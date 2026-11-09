@@ -99,8 +99,11 @@ func TestPerformGiveHandsFullAndWeight(t *testing.T) {
 
 	t.Run("weight", func(t *testing.T) {
 		w, ch, vict, msgs := newGiveTestWorld(t)
+		// A strong giver can hold an item heavier than the recipient's limit.
+		ch.Stats.Str = 25
+		ch.CopyBaseAttributes()
 		heavy := newTransferItem(8200, "an anvil", "anvil", 1)
-		heavy.SetWeight(vict.Inventory.GetCapacity()*10 + 1)
+		heavy.SetWeight(vict.MaxCarryWeight() + 1)
 		registerTransferObject(w, heavy)
 		if err := w.MoveObjectToPlayerInventory(heavy, ch); err != nil {
 			t.Fatalf("seat anvil: %v", err)
@@ -108,6 +111,39 @@ func TestPerformGiveHandsFullAndWeight(t *testing.T) {
 		w.performGive(ch, vict, heavy)
 		if got := msgOf(msgs, "Giver"); !strings.Contains(got, "can't carry that much weight.") {
 			t.Fatalf("weight byte: got %q", got)
+		}
+	})
+
+	// A weak recipient's limit is str_app[STRENGTH_APPLY_INDEX].carry_w
+	// (src/utils.h:448), not a multiple of the item-count capacity (DP-1516
+	// item 1: STR 3 -> 10, so an 8-weight item on top of 3 carried is refused at
+	// the weight gate, not later with "can't carry any more").
+	t.Run("weak recipient uses str_app carry_w", func(t *testing.T) {
+		w, ch, vict, msgs := newGiveTestWorld(t)
+		vict.Stats.Str = 3
+		vict.Stats.StrAdd = 0
+		vict.CopyBaseAttributes()
+		if got := vict.MaxCarryWeight(); got != 10 {
+			t.Fatalf("MaxCarryWeight(3) = %d, want C's 10 (str_app[3])", got)
+		}
+		carried := newTransferItem(8300, "a rock", "rock", 1)
+		carried.SetWeight(3)
+		registerTransferObject(w, carried)
+		if err := w.MoveObjectToPlayerInventory(carried, vict); err != nil {
+			t.Fatalf("seat rock: %v", err)
+		}
+		sword := newTransferItem(8301, "a sword", "sword", 1)
+		sword.SetWeight(8)
+		registerTransferObject(w, sword)
+		if err := w.MoveObjectToPlayerInventory(sword, ch); err != nil {
+			t.Fatalf("seat sword: %v", err)
+		}
+		w.performGive(ch, vict, sword)
+		if got := msgOf(msgs, "Giver"); !strings.Contains(got, "can't carry that much weight.") {
+			t.Fatalf("weak-recipient weight byte: got %q", got)
+		}
+		if strings.Contains(msgOf(msgs, "Giver"), "can't carry any more") {
+			t.Fatal("weak recipient hit the move-failure arm instead of the weight gate")
 		}
 	})
 }

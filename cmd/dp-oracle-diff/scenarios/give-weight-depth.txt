@@ -1,0 +1,78 @@
+# depth-case: give.weight
+# C-first vehicle for perform_give's weight gate, "$E can't carry that much
+# weight." (src/act.item.c:692-695). The recipient's CAN_CARRY_W is
+# str_app[STRENGTH_APPLY_INDEX].carry_w (src/utils.h:448); a STR-3 recipient
+# (carry_w 10) cannot take the weight-8 confessor's sword (vnum 5805) on top of
+# a held item. The God gives it; the diagnostic's first divergent block was
+# C "He can't carry that much weight." vs Go "He can't carry any more.".
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+add-obj-index 58.obj
+
+[setup:oracle]
+Givegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Givegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:givepeer]
+Givepeer
+Y
+givepass
+givepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:givepeer]
+Givepeer
+y
+givepass
+givepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Givepeer 8105
+set player Givepeer str 3
+load obj 5805
+
+[probe]
+give sword Givepeer

@@ -457,7 +457,13 @@ func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {
 		w.actToChar(ch, "$N seems to have $S hands full.", vict, obj)
 		return
 	}
-	if obj.GetWeight()+vict.Inventory.GetWeight() > vict.Inventory.GetCapacity()*10 {
+	// C perform_give weight gate: GET_OBJ_WEIGHT(obj) + IS_CARRYING_W(vict) >
+	// CAN_CARRY_W(vict) (src/act.item.c:692-695; utils.h:448). The limit is
+	// str_app[STRENGTH_APPLY_INDEX(vict)].carry_w — the old *10 of the item-count
+	// capacity gave a weak recipient ~50 instead of C's 10, so a heavy give
+	// slipped past this gate and failed later with the wrong message
+	// (DP-1516 item 1).
+	if obj.GetWeight()+vict.CarriedWeight() > vict.MaxCarryWeight() {
 		w.actToChar(ch, "$E can't carry that much weight.", vict, nil)
 		return
 	}
