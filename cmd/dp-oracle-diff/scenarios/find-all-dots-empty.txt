@@ -36,5 +36,7 @@ Y
 1
 
 [probe]
-get x all.
+get all.
+open pack
+get all. pack
 drop all.
