@@ -1,0 +1,86 @@
+# depth-case: wield.two-handed-hands-busy
+# depth-case: wield.two-handed-target-busy
+# C-first vehicle for perform_wear's two-handed wield conflicts
+# (src/act.item.c:1497-1509). A STR-25 peer carries the 2-handed claymore
+# (vnum 4381) and a short sword (vnum 8037):
+#   :1508 - wielding the 2-handed claymore then holding the sword is refused
+#           ("Both your hands are occupied with your weapon at the moment.").
+#   :1500 - with the sword still held, wielding the 2-handed claymore is
+#           refused ("Both hands must be free to wield that.").
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Wieldgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wieldgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:wielder]
+Wieldtwopeer
+Y
+wielpass
+wielpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:wielder]
+Wieldtwopeer
+y
+wielpass
+wielpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Wieldtwopeer 8105
+set player Wieldtwopeer str 25
+load obj 4381
+give claymore Wieldtwopeer
+load obj 8052
+give scroll Wieldtwopeer
+
+[probe]
+send:wielder hold recall
+send:wielder wield claymore
+send:wielder remove recall
+send:wielder wield claymore
+send:wielder hold recall

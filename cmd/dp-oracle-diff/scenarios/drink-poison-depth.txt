@@ -1,0 +1,79 @@
+# depth-case: drink.poison
+# depth-case: drink.thirst-message
+# C-first vehicle for do_drink's poisoned-container branch, "Oops, it tasted
+# rather strange!" and its room act (src/act.item.c:1010-1011). The God loads
+# the vnum-13301 poisoned goblet (value[3]=1) directly -- it lives in 132.obj,
+# so force-load's vnum/100 path cannot reach it -- and hands it to a mortal
+# peer, who drinks it.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+add-obj-index 132.obj
+
+[setup:oracle]
+Poigod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Poigod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:drinker]
+Poidrink
+Y
+drinkpass
+drinkpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:drinker]
+Poidrink
+y
+drinkpass
+drinkpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Poidrink 8105
+load obj 13301
+give goblet Poidrink
+
+[probe]
+set player Poidrink hunger 0
+send:drinker drink goblet

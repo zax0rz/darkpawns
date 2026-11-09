@@ -1,0 +1,77 @@
+# depth-case: cast.concentration-failure
+# C-first witness for do_cast's concentration draw, "You lost your
+# concentration!" (DP-1502 list at src/spell_parser.c:1101). A level-20 Mage
+# peer's detect-invisibility skill is forced to 1 and it casts a known
+# non-violent spell at itself, so number(0, 101+weight_add) > skill fails on
+# most seeds. The primary is an idle God.
+# C path: do_cast (src/spell_parser.c:1078-1112).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Conzgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Conzgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Conzcast]
+Conzcast
+Y
+castpass
+castpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:Conzcast]
+Conzcast
+y
+castpass
+castpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Conzcast 8105
+set player Conzcast class mage
+set player Conzcast level 20
+skillset Conzcast 'detect invisibility' 1
+
+[probe:Conzcast]
+cast 'detect invisibility' Conzcast

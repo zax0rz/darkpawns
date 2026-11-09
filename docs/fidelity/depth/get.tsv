@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_get	get	get.arms-full-pregate	D1	command	unit-green	TestDoGetChecksFullArmsBeforeEmptyArgument	act.item.c:357-358	IS_CARRYING_N>=CAN_CARRY_N pre-empts even the Get-what arg gate.
+do_get	get	get.arms-full-pregate	D1	command	oracle-green-multiseed	carry-limit-gates-depth@1,2,3,5,8;TestDoGetChecksFullArmsBeforeEmptyArgument	act.item.c:357-358	The CLEAN live carry-limit-gates-depth makes a level-1 DEX-1 peer (CAN_CARRY_N=5, src/utils.h:449) carry 5 items, so its get prints "Your arms are already full!" before the argument check; the unit test pins the same pregate order (R1/R2/R5e/R5h).
 do_get	get	get.no-arg	D1	command	oracle-green	get-room	act.item.c:359-360	Empty arg1 yields "Get what?".
 do_get	get	get.room-single	D3	command	oracle-green	get-room	act.item.c:361-362	One-arg form delegates to get_from_room.
 do_get	get	get.container-not-held	D2	command	oracle-green	get-container	act.item.c:371-374	generic_find INV|ROOM miss yields "You don't have a/an X.".

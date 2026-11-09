@@ -46,4 +46,5 @@ set mob trainee hit 30000
 [probe]
 hit trainee
 ~dpclock pulse 20
+~dpclock pulse 20
 recite recall

@@ -198,6 +198,21 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 
 	spellLevel := item.GetValue(0)
 	spellNum := item.GetValue(3)
+	// C mag_objectmagic selects its switch branches when equipd == WEAR_HOLD or
+	// the item is neither staff nor wand (src/spell_parser.c:576-578); naming
+	// the wielded item in the second `use` argument is what puts a held staff or
+	// wand onto the tap/point branch. C's equipd scan uses `buf` whole (the
+	// half_chop remainder, not its first word) against isname
+	// (src/act.other.c:901; src/spell_parser.c:569-572), so a multi-word
+	// remainder is passed through unchanged.
+	if w.useEquipdHold(ch, useRest) {
+		if itemType == ITEM_STAFF {
+			w.useStaffTap(ch, item, useRest, spellNum, spellLevel)
+		} else {
+			w.useWandPoint(ch, item, useRest, spellNum, spellLevel)
+		}
+		return true
+	}
 	if itemType == ITEM_WAND {
 		w.useWand(ch, item, useRest, spellNum, spellLevel)
 	} else {
@@ -434,6 +449,122 @@ func (w *World) useStaff(ch *Player, item *ObjectInstance, targetArg string, spe
 		}
 		spells.CallMagicWithArgument(ch, actor, nil, spellNum, level, spells.CastStaff, w, spellArgument)
 	}
+}
+
+// cWearOrder lists the equipment slots in C WEAR_* order (src/structs.h:390-411)
+// so useEquipdHold can reproduce mag_objectmagic's `equipd = wear_pos + 1` scan
+// (src/spell_parser.c:569-578).
+var cWearOrder = []EquipmentSlot{
+	SlotLight, SlotFingerR, SlotFingerL, SlotNeck1, SlotNeck2, SlotBody, SlotHead,
+	SlotLegs, SlotFeet, SlotHands, SlotArms, SlotShield, SlotAbout, SlotWaist,
+	SlotWristR, SlotWristL, SlotWield, SlotHold, SlotThrow, SlotAblegs, SlotFace, SlotHover,
+}
+
+// useEquipdHold reproduces mag_objectmagic's `equipd == WEAR_HOLD` test for a
+// held staff or wand (src/spell_parser.c:569-578). C scans wear positions
+// 0..NUM_WEARS-1 in order and keeps the LAST name match, so equipd=wear_pos+1
+// equals WEAR_HOLD (17) exactly when the last matching slot is WEAR_WIELD (16):
+// the second `use` argument names the wielded item. A keyword that also matches
+// the held item (slot 17) yields 18 and takes the else branch instead.
+func (w *World) useEquipdHold(ch *Player, buf string) bool {
+	if buf == "" || ch.Equipment == nil {
+		return false
+	}
+	last := -1
+	for i, slot := range cWearOrder {
+		item, ok := ch.Equipment.GetItemInSlot(slot)
+		if ok && item != nil && useHeldNameMatches(buf, item.GetKeywords()) {
+			last = i
+		}
+	}
+	return last == 16 // WEAR_WIELD (src/structs.h:406)
+}
+
+// useStaffTap is mag_objectmagic's switch ITEM_STAFF tap branch
+// (src/spell_parser.c:578-609), reached when useEquipdHold lands on WEAR_HOLD.
+// Unlike the held-staff else branch (useStaff), it prints the caster line before
+// the room act and fans a MAG_MASSES|MAG_AREAS staff out per room occupant
+// instead of casting once.
+func (w *World) useStaffTap(ch *Player, item *ObjectInstance, targetArg string, spellNum, spellLevel int) {
+	spellArgument, _ := OneArgument(targetArg)
+	Act(nil, false, ch, nil, item, nil, "You tap $p three times on the ground.", "", ToChar)
+	if item.Prototype != nil && item.Prototype.ActionDesc != "" {
+		Act(w, false, ch, nil, item, nil, item.Prototype.ActionDesc, "", ToRoom)
+	} else {
+		Act(w, false, ch, nil, item, nil, "$n taps $p three times on the ground.", "", ToRoom)
+	}
+	if !w.takeMagicItemCharge(item) {
+		Act(nil, false, ch, nil, item, nil, "It seems powerless.", "", ToChar)
+		Act(w, false, ch, nil, item, nil, "Nothing seems to happen.", "", ToRoom)
+		return
+	}
+	ch.SetWaitState(1) // C: WAIT_STATE(ch, PULSE_VIOLENCE)
+	level := spellLevel
+	if level == 0 {
+		level = defaultMagicItemLevel
+	}
+	for _, actor := range w.actChar(ch.GetRoomVNum()) {
+		if actor == ch {
+			continue
+		}
+		spells.CallMagicWithArgument(ch, actor, nil, spellNum, level, spells.CastStaff, w, spellArgument)
+	}
+}
+
+// useWandPoint is mag_objectmagic's switch ITEM_WAND point branch
+// (src/spell_parser.c:610-659), reached when useEquipdHold lands on WEAR_HOLD.
+// It prints the caster line before the room act and, with no valid target,
+// prints "At what should $p be pointed?" instead of the held-wand else branch's
+// "You can't use $p like that.".
+func (w *World) useWandPoint(ch *Player, item *ObjectInstance, targetArg string, spellNum, spellLevel int) {
+	spellArgument, _ := OneArgument(targetArg)
+	target, targetObj, found := w.resolveMagicItemTarget(ch, targetArg, spellNum)
+	if !found {
+		Act(nil, false, ch, nil, item, nil, "At what should $p be pointed?", "", ToChar)
+		return
+	}
+	if target != nil {
+		if target == ch {
+			// C's tch == ch branch always prints the plain room act; only the
+			// at-someone-else branches substitute obj->action_description
+			// (src/spell_parser.c:614-624).
+			Act(nil, false, ch, nil, item, nil, "You point $p at yourself.", "", ToChar)
+			Act(w, false, ch, target, item, nil, "$n points $p at $mself.", "", ToRoom)
+		} else {
+			Act(nil, false, ch, target, item, nil, "You point $p at $N.", "", ToChar)
+			roomAct := "$n points $p at $N."
+			hideInvisible := true
+			if item.Prototype != nil && item.Prototype.ActionDesc != "" {
+				roomAct = item.Prototype.ActionDesc
+				hideInvisible = false
+			}
+			Act(w, hideInvisible, ch, target, item, nil, roomAct, "", ToRoom)
+		}
+	} else {
+		Act(nil, false, ch, nil, item, targetObj, "You point $p at $P.", "", ToChar)
+		roomAct := "$n points $p at $P."
+		hideInvisible := true
+		if item.Prototype != nil && item.Prototype.ActionDesc != "" {
+			roomAct = item.Prototype.ActionDesc
+			hideInvisible = false
+		}
+		Act(w, hideInvisible, ch, nil, item, targetObj, roomAct, "", ToRoom)
+	}
+	if !w.takeMagicItemCharge(item) {
+		Act(nil, false, ch, nil, item, nil, "It seems powerless.", "", ToChar)
+		Act(w, false, ch, nil, item, nil, "Nothing seems to happen.", "", ToRoom)
+		return
+	}
+	ch.SetWaitState(1) // C: WAIT_STATE(ch, PULSE_VIOLENCE)
+	level := spellLevel
+	if level == 0 {
+		level = defaultMagicItemLevel
+	}
+	var objectTarget any
+	if targetObj != nil {
+		objectTarget = targetObj
+	}
+	spells.CallMagicWithArgument(ch, target, objectTarget, spellNum, level, spells.CastWand, w, spellArgument)
 }
 
 // resolveUseActionObjectTarget mirrors mag_objectmagic's generic_find lookup

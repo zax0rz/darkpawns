@@ -1,6 +1,6 @@
 # DP-1511 refusal gate — first review batch
 
-This batch implements the parameterized gate and repairs 13 of the 65 scenarios
+This batch implements the parameterized gate and repairs 13 of the original 65 scenarios
 newly rejected by the first full census. The other 52 carry the explicitly
 approved temporary reason `pending DP-1511 triage`; they remain work to do after
 this batch is reviewed and merged. A clean comparison with that allowance does
@@ -79,12 +79,32 @@ The only subsequent matcher change removed the unreachable direct look-stars
 entry. This is not an exact-final-commit release gate: Claude runs the batched
 combined release census under the repository process.
 
+## Main integration
+
+Main advanced to `0b058ea29` during this work. Its merge is included; the two
+manifest overlaps preserve the incoming evidence and this batch's distinct
+blocked cases. No game-code delta remains relative to main.
+`sol-dp1511-main-integration` checks all 18 incoming scenarios: 17 pass, and
+`carry-limit-gates-depth` newly fails at the third give to the peer. C starts
+that warrior with a sword, tunic, and backpack (`src/class.c:521-534`); two new
+swords reach the five-item cap. Three excess warmup gives were refused.
+The repair removes those three load/give pairs. Before/after runs at original
+seeds 1,2,3,5,8 are `sol-dp1511-integration-before-seed{2,3,5,8}` (seed 1 is
+main-integration) and `sol-dp1511-integration-after-seed{1,2,3,5,8}`. All before
+runs are red, all after runs clean. The C probe says `Your arms are already
+full!` and `Fullpeer seems to have his hands full.` This is one additional
+repaired scenario beyond the original 13; no pending allowance was added.
+The fresh-mortal give claim remains green; the live discrepancy after first-God
+level demotion has its own blocked boundary row. The clean full snapshot above
+predates this integration; incoming scenarios and the repair have targeted
+coverage, not a claimed exact-final full/release result.
+
 ## Triage
 
-`triage.tsv` supplies the required scenario → verdict → evidence table for all
-65 failures. `batch1-seeds.json` records original manifest seeds;
+`triage.tsv` supplies the required scenario → verdict → evidence table for the original
+65 failures plus the integration failure. `batch1-seeds.json` records original manifest seeds;
 `batch1-witnesses.tsv` gives verbatim C witness lines and dump locations for all
-13 repairs. The repairs remove impossible removal of unworn starting gear,
+14 repairs (13 original plus one integration). The repairs remove impossible removal of unworn starting gear,
 keep valid junk of carried gear, and remove an unsupported set-vampire field
 from the robe wear/remove scenario. The latter's claims now describe the actual
 robe bit cycle; real vampire transformation coverage remains in its existing

@@ -48,5 +48,12 @@
   ],
   "spec-proc-remorter-success": [
     1
+  ],
+  "carry-limit-gates-depth": [
+    1,
+    2,
+    3,
+    5,
+    8
   ]
 }

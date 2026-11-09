@@ -54,7 +54,7 @@ consequences after the first difference. No diagnostic is shipped as green.
 | Run | First divergent block | C → Go | Claim disposition |
 |---|---|---|---|
 | `sol-dp1511-item-witness-r2` | wield axe while holding scroll | `It is too heavy for you to use.` → `Both hands must be free to wield that.` | blocked `wield.weight-before-two-hand-conflict`; `src/act.item.c:1492-1502` orders weight first |
-| `sol-dp1511-item-witness-r3` | give scroll Gateitems | `Gateitems seems to have his hands full.` → transfer succeeds | `give.hands-full` demoted from unit-green; `src/act.item.c:687-689`; later inventory/drop differences are downstream |
+| `sol-dp1511-item-witness-r3` | give scroll Gateitems | `Gateitems seems to have his hands full.` → transfer succeeds | blocked `give.hands-full-demoted-first-god` (actor loaded equipment as first God, then demoted to level 1); the integrated fresh-mortal case is independently repaired; `src/act.item.c:687-689`; later inventory/drop differences are downstream |
 | `sol-dp1511-clan-transform-witness` (also later clan runs) | clan demote victim audience | `You've demoted within your clan!` → `You've been demoted within your clan!` | `clan.demote-output-gates` demoted; `src/clan.c:451-488` |
 | `sol-dp1511-write-witness` | write Active author | `You have no active.` → `You don't have 'author'.` | blocked `write.two-argument-missing-paper`; this first attempt lacked a board, so it proves only generic write; `src/act.comm.c:1048-1056` |
 | `sol-dp1511-write-witness-r2` | write missing | `There is no missing in your inventory.` → `Write?  With what?  ON what?  What are you trying to do?!?` | blocked `write.single-argument-missing-object`; `src/act.comm.c:1058-1062` |

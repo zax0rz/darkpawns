@@ -1,0 +1,86 @@
+# depth-case: pour.cant-pour-into
+# depth-case: pour.pour-into-self
+# C-first vehicle for do_pour's carried-destination gates (src/act.item.c:1266-1279).
+# A mortal peer carries a non-empty water skin (vnum 8063, DRINKCON) and a
+# short sword (vnum 8037). Pouring into the carried non-drinkcon reaches
+# "You can't pour anything into that."; pouring the skin into itself reaches
+# "A most unproductive effort.". pour-basic cannot reach either (its fill
+# source is looked up in the room, and it never pours into a carried
+# non-drinkcon). Directed send:<peer> steps run each pour as the peer.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-obj 8063 1 8105 80
+force-load 8063
+spawn-obj 8037 1 8105 80
+force-load 8037
+
+[setup:oracle]
+Pourgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pourgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:pourier]
+Pourer
+Y
+pourpass
+pourpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:pourier]
+Pourer
+y
+pourpass
+pourpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Pourer 8105
+get skin
+get sword
+give skin Pourer
+give sword Pourer
+
+[probe]
+send:pourier pour skin sword
+send:pourier pour skin skin
