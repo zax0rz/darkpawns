@@ -1,0 +1,80 @@
+# depth-case: turn.opening-lines
+# depth-case: turn.low-mana-quarter-cost
+# C-first witness for do_turn's opening lines and its mana gate, DP-1502 lists
+# at src/new_cmds2.c:976-986. A good-aligned actor with the turn skill receives
+# the "You attempt to turn away..." self line and the room's blinding-light act
+# (:976-979), then refuses with "You fail to summon enough energy..." when
+# need_mana = GET_LEVEL*3 + number(1,55) exceeds mana (:984-989). The primacy
+# God is set good-aligned with turn at 100 and no mana. C path:
+# src/new_cmds2.c:960-989.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Trngod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Trngod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:obs]
+Trnobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:obs]
+Trnobs
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Trngod align 1000
+skillset Trngod 'turn' 100
+set Trngod maxmana 5000
+set Trngod mana 0
+goto 8162
+teleport Trnobs 8162
+
+[probe]
+turn

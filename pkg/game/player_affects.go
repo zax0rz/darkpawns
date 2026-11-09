@@ -402,6 +402,7 @@ func (p *Player) AddAffect(aff *engine.Affect) {
 		p.mu.Unlock()
 		p.refreshAttributeCapacity()
 	}()
+
 	p.ActiveAffects = append(p.ActiveAffects, aff)
 }
 
@@ -415,6 +416,7 @@ func (p *Player) JoinAffect(aff *engine.Affect, addDuration, addMagnitude bool) 
 		p.mu.Unlock()
 		p.refreshAttributeCapacity()
 	}()
+
 	for i := len(p.ActiveAffects) - 1; i >= 0; i-- {
 		current := p.ActiveAffects[i]
 		if current == nil || current.SpellID != aff.SpellID || current.Location != aff.Location {

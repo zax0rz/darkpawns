@@ -172,28 +172,62 @@ func DoTigerPunch(ch *Player, target combat.Combatant) SkillResult {
 	}
 }
 
-// DoSubdue implements do_subdue() from act.offensive.c lines 1084-1160.
-// Non-lethal stun. Cannot be fighting.
-func DoSubdue(ch *Player, target combat.Combatant) SkillResult {
+// DoSubdue implements do_subdue() from act.offensive.c lines 1084-1182.
+// Non-lethal stun. Cannot be fighting. The command wrapper owns argument
+// parsing and target lookup (the "Subdue who?" arms), matching C's order:
+// skill, busy, target lookup, self, then the gates below.
+func DoSubdue(ch *Player, target combat.Combatant, world *World) SkillResult {
 	if ch.GetSkill(SkillSubdue) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You have no idea how!"}
 	}
 	if ch.GetFightingBody() != nil {
 		return SkillResult{Success: false, MessageToCh: "You're too busy right now!"}
 	}
+	if target == nil {
+		return SkillResult{Success: false, MessageToCh: "Subdue who?"}
+	}
+	if target == ch {
+		return SkillResult{Success: false, MessageToCh: "Aren't we funny today..."}
+	}
+	if world != nil && world.RoomHasFlag(ch.GetRoom(), "peaceful") {
+		return SkillResult{Success: false, MessageToCh: "You can't contemplate violence in such a place!"}
+	}
+	if ch.IsMounted() {
+		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
+	}
 	if target.GetFightingBody() != nil {
 		return SkillResult{Success: false, MessageToCh: "You can't get close enough!"}
+	}
+	if !target.IsNPC() && ch.GetFlags()&(1<<uint(PlrOutlaw)) == 0 {
+		return SkillResult{
+			Success:       false,
+			MessageToCh:   "You can't subdue them because you are not an Outlaw!",
+			MessageToVict: fmt.Sprintf("%s failed to subdue you because %s is not an Outlaw.", ch.GetName(), ch.GetName()),
+		}
+	}
+	if isShopKeeperInWorld(world, target) {
+		return SkillResult{Success: false, MessageToCh: "Haha.. Don't think so."}
+	}
+	if target.GetPosition() <= combat.PosStunned {
+		return SkillResult{Success: false, MessageToCh: "What's the point of doing that now?"}
 	}
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
 	// #nosec G404
 	percent := dprng.Number(1, 101+target.GetLevel())
 	prob := ch.GetSkill(SkillSubdue)
+	if ch.GetLevel() >= LVL_IMMORT {
+		percent = 0
+	}
+	if mob, ok := target.(*MobInstance); ok && mob.HasMobFlag(MobFlagAware) {
+		prob = 0
+	}
+	if !target.IsNPC() && ch.GetLevel() < LVL_IMMORT &&
+		(target.GetLevel() > ch.GetLevel()+3 || target.GetLevel() < ch.GetLevel()-3) {
+		prob = 0
+	}
 	if levelDiff := target.GetLevel() - ch.GetLevel(); levelDiff > 0 {
 		percent += levelDiff
-	}
-	if !target.IsNPC() && (target.GetLevel() > ch.GetLevel()+3 || target.GetLevel() < ch.GetLevel()-3) {
-		percent = prob + 1
 	}
 	if percent > prob {
 		return SkillResult{
@@ -201,14 +235,23 @@ func DoSubdue(ch *Player, target combat.Combatant) SkillResult {
 			MessageToCh:   ActMessage("$N avoids your misplaced blow to the back of $S head.", chPronouns, &victPronouns, ""),
 			MessageToVict: ActMessage("$n misses a blow to the back of your head.", chPronouns, &victPronouns, ""),
 			MessageToRoom: ActMessage("$N avoids $n's misplaced blow to the back of $S head.", chPronouns, &victPronouns, ""),
+			// C's miss arm ends in hit(victim, ch, TYPE_UNDEFINED) after the
+			// three acts (act.offensive.c:1168).
+			RetaliateHit: true, RetaliateHitAfterMessages: true,
 		}
 	}
-	improveSkill(ch, SkillSubdue)
+	// C sets GET_POS(victim) = POS_STUNNED after the success acts
+	// (act.offensive.c:1177) and puts no wait state on the victim. The actor's
+	// intermediate WAIT_STATE(PULSE_VIOLENCE * 1) (:1178) is overwritten by
+	// the unconditional WAIT_STATE(PULSE_VIOLENCE * 3) (:1181), so both arms
+	// end at a 3-round wait (R3c).
+	target.SetPosition(combat.PosStunned)
 	return SkillResult{
-		Success: true, Damage: 0, StunTarget: true, WaitCh: 1, WaitTarget: 3,
-		MessageToCh:   ActMessage("You knock $M out cold.", chPronouns, &victPronouns, ""),
-		MessageToVict: "Someone sneaks up behind you and knocks you out!",
-		MessageToRoom: ActMessage("$n knocks out $N with a well-placed blow to the back of the head.", chPronouns, &victPronouns, ""),
+		Success: true, WaitCh: 3,
+		MessageToCh:     ActMessage("You knock $M out cold.", chPronouns, &victPronouns, ""),
+		MessageToVict:   "Someone sneaks up behind you and knocks you out!",
+		MessageToRoom:   ActMessage("$n knocks out $N with a well-placed blow to the back of the head.", chPronouns, &victPronouns, ""),
+		DeferredImprove: []string{SkillSubdue},
 	}
 }
 

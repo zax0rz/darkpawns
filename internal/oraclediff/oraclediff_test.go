@@ -61,6 +61,17 @@ func TestNormalizeCanonicalizesAutoExitIndentation(t *testing.T) {
 	}
 }
 
+func TestNormalizePreservesMidLineDoubleSpaceInIdentifyCasts(t *testing.T) {
+	twoSpaces := Normalize("This WAND casts:  create water\r\n")
+	oneSpace := Normalize("This WAND casts: create water\r\n")
+	if twoSpaces != "This WAND casts:  create water\n" {
+		t.Fatalf("Normalize(twoSpaces) = %q, want %q", twoSpaces, "This WAND casts:  create water\n")
+	}
+	if twoSpaces == oneSpace {
+		t.Fatalf("Normalize collapsed mid-line double space: %q == %q", twoSpaces, oneSpace)
+	}
+}
+
 func TestUnifiedDiff(t *testing.T) {
 	diff := UnifiedDiff("c", "go", "same\nold\ntail\n", "same\nnew\ntail\n")
 	for _, want := range []string{"--- c", "+++ go", "@@ -1,3 +1,3 @@", "-old", "+new"} {

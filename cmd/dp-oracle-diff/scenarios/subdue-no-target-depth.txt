@@ -1,0 +1,50 @@
+# C-first do_subdue parser-visible gate vehicle (src/interpreter.c:748;
+# src/act.offensive.c:1084-1110). The God grants itself subdue, then probes
+# C's no-argument / unresolved-target / self branches. C prints "Subdue who?"
+# for both the empty argument and the get_char_room_vis failure; the port
+# used to invent "They aren't here." for the latter.
+#
+# depth-case: subdue.no-argument
+# depth-case: subdue.target-not-found
+# depth-case: subdue.self-target
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Subduegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Subduegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Subduegod 'subdue' 100
+goto 8105
+
+[probe]
+subdue
+subdue Nobody
+subdue Subduegod

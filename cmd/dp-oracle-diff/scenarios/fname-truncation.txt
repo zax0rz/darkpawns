@@ -1,0 +1,52 @@
+# depth-case: look.direction-door-name
+# C's fname() (src/handler.c:68-79) keeps only the leading run of letters of a
+# keyword, stopping at the first non-letter. A `look <dir>` at a door renders
+# fname(EXIT->keyword) (src/act.informative.c:867 closed, :878 open), so a door
+# keyed "iron-gate" prints "The iron ..." while the pre-fix Go port printed
+# "The iron-gate ...". replace-room-exits rewrites both disposable worlds'
+# room 8162 so the keyword is deterministic; the actor is the first player on an
+# empty player file (C init_char implementor).
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 1 iron-gate
+
+[setup:oracle]
+Fentress
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+recall
+
+[setup:port]
+Fentress
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+recall
+
+[warmup]
+holylight
+goto 8162
+
+[probe]
+look north

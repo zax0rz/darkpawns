@@ -421,32 +421,60 @@ func specStableboyBuy(w *World, ch *Player, me *MobInstance, a string) bool {
 // ================================================================
 // tipster — Random tip messages on pulse
 // ================================================================
+
+// tipsterNumber is the tipster special's RNG seam, kept separate so a focused
+// test can pin the C draw range without touching the process-wide stream.
+var tipsterNumber = dprng.Number
+
+// specTipster ports SPECIAL(tipster) (src/spec_procs2.c:464-520). C draws
+// number(0, 50) on an autonomous pulse and speaks one of thirteen canned
+// do_say lines (case 6 speaks two). C's ch is the host mob on that lane, so the
+// gate and the say both use me; a nil ch from callMobSpecSafely is expected.
+// The special is declared but never ASSIGNMOB'd (src/spec_assign.c:110), so its
+// proof is this direct call, not the census.
 func specTipster(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || ch.GetPosition() <= combat.PosSleeping || ch.GetHP() < 0 {
+	if cmd != "" || me == nil {
 		return false
 	}
-	if ch.GetFightingBody() != nil {
+	if me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
+		return false
+	}
+	if me.GetFightingBody() != nil {
 		return false
 	}
 
-	tips := []string{
-		"For ansi color, type COLOR COMPLETE!",
-		"Wargs make a tasty meal if you CARVE their corpse.",
-		"AUTO EXIT will show you the exits for every room.",
-		"It's always safest to quit in the temple.",
-		"You're allowed to play up to 3 characters at once.",
-		"You can hire a mercenary by giving him 100 coins.",
-		"A bribe of a couple hundred coins will make a guard look the other way while you fight.  Guards will attack you if you fight in front of them.",
-		"Use the CONSIDER command!",
-		"If you don't like something, use the IDEA command.",
-		"If you see something out of place, use the BUG command.",
-		"If you see something spelled incorrectly, use the TYPO command.",
-		"Use an identify scroll on yourself to see your numerical statistics.  (Available at your local magick shop.)",
-		"Check out HELP ALIAS to see how to abbreviate commands or do multiple commands at once.",
+	switch tipsterNumber(0, 50) {
+	case 0:
+		w.npcSay(me, "For ansi color, type COLOR COMPLETE!")
+	case 1:
+		w.npcSay(me, "Wargs make a tasty meal if you CARVE their corpse.")
+	case 2:
+		w.npcSay(me, "AUTO EXIT will show you the exits for every room.")
+	case 3:
+		w.npcSay(me, "It's always safest to quit in the temple.")
+	case 4:
+		w.npcSay(me, "You're allowed to play up to 3 characters at once.")
+	case 5:
+		w.npcSay(me, "You can hire a mercenary by giving him 100 coins.")
+	case 6:
+		w.npcSay(me, "A bribe of a couple hundred coins will make a guard look the other way while you fight.")
+		w.npcSay(me, "Guards will attack you if you fight in front of them.")
+	case 7:
+		w.npcSay(me, "Use the CONSIDER command!")
+	case 8:
+		w.npcSay(me, "If you don't like something, use the IDEA command.")
+	case 9:
+		w.npcSay(me, "If you see something out of place, use the BUG command.")
+	case 10:
+		w.npcSay(me, "If you see something spelled incorrectly, use the TYPO command.")
+	case 11:
+		w.npcSay(me, "Use an identify scroll on yourself to see your numerical statistics. (Available at your local magick shop.)")
+	case 12:
+		w.npcSay(me, "Check out HELP ALIAS to see how to abbreviate commands or do multiple commands at once.")
 	}
 
-	n := randN(len(tips))
-	ch.SendMessage(fmt.Sprintf("%s says '%s'\r\n", mobName(me), tips[n]))
+	// C returns FALSE even when it speaks, letting the rest of
+	// mobile_activity() continue with its normal AI work.
 	return false
 }
 
@@ -502,29 +530,24 @@ func mobRescuerIsReciprocallyFighting(w *World, me *MobInstance) bool {
 	return target != nil && target.GetFightingBody() == me
 }
 
-// mobRescueVictim resolves the first word of an NPC's short description with
-// get_char_room_vis semantics. SPECIAL(rescuer) passes GET_NAME(ally), and
-// one_argument() inside do_rescue therefore makes an article-leading short
-// description such as "a guard trainee" fail to resolve.
-func mobRescueVictim(w *World, me *MobInstance, shortDesc string) combat.Combatant {
-	fields := strings.Fields(shortDesc)
-	if len(fields) == 0 {
+// mobRescueVictim resolves a name the way an NPC command body does: C parses
+// the argument with one_argument (fill words skipped, lowercased —
+// src/interpreter.c:1267) and resolves the result with get_char_room_vis
+// (src/handler.c:1277-1300). SPECIAL(rescuer) passes GET_NAME(ally) and the
+// shopkeeper slap passes GET_NAME(attacker), so an article-leading short
+// description such as "a guard trainee" looks for the keyword "a" and
+// usually finds nobody, while "the keeper" skips "the" and resolves
+// "keeper".
+func mobRescueVictim(w *World, me *MobInstance, name string) combat.Combatant {
+	arg, _ := oneArgument(name)
+	if arg == "" {
 		return nil
 	}
-	arg := fields[0]
-	for _, player := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if canSee(me, player) && isnameWithAbbrevs(arg, charKeywords(player)) {
-			return player
-		}
+	t, ok := w.resolveCharInRoomAt(me, me.GetRoomVNum(), arg)
+	if !ok {
+		return nil
 	}
-	mobs := w.GetMobsInRoom(me.GetRoomVNum())
-	sort.Slice(mobs, func(i, j int) bool { return mobs[i].GetID() < mobs[j].GetID() })
-	for _, mob := range mobs {
-		if canSee(me, mob) && isnameWithAbbrevs(arg, charKeywords(mob)) {
-			return mob
-		}
-	}
-	return nil
+	return t.Combatant
 }
 
 func mobDoRescueResolved(w *World, me *MobInstance, victim combat.Combatant) {
@@ -591,8 +614,10 @@ func mobDoRescueResolved(w *World, me *MobInstance, victim combat.Combatant) {
 			slog.Warn("rescuer ally hit failed", "mob", allyVictim.GetName(), "target", tmp.GetName(), "error", err)
 		}
 	}
+	// do_rescue's WAIT_STATE(vict, PULSE_VIOLENCE*2) writes ch->wait
+	// (src/act.offensive.c); SetWaitState takes rounds.
 	if waiter, ok := victim.(interface{ SetWaitState(int) }); ok {
-		waiter.SetWaitState(2 * engine.PULSE_VIOLENCE)
+		waiter.SetWaitState(2)
 	}
 }
 
@@ -1586,8 +1611,12 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		}
 		target := tch.GetFightingBody()
 		targetAligned, ok := target.(cityguardAlignedCombatant)
+		// C's take_to_jail candidate gate is the mirror of cityguard's:
+		// (!IS_NPC(tch) || IS_NPC(FIGHTING(tch))) — the villain must be a
+		// player (src/spec_procs2.c:1450-1451), unlike cityguard's
+		// (IS_NPC(tch) || ...) at src/spec_procs.c:805-806.
 		if !ok || targetAligned == nil || tch.GetAlignment() >= maxEvil ||
-			(!tch.IsNPC() && !target.IsNPC()) {
+			(tch.IsNPC() && !target.IsNPC()) {
 			continue
 		}
 		maxEvil = tch.GetAlignment()

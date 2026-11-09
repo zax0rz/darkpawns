@@ -1,0 +1,85 @@
+# depth-case: cutthroat.peaceful
+# C-first witness for do_cutthroat's room gate, "You feel too peaceful to slit
+# a throat!", DP-1502 lists at src/new_cmds.c:595. The mortal peer walks to the
+# trainee with cutthroat and the pierce dagger 8036; the fixture turns 8105
+# ROOM_PEACEFUL on (bit 4), and the peaceful check runs after the weapon checks
+# and before the target's immortal/level gate. C path: src/new_cmds.c:559-616.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 on
+spawn-mob 16303 1 8105 80
+spawn-obj 8036 1 8105 80
+
+[setup:oracle]
+Ctpgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ctpgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Ctpmortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Ctpmortal
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Ctpmortal 'cutthroat' 75
+
+[probe:mortal]
+get dagger
+wield dagger
+cutthroat trainee

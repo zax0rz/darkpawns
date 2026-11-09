@@ -1,0 +1,87 @@
+# depth-case: strike.charm-refusal
+# C-first witness for do_strike's charmed-master gate, "is just such a good
+# friend, you simply can't strike", DP-1502 lists at src/new_cmds.c:1466. The
+# God charms the peer (master = God), grants it strike, and the charmed peer
+# walks to the trainee (POS_FIGHTING opener lane) then strikes its master. The
+# AFF_CHARM + master==victim gate runs after the skill and target resolution.
+# Mirrors combat-entry-charm-relations. C path: src/new_cmds.c:1434-1470.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Charmgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8105
+
+[setup:port]
+Charmgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8105
+
+[setup:oracle:thrall]
+Strikethrall
+Y
+thrallpass
+thrallpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:thrall]
+Strikethrall
+y
+thrallpass
+thrallpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set Charmgod outlaw on
+skillset Strikethrall 'strike' 100
+cast 'charm' Strikethrall
+
+[probe:thrall]
+strike Charmgod

@@ -1,0 +1,100 @@
+# depth-case: mob.troll-idle-regen-site-live
+# depth-case: mob.troll-fight-regen-site-live
+# C-first witness for the two troll regen acts DP-1502 lists (src/spec_procs3.c:355
+# and :362, "$n's wounds glow brightly for a moment, then disappear!"): the
+# injured non-fighting arm (:353-357, 1-in-21) and the fighting arm (:358-363,
+# 1-in-11). The existing spec-proc-troll.txt runs ten ticks and lands on
+# neither at seed 1; this vehicle pads 100 ticks with the troll injured but
+# idle, then starts combat and pads 100 more. The troll is mob 10029
+# (src/spec_assign.c:318).
+# Both bodies carry 100000 HP so the level-40 actor and the troll cannot end
+# the combat (a dead actor sits in CON_MENU and check_idle_passwords kicks it
+# mid-burst, src/comm.c:2170-2186). C path: src/mobact.c:68-93 ->
+# src/spec_procs3.c:347-367.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 10029 1 10049 100
+replace-room-exits 10049 none
+
+[setup:oracle]
+TrollActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TrollActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+TrollPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+TrollPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set TrollActor align -1000
+set TrollPeer align -1000
+teleport TrollPeer 10049
+goto 10049
+set TrollActor maxhit 100000
+set TrollActor hp 100000
+set TrollActor hit 100000
+set targ maxhit 100000
+set targ hit 1
+
+[probe]
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+set targ hit 100000
+hit targ
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400

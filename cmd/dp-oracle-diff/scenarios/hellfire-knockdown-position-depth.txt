@@ -1,0 +1,118 @@
+# C spell_hellfire knocks a level-5+ victim to POS_SITTING when the caster's
+# dex check fails (src/spells.c:735-744: if (number(1,20) > GET_DEX(ch))
+# GET_POS(tmp_victim) = POS_SITTING). The caster's dex is set to 0 so the draw
+# always fires. The level-10 player victim is under newbie protection, so C's
+# damage() returns before set_fighting (src/fight.c:1351-1356) and the sitting
+# position persists; an immortal observer's look then reports it
+# (src/act.informative.c:496-506,565-566). The observer is immortal so hellfire
+# spares it the knockdown and the look isolates the victim's position.
+# depth-case: spell.hellfire-knockdown-position
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Hellknock
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hellknock
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Hellvictim
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Hellvictim
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:obs]
+Hellobs
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:obs]
+Hellobs
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Hellvictim 8105
+teleport Hellobs 8105
+set player Hellknock class mage
+set player Hellknock maxmana 5000
+set player Hellknock mana 5000
+set player Hellknock dex 0
+skillset Hellknock 'hellfire' 100
+set player Hellvictim level 10
+set player Hellvictim maxhit 5000
+set player Hellvictim hit 5000
+set player Hellobs level 31
+set player Hellknock level 34
+
+[probe]
+cast 'hellfire'
+send:obs look

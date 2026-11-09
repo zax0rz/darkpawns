@@ -92,9 +92,13 @@ func TestIsNPC(t *testing.T) {
 	}
 }
 
+// C's thresholds are ±350 (src/utils.h:454-455): -349..349 is neutral.
 func TestIsEvil(t *testing.T) {
-	if !isEvil(&alignMock{alignment: -1}) {
-		t.Error("expected alignment -1 to be evil")
+	if isEvil(&alignMock{alignment: -349}) {
+		t.Error("expected alignment -349 to not be evil")
+	}
+	if !isEvil(&alignMock{alignment: -350}) {
+		t.Error("expected alignment -350 to be evil")
 	}
 	if isEvil(&alignMock{alignment: 0}) {
 		t.Error("expected alignment 0 to not be evil")
@@ -105,8 +109,11 @@ func TestIsEvil(t *testing.T) {
 }
 
 func TestIsGood(t *testing.T) {
-	if !isGood(&alignMock{alignment: 1}) {
-		t.Error("expected alignment 1 to be good")
+	if isGood(&alignMock{alignment: 349}) {
+		t.Error("expected alignment 349 to not be good")
+	}
+	if !isGood(&alignMock{alignment: 350}) {
+		t.Error("expected alignment 350 to be good")
 	}
 	if isGood(&alignMock{alignment: 0}) {
 		t.Error("expected alignment 0 to not be good")
@@ -154,21 +161,20 @@ func TestRandBool(t *testing.T) {
 }
 
 func TestConsumeReagent(t *testing.T) {
-	reagent := &mockItem{shortDesc: "spider leg"}
+	reagent := &mockItem{vnum: 1239}
 	inv := &mockInventory{items: []*mockItem{reagent}}
 	caster := &mockCaster{inv: inv}
 
-	if !consumeReagent(caster, 1, 10, "spider leg", "The leg twitches.", "A leg twitches.") {
-		t.Error("expected consumeReagent to return true when reagent found")
+	if got := consumeReagent(caster, SpellMagicMissile, 10, "The shard crumbles."); got != 10 {
+		t.Errorf("consumeReagent bonus = %d, want caster level 10", got)
 	}
 	if len(inv.items) != 0 {
 		t.Errorf("expected reagent consumed, got %d items", len(inv.items))
 	}
 
-	// Missing reagent.
 	caster2 := &mockCaster{inv: &mockInventory{}}
-	if consumeReagent(caster2, 1, 10, "spider leg", "", "") {
-		t.Error("expected consumeReagent to return false when reagent missing")
+	if got := consumeReagent(caster2, SpellMagicMissile, 10, ""); got != 0 {
+		t.Errorf("consumeReagent without reagent = %d, want 0", got)
 	}
 }
 
@@ -212,12 +218,12 @@ func TestSendAct(t *testing.T) {
 	victim := &msgMock{}
 
 	sendAct("to caster", caster, nil, nil, nil)
-	if len(caster.messages) != 1 || caster.messages[0] != "to caster" {
+	if len(caster.messages) != 1 || caster.messages[0] != "To caster" {
 		t.Errorf("expected message to caster, got %v", caster.messages)
 	}
 
 	sendAct("to victim", caster, nil, victim, nil)
-	if len(victim.messages) != 1 || victim.messages[0] != "to victim" {
+	if len(victim.messages) != 1 || victim.messages[0] != "To victim" {
 		t.Errorf("expected message to victim, got %v", victim.messages)
 	}
 }

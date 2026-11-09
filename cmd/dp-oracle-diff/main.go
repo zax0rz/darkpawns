@@ -39,13 +39,6 @@ const (
 	// A scenario's fixed-time fixture overrides it (fixedTimeFor).
 	fixedTime    = "1770838461"
 	settlePulses = 40 // C PULSE_MOBILE: births a newbie exactly once.
-	// deadStorePath names a database under a directory that does not exist, so the
-	// store cannot be opened. Scenarios that do not read persistence boot with it
-	// and DP_ALLOW_NO_DB=1 (withFreshMUDEnv): the same intent as the unreachable
-	// PostgreSQL server this used to name, expressed in a runtime that has one
-	// store and it is a file. Relogin and restart scenarios replace it with a real
-	// store (prepareGoReloginDB).
-	deadStorePath = "/nonexistent-darkpawns-oracle-diff/relogin.db"
 )
 
 //go:embed scenarios/*.txt
@@ -474,7 +467,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	// engine closures read them lazily, so a <RESTART> step reuses the same
 	// environment and the same durable store as the first boot.
 	var goEnv []string
-	goDB := deadStorePath
+	var goDB string
 	for _, ff := range scenario.FaultFixtures {
 		if ff.Verb == "fault-crash-file" {
 			// Go's twin of C's unreadable crash file: the session layer turns
@@ -527,13 +520,12 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		goEnv = append(goEnv, "DP_DRAW_LOG=1", "DP_DRAW_LOG_FILE="+goDrawLog)
 	}
 	goEnv = withFreshMUDEnv(goEnv, scenario.EmptyPlayers)
-	// Record consumers need the same real SQLite store as login, including
-	// stat file now that the JSON sidecar is retired.
-	if needsPlayerStore(&scenario) {
-		goDB, err = prepareGoReloginDB(goWork, scenario.EmptyPlayers, scenario.SeedPlayer, filepath.Join(oracleRoot, "lib", "etc", "players"))
-		if err != nil {
-			return err
-		}
+	// Every scenario boots the Go port with a real SQLite store, the same one
+	// login and the record consumers use: C always has its player file, and a
+	// store-less boot silenced every saved-player surface (DP-1463, DP-1464).
+	goDB, err = prepareGoReloginDB(goWork, scenario.EmptyPlayers, scenario.SeedPlayer, filepath.Join(oracleRoot, "lib", "etc", "players"))
+	if err != nil {
+		return err
 	}
 	if _, err := goEngine.ensure(); err != nil {
 		return err
@@ -555,9 +547,13 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	}
 	// awaitGo blocks on the port's readiness marker. Every start gets a fresh
 	// log buffer, so this waits for the new process's boot rather than matching
-	// the line the previous process printed.
+	// the line the previous process printed. A boot that came up without
+	// persistence must not compare (requirePersistence).
 	awaitGo := func() error {
-		return waitForLog(goEngine.proc, bootmarker.Ready, bootTimeout)
+		if err := waitForLog(goEngine.proc, bootmarker.Ready, bootTimeout); err != nil {
+			return err
+		}
+		return requirePersistence(goEngine.proc)
 	}
 	// restartOracle stops the C oracle and starts it again on the same
 	// disposable lib tree and the same port: the copied lib's player, rent,
@@ -1203,15 +1199,16 @@ func applyGoHouseControlFixtures(goWork string, fixtures []oraclediff.HouseContr
 	return nil
 }
 
-// prepareGoReloginDB creates the port's throwaway SQLite store for a relogin
-// scenario. The C oracle's copied lib keeps its existing player file unless the
-// scenario empties it, so its new character is an ordinary mortal; an empty Go
-// store would crown that character God instead (init_char's first-player rule),
-// so the store is seeded with one placeholder player to match. An
-// empty-players scenario keeps the store empty on both sides. A seed-player
-// scenario logs the port in as C's shipped first player instead of creating a
-// fresh character: the store is seeded with the Testor twin below, so neither
-// engine rolls creation draws.
+// prepareGoReloginDB creates the port's throwaway SQLite store. The C oracle's
+// copied lib keeps its existing player file unless the scenario empties it, and
+// the Go store mirrors that at boot: an empty-players scenario starts with an
+// empty store on both sides; every other scenario holds the shipped first
+// player's Testor twin and nothing else. The twin stops the next fresh creation
+// being crowned God (init_char's first-player rule) exactly as C's shipped
+// player does. A seed-player scenario logs the port in as that player instead
+// of creating a fresh character, so neither engine rolls creation draws; it
+// also matches the shipped bad_pws and the ++top_idnum sequence C hands the
+// next creation.
 func prepareGoReloginDB(goWork string, emptyPlayers, seedPlayer bool, shippedPfile string) (string, error) {
 	url := "sqlite://" + filepath.Join(goWork, "relogin.db")
 	if emptyPlayers {
@@ -1222,14 +1219,9 @@ func prepareGoReloginDB(goWork string, emptyPlayers, seedPlayer bool, shippedPfi
 		return "", fmt.Errorf("create relogin store: %w", err)
 	}
 	defer func() { _ = store.Close() }()
-	var record *db.PlayerRecord
-	if seedPlayer {
-		record, err = testorTwinRecord()
-		if err != nil {
-			return "", err
-		}
-	} else {
-		record = &db.PlayerRecord{Name: "Zzplaceholder", Password: "x", Level: 1, RoomVNum: 8004}
+	record, err := testorTwinRecord()
+	if err != nil {
+		return "", err
 	}
 	if err := store.CreatePlayer(record); err != nil {
 		return "", fmt.Errorf("seed relogin store: %w", err)
@@ -1334,10 +1326,12 @@ func withFreshMUDEnv(env []string, enabled bool) []string {
 			filtered = append(filtered, entry)
 		}
 	}
+	// DP_ALLOW_NO_DB is stripped and never set: a census run must not fall back
+	// to a store-less boot (the no-persistence guard below classifies that INFRA).
 	if enabled {
 		filtered = append(filtered, "DP_FRESH_MUD=1")
 	}
-	return append(filtered, "DP_ALLOW_NO_DB=1")
+	return filtered
 }
 
 func probeClients(primary oraclediff.Conn, peers map[string]oraclediff.Conn, actorName string) (oraclediff.Conn, map[string]oraclediff.Conn) {
@@ -2089,6 +2083,30 @@ func waitForLog(p *process, marker string, timeout time.Duration) error {
 	return fmt.Errorf("%s did not log %q within %s\nserver log:\n%s", p.name, marker, timeout, p.log.String())
 }
 
+// noPersistenceMarkers are cmd/server's two no-database boot lines: the
+// refusal (main.go:556, "refusing logins without persistence") and the
+// DP_ALLOW_NO_DB warning (main.go:559, "explicitly running without
+// persistence"). A census run must never compare on such a boot: C always has
+// its player file, and a store-less Go silently empties every saved-player
+// surface (DP-1463, DP-1464).
+var noPersistenceMarkers = []string{
+	"refusing logins without persistence",
+	"explicitly running without persistence",
+}
+
+// requirePersistence refuses to compare a run whose Go server started without
+// a player store. The error names the marker line so the worker classifies the
+// attempt INFRA (has_infra_signature) rather than scoring a content diff.
+func requirePersistence(p *process) error {
+	log := p.log.String()
+	for _, marker := range noPersistenceMarkers {
+		if strings.Contains(log, marker) {
+			return fmt.Errorf("go boot: server started without persistence (%q); the scenario must not compare", marker)
+		}
+	}
+	return nil
+}
+
 // allocatePorts reserves all five listeners, including Go WHOD (telnet+1).
 // Callers hold the host boot lease while allocating and during ownedStart.
 func allocatePorts() (oracle, whod, goTelnet, goWHOD, goHTTP net.Listener, err error) {
@@ -2247,28 +2265,6 @@ func fixedTimeFor(s *oraclediff.Scenario) string {
 		return strconv.FormatInt(s.FixedTime, 10)
 	}
 	return fixedTime
-}
-
-func needsPlayerStore(s *oraclediff.Scenario) bool {
-	if s.SeedPlayer || s.LiveStore {
-		return true
-	}
-	if len(s.ReloginPort) > 0 {
-		return true
-	}
-	groups := [][]string{s.SetupPort, s.Warmup, s.Probe}
-	for _, peer := range s.Peers {
-		groups = append(groups, peer.SetupPort)
-	}
-	for _, steps := range groups {
-		for _, step := range steps {
-			fields := strings.Fields(strings.ToLower(step))
-			if len(fields) >= 2 && (fields[0] == "stat" || fields[0] == "set") && fields[1] == "file" {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 // applyMiscFileFixtures writes only under the run's disposable root. execute's

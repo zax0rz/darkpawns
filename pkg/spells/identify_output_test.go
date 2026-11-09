@@ -52,14 +52,28 @@ func TestCastIdentifyObjectOutputBranches(t *testing.T) {
 			obj: identifyOutputObject{
 				typeFlag: 3, short: "a wand", values: [4]int{0, 2, 1, 1},
 			},
-			want: "This WAND casts: holy ward\r\nIt has 2 maximum charges and 1 remaining.\r\n",
+			want: "This WAND casts:  holy ward\r\nIt has 2 maximum charges and 1 remaining.\r\n",
 		},
 		{
 			name: "staff singular charge",
 			obj: identifyOutputObject{
 				typeFlag: 4, short: "a staff", values: [4]int{0, 1, 1, 3},
 			},
-			want: "This STAFF casts: bless\r\nIt has 1 maximum charge and 1 remaining.\r\n",
+			want: "This STAFF casts:  bless\r\nIt has 1 maximum charge and 1 remaining.\r\n",
+		},
+		{
+			name: "wand header is CASTING_EQ",
+			obj: identifyOutputObject{
+				typeFlag: 3, short: "a wand", values: [4]int{0, 2, 1, 1},
+			},
+			want: "Object 'a wand', Item type: CASTING_EQ\n\r",
+		},
+		{
+			name: "staff header is CASTING_EQ",
+			obj: identifyOutputObject{
+				typeFlag: 4, short: "a staff", values: [4]int{0, 1, 1, 3},
+			},
+			want: "Object 'a staff', Item type: CASTING_EQ\n\r",
 		},
 		{
 			name: "weapon average damage",

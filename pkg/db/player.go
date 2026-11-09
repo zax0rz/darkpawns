@@ -78,8 +78,12 @@ func (db *DB) execDDL(stmt string) error {
 
 // PlayerRecord represents a player in the database.
 type PlayerRecord struct {
-	ID          int
-	LastLogon   int64 // C char_file_u.last_logon: last character save, not connection age
+	ID        int
+	LastLogon int64 // C char_file_u.last_logon: last character save, not connection age
+	// Host is C char_file_u.host: save_char copies ch->desc->host into the
+	// record only when the character has a live descriptor, else empty
+	// (src/db.c:2373-2381). read by last (src/act.wizard.c:1847).
+	Host        string
 	Name        string
 	Password    string // hashed
 	Description string
@@ -212,6 +216,7 @@ func (db *DB) Close() error {
 // because SQLite's ALTER TABLE has no IF NOT EXISTS.
 var playersMigrationColumns = []string{
 	"last_logon INTEGER",
+	"host TEXT DEFAULT ''",
 	"strength INTEGER DEFAULT 10",
 	"class INTEGER DEFAULT 3",
 	"race INTEGER DEFAULT 0",
@@ -347,7 +352,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 		       class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
 		       hunger, thirst, drunk, hometown, COALESCE(olc_zone, 0),
 		       inventory, equipment, COALESCE(character_data, '{}'),
-		       COALESCE(failed_login_attempts, 0), locked_until, COALESCE(description, ''), COALESCE(title, ''), COALESCE(last_logon,0), COUNT(*) OVER ()
+		       COALESCE(failed_login_attempts, 0), locked_until, COALESCE(description, ''), COALESCE(title, ''), COALESCE(last_logon,0), COALESCE(host,''), COUNT(*) OVER ()
 		FROM players WHERE lower(name) = lower(?)
 	`
 	var p PlayerRecord
@@ -359,7 +364,7 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 		&p.Class, &p.Race, &p.StatStr, &p.StatStrAdd, &p.StatInt, &p.StatWis, &p.StatDex, &p.StatCon, &p.StatCha,
 		&p.Hunger, &p.Thirst, &p.Drunk, &p.Hometown, &p.OlcZone,
 		&p.Inventory, &p.Equipment, &p.CharacterData,
-		&p.FailedLoginAttempts, &lockedUntil, &p.Description, &p.Title, &p.LastLogon, &matches,
+		&p.FailedLoginAttempts, &lockedUntil, &p.Description, &p.Title, &p.LastLogon, &p.Host, &matches,
 	)
 	if lockedUntil.Valid {
 		p.LockedUntil = &lockedUntil.Time
@@ -379,7 +384,10 @@ func (db *DB) GetPlayer(name string) (*PlayerRecord, error) {
 // ListPlayerNames returns all registered player names sorted alphabetically.
 // Source: C player_table iteration in do_gen_ps SCMD_PLAYER_LIST.
 func (db *DB) ListPlayerNames() ([]string, error) {
-	rows, err := db.query(`SELECT name FROM players ORDER BY name`)
+	// Creation order: C's player_table walks the pfile's record order
+	// (src/db.c:512-527), which create_entry appends to — the autoincrement
+	// id carries that order (do_gen_ps, src/act.informative.c:2181-2195).
+	rows, err := db.query(`SELECT name FROM players ORDER BY id`)
 	if err != nil {
 		return nil, err
 	}
@@ -436,15 +444,15 @@ func playerInsert(p *PlayerRecord) (string, []any) {
 		  (name, password_hash, room_vnum, level, exp, health, max_health, mana, max_mana, move, max_move, strength,
 		   class, race, stat_str, stat_str_add, stat_int, stat_wis, stat_dex, stat_con, stat_cha,
 		   hunger, thirst, drunk, hometown,
-		   olc_zone, inventory, equipment, description, title, character_data, last_logon)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+		   olc_zone, inventory, equipment, description, title, character_data, last_logon, host)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 		RETURNING id
 	`
 	return query, []any{
 		p.Name, p.Password, p.RoomVNum, p.Level, p.Exp, p.Health, p.MaxHealth, p.Mana, p.MaxMana, p.Move, p.MaxMove, p.Strength,
 		p.Class, p.Race, p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
 		p.Hunger, p.Thirst, p.Drunk, p.Hometown,
-		p.OlcZone, p.Inventory, p.Equipment, p.Description, p.Title, characterDataOrEmpty(p.CharacterData), p.LastLogon,
+		p.OlcZone, p.Inventory, p.Equipment, p.Description, p.Title, characterDataOrEmpty(p.CharacterData), p.LastLogon, p.Host,
 	}
 }
 
@@ -550,7 +558,7 @@ func playerUpdate(p *PlayerRecord) (string, []any) {
 		  class=?, race=?,
 		  stat_str=?, stat_str_add=?, stat_int=?, stat_wis=?, stat_dex=?, stat_con=?, stat_cha=?,
 		  hunger=?, thirst=?, drunk=?, hometown=?, olc_zone=?,
-		  inventory=?, equipment=?, description=?, title=?, character_data=?, last_logon=?, updated_at=CURRENT_TIMESTAMP
+		  inventory=?, equipment=?, description=?, title=?, character_data=?, last_logon=?, host=?, updated_at=CURRENT_TIMESTAMP
 		WHERE id=?
 	`
 	args := []any{
@@ -559,7 +567,7 @@ func playerUpdate(p *PlayerRecord) (string, []any) {
 		p.Class, p.Race,
 		p.StatStr, p.StatStrAdd, p.StatInt, p.StatWis, p.StatDex, p.StatCon, p.StatCha,
 		p.Hunger, p.Thirst, p.Drunk, p.Hometown, p.OlcZone,
-		p.Inventory, p.Equipment, p.Description, p.Title, characterDataOrEmpty(p.CharacterData), p.LastLogon, p.ID,
+		p.Inventory, p.Equipment, p.Description, p.Title, characterDataOrEmpty(p.CharacterData), p.LastLogon, p.Host, p.ID,
 	}
 	return query, args
 }
@@ -780,7 +788,7 @@ func playerCompareUpdate(updated, original *PlayerRecord) (string, []any) {
 	}
 	query += " AND name IS ?"
 	args = append(args, original.Name)
-	columns := []string{"room_vnum", "level", "exp", "health", "max_health", "mana", "max_mana", "move", "max_move", "strength", "class", "race", "stat_str", "stat_str_add", "stat_int", "stat_wis", "stat_dex", "stat_con", "stat_cha", "hunger", "thirst", "drunk", "hometown", "olc_zone", "inventory", "equipment", "description", "title", "character_data", "last_logon"}
+	columns := []string{"room_vnum", "level", "exp", "health", "max_health", "mana", "max_mana", "move", "max_move", "strength", "class", "race", "stat_str", "stat_str_add", "stat_int", "stat_wis", "stat_dex", "stat_con", "stat_cha", "hunger", "thirst", "drunk", "hometown", "olc_zone", "inventory", "equipment", "description", "title", "character_data", "last_logon", "host"}
 	for i, column := range columns {
 		expression := column
 		switch column {
@@ -790,6 +798,8 @@ func playerCompareUpdate(updated, original *PlayerRecord) (string, []any) {
 			expression = "COALESCE(" + column + ",'')"
 		case "character_data":
 			expression = "COALESCE(character_data,'{}')"
+		case "host":
+			expression = "COALESCE(host,'')"
 		}
 		query += " AND " + expression + " IS ?"
 		args = append(args, oldArgs[i])

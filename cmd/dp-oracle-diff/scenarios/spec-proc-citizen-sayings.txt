@@ -1,0 +1,91 @@
+# depth-case: mob.citizen-sayings-site-live
+# C-first witness vehicle for the random sayings of SPECIAL(citizen), assigned
+# to mob vnums 8062 and 18202 at src/spec_assign.c:293,402 and defined at
+# src/spec_procs.c:985-1032. This vehicle makes the C transcript print the
+# eight saying output sites the census had never seen at seed 1 (DP-1498):
+# jingles (:1000), stares/looks-like-rain (:1003,:1004), glances (:1007),
+# mumbles (:1011), kicks a pebble (:1015), Repent (:1018) and eyes your coin
+# purse (:1022). Ten citizens share the room so the 1-in-20 gate
+# (src/spec_procs.c:995) passes often across 40-pulse mobile ticks
+# (src/structs.h:633) and the number(1,10) switch covers every saying case
+# under DP_SEED=1.
+# C path: src/mobact.c:68-93 -> src/spec_procs.c:985-1032.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8062 20 8105 80
+spawn-mob 8062 20 8105 80
+spawn-mob 8062 20 8105 80
+spawn-mob 8062 20 8105 80
+spawn-mob 8062 20 8105 80
+spawn-mob 8062 20 8105 80
+spawn-mob 8062 20 8105 80
+spawn-mob 8062 20 8105 80
+spawn-mob 8062 20 8105 80
+spawn-mob 8062 20 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+Mordred
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordred
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+CivPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+CivPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport CivPeer 8105
+
+[probe]
+~dpclock pulse 4000
+~dpclock pulse 4000

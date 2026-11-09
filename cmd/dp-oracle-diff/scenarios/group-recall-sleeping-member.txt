@@ -68,7 +68,7 @@ Y
 goto 8162
 teleport Sleeper 8162
 force Sleeper follow Groupleader
-group Sleeper
+group all
 force Sleeper sleep
 
 [probe]

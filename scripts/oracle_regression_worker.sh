@@ -73,7 +73,10 @@ main() {
 		# (RO-016; it was scored FAIL before this), and C's perror prints
 		# "SYSERR: bind" (comm.c:357). Either engine failing to bind must reach
 		# the retry path, because FAIL is never retried.
-		grep -Eq 'listener ownership|exited before readiness|did not log .*within|did not accept connections .* within|: EOF|connection (reset|closed)|Telnet listener failed|address already in use|SYSERR: bind' "$1"
+		# The two no-persistence lines (cmd/server/main.go:556, :559) are the
+		# same class: the run may not compare without a player store, and
+		# dp-oracle-diff's requirePersistence names the marker in its error.
+		grep -Eq 'listener ownership|exited before readiness|did not log .*within|did not accept connections .* within|: EOF|connection (reset|closed)|Telnet listener failed|address already in use|SYSERR: bind|refusing logins without persistence|explicitly running without persistence' "$1"
 	}
 
 	run_attempt() {

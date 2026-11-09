@@ -60,8 +60,11 @@ func TestSpecDracula_EntryGatesAndDelegation(t *testing.T) {
 	if !specDracula(w, nil, mob, "", "") {
 		t.Fatal("fighting commandless Dracula should delegate to magic_user")
 	}
-	if got := lastMsg(); got != "" {
-		t.Fatalf("delegated magic_user output = %q, want empty", got)
+	// With real mob stats (Int/Wis 11, C's parse_simple_mob defaults) the
+	// delegated magic_user casts and the room hears its utterance; the spell is
+	// drawn from the RNG, so assert the frame, not the spell name.
+	if got := lastMsg(); !strings.Contains(got, "utters the words") {
+		t.Fatalf("delegated magic_user output = %q, want a cast utterance", got)
 	}
 }
 

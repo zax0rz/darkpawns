@@ -2,7 +2,6 @@ package session
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"testing"
 
@@ -116,11 +115,44 @@ func TestTransferAllOnlyMovesConPlayingDescriptors(t *testing.T) {
 		}
 	}
 	got := drainSessionText(t, f.actor)
-	want := []string{"Mailing arrives from a puff of smoke.\r\n", "NoteWrite arrives from a puff of smoke.\r\n", "Playing arrives from a puff of smoke.\r\n", "Okay.\r\n"}
-	sort.Strings(got)
-	sort.Strings(want)
+	// C walks descriptor_list, newest connection first (src/act.wizard.c:347).
+	// The fixture creates Actor, Playing, Mailing, NoteWrite, ... in that
+	// order, so the arrival order is NoteWrite, Mailing, Playing — not a map
+	// order. The exact sequence is the proof, not a sorted multiset.
+	want := []string{"NoteWrite arrives from a puff of smoke.\r\n", "Mailing arrives from a puff of smoke.\r\n", "Playing arrives from a puff of smoke.\r\n", "Okay.\r\n"}
 	if !equalStrings(got, want) {
-		t.Errorf("transfer-all actor bytes = %q, want exact output multiset %q", got, want)
+		t.Errorf("transfer-all actor bytes = %q, want exact descriptor-order output %q", got, want)
+	}
+}
+
+// TestTransferAllLeavesRiddenMountBehind pins the all-branch's mount behavior:
+// C do_trans's all branch moves no mount (src/act.wizard.c:352-354 never calls
+// get_mount), only its single-target branch does (src/act.wizard.c:332-336).
+// Reverting the branch to the single-target helper carries the mount and fails.
+func TestTransferAllLeavesRiddenMountBehind(t *testing.T) {
+	m := makeTestManagerWithMobs(t)
+	actor := makeCommandTestSession(t, m, "Wizard", game.LVL_IMPL, 1001)
+	registerTestSession(t, m, actor, "Wizard")
+	victim := makeCommandTestSession(t, m, "Rider", 10, 1002)
+	registerTestSession(t, m, victim, "Rider")
+
+	mount := registerMob(t, m, 2001, 1002)
+	victim.player.SetAffect(game.AffMount, true)
+	mount.SetMountRider(victim.player.Name)
+	mount.SetFollowing(victim.player.Name)
+	mount.SetAffected(game.AffMount)
+	if got := m.world.GetMount(victim.player); got != mount {
+		t.Fatalf("fixture mount = %v, want the spawned 2001 mount", got)
+	}
+
+	if err := ExecuteCommand(actor, "transfer", []string{"all"}); err != nil {
+		t.Fatalf("dispatch transfer all: %v", err)
+	}
+	if got := victim.player.GetRoomVNum(); got != 1001 {
+		t.Fatalf("rider room = %d, want the all branch to move it to the actor's 1001", got)
+	}
+	if got := mount.GetRoomVNum(); got != 1002 {
+		t.Errorf("mount room = %d, want the all branch to leave the mount in the origin 1002", got)
 	}
 }
 
@@ -231,7 +263,7 @@ func TestCmdTagNPCAcknowledgment(t *testing.T) {
 	if err := ExecuteCommand(actor, "tag", []string{"goblin"}); err != nil {
 		t.Fatalf("ExecuteCommand tag NPC: %v", err)
 	}
-	if got, want := strings.Join(drainSessionText(t, actor), ""), "You tag A goblin guard, but It tags you right back!\r\n"; got != want {
+	if got, want := strings.Join(drainSessionText(t, actor), ""), "You tag A goblin guard, but it tags you right back!\r\n"; got != want {
 		t.Fatalf("NPC tag output = %q, want %q", got, want)
 	}
 	if !actor.player.HasPLRFlag(game.PlrIt) {

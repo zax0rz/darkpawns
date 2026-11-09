@@ -861,7 +861,14 @@ func (w *World) SendToZone(roomVNum int, msg string) {
 		}
 		pr := w.GetRoomInWorld(p.RoomVNum)
 		if pr != nil && pr.Zone == zone {
-			p.SendMessage(msg)
+			// C's send_to_zone writes the string verbatim (src/comm.c:2384)
+			// and process_output's flush supplies the only terminator
+			// (src/comm.c:1630-1632), so bare messages (the werewolf howl,
+			// src/spec_procs3.c:438; the fire and lightning zone lines,
+			// src/magic.c:833,838) must reach the wire bare — SendMessage's
+			// ensureLineEnded would add a terminator C never wrote and print
+			// an extra blank line before the prompt (R1).
+			p.SendLiteral(msg)
 		}
 	}
 }
@@ -920,20 +927,39 @@ func (w *World) GetRoomZone(roomVNum int) int {
 	return room.Zone
 }
 
-// GetPlayersInRoom returns all players in a given room.
+// GetPlayersInRoom returns all players in a given room in C's
+// world[room].people order: the most recent arrival first, because
+// char_to_room() prepends to the list (src/handler.c:537:
+// `ch->next_in_room = world[room].people`). Ties fall back to name so two
+// players that entered in the same tick keep a deterministic order (R3).
+// C's aggressive mobile takes the first eligible player from the head of that
+// list (src/mobact.c:200-233), so the order is player-visible: callers must not
+// re-sort the slice.
 func (w *World) GetPlayersInRoom(roomVNum int) []*Player {
+	// Snapshot the player list under the world lock, then query each player's
+	// room and arrival sequence OUTSIDE it. GetRoom and GetRoomEntrySequence
+	// acquire the player's own lock; holding w.mu.RLock across them is the same
+	// nested-lock stall GetMobsInRoom documents.
 	w.mu.RLock()
-	defer w.mu.RUnlock()
+	allPlayers := make([]*Player, 0, len(w.players))
+	for _, p := range w.players {
+		allPlayers = append(allPlayers, p)
+	}
+	w.mu.RUnlock()
 
 	var players []*Player
-	for _, p := range w.players {
-		// Read through the player's own lock: SetRoom runs on session
-		// goroutines under p.mu only, so a raw p.RoomVNum read here would
-		// race movement even though the map iteration is covered by w.mu.
+	for _, p := range allPlayers {
 		if p.GetRoom() == roomVNum {
 			players = append(players, p)
 		}
 	}
+	sort.SliceStable(players, func(i, j int) bool {
+		si, sj := players[i].GetRoomEntrySequence(), players[j].GetRoomEntrySequence()
+		if si != sj {
+			return si > sj
+		}
+		return players[i].GetName() < players[j].GetName()
+	})
 	return players
 }
 
@@ -1010,13 +1036,39 @@ func (w *World) SpawnMobQuiet(vnum int, roomVNum int) (*MobInstance, error) {
 	return w.spawnMobQuiet(vnum, roomVNum)
 }
 
+// huntingStartRoom is real_room(18201): create_mobile's hunting arm drops the
+// summoned mobile at the temple in Kir-Oshi (src/new_cmds2.c:611).
+const huntingStartRoom = 18201
+
 // SpawnMobWithLevelI creates a mob with overridden level, returns interface{} for spell layer.
 func (w *World) SpawnMobWithLevelI(vnum int, roomVNum int, level int) (any, error) {
-	mob, err := w.SpawnMob(vnum, roomVNum)
+	mob, err := w.CreateMobileI(nil, vnum, roomVNum, level, false)
 	if err != nil {
 		return nil, err
 	}
-	mob.SetLevel(level)
+	return mob, nil
+}
+
+// CreateMobileI is the one shared Go path for C's create_mobile
+// (src/new_cmds2.c:588-620): read_mobile, then the per-instance level stats
+// (GET_LEVEL, GET_EXP 0, damroll, NDD, SDD, hitroll, AC, max hit and hit,
+// carry counts), then char_to_room. A hunting spawn lands at room 18201 and
+// set_hunting()s the caster (src/new_cmds2.c:609-613); every other spawn lands
+// in the given room (src/new_cmds2.c:615-618). Routing every caller through
+// here is what keeps the scaling from silently lapsing on a new spawn site
+// (the DP-1487 class: the spell spawn paths never applied it).
+func (w *World) CreateMobileI(ch any, vnum, roomVNum, level int, hunting bool) (*MobInstance, error) {
+	mob, err := w.spawnMob(vnum, roomVNum)
+	if err != nil {
+		return nil, err
+	}
+	mob.ConfigureCreatedMobile(level)
+	if hunting {
+		mob.SetRoom(huntingStartRoom)
+		if hunter, ok := ch.(Actor); ok {
+			w.SetHuntingTarget(mob, hunter)
+		}
+	}
 	return mob, nil
 }
 

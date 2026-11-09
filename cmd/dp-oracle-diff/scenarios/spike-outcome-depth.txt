@@ -1,0 +1,125 @@
+# depth-case: spike.miss-victim-line
+# depth-case: spike.hit-victim-line
+# C-first do_spike outcome vehicle (src/new_cmds.c:1155-1188). A production room
+# oncmd sets each victim's PLR_WEREWOLF/AFF_WEREWOLF state (the wolf.lua pattern
+# bite-skill-message-miss-depth uses), so the wielded spike passes the
+# werewolf-only gate and reaches the level/RNG comparison. The actor (level 12)
+# misses the level-30 victim and drives the spike home against the level-5 one;
+# the victims' sessions capture the TO_VICT lines. The actor's own level is set
+# last because the set command needs a level the lowered actor no longer has.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 8105 122
+mob-script 12220 oracle/wolf.lua 512
+spawn-obj 7905 1 8105 79
+
+[lua-script mob/oracle/wolf.lua]
+function oncmd()
+if (argument ~= "say moon") then return FALSE end
+plr_flags(ch, "set", 16)
+aff_flags(ch, "set", 27)
+return TRUE
+end
+
+[setup:oracle]
+Spikeactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Spikeactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Spikevictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+C
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Spikevictim
+y
+oraclepass
+oraclepass
+N
+M
+H
+C
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:hitvictim]
+Spikehitvictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+C
+K
+Y
+<ENTER>
+1
+
+[setup:port:hitvictim]
+Spikehitvictim
+y
+oraclepass
+oraclepass
+N
+M
+H
+C
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Spikevictim 8105
+teleport Spikehitvictim 8105
+set player Spikevictim level 30
+set player Spikehitvictim level 5
+set player Spikeactor level 12
+get spike
+wield spike
+
+[probe]
+send:victim say moon
+send:hitvictim say moon
+spike Spikevictim
+~dpclock pulse 40
+spike Spikehitvictim

@@ -937,6 +937,28 @@ func TestCalculateDamage_AttackerDeadStr(t *testing.T) {
 	})
 }
 
+func TestCalculateDamage_StrZeroOverrideOnlyInNormalArm(t *testing.T) {
+	// src/fight.c:1880-1885 — the strength-zero override shares hit()'s
+	// normal-weapon arm with get_minusdam(); the SKILL_BACKSTAB, SKILL_CIRCLE
+	// and SKILL_DISEMBOWEL arms beside it never apply it. CalculateDamage
+	// only ever receives AttackNormal in production (engine.go performOneHit);
+	// this pins the C contract for any future caller. Red before the scoping:
+	// the override ran for every attack type, so the disembowel call also
+	// returned 1.
+	attacker := &mockCombatant{npc: false, level: 10, str: 0, strAdd: 0, damroll: 5, damageRoll: DiceRoll{}}
+	defender := &mockCombatant{position: PosStanding, ac: 100}
+	weapon := DiceRoll{Num: 1, Sides: 8}
+
+	WithRoller(NewScriptedRoller([]int{8}), func() {
+		if dam := CalculateDamage(attacker, defender, weapon, AttackNormal); dam != 1 {
+			t.Errorf("normal-arm strength-zero damage = %d, want 1 (fight.c:1883-1884)", dam)
+		}
+		if dam := CalculateDamage(attacker, defender, weapon, AttackDisembowel); dam != 9 {
+			t.Errorf("disembowel-arm strength-zero damage = %d, want the computed 9 = str-0 todam -4 + damroll 5 + weapon 8 (fight.c:1875-1878 has no override)", dam)
+		}
+	})
+}
+
 func TestCalculateDamage_VictimPositionMultiplier(t *testing.T) {
 	// src/fight.c:1854-1855 divides integers before multiplication. Base12
 	// and neutral AC expose fractional replacements that sleeping alone misses.

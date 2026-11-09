@@ -272,7 +272,7 @@ func specMoonGate(w *World, ch *Player, obj *ObjectInstance, cmd string, arg str
 
 	switch cmd {
 	case "enter":
-		if !isName(arg, obj.GetName()) {
+		if !cIsName(arg, obj.GetName()) {
 			return false
 		}
 

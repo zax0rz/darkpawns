@@ -238,9 +238,10 @@ func (w *World) doYank(ch *Player, me *MobInstance, cmd string, arg string) bool
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(victName, victSex)
 
-	// Self-check — act.other.c:1632 (the victim is the actor). Comes BEFORE the
-	// follower check in C.
-	if victName == ch.Name {
+	// Self-check — act.other.c:1632 (the victim is the actor, by identity
+	// like C's victim == ch, not by name). Comes BEFORE the follower check
+	// in C.
+	if victimPl == ch {
 		ch.SendMessage("That's wierd.\r\n") // sic: "wierd" (R1 — keep the typo)
 		return true
 	}

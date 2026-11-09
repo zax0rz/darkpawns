@@ -279,3 +279,26 @@ func TestSeditSaveRoundTripAndWriter(t *testing.T) {
 		}
 	}
 }
+
+// TestSeditSavePathDuplicateRefusalBytes pins the zone-save variant of the
+// duplicate refusal: C has one format for every editor, "... by %s.\r\n"
+// (src/olc.c:157-158), so the save-path label ends in a period. The pre-DP-1465
+// sedit save path dropped it while the claim path kept it (R1/R5h).
+func TestSeditSavePathDuplicateRefusalBytes(t *testing.T) {
+	w := makeSeditTestWorld(t)
+	m := newTestManager(t, w, nil)
+	holder := makeSeditTestSession(t, m, "Seditfirst", 35)
+	if err := cmdSedit(holder, []string{"3000"}); err != nil {
+		t.Fatal(err)
+	}
+	_ = readMsgText(t, holder) // drain the editor menu
+
+	saver := makeSeditTestSession(t, m, "Seditsaver", 35)
+	// "save 30" resolves to shop 3000 (zone 30 * 100), which Seditfirst holds.
+	if err := cmdSedit(saver, []string{"save", "30"}); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := readMsgText(t, saver), "That shop is currently being edited by Seditfirst.\r\n"; got != want {
+		t.Fatalf("sedit save duplicate = %q, want %q", got, want)
+	}
+}

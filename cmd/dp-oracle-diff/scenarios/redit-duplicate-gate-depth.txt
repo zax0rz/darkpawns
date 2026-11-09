@@ -1,0 +1,74 @@
+# A second real descriptor requests the same REDIT room while the first owns
+# the editor. Reaches do_olc's duplicate scan through a non-ZEDIT editor: C's
+# one refusal prints the holder's plain character name (src/olc.c:150-159).
+# depth-case: redit.duplicate-gate-cleanup
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Reditadmin
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Reditadmin
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Reditpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Reditpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Reditpeer 8162
+advance Reditpeer 40
+redit 8162
+
+[probe]
+send:peer redit 8162
+q

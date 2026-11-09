@@ -37,18 +37,6 @@ func randRange(min, max int) int {
 // changing the process-wide stream used by other specials.
 var citizenNumber = dprng.Number
 
-// randN returns a uniform random integer in [0, n). It is exclusive, so it
-// is safe for array indexing and switch selection. For C-style inclusive
-// probability gates use number(from, to) instead.
-func randN(n int) int {
-	if n <= 0 {
-		return 0
-	}
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	return dprng.Number(0, n-1)
-}
-
 // roomMessage delivers pre-rendered text from C act()-equivalent room paths.
 // Callers that replace C send_to_room() must use World.SendToRoom instead,
 // whose recipient rule differs by allowing PLR_WRITING recipients.
@@ -67,6 +55,9 @@ func (w *World) roomMessage(roomVNum int, msg string) {
 // and toRoom to everyone else. Empty strings are skipped.
 // Mirrors C's act() with TO_CHAR / TO_VICT / TO_ROOM.
 func (w *World) actMessage(roomVNum int, actor, victim combat.Combatant, toChar, toVict, toRoom string) {
+	// C's perform_act capitalizes the substituted line (CAP(lbuf),
+	// src/comm.c:2477); every message here mirrors a C act() built from
+	// lowercase short descriptions, so the same CAP applies (R1).
 	players := w.GetPlayersInRoom(roomVNum)
 	for _, p := range players {
 		if !sendOk(p, false) {
@@ -74,18 +65,18 @@ func (w *World) actMessage(roomVNum int, actor, victim combat.Combatant, toChar,
 		}
 		if actor != nil && p == actor {
 			if toChar != "" {
-				p.SendMessage(toChar + "\r\n")
+				p.SendMessage(cap(toChar) + "\r\n")
 			}
 			continue
 		}
 		if victim != nil && p == victim {
 			if toVict != "" {
-				p.SendMessage(toVict + "\r\n")
+				p.SendMessage(cap(toVict) + "\r\n")
 			}
 			continue
 		}
 		if toRoom != "" {
-			p.SendMessage(toRoom + "\r\n")
+			p.SendMessage(cap(toRoom) + "\r\n")
 		}
 	}
 }
@@ -376,7 +367,10 @@ func npcSteal(w *World, me *MobInstance, victim *Player) {
 func castMobSpell(w *World, me *MobInstance, victim combat.Combatant, spellNum int) bool {
 	// C's GET_WIS/GET_INT and GET_MOB_WAIT gates send only to the mob, whose
 	// descriptor is absent; retaining the gate avoids inventing player bytes.
-	if me.GetWis() == 0 || me.GetInt() == 0 || me.GetWaitState() > 0 {
+	// GET_MOB_WAIT is the Lua timer counter, tested nonzero like C's
+	// `if (GET_MOB_WAIT(ch))` (src/spell_parser.c:844-848): the unclamped
+	// violence drain can leave it negative, and negative still refuses.
+	if me.GetWis() == 0 || me.GetInt() == 0 || me.GetMobWait() != 0 {
 		return false
 	}
 	spells.SaySpell(me, spellNum, victim, nil, w)
@@ -466,7 +460,7 @@ func mobCombatSpecialTarget(w *World, me *MobInstance, cmd string) (combat.Comba
 	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 || me.GetFightingBody() == nil {
 		return nil, false
 	}
-	if me.GetWaitState() > 0 {
+	if me.GetMobWait() != 0 { // SPECIAL(fighter/paladin): nonzero test, src/spec_procs.c:516,544
 		return nil, false
 	}
 	melee := mobFightingTarget(w, me)
@@ -704,7 +698,7 @@ func specJanitor(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	for _, obj := range items {
 		// C uses CAN_WEAR(i, ITEM_WEAR_TAKE) and the reversed isname(i->name,
 		// "corpse") call at src/spec_procs.c:759.
-		if !obj.IsTakeable() || isName(obj.GetKeywords(), "corpse") {
+		if !obj.IsTakeable() || cIsName(obj.GetKeywords(), "corpse") {
 			continue
 		}
 		Act(w, false, me, nil, nil, nil, "$n picks up some trash.", "", ToRoom)

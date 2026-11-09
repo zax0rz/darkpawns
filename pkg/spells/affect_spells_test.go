@@ -14,6 +14,8 @@ import (
 // mockSpellsChar satisfies all local interfaces in affect_spells.go
 type mockSpellsChar struct {
 	name          string
+	title         string
+	description   string
 	npc           bool
 	level         int
 	alignment     int
@@ -36,9 +38,11 @@ type mockSpellsChar struct {
 	inventory     *mockInventory
 }
 
-func (m *mockSpellsChar) GetName() string  { return m.name }
-func (m *mockSpellsChar) IsNPC() bool      { return m.npc }
-func (m *mockSpellsChar) GetFlags() uint64 { return m.flags }
+func (m *mockSpellsChar) GetName() string        { return m.name }
+func (m *mockSpellsChar) GetTitle() string       { return m.title }
+func (m *mockSpellsChar) GetDescription() string { return m.description }
+func (m *mockSpellsChar) IsNPC() bool            { return m.npc }
+func (m *mockSpellsChar) GetFlags() uint64       { return m.flags }
 func (m *mockSpellsChar) HasSpellAffect(n int) bool {
 	for _, aff := range m.activeAffects {
 		if aff.SpellID == n {
@@ -82,11 +86,8 @@ func (m *mockSpellsChar) IsAffected(bit int) bool    { return m.aff&(1<<bit) != 
 func (m *mockSpellsChar) HasMobFlag(bit uint64) bool { return m.flags&bit != 0 }
 func (m *mockSpellsChar) GetMobFlags() uint64        { return m.mobFlags }
 func (m *mockSpellsChar) GetCha() int                { return 18 }
-func (m *mockSpellsChar) GetInventory() ReagentInventory {
-	if m.inventory == nil {
-		return nil
-	}
-	return m.inventory
+func (m *mockSpellsChar) ConsumeSpellReagentVNum(vnum int) bool {
+	return m.inventory != nil && m.inventory.consumeVNum(vnum)
 }
 
 func TestMagAffects_ChillTouch(t *testing.T) {
@@ -681,7 +682,7 @@ func TestMagAffects_Metalskin(t *testing.T) {
 		level: 30,
 		inventory: &mockInventory{
 			items: []*mockItem{
-				{shortDesc: "chunk of iron"},
+				{shortDesc: "chunk of iron", vnum: 1229},
 			},
 		},
 	}
@@ -689,17 +690,13 @@ func TestMagAffects_Metalskin(t *testing.T) {
 
 	MagAffects(30, ch, victim, SpellMetalskin, int(SaveSpell), nil)
 
-	// Metalskin applies two affects: AFF_METALSKIN flag and AC modifier.
-	if len(victim.activeAffects) != 2 {
-		t.Fatalf("expected 2 affects for Metalskin, got %d", len(victim.activeAffects))
+	// src/magic.c:1299-1313: one record carries both AC and AFF_METALSKIN.
+	if len(victim.activeAffects) != 1 {
+		t.Fatalf("expected 1 affect for Metalskin, got %d", len(victim.activeAffects))
 	}
-	aff1 := victim.activeAffects[0]
-	if aff1.SpellID != SpellMetalskin || aff1.Flags != engine.AFFMetalskin {
-		t.Errorf("unexpected metalskin flag affect: %+v", aff1)
-	}
-	aff2 := victim.activeAffects[1]
-	if aff2.SpellID != SpellMetalskin || aff2.Location != engine.ApplyAC {
-		t.Errorf("unexpected metalskin AC affect: %+v", aff2)
+	aff := victim.activeAffects[0]
+	if aff.SpellID != SpellMetalskin || aff.Location != engine.ApplyAC || aff.Duration != 5 || aff.Magnitude != -(15+30/2+1) || aff.Flags != engine.AFFMetalskin {
+		t.Errorf("unexpected metalskin affect: %+v", aff)
 	}
 }
 

@@ -37,6 +37,11 @@ func (w *World) mobSkillDamageAfterGate(ch *MobInstance, vict combat.Combatant, 
 	if ch.GetPosition() > combat.PosStunned && vict.GetPosition() > combat.PosStunned && vict.GetFightingBody() == nil {
 		vict.SetFightingBody(ch)
 	}
+	// fight.c:1457-1464: break the victim's following when the attacker is
+	// the master, then fade a hidden attacker — before the modifier block
+	// (:1465 onward). This seam omitted both (DP-1489).
+	combat.BreakFollowerOnDamage(ch, vict)
+	combat.FadeHiddenAttacker(ch)
 	dam = combat.ApplyDamageModifiers(ch, vict, dam)
 	if dam > 0 {
 		vict.TakeDamage(dam)
@@ -338,5 +343,5 @@ func (w *World) npcBackstabCommand(me *MobInstance, target combat.Combatant) {
 		return
 	}
 	w.mobBackstab(me, target)
-	me.SetWaitState(engine.PULSE_VIOLENCE)
+	me.SetWaitState(1) // WAIT_STATE(ch, PULSE_VIOLENCE) — ch->wait, in rounds
 }

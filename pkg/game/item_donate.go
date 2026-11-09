@@ -22,7 +22,7 @@ func (w *World) performDispose(ch *Player, obj *ObjectInstance, mode int, sname 
 	// helper is only ever called with mode == junk or donate.
 	const vanish = "  It vanishes in a puff of smoke!"
 	w.actToChar(ch, fmt.Sprintf("You %s $p.%s", sname, vanish), obj, nil)
-	w.actToRoom(ch, fmt.Sprintf("$n %ss $p.%s", sname, vanish), obj, nil)
+	w.actToRoom(ch, fmt.Sprintf("$n %ss $p.%s", sname, vanish), obj, nil, true)
 	ch.Inventory.RemoveItem(obj)
 
 	// A donated item flagged NODONATE is silently junked instead — act.item.c:498-499.
@@ -67,12 +67,12 @@ func (w *World) performDisposeGold(ch *Player, amount int, mode int, donationRoo
 	}
 
 	if mode == scmdJunk {
-		w.actToRoom(ch, fmt.Sprintf("$n drops %s which disappears in a puff of smoke!", createMoneyDesc(amount)), nil, nil)
+		w.actToRoom(ch, fmt.Sprintf("$n drops %s which disappears in a puff of smoke!", createMoneyDesc(amount)), nil, nil, false)
 		ch.SendMessage("You drop some gold which disappears in a puff of smoke!\r\n")
 	} else {
 		ch.SetWaitState(1) // WAIT_STATE(ch, PULSE_VIOLENCE) — discourage coin-bombing
 		ch.SendMessage("You throw some gold into the air where it disappears in a puff of smoke!\r\n")
-		w.actToRoom(ch, "$n throws some gold into the air where it disappears in a puff of smoke!", nil, nil)
+		w.actToRoom(ch, "$n throws some gold into the air where it disappears in a puff of smoke!", nil, nil, false)
 		moneyObj := w.createMoneyObject(amount)
 		// C perform_drop_gold's donate arm is obj_to_room (act.item.c:452).
 		if err := w.MoveObjectToRoomFront(moneyObj, donationRoom); err != nil {
@@ -155,7 +155,7 @@ func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donati
 
 	if amount > 0 && sname == "junk" {
 		ch.SendMessage("You have been rewarded by the gods!\r\n")
-		w.actToRoom(ch, "$n has been rewarded by the gods!", nil, nil)
+		w.actToRoom(ch, "$n has been rewarded by the gods!", nil, nil, true)
 		w.GainExp(ch, min(10, amount))
 	}
 }
@@ -164,17 +164,6 @@ func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donati
 // subcmd SCMD_JUNK.
 func (w *World) DoJunk(ch *Player, arg string) {
 	w.doDispose(ch, arg, scmdJunk, "junk", 0)
-}
-
-// junkCheapItems removes inventory items with a base cost of 150 or less,
-// matching the attitude_loot() behavior in src/fight.c:1128.
-func (w *World) junkCheapItems(ch *Player) {
-	items := ch.Inventory.Snapshot()
-	for _, obj := range items {
-		if obj.GetCost() <= 150 {
-			w.performDispose(ch, obj, scmdJunk, "junk", 0)
-		}
-	}
 }
 
 // DoDonate implements the donate command — src/act.item.c ACMD(do_drop)

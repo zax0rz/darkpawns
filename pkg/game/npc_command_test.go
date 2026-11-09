@@ -20,6 +20,9 @@ func newNPCCommandWorld(t *testing.T) (*World, *Player, *MobInstance, *strings.B
 		Mobs: []parser.Mob{{
 			VNum: 2001, Keywords: "healer", ShortDesc: "the healer",
 			Level: 20, Alignment: -350, Position: combat.PosStanding, DefaultPos: combat.PosStanding,
+			// C parse_simple_mob seeds INT/WIS 11 (src/db.c:1034-1035); a
+			// literal that leaves them 0 is silenced by do_say (src/act.comm.c:766-771).
+			Int: 11, Wis: 11,
 		}},
 	}
 	w, err := NewWorld(parsed)
@@ -213,10 +216,15 @@ func TestWorldBridgeTimerIsMobWait(t *testing.T) {
 	b := NewWorldScriptableAdapter(w)
 	ref := scripting.CharRef{NPC: true, ID: mob.GetID()}
 	b.ApplyChar(ref, scripting.CharWrite{Level: mob.GetLevel(), HP: mob.GetHP(), Pos: mob.GetPosition(), Timer: 3, Align: mob.GetAlignment()})
-	if got := mob.GetWaitState(); got != 3 {
+	if got := mob.GetMobWait(); got != 3 {
 		t.Fatalf("GET_MOB_WAIT after a script's timer write = %d, want 3", got)
 	}
 	if f, _ := b.CharFields(ref); f.Timer != 3 {
 		t.Fatalf("me.timer reads %d, want 3", f.Timer)
+	}
+	// The timer is its own counter (DP-1473): a script's timer write must not
+	// touch the ch->wait WAIT_STATE writes, and vice versa.
+	if got := mob.GetWaitState(); got != 0 {
+		t.Fatalf("ch->wait after a script's timer write = %d, want 0", got)
 	}
 }

@@ -302,10 +302,11 @@ func ChangeAlignment(killer, victim Combatant) {
 func DeathCry(ch Combatant) string {
 	var rooms []string
 	roomVNum := ch.GetRoom()
-	msg := fmt.Sprintf("Your blood freezes as you hear %s's death cry.", ch.GetName())
 	// death_cry() uses TO_ROOM: the dead character does not hear the room
 	// broadcast (fight.c:558-577).
-	cbBroadcast(roomVNum, msg, []Combatant{ch})
+	cbBroadcastPerReceiver(roomVNum, func(to Combatant) string {
+		return fmt.Sprintf("Your blood freezes as you hear %s's death cry.", persName(ch, to))
+	}, []Combatant{ch})
 	rooms = append(rooms, fmt.Sprintf("%d", roomVNum))
 	for door := 0; door < NUM_OF_DIRS; door++ {
 		adjRoom := cbGetAdjacentRoom(roomVNum, door)
@@ -416,9 +417,9 @@ func ApplySurvivingVictimDefaultArm(ch, victim Combatant, dam, newPos int) {
 	if dam > victim.GetMaxHP()/4 {
 		sendCombatMessage(victim, "That really did HURT!\r\n")
 		if GetRoller().Number(0, 2) == 0 {
-			cbBroadcast(roomVNum,
-				capitalizeFightMessage(fmt.Sprintf("%s screams in pain!", victim.GetName())),
-				[]Combatant{ch, victim})
+			cbBroadcastPerReceiver(roomVNum, func(to Combatant) string {
+				return capitalizeFightMessage(fmt.Sprintf("%s screams in pain!", persName(victim, to)))
+			}, []Combatant{ch, victim})
 		}
 	}
 	if victim.GetHP() < victim.GetMaxHP()/4 {
@@ -436,6 +437,33 @@ func ApplySurvivingVictimDefaultArm(ch, victim Combatant, dam, newPos int) {
 		} else {
 			cbDoFlee(victim)
 		}
+	}
+}
+
+// FadeHiddenAttacker is damage()'s inline appear(): a hidden attacker is
+// revealed at the damage point (src/fight.c:1460-1464).
+func FadeHiddenAttacker(ch Combatant) {
+	if ch == nil || !cbHasAffect(ch, AFF_HIDE) {
+		return
+	}
+	if cb := callbacks; cb != nil && cb.RemoveAffectBit != nil {
+		cb.RemoveAffectBit(ch, AFF_HIDE)
+	}
+	cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
+		return capitalizeFightMessage(fmt.Sprintf("%s slowly fades into existence.", persName(ch, to)))
+	}, []Combatant{ch})
+}
+
+// BreakFollowerOnDamage is damage()'s stop_follower call: when the attacker is
+// the victim's own master the relation breaks on every damage() entry, before
+// the hide fade (src/fight.c:1457-1458). The charm branch makes the attacking
+// master's pet denounce him.
+func BreakFollowerOnDamage(ch, victim Combatant) {
+	if ch == nil || victim == nil {
+		return
+	}
+	if cbGetFollowing(victim) == ch {
+		cbStopFollowerOfMaster(victim, ch)
 	}
 }
 
@@ -458,9 +486,10 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 			hasVampire := cbHasAffectStr(victim, AFF_STR_VAMPIRE)
 			hasWerewolf := cbHasAffectStr(victim, AFF_STR_WEREWOLF)
 			if !hasVampire && !hasWerewolf {
-				cbBroadcast(ch.GetRoom(),
-					fmt.Sprintf("%s grabs %s by the collar, and quickly beats %s into submission.",
-						chName, victimName, victimName), nil)
+				cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
+					return fmt.Sprintf("%s grabs %s by the collar, and quickly beats %s into submission.",
+						persName(ch, to), persName(victim, to), persName(victim, to))
+				}, nil)
 				victim.StopFighting()
 				return false
 			}
@@ -501,18 +530,10 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 		}
 	}
 
-	// stop_follower: if victim follows ch, break following (fight.c:1457) —
-	// the charm branch makes the attacking master's pet denounce him.
-	if cbGetFollowing(victim) == ch {
-		cbStopFollowerOfMaster(victim, ch)
-	}
-
-	// AFF_HIDE: attacker becomes visible on offensive action (fight.c:1459)
-	if cbHasAffect(ch, AFF_HIDE) {
-		cbRemoveAffect(ch, AFF_HIDE)
-		cbBroadcast(ch.GetRoom(),
-			fmt.Sprintf("%s slowly fades into existence.", chName), []Combatant{ch})
-	}
+	// fight.c:1457-1464: break the victim's following when the attacker is
+	// the master, then fade a hidden attacker.
+	BreakFollowerOnDamage(ch, victim)
+	FadeHiddenAttacker(ch)
 
 	dam = ApplyDamageModifiers(ch, victim, dam)
 
@@ -627,10 +648,11 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 			DieWithKiller(victim, ch, attackType)
 		}
 
-		if onDeath == nil && ch != victim &&
-			(cbHasMobFlag(ch, "MOB_AGGR24") || cbHasMobFlag(ch, "MOB_LOOTS")) {
-			AttitudeLoot(ch, victim)
-		}
+		// C's attitude_loot tail (fight.c:1690-1697) runs from the game
+		// layer's World.attitudeLootAfterKill inside every onDeath callback
+		// production callers pass. No nil-onDeath caller can present a
+		// looting killer (see pkg/game/attitude_loot.go), so there is no arm
+		// here — the counter_procs duplicate was removed the same way (#2277).
 
 		// autoloot on kill (fight.c:1708)
 		if onDeath == nil && !ch.IsNPC() && victim.IsNPC() && ch != victim {
@@ -650,20 +672,25 @@ func emitDamagePositionMessage(ch, victim Combatant, dam, newPos int, victimName
 	switch newPos {
 	case PosMortally:
 		sendCombatMessage(victim, "You are mortally wounded, and will die soon, if not aided.\r\n")
-		cbBroadcast(ch.GetRoom(),
-			capitalizeFightMessage(fmt.Sprintf("%s is mortally wounded, and will die soon, if not aided.", victimName)), []Combatant{victim})
+		cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
+			return capitalizeFightMessage(fmt.Sprintf("%s is mortally wounded, and will die soon, if not aided.", persName(victim, to)))
+		}, []Combatant{victim})
 	case PosIncap:
 		sendCombatMessage(victim, "You are incapacitated an will slowly die, if not aided.\r\n")
-		cbBroadcast(ch.GetRoom(),
-			capitalizeFightMessage(fmt.Sprintf("%s is incapacitated and will slowly die, if not aided.", victimName)), []Combatant{victim})
+		cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
+			return capitalizeFightMessage(fmt.Sprintf("%s is incapacitated and will slowly die, if not aided.", persName(victim, to)))
+		}, []Combatant{victim})
 	case PosStunned:
 		sendCombatMessage(victim, "You're stunned, but will probably regain consciousness again.\r\n")
-		cbBroadcast(ch.GetRoom(),
-			capitalizeFightMessage(fmt.Sprintf("%s is stunned, but will probably regain consciousness again.", victimName)), []Combatant{victim})
+		cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
+			return capitalizeFightMessage(fmt.Sprintf("%s is stunned, but will probably regain consciousness again.", persName(victim, to)))
+		}, []Combatant{victim})
 	case PosDead:
 		sendCombatMessage(victim, "You are dead!  Sorry...\r\n")
 		// act(..., TO_ROOM) excludes the victim (fight.c:1582).
-		cbBroadcast(roomVNum, capitalizeFightMessage(fmt.Sprintf("%s is dead!  R.I.P.", victimName)), []Combatant{victim})
+		cbBroadcastPerReceiver(roomVNum, func(to Combatant) string {
+			return capitalizeFightMessage(fmt.Sprintf("%s is dead!  R.I.P.", persName(victim, to)))
+		}, []Combatant{victim})
 	default:
 		ApplySurvivingVictimDefaultArm(ch, victim, dam, newPos)
 	}
@@ -812,17 +839,22 @@ func DamMessage(dam int, ch, victim Combatant, attackType int) {
 
 	sex := ch.GetSex()
 	victimSex := victim.GetSex()
-	roomMsg := replaceMessageTokens(tier.Room[0], ch.GetName(), victim.GetName(), singular, plural, sex, victimSex)
-	charMsg := replaceMessageTokens(tier.Char[0], ch.GetName(), victim.GetName(), singular, plural, sex, victimSex)
-	victimMsg := replaceMessageTokens(tier.Victim[0], ch.GetName(), victim.GetName(), singular, plural, sex, victimSex)
+	// C's three acts render per recipient through PERS() (fight.c:995-1015:
+	// TO_CHAR, TO_VICT|TO_SLEEP, TO_NOTVICT), so an actor the recipient cannot
+	// see is named "someone", not its real name (DP-1481 shape 3).
+	renderFor := func(to Combatant, template string) string {
+		return replaceMessageTokens(template, persName(ch, to), persName(victim, to), singular, plural, sex, victimSex)
+	}
 
-	cbBroadcast(ch.GetRoom(), roomMsg, []Combatant{ch, victim})
+	cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
+		return renderFor(to, tier.Room[0])
+	}, []Combatant{ch, victim})
 
 	// src/fight.c:995-1015: the room act() above carries no color, while the
 	// attacker's TO_CHAR line is bracketed by CCYEL(ch, C_CMP)/CCNRM and the
 	// victim's TO_VICT|TO_SLEEP line by CCRED(victim, C_CMP)/CCNRM.
-	sendColorBracketed(ch, skillColorYellow, charMsg, false, cbGetColorLevel(ch) >= colorLevelCMP)
-	sendColorBracketed(victim, skillColorRed, victimMsg, true, cbGetColorLevel(victim) >= colorLevelCMP)
+	sendColorBracketed(ch, skillColorYellow, renderFor(ch, tier.Char[0]), false, cbGetColorLevel(ch) >= colorLevelCMP)
+	sendColorBracketed(victim, skillColorRed, renderFor(victim, tier.Victim[0]), true, cbGetColorLevel(victim) >= colorLevelCMP)
 }
 
 // replaceMessageTokens applies the character and weapon substitutions used by
@@ -1074,39 +1106,6 @@ func CounterProcs(ch Combatant) {
 		return
 	}
 	cbCounterProcs(ch, cbGetKills(ch))
-}
-
-// **********************************
-// 14. attitudeLoot()
-//
-// Port of fight.c:attitude_loot.
-// Loots corpse, junks cheap items in two passes (get → junk → wear → get → junk → wear),
-// and broadcasts one of 12 randomized brag messages for MOB_AGGR24/MOB_LOOTS attackers.
-// **********************************
-
-func AttitudeLoot(ch, victim Combatant) {
-	// Phase 1: loot corpse
-	cbPerformCommand(ch, fmt.Sprintf("get all corpse of %s", victim.GetName()))
-
-	// C source (fight.c:1128): first junk pass — discard items with cost <= 150
-	cbJunkInventoryItems(ch)
-
-	// C source (fight.c:1138): auto-wear anything wearable
-	cbPerformCommand(ch, "wear all")
-
-	// C source (fight.c:1139): second get — picks up items from worn containers
-	cbPerformCommand(ch, fmt.Sprintf("get all corpse of %s", victim.GetName()))
-
-	// C source (fight.c:1141): second junk pass
-	cbJunkInventoryItems(ch)
-
-	// C source (fight.c:1156): auto-wear anything newly acquired
-	cbPerformCommand(ch, "wear all")
-
-	// C source (fight.c:1173-1248): brag messages — only for MOB_AGGR24 mobs (already filtered at call site)
-	// Additional early outs from C source: ch == victim (already handled at call site — ch != victim)
-	// and !can_speak(ch) — we skip that here; if the mob can't speak, cbBroadChat does nothing.
-	BragMessage(ch, victim)
 }
 
 // BragMessage sends one of 12 randomized brag messages matching the C source

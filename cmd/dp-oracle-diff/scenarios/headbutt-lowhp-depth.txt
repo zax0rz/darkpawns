@@ -1,0 +1,85 @@
+# depth-case: headbutt.hp-gate
+# C-first witness for do_headbutt's exhaustion arm, "But that could kill
+# you!", DP-1502 lists at src/new_cmds.c:433. After the skill gate and target
+# resolution, C refuses when GET_LEVEL(ch)/2 > GET_HIT(ch). The God primes the
+# peer to level 30 with 1 hit point (both settable, src/act.wizard.c:2593/2579)
+# so 15 > 1, and the aggressive trainee keeps the peer at POS_FIGHTING for the
+# POS_FIGHTING opener lane (src/interpreter.c:487).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Hblowgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hblowgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Hblowmortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Hblowmortal
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Hblowmortal 'headbutt' 75
+set Hblowmortal level 30
+set Hblowmortal maxhit 50000
+set Hblowmortal hit 1
+
+[probe:mortal]
+headbutt trainee

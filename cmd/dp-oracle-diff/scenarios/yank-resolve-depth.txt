@@ -1,0 +1,45 @@
+# depth-case: yank.self-me
+# depth-case: yank.ordinal-second
+# depth-case: yank.ordinal-exhausted
+# do_yank resolves its victim with get_char_room_vis
+# (src/act.other.c:1630 → src/handler.c:1277-1300) and tests victim == ch for
+# the self branch. Two identical trainee guards keep the ordinal free of an
+# ordering variable; a non-follower victim stops at C's appreciation refusal.
+
+[fixture]
+quiet-mobs
+spawn-mob 16303 2 8162 163
+spawn-mob 16303 2 8162 163
+
+[setup:oracle]
+Yanker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Yanker
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+yank me
+yank 2.guard
+yank 3.guard

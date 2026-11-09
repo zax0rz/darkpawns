@@ -276,23 +276,23 @@ func cmdPlayers(s *Session, args []string) error {
 			// database-error branch. Preserve its list shape when the Go backing
 			// store is unavailable by using the names currently in the world.
 			names = make([]string, 0)
-			for _, player := range s.manager.world.GetAllPlayers() {
-				names = append(names, player.GetName())
-			}
+			names = append(names, worldPlayerNamesInCreationOrder(s)...)
 		}
 	} else {
 		// The no-DB oracle/runtime path still has C's create_entry equivalent:
 		// newly created characters are registered in the in-memory player list.
-		for _, player := range s.manager.world.GetAllPlayers() {
-			names = append(names, player.GetName())
-		}
+		names = append(names, worldPlayerNamesInCreationOrder(s)...)
 	}
 	for i := range names {
 		// C's player_table stores every name in lowercase, both when the boot
 		// index is built and when create_entry adds a new character.
 		names[i] = strings.ToLower(names[i])
 	}
-	sort.Strings(names)
+	// No sort: C's do_gen_ps walks player_table in its physical order
+	// (src/act.informative.c:2183-2193) — the pfile's record order, which
+	// build_player_index scans (src/db.c:512-527) and create_entry appends to
+	// (src/db.c:2653-2677): creation order, not alphabetical. The store's
+	// autoincrement id is that order.
 	var buf strings.Builder
 	buf.WriteString("A list of registered players:\r\n")
 	count := 0
@@ -307,6 +307,23 @@ func cmdPlayers(s *Session, args []string) error {
 	buf.WriteString("\r\n")
 	s.Send(buf.String())
 	return nil
+}
+
+// worldPlayerNamesInCreationOrder names the live players in C's player_table
+// order. On these fallback paths (no store, or the store listing failed) the
+// world holds session-created characters whose IDs AddPlayer assigns in
+// insertion order from the lowest unused integer (the in-memory equivalent of
+// create_entry appending pfile records, src/db.c:2653-2677), so ascending ID
+// is the table's physical creation order. GetAllPlayers walks a map, which is
+// run-to-run random (R3); sort by ID, never by name.
+func worldPlayerNamesInCreationOrder(s *Session) []string {
+	players := s.manager.world.GetAllPlayers()
+	sort.Slice(players, func(i, j int) bool { return players[i].GetID() < players[j].GetID() })
+	names := make([]string, 0, len(players))
+	for _, player := range players {
+		names = append(names, player.GetName())
+	}
+	return names
 }
 
 // The Go-only operations notice is appended at rendering time, never written

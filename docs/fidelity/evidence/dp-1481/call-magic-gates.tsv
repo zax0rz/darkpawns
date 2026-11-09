@@ -1,0 +1,13 @@
+caller	cast type	C path	C position gate	Go gate after this PR
+pkg/session/cast_cmds.go:326 (do_cast)	CastSpell	src/spell_parser.c:820-870 do_cast	YES - do_cast's own minimum-position switch (src/spell_parser.c:855-870)	kept: Session.checkCastPosition (pkg/session/cast_cmds.go:340) runs before call_magic
+pkg/session/use_cmds.go:266 (use wand)	CastWand	src/spell_parser.c:653-658 do_use ITEM_WAND -> call_magic	NO - call_magic has only the sitting refusal (src/spell_parser.c:431-434)	removed; sitting only
+pkg/session/use_cmds.go:144 (use scroll)	CastScroll	src/spell_parser.c:659-680 do_use ITEM_SCROLL -> call_magic	NO - only the RECALLSCROLL+FIGHTING special case (src/spell_parser.c:662-664) and the sitting refusal	removed; sitting only (recall-scroll gate stays in use_cmds.go:57)
+pkg/game/other_economy.go:391 (mag_objectmagic wand)	CastWand	src/act.other.c:908-974 -> call_magic	NO	removed; sitting only
+pkg/game/other_economy.go:428, 435 (staff fan-out)	CastStaff	src/act.other.c:908-974 -> call_magic	NO	removed; sitting only
+pkg/session/eat_cmds.go:98 (quaff potion)	CastPotion	src/act.item.c do_quaff -> call_magic(EAT)	NO	removed; sitting only
+pkg/game/spec_procs.go:1014, 1032 (mob breath)	CastBreath	native special -> call_magic	NO	removed; sitting only
+pkg/game/spec_procs2.go:1372 (identify special)	CastSpell	native special -> call_magic	NO	removed; sitting only
+pkg/spells/call_magic.go:55 CastFromSpecialTarget	CastSpell	native special / Lua binding -> call_magic	NO	removed (this is what fromSpecial used to select)
+pkg/spells/call_magic.go:61 CastFromTattoo	CastWand	src/tattoo.c -> call_magic	NO	removed
+pkg/spells/spells.go:206 (CastSpell helper)	CastSpell	internal spell effect, not a command	NO	removed
+pkg/spells/affect_spells.go:1917 (magic missile proc)	CastSpell	internal spell effect	NO	removed

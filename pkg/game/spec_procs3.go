@@ -326,7 +326,10 @@ func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 			case 212:
 				homet = 3
 			default:
-				sendToChar(ch, "default case reached in clerk special - tell a god")
+				// C sends this bare (src/spec_procs3.c:96-97): the flush's
+				// framing is the only terminator, so sendToChar's appended
+				// CRLF would print an extra blank line (R1).
+				ch.SendLiteral("default case reached in clerk special - tell a god")
 			}
 		}
 	}
@@ -919,7 +922,7 @@ func specTurnUndead(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 			return false
 		}
 		// Check that arg matches the object's keywords
-		if me != nil && !isName(arg, me.GetName()) {
+		if me != nil && !cIsName(arg, me.GetName()) {
 			return false
 		}
 		w.roomMessage(ch.GetRoomVNum(), "A ray of flame bursts out of the object, consuming the undead!")
@@ -975,7 +978,7 @@ func specMirror(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		return false
 	}
 	arg = strings.TrimSpace(arg)
-	if !isName(arg, me.GetName()) {
+	if !cIsName(arg, me.GetName()) {
 		return false
 	}
 
@@ -1104,7 +1107,8 @@ func (w *World) specRoachFood(me *MobInstance, roomVNum int) bool {
 				me.SetMaxHP(newMaxHP)
 				// #nosec G404 — game RNG, not cryptographic
 				// #nosec G404
-				if roachNumber(0, 1) == 0 {
+				// C: if (number(0,1)) stretching else rumbling (src/spec_procs3.c:755-759).
+				if roachNumber(0, 1) != 0 {
 					Act(w, false, me, nil, nil, nil, "You hear some stretching noises.", "", ToRoom)
 				} else {
 					Act(w, false, me, nil, nil, nil, "You hear a strange rumbling from $n's stonach.", "", ToRoom)

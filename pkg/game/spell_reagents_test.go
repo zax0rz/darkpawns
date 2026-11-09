@@ -43,7 +43,7 @@ func TestSpawnObjectToRoomForSpellUsesObjToRoomPlacement(t *testing.T) {
 	}
 }
 
-func TestConsumeSpellReagentUsesObjectLocationPipeline(t *testing.T) {
+func TestConsumeSpellReagentVNumRejectsKeywordDecoy(t *testing.T) {
 	w, player := newTestWorld(t)
 	obj, err := w.SpawnObject(3001, 1001)
 	if err != nil {
@@ -55,14 +55,14 @@ func TestConsumeSpellReagentUsesObjectLocationPipeline(t *testing.T) {
 		t.Fatalf("MoveObjectToPlayerInventory: %v", err)
 	}
 
-	if !player.ConsumeSpellReagent("shard of obsidian") {
-		t.Fatal("ConsumeSpellReagent returned false for carried component")
+	if player.ConsumeSpellReagentVNum(1239) {
+		t.Fatal("ConsumeSpellReagentVNum consumed a keyword decoy")
 	}
-	if player.Inventory.GetItemCount() != 0 {
-		t.Errorf("inventory still contains consumed reagent: %+v", player.Inventory.Snapshot())
+	if player.Inventory.GetItemCount() != 1 {
+		t.Errorf("decoy missing from inventory: %+v", player.Inventory.Snapshot())
 	}
-	if !obj.Location.IsNowhere() {
-		t.Errorf("consumed reagent location = %+v, want LocNowhere", obj.Location)
+	if got := obj.Location; got != LocInventoryPlayer(player.Name) {
+		t.Errorf("decoy location = %+v, want player inventory", got)
 	}
 }
 

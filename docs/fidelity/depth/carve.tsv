@@ -9,7 +9,7 @@ do_carve	carve	carve.self	D1	command	oracle-green-multiseed	carve-depth@1,2,3,5,
 do_carve	carve	carve.no-wield	D2	command	oracle-green-multiseed	carve-depth@1,2,3,5,8	new_cmds.c:156-191	A valid generated corpse without a wielded tool reaches C's no-tool branch.
 do_carve	carve	carve.success	D3	command	oracle-green-multiseed	carve-depth@1,2,3,5,8	new_cmds.c:156-213	The generated corpse is carved with a slash weapon, including actor, observer, and inventory bytes.
 do_carve	carve	carve.trailing-target-words	D1	command	oracle-green-multiseed	carve-depth@1,2,3,5,8	interpreter.c:1265-1283; new_cmds.c:115	one_argument consumes only the first non-fill target token.
-do_carve	carve	carve.wrong-weapon	D2	state	unit-green	TestDoCarveCEntryBranches	new_cmds.c:156-178	A wielded weapon whose value[3] is neither slash nor pierce reaches C's exact rejection and extracts the temporary food.
+do_carve	carve	carve.wrong-weapon	D2	command	oracle-green	carve-club-depth	new_cmds.c:156-178	Live C witness (carve-club-depth, wooden club 8023 value[3]=7) confirms the wrong-weapon refusal bytes; TestDoCarveCEntryBranches still proves the temporary-food extraction state.
 do_carve	carve	carve.full-arms	D2	state	unit-green	TestDoCarveCEntryBranches	new_cmds.c:151-154; utils.h:449	The count-only CAN_CARRY_N gate runs before weapon validation.
 do_carve	carve	carve.food-mappings	D4	state	unit-green	TestDoCarveFoodMappings	new_cmds.c:156-169	Exact isname mapping yields meat, fish, bird, rabbit, and meat fallback prototype vnums.
 do_carve	carve	carve.contents-dump	D3	state	unit-green	TestDoCarveSuccessUsesCFoodAndRoomContract	new_cmds.c:193-213	Corpse contents are moved to the room in C prepend order before corpse extraction.

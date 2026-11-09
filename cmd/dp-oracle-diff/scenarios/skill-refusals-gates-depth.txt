@@ -1,0 +1,101 @@
+# depth-case: trip.no-arg
+# depth-case: trip.self
+# depth-case: slug.wielded-gate
+# depth-case: charge.no-weapon
+# depth-case: charge.wrong-weapon
+# C-first witness for four refusal sites DP-1502 lists in src/new_cmds.c:
+# :761 "Trip who?" (no argument, no fight target), :774 "You trip over your
+# shoe laces..." (trip a self target), :854 "You can't
+# make a fist while wielding a weapon!" (slug while armed), :915 "You're
+# barehanded..." (charge with no weapon) and :923 "You need sword or a lance..."
+# (charge with a non-sword/lance weapon). The mortal peer walks to the
+# aggressive trainee (POS_FIGHTING opener lane); none of these gates needs
+# FIGHTING set. C path: src/new_cmds.c:735-935.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+spawn-obj 8037 1 8105 80
+spawn-obj 8023 1 8105 80
+
+[setup:oracle]
+Skgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Skgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Skmortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Skmortal
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Skmortal 'trip' 75
+skillset Skmortal 'slug' 75
+skillset Skmortal 'charge' 75
+
+[probe:mortal]
+trip
+trip Skmortal
+get sword
+wield sword
+slug trainee
+remove sword
+charge trainee
+get club
+wield club
+charge trainee

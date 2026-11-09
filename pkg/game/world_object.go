@@ -204,7 +204,7 @@ func (w *World) removeItemFromRoomLocked(item *ObjectInstance, roomVNum int) boo
 // src/spells.c:361-365, src/handler.c:68-95, src/db.c:1892-1893,1950-1951.
 // Returns matching objects as []interface{} for spell system compatibility.
 func (w *World) FindObjectByName(name string) []any {
-	name = cFName(name)
+	name = CFName(name)
 	if name == "" {
 		return nil
 	}
@@ -304,9 +304,21 @@ func (w *World) locateObjectByID(id int) *ObjectInstance {
 	return w.objectInstances[id]
 }
 
-// cFName and cIsName preserve spell_locate_object's fname()/isname() token
-// rules. The C helpers operate on alphabetic byte runs, not substrings.
-func cFName(name string) string {
+// CFName is the single Go port of C's fname() (src/handler.c:68-79). C copies
+// the leading run of alphabetic bytes into a static holder[30] and stops at the
+// first non-letter, so "black-banded" -> "black", "D'haran" -> "D", "chai-dao"
+// -> "chai", and a leading non-letter (or empty input) -> "". Every caller of
+// fname shares this one implementation: OBJN/objName (src/utils.h:557-558),
+// act's $F (src/comm.c:2454), door names in movement/open-close/look/bash
+// (src/act.movement.c:329,522, src/act.offensive.c:847, src/act.informative.c:867,878),
+// the look-in container header (src/act.informative.c:942), shop refusals
+// (src/shop.c:521,528), and spell_locate_object (src/spells.c:361).
+//
+// holder[30]: C terminates at holder[30], one past the array, so a first
+// keyword of 30 or more letters writes out of bounds. No object or door keyword
+// in lib/world has a first letter-run that long (verified by a lib/world scan),
+// so the overflow is not emulated. Companion: cIsName.
+func CFName(name string) string {
 	end := 0
 	for end < len(name) && isASCIIAlpha(name[end]) {
 		end++
@@ -314,6 +326,13 @@ func cFName(name string) string {
 	return name[:end]
 }
 
+// cIsName is the single Go port of C's isname() (src/handler.c:81-111). Every
+// space-or-non-alpha-separated letter-run in nameList is compared to the whole
+// name case-insensitively: isname matches a WHOLE keyword word, never a prefix,
+// so cIsName("d", "door") is false and cIsName("door", "door") is true. This is
+// the matcher for find_door, do_steal's worn-item scan, janitor, turn_undead,
+// mirror, horn and moon_gate. The abbreviation matcher for generic_find /
+// get_obj_in_list_vis sites is isnameWithAbbrevs (C isname_with_abbrevs).
 func cIsName(name, nameList string) bool {
 	if name == "" {
 		return false

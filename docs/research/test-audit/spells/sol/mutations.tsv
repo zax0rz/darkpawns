@@ -1,0 +1,39 @@
+test	file	line	mutation	result(green|red)	restored(yes)
+TestCheckSavingThrow_HighLevelSavesOften	pkg/spells/saving_throws.go	216	Force successful saves	green	yes
+TestCheckSavingThrow_DoesNotPanic	pkg/spells/saving_throws.go	216	Force successful saves	green	yes
+TestCheckSavingThrow_Level0SavesRarely	pkg/spells/saving_throws.go	216	Force failed saves	green	yes
+TestSavingThrowNPCUsesWarriorTable	pkg/spells/saving_throws.go	202	Disable NPC class override on valid levels	green	yes
+TestSavingThrowBeforeKeyingMatchesCFixture	pkg/spells/saving_throws.go	161	Change every production threshold	green	yes
+TestSavingThrowBeforeKeyingChecksum	pkg/spells/saving_throws.go	161	Change every production threshold	green	yes
+TestSavingThrow_GoldenAgainstCSource	pkg/spells/saving_throws.go	161	Change every production threshold	red	yes
+TestMagPointsFormula_GoldenAgainstCSource/^lay_hands	pkg/spells/affect_spells.go	689	Change dispatch dice argument while leaving formula helper intact	green	yes
+TestCheckReagents_ItemConsumedOnExactShortDescMatch	pkg/spells/affect_spells.go	1652	Pass wrong name to live consumer only	green	yes
+TestSaySpell_RoomMessageObfuscatesForDifferentClass	pkg/spells/say_spell.go	25	Replace only chant-path syllables	green	yes
+TestIsEvil	pkg/spells/damage_spells.go	444	Restore the C evil threshold	red	yes
+TestIsGood	pkg/spells/damage_spells.go	452	Restore the C good threshold	red	yes
+TestRandBool	pkg/spells/damage_spells.go	490	Increase RNG upper bound by one	green	yes
+TestCast_RoutesToCallMagic	pkg/spells/spells.go	206	Remove forwarding	green	yes
+TestCastHellfire_DealsAreaDamage_InstakillsLowLevel_SkipsCasterAndGroup	pkg/spells/affect_spells.go	3093	Replace ordinary Hellfire formula with one damage	green	yes
+TestCastMeteorSwarm_DealsAreaDamage_SkipsImmortalsAndGroup	pkg/spells/affect_spells.go	2995	Replace Meteor Swarm damage with one	green	yes
+TestCastMeteorSwarmPreservesLevelZeroNonpositiveDamage	pkg/spells/affect_spells.go	2995	Pass a raw damage outside the C level-zero range	green	yes
+TestCastHellfire_SkipsImmortalNonNPC	pkg/spells/affect_spells.go	3129	Disable Hellfire immortal gate at positive levels	green	yes
+TestMagAffects_Metalskin	pkg/spells/affect_spells.go	416	Combine flag and AC into the C single record	red	yes
+TestMagAffectsApply_GoldenAgainstCSource/^metalskin$	pkg/spells/affect_spells.go	416	Combine flag and AC into the C single record	red	yes
+TestMagAffectsMessages_RoomAudience	pkg/spells/affect_spells.go	493	Also send the room line to the victim	green	yes
+TestMagAffectsReapplyGate/^infravision_accumulates$	pkg/spells/affect_spells.go	578	Allow Infravision recast while accumulating magnitude instead of duration	green	yes
+TestMagAffectsApply_GoldenAgainstCSource/^great_percept$	pkg/spells/affect_spells.go	429	Restore C location for Sense Life	red	yes
+TestMagAffectsApply_GoldenAgainstCSource/^less_percept$	pkg/spells/affect_spells.go	433	Restore C location for Infravision	red	yes
+TestDominateRoutesToCharm	pkg/spells/affect_spells.go	1402	Both dispatch arms emit identical invented refusal	green	yes
+TestCastHellfire_BlocksPeacefulRoom	pkg/spells/affect_spells.go	3073	Disable peaceful guard at positive levels	green	yes
+TestSummonMobFlagPositionsMatchC	pkg/spells/affect_spells.go	3531	Change shared no-charm bit literal	green	yes
+TestMobFlagBitsPinCPositions	pkg/spells/affect_spells.go	3531	Change shared no-charm bit literal	red	yes
+TestMagAffectsMessages_RoomAudience	pkg/spells/affect_spells.go	1536	Let the fallback deliver rendered room bytes to its actor, the affected victim	green	yes
+TestRandBool	pkg/spells/damage_spells.go	490	Select the wrong roll	green	yes
+TestCastMirrorImageOutputAndRoomAudience	pkg/spells/affect_spells.go	3917	Restore C clone level one	red	yes
+TestCastIdentifyObjectOutputBranches/^wand_spell_and_charges$	pkg/spells/affect_spells.go	2541	Restore C source-intended second space for charged items	red	yes
+TestCastIdentifyObjectOutputBranches/^staff_singular_charge$	pkg/spells/affect_spells.go	2541	Restore C source-intended second space for charged items	red	yes
+TestCheckReagents_BonusScalesWithLevel	pkg/spells/affect_spells.go	1676	Remove helper half-level convention while retaining caller boolean behavior	red	yes
+TestMagDamageReagentRoomMessagesMatchC	pkg/spells/affect_spells.go	1676	Remove helper half-level convention while retaining caller boolean behavior	green	yes
+TestAttackTypes_TableSize	pkg/combat/fight_core.go	32	Break the live hit verb pair	green	yes
+TestAttackTypes_IndexZeroIsEmpty	pkg/combat/fight_core.go	32	Break the live hit verb pair	green	yes
+TestAttackTypes_EntriesHaveValues	pkg/combat/fight_core.go	32	Break the live hit verb pair	green	yes

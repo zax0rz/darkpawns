@@ -1,0 +1,77 @@
+# depth-case: mob.cuchi-orodreth-site-live
+# C-first witness for the cuchi Orodreth arm DP-1502 lists (src/spec_procs.c:1050
+# stc "Cuchi purrs at you contently."): SPECIAL(cuchi) (mob 18306,
+# src/spec_assign.c:415) matches any `pat` command from a character named
+# exactly "Orodreth" (src/spec_procs.c:1041-1053) and prints the purr pair.
+# The port mirrors the arm byte-for-byte (pkg/game/spec_procs.go:1099-1105),
+# so the witness is green. The non-backdoor arm is covered by spec-proc-cuchi.
+# C path: src/interpreter.c:1407-1456 -> src/spec_procs.c:1034-1060.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18306 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+Orodreth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Orodreth
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+CuchiPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+CuchiPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport CuchiPeer 8105
+
+[probe]
+pat cuchi

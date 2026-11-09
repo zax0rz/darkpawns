@@ -152,24 +152,6 @@ func (r *Registry) Holder(kind Kind, number int) (Owner, bool) {
 	return claim.owner, true
 }
 
-// Entry returns a value snapshot of one active claim, including its lease
-// timestamps. The owner interface never crosses this boundary.
-func (r *Registry) Entry(kind Kind, number int) (ClaimEntry, bool) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	key := claimKey{kind: kind, num: number}
-	claim, ok := r.claims[key]
-	if !ok {
-		return ClaimEntry{}, false
-	}
-	if !time.Now().Before(claim.expiresAt) {
-		delete(r.claims, key)
-		return ClaimEntry{}, false
-	}
-	return claimEntry(key, claim), true
-}
-
 // List returns a deterministic value snapshot of all active claims. The
 // returned entries and their owner fields are independent of registry state.
 func (r *Registry) List() []ClaimEntry {
@@ -234,9 +216,10 @@ func sameOwner(a, b Owner) bool {
 	return a.Identity() == b.Identity() && a.Frontend() == b.Frontend()
 }
 
-// HolderDescription is the legacy owner-only label used by older call sites.
-// New claim refusals should use ClaimConflictDescription so both frontends
-// expose frontend and idle metadata from the same claim snapshot.
+// HolderDescription is the player-facing label for a claim holder. C's OLC
+// duplicate refusal prints the holder's plain character name (src/olc.c:157-158),
+// so a telnet holder is named with no transport or idle metadata. A web holder
+// keeps its "(web)" suffix; C has no web editor, so there is no C byte to match.
 func HolderDescription(owner Owner) string {
 	if owner == nil {
 		return "someone"
@@ -249,24 +232,4 @@ func HolderDescription(owner Owner) string {
 		return fmt.Sprintf("%s (%s)", name, owner.Frontend())
 	}
 	return name
-}
-
-// ClaimConflictDescription is the shared refusal label for both frontends.
-// It intentionally exposes identity metadata and idle time, but never any
-// draft contents or values.
-func ClaimConflictDescription(entry ClaimEntry, now time.Time) string {
-	name := entry.OwnerDisplayName
-	if name == "" {
-		name = "someone"
-	}
-	frontend := string(entry.OwnerFrontend)
-	if frontend == "" {
-		frontend = "unknown"
-	}
-	idle := now.Sub(entry.ClaimedAt)
-	if idle < 0 {
-		idle = 0
-	}
-	idle = idle.Round(time.Second)
-	return fmt.Sprintf("%s (%s; idle %s)", name, frontend, idle)
 }

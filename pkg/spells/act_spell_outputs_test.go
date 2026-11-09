@@ -1,6 +1,7 @@
 package spells
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -58,7 +59,7 @@ func TestCastEnchantOutputBranches(t *testing.T) {
 			obj := &enchantOutputObject{identifyOutputObject: identifyOutputObject{typeFlag: tc.objType, short: tc.shortDesc}}
 			ExecuteManualSpell(tc.spell, caster.level, caster, nil, obj, "", nil)
 
-			want := tc.shortDesc + " glows " + tc.color + ".\r\n"
+			want := capitalizeActMessage(tc.shortDesc) + " glows " + tc.color + ".\r\n"
 			if got := strings.Join(caster.messages, ""); got != want {
 				t.Fatalf("enchant output = %q, want exact C bytes %q", got, want)
 			}
@@ -176,10 +177,16 @@ type mirrorImageOutputWorld struct {
 	room          int
 	level         int
 	mob           *mirrorImageOutputMob
+	spawnErr      error
+	configured    bool
+	handoff       bool
 }
 
 func (w *mirrorImageOutputWorld) SpawnMobWithLevelI(vnum, room, level int) (interface{}, error) {
 	w.vnum, w.room, w.level = vnum, room, level
+	if w.spawnErr != nil {
+		return nil, w.spawnErr
+	}
 	w.mob = &mirrorImageOutputMob{}
 	return w.mob, nil
 }
@@ -190,8 +197,12 @@ func (w *mirrorImageOutputWorld) SpellActToRoom(actor, _ interface{}, format str
 	return true
 }
 
+func (w *mirrorImageOutputWorld) ConfigureMirrorClone(_, _ interface{}) { w.configured = true }
+
+func (w *mirrorImageOutputWorld) MirrorImageHandoff(_, _ interface{}) { w.handoff = true }
+
 func TestCastMirrorImageOutputAndRoomAudience(t *testing.T) {
-	caster := &mockSpellsChar{name: "Mirror", level: 22, roomVNum: 8105}
+	caster := &mockSpellsChar{name: "Mirror", title: "the Mirrored", description: "A mirrored figure.", level: 22, roomVNum: 8105}
 	world := &mirrorImageOutputWorld{}
 
 	ExecuteManualSpell(SpellMirrorImage, caster.level, caster, nil, nil, "", world)
@@ -199,11 +210,70 @@ func TestCastMirrorImageOutputAndRoomAudience(t *testing.T) {
 	if got, want := strings.Join(caster.messages, ""), "You divide yourself in two!\r\n"; got != want {
 		t.Fatalf("mirror image caster output = %q, want exact C bytes %q", got, want)
 	}
-	if world.vnum != 69 || world.room != caster.roomVNum || world.level != caster.level || world.mob == nil || world.mob.name != caster.name {
-		t.Fatalf("mirror image clone = {vnum:%d room:%d level:%d mob:%+v}, want named clone vnum 69 in caster room", world.vnum, world.room, world.level, world.mob)
+	// C spawns the clone at a literal level 1 — create_mobile(ch, MOB_CLONE,
+	// 1, FALSE) (src/spells.c:1136) — regardless of the cast or caster level
+	// (DP-1458).
+	if world.vnum != 69 || world.room != caster.roomVNum || world.level != 1 || world.mob == nil {
+		t.Fatalf("mirror image clone = {vnum:%d room:%d level:%d mob:%+v}, want named level-1 clone vnum 69 in caster room", world.vnum, world.room, world.level, world.mob)
+	}
+	if !world.configured || !world.handoff {
+		t.Fatalf("mirror image world hooks = {configured:%t handoff:%t}, want both to run after the guards", world.configured, world.handoff)
 	}
 	if world.calls != 1 || world.actor != caster || world.format != "$n divides $mself in two!" || !world.hideInvisible {
 		t.Fatalf("mirror image room act = {calls:%d actor:%v format:%q hideInvisible:%t}, want one C-compatible TO_ROOM act", world.calls, world.actor, world.format, world.hideInvisible)
+	}
+}
+
+// TestCastMirrorImageNullGuardsSilent proves C's three early returns
+// (src/spells.c:1141-1143). The clone is always created first (line 1136), but
+// a NULL name, title or description makes the spell return before SET_NAME, the
+// messages, and the memory hand-off. Reverting a guard is the revert proof:
+// with the guard gone the caster gets "You divide yourself in two!" and the
+// world hooks fire.
+func TestCastMirrorImageNullGuardsSilent(t *testing.T) {
+	cases := []struct {
+		name   string
+		mutate func(*mockSpellsChar)
+	}{
+		{"null name", func(c *mockSpellsChar) { c.name = "" }},
+		{"null title", func(c *mockSpellsChar) { c.title = "" }},
+		{"null description", func(c *mockSpellsChar) { c.description = "" }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			caster := &mockSpellsChar{name: "Mirror", title: "the Mirrored", description: "A mirrored figure.", level: 22, roomVNum: 8105}
+			tc.mutate(caster)
+			world := &mirrorImageOutputWorld{}
+
+			ExecuteManualSpell(SpellMirrorImage, caster.level, caster, nil, nil, "", world)
+
+			if world.vnum != 69 || world.mob == nil {
+				t.Fatalf("clone not created before the guard: %+v", world)
+			}
+			if got := strings.Join(caster.messages, ""); got != "" {
+				t.Fatalf("guard %q caster output = %q, want silence", tc.name, got)
+			}
+			if world.calls != 0 || world.configured || world.handoff {
+				t.Fatalf("guard %q fired world effects: {calls:%d configured:%t handoff:%t}", tc.name, world.calls, world.configured, world.handoff)
+			}
+		})
+	}
+}
+
+// TestCastMirrorImageSpawnFailureIsSilent proves C's `NULL == clone` return
+// (src/spells.c:1138) carries no message. The port used to print an invented
+// "You fail to divide yourself." (R4).
+func TestCastMirrorImageSpawnFailureIsSilent(t *testing.T) {
+	caster := &mockSpellsChar{name: "Mirror", title: "the Mirrored", description: "A mirrored figure.", level: 22, roomVNum: 8105}
+	world := &mirrorImageOutputWorld{spawnErr: errors.New("spawn failed")}
+
+	ExecuteManualSpell(SpellMirrorImage, caster.level, caster, nil, nil, "", world)
+
+	if got := strings.Join(caster.messages, ""); got != "" {
+		t.Fatalf("spawn failure caster output = %q, want silence (src/spells.c:1138)", got)
+	}
+	if world.calls != 0 || world.configured || world.handoff {
+		t.Fatalf("spawn failure fired world effects: {calls:%d configured:%t handoff:%t}", world.calls, world.configured, world.handoff)
 	}
 }
 
@@ -512,6 +582,53 @@ func TestCastMentalLapseOutputBranches(t *testing.T) {
 			}
 			if victim.cleared != tc.cleared {
 				t.Fatalf("hunting cleared=%t, want %t", victim.cleared, tc.cleared)
+			}
+		})
+	}
+}
+
+// TestCastEnchantAlignThresholds pins the enchant glow/flag gates to C's
+// IS_GOOD/IS_EVIL thresholds (src/utils.h:454-455; src/spells.c:644-651,
+// 855-862): a caster at 1..349 or -349..-1 is neutral and gets "glows
+// yellow." with neither anti flag.
+func TestCastEnchantAlignThresholds(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		spell     int
+		objType   int
+		shortDesc string
+		alignment int
+		color     string
+		antiEvil  bool
+		antiGood  bool
+	}{
+		{name: "weapon at 100 glows yellow", spell: SpellEnchantWeapon, objType: 5, shortDesc: "a dagger", alignment: 100, color: "yellow"},
+		{name: "weapon at 349 glows yellow", spell: SpellEnchantWeapon, objType: 5, shortDesc: "a dagger", alignment: 349, color: "yellow"},
+		{name: "weapon at 350 glows blue", spell: SpellEnchantWeapon, objType: 5, shortDesc: "a dagger", alignment: 350, color: "blue", antiEvil: true},
+		{name: "weapon at -100 glows yellow", spell: SpellEnchantWeapon, objType: 5, shortDesc: "a dagger", alignment: -100, color: "yellow"},
+		{name: "weapon at -349 glows yellow", spell: SpellEnchantWeapon, objType: 5, shortDesc: "a dagger", alignment: -349, color: "yellow"},
+		{name: "weapon at -350 glows red", spell: SpellEnchantWeapon, objType: 5, shortDesc: "a dagger", alignment: -350, color: "red", antiGood: true},
+		{name: "armor at 100 glows yellow", spell: SpellEnchantArmor, objType: 9, shortDesc: "a breast plate", alignment: 100, color: "yellow"},
+		{name: "armor at 350 glows blue", spell: SpellEnchantArmor, objType: 9, shortDesc: "a breast plate", alignment: 350, color: "blue", antiEvil: true},
+		{name: "armor at -350 glows red", spell: SpellEnchantArmor, objType: 9, shortDesc: "a breast plate", alignment: -350, color: "red", antiGood: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			caster := &alignedSpellProbe{
+				mockSpellsChar: &mockSpellsChar{name: "Enchanter", level: 30},
+				alignment:      tc.alignment,
+			}
+			obj := &enchantOutputObject{identifyOutputObject: identifyOutputObject{typeFlag: tc.objType, short: tc.shortDesc}}
+			ExecuteManualSpell(tc.spell, caster.level, caster, nil, obj, "", nil)
+
+			want := capitalizeActMessage(tc.shortDesc) + " glows " + tc.color + ".\r\n"
+			if got := strings.Join(caster.messages, ""); got != want {
+				t.Fatalf("enchant output = %q, want exact C bytes %q", got, want)
+			}
+			if got := obj.HasExtraFlag(0, 10); got != tc.antiEvil {
+				t.Fatalf("ITEM_ANTI_EVIL = %v, want %v (align %d)", got, tc.antiEvil, tc.alignment)
+			}
+			if got := obj.HasExtraFlag(0, 9); got != tc.antiGood {
+				t.Fatalf("ITEM_ANTI_GOOD = %v, want %v (align %d)", got, tc.antiGood, tc.alignment)
 			}
 		})
 	}

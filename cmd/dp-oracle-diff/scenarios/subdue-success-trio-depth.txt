@@ -1,0 +1,106 @@
+# C-first do_subdue success vehicle (src/act.offensive.c:1146-1181). The God
+# (an immortal) takes the Outlaw flag and the subdue skill, then subdues a
+# level-1 player victim. C's immortal pin sets percent = 0 after the single
+# number(1,101+level) draw, so the success arm is deterministic; the trio
+# captures the bare send_to_char to the stunned victim, the TO_CHAR act, and
+# the TO_NOTVICT act. No hit() follows success, so no combat starts.
+#
+# depth-case: subdue.success-audience
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Subduegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Subduegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Subvictim
+Y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Subvictim
+y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watcher]
+Subwatcher
+Y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watcher]
+Subwatcher
+y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Subduegod 'subdue' 100
+set Subduegod outlaw on
+goto 8105
+teleport Subvictim 8105
+teleport Subwatcher 8105
+
+[probe]
+subdue Subvictim

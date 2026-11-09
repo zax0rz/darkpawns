@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/internal/dpclock"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
@@ -537,6 +538,25 @@ func (ce *CombatEngine) removeFighterLocked(body Combatant) {
 	}
 }
 
+// Enrolled reports whether body is on the engine's combat list (C's
+// combat_list), as opposed to merely carrying a FIGHTING field. The two differ
+// whenever a damage seam copies set_fighting's fields without enrolling the
+// pair, which is exactly the DP-1481 shape-2 failure; damage-seam tests need
+// to tell them apart.
+func (ce *CombatEngine) Enrolled(body Combatant) bool {
+	if body == nil {
+		return false
+	}
+	ce.mu.RLock()
+	defer ce.mu.RUnlock()
+	for _, fighter := range ce.combatOrder {
+		if fighter == body {
+			return true
+		}
+	}
+	return false
+}
+
 // IsFighting checks if a character is in combat
 func (ce *CombatEngine) IsFighting(body Combatant) bool {
 	if !ValidBody(body) {
@@ -598,6 +618,13 @@ type waitStateHolder interface {
 	DecrementWaitState()
 }
 
+// mobWaitHolder reaches GET_MOB_WAIT — the Lua bridge's timer counter, a
+// different field from WAIT_STATE's ch->wait (src/utils.h:434,462-464).
+type mobWaitHolder interface {
+	GetMobWait() int
+	SetMobWait(int)
+}
+
 func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	attacker := pair.Attacker
 	defender := pair.Defender
@@ -618,14 +645,27 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	// every round; NPC dodge draws Number(0,100) if AFF_DODGE.
 	ce.prepareRoundDefense(attacker, defender)
 
-	// 3. NPC stand-up (fight.c:1975-1988). C zeros attacks only for
-	// GET_MOB_WAIT > 0, which only the Lua bridge writes (scripts.c:2017) —
-	// never WAIT_STATE (utils.h:462-464 writes ch->wait, a different field).
-	// Go's scripting layer writes no mob wait, so NPC attacks are NEVER zeroed
-	// by wait. A downed mob stands and swings in the same round (DP-1215).
-	if attacker.IsNPC() && attacker.GetPosition() < PosFighting {
-		attacker.SetPosition(PosFighting)
-		ce.scrambleBroadcast(attacker)
+	// 3. NPC wait drain and stand-up (fight.c:1975-1988). GET_MOB_WAIT —
+	// the Lua bridge's timer (scripts.c:2015-2018), NOT the ch->wait
+	// WAIT_STATE writes — zeroes this round's attacks and drains by
+	// PULSE_VIOLENCE per pass, unclamped so it may go negative (C's own
+	// arithmetic; a negative counter still blocks the stand-up, since C tests
+	// !GET_MOB_WAIT). A downed mob stands only when the counter is clear, and
+	// stands and swings in the same round (DP-1215).
+	if attacker.IsNPC() {
+		if mw, ok := attacker.(mobWaitHolder); ok {
+			if wait := mw.GetMobWait(); wait > 0 {
+				mw.SetMobWait(wait - engine.PULSE_VIOLENCE)
+				numAttacks = 0
+			}
+			if attacker.GetPosition() < PosFighting && mw.GetMobWait() == 0 {
+				attacker.SetPosition(PosFighting)
+				ce.scrambleBroadcast(attacker)
+			}
+		} else if attacker.GetPosition() < PosFighting {
+			attacker.SetPosition(PosFighting)
+			ce.scrambleBroadcast(attacker)
+		}
 	}
 
 	// 4. PC stand-up (fight.c:1990-1998). C: !IS_NPC && GET_POS < POS_FIGHTING
@@ -781,13 +821,15 @@ func (ce *CombatEngine) prepareRoundDefense(fighter, opponent Combatant) {
 		defenseAction = "parry"
 		sendCombatMessage(fighter, "With a dazzling show of swordplay, you move into defensive position...\r\n")
 		// C act() → CAP uppercases the first byte (comm.c:2477). The fighter's
-		// name may be lowercase (e.g. "a guard trainee").
-		sendCombatMessage(opponent, capitalizeFightMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off your every blow!\r\n", fighter.GetName())))
-		ce.sendDefenseObserverMessage(
+		// name may be lowercase (e.g. "a guard trainee"). The room line is
+		// TO_ROOM, not TO_NOTVICT, so the opponent reads it before its own
+		// TO_VICT line (src/fight.c:1959-1962).
+		ce.sendDefenseRoomMessage(
 			fighter,
 			opponent,
 			capitalizeFightMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off %s's every blow!\r\n", fighter.GetName(), opponent.GetName())),
 		)
+		sendCombatMessage(opponent, capitalizeFightMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off your every blow!\r\n", fighter.GetName())))
 	case CheckDodge(fighter, opponent) == DodgeSuccess:
 		defenseAction = "dodge"
 		sendCombatMessage(fighter, "You dodge!\r\n")
@@ -816,6 +858,15 @@ func (ce *CombatEngine) sendDefenseObserverMessage(fighter, opponent Combatant, 
 		// Test and embedding fallback when the game-layer room lookup is absent.
 		ce.BroadcastFunc(fighter.GetRoom(), message, []Combatant{fighter, opponent})
 	}
+}
+
+// sendDefenseRoomMessage is act(..., TO_ROOM) with the opponent as $N: every
+// awake character but the fighter, the opponent included.
+func (ce *CombatEngine) sendDefenseRoomMessage(fighter, opponent Combatant, message string) {
+	if opponent != nil && opponent.GetPosition() > PosSleeping {
+		sendCombatMessage(opponent, message)
+	}
+	ce.sendDefenseObserverMessage(fighter, opponent, message)
 }
 
 func (ce *CombatEngine) setParried(body Combatant, defenseAction string) {
@@ -1004,10 +1055,9 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	// C damage() breaks the victim's following when the attacker IS the
 	// master (fight.c:1457-1458): stop_follower's charm branch announces
 	// "$n hates your guts!" to the master BEFORE the swing's message, on
-	// both the miss (damage 0) and hit paths.
-	if cbGetFollowing(defender) == attacker {
-		cbStopFollowerOfMaster(defender, attacker)
-	}
+	// both the miss (damage 0) and hit paths. Then the hide fade (:1460-1464).
+	BreakFollowerOnDamage(attacker, defender)
+	FadeHiddenAttacker(attacker)
 
 	if !hit {
 		standVictim()

@@ -156,11 +156,16 @@ func TestMagDamageReagentRoomMessagesMatchC(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			dprng.ResetStream(1)
 			caster := &mockSpellsChar{
-				name:      "Mage",
-				level:     30,
-				class:     0, // CLASS_MAGIC_USER
-				roomVNum:  8162,
-				inventory: &mockInventory{items: []*mockItem{{shortDesc: tc.reagent}}},
+				name:     "Mage",
+				level:    30,
+				class:    0, // CLASS_MAGIC_USER
+				roomVNum: 8162,
+				inventory: &mockInventory{items: []*mockItem{{shortDesc: tc.reagent, vnum: map[int]int{
+					SpellColorSpray:   1236,
+					SpellFireball:     1225,
+					SpellDisintegrate: 1227,
+					SpellEnergyDrain:  1230,
+				}[tc.spell]}}},
 			}
 			victim := &mockSpellsChar{name: "Target", level: 20, roomVNum: 8162}
 			witness := newAffectMale("Witness", 8162)
@@ -233,6 +238,74 @@ func TestMagDamage_DoesNotFabricateRemovedSpells(t *testing.T) {
 			if victim.hp != 100 {
 				t.Errorf("DP-938: MagDamage dealt %d fabricated damage for %s (spell %d); expected 0 (not a real mag_damage case in C)",
 					100-victim.hp, tc.name, tc.spellNum)
+			}
+		})
+	}
+}
+
+// TestMagDamageDispelAlignThresholds pins C's dispel evil/good gates
+// (src/magic.c:725-750) at IS_GOOD/IS_EVIL thresholds (src/utils.h:454-455):
+// the self-damage branch keys on the caster's IS_EVIL/IS_GOOD, "The gods
+// protect $N." keys on the victim's IS_GOOD/IS_EVIL, and everything in
+// -349..349 is neutral. Dispel evil on a target at -100 damages the target.
+func TestMagDamageDispelAlignThresholds(t *testing.T) {
+	const hp = 100_000
+	cases := []struct {
+		name        string
+		spellNum    int
+		casterAlign int
+		victimAlign int
+		// want: "damaged" = victim takes the damage; "protected" = the C
+		// protection act and no damage; "self" = the caster becomes the
+		// victim and the original target is untouched.
+		want string
+	}{
+		{"dispel evil on a target at -100", SpellDispelEvil, 0, -100, "damaged"},
+		{"dispel evil on a target at 349", SpellDispelEvil, 0, 349, "damaged"},
+		{"dispel evil protects a target at 350", SpellDispelEvil, 0, 350, "protected"},
+		{"dispel evil caster at -100 casts normally", SpellDispelEvil, -100, 0, "damaged"},
+		{"dispel evil caster at -349 casts normally", SpellDispelEvil, -349, 0, "damaged"},
+		{"dispel evil caster at -350 self-damages", SpellDispelEvil, -350, 0, "self"},
+		{"dispel good on a target at 100", SpellDispelGood, 0, 100, "damaged"},
+		{"dispel good on a target at -100", SpellDispelGood, 0, -100, "damaged"},
+		{"dispel good protects a target at -350", SpellDispelGood, 0, -350, "protected"},
+		{"dispel good caster at 100 casts normally", SpellDispelGood, 100, 0, "damaged"},
+		{"dispel good caster at 349 casts normally", SpellDispelGood, 349, 0, "damaged"},
+		{"dispel good caster at 350 self-damages", SpellDispelGood, 350, 0, "self"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			dprng.ResetStream(1)
+			caster := &mockSpellsChar{
+				name: "Castero", level: 20, hp: hp, maxHP: hp, inventory: &mockInventory{},
+			}
+			victim := &mockSpellsChar{
+				name: "Barnaby", level: 20, hp: hp, maxHP: hp, inventory: &mockInventory{},
+			}
+			caster.alignment = tc.casterAlign
+			victim.alignment = tc.victimAlign
+
+			MagDamage(20, caster, victim, tc.spellNum, int(SaveSpell), nil)
+
+			switch tc.want {
+			case "protected":
+				if !reflect.DeepEqual(caster.messages, []string{"The gods protect Barnaby.\r\n"}) {
+					t.Fatalf("caster messages = %q, want C's protection act", caster.messages)
+				}
+				if victim.hp != hp {
+					t.Fatalf("victim hp = %d, want untouched on the protection branch", victim.hp)
+				}
+			case "damaged":
+				if victim.hp == hp {
+					t.Fatal("victim took no damage; C's gate let the damage through")
+				}
+			case "self":
+				if victim.hp != hp {
+					t.Fatalf("victim hp = %d, want untouched on the self-damage branch", victim.hp)
+				}
+				if caster.hp == hp {
+					t.Fatal("caster took no damage; want C's self-damage branch")
+				}
 			}
 		})
 	}

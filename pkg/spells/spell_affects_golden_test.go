@@ -393,8 +393,7 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 		magAffectsApply(20, ch, v, SpellMetalskin, false, 0, nil)
 		wantMag := -(15 + 20/2)
 		expectAffects(t, "metalskin", v, []affectExpectation{
-			{SpellMetalskin, engine.ApplyNone, 5, wantMag, engine.AFFMetalskin},
-			{SpellMetalskin, engine.ApplyAC, 5, wantMag, engine.AFFNone},
+			{SpellMetalskin, engine.ApplyAC, 5, wantMag, engine.AFFMetalskin},
 		})
 	})
 
@@ -420,8 +419,8 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 		magAffectsApply(20, ch, v, SpellGreatPercept, false, 0, nil)
 		wantDur := 20/2 + 4
 		expectAffects(t, "great percept", v, []affectExpectation{
+			{SpellGreatPercept, engine.ApplySpell, wantDur, 0, engine.AFFSenseLife},
 			{SpellGreatPercept, engine.ApplyNone, wantDur, 0, engine.AFFDetectInvisible},
-			{SpellGreatPercept, engine.ApplyNone, wantDur, 0, engine.AFFSenseLife},
 		})
 	})
 
@@ -430,8 +429,8 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 		magAffectsApply(20, ch, v, SpellLessPercept, false, 0, nil)
 		wantDur := 20/2 + 4
 		expectAffects(t, "less percept", v, []affectExpectation{
+			{SpellLessPercept, engine.ApplySpell, wantDur, 0, engine.AFFInfrared},
 			{SpellLessPercept, engine.ApplyNone, wantDur, 0, engine.AFFDetectAlign},
-			{SpellLessPercept, engine.ApplyNone, wantDur, 0, engine.AFFInfrared},
 		})
 	})
 

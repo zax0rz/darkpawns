@@ -327,7 +327,9 @@ func TestCmdBash_AppliesWaitStateToMobTarget(t *testing.T) {
 		t.Fatalf("CmdBash returned error: %v", err)
 	}
 
-	if mob.GetWaitState() != 2 {
+	// WAIT_STATE(vict, PULSE_VIOLENCE*2) stores pulses (DP-1473 aligned the
+	// mob accessor's units with the player's).
+	if mob.GetWaitState() != 2*engine.PULSE_VIOLENCE {
 		t.Errorf("expected mob wait state 2 after bash, got %d", mob.GetWaitState())
 	}
 	if mob.GetPosition() != combat.PosSitting {
@@ -735,6 +737,54 @@ func TestCmdStrike_NoSkill(t *testing.T) {
 	}
 	if !strings.Contains(joinMessages(session.messages), "Yeah, right") {
 		t.Errorf("expected 'Yeah, right', got: %v", session.messages)
+	}
+}
+
+// TestCmdStrike_CharmedMasterGate pins do_strike's charmed-master gate
+// (src/new_cmds.c:1460-1464, DP-1502). charm is not mob-only: a charmed actor
+// whose master is the target sees "$N is just such a good friend, you simply
+// can't strike $M." and the command returns before the roll and the damage
+// protection block. Revert proof: without the gate, the command reaches
+// DoStrike and Go prints the damage-protection line instead.
+func TestCmdStrike_CharmedMasterGate(t *testing.T) {
+	world, err := game.NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Test Room", Zone: 1}},
+		Mobs: []parser.Mob{{
+			VNum: 9001, Keywords: "master", ShortDesc: "the master",
+			Level: 1, HP: parser.DiceRoll{Num: 1, Sides: 1, Plus: 10},
+		}},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(world.StopAITicker)
+	var msgs strings.Builder
+	world.MessageSink = func(_ string, msg []byte) { msgs.Write(msg) }
+
+	ch := game.NewPlayer(1, "Tester", 1001)
+	ch.SetLevel(10)
+	ch.Stats = game.CharStats{Str: 10, Int: 10, Wis: 10, Dex: 10, Con: 10, Cha: 10}
+	ch.CopyBaseAttributes()
+	ch.SetSkill(game.SkillStrike, 100)
+	ch.SetPosition(combat.PosFighting)
+	if err := world.AddPlayer(ch); err != nil {
+		t.Fatalf("AddPlayer: %v", err)
+	}
+
+	master, err := world.SpawnMob(9001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob: %v", err)
+	}
+	master.SetPosition(combat.PosStanding)
+	ch.SetAffect(game.AffCharm, true)
+	ch.SetFollowingBody(master)
+
+	session := &skillCommandSession{player: ch, world: world}
+	if err := CmdStrike(session, []string{"master"}); err != nil {
+		t.Fatalf("CmdStrike: %v", err)
+	}
+	if !strings.Contains(msgs.String(), "good friend, you simply can't strike") {
+		t.Fatalf("strike vs master got %q, want the charmed-master refusal", msgs.String())
 	}
 }
 

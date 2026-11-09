@@ -19,6 +19,10 @@ func dyingArmWorld(t *testing.T, mobVNum int, shortDesc string) (*World, *MobIns
 			LongDesc:  shortDesc + " is here.",
 			Level:     2,
 			HP:        parser.DiceRoll{Num: 1, Sides: 8, Plus: 20},
+			// C parse_simple_mob seeds INT/WIS 11 (src/db.c:1034-1035); a
+			// literal that leaves them 0 is silenced by do_say (src/act.comm.c:766-771).
+			Int: 11,
+			Wis: 11,
 		}},
 	}
 	w, err := NewWorld(parsed)

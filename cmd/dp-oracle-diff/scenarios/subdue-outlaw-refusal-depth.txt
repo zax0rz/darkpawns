@@ -1,0 +1,104 @@
+# C-first do_subdue Outlaw refusal vehicle (src/act.offensive.c:1127-1133).
+# A mortal actor with the subdue skill — but no Outlaw flag — tries to subdue
+# a same-room player victim. C refuses the actor ("You can't subdue them
+# because you are not an Outlaw!") and sends the victim a bare send_to_char
+# naming the actor twice. No combat, no roll: the refusal returns before the
+# percent draw, so the probe stream stays clean for both audiences.
+#
+# depth-case: subdue.non-outlaw-player-gate
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Subduegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Subduegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Subdoer
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Subdoer
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Subvictim
+Y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Subvictim
+y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Subdoer 'subdue' 100
+teleport Subdoer 8105
+teleport Subvictim 8105
+
+[probe:mortal]
+subdue Subvictim

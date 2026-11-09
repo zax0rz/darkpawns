@@ -265,6 +265,9 @@ func cmdSetText(s *Session, args []string, rawArgs string) error {
 			r.OlcZone = target.record.OlcZone
 			// char_to_store edits the playerfile, not C’s crash object file.
 			r.Inventory, r.Equipment = original.Inventory, original.Equipment
+			// The file branch's save_char runs on a descriptorless char, so C
+			// writes an empty host over the record (src/db.c:2379-2381).
+			r.Host = ""
 			err = db.SavePlayerIfCurrent(s.manager.db, r, original)
 		}
 		if err != nil {
@@ -411,18 +414,6 @@ func cAtoi(input string) int {
 		return int(^uint(0) >> 1)
 	}
 	return v
-}
-
-func cIsNumber(input string) bool {
-	if input == "" {
-		return true
-	}
-	for i := 0; i < len(input); i++ {
-		if input[i] < '0' || input[i] > '9' {
-			return false
-		}
-	}
-	return true
 }
 
 func setCPlayerFlag(p *game.Player, bit int, enabled bool) {
@@ -640,7 +631,7 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 		if value == "off" {
 			p.SetCondition(cond, -1)
 			ack = fmt.Sprintf("%s's %s now off.", name, field.name)
-		} else if !cIsNumber(value) {
+		} else if !game.CIsNumber(value) {
 			return "Must be 'off' or a value from 0 to 48.\r\n", false, true
 		} else {
 			valueInt = clamp(valueInt, 0, 48)
@@ -701,7 +692,7 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 	case "loadroom":
 		if value == "off" {
 			setCPlayerFlag(p, game.PlrLoadroom, false)
-		} else if !cIsNumber(value) {
+		} else if !game.CIsNumber(value) {
 			ack = "Must be 'off' or a room's virtual number.\r\n"
 		} else if s.manager.world.GetRoomInWorld(valueInt) == nil {
 			ack = "That room does not exist!"

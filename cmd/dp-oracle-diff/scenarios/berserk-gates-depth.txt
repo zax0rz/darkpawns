@@ -1,0 +1,84 @@
+# depth-case: berserk.already-affected
+# C-first witness for do_berserk's AFF_BERSERK guard, "You're unable to summon
+# your battle rage right now.", DP-1502 lists at src/new_cmds.c:2151. The
+# mortal peer walks to the trainee (POS_FIGHTING opener lane) with berserk at
+# 100, so the first `berserk` succeeds and applies AFF_BERSERK; the second takes
+# the already-raging arm. C path: src/new_cmds.c:2131-2155.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Bzgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bzgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Bzmortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Bzmortal
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Bzmortal 'berserk' 100
+
+[probe:mortal]
+berserk
+~dpclock pulse 40
+~dpclock pulse 40
+berserk

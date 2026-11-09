@@ -374,7 +374,7 @@ func (s *Session) oeditActLocked(format string) {
 	if s.manager == nil || s.manager.world == nil || s.olcActor() == nil {
 		return
 	}
-	game.Act(s.manager.world, false, s.player, nil, nil, nil, format, "", game.ToRoom)
+	game.Act(s.manager.world, true, s.player, nil, nil, nil, format, "", game.ToRoom)
 }
 
 // oeditCols mirrors get_char_cols for the OLC menus; it is the same
@@ -416,17 +416,11 @@ func oeditSprintNBit(bits uint32, names []string) string {
 // renderings, skipping words that render nothing; an all-empty result renders
 // "NOBITS ".
 func oeditSprintBitArray(words [4]int, names []string) string {
-	var sb strings.Builder
-	for _, word := range words {
-		rendered := oeditSprintNBit(uint32(word), names) // #nosec G115 -- deliberate wrap mirroring C's (bitvector_t) cast of the int word in sprintbitarray (src/utils.c:836)
-		if rendered != "NOBITS " {
-			sb.WriteString(rendered)
-		}
+	flagWords := make([]uint32, len(words))
+	for i, word := range words {
+		flagWords[i] = uint32(word) // #nosec G115 -- SprintbitArray sign-extends this C int word.
 	}
-	if sb.Len() == 0 {
-		return "NOBITS "
-	}
-	return sb.String()
+	return game.SprintbitArray(flagWords, names, len(flagWords))
 }
 
 // oeditSprintBit mirrors C's sprintbit (singular) over one int bitvector.

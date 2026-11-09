@@ -248,9 +248,17 @@ func (w *World) npcStand(me *MobInstance) {
 	me.SetPosition(combat.PosStanding)
 }
 
-// npcSay is do_say (act.comm.c) for a mobile: the room hears
+// npcSay is do_say (act.comm.c:759-821) for a mobile: the room hears
 // "$n says, '...'" (or exclaims/asks/states by the line's last character).
 func (w *World) npcSay(me *MobInstance, argument string) {
+	// C do_say refuses before any output when the speaker is too stupid to use
+	// language (src/act.comm.c:766-771). The refusal is TO_CHAR only, so for a
+	// descriptor-less mobile it is a silent no-op: the mobile does not speak.
+	// Mind bar (APPLY_INT -18, src/magic.c:1369-1371) drives ordinary mobs to 0
+	// here, and affect_total clamps the result at 0 (src/handler.c:354).
+	if me.GetWis() == 0 || me.GetInt() == 0 {
+		return
+	}
 	text := strings.TrimLeft(argument, " ")
 	if text == "" {
 		return // "Yes, but WHAT do you want to say?" to a descriptor-less mobile
@@ -344,7 +352,7 @@ func (w *World) npcVisiblePlayer(me *MobInstance, name string) *Player {
 // ported for mobiles.
 func (w *World) npcGive(me *MobInstance, argument string) {
 	objName, rest := oneArgument(argument)
-	if objName == "" || isNumber(objName) || strings.HasPrefix(strings.ToLower(objName), "all") {
+	if objName == "" || CIsNumber(objName) || strings.HasPrefix(strings.ToLower(objName), "all") {
 		if objName != "" {
 			slog.Warn("NPC give form not ported for mobiles; ignored", "mob_vnum", me.GetVNum(), "argument", argument)
 		}
@@ -355,7 +363,7 @@ func (w *World) npcGive(me *MobInstance, argument string) {
 		return
 	}
 	vict := mobRescueVictim(w, me, victName)
-	if vict == nil || vict.GetName() == me.GetName() {
+	if vict == nil || vict == combat.Combatant(me) {
 		return
 	}
 	obj := w.npcCarriedVis(me, objName)

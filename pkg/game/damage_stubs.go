@@ -145,9 +145,18 @@ func (w *World) DoSpellDamage(attacker, victim any, dam int, skill string) bool 
 		return w.ApplySkillDamage(attacker, victim, dam, skillToAttackType(skill))
 	}
 	attackType := skillToAttackType(skill)
-	return combat.TakeDamageAfterGate(killer, victimC, dam, attackType, func() {
+	dealt := combat.TakeDamageAfterGate(killer, victimC, dam, attackType, func() {
 		w.HandleDeath(victimC, killer, attackType)
 	})
+	// C's damage() calls set_fighting on both sides before applying the amount
+	// (src/fight.c:1408, 1443-1445), which is what puts them on combat_list for
+	// violence_update. TakeDamageAfterGate fills only the FIGHTING fields, so an
+	// area spell (hellfire, meteor swarm) left the fight out of the engine and
+	// no round was ever run (DP-1481 shape 2).
+	if w.combatEngine != nil {
+		_ = combat.EnrollAfterDamage(w.combatEngine, killer, victimC)
+	}
+	return dealt
 }
 
 // ApplySkillDamage is DoSpellDamage for a caller that has already asked
@@ -163,13 +172,19 @@ func (w *World) ApplySkillDamage(attacker, victim any, dam, attackType int) bool
 // damage()'s HP/position/rescue block (src/fight.c:1484-1535).
 func (w *World) ApplySkillDamageWithMessage(attacker, victim any, dam, attackType int, message func(int)) bool {
 	killer := combatantFromInterface(attacker)
-	combat.EnterDamageFighting(killer, combatantFromInterface(victim))
+	victimC := combatantFromInterface(victim)
+	combat.EnterDamageFighting(killer, victimC)
+	// fight.c:1457-1464: break the victim's following when the attacker is
+	// the master, then fade a hidden attacker — before the modifier block
+	// (:1465 onward). This seam omitted both (DP-1489).
+	combat.BreakFollowerOnDamage(killer, victimC)
+	combat.FadeHiddenAttacker(killer)
 
 	// Route the computed damage through the shared damage() modifier block
 	// (sanctuary, protect evil/good, race-hate, immortal immunity, 3000 cap)
 	// before applying — the same funnel melee and skills use (DP-1025). A hit
 	// reduced to 0 (immortal victim / sanctuary on a tiny hit) deals nothing.
-	if victimC := combatantFromInterface(victim); victimC != nil {
+	if victimC != nil {
 		dam = combat.ApplyDamageModifiers(killer, victimC, dam)
 	}
 	if v := combatantFromInterface(victim); v != nil {

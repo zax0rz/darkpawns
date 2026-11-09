@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
 type msgMockCombatant struct {
@@ -1016,7 +1017,10 @@ func TestProcessCombatPair_ParryDefersReductionToOpponentsTurn(t *testing.T) {
 	if got, want := strings.Join(player.messages, ""), "With a dazzling show of swordplay, you move into defensive position...\r\n"; got != want {
 		t.Fatalf("parry actor output = %q, want %q", got, want)
 	}
-	if got, want := strings.Join(mob.messages, ""), "Parry_warrior displays a dazzling show of swordplay, fending off your every blow!\r\n"; got != want {
+	// C sends the TO_ROOM line to the opponent too, before its TO_VICT line
+	// (src/fight.c:1959-1962).
+	if got, want := strings.Join(mob.messages, ""), "Parry_warrior displays a dazzling show of swordplay, fending off orc's every blow!\r\n"+
+		"Parry_warrior displays a dazzling show of swordplay, fending off your every blow!\r\n"; got != want {
 		t.Fatalf("parry victim output = %q, want %q", got, want)
 	}
 	if got, want := strings.Join(observerMessages, ""), "Parry_warrior displays a dazzling show of swordplay, fending off orc's every blow!\r\n"; got != want {
@@ -1094,7 +1098,8 @@ func TestPerformRound_IgnoresNonFightingCombatant(t *testing.T) {
 
 type waitStateMockCombatant struct {
 	mockCombatant
-	waitState int
+	waitState int // ch->wait (WAIT_STATE)
+	mobWait   int // GET_MOB_WAIT (the Lua bridge's timer)
 }
 
 func (m *waitStateMockCombatant) GetWaitState() int      { return m.waitState }
@@ -1105,13 +1110,16 @@ func (m *waitStateMockCombatant) DecrementWaitState() {
 	}
 }
 
-// TestProcessCombatPair_MobWithWaitStillAttacks — DP-1215: C's perform_violence
-// zeroes mob attacks only for GET_MOB_WAIT (written solely by the Lua bridge,
-// scripts.c:2017), NOT for ch->wait (written by WAIT_STATE, utils.h:462). Go's
-// scripting layer writes no mob wait, so a downed mob with a wait state (the
-// ch->wait analogue) STILL stands up and attacks in the same round — the engine
-// does NOT decrement the wait or skip the attack. (Previously the engine
-// incorrectly zeroed attacks from the generic wait field.)
+func (m *waitStateMockCombatant) GetMobWait() int       { return m.mobWait }
+func (m *waitStateMockCombatant) SetMobWait(pulses int) { m.mobWait = pulses }
+
+// TestProcessCombatPair_MobWithWaitStillAttacks — DP-1215/DP-1473: C's
+// perform_violence zeroes mob attacks only for GET_MOB_WAIT (written solely
+// by the Lua bridge, scripts.c:2015-2018), NOT for ch->wait (written by
+// WAIT_STATE, utils.h:462-464 — a bash's victim wait, invisible to the
+// violence pass). A mob carrying only a ch->wait still stands up and attacks
+// in the same round, and the engine never decrements ch->wait (only
+// descriptors drain it, comm.c:597).
 func TestProcessCombatPair_MobWithWaitStillAttacks(t *testing.T) {
 	attacker := &waitStateMockCombatant{
 		mockCombatant: mockCombatant{name: "Orc", npc: true, room: 1, position: PosSitting, fighting: &mockCombatant{name: "Hero"}, hp: 100, maxHP: 100, level: 10, ac: 10},
@@ -1136,20 +1144,138 @@ func TestProcessCombatPair_MobWithWaitStillAttacks(t *testing.T) {
 	t.Cleanup(func() { SetCallbacks(origCB) })
 	SetCallbacks(defaultCombatCallbacks())
 
-	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
+	WithRoller(NewScriptedRoller([]int{20, 1, 20, 1}), func() {
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
+	})
 
-	// The mob stands (scramble broadcast) — wait does NOT block stand-up.
+	// The mob stands (scramble broadcast) — ch->wait does NOT block stand-up.
 	if attacker.GetPosition() != PosFighting {
-		t.Errorf("mob should stand (wait does not block stand-up): pos %d, want %d", attacker.GetPosition(), PosFighting)
+		t.Errorf("mob should stand (ch->wait does not block stand-up): pos %d, want %d", attacker.GetPosition(), PosFighting)
 	}
 	if len(broadcasts) == 0 || !strings.Contains(broadcasts[0], "scrambles") {
 		t.Errorf("expected scramble broadcast, got %v", broadcasts)
 	}
-	// The wait is NOT decremented by the engine (it drains in the heartbeat,
+	// ch->wait does NOT zero attacks: the scripted hit lands beyond the
+	// scramble broadcast.
+	if len(broadcasts) < 2 {
+		t.Errorf("ch->wait must not zero attacks: broadcasts = %v", broadcasts)
+	}
+	// ch->wait is NOT decremented by the engine (it drains in the heartbeat,
 	// matching C's comm.c:597 descriptor-loop decrement, not perform_violence).
 	if attacker.waitState != 2 {
-		t.Errorf("mob wait should NOT be decremented by the engine: got %d, want 2", attacker.waitState)
+		t.Errorf("mob ch->wait should NOT be decremented by the engine: got %d, want 2", attacker.waitState)
 	}
+}
+
+// TestProcessCombatPair_MobWaitZeroesAttacksAndDrains — DP-1473: C
+// perform_violence zeroes a mob's attacks while GET_MOB_WAIT > 0 and
+// subtracts PULSE_VIOLENCE per pass (src/fight.c:1977-1981). The counter is
+// unclamped: a value under one PULSE_VIOLENCE goes negative, and the negative
+// counter still blocks the NPC stand-up because C tests !GET_MOB_WAIT
+// (src/fight.c:1982-1986).
+func TestProcessCombatPair_MobWaitZeroesAttacksAndDrains(t *testing.T) {
+	attacker := &waitStateMockCombatant{
+		mockCombatant: mockCombatant{name: "Orc", npc: true, room: 1, position: PosFighting, fighting: &mockCombatant{name: "Hero"}, hp: 100, maxHP: 100, level: 10, ac: 10},
+		mobWait:       2 * engine.PULSE_VIOLENCE,
+	}
+	defender := &mockCombatant{name: "Hero", room: 1, position: PosFighting, hp: 1000, maxHP: 1000, ac: 10}
+	attacker.SetFightingBody(defender)
+
+	ce := NewCombatEngine()
+	if err := ce.StartCombat(attacker, defender); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+	var broadcasts []string
+	ce.BroadcastFunc = func(roomVNum int, message string, excludedBodies []Combatant) {
+		broadcasts = append(broadcasts, message)
+	}
+	origCB := GetCallbacks()
+	t.Cleanup(func() { SetCallbacks(origCB) })
+	SetCallbacks(defaultCombatCallbacks())
+
+	startHP := defender.GetHP()
+	// Per-pass draw order: the attacks-count roll runs before the wait gate,
+	// so passes 1-2 each consume one value while zeroed; pass 3 draws the
+	// count (20: no extra attack), an auto-hit to-roll (20) and the bare-hand
+	// die (1).
+	WithRoller(NewScriptedRoller([]int{20, 1, 20, 20, 1, 20, 1}), func() {
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
+		if len(broadcasts) != 0 {
+			t.Fatalf("GET_MOB_WAIT must zero attacks: broadcasts = %v", broadcasts)
+		}
+		if got := attacker.GetMobWait(); got != engine.PULSE_VIOLENCE {
+			t.Fatalf("GET_MOB_WAIT after one pass = %d, want %d", got, engine.PULSE_VIOLENCE)
+		}
+
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
+		if got := attacker.GetMobWait(); got != 0 {
+			t.Fatalf("GET_MOB_WAIT after two passes = %d, want 0", got)
+		}
+
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
+	})
+	// The scripted rolls were never consumed while attacks were zeroed: the
+	// defender is untouched until the counter clears, and the round after
+	// clearance attacks again.
+	if got := defender.GetHP(); got >= startHP {
+		t.Errorf("attacks did not resume after the timer cleared: defender HP = %d, want < %d", got, startHP)
+	}
+	if len(broadcasts) == 0 {
+		t.Errorf("no attack output after the timer cleared: broadcasts = %v", broadcasts)
+	}
+}
+
+// TestProcessCombatPair_MobWaitBlocksStandUp — DP-1473: the NPC scramble to
+// its feet is gated on a clear GET_MOB_WAIT (src/fight.c:1982-1986), and C
+// never clamps the counter, so a negative value keeps blocking the stand-up.
+func TestProcessCombatPair_MobWaitBlocksStandUp(t *testing.T) {
+	attacker := &waitStateMockCombatant{
+		mockCombatant: mockCombatant{name: "Orc", npc: true, room: 1, position: PosSitting, fighting: &mockCombatant{name: "Hero"}, hp: 100, maxHP: 100, level: 10, ac: 10},
+		mobWait:       30, // 1.5 PULSE_VIOLENCE: one pass leaves it negative
+	}
+	defender := &mockCombatant{name: "Hero", room: 1, position: PosFighting, hp: 1000, maxHP: 1000, ac: 10}
+	attacker.SetFightingBody(defender)
+
+	ce := NewCombatEngine()
+	if err := ce.StartCombat(attacker, defender); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+	attacker.SetPosition(PosSitting)
+	var broadcasts []string
+	ce.BroadcastFunc = func(roomVNum int, message string, excludedBodies []Combatant) {
+		broadcasts = append(broadcasts, message)
+	}
+	origCB := GetCallbacks()
+	t.Cleanup(func() { SetCallbacks(origCB) })
+	SetCallbacks(defaultCombatCallbacks())
+
+	WithRoller(NewScriptedRoller([]int{20, 1}), func() {
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
+		if attacker.GetPosition() != PosSitting {
+			t.Fatalf("mob stood while GET_MOB_WAIT = %d", attacker.GetMobWait())
+		}
+		if got := attacker.GetMobWait(); got != 30-engine.PULSE_VIOLENCE {
+			t.Fatalf("GET_MOB_WAIT after one pass = %d, want %d", got, 30-engine.PULSE_VIOLENCE)
+		}
+		if len(broadcasts) != 0 {
+			t.Fatalf("zeroed round emitted output: %v", broadcasts)
+		}
+
+		// 10 - 20 = -10: unclamped, and the negative counter still blocks.
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
+		if attacker.GetPosition() != PosSitting {
+			t.Fatalf("mob stood while GET_MOB_WAIT is negative (%d)", attacker.GetMobWait())
+		}
+		if got := attacker.GetMobWait(); got != 30-2*engine.PULSE_VIOLENCE {
+			t.Fatalf("GET_MOB_WAIT must drain unclamped: got %d, want %d", got, 30-2*engine.PULSE_VIOLENCE)
+		}
+
+		attacker.SetMobWait(0)
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
+		if attacker.GetPosition() != PosFighting {
+			t.Fatal("mob did not stand once GET_MOB_WAIT cleared")
+		}
+	})
 }
 
 // TestProcessCombatPair_MobStandsWhenDowned — DP-1215: a downed mob (below

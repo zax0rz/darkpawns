@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"unicode"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/errlog"
@@ -228,36 +227,9 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 	}
 	mob.ShortDesc = readMobTildeLine(lb.Text())
 
-	// C source (parse_mobile): auto-lowercase articles in short_desc
-	// "A", "An", "The" at start of short desc -> "a", "an", "the"
-	{
-		sd := mob.ShortDesc
-		if sd != "" {
-			// Find first run of non-space starting word
-			trimmed := strings.TrimLeftFunc(sd, unicode.IsSpace)
-			if trimmed != sd {
-				// Skip leading spaces, store them
-				leadLen := len(sd) - len(trimmed)
-				// Find first word
-				fields := strings.Fields(trimmed)
-				if len(fields) > 0 {
-					lw := strings.ToLower(fields[0])
-					if lw == "a" || lw == "an" || lw == "the" {
-						offset := leadLen
-						mob.ShortDesc = sd[:offset] + lw + sd[offset+len(fields[0]):]
-					}
-				}
-			} else {
-				fields := strings.Fields(sd)
-				if len(fields) > 0 {
-					lw := strings.ToLower(fields[0])
-					if lw == "a" || lw == "an" || lw == "the" {
-						mob.ShortDesc = lw + sd[len(fields[0]):]
-					}
-				}
-			}
-		}
-	}
+	// C parse_mobile lowercases the leading article of short_descr
+	// (src/db.c:1294-1298); cFixShortDescArticle ports that fix.
+	mob.ShortDesc = cFixShortDescArticle(mob.ShortDesc)
 
 	// Long description (ends with ~)
 	if !lb.Scan() {

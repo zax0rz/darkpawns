@@ -98,7 +98,7 @@ func DoAction(w *World, ch *Player, cmd string, argument string) bool {
 
 	// Check if target is self
 	targetActor := target.(Actor)
-	if target.GetName() == ch.Name {
+	if isSocialSelf(target, ch) {
 		if message, ok := socialMessage(social, socCharAuto); ok {
 			// C sends char_auto with send_to_char(), not act(). Preserve the
 			// authored bytes and any literal $-codes in this actor-only path.
@@ -156,7 +156,7 @@ func DoInsult(w *World, ch *Player, argument string) {
 		return
 	}
 
-	if target.GetName() == ch.Name {
+	if isSocialSelf(target, ch) {
 		ch.SendMessage("You feel insulted.\r\n")
 		return
 	}
@@ -221,32 +221,27 @@ func extractArg(argument string) string {
 	return arg1
 }
 
-// findSocialTarget finds a character by name, checking mobs first then players
-// like C get_char_room_vis() (src/handler.c:1277-1300).
+// findSocialTarget resolves a social's victim the way C does: do_action and
+// do_insult both call get_char_room_vis (src/act.social.c:132, :160 →
+// src/handler.c:1277-1300), so "me"/"self", N.<name> ordinals, 0.<name>
+// player-only matches, CAN_SEE and the combined room order all apply.
 func (w *World) findSocialTarget(observer *Player, name string) socialTarget {
-	vnum := observer.GetRoomVNum()
-	nameLower := strings.ToLower(name)
-	if nameLower == "self" || nameLower == "me" {
-		return observer
+	t, ok := w.resolveCharInRoomAt(observer, observer.GetRoomVNum(), name)
+	if !ok {
+		return nil
 	}
-
-	// Check mobs in the room
-	mobs := w.GetMobsInRoom(vnum)
-	for _, m := range mobs {
-		if isnameWithAbbrevs(name, charKeywords(m)) && canSeeForPers(observer, m) {
-			return m
-		}
+	if t.Player != nil {
+		return t.Player
 	}
+	return t.Mob
+}
 
-	// Check players
-	players := w.GetPlayersInRoom(vnum)
-	for _, p := range players {
-		if isnameWithAbbrevs(name, charKeywords(p)) && canSeeForPers(observer, p) {
-			return p
-		}
-	}
-
-	return nil
+// isSocialSelf mirrors C's vict == ch identity test (src/act.social.c:134,
+// :166): the self branch triggers when the resolver answered with the actor,
+// not when a target merely shares the actor's name.
+func isSocialSelf(target socialTarget, ch *Player) bool {
+	p, ok := target.(*Player)
+	return ok && p == ch
 }
 
 // roomMessageExcludeTwo sends a message to all players in a room except two named ones.

@@ -1,0 +1,21 @@
+go file:line	call	C file:line	C hide flag	Go hide after fix
+pkg/game/item_transfer.go:83	$n gets $p from $P.	src/act.item.c:209	TRUE	true
+pkg/game/item_transfer.go:164	$n gets $p.	src/act.item.c:279	TRUE	true
+pkg/game/item_transfer.go:330	$n drops $p. (perform_drop)	src/act.item.c:494	TRUE	true
+pkg/game/item_transfer.go:358	$n drops <money>.	src/act.item.c:460	FALSE	false
+pkg/game/item_transfer.go:466	$n gives $p to $N.	src/act.item.c:699	TRUE	true
+pkg/game/item_transfer.go:552	$n gives <money> to $N.	src/act.item.c:752	TRUE	true
+pkg/game/item_donate.go:25	$n drops $p.<vanish>	src/act.item.c:494 (perform_drop)	TRUE	true
+pkg/game/item_donate.go:70	$n drops <money> which disappears in a puff of smoke!	src/act.item.c:468	FALSE	false
+pkg/game/item_donate.go:75	$n throws some gold into the air...	src/act.item.c:449	FALSE	false
+pkg/game/item_donate.go:158	$n has been rewarded by the gods!	src/act.item.c:663	TRUE	true
+pkg/game/char_mgmt.go:63	$n's light begins to flicker and fade.	src/handler.c:1059	FALSE	false
+pkg/game/char_mgmt.go:71	$n's light sputters out and dies.	src/handler.c:1063	FALSE	false
+pkg/game/item_container.go:20	$n puts $p in $P.	src/act.item.c:62	TRUE	true
+pkg/game/item_equipment.go:79	wear_messages[where][0]	src/act.item.c:1410	TRUE	true
+pkg/game/item_equipment.go:182	$n is zapped by $p and instantly lets go of it.	src/handler.c:707	FALSE	false
+pkg/game/item_equipment.go:529	$n stops using $p.	src/act.item.c:1727	TRUE	true
+pkg/session/oedit.go:373	oeditActLocked (starts/stops using OLC)	src/olc.c:275,514	TRUE	true
+pkg/session/medit.go:277	meditActLocked (starts/stops using OLC)	src/olc.c:275,514	TRUE	true
+pkg/session/sedit.go:183	$n starts using OLC.	src/olc.c:275	TRUE	true
+pkg/session/sedit.go:270	$n stops using OLC.	src/olc.c:514	TRUE	true

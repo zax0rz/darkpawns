@@ -1,0 +1,84 @@
+# DP-1473 proof: a bashed mob can flee. do_bash's WAIT_STATE writes the
+# victim's ch->wait (src/act.offensive.c:490-494 via src/utils.h:462-464),
+# but do_flee's mob gate reads GET_MOB_WAIT only
+# (src/act.offensive.c:377-381), so the bashed trainee flees once the
+# violence pass stands it up (src/fight.c:1982-1986). The split keeps the
+# counters apart; the merged field used to refuse the flee silently.
+# C witness (seed 1, glm-verify-leads-targeted): "A guard trainee panics,
+# and attempts to flee!" followed by the leave line.
+# depth-case: flee.bashed-mob-can-flee
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 all 8104 0
+spawn-mob 16303 1 8105 163
+
+[setup:oracle]
+Pflead
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pflead
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Pflatt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker]
+Pflatt
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Pflatt level 5
+skillset Pflatt 'bash' 100
+set Pflatt maxhit 500
+set Pflatt hit 500
+goto 8105
+teleport Pflatt 8105
+
+[probe]
+
+send:attacker bash trainee
+~dpclock pulse 20
+force trainee flee

@@ -745,8 +745,8 @@ func CmdShoot(s SessionInterface, args []string) error {
 		return s.SendMessage("Alas, you cannot shoot that way...\r\n")
 	}
 	if exit.ExitInfo&parser.ExitClosed != 0 {
-		if keyword := strings.Fields(exit.Keywords); len(keyword) > 0 {
-			return s.SendMessage(fmt.Sprintf("The %s seems to be closed.\r\n", keyword[0]))
+		if exit.Keywords != "" {
+			return s.SendMessage(fmt.Sprintf("The %s seems to be closed.\r\n", game.CFName(exit.Keywords)))
 		}
 		return s.SendMessage("It seems to be closed.\r\n")
 	}
@@ -790,7 +790,12 @@ func shootTargetGate(s SessionInterface, target combat.Combatant) (bool, error) 
 	return false, nil
 }
 
-// CmdSubdue handles the subdue command (C-10).
+// CmdSubdue handles the subdue command (C-10). C checks the skill, then
+// FIGHTING(ch), then the target (src/act.offensive.c:1091-1105). A fighting
+// actor usually never gets here (the interpreter's POS_STANDING gate), but one
+// bashed to sitting who stands again is POS_STANDING while still fighting
+// (src/act.movement.c:707-710; src/fight.c:1992), so the busy arm must come
+// before the "Subdue who?" lookup.
 func CmdSubdue(s SessionInterface, args []string) error {
 	ch, err := skillContext(s, game.SkillSubdue)
 	if err != nil {
@@ -799,18 +804,23 @@ func CmdSubdue(s SessionInterface, args []string) error {
 	if ch == nil {
 		return nil
 	}
+	if ch.GetFightingBody() != nil {
+		return s.SendMessage("You're too busy right now!\r\n")
+	}
 	if len(args) == 0 {
 		return s.SendMessage("Subdue who?\r\n")
 	}
 	world := s.GetWorld()
 	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
 	if !found {
-		return s.SendMessage("They aren't here.\r\n")
+		// C's get_char_room_vis failure prints the same "Subdue who?" as a
+		// missing argument (src/act.offensive.c:1101-1105).
+		return s.SendMessage("Subdue who?\r\n")
 	}
 	if target == ch {
 		return s.SendMessage("Aren't we funny today...\r\n")
 	}
-	return sendSkillResult(s, ch, target, game.DoSubdue(ch, target))
+	return sendSkillResult(s, ch, target, game.DoSubdue(ch, target, world))
 }
 
 // CmdSleeper handles the sleeper hold command (C-10).
@@ -1093,9 +1103,18 @@ func CmdStrike(s SessionInterface, args []string) error {
 		return nil
 	}
 
+	// C's charmed-master gate (src/new_cmds.c:1460-1464) precedes the mount
+	// refusal: a charmed actor whose master is the target cannot strike it.
+	// charm is not mob-only — a God can charm a player, so the port must test
+	// the player's charm/master link too (combat-entry-charm-relations proves
+	// the identical hit arm).
+	if world.IsCharmedI(ch) && world.FollowingBody(ch) == target {
+		game.Act(world, false, ch, target, nil, nil,
+			"$N is just such a good friend, you simply can't strike $M.", "", game.ToChar)
+		return nil
+	}
+
 	// new_cmds.c:1466-1470 — the mount refusal precedes the roll and WAIT_STATE.
-	// C's AFF_CHARM arm cannot be reached for a player (charm is mob-only in
-	// this tree), so the port has no player master link to test.
 	if ch.IsMounted() {
 		return s.SendMessage("Dismount first!\r\n")
 	}
@@ -1421,7 +1440,11 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		if result.MessageToCh != "" {
 			// C act() CAPs the assembled string (comm.c:2477); lines that begin
 			// with $e/$n render lowercase and must be capitalized here.
-			_ = s.SendMessage(skillMessageTerminator(game.CapitalizeSentence(result.MessageToCh)))
+			chMessage := game.CapitalizeSentence(result.MessageToCh)
+			if !result.NoMessageToChTerminator {
+				chMessage = skillMessageTerminator(chMessage)
+			}
+			_ = s.SendMessage(chMessage)
 		}
 		if result.MessageToVict != "" && target != nil {
 			if p, ok := target.(*game.Player); ok {
@@ -1510,7 +1533,11 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	} else if result.MessageToCh != "" && !result.MessageToChAfterRoom {
 		// C act() CAPs the assembled string (comm.c:2477); lines that begin
 		// with $e/$n render lowercase and must be capitalized here.
-		_ = s.SendMessage(skillMessageTerminator(game.CapitalizeSentence(result.MessageToCh)))
+		chMessage := game.CapitalizeSentence(result.MessageToCh)
+		if !result.NoMessageToChTerminator {
+			chMessage = skillMessageTerminator(chMessage)
+		}
+		_ = s.SendMessage(chMessage)
 	}
 
 	// C's failed cutthroat arm calls hit(ch, victim, SKILL_CUTTHROAT)
@@ -1745,7 +1772,11 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		}
 	}
 	if result.MessageToChAfterRoom && result.MessageToCh != "" {
-		_ = s.SendMessage(game.CapitalizeSentence(result.MessageToCh) + "\r\n")
+		if result.NoMessageToChTerminator {
+			_ = s.SendMessage(game.CapitalizeSentence(result.MessageToCh))
+		} else {
+			_ = s.SendMessage(game.CapitalizeSentence(result.MessageToCh) + "\r\n")
+		}
 	}
 	if result.DeferredImproveAfterActor {
 		for _, skill := range result.DeferredImprove {
@@ -2070,8 +2101,10 @@ func CmdPalm(s SessionInterface, args []string) error {
 
 	// No early no-argument return: C consumes its number(1,101) draw before
 	// the "Palm what?" branch (src/new_cmds.c:2110-2119), and DoPalm draws
-	// first, so an empty argument must reach it.
-	objName := strings.Join(args, " ")
+	// first, so an empty argument must reach it. C parses the argument with
+	// one_argument (fill words skipped, src/interpreter.c:1267-1284), so only
+	// the first non-fill word reaches get_from_room.
+	objName, _ := game.OneArgument(strings.Join(args, " "))
 	world := s.GetWorld()
 	result := game.DoPalm(ch, objName, world)
 	return sendSkillResult(s, ch, nil, result)

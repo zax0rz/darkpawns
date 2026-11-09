@@ -1,0 +1,80 @@
+# do_subdue interpreter-gate vehicle (src/interpreter.c:748,923-946). An
+# ordinary fighting actor is POS_FIGHTING, so command_interpreter refuses
+# subdue (POS_STANDING) with "No way!  You're fighting for your life!"
+# before do_subdue runs. A mortal actor with the subdue skill is jumped by the
+# level-2 trainee guard (forced "hit", so the actor is fighting without a
+# wait) and then tries to subdue: both engines must emit that refusal.
+# do_subdue's own busy arm (src/act.offensive.c:1096-1100) is still reachable
+# by a fighting actor who was bashed to sitting and stood up; that path is
+# not witnessed here (subdue.tsv subdue.busy).
+#
+# depth-case: subdue.busy-interpreter-gate
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Subduegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Subduegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Subdoer
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Subdoer
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Subdoer 'subdue' 100
+teleport Subdoer 8105
+force trainee hit Subdoer
+
+[probe:mortal]
+subdue trainee

@@ -4,7 +4,6 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 )
 
@@ -80,7 +79,7 @@ func (w *World) performGetFromContainer(ch *Player, obj, cont *ObjectInstance, m
 			return
 		}
 		w.actToChar(ch, "You get $p from $P.", obj, cont)
-		w.actToRoom(ch, "$n gets $p from $P.", obj, cont)
+		w.actToRoom(ch, "$n gets $p from $P.", obj, cont, true)
 		w.getCheckMoney(ch, obj)
 		w.fireOnGet(ch, obj)
 	}
@@ -146,8 +145,11 @@ func (w *World) getFromContainer(ch *Player, cont *ObjectInstance, arg string, m
 	}
 }
 
-// performGetFromRoom picks up an item from the room floor
-func (w *World) performGetFromRoom(ch *Player, obj *ObjectInstance) {
+// performGetFromRoom picks up an item from the room floor. quiet ports
+// perform_get_from_room's third argument (src/act.item.c:269-283): a quiet
+// pickup (do_palm's prob>percent, src/new_cmds.c:2122) suppresses the room
+// "$n gets $p." act and instead trains SKILL_PALM, exactly as C does.
+func (w *World) performGetFromRoom(ch *Player, obj *ObjectInstance, quiet bool) {
 	// The room snapshot is stale: a concurrent getter may already have taken
 	// this object. Re-moving an extracted object would resurrect it, and for a
 	// money pile it would re-credit the amount (CWE-362/CWE-367).
@@ -161,13 +163,18 @@ func (w *World) performGetFromRoom(ch *Player, obj *ObjectInstance) {
 			return
 		}
 		w.actToChar(ch, "You get $p.", obj, nil)
-		w.actToRoom(ch, "$n gets $p.", obj, nil)
+		if !quiet {
+			w.actToRoom(ch, "$n gets $p.", obj, nil, true)
+		}
+		if quiet {
+			improveSkill(ch, SkillPalm)
+		}
 		w.getCheckMoney(ch, obj)
 		w.fireOnGet(ch, obj)
 	}
 }
 
-func (w *World) getFromRoom(ch *Player, arg string) {
+func (w *World) getFromRoom(ch *Player, arg string, quiet bool) {
 	// C get_from_room (act.item.c:297) rejects a mounted actor before any
 	// lookup: a rider cannot reach objects on the floor.
 	if ch.IsMounted() {
@@ -179,7 +186,7 @@ func (w *World) getFromRoom(ch *Player, arg string) {
 	if dotmode == findIndiv {
 		for _, obj := range items {
 			if isnameWithAbbrevs(arg, obj.GetKeywords()) && canSeeObject(ch, obj) {
-				w.performGetFromRoom(ch, obj)
+				w.performGetFromRoom(ch, obj, quiet)
 				return
 			}
 		}
@@ -196,7 +203,7 @@ func (w *World) getFromRoom(ch *Player, arg string) {
 	for _, obj := range items {
 		if canSeeObject(ch, obj) && (dotmode == findAll || isnameWithAbbrevs(keyword, obj.GetKeywords())) {
 			found = true
-			w.performGetFromRoom(ch, obj)
+			w.performGetFromRoom(ch, obj, quiet)
 		}
 	}
 	if found {
@@ -239,7 +246,7 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 		return true
 	}
 	if arg2 == "" {
-		w.getFromRoom(ch, arg1)
+		w.getFromRoom(ch, arg1, false)
 		return true
 	}
 
@@ -327,7 +334,7 @@ func (w *World) performDropNamed(ch *Player, obj *ObjectInstance, sname string) 
 		return
 	}
 	w.actToChar(ch, fmt.Sprintf("You %s $p.", sname), obj, nil)
-	w.actToRoom(ch, fmt.Sprintf("$n %ss $p.", sname), obj, nil)
+	w.actToRoom(ch, fmt.Sprintf("$n %ss $p.", sname), obj, nil, true)
 	w.fireOnDrop(ch, obj)
 }
 
@@ -355,7 +362,7 @@ func (w *World) performDropGold(ch *Player, amount int) {
 	}
 	ch.SetWaitState(1)
 	ch.SendMessage("You drop some gold.\r\n")
-	w.actToRoom(ch, fmt.Sprintf("$n drops %s.", createMoneyDesc(amount)), nil, nil)
+	w.actToRoom(ch, fmt.Sprintf("$n drops %s.", createMoneyDesc(amount)), nil, nil, false)
 }
 
 // doDrop handles the drop command
@@ -369,7 +376,8 @@ func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 	}
 	sname := "drop"
 
-	if amount, err := strconv.Atoi(arg1); err == nil {
+	if CIsNumber(arg1) {
+		amount := atoi(arg1)
 		arg2, _ := oneArgument(rest)
 		if arg2 == "coin" || arg2 == "coins" {
 			w.performDropGold(ch, amount)
@@ -430,6 +438,16 @@ func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 }
 
 // performGive gives an object to a player
+// performGiveAny dispatches across the Go player/mob split of C perform_give
+// (src/act.item.c:667-706), whose single body serves any victim kind.
+func (w *World) performGiveAny(ch *Player, vict CharTarget, obj *ObjectInstance) {
+	if vict.Mob != nil {
+		w.performGiveToMob(ch, vict.Mob, obj)
+		return
+	}
+	w.performGive(ch, vict.Player, obj)
+}
+
 func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {
 	if obj.HasExtraFlag(0, extraFlagNoDrop) && ch.GetLevel() < lvlImmort {
 		w.actToChar(ch, "You can't let go of $p!!  Yeech!", obj, nil)
@@ -453,7 +471,7 @@ func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {
 	}
 	w.actToChar(ch, "You give $p to $N.", obj, vict)
 	actToVictim(ch, vict, "$n gives you $p.", obj, nil)
-	w.actToRoomExclude(ch, vict, "$n gives $p to $N.", obj, vict)
+	w.actToRoomExclude(ch, vict, "$n gives $p to $N.", obj, vict, true)
 }
 
 func (w *World) performGiveToMob(ch *Player, vict *MobInstance, obj *ObjectInstance) {
@@ -494,22 +512,26 @@ func (w *World) performGiveToMob(ch *Player, vict *MobInstance, obj *ObjectInsta
 	}
 }
 
-// giveFindVict finds the victim for a give command
-func (w *World) giveFindVict(ch *Player, arg string) *Player {
+// giveFindVict finds the victim for a give command. C give_find_vict
+// (src/act.item.c:709-728) resolves the target with get_char_room_vis
+// (src/handler.c:1277-1300), which answers "me"/"self" with the giver
+// itself, honours N.<name> ordinals and CAN_SEE, and scans the room's
+// people list in arrival order with players and mobs together.
+func (w *World) giveFindVict(ch *Player, arg string) (CharTarget, bool) {
 	if arg == "" {
 		ch.SendMessage("To who?\r\n")
-		return nil
+		return CharTarget{}, false
 	}
-	vict := w.FindPlayerInRoom(ch.GetRoomVNum(), arg)
-	if vict == nil {
+	vict, ok := w.ResolveCharInRoom(ch, arg)
+	if !ok {
 		ch.SendMessage(NoPersonHere)
-		return nil
+		return CharTarget{}, false
 	}
-	if vict == ch {
+	if vict.Player == ch {
 		ch.SendMessage("What's the point of that?\r\n")
-		return nil
+		return CharTarget{}, false
 	}
-	return vict
+	return vict, true
 }
 
 // performGiveGold gives gold coins to a player
@@ -535,13 +557,16 @@ func (w *World) performGiveGold(ch *Player, vict *Player, amount int) {
 	// C sprintf()s the amount/money_desc into the string before act(); the act
 	// helpers only substitute $n/$N, so pre-format here.
 	actToVictim(ch, vict, fmt.Sprintf("$n gives you %d gold coins.", amount), nil, nil)
-	w.actToRoomExclude(ch, vict, fmt.Sprintf("$n gives %s to $N.", createMoneyDesc(amount)), nil, vict)
+	w.actToRoomExclude(ch, vict, fmt.Sprintf("$n gives %s to $N.", createMoneyDesc(amount)), nil, vict, true)
 }
 
 // doGiveCoins handles the coin form of give, including mob bribes.
 func (w *World) doGiveCoins(ch *Player, victName string, amount int) bool {
-	mob := w.FindMobInRoom(ch.GetRoomVNum(), victName)
-	if mob != nil {
+	vict, found := w.giveFindVict(ch, victName)
+	if !found {
+		return true
+	}
+	if mob := vict.Mob; mob != nil {
 		// C perform_give_gold (src/act.item.c:738-754): the amount
 		// and purse checks come before the bribe, and a god's purse is
 		// never checked or charged.
@@ -566,10 +591,7 @@ func (w *World) doGiveCoins(ch *Player, victName string, amount int) bool {
 		}
 		return true
 	}
-	vict := w.giveFindVict(ch, victName)
-	if vict != nil {
-		w.performGiveGold(ch, vict, amount)
-	}
+	w.performGiveGold(ch, vict.Player, amount)
 	return true
 }
 
@@ -584,7 +606,7 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 	}
 
 	// Check if first arg is a number (gold)
-	if isNumber(arg1) {
+	if CIsNumber(arg1) {
 		amount := atoi(arg1)
 		arg2, rest2 := oneArgument(rest)
 		if arg2 == "coins" || arg2 == "coin" {
@@ -597,28 +619,13 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 	}
 
 	// Give object — vict name is the next token after the object name.
+	// C do_give resolves one victim through give_find_vict and then runs the
+	// dotmode logic for it whatever it is (src/act.item.c:798-830); the mob
+	// and player bodies share the same perform_give.
 	victName, _ := oneArgument(rest)
 
-	// Check mob before player — ongive/item path
-	mob := w.FindMobInRoom(ch.GetRoomVNum(), victName)
-	if mob != nil {
-		var obj *ObjectInstance
-		for _, o := range ch.Inventory.Snapshot() {
-			if isnameWithAbbrevs(arg1, o.GetKeywords()) {
-				obj = o
-				break
-			}
-		}
-		if obj == nil {
-			ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(arg1), arg1))
-			return true
-		}
-		w.performGiveToMob(ch, mob, obj)
-		return true
-	}
-
-	vict := w.giveFindVict(ch, victName)
-	if vict == nil {
+	vict, found := w.giveFindVict(ch, victName)
+	if !found {
 		return true
 	}
 
@@ -636,7 +643,7 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 			ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(arg1), arg1))
 			return true
 		}
-		w.performGive(ch, vict, obj)
+		w.performGiveAny(ch, vict, obj)
 	} else {
 		// C checks the empty-keyword ("give all.") case before the
 		// empty-inventory case (act.item.c:814-819).
@@ -657,7 +664,7 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 				continue
 			}
 			if dotmode == findAll || isnameWithAbbrevs(keyword, obj.GetKeywords()) {
-				w.performGive(ch, vict, obj)
+				w.performGiveAny(ch, vict, obj)
 			}
 		}
 	}

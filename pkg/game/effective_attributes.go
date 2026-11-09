@@ -61,6 +61,7 @@ func (p *Player) CopyBaseAttributes() {
 }
 
 func (p *Player) affectTotalLocked() {
+	p.affectBitClear = 0
 	worn := COrderedWorn(p)
 	p.RaceHates = raceHateSlotsForItems(worn)
 	p.equipmentAffectSet, p.equipmentAffectClear = equipmentSpellAffectOverlay(worn, p.ActiveAffects)

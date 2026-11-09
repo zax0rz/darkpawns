@@ -71,7 +71,7 @@ Both agents found the same introducing commit for all 190 tests, but named the s
 
 - Two packages, two models, one brief family.
 - MiMo's extra rows and the excluded test change the counts slightly; the agreement figures use the 190 single-row tests.
-- The frontier pass (Sol) hasn't run on spells yet.
+- The frontier pass (Sol) ran on 2026-11-06: see [PF-108](2026-11-06-the-frontier-pass-finds-the-live-divergences.md).
 
 ## Ledger
 

@@ -108,11 +108,12 @@ set player ItemView level 30
 set player ItemView maxhit 5000
 set player ItemView hit 5000
 set player ItemView align -1000
+set player ItemMage str 18
 set player ItemMage level 30
-get twisted
-wear twisted
+get staff
+wear staff
 
 
 [probe]
 equipment
-use twisted
+use staff

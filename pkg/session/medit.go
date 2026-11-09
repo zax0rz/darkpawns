@@ -278,7 +278,7 @@ func (s *Session) meditActLocked(actType int, format string) {
 	if s.manager == nil || s.manager.world == nil || s.olcActor() == nil {
 		return
 	}
-	game.Act(s.manager.world, false, s.player, nil, nil, nil, format, "", actType)
+	game.Act(s.manager.world, true, s.player, nil, nil, nil, format, "", actType)
 }
 
 // meditDisplayLongDesc mirrors C's fread_string output for the mob long
@@ -400,22 +400,13 @@ func meditSprintBitArray(set []string, parserNames, displayNames []string) strin
 	for _, name := range set {
 		inSet[name] = true
 	}
-	var sb strings.Builder
-	// C's sprintnbit walks bits 0..n in order; iterate the parser bit table
-	// (which mirrors the C bit positions) rather than the set's storage order.
+	words := make([]uint32, 4)
 	for i, parserName := range parserNames {
-		if i >= len(displayNames) {
-			break
-		}
 		if inSet[parserName] {
-			sb.WriteString(displayNames[i])
-			sb.WriteString(" ")
+			words[i/32] |= 1 << uint(i%32)
 		}
 	}
-	if sb.Len() == 0 {
-		return "NOBITS "
-	}
-	return sb.String()
+	return game.SprintbitArray(words, displayNames, len(words))
 }
 
 // meditSprintScriptFlags mirrors sprintbit over mscript_bits for the script

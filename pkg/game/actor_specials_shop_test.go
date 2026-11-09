@@ -1,6 +1,7 @@
 package game
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -84,5 +85,43 @@ func TestSpecShopKeeperActorPortsC(t *testing.T) {
 	keeper.SetPosition(combat.PosSleeping)
 	if got := specShopKeeperActor(w, ctx, keeper, "steal", ""); got != SpecialDeclined {
 		t.Fatalf("steal beside a sleeping keeper = %v, want SpecialDeclined", got)
+	}
+}
+
+// TestSpecShopKeeperActorKenderActorShouts pins the steal arm's Kender gate:
+// C reads GET_RACE(ch) — the acting body's race (src/shop.c:973; a mobile's
+// mob_specials.race per src/utils.h:347) — not the keeper's. A Kender actor
+// draws the keeper's shout; any other race does not (DP-1474).
+func TestSpecShopKeeperActorKenderActorShouts(t *testing.T) {
+	w, messages := newActorRoomTestWorld(t, parser.Room{VNum: 1001, Name: "Shop"})
+	keeper := newSpecProcTestMob(t, w, 1001, 10)
+	keeper.SetPosition(combat.PosStanding)
+	shops := NewShopManager()
+	shops.AddShop(&Shop{VNum: 1, KeeperVNum: keeper.GetVNum(), Rooms: []int{1001}, OpenHour1: 0, CloseHour1: 23, OpenHour2: 0, CloseHour2: 23})
+	w.SetShopManager(shops)
+	witness := NewPlayer(1, "Witness", 1001)
+	witness.SetPosition(combat.PosStanding)
+	if err := w.AddPlayer(witness); err != nil {
+		t.Fatal(err)
+	}
+
+	kender := newSpecProcTestMob(t, w, 1001, 1)
+	kender.Proto().Race = RaceKender
+	if got := specShopKeeperActor(w, CharacterSpecialContext{Actor: kender}, keeper, "steal", ""); got != SpecialHandled {
+		t.Fatalf("steal as a Kender = %v, want SpecialHandled", got)
+	}
+	if got := messages[witness.GetName()]; !strings.Contains(got, "Stinkin' Kender scum!") {
+		t.Fatalf("witness messages = %q, want the keeper's Kender shout", got)
+	}
+
+	for name := range messages {
+		delete(messages, name)
+	}
+	other := newSpecProcTestMob(t, w, 1001, 1)
+	if got := specShopKeeperActor(w, CharacterSpecialContext{Actor: other}, keeper, "steal", ""); got != SpecialHandled {
+		t.Fatalf("steal as a non-Kender = %v, want SpecialHandled", got)
+	}
+	if got := messages[witness.GetName()]; strings.Contains(got, "Stinkin' Kender scum!") {
+		t.Fatalf("witness messages = %q, want no Kender shout for a non-Kender actor", got)
 	}
 }

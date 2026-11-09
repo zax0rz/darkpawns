@@ -1,0 +1,170 @@
+# OLC-configured CAST_WAND live route for mirror image; item level 20 (caster level 30).
+# DP-1458: C spawns the clone at a literal level 1 — create_mobile(ch, MOB_CLONE, 1,
+# FALSE) (src/spells.c:1136) — whatever the wand's spell level is, so `stat` on the
+# clone answers to its prototype keywords (the C early return on a NULL title
+# happens before SET_NAME, so the clone stays "clone") and shows Lev 1, not 20.
+# OLC access: ItemBuilder remains level 35 and edits through its own descriptor because oedit requires LVL_BUILDER (src/interpreter.c:592; src/olc.h:54; src/structs.h:620); ItemMage remains level 30 for item use, and object value[0] supplies the spell level.
+# C route: src/act.other.c:908-974; src/spell_parser.c:452-459,610-658,724-783; spell body: src/spells.c:1132-1164; spawn stats: src/new_cmds2.c:588-618.
+# Active spello definitions: src/spell_parser.c:1531.
+# depth-case: spell.mirror-image.matrix-wand-olc-clone-stat
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+
+[setup:oracle]
+ItemMage
+Y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ItemMage
+y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ItemPeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ItemPeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ItemView
+Y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ItemView
+y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:builder]
+ItemBuilder
+Y
+buildpass
+buildpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:builder]
+ItemBuilder
+y
+buildpass
+buildpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport ItemBuilder 8162
+teleport ItemPeer 8162
+teleport ItemView 8162
+set player ItemMage class mage
+set player ItemMage align 1000
+set player ItemMage maxhit 100000
+set player ItemMage hit 100000
+set player ItemPeer level 30
+set player ItemPeer align -1000
+set player ItemPeer maxhit 100000
+set player ItemPeer hit 100000
+set player ItemView level 30
+set player ItemView align -1000
+set player ItemView maxhit 100000
+set player ItemView hit 100000
+set player ItemBuilder level 35
+send:builder oedit 8053
+send:builder 1
+send:builder wand0990
+send:builder D
+send:builder 20
+send:builder 1
+send:builder 1
+send:builder 79
+send:builder q
+send:builder y
+load obj 8053
+set player ItemMage level 30
+
+[probe]
+get wand0990
+hold wand0990
+use wand0990 ItemMage
+~dpclock pulse 20
+look
+send:builder stat clone
+send:peer look
+score
+remove wand0990
+drop wand0990

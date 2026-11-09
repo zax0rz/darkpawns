@@ -106,7 +106,7 @@ func TestGetItemsInRoomSnapshotVsWriter(t *testing.T) {
 	// nothing per iteration.
 	ch := NewPlayer(1, "Taker", 1001)
 	for i := 0; i < 2000; i++ {
-		w.getFromRoom(ch, "nosuchthing")
+		w.getFromRoom(ch, "nosuchthing", false)
 		for range w.GetItemsInRoom(1001) {
 		}
 	}

@@ -1,0 +1,80 @@
+# depth-case: dream.level-11-20
+# The level 11-20 branch of dream() (src/dream.c:133-142) reached through
+# limits.c:489-490 point_update.  A sleeping level-15 actor draws the
+# 1-in-16 dream check; under DP_SEED=1 the draw lands on the fourth seeded
+# MUD hour, so the actor line
+#   You dream of your conquest of the world.
+# and the room act
+#   $n begins to grin in $s sleep.
+# are C's own transcript witness (R5j).  The witness is present for the whole
+# four-hour window, below IDLE_TO_VOID (limits.c:419).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Dreampulse
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dreampulse
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+Dreamwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+Dreamwitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Dreamwitness 8162
+set Dreamwitness level 31
+set Dreampulse level 15
+
+[probe]
+sleep
+~dpclock pulse 2520

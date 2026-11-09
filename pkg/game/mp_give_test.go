@@ -42,6 +42,10 @@ func spawnMpGiveTestMob(t *testing.T, w *World, roomVNum, vnum int) *MobInstance
 		HP:        parser.DiceRoll{Num: 1, Sides: 8, Plus: 20},
 		Race:      1,
 		Sex:       1, // male, like the real warg/gatekeeper/janitor
+		// Real mobiles carry INT/WIS 11 (src/db.c:1034-1035); a stat-less
+		// literal is 0 and would trip do_say's INT/WIS gate (src/act.comm.c:766).
+		Int: 11,
+		Wis: 11,
 	}
 	w.mu.Lock()
 	w.mobs[vnum] = proto

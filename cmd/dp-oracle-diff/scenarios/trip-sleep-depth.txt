@@ -1,0 +1,84 @@
+# depth-case: trip.sleeping
+# C-first witness for do_trip's sleeping-victim gate, "Whats the point of doing
+# that now?", DP-1502 lists at src/new_cmds.c:784. After the skill, peaceful,
+# target, mounted, self and flying gates, C refuses a victim whose
+# GET_POS(victim) <= POS_SLEEPING. Mob 2109 ("an orc worker") spawns at position
+# 4 (POS_SLEEPING); the mortal peer walks to the trainee (POS_FIGHTING opener
+# lane) with trip at 75 and trips the sleeping orc. C path:
+# src/new_cmds.c:735-790.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+spawn-mob 2109 1 8105 80
+
+[setup:oracle]
+Trgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Trgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Trmortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Trmortal
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Trmortal 'trip' 75
+
+[probe:mortal]
+trip orc

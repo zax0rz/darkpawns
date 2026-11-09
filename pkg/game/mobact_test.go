@@ -718,6 +718,42 @@ func TestAggressive_PlayerAttacked(t *testing.T) {
 	}
 }
 
+// DP-1480: an aggressive mobile takes the first eligible player from C's
+// world[room].people, which char_to_room front-inserts, so the newest arrival
+// is first (src/handler.c:537; src/mobact.c:200-233). Two players in one room
+// must always resolve to the newest, whatever order the players map iterates.
+// 200 scans so a map-order implementation cannot pass by luck (R3/R5h).
+func TestAggressive_TargetsNewestArrivalInRoomOrder(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 9150, 0, 0, "aggressive", "sentinel")
+
+	older := NewPlayer(1, "ArrivedFirst", 1001)
+	if err := w.AddPlayer(older); err != nil {
+		t.Fatalf("AddPlayer older: %v", err)
+	}
+	newest := NewPlayer(2, "ArrivedLast", 1001)
+	if err := w.AddPlayer(newest); err != nil {
+		t.Fatalf("AddPlayer newest: %v", err)
+	}
+	if newest.GetRoomEntrySequence() <= older.GetRoomEntrySequence() {
+		t.Fatalf("fixture arrival order: newest seq %d must exceed older seq %d",
+			newest.GetRoomEntrySequence(), older.GetRoomEntrySequence())
+	}
+
+	const iterations = 200
+	for i := 0; i < iterations; i++ {
+		ce.reset()
+		w.mobileActivityForMob(mob)
+		if len(ce.starts) != 1 {
+			t.Fatalf("iteration %d: expected 1 combat start, got %d (%+v)", i, len(ce.starts), ce.starts)
+		}
+		if got := ce.starts[0].defender; got != newest.Name {
+			t.Fatalf("iteration %d: aggressive mobile attacked %q, want the newest arrival %q",
+				i, got, newest.Name)
+		}
+	}
+}
+
 func TestMemory_CannotSeePlayer_Skips(t *testing.T) {
 	w, ce := newMobactTestWorld(t)
 	mob := newMobactTestMob(w, 9201, 1, 0, "memory", "sentinel")
@@ -1085,6 +1121,114 @@ func TestMobileActivityCharmedHelperAssistsMaster(t *testing.T) {
 	}
 	if ce.starts[0].attacker != helper.GetName() || ce.starts[0].defender != foe.GetName() {
 		t.Fatalf("unexpected combat pair: %+v", ce.starts[0])
+	}
+}
+
+func TestMobileActivityDivineAngelsStayOutOfCombat(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	master := newMobactSpeakingPlayer(t, w, "Master")
+	victim := newMobactSpeakingPlayer(t, w, "Victim")
+	victim.Alignment = -1000
+	observer := newMobactSpeakingPlayer(t, w, "Observer")
+	for _, vnum := range []int{85, 86} {
+		alignment := "aggr_evil"
+		if vnum == 86 {
+			alignment = "aggr_good"
+		}
+		angel := newMobactTestMob(w, vnum, 1, 0, alignment, "helper", "sentinel")
+		angel.Proto().ShortDesc = "a Dominion Angel"
+		angel.SetAffected(affCharm)
+		angel.SetFollowing(master.Name)
+	}
+
+	out := captureOutput(w)
+	pinNorthWanderDraws(t)
+	w.MobileActivity()
+
+	if len(ce.starts) != 0 {
+		t.Fatalf("alignment-only divine angels started combat: %+v", ce.starts)
+	}
+	if got := outputOf(out, observer.Name); got != "" {
+		t.Fatalf("observer saw angel combat = %q, want no attack or assist", got)
+	}
+	if victim.GetFightingBody() != nil {
+		t.Fatalf("victim fighting = %v, want nil", victim.GetFightingBody())
+	}
+}
+
+func TestMobileActivityAlignmentOnlyMobDoesNotAttack(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	newMobactTestMob(w, 85, 1, 0, "aggr_evil", "sentinel")
+	victim := newMobactTestPlayer(w, "EvilVictim")
+	victim.Alignment = -1000
+
+	w.mobileActivityForMob(w.activeMobs[1])
+
+	if len(ce.starts) != 0 {
+		t.Fatalf("alignment-only mob started combat: %+v", ce.starts)
+	}
+}
+
+func TestMobileActivityMemoryEnablesAlignmentAttack(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 85, 1, 0, "aggr_evil", "memory", "sentinel")
+	victim := newMobactTestPlayer(w, "EvilVictim")
+	victim.Alignment = -1000
+
+	w.mobileActivityForMob(mob)
+
+	if len(ce.starts) != 1 {
+		t.Fatalf("memory/alignment combat starts = %d, want 1: %+v", len(ce.starts), ce.starts)
+	}
+	if ce.starts[0].attacker != mob.GetName() || ce.starts[0].defender != victim.Name {
+		t.Fatalf("unexpected combat pair: %+v", ce.starts[0])
+	}
+}
+
+func TestMobileActivityCharmedAggressiveFollowerStillAttacks(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	master := newMobactSpeakingPlayer(t, w, "Master")
+	victim := newMobactSpeakingPlayer(t, w, "Victim")
+	mob := newMobactTestMob(w, 85, 1, 0, "aggressive", "helper", "sentinel")
+	mob.SetAffected(affCharm)
+	mob.SetFollowing(master.Name)
+
+	w.mobileActivityForMob(mob)
+
+	if len(ce.starts) != 1 {
+		t.Fatalf("charmed aggressive follower combat starts = %d, want 1: %+v", len(ce.starts), ce.starts)
+	}
+	if ce.starts[0].attacker != mob.GetName() || ce.starts[0].defender != victim.Name {
+		t.Fatalf("unexpected combat pair: %+v", ce.starts[0])
+	}
+}
+
+func TestMobileActivityNeutralGoodWithoutEvilHitsAnyAlignment(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 85, 1, 0, "aggr_neutral", "aggr_good", "memory", "sentinel")
+	victim := newMobactTestPlayer(w, "EvilVictim")
+	victim.Alignment = -1000
+
+	w.mobileActivityForMob(mob)
+
+	if len(ce.starts) != 1 {
+		t.Fatalf("neutral/good first-clause combat starts = %d, want 1: %+v", len(ce.starts), ce.starts)
+	}
+	if ce.starts[0].defender != victim.Name {
+		t.Fatalf("unexpected combat pair: %+v", ce.starts[0])
+	}
+}
+
+func TestMobileActivityAggressiveAlignmentMatchHitsTwice(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 85, 1, 0, "aggressive", "aggr_evil", "sentinel")
+	victim := newMobactTestPlayer(w, "EvilVictim")
+	victim.Alignment = -1000
+
+	w.mobileActivityForMob(mob)
+
+	if len(ce.starts) != 2 {
+		t.Fatalf("aggressive/alignment hit calls = %d, want 2: %+v", len(ce.starts), ce.starts)
 	}
 }
 

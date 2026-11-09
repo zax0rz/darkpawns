@@ -20,6 +20,7 @@ import (
 
 	lua "github.com/yuin/gopher-lua"
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 // Engine manages the Lua VM.
@@ -544,9 +545,9 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 				mt.RawSetString("level", lua.LNumber(m.GetLevel()))
 				mt.RawSetString("hp", lua.LNumber(m.GetHealth()))
 				mt.RawSetString("maxhp", lua.LNumber(m.GetMaxHealth()))
-				// Check mob alignment (negative = evil)
+				// C's Lua mob table sets "evil" from IS_EVIL (src/scripts.c:1865).
 				alignment := m.GetPrototype().GetAlignment()
-				mt.RawSetString("evil", lua.LBool(alignment < 0))
+				mt.RawSetString("evil", lua.LBool(spells.IsEvilAlign(alignment)))
 				mt.RawSetString("pos", lua.LNumber(combat.PosStanding)) // POS_STANDING
 				mt.RawSetString("vnum", lua.LNumber(m.GetVNum()))
 				mt.RawSetString("room", lua.LNumber(ctx.RoomVNum))
@@ -1122,7 +1123,7 @@ func (e *Engine) legacyMobTable(m ScriptableMob, depth int) *lua.LTable {
 	tbl.RawSetString("evil", luaBool(m.GetAlignment() <= -350))
 	e.legacyLeaderInto(tbl, m.GetLeaderName(), depth)
 	tbl.RawSetString("vnum", lua.LNumber(m.GetVNum()))
-	tbl.RawSetString("timer", lua.LNumber(m.GetWaitState()))
+	tbl.RawSetString("timer", lua.LNumber(m.GetMobWait()))
 	tbl.RawSetString("struct", lua.LNumber(m.GetVNum()))
 	return tbl
 }

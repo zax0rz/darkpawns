@@ -5,11 +5,18 @@
 # A blue gate is force-loaded into its dynamic moon room. Two destination
 # witnesses distinguish gate_phase's Exit1 and Exit2 selected by number(0,3).
 # C path: interpreter.c:1470-1476 -> gate.c SPECIAL(moon_gate).
+#
+# spawn-obj uses MaxExisting 99, not 1: zone 40's own reset list already
+# loads eight 4001 copies into the void rooms (O 0 4001 8 4011..4018), so a
+# MaxExisting of 1 would leave the appended O reset nothing to load and the
+# gate would never reach room 4001 -- the warmup probes would read
+# "You do not see that here." / "There is no portal here." on both engines
+# (a hollow green; DP-1511 batch 1).
 
 [fixture]
 empty-players
 quiet-mobs
-spawn-obj 4001 1 4001 80
+spawn-obj 4001 99 4001 80
 force-load 4001
 
 [setup:oracle]

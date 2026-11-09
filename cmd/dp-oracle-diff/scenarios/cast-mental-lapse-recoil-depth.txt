@@ -1,0 +1,79 @@
+# depth-case: spell.mental-lapse-recoil
+# C-first witness for spell_mental_lapse's "sent out your mental voice" arm
+# (DP-1502 list at src/spells.c:967). The victim mobile is made to hunt a third
+# party (a peer), so HUNTING(victim) != caster and the caster's level is >= 30:
+# C takes the stc branch at src/spells.c:966-967 instead of the psionic recoil.
+# C path: do_cast -> cast_spell -> call_magic -> MANUAL spell_mental_lapse
+# (src/spell_parser.c:509,879-925,1038-1110; src/spells.c:960-977).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Lapserecoil
+Y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lapserecoil
+y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:prey]
+Lapseprey
+Y
+preypass
+preypass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:prey]
+Lapseprey
+y
+preypass
+preypass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Lapseprey 8105
+set Lapserecoil class i
+skillset Lapserecoil 'mental lapse' 100
+sethunt Lapseprey trainee
+set Lapserecoil level 31
+
+[probe]
+cast 'mental lapse' trainee

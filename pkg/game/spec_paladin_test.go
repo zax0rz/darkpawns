@@ -38,12 +38,12 @@ func TestSpecPaladin_Golden(t *testing.T) {
 
 	mob.SetFightingBody(player)
 	player.SetFightingBody(mob)
-	mob.SetWaitState(1)
+	mob.SetMobWait(1)
 	if specPaladin(w, nil, mob, "", "") {
 		t.Error("specPaladin should return false while GET_MOB_WAIT is nonzero")
 	}
 
-	mob.SetWaitState(0)
+	mob.SetMobWait(0)
 	mob.CurrentHP = -1
 	if specPaladin(w, nil, mob, "", "") {
 		t.Error("specPaladin should return false for negative HP")
@@ -132,7 +132,7 @@ func TestSpecPaladin_ChargeNativeArithmetic(t *testing.T) {
 	if got := mob.GetPosition(); got != combat.PosFighting {
 		t.Errorf("successful charge moved mob to position %d, want fighting", got)
 	}
-	if got := mob.GetWaitState(); got != 0 {
+	if got := mob.GetMobWait(); got != 0 {
 		t.Errorf("charge changed GET_MOB_WAIT to %d, want 0", got)
 	}
 
@@ -161,6 +161,25 @@ func TestSpecPaladin_DisarmNativeAudienceAndState(t *testing.T) {
 	if err := player.Equipment.SetSlot(SlotWield, weapon); err != nil {
 		t.Fatalf("SetSlot: %v", err)
 	}
+	// The caster line is TO_CHAR, delivered to a wizard switched onto the mob.
+	// The switched wizard's own body is detached (skipped by room acts), so it
+	// must be a separate body from the observer the room line reaches.
+	switched := NewPlayer(3, "Switched", 1001)
+	if err := w.AddPlayer(switched); err != nil {
+		t.Fatalf("AddPlayer switched: %v", err)
+	}
+	var mobOut strings.Builder
+	w.MobileMessageSink = func(body *MobInstance, msg []byte) {
+		if body == mob {
+			mobOut.Write(msg)
+		}
+	}
+	w.MobileDescriptorOwner = func(body *MobInstance) *Player {
+		if body == mob {
+			return switched
+		}
+		return nil
+	}
 	_ = lastMsg() // discard spawn/setup bytes
 
 	dprng.ResetStream(23)
@@ -179,6 +198,9 @@ func TestSpecPaladin_DisarmNativeAudienceAndState(t *testing.T) {
 	if !strings.Contains(msg, "A test mob knocks a steel sword from Tester's hand!") {
 		t.Errorf("room disarm message = %q", msg)
 	}
+	if got, want := mobOut.String(), "You disarm Tester and a steel sword goes flying!\r\n"; got != want {
+		t.Errorf("caster disarm line = %q, want %q", got, want)
+	}
 }
 
 func TestSpecPaladin_DisarmFailure(t *testing.T) {
@@ -189,6 +211,25 @@ func TestSpecPaladin_DisarmFailure(t *testing.T) {
 	weapon.Location = LocEquippedPlayer(player.GetName(), SlotWield)
 	if err := player.Equipment.SetSlot(SlotWield, weapon); err != nil {
 		t.Fatalf("SetSlot: %v", err)
+	}
+
+	// The caster line is TO_CHAR: silent for a descriptorless mobile, delivered
+	// to a wizard switched onto it (src/new_cmds2.c:245).
+	switched := NewPlayer(3, "Switched", 1001)
+	if err := w.AddPlayer(switched); err != nil {
+		t.Fatalf("AddPlayer switched: %v", err)
+	}
+	var mobOut strings.Builder
+	w.MobileMessageSink = func(body *MobInstance, msg []byte) {
+		if body == mob {
+			mobOut.Write(msg)
+		}
+	}
+	w.MobileDescriptorOwner = func(body *MobInstance) *Player {
+		if body == mob {
+			return switched
+		}
+		return nil
 	}
 	_ = lastMsg()
 
@@ -211,8 +252,11 @@ func TestSpecPaladin_DisarmFailure(t *testing.T) {
 	if got := mob.GetPosition(); got != combat.PosSitting {
 		t.Errorf("failed disarm position = %d, want sitting", got)
 	}
-	if got := lastMsg(); !strings.Contains(got, "tries to disarm you but fails and falls flat") {
-		t.Errorf("failed disarm audience = %q", got)
+	if got := lastMsg(); !strings.Contains(got, "tries to disarm you but fails and falls flat on its face instead!") {
+		t.Errorf("failed disarm victim line = %q, want the C \"... instead!\" ending", got)
+	}
+	if got, want := mobOut.String(), "You try to disarm Tester but fail, tumbling to the ground in the process!\r\n"; got != want {
+		t.Errorf("failed disarm caster line = %q, want %q", got, want)
 	}
 }
 

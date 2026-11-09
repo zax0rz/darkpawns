@@ -21,6 +21,12 @@ func TestSpecHornObjectReceiverAudienceAndGates(t *testing.T) {
 	w.MessageSink = func(name string, msg []byte) {
 		messages[name] += string(msg)
 	}
+	// send_to_zone traffic is verbatim (src/comm.c:2384): the horn's zone line
+	// travels the literal sink, the framed sink stays silent (R1).
+	literal := make(map[string]string)
+	w.LiteralMessageSink = func(name string, msg []byte) {
+		literal[name] += string(msg)
+	}
 	actor := NewPlayer(1, "Hornactor", 1001)
 	roomPeer := NewPlayer(2, "Roompeer", 1001)
 	zonePeer := NewPlayer(3, "Zonepeer", 1002)
@@ -57,15 +63,21 @@ func TestSpecHornObjectReceiverAudienceAndGates(t *testing.T) {
 	if got, want := messages[roomPeer.Name], "Hornactor blows into a silver horn.\r\nA silver horn lets out a blaring note...\r\n"; got != want {
 		t.Errorf("same-room output = %q, want %q", got, want)
 	}
-	if got, want := messages[zonePeer.Name], "You hear the blaring of a loud horn.\r\n"; got != want {
+	if got, want := literal[zonePeer.Name], "You hear the blaring of a loud horn.\r\n"; got != want {
 		t.Errorf("same-zone output = %q, want %q", got, want)
 	}
-	if got := messages[otherZonePeer.Name]; got != "" {
+	if got := messages[zonePeer.Name]; got != "" {
+		t.Errorf("same-zone output went through the framed sink: %q", got)
+	}
+	if got := literal[otherZonePeer.Name]; got != "" {
 		t.Errorf("other-zone output = %q, want empty", got)
 	}
 
 	for name := range messages {
 		messages[name] = ""
+	}
+	for name := range literal {
+		literal[name] = ""
 	}
 	if got := specHornObject(w, actor, horn, "use", "horn extra"); got {
 		t.Fatal("multi-word horn argument was handled")
@@ -73,6 +85,11 @@ func TestSpecHornObjectReceiverAudienceAndGates(t *testing.T) {
 	for name, got := range messages {
 		if got != "" {
 			t.Errorf("keyword-gate output for %s = %q, want empty", name, got)
+		}
+	}
+	for name, got := range literal {
+		if got != "" {
+			t.Errorf("keyword-gate literal output for %s = %q, want empty", name, got)
 		}
 	}
 

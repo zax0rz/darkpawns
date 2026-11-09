@@ -14,8 +14,15 @@ type GameCallbacks struct {
 	// RangedHunt supplies shoot retaliation's damage-side hunter assignment.
 	RangedHunt func(attacker, defender Combatant)
 	// Messaging
-	Broadcast  func(roomVNum int, msg string, exclude []Combatant)
-	SendToChar func(name Combatant, msg string)
+	Broadcast func(roomVNum int, msg string, exclude []Combatant)
+	// BroadcastPerReceiver renders and delivers one act() message per
+	// recipient. C's act() substitutes $n/$N per recipient through PERS()
+	// (src/comm.c:2450-2470; src/utils.h:515-530), so an actor the recipient
+	// cannot see renders as "someone"; broadcasting a single pre-rendered
+	// string leaks the real name to a blind observer (DP-1481 shape 3). Nil
+	// falls back to Broadcast with the render's nil-recipient result.
+	BroadcastPerReceiver func(roomVNum int, render func(to Combatant) string, exclude []Combatant)
+	SendToChar           func(name Combatant, msg string)
 	// SendText retains the ordinary text-event route for formerly direct body messages.
 	SendText     func(body Combatant, msg string)
 	SkillMessage func(dam int, ch, vict Combatant, attackType int, roomVNum int) bool
@@ -49,6 +56,7 @@ type GameCallbacks struct {
 	// Affects
 	HasAffect        func(name Combatant, aff int) bool
 	HasAffectStr     func(name Combatant, aff string) bool
+	RemoveAffectBit  func(name Combatant, aff int)
 	RemoveAffect     func(name Combatant, skillNum int)
 	RemoveAllAffects func(name Combatant)
 	RemoveTattoo     func(name Combatant)
@@ -132,7 +140,6 @@ type GameCallbacks struct {
 	SetGold func(name Combatant, gold int)
 
 	// Items
-	JunkInventoryItems func(chName Combatant)
 
 	// Commands
 	PerformCommand func(chName Combatant, cmd string)
@@ -174,6 +181,30 @@ func cbBroadcast(roomVNum int, msg string, exclude []Combatant) {
 	if cb := callbacks; cb != nil && cb.Broadcast != nil {
 		cb.Broadcast(roomVNum, msg, exclude)
 	}
+}
+
+// cbBroadcastPerReceiver renders one message per recipient so act()'s PERS()
+// masking applies (DP-1481 shape 3). Without the seam it falls back to a single
+// unmasked string through Broadcast, keeping engine-less fixtures working.
+func cbBroadcastPerReceiver(roomVNum int, render func(to Combatant) string, exclude []Combatant) {
+	if cb := callbacks; cb != nil && cb.BroadcastPerReceiver != nil {
+		cb.BroadcastPerReceiver(roomVNum, render, exclude)
+		return
+	}
+	cbBroadcast(roomVNum, render(nil), exclude)
+}
+
+// persName mirrors C's PERS(ch, to): the actor's name when the recipient can
+// see it, "someone" otherwise (src/comm.c PERS; src/utils.h:515-530). A nil
+// recipient is the render-for-anyone fallback and receives the real name.
+func persName(actor, to Combatant) string {
+	if actor == nil {
+		return "someone"
+	}
+	if to == nil || cbCanSee(to, actor) {
+		return actor.GetName()
+	}
+	return "someone"
 }
 
 func cbSendToChar(name Combatant, msg string) {
@@ -364,12 +395,6 @@ func cbHasAffectStr(name Combatant, aff string) bool {
 		return cb.HasAffectStr(name, aff)
 	}
 	return false
-}
-
-func cbRemoveAffect(name Combatant, skillNum int) {
-	if cb := callbacks; cb != nil && cb.RemoveAffect != nil {
-		cb.RemoveAffect(name, skillNum)
-	}
 }
 
 func cbRemoveAllAffects(name Combatant) {
@@ -670,12 +695,6 @@ func cbSetGold(name Combatant, gold int) {
 // ---------------------------------------------------------------------------
 // Item helpers.
 // ---------------------------------------------------------------------------
-
-func cbJunkInventoryItems(chName Combatant) {
-	if cb := callbacks; cb != nil && cb.JunkInventoryItems != nil {
-		cb.JunkInventoryItems(chName)
-	}
-}
 
 // ---------------------------------------------------------------------------
 // Command helpers.

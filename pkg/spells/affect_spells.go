@@ -8,6 +8,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -60,11 +61,15 @@ func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int
 			sendAffectActRoom(ch, nil, "$n crushes a small lens under $s heel.", true, world)
 		}
 	case SpellWaterwalk:
-		reag = checkReagents(ch, SpellWaterwalk, getLevel(ch), "frog leg",
-			"A frog leg turns into dust as you mouth the words of the spell...")
+		if consumeSpellReagentVNum(ch, 1228) {
+			reag = 1
+			sendToCaster(ch, "A frog leg turns into dust as you mouth the words of the spell...\r\n")
+		}
 	case SpellMetalskin:
-		reag = checkReagents(ch, SpellMetalskin, getLevel(ch), "chunk of iron",
-			"A small chunk of iron melts in your palm as you cast the spell...", "flat:1")
+		if consumeSpellReagentVNum(ch, 1229) {
+			reag = 1
+			sendToCaster(ch, "A small chunk of iron melts in your palm as you cast the spell...\r\n")
+		}
 		if reag > 0 {
 			sendAffectActRoom(ch, nil, "A small chunk of iron melts in $n's palm as $e cast a spell...", true, world)
 		}
@@ -274,8 +279,10 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 				}
 			}
 		}
-		// Duration: level * 0.17, max ~5 hours for mortals
-		dur := int(float64(level) * 0.17)
+		// Duration: the caster's level * 0.17, max ~5 hours for mortals. C
+		// reads GET_LEVEL(ch), not the cast level (src/magic.c:1124), so an
+		// item-cast flamestrike scales with the user's level (DP-1468).
+		dur := int(float64(getLevel(ch)) * 0.17)
 		if dur < 1 {
 			dur = 1
 		}
@@ -413,7 +420,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		aff = engine.NewAffectDirect(SpellChameleon, engine.ApplyNone, getLevel(ch), 0, engine.AFFHide, "chameleon")
 		toVictim = "You blend into the surroundings.\r\n"
 	case SpellMetalskin:
-		pending = append(pending, engine.NewAffectDirect(SpellMetalskin, engine.ApplyNone, 5, -(15+getLevel(ch)/2+reag), engine.AFFMetalskin, "metalskin"), engine.NewAffect(SpellMetalskin, engine.ApplyAC, 5, -(15+getLevel(ch)/2+reag), "metalskin"))
+		pending = append(pending, engine.NewAffectDirect(SpellMetalskin, engine.ApplyAC, 5, -(15+getLevel(ch)/2+reag), engine.AFFMetalskin, "metalskin"))
 		toVictim = "Your skin turns metallic!\r\n"
 	case SpellInvulnerability:
 		// C magic.c:1316-1328 applies AFF_INVULN to both records; the first
@@ -426,11 +433,11 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		aff = engine.NewAffect(SpellPsyshield, engine.ApplyAC, getLevel(ch)/2, -15, "psyshield")
 		toVictim = "You feel a shield of energy form around you.\r\n"
 	case SpellGreatPercept:
-		pending = append(pending, engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectInvisible, "great percept"), engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFSenseLife, "great percept"))
+		pending = append(pending, engine.NewAffectDirect(SpellGreatPercept, engine.ApplySpell, level/2+4, 0, engine.AFFSenseLife, "great percept"), engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectInvisible, "great percept"))
 		toVictim = "Your eyes glow briefly.\r\n"
 		toRoom = "$n's eyes glow briefly.\r\n"
 	case SpellLessPercept:
-		pending = append(pending, engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectAlign, "lesser percept"), engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFInfrared, "lesser percept"))
+		pending = append(pending, engine.NewAffectDirect(SpellLessPercept, engine.ApplySpell, level/2+4, 0, engine.AFFInfrared, "lesser percept"), engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectAlign, "lesser percept"))
 		toVictim = "Your eyes glow briefly.\r\n"
 		toRoom = "$n's eyes glow briefly.\r\n"
 	case SpellIntellect:
@@ -686,7 +693,7 @@ func MagPoints(level int, ch, victim interface{}, spellNum, savetype int, world 
 	_ = world
 
 	isPsiMystic := isClassPsionicOrMystic(getClass(ch))
-	formula, ok := magPointsFormula(level, spellNum, isPsiMystic)
+	formula, ok := magPointsFormula(level, getLevel(ch), spellNum, isPsiMystic)
 	if !ok {
 		return
 	}
@@ -782,9 +789,13 @@ type pointsFormula struct {
 
 // magPointsFormula returns the base healing (hit) and movement restoration formula for a spell.
 // It mirrors src/magic.c:mag_points() dice formulas exactly, with no RNG and no side effects.
-// isPsionicOrMystic controls the heal/cell-adjustment branch (C: IS_PSIONIC || IS_MYSTIC).
+// level is the cast level; casterLevel is the caster's own level, which C's
+// lay hands arm reads for its dice sides (hit = dice(3, GET_LEVEL(ch)),
+// src/magic.c:1823) — the two differ for wand/staff/scroll/potion casts
+// (DP-1468). isPsionicOrMystic controls the heal/cell-adjustment branch
+// (C: IS_PSIONIC || IS_MYSTIC).
 // Returns ok=false for spell numbers that are not healing spells in C's mag_points().
-func magPointsFormula(level, spellNum int, isPsionicOrMystic bool) (pointsFormula, bool) {
+func magPointsFormula(level, casterLevel, spellNum int, isPsionicOrMystic bool) (pointsFormula, bool) {
 	switch spellNum {
 	case SpellCureLight:
 		return pointsFormula{hitNum: 2, hitSides: 8, hitFlat: 1 + (level >> 2)}, true
@@ -802,7 +813,8 @@ func magPointsFormula(level, spellNum int, isPsionicOrMystic bool) (pointsFormul
 	case SpellInvigorate:
 		return pointsFormula{moveNum: 10, moveSides: 10}, true
 	case SpellLayHands:
-		return pointsFormula{hitNum: 3, hitSides: level}, true
+		// C reads the caster's level, not the cast level (src/magic.c:1823).
+		return pointsFormula{hitNum: 3, hitSides: casterLevel}, true
 	default:
 		return pointsFormula{}, false
 	}
@@ -859,6 +871,16 @@ func MagUnaffects(level int, ch, victim interface{}, spellNum int, world interfa
 // MagGroups applies group versions of spells.
 // MagGroups applies group spells to all grouped characters in the room.
 
+// groupWalkWorld is the game-layer view of C's follower lists. The walk is
+// identity-based (C k->followers), so name lookup cannot stand in for it (R3).
+type groupWalkWorld interface {
+	// MasterBody returns the body ch follows (C ch->master), or nil.
+	MasterBody(ch any) any
+	// FollowersOfBody returns the bodies following leader (C leader->followers)
+	// in C's list order: newest first.
+	FollowersOfBody(leader any) []any
+}
+
 func MagGroups(level int, ch interface{}, spellNum, savetype int, world interface{}) {
 	if ch == nil {
 		return
@@ -872,45 +894,81 @@ func MagGroups(level int, ch interface{}, spellNum, savetype int, world interfac
 		return
 	}
 
-	// Get all characters in the room
-	type roomGetter interface{ GetRoomVNum() int }
-	type worldChars interface {
-		GetAllCharsInRoom(roomVNum int) []interface{}
-	}
-
-	rg, ok := ch.(roomGetter)
+	// C's walk is the master's follower list, not the room (src/magic.c:1466-1501):
+	// k = ch->master or ch (:1477-1478); every follower of k in list order,
+	// skipping ch (:1482-1484), other rooms (:1485-1486) and non-AFF_GROUP
+	// (:1487-1488); then k itself (:1492-1494); then ch last if k != ch
+	// (:1496-1498). add_follower prepends (src/utils.c:474-475,491-492), so
+	// the list is newest-first. The room walk this replaces re-ordered members
+	// whenever the spells themselves re-entered a body (group recall) and never
+	// put the caster last (DP-1489).
+	ww, ok := world.(groupWalkWorld)
 	if !ok {
 		return
 	}
-	roomVNum := rg.GetRoomVNum()
-
-	w, ok := world.(worldChars)
-	if !ok {
-		return
+	k := ww.MasterBody(ch)
+	if k == nil {
+		k = ch
 	}
 
-	chars := w.GetAllCharsInRoom(roomVNum)
-
-	// Apply spell to each grouped character (including caster)
-	for _, c := range chars {
-		if !areGrouped(ch, c, world) && c != ch {
-			continue
+	roomGetter := func(v interface{}) int {
+		if rg, ok := v.(interface{ GetRoomVNum() int }); ok {
+			return rg.GetRoomVNum()
 		}
+		return -1
+	}
+	sameRoomAsCh := func(v interface{}) bool {
+		return v != nil && roomGetter(v) == roomGetter(ch)
+	}
+	isGroupAffected := func(v interface{}) bool {
+		if gc, ok := v.(affectChecker); ok {
+			return gc.IsAffected(combat.AFF_GROUP)
+		}
+		return false
+	}
+
+	perform := func(tch interface{}) {
 		switch spellNum {
 		case SpellGroupHeal:
-			MagPoints(level, ch, c, SpellHeal, savetype, world)
+			MagPoints(level, ch, tch, SpellHeal, savetype, world)
 		case SpellHolyShield:
-			MagAffects(level, ch, c, SpellArmor, savetype, world)
+			MagAffects(level, ch, tch, SpellArmor, savetype, world)
 		case SpellGroupInvis:
-			MagAffects(level, ch, c, SpellInvisible, savetype, world)
+			MagAffects(level, ch, tch, SpellInvisible, savetype, world)
 		case SpellGroupRecall:
 			// C src/magic.c:1442-1443 routes each grouped member through
 			// spell_recall, including its BFR/fighting gates and sleeping landing.
-			ExecuteManualSpell(SpellWordOfRecall, level, ch, c, nil, "", world)
+			ExecuteManualSpell(SpellWordOfRecall, level, ch, tch, nil, "", world)
 		case SpellMassDominate:
-			// Mass dominate — charm each grouped NPC
-			ExecuteManualSpell(SpellCharm, level, ch, c, nil, "", world)
+			// Unreachable in play: MASS_DOMINATE is MAG_AREAS-only
+			// (src/spell_parser.c:1480-1481) and mag_groups runs only under
+			// MAG_GROUPS (src/spell_parser.c:488-489). The C case still has
+			// no break and falls through into SPELL_GROUP_INVIS
+			// (src/magic.c:1438-1441); this keeps the function twin faithful.
+			ExecuteManualSpell(SpellCharm, level, ch, tch, nil, "", world)
+			MagAffects(level, ch, tch, SpellInvisible, savetype, world)
 		}
+	}
+
+	// do all followers of k who are not ch
+	for _, f := range ww.FollowersOfBody(k) {
+		if f == ch {
+			continue
+		}
+		if !sameRoomAsCh(f) || !isGroupAffected(f) {
+			continue
+		}
+		perform(f)
+	}
+
+	// do k
+	if sameRoomAsCh(k) && isGroupAffected(k) {
+		perform(k)
+	}
+
+	// do yourself if you didn't already
+	if k != ch {
+		perform(ch)
 	}
 }
 
@@ -1048,8 +1106,11 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 		}
 		// C mag_areas deliberately passes SAVING_SPELL (literal 1) to
 		// mag_damage, even when call_magic was entered as CAST_BREATH
-		// (magic.c:1611). Preserve that call-path quirk.
-		MagDamage(level, ch, c, spellNum, 1, world)
+		// (magic.c:1611). Preserve that call-path quirk. It also re-derives
+		// the level argument from the caster — mag_damage(GET_LEVEL(ch), ...)
+		// (src/magic.c:1620) — so an item-cast area spell damages with the
+		// user's level, not the object's (DP-1468).
+		MagDamage(getLevel(ch), ch, c, spellNum, 1, world)
 	}
 }
 
@@ -1347,7 +1408,7 @@ func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{
 	if named, ok := obj.(interface{ GetShortDesc() string }); ok {
 		name = named.GetShortDesc()
 	}
-	sendToCaster(ch, strings.ReplaceAll(effect, "$p", name)+"\r\n")
+	sendToCaster(ch, capitalizeActMessage(strings.ReplaceAll(effect, "$p", name))+"\r\n")
 }
 
 // ExecuteManualSpell dispatches manual (ASPELL) spell implementations.
@@ -1381,7 +1442,7 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 	case SpellEnchantArmor:
 		castEnchantArmor(level, ch, ovict, world)
 	case SpellCreateWater:
-		castCreateWater(level, ch, ovict)
+		castCreateWater(level, ch, ovict, world)
 	case SpellIdentify:
 		castIdentify(level, ch, cvict, ovict, world)
 	case SpellSilkenMissile:
@@ -1570,13 +1631,22 @@ func healHP(victim interface{}, amount int) {
 	if newHP > g.GetMaxHP() {
 		newHP = g.GetMaxHP()
 	}
+	setHP(victim, newHP)
+}
+
+// setHP assigns an absolute hit-point value through the same setter dispatch
+// healHP uses (Player.SetHealth, else SetHP). C spells that ASSIGN rather
+// than add — zen's GET_HIT(ch) = MIN(GET_MAX_HIT(victim), ...) (src/spells.c:
+// 878) — route through here so the value is not re-capped at the caster's
+// own maximum.
+func setHP(target interface{}, value int) {
 	// Player uses SetHealth; fallback to SetHP for other types.
 	type healthSetter interface{ SetHealth(int) }
 	type hpSetter interface{ SetHP(int) }
-	if s, ok := victim.(healthSetter); ok {
-		s.SetHealth(newHP)
-	} else if s, ok := victim.(hpSetter); ok {
-		s.SetHP(newHP)
+	if s, ok := target.(healthSetter); ok {
+		s.SetHealth(value)
+	} else if s, ok := target.(hpSetter); ok {
+		s.SetHP(value)
 	}
 }
 
@@ -1616,76 +1686,6 @@ func spellCounterattack(world, victim, ch interface{}) {
 	}); ok {
 		w.ExecuteSpellCounterattack(victim, ch)
 	}
-}
-
-// ReagentItem is the interface a reagent object must satisfy.
-// Extracted from function-local to package scope for testability.
-type ReagentItem interface {
-	GetShortDesc() string
-}
-
-// ReagentInventory is the interface for an inventory that can find and remove reagents.
-type ReagentInventory interface {
-	FindItem(string) (ReagentItem, bool)
-	RemoveItem(ReagentItem) bool
-}
-
-// InventoryHolder is the interface for a caster that has an inventory.
-type InventoryHolder interface {
-	GetInventory() ReagentInventory
-}
-
-func checkReagents(ch interface{}, spellNum, level int, reagents ...string) int {
-	_ = spellNum
-	if len(reagents) == 0 {
-		return 0
-	}
-
-	reagentName := reagents[0]
-
-	// Look for and consume the reagent from the caster's inventory.
-	// Uses interface assertions to avoid circular imports (spells → game).
-	type messageSender interface{ SendMessage(string) }
-
-	var found bool
-	if consumer, ok := ch.(interface{ ConsumeSpellReagent(string) bool }); ok {
-		found = consumer.ConsumeSpellReagent(reagentName)
-	} else if holder, ok := ch.(InventoryHolder); ok {
-		if item, ok := holder.GetInventory().FindItem(reagentName); ok {
-			// Honour the remove's result: FindItem is a snapshot lookup, so
-			// two concurrent casts can both find the same item and only the
-			// one whose atomic remove succeeds has consumed it.
-			found = holder.GetInventory().RemoveItem(item)
-		}
-	}
-
-	if !found {
-		return 0
-	}
-
-	// Send caster message (second arg if provided)
-	if len(reagents) > 1 && reagents[1] != "" {
-		if sender, ok := ch.(messageSender); ok {
-			sender.SendMessage(reagents[1] + "\r\n")
-		}
-	}
-
-	// Damage bonus: scales with level, matching C behavior.
-	// Original C: bonus is approximately level/2 (varies by spell).
-	// metalskin reagent adds flat +1 (C: magic.c:1300 reag is boolean 0/1).
-	bonus := level / 2
-	if bonus < 1 {
-		bonus = 1
-	}
-
-	// Check for flat bonus override ("flat:1" in reagent args)
-	for _, r := range reagents {
-		if r == "flat:1" {
-			return 1
-		}
-	}
-
-	return bonus
 }
 
 func init() {
@@ -1839,15 +1839,37 @@ func castZen(level int, ch, cvict, world interface{}) {
 		renderer.SpellActToRoom(ch, nil, "$n sinks into a deep, meditative sleep.", false)
 	}
 
-	// TAR_SELF_ONLY makes victim the caster on the registered C command path.
-	healHP(ch, 2*level)
-
+	// C stuns the caster first (src/spells.c:877), then assigns the caster's
+	// hit points from the VICTIM (src/spells.c:878):
+	//   GET_HIT(ch) = MIN(GET_MAX_HIT(victim), GET_HIT(victim)+2*GET_LEVEL(ch))
+	// The caster's own level scales the heal (DP-1468), and the cap is the
+	// VICTIM's max, not the caster's. TAR_SELF_ONLY makes victim the caster on
+	// the registered command path, so there the formula degenerates to a plain
+	// heal to the caster's own max. A staff-cast zen (mag_objectmagic's room
+	// fan-out, src/spell_parser.c:806-810) instead overwrites the user's HP
+	// from each room occupant — the last one in C's newest-arrival-first
+	// people list wins (DP-1461: a zen staff left the user at 21/5000 because
+	// the last target sat at 21/21).
 	type poser interface{ SetPosition(int) }
 	if p, ok := ch.(poser); ok {
 		p.SetPosition(int(PosStunned))
 	}
 
-	_ = cvict
+	type hpReader interface {
+		GetHP() int
+		GetMaxHP() int
+	}
+	if v, ok := cvict.(hpReader); ok {
+		assigned := v.GetHP() + 2*getLevel(ch)
+		if v.GetMaxHP() < assigned {
+			assigned = v.GetMaxHP()
+		}
+		setHP(ch, assigned)
+	} else if cvict == nil {
+		healHP(ch, 2*getLevel(ch))
+	}
+
+	_ = level
 }
 
 // castDetectPoison — checks for poison on victims and objects.
@@ -2092,9 +2114,13 @@ func castCoC(level int, ch interface{}, world interface{}) {
 	// Set timer
 	type timerSetter interface{ SetTimer(int) }
 	if ts, ok := obj.(timerSetter); ok {
+		// C reads the caster's own level, not the cast level:
+		// GET_OBJ_TIMER(obj) = GET_LEVEL(ch)/2 + number(-2, 1)
+		// (src/spells.c:1018), so an item-cast circle scales with the user's
+		// level (DP-1468).
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		timer := level/2 + dprng.Number(-2, 1)
+		timer := getLevel(ch)/2 + dprng.Number(-2, 1)
 		if timer < 1 {
 			timer = 1
 		}
@@ -2295,14 +2321,14 @@ func castEnchantWeapon(level int, ch, ovict, world interface{}) {
 	newAffects[1] = parser.ObjAffect{Location: 19, Modifier: damroll} // APPLY_DAMROLL
 	obj.SetAffectsOverride(newAffects)
 
-	// Alignment glow
+	// Alignment glow — C: IS_GOOD/IS_EVIL (src/spells.c:644-651, 855-862).
 	type aligner interface{ GetAlignment() int }
 	if a, ok := ch.(aligner); ok {
 		switch {
-		case a.GetAlignment() > 0:
+		case IsGoodAlign(a.GetAlignment()):
 			obj.SetExtraFlag(0, 10) // ITEM_ANTI_EVIL
 			sendSpellActToCaster("$p glows blue.", ch, nil, ovict, world)
-		case a.GetAlignment() < 0:
+		case IsEvilAlign(a.GetAlignment()):
 			obj.SetExtraFlag(0, 9) // ITEM_ANTI_GOOD
 			sendSpellActToCaster("$p glows red.", ch, nil, ovict, world)
 		default:
@@ -2362,14 +2388,14 @@ func castEnchantArmor(level int, ch, ovict, world interface{}) {
 	newAffects[0] = parser.ObjAffect{Location: 17, Modifier: acMod} // APPLY_AC
 	obj.SetAffectsOverride(newAffects)
 
-	// Alignment glow
+	// Alignment glow — C: IS_GOOD/IS_EVIL (src/spells.c:644-651, 855-862).
 	type aligner interface{ GetAlignment() int }
 	if a, ok := ch.(aligner); ok {
 		switch {
-		case a.GetAlignment() > 0:
+		case IsGoodAlign(a.GetAlignment()):
 			obj.SetExtraFlag(0, 10) // ITEM_ANTI_EVIL
 			sendSpellActToCaster("$p glows blue.", ch, nil, ovict, world)
-		case a.GetAlignment() < 0:
+		case IsEvilAlign(a.GetAlignment()):
 			obj.SetExtraFlag(0, 9) // ITEM_ANTI_GOOD
 			sendSpellActToCaster("$p glows red.", ch, nil, ovict, world)
 		default:
@@ -2380,7 +2406,7 @@ func castEnchantArmor(level int, ch, ovict, world interface{}) {
 
 // castCreateWater — fills a drink container with water or changes its liquid to slime.
 // C source: spells.c:87-120. Drink-name helpers mutate the targeting keywords only.
-func castCreateWater(level int, ch, ovict interface{}) {
+func castCreateWater(level int, ch, ovict, world interface{}) {
 	_ = level
 	if ch == nil || ovict == nil {
 		return
@@ -2432,11 +2458,9 @@ func castCreateWater(level int, ch, ovict interface{}) {
 		}
 		clearDrinkconName(ovict)
 		setDrinkconName(ovict, "water") // drinknames[LIQ_WATER], src/constants.c:946
-		if desc, ok := ovict.(interface{ GetShortDesc() string }); ok {
-			// C act("$p is filled.", ..., TO_CHAR) uses OBJS(obj, ch),
-			// so the caster sees the object's short description (src/comm.c:2439).
-			sendToCaster(ch, fmt.Sprintf("%s is filled.\r\n", desc.GetShortDesc()))
-		}
+		// C act("$p is filled.", FALSE, ch, obj, 0, TO_CHAR) (src/spells.c:112)
+		// renders OBJS(obj, ch) and applies CAP(lbuf) (src/comm.c:2477).
+		sendSpellActToCaster("$p is filled.", ch, nil, ovict, world)
 	} else {
 		sendToCaster(ch, "You cannot create water in that!\r\n")
 	}
@@ -2504,7 +2528,13 @@ func castIdentifyObject(level int, ch, ovict interface{}) {
 		itemType = tf.GetTypeFlag()
 	}
 	typeName := identifyItemTypeName(itemType)
-	sendToCaster(ch, fmt.Sprintf("Object '%s', Item type: %s\r\n", objectName, typeName))
+	if itemType == 3 || itemType == 4 { // ITEM_WAND, ITEM_STAFF
+		// C hard-codes CASTING_EQ for both, with a reversed terminator,
+		// instead of sprinttype(item_types) (src/spells.c:491-492).
+		sendToCaster(ch, fmt.Sprintf("Object '%s', Item type: CASTING_EQ\n\r", objectName))
+	} else {
+		sendToCaster(ch, fmt.Sprintf("Object '%s', Item type: %s\r\n", objectName, typeName))
+	}
 
 	// C's object bitvector is not exposed by the Go object interface yet; the
 	// parsed object format has no corresponding field, so this is NOBITS for
@@ -2538,7 +2568,7 @@ func castIdentifyObject(level int, ch, ovict interface{}) {
 			}
 			sendToCaster(ch, fmt.Sprintf("This %s casts: %s\r\n", typeName, spells))
 		case 3, 4: // ITEM_WAND, ITEM_STAFF
-			sendToCaster(ch, fmt.Sprintf("This %s casts: %s\r\nIt has %d maximum charge%s and %d remaining.\r\n",
+			sendToCaster(ch, fmt.Sprintf("This %s casts:  %s\r\nIt has %d maximum charge%s and %d remaining.\r\n",
 				typeName, identifySpellName(v.GetValue(3)), v.GetValue(1), pluralS(v.GetValue(1)), v.GetValue(2)))
 		case 5: // ITEM_WEAPON
 			sendToCaster(ch, fmt.Sprintf("Damage Dice is '%dD%d' for an average per-round damage of %.1f.\r\n",
@@ -2605,32 +2635,11 @@ var identifyMobRaces = []string{
 }
 
 func identifyBits(flags [4]int, names []string) string {
-	result := ""
-	for word, flag := range flags {
-		bits := identifyFlagWord(flag)
-		for bit := 0; bits != 0; bit++ {
-			if bits&1 != 0 {
-				index := word*32 + bit
-				if index < len(names) && names[index] != "" {
-					result += names[index] + " "
-				} else {
-					result += "UNDEFINED "
-				}
-			}
-			bits >>= 1
-		}
+	words := make([]uint32, len(flags))
+	for i, flag := range flags {
+		words[i] = uint32(flag) // #nosec G115 -- SprintbitArray sign-extends this C int word.
 	}
-	if result == "" {
-		return "NOBITS "
-	}
-	return result
-}
-
-func identifyFlagWord(flag int) uint32 {
-	if flag < 0 || uint64(flag) > uint64(^uint32(0)) {
-		return 0
-	}
-	return uint32(flag)
+	return common.SprintbitArray(words, names, len(words))
 }
 
 func identifyItemTypeName(itemType int) string {
@@ -2990,9 +2999,11 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 // AoE damage to all non-grouped characters in room. Must be outdoors.
 func castMeteorSwarm(level int, ch, world interface{}) {
 	// C src/spells.c:1094 consumes this damage draw before the peaceful and
-	// outdoor refusal gates.
+	// outdoor refusal gates. Both terms read GET_LEVEL(ch) — the caster's own
+	// level, not the cast level — so an item-cast meteor swarm rolls its one
+	// number() draw with the user's level in both bounds (DP-1468).
 	// #nosec G404 -- game RNG, not cryptographic
-	dam := level*6 + dprng.Number(-10, level*3)
+	dam := getLevel(ch)*6 + dprng.Number(-10, getLevel(ch)*3)
 
 	w, ok := world.(worldAoe)
 	if !ok {
@@ -3141,7 +3152,7 @@ func castHellfire(level int, ch, world interface{}) {
 			// C source: spells.c:737-742 uses number(1, 20) before the damage call.
 			// #nosec G404 — game RNG, not cryptographic
 			if dprng.Number(1, 20) > casterDex {
-				cn.SetPosition(5) // POS_SITTING
+				cn.SetPosition(int(PosSitting))
 				castHellfireActToVictim(world, ch, c, "The fires of hell bring you to your knees!\r\n")
 				castHellfireActNotVictim(world, ch, c, "The fires of hell bring $N to $S knees!\r\n", false)
 			}
@@ -3469,7 +3480,12 @@ func castSummon(level int, ch, cvict, world interface{}) {
 	sendAffectRoom(cvict, nil, "$n arrives suddenly.\r\n", true, world)
 
 	if getPos(cvict) > int(PosSleeping) {
-		sendToVictim(cvict, fmt.Sprintf("%s has summoned you!\r\n", chName))
+		const summonedAct = "$n has summoned you!"
+		if renderer, ok := world.(interface {
+			SpellActToVictim(caster, victim interface{}, format string) bool
+		}); !ok || !renderer.SpellActToVictim(ch, cvict, summonedAct) {
+			sendAct(summonedAct+"\r\n", ch, nil, cvict, world)
+		}
 		// C calls look_at_room(victim, 0) immediately after the awake victim
 		// message; the game adapter owns the room renderer to avoid a package
 		// cycle from spells to game.
@@ -3578,8 +3594,8 @@ func castDivineInt(level int, ch, world interface{}) {
 		alignment = a.GetAlignment()
 	}
 
-	good := alignment >= 350
-	evil := alignment <= -350
+	good := IsGoodAlign(alignment)
+	evil := IsEvilAlign(alignment)
 	if !good && !evil {
 		sendToCaster(ch, "Your request for intervention falls on deaf ears.\r\n")
 		return
@@ -3624,14 +3640,19 @@ func castDivineInt(level int, ch, world interface{}) {
 	fa, _ := world.(followerAdder)
 
 	for i := 0; i < angelCount; i++ {
-		mobLevel := level / 2
+		// C reads the caster's own level for both the spawn level —
+		// create_mobile(ch, mob_num, GET_LEVEL(ch)/2, FALSE)
+		// (src/spells.c:1212) — and the charm affect's duration —
+		// af.duration = (GET_LEVEL(ch)/2)-2 (src/spells.c:1178) — not the
+		// cast level, so item casts scale with the user's level (DP-1468).
+		mobLevel := getLevel(ch) / 2
 		mob, err := spawner.SpawnMobWithLevelI(mobVNum, roomVNum, mobLevel)
 		if err != nil {
 			slog.Warn("spell_divine_int: failed to spawn angel", "error", err, "vnum", mobVNum)
 			continue
 		}
 		spellActToRoom(world, mob, "$n steps through the portal!", true)
-		applyAffect(mob, engine.NewAffectDirect(SpellDivineInt, engine.ApplyNone, level/2-2, 0, engine.AFFCharm, "divine intervention"))
+		applyAffect(mob, engine.NewAffectDirect(SpellDivineInt, engine.ApplyNone, getLevel(ch)/2-2, 0, engine.AFFCharm, "divine intervention"))
 		if fa != nil {
 			fa.AddFollowerQuiet(mob, ch)
 		}
@@ -3719,8 +3740,11 @@ func castConjureElemental(level int, ch, world interface{}) {
 	}
 	sendToCaster(ch, fmt.Sprintf("You begin to chant slowly, drawing power from %s.\r\n", compName))
 
-	// Spawn the elemental
-	mobLevel := level/2 + 3
+	// Spawn the elemental. C reads the caster's own level —
+	// create_mobile(ch, elem, (GET_LEVEL(ch)/2)+3, FALSE)
+	// (src/spells.c:1071-1072) — not the cast level, so an item-cast
+	// conjure elemental scales with the user's level (DP-1468).
+	mobLevel := getLevel(ch)/2 + 3
 	type mobSpawner interface {
 		SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error)
 	}
@@ -3898,6 +3922,7 @@ func castLocateObject(level int, ch, ovict, world interface{}) {
 
 // castMirrorImage creates a clone of the caster.
 func castMirrorImage(level int, ch, world interface{}) {
+	_ = level
 	if ch == nil {
 		return
 	}
@@ -3912,32 +3937,58 @@ func castMirrorImage(level int, ch, world interface{}) {
 	type mobSpawner interface {
 		SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error)
 	}
-	if ms, ok := world.(mobSpawner); ok {
-		// MOB_CLONE vnum — check C source
-		mob, err := ms.SpawnMobWithLevelI(69, roomVNum, level) // MOB_CLONE = 69
-		if err != nil {
-			sendToCaster(ch, "You fail to divide yourself.\r\n")
-			return
-		}
+	ms, ok := world.(mobSpawner)
+	if !ok {
+		return
+	}
 
-		// Name the clone after the caster
-		type named interface{ GetName() string }
-		if n, ok := ch.(named); ok {
-			type nameSetter interface{ SetName(string) }
-			if ns, ok := mob.(nameSetter); ok {
-				ns.SetName(n.GetName())
-			}
-		}
+	// src/spells.c:1136 with MOB_CLONE = 69 (src/spells.c:1130). The clone is
+	// created at a literal level 1 — a wand or scroll of mirror image divides
+	// the user into level-1 images (DP-1458) — and it is created BEFORE the
+	// guards, exactly as C does.
+	clone, err := ms.SpawnMobWithLevelI(69, roomVNum, 1)
+	if err != nil || clone == nil {
+		// src/spells.c:1138: (NULL == ch) || (NULL == clone) — a silent return.
+		// C has no failure message here; the port invented one (R4).
+		return
+	}
 
-		sendToCaster(ch, "You divide yourself in two!\r\n")
-		type roomActer interface {
-			SpellActToRoom(actor, victim interface{}, format string, hideInvisible bool) bool
-		}
-		if acter, ok := world.(roomActer); ok {
-			// C src/spells.c:1153 uses act(..., TRUE, ..., TO_ROOM), so retain
-			// the canonical act substitutions and invisibility filtering.
-			acter.SpellActToRoom(ch, nil, "$n divides $mself in two!", true)
-		}
+	// src/spells.c:1141-1143: C returns silently when the caster's name, title
+	// or description is NULL. Go carries C's NULL as the empty string (a fresh
+	// character's Description is "" until the editor sets it; pkg/session
+	// models the same present-iff-non-empty rule, menu.go:244-249).
+	type named interface{ GetName() string }
+	type titled interface{ GetTitle() string }
+	type described interface{ GetDescription() string }
+	n, nOK := ch.(named)
+	t, tOK := ch.(titled)
+	d, dOK := ch.(described)
+	if !nOK || !tOK || !dOK || n.GetName() == "" || t.GetTitle() == "" || d.GetDescription() == "" {
+		return
+	}
+
+	// src/spells.c:1145-1150: copy the caster's identity onto the clone.
+	if cc, ok := world.(interface {
+		ConfigureMirrorClone(clone, caster interface{})
+	}); ok {
+		cc.ConfigureMirrorClone(clone, ch)
+	}
+
+	sendToCaster(ch, "You divide yourself in two!\r\n")
+	type roomActer interface {
+		SpellActToRoom(actor, victim interface{}, format string, hideInvisible bool) bool
+	}
+	if acter, ok := world.(roomActer); ok {
+		// C src/spells.c:1153 uses act(..., TRUE, ..., TO_ROOM), so retain
+		// the canonical act substitutions and invisibility filtering.
+		acter.SpellActToRoom(ch, nil, "$n divides $mself in two!", true)
+	}
+
+	// src/spells.c:1155-1162: point mob memory and hunting from caster to clone.
+	if mh, ok := world.(interface {
+		MirrorImageHandoff(clone, caster interface{})
+	}); ok {
+		mh.MirrorImageHandoff(clone, ch)
 	}
 }
 

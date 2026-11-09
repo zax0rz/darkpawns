@@ -59,7 +59,10 @@ func (w *World) DoFlee(ch combat.Combatant) {
 		sendBodyMessage(w, ch, "Get on your feet first!\r\n")
 		return
 	}
-	if mob != nil && mob.GetWaitState() != 0 {
+	// C's mob gate reads GET_MOB_WAIT (src/act.offensive.c:377-381) — the
+	// Lua timer counter, distinct from the ch->wait a bash writes, which
+	// never stops a mob from fleeing.
+	if mob != nil && mob.GetMobWait() != 0 {
 		sendBodyMessage(w, mob, "You can't flee yet!\r\n")
 		return
 	}
@@ -274,7 +277,7 @@ func (w *World) performMoveMob(ch *MobInstance, dir int, needSpecialsCheck bool)
 			if isSecret && !movementRoomHasFlag(fromRoom, roomFlagSecretMark, "secret_mark") {
 				sendBodyMessage(w, ch, "Alas, you cannot go that way...\r\n")
 			} else {
-				sendBodyMessage(w, ch, fmt.Sprintf("The %s seems to be closed.\r\n", firstWord(exit.Keywords)))
+				sendBodyMessage(w, ch, fmt.Sprintf("The %s seems to be closed.\r\n", CFName(exit.Keywords)))
 			}
 		} else {
 			sendBodyMessage(w, ch, "It seems to be closed.\r\n")

@@ -10,6 +10,7 @@ package game
 
 import (
 	"log"
+	"sort"
 	"strings"
 	"unicode"
 
@@ -260,18 +261,9 @@ func CanReceiveAct(to *Player) bool {
 	return to != nil && sendOk(to, false)
 }
 
-// fname returns the first word of a keywords string.
-// C: fname() from utils.c
-func fname(keywords string) string {
-	idx := strings.IndexByte(keywords, ' ')
-	if idx == -1 {
-		return keywords
-	}
-	return keywords[:idx]
-}
-
 // objName returns the object's first keyword or "something" if not visible.
 // C: OBJN(obj, vict) — fname(obj->name) if CAN_SEE_OBJ, else "something"
+// (src/utils.h:557-558). fname() is CFName; see world_object.go.
 func objName(obj *ObjectInstance, to Actor) string {
 	if obj == nil {
 		return "something"
@@ -279,7 +271,7 @@ func objName(obj *ObjectInstance, to Actor) string {
 	if !canSeeObject(to, obj) {
 		return "something"
 	}
-	return fname(obj.GetKeywords())
+	return CFName(obj.GetKeywords())
 }
 
 // objShortDesc returns the object's short description or "something".
@@ -510,7 +502,7 @@ func actSubstitution(code byte, ch, vict Actor, obj, victObj *ObjectInstance, ar
 		sub = strings.ToLower(arg2)
 	case 'F':
 		if arg2 != "" {
-			sub = fname(arg2)
+			sub = CFName(arg2)
 		} else {
 			sub = "someone"
 		}
@@ -725,16 +717,45 @@ func actArenaBroadcast(world *World, hideInvisible bool, ch, vict Actor, obj, vi
 	}
 }
 
-// actChar returns all actors (players + mobs) in a room.
+// actChar returns all actors (players + mobs) in a room in C's
+// world[room].people order: char_to_room prepends to the one shared list
+// (src/handler.c:537-538), so the newest arrival comes first and players and
+// mobiles interleave by arrival. Every C walk of the room — mag_objectmagic's
+// staff fan-out (src/spell_parser.c:806-810), mag_areas, mobile aggression —
+// follows that list, so the order is player-facing (R3b). GetMobsInRoom
+// walks a map and must never feed an order-sensitive fan-out; both groups
+// arrive pre-sorted newest-first and merge here on the shared entry
+// sequence, with the name tiebreak the player/mob helpers use (R3).
 func (w *World) actChar(roomVNum int) []Actor {
-	var actors []Actor
-	for _, p := range w.GetPlayersInRoom(roomVNum) {
+	players := w.GetPlayersInRoom(roomVNum)
+	mobs := w.COrderedRoomMobs(roomVNum)
+	actors := make([]Actor, 0, len(players)+len(mobs))
+	for _, p := range players {
 		actors = append(actors, p)
 	}
-	for _, m := range w.GetMobsInRoom(roomVNum) {
+	for _, m := range mobs {
 		actors = append(actors, m)
 	}
+	sort.SliceStable(actors, func(i, j int) bool {
+		si, sj := actorRoomEntrySequence(actors[i]), actorRoomEntrySequence(actors[j])
+		if si != sj {
+			return si > sj
+		}
+		return actors[i].GetName() < actors[j].GetName()
+	})
 	return actors
+}
+
+// actorRoomEntrySequence returns the actor's room-entry sequence, the runtime
+// stand-in for position in C's people list (newest arrival = largest value).
+func actorRoomEntrySequence(a Actor) uint64 {
+	switch a := a.(type) {
+	case *Player:
+		return a.GetRoomEntrySequence()
+	case *MobInstance:
+		return a.GetRoomEntrySequence()
+	}
+	return 0
 }
 
 // --------------------------------------------------------------------------

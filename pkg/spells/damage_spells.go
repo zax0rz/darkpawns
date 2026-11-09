@@ -20,46 +20,52 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 
 	// Consume reagents for mage damage spells. In C, has_reagents() is a boolean;
 	// the bonus is the full caster level when the reagent is present.
-	hasReag := false
+	reag := 0
 	switch spellNum {
 	case SpellMagicMissile:
-		hasReag = isMage && consumeReagent(ch, SpellMagicMissile, level, "shard of obsidian",
-			"Pulling a shard of obsidian from a pocket, you crush it under your heel...",
-			"$n pulls something out of $s pocket and crushes it beneath $s heel...")
-		if isMage && !hasReag {
+		if isMage {
+			reag = consumeReagent(ch, SpellMagicMissile, level,
+				"Pulling a shard of obsidian from a pocket, you crush it under your heel...")
+		}
+		if isMage && reag == 0 {
 			sendToCaster(ch, "You attempt the spell without the components..\r\n")
-		} else if hasReag {
+		} else if reag > 0 {
 			sendAffectRoom(ch, nil, "$n pulls something out of $s pocket and crushes it beneath $s heel...\r\n", true, world)
 		}
 	case SpellColorSpray:
-		hasReag = isMage && consumeReagent(ch, SpellColorSpray, level, "prism",
-			"Pulling a prism from a pocket, you crush it under your heel...",
-			"$n pulls something out of $s pocket and crushes it beneath $s heel...")
-		if hasReag {
+		if isMage {
+			reag = consumeReagent(ch, SpellColorSpray, level,
+				"Pulling a prism from a pocket, you crush it under your heel...")
+		}
+		if reag > 0 {
 			sendAffectActRoom(ch, nil, "$n pulls something out of $s pocket and crushes it beneath $s heel...", true, world)
 		}
 	case SpellFireball:
-		hasReag = isMage && consumeReagent(ch, SpellFireball, level, "pinch of ash",
-			"Pulling a pinch of ash from a pocket, you cast it about the room...",
-			"$n pulls a pinch of ash out of a pocket and casts it about the room.")
-		if hasReag {
+		if isMage {
+			reag = consumeReagent(ch, SpellFireball, level,
+				"Pulling a pinch of ash from a pocket, you cast it about the room...")
+		}
+		if reag > 0 {
 			sendAffectActRoom(ch, nil, "$n pulls a pinch of ash out of a pocket and casts it about the room.", true, world)
 		}
 	case SpellDisintegrate:
-		hasReag = isMage && consumeReagent(ch, SpellDisintegrate, level, "eye of a beholder",
-			"Pulling the eye of a beholder from a pocket, you throw it to the ground...",
-			"$n pulls a small orb out of a pocket and dashes it to the ground.")
-		if hasReag {
+		if isMage {
+			reag = consumeReagent(ch, SpellDisintegrate, level,
+				"Pulling the eye of a beholder from a pocket, you throw it to the ground...")
+		}
+		if reag > 0 {
 			sendAffectActRoom(ch, nil, "$n pulls a small orb out of a pocket and dashes it to the ground.", true, world)
 		}
 	case SpellSoulLeech, SpellEnergyDrain:
-		hasReag = isMage && consumeReagent(ch, SpellEnergyDrain, level, "vampire dust",
-			"Pulling the vampire dust from a pocket, you throw it into the air...",
-			"$n throws some dust into the air...")
-		if hasReag {
+		if isMage {
+			reag = consumeReagent(ch, SpellEnergyDrain, level,
+				"Pulling the vampire dust from a pocket, you throw it into the air...")
+		}
+		if reag > 0 {
 			sendAffectActRoom(ch, nil, "$n throws some dust into the air...", true, world)
 		}
 	}
+	hasReag := reag > 0
 
 	// Compute base damage dice/flat from the C mag_damage() formula table.
 	num, sides, flat, ok := magDamageFormula(level, getLevel(victim), spellNum, isMage, hasReag)
@@ -278,11 +284,20 @@ func magDamageFormula(level, victimLevel, spellNum int, isMage, hasReagent bool)
 	}
 }
 
-// consumeReagent checks for and removes a reagent from the caster's inventory,
-// returning true if the reagent was found. It sends flavor messages when consumed.
-func consumeReagent(ch interface{}, spellNum, level int, reagentName, casterMsg, roomMsg string) bool {
-	reag := checkReagents(ch, spellNum, level, reagentName, casterMsg, roomMsg)
-	return reag > 0
+func consumeReagent(ch interface{}, spellNum, level int, casterMsg string) int {
+	vnums := map[int]int{
+		SpellMagicMissile: 1239,
+		SpellColorSpray:   1236,
+		SpellFireball:     1225,
+		SpellDisintegrate: 1227,
+		SpellEnergyDrain:  1230,
+	}
+	vnum, ok := vnums[spellNum]
+	if !ok || !consumeSpellReagentVNum(ch, vnum) {
+		return 0
+	}
+	sendToCaster(ch, casterMsg+"\r\n")
+	return level
 }
 
 // woundBroadcaster lets spell damage route wound/position messages through the
@@ -299,6 +314,30 @@ type woundBroadcaster interface {
 // kills — see inflictDamage / DP-1022.
 type spellDeathPipeline interface {
 	HandleDeath(victim, killer combat.Combatant, attackType int)
+}
+
+// enrollDamagePair registers C damage()'s set_fighting pair with the fight
+// engine, whose combatOrder is the runtime twin of C's combat_list that
+// violence_update walks (src/fight.c:1408, 1443-1445). EnterDamageFighting
+// copies only the FIGHTING fields, so a damage seam that stopped there left the
+// pair out of the engine and no round was ever run — every staff, wand, scroll
+// and directly cast damage spell (DP-1481 shape 2). The post-damage entry is
+// preferred because it leaves the victim's pre-combat position in charge of
+// enrolment, exactly as C's set_fighting gates do; the ordinary opener is the
+// fallback for a world that predates it. An already-enrolled pair is expected
+// (a mob breathing mid-melee) and non-fatal.
+func enrollDamagePair(world interface{}, ch, victim combat.Combatant) {
+	if enroller, ok := world.(interface {
+		StartCombatAfterDamage(combat.Combatant, combat.Combatant) error
+	}); ok {
+		_ = enroller.StartCombatAfterDamage(ch, victim)
+		return
+	}
+	if starter, ok := world.(interface {
+		StartCombat(combat.Combatant, combat.Combatant) error
+	}); ok {
+		_ = starter.StartCombat(ch, victim)
+	}
 }
 
 // inflictDamage applies spell damage and, on a lethal blow, drives the death
@@ -356,7 +395,16 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 					_ = err
 				}
 			}
+		} else if !isBreathSpell(attackType) {
+			enrollDamagePair(world, chCombat, victCombat)
 		}
+		// fight.c:1457-1464: every damage() entry breaks the victim's
+		// following when the attacker is the master, then fades a hidden
+		// attacker — before the modifier block (:1465 onward). The spell
+		// path omitted both and let the break wait for the next melee round
+		// (DP-1489).
+		combat.BreakFollowerOnDamage(chCombat, victCombat)
+		combat.FadeHiddenAttacker(chCombat)
 		// Shared damage() modifier block: sanctuary, protect evil/good,
 		// race-hate, the 3000 cap, and immortal invulnerability (DP-1025).
 		dam = combat.ApplyDamageModifiers(chCombat, victCombat, dam)
@@ -394,6 +442,14 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 			stopFighting = sfb.StopFightingBody
 		}
 		newPos := combat.UpdatePositionAfterDamage(victCombat, wb, stopFighting)
+		// damage()'s default arm — the "That really did HURT!" line, the
+		// number(0,2) scream draw, the bleed line and the wimp-out — runs for
+		// EVERY attack type, spells included (src/fight.c:1587-1614). Melee
+		// (takeDamageFrom) and the skill seams already call it; omitting it here
+		// dropped the draw as well as the line, so every later draw in the round
+		// shifted and the following perform_violence attack counts came out
+		// wrong (DP-1460; R3).
+		combat.ApplySurvivingVictimDefaultArm(chCombat, victCombat, dam, newPos)
 		if newPos == combat.PosDead {
 			combat.EmitDeathPositionMessage(victCombat, wb)
 
@@ -441,7 +497,7 @@ func isNPC(ch interface{}) bool {
 func isEvil(ch interface{}) bool {
 	type aligner interface{ GetAlignment() int }
 	if a, ok := ch.(aligner); ok {
-		return a.GetAlignment() < 0
+		return IsEvilAlign(a.GetAlignment())
 	}
 	return false
 }
@@ -449,7 +505,7 @@ func isEvil(ch interface{}) bool {
 func isGood(ch interface{}) bool {
 	type aligner interface{ GetAlignment() int }
 	if a, ok := ch.(aligner); ok {
-		return a.GetAlignment() > 0
+		return IsGoodAlign(a.GetAlignment())
 	}
 	return false
 }

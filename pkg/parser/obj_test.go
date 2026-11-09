@@ -44,8 +44,11 @@ $
 	if o.Keywords != "sword blade sharp" {
 		t.Errorf("keywords: expected 'sword blade sharp', got %q", o.Keywords)
 	}
-	if o.ShortDesc != "A sharp sword" {
-		t.Errorf("shortdesc: expected 'A sharp sword', got %q", o.ShortDesc)
+	// C parse_object lowercases the short description's leading article
+	// (src/db.c:1388-1392): "A sharp sword" -> "a sharp sword". The long
+	// description keeps its auto-capitalization ("A sharp sword lies here.").
+	if o.ShortDesc != "a sharp sword" {
+		t.Errorf("shortdesc: expected 'a sharp sword', got %q", o.ShortDesc)
 	}
 	if o.LongDesc != "A sharp sword lies here." {
 		t.Errorf("longdesc: expected 'A sharp sword lies here.', got %q", o.LongDesc)

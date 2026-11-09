@@ -44,15 +44,12 @@ func parseSeedPlayerScenario(t *testing.T, body string) oraclediff.Scenario {
 	return scenario
 }
 
-// The seed-player fixture must force the port's real SQLite store: the twin
-// lives there, and without a store the login would fall through to creation.
-func TestSeedPlayerFixtureForcesPlayerStore(t *testing.T) {
+// The seed-player fixture sets Scenario.SeedPlayer. The store itself is now
+// prepared for every scenario (prepareGoReloginDB), fixture or not.
+func TestSeedPlayerFixtureSetsFlag(t *testing.T) {
 	scenario := parseSeedPlayerScenario(t, seedPlayerScenario)
 	if !scenario.SeedPlayer {
 		t.Fatal("seed-player fixture did not set Scenario.SeedPlayer")
-	}
-	if !needsPlayerStore(&scenario) {
-		t.Fatal("seed-player scenario does not request the player store")
 	}
 }
 
@@ -170,16 +167,6 @@ func TestPrepareGoReloginDBSeedsTestorTwin(t *testing.T) {
 		t.Fatal("twin password does not verify against testpassword")
 	}
 
-	// Only the twin is seeded: the placeholder exists to stop a fresh creation
-	// being crowned, and the seeded Testor already does that.
-	placeholder, err := store.GetPlayer("Zzplaceholder")
-	if err != nil {
-		t.Fatalf("placeholder lookup failed: %v", err)
-	}
-	if placeholder != nil {
-		t.Fatal("seed-player store also seeded Zzplaceholder")
-	}
-
 	// C's next fresh mortal takes ++top_idnum from the shipped records (4
 	// here), so the store's sequence must hand the next creation ID 5 — the
 	// IDNum stat/set/whois/finger print (Luna's PR #2167 surface).
@@ -194,28 +181,42 @@ func TestPrepareGoReloginDBSeedsTestorTwin(t *testing.T) {
 
 // Default off: without the fixture the placeholder path is exactly what it
 // was before seed-player existed.
-func TestPrepareGoReloginDBDefaultSeedsPlaceholder(t *testing.T) {
-	url, err := prepareGoReloginDB(t.TempDir(), false, false, "")
-	if err != nil {
-		t.Fatal(err)
+// The boot store mirrors C's player file: empty-players starts empty on both
+// sides; every other mode holds the shipped first player's twin and nothing
+// else (C's file record 0, lib/etc/players).
+func TestPrepareGoReloginDBBootStoreNames(t *testing.T) {
+	modes := []struct {
+		name                     string
+		emptyPlayers, seedPlayer bool
+		want                     []string
+	}{
+		{name: "empty-players", emptyPlayers: true},
+		{name: "default", want: []string{"Testor"}},
+		{name: "seed-player", seedPlayer: true, want: []string{"Testor"}},
 	}
-	store, err := db.New(url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = store.Close() }()
-	placeholder, err := store.GetPlayer("Zzplaceholder")
-	if err != nil {
-		t.Fatalf("default relogin store lookup failed: %v", err)
-	}
-	if placeholder == nil {
-		t.Fatal("default relogin store lost its placeholder")
-	}
-	testor, err := store.GetPlayer("Testor")
-	if err != nil {
-		t.Fatalf("default relogin store lookup failed: %v", err)
-	}
-	if testor != nil {
-		t.Fatal("default relogin store seeded Testor without the fixture")
+	for _, mode := range modes {
+		t.Run(mode.name, func(t *testing.T) {
+			url, err := prepareGoReloginDB(t.TempDir(), mode.emptyPlayers, mode.seedPlayer, writeShippedPfile(t, 1, 2, 3, 4))
+			if err != nil {
+				t.Fatal(err)
+			}
+			store, err := db.New(url)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer func() { _ = store.Close() }()
+			names, err := store.ListPlayerNames()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(names) != len(mode.want) {
+				t.Fatalf("boot store names = %v, want %v", names, mode.want)
+			}
+			for i := range names {
+				if names[i] != mode.want[i] {
+					t.Fatalf("boot store names = %v, want %v", names, mode.want)
+				}
+			}
+		})
 	}
 }

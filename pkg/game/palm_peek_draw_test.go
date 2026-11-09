@@ -1,6 +1,7 @@
 package game
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -40,11 +41,16 @@ func palmPeekWorld(t *testing.T) (*World, *Player, *MobInstance) {
 }
 
 // TestPalmEntryDrawPrecedesEveryGate pins DP-1436 (R3): do_palm consumes
-// number(1,101) before its no-argument return and before the item and weight
-// checks (src/new_cmds.c:2110-2122), so every refusal still burns the draw.
+// number(1,101) before its no-argument return and before get_from_room
+// (src/new_cmds.c:2110-2122), so every refusal still burns the draw. The
+// no-argument line is returned by DoPalm; the miss line now comes from the
+// real get_from_room (C's "You don't see a <arg> here."), which DoPalm
+// delegates to, so the sink captures it.
 func TestPalmEntryDrawPrecedesEveryGate(t *testing.T) {
 	w, p, _ := palmPeekWorld(t)
 	seed := uint32(163)
+	var out strings.Builder
+	w.MessageSink = func(_ string, msg []byte) { out.Write(msg) }
 
 	for _, tc := range []struct {
 		name    string
@@ -52,17 +58,22 @@ func TestPalmEntryDrawPrecedesEveryGate(t *testing.T) {
 		want    string
 	}{
 		{name: "no argument", objName: "", want: "Palm what?\r\n"},
-		{name: "nothing matches", objName: "nothing", want: "You don't see that here.\r\n"},
+		{name: "nothing matches", objName: "nothing", want: "You don't see a nothing here.\r\n"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			out.Reset()
 			dprng.ResetStream(seed)
 			_ = dprng.Number(1, 101) // reference: the entry draw
 			wantNext := dprng.Number(1, 101)
 
 			dprng.ResetStream(seed)
 			result := DoPalm(p, tc.objName, w)
-			if result.MessageToCh != tc.want {
-				t.Fatalf("palm bytes = %q, want %q", result.MessageToCh, tc.want)
+			got := result.MessageToCh
+			if got == "" {
+				got = out.String()
+			}
+			if got != tc.want {
+				t.Fatalf("palm bytes = %q, want %q", got, tc.want)
 			}
 			if gotNext := dprng.Number(1, 101); gotNext != wantNext {
 				t.Fatalf("next draw after palm = %d, want %d (the entry draw was skipped or doubled)", gotNext, wantNext)

@@ -75,7 +75,6 @@ func defaultCombatCallbacks() *GameCallbacks {
 		ApplyToGroupMembers:      func(bodyleaderName Combatant, roomVNum int, fn func(name Combatant)) {},
 		GetGold:                  func(bodyname Combatant) int { return 0 },
 		SetGold:                  func(bodyname Combatant, gold int) {},
-		JunkInventoryItems:       func(bodychName Combatant) {},
 		PerformCommand:           func(bodychName Combatant, cmd string) {},
 		GetWimpyLev:              func(bodyname Combatant) int { return 0 },
 		DoFlee:                   func(bodyname Combatant) {},

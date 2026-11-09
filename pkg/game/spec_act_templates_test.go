@@ -87,7 +87,7 @@ func TestMpSoundRendersSayLineThroughAct(t *testing.T) {
 	// (src/act.comm.c:787-790; mp_sound delivery at src/mobprog.c:604).
 	w := newActTemplateWorld(1001)
 	observer := addCapturedPlayer(t, w, "Pracobserver", 1001)
-	petitioner := NewMob(&parser.Mob{VNum: 8066, Keywords: "petitioner", ShortDesc: "a petitioner"}, 1001)
+	petitioner := NewMob(&parser.Mob{VNum: 8066, Keywords: "petitioner", ShortDesc: "a petitioner", Int: 11, Wis: 11}, 1001)
 	forceMobProgDraw(t, 0) // case 8066 arm 1
 
 	w.MpSound(petitioner)
@@ -123,7 +123,7 @@ func TestMpSoundAversinEmotesBeforeSaying(t *testing.T) {
 	// the say (src/mobprog.c:582-584). Case 8059 draws no mana of the RNG.
 	w := newActTemplateWorld(1001)
 	observer := addCapturedPlayer(t, w, "Pracobserver", 1001)
-	aversin := NewMob(&parser.Mob{VNum: 8059, Keywords: "aversin", ShortDesc: "the captain"}, 1001)
+	aversin := NewMob(&parser.Mob{VNum: 8059, Keywords: "aversin", ShortDesc: "the captain", Int: 11, Wis: 11}, 1001)
 
 	w.MpSound(aversin)
 

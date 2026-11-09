@@ -89,6 +89,22 @@ func specialActor(ctx CharacterSpecialContext) cBody {
 	return actor
 }
 
+// specialActorRace reports GET_RACE(ch) for an acting body (src/utils.h:347):
+// the player's saved race or the mobile's race. Special gates that read "the
+// actor's race" mean this — not the host mobile's prototype race
+// (src/shop.c:973 GET_RACE(ch) for the shopkeeper's Kender arm).
+func specialActorRace(body cBody) int {
+	switch a := body.(type) {
+	case *Player:
+		return a.GetRace()
+	case *MobInstance:
+		if a.Proto() != nil {
+			return a.Proto().Race
+		}
+	}
+	return 0
+}
+
 // elementTeleportPerson runs one iteration of the element rooms' C loop: the
 // direct line (TO_CHAR, which a descriptor-less mobile never receives), the
 // departure act, the checked char_from_room/char_to_room pair, the optional

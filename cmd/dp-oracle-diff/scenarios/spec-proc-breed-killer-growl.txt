@@ -1,0 +1,103 @@
+# depth-case: mob.breed-killer-growl-site-live
+# C-first witness for the growl pair DP-1502 lists (src/spec_procs2.c:1702
+# "You hear a low growl in the back of $n's throat." — segments "You hear a low
+# growl in the back of" and "'s throat."). SPECIAL(breed_killer) (mob 7910,
+# src/spec_assign.c:264) needs a NIGHTBREED body in the room
+# (AFF_VAMPIRE/AFF_WEREWOLF, src/utils.h:380) and takes the growl arm only
+# when not (can_speak && !PRF_NOHASSLE) — so the victim carries NOHASSLE
+# (src/spec_procs2.c:1696-1703). The pipeline to a nightbreed: Dracula's
+# look-bite grants PLR_VAMPIRE (src/spec_procs.c:1828-1830), then transform
+# at night (fixed-time pins 23H) sets AFF_VAMPIRE (src/act.other.c:1503).
+# C path: src/mobact.c:68-93 -> src/spec_procs2.c:1685-1715.
+
+[fixture]
+empty-players
+quiet-mobs
+fixed-time 650812932
+spawn-mob 14110 1 8105 80
+clear-mob-flag 14110 AGGRESSIVE
+spawn-mob 7910 1 8105 80
+clear-mob-flag 7910 AGGRESSIVE
+set-mob-flag 7910 SPEC
+replace-room-exits 8105 none
+
+[setup:oracle]
+BreedGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BreedGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+BreedPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+BreedPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+# zone79 randload scatters 7900-7998 mobs at reset (src/db.c:2126-2138),
+# so the hunter must be gathered into the witness room explicitly.
+teleport killer 8105
+teleport BreedPeer 8105
+set BreedPeer maxhit 50000
+set BreedPeer hp 50000
+set BreedPeer hit 50000
+
+[probe]
+send:peer look lothar
+set player BreedPeer nohassle on
+send:peer transform
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400

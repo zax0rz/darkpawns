@@ -1,0 +1,77 @@
+# C-first do_subdue fighting-target vehicle (src/act.offensive.c:1121-1124).
+# A mortal victim opens on the level-2 trainee guard; with the fight live and
+# no settle pulses, the God (subdue granted, not fighting) tries to subdue the
+# victim: C answers "You can't get close enough!" because FIGHTING(victim) is
+# checked before the Outlaw gate and the roll.
+#
+# depth-case: subdue.target-fighting
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Subduegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Subduegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Subvictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Subvictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Subduegod 'subdue' 100
+goto 8105
+teleport Subvictim 8105
+
+[probe]
+send:victim hit trainee
+subdue Subvictim

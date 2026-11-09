@@ -1,0 +1,47 @@
+# C-first enchant weapon glow at a caster inside C's neutral alignment band
+# (align 100). IS_GOOD/IS_EVIL are the ±350 thresholds (src/utils.h:454-455),
+# so the caster is neutral and gets "glows yellow." with neither anti flag
+# (src/spells.c:644-651); identify reads the flags back ("Item is: ",
+# src/spells.c:506-509). A sign-based gate would glow blue and set !EVIL.
+# depth-case: spell.enchant-weapon-glow-align-threshold
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Enchantalign
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Enchantalign
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+load obj 8020
+set Enchantalign align 100
+
+[probe]
+cast 'enchant weapon' dagger
+cast 'identify' dagger

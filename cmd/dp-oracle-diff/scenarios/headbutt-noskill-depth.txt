@@ -1,0 +1,80 @@
+# depth-case: headbutt.no-skill
+# C-first witness for do_headbutt's skill gate, "You aren't qualified to
+# headbutt anyone!", DP-1502 lists at src/new_cmds.c:384. headbutt is
+# POS_FIGHTING (src/interpreter.c:487), so the mortal peer walks to the
+# aggressive trainee and the fight opens; the peer has no headbutt skill, so
+# the first `headbutt` reaches the qualification refusal. Mirrors
+# combat-trip-opener's opener lane (empty-players crowns the primary God; the
+# peer walks north east south east to 8105).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Hbnoskillgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hbnoskillgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Hbnoskill
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Hbnoskill
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[probe:mortal]
+headbutt trainee

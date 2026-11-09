@@ -3,6 +3,7 @@ package session
 import (
 	"fmt"
 	"log/slog"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -342,10 +343,10 @@ func cmdTeleport(s *Session, args []string) error {
 	return nil
 }
 
-// cmdTransfer mirrors do_trans (src/act.wizard.c:309-364). Unlike teleport,
+// cmdTransfer mirrors do_trans (src/act.wizard.c:309-361). Unlike teleport,
 // transfer has only a one_argument target and always lands the target in the
 // actor's current room. The C "all" branch is available only to GRGOD and
-// iterates connected characters below the actor's level.
+// iterates connected characters below the actor's level in descriptor order.
 func cmdTransfer(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT+1) {
 		s.Send("Huh?!?")
@@ -358,20 +359,47 @@ func cmdTransfer(s *Session, args []string) error {
 		return nil
 	}
 
-	if strings.EqualFold(targetName, "all") && s.player.GetLevel() >= LVL_GRGOD {
+	// C tests str_cmp("all", buf) before the single-target lookup, and
+	// str_cmp is case-insensitive (src/utils.c:107). The all branch is chosen
+	// for "all" alone; every other argument takes the single-target path
+	// (src/act.wizard.c:319). Below LVL_GRGOD the all branch refuses with
+	// "I think not." before it walks descriptor_list (src/act.wizard.c:342-345).
+	if strings.EqualFold(targetName, "all") {
+		if s.player.GetLevel() < LVL_GRGOD {
+			s.Send("I think not.\r\n")
+			return nil
+		}
+
 		s.manager.mu.RLock()
 		sessions := make([]*Session, 0, len(s.manager.sessions))
 		for _, target := range s.manager.sessions {
 			sessions = append(sessions, target)
 		}
 		s.manager.mu.RUnlock()
+		// C walks descriptor_list, which prepends each new descriptor, so the
+		// newest connection is first (src/act.wizard.c:347). Go has no such
+		// list; connectionNumber descending is the same order cmdUsers and the
+		// whod listener model.
+		sort.SliceStable(sessions, func(i, j int) bool {
+			if sessions[i].connectionNumber != sessions[j].connectionNumber {
+				return sessions[i].connectionNumber > sessions[j].connectionNumber
+			}
+			return sessions[i].playerName > sessions[j].playerName
+		})
 
 		for _, target := range sessions {
+			// C skips the caller, descriptors not in CON_PLAYING, missing
+			// characters, and characters at or above the caller's level
+			// (src/act.wizard.c:348-351). isConPlaying matches `!i->connected`
+			// and implies a non-nil character.
 			if target == s || !target.isConPlaying() || target.player.GetLevel() >= s.player.GetLevel() {
 				continue
 			}
-			transferCharacter(s, target.player)
+			// The all branch uses the mushroom-cloud departure and moves no
+			// mount (src/act.wizard.c:352-354).
+			transferCharacter(s, target.player, "$n disappears in a mushroom cloud.", false)
 		}
+		// C sends OK, "Okay.\r\n" (src/config.c:92).
 		s.Send("Okay.\r\n")
 		return nil
 	}
@@ -390,22 +418,33 @@ func cmdTransfer(s *Session, args []string) error {
 		return nil
 	}
 
-	transferCharacter(s, target.Combatant)
+	// The single-target branch uses the hellfire departure and moves a ridden
+	// mount (src/act.wizard.c:329-336).
+	transferCharacter(s, target.Combatant, "$n disappears in a blaze of hellfire!", true)
 	return nil
 }
 
-func transferCharacter(s *Session, target game.Actor) {
+// transferCharacter performs C's shared transfer body: the departure Act, the
+// move, the arrival Act, the victim acknowledgement and the victim's room look
+// (src/act.wizard.c:329-339 single target; 352-357 all). disappearAct is the
+// branch-specific departure line ("... blaze of hellfire!" for a named target,
+// "... mushroom cloud." for the all branch). moveMount mirrors C: only the
+// single-target branch relocates a ridden mount (src/act.wizard.c:332-336).
+func transferCharacter(s *Session, target game.Actor, disappearAct string, moveMount bool) {
 	if s == nil || s.manager == nil || s.manager.world == nil || target == nil {
 		return
 	}
 
 	game.Act(s.manager.world, false, target, nil, nil, nil,
-		"$n disappears in a blaze of hellfire!", "", game.ToRoom)
+		disappearAct, "", game.ToRoom)
 	var err error
-	if target.IsNPC() {
+	switch {
+	case target.IsNPC():
 		err = s.manager.world.MobTransfer(target.(*game.MobInstance), s.player.GetRoom())
-	} else {
+	case moveMount:
 		err = s.manager.world.PlayerTransfer(target.(*game.Player), s.player.GetRoom())
+	default:
+		err = s.manager.world.PlayerTransferNoMount(target.(*game.Player), s.player.GetRoom())
 	}
 	if err != nil {
 		slog.Error("wizard transfer failed", "by", s.player.Name, "target", target.GetName(), "error", err)

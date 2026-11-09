@@ -722,7 +722,9 @@ func (w *World) sendToZoneExceptRoom(roomVNum int, msg string) {
 			continue
 		}
 		if playerRoom := w.GetRoomInWorld(p.GetRoomVNum()); playerRoom != nil && playerRoom.Zone == zone {
-			p.SendMessage(msg)
+			// Verbatim like C's send_to_zone (src/comm.c:2384): bare strings
+			// stay bare (R1; see World.SendToZone).
+			p.SendLiteral(msg)
 		}
 	}
 }
@@ -733,7 +735,7 @@ func specHornObject(w *World, ch *Player, obj *ObjectInstance, cmd string, arg s
 	}
 
 	held, ok := ch.Equipment.GetItemInSlot(SlotHold)
-	if !ok || held != obj || !isName(strings.TrimSpace(arg), obj.GetKeywords()) {
+	if !ok || held != obj || !cIsName(strings.TrimSpace(arg), obj.GetKeywords()) {
 		return false
 	}
 

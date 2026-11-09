@@ -532,6 +532,7 @@ func (p *Player) SetAffectBit(bit uint64, val bool) {
 	defer p.mu.Unlock()
 	if val {
 		p.Affects |= 1 << uint(bit)
+		p.affectBitClear &^= 1 << uint(bit)
 	} else {
 		p.Affects &^= 1 << uint(bit)
 	}
@@ -578,6 +579,7 @@ func (p *Player) RemoveAffectBit(bit int) {
 		return
 	}
 	p.Affects &^= 1 << uint(bit)
+	p.affectBitClear |= 1 << uint(bit)
 }
 
 // GetEquipment returns the player's equipment iterator.

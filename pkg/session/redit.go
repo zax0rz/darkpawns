@@ -818,17 +818,13 @@ func reditRoomFlagSet(room parser.Room, bit int) bool {
 }
 
 func reditRoomFlags(room parser.Room) string {
-	var out strings.Builder
-	for bit, name := range olc.RoomFlagNames {
+	words := make([]uint32, 4)
+	for bit := range olc.RoomFlagNames {
 		if reditRoomFlagSet(room, bit) {
-			out.WriteString(name)
-			out.WriteByte(' ')
+			words[bit/32] |= 1 << uint(bit%32)
 		}
 	}
-	if out.Len() == 0 {
-		return "NOBITS "
-	}
-	return out.String()
+	return game.SprintbitArray(words, olc.RoomFlagNames, len(words))
 }
 
 func reditScriptFlagsText(flags int) string {

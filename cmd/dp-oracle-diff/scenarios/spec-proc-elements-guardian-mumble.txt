@@ -1,0 +1,86 @@
+# depth-case: mob.elements-guardian-mumble-site-live
+# C-first witness for the elements_guardian mumble pair DP-1502 lists
+# (src/spec_procs3.c:1266 TO_VICT "mumbles softly and you begin to scream,
+# involuntarily hitting yourself.", with its TO_NOTVICT twin at :1264-1265).
+# SPECIAL(elements_guardian) (mob 1314, src/spec_assign.c:196) walks the room's
+# people and damages a mortal whose successor in the list is absent or invalid
+# (src/spec_procs3.c:1252-1270); a lone mortal in the room takes the arm on the
+# guardian's pulse.
+# C path: src/mobact.c:68-93 -> src/spec_procs3.c:1230-1280.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 1314 1 8105 80
+clear-mob-flag 1314 AGGRESSIVE
+replace-room-exits 8105 none
+
+[setup:oracle]
+ElemGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ElemGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ElemPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ElemPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+# top the peer up BEFORE it enters: the guardian's arm fires on every
+# command typed in the room, and do_start leaves a fresh mortal at 10 HP
+# (src/class.c:543); do_set clamps maxhit to 5000 (src/act.wizard.c:2736).
+set ElemPeer maxhit 5000
+set ElemPeer hp 5000
+set ElemPeer hit 5000
+teleport ElemPeer 8105
+
+[probe]
+send:peer look
+send:peer score

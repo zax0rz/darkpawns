@@ -1,0 +1,9 @@
+Go file:line	message	C file:line	PERS applies (yes/no)	fixed (yes/no)
+pkg/combat/fight_core.go:307	Your blood freezes as you hear $n's death cry.	src/fight.c:517-518	yes	yes
+pkg/combat/fight_core.go:420	$N screams in pain!	src/fight.c:1591	yes	yes
+pkg/combat/fight_core.go:474	$n grabs $N by the collar, and quickly beats $M into submission.	src/fight.c:1387-1389	yes	yes
+pkg/combat/fight_core.go:450	$n slowly fades into existence.	src/fight.c:1460-1463	yes	yes
+pkg/combat/fight_core.go:663	$n is mortally wounded, and will die soon, if not aided.	src/fight.c:1564-1565	yes	yes
+pkg/combat/fight_core.go:668	$n is incapacitated and will slowly die, if not aided.	src/fight.c:1569-1570	yes	yes
+pkg/combat/fight_core.go:673	$n is stunned, but will probably regain consciousness again.	src/fight.c:1576-1577	yes	yes
+pkg/combat/fight_core.go:679	$n is dead!  R.I.P.	src/fight.c:1582	yes	yes

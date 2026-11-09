@@ -227,12 +227,21 @@ func TestGiveFindVictNoperson(t *testing.T) {
 	w, ch, lastMsg := newDonateTestWorld(t)
 
 	// give to "nobody" — no player or mob with that name in room
-	vict := w.giveFindVict(ch, "nobody")
-	if vict != nil {
-		t.Fatal("giveFindVict should return nil for missing target")
+	if vict, ok := w.giveFindVict(ch, "nobody"); ok {
+		t.Fatalf("giveFindVict should not resolve a missing target, got %v", vict)
 	}
 	if got := lastMsg(); got != NoPersonHere {
 		t.Fatalf("giveFindVict not-found = %q, want exact C NOPERSON %q", got, NoPersonHere)
+	}
+
+	// C give_find_vict resolves through get_char_room_vis (src/handler.c:1284),
+	// which answers "me" with the giver — so the reply is the self-give
+	// refusal, not NOPERSON.
+	if vict, ok := w.giveFindVict(ch, "me"); ok {
+		t.Fatalf("giveFindVict should refuse self-give, got %v", vict)
+	}
+	if got := lastMsg(); got != "What's the point of that?\r\n" {
+		t.Fatalf("giveFindVict me = %q, want C self-give refusal", got)
 	}
 }
 
