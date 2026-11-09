@@ -6,7 +6,6 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // Communication command handlers.
@@ -186,61 +185,9 @@ func cmdThink(s *Session, args []string) error {
 // Source: act.comm.c do_write() lines 978-1054
 // Simplified: requires "pen" and "paper" in inventory.
 func cmdWrite(s *Session, args []string) error {
-	if len(args) < 2 {
-		s.Send("Write?  With what?  ON what?  What are you trying to do?!?")
-		return nil
-	}
-
-	// Last arg is the item name, everything before is the message
-	itemName := args[len(args)-1]
-	message := strings.Join(args[:len(args)-1], " ")
-
-	// Find the item in inventory
-	item, found := s.player.Inventory.FindItem(itemName)
-	if !found {
-		s.Send(fmt.Sprintf("You don't have '%s'.", itemName))
-		return nil
-	}
-
-	// Check if item is writable (ITEM_NOTE type = 16)
-	if item.GetTypeFlag() != game.ITEM_NOTE {
-		s.Send("You can't write on that!")
-		return nil
-	}
-
-	// Check if player has a pen in inventory
-	hasPen := false
-	if s.player.Inventory != nil {
-		for _, invItem := range s.player.Inventory.FindItems("") {
-			if invItem != nil && invItem.GetTypeFlag() == game.ITEM_PEN {
-				hasPen = true
-				break
-			}
-		}
-	}
-	if !hasPen {
-		s.Send("You need a pen to write on something!")
-		return nil
-	}
-
-	// Store message in extra descriptions
-	if item.CustomData == nil {
-		item.CustomData = make(map[string]interface{})
-	}
-	var extraDescs []parser.ExtraDesc
-	if raw, ok := item.CustomData["extra_descs"]; ok {
-		if currentDescs, ok := raw.([]parser.ExtraDesc); ok {
-			extraDescs = currentDescs
-		}
-	}
-	// Append new description for looking at the note
-	extraDescs = append(extraDescs, parser.ExtraDesc{
-		Keywords:    item.GetKeywords(),
-		Description: message + "\r\n",
-	})
-	item.CustomData["extra_descs"] = extraDescs
-
-	s.Send(fmt.Sprintf("You write '%s' on %s.", message, item.GetShortDesc()))
+	// Faithful port of do_write (src/act.comm.c:1024-1094); the game layer owns
+	// C's two_arguments parsing and every refusal byte (DP-1516 item 7).
+	s.manager.world.DoWrite(s.player, strings.Join(args, " "))
 	return nil
 }
 
