@@ -1,0 +1,46 @@
+# depth-case: write.single-argument-missing-object
+# depth-case: write.two-argument-missing-paper
+# C-first vehicle for do_write's two missing-object refusals (src/act.comm.c:1046-1062).
+# C parses with two_arguments (papername first, penname second): a one-argument
+# "write missing" reports "There is no missing in your inventory.", and a
+# two-argument "write nothing author" reports the missing paper name.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Writeuser
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Writeuser
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+write
+write missing
+write nothing author
