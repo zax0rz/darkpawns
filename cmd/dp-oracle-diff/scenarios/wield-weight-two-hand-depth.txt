@@ -1,0 +1,51 @@
+# depth-case: wield.weight-before-two-hand-conflict
+# C-first vehicle for perform_wear's WEAR_WIELD ordering
+# (src/act.item.c:1484-1502): the weight refusal precedes the two-handed
+# refusal. A wielder at 18/70 strength (STRENGTH_APPLY_INDEX 27, wield_w 24,
+# src/structs.h:440; str_app[27]=24, src/constants.c) cannot use the vnum-11025
+# beheading axe (weight 26) even though it is two-handed and a scroll is held;
+# C prints the weight refusal, not the two-handed one.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Wieldweight
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wieldweight
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set player Wieldweight str 18
+set player Wieldweight stradd 70
+load obj 11025
+load obj 8052
+hold scroll
+
+[probe]
+wield axe

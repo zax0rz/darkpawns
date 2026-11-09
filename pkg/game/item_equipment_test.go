@@ -301,3 +301,46 @@ func TestDoGrabRejectsNonHoldableItem(t *testing.T) {
 		t.Fatal("rejected tunic should remain in inventory")
 	}
 }
+
+// TestPerformWearWieldWeightBeforeTwoHanded pins C's WEAR_WIELD ordering and
+// the exceptional-strength wield_w (src/act.item.c:1492-1502): the weight
+// refusal precedes the two-handed refusal, and str_app[STRENGTH_APPLY_INDEX]
+// (src/structs.h:440) gives an 18/70 wielder wield_w 24, so a weight-26
+// two-handed axe is refused for weight even while a hand is held. Go read the
+// raw Strength field (25 here, as `set str` leaves it before affect_total), not
+// the effective 18/70, and took the two-handed branch (DP-1516 item 4).
+func TestPerformWearWieldWeightBeforeTwoHanded(t *testing.T) {
+	w, ch, lastMsg := newDonateTestWorld(t)
+	ch.Stats.Str = 18
+	ch.Stats.StrAdd = 70
+	ch.CopyBaseAttributes()
+	ch.Strength = 25 // stale raw field, as affect_total leaves it after `set str`
+
+	if got := ch.MaxWieldWeight(); got != 24 {
+		t.Fatalf("MaxWieldWeight(18/70) = %d, want C's 24 (str_app[27])", got)
+	}
+
+	held := newHoldableItem(4100, "a scroll of recall", "scroll")
+	twoHanded := newWieldableItem(4102, "a beheading axe", "axe", true)
+	twoHanded.SetWeight(26) // heavier than 18/70's wield_w (24)
+
+	if err := w.EquipItem(ch, held, eqWearHold); err != nil {
+		t.Fatalf("EquipItem held: %v", err)
+	}
+	if err := ch.Inventory.AddItem(twoHanded); err != nil {
+		t.Fatalf("AddItem twoHanded: %v", err)
+	}
+
+	lastMsg()
+	w.performWear(ch, twoHanded, eqWearWield)
+	if w.IsEquipped(ch, eqWearWield) {
+		t.Fatal("the heavy two-handed axe should not be wielded")
+	}
+	msg := lastMsg()
+	if !strings.Contains(msg, "It is too heavy for you to use.") {
+		t.Fatalf("message = %q, want the weight refusal (which precedes the two-handed one)", msg)
+	}
+	if strings.Contains(msg, "Both hands must be free") {
+		t.Fatalf("message = %q took the two-handed branch before the weight check", msg)
+	}
+}
