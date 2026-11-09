@@ -277,6 +277,18 @@ func StrAppToDam(c Combatant) int {
 	return strApp[idx].ToDam
 }
 
+// WieldWeight returns str_app[STRENGTH_APPLY_INDEX(c)].wield_w from
+// src/constants.c (the heaviest item the combatant can wield). It reads the
+// combatant's effective strength, including exceptional 18/xx strength, so an
+// 18/70 wielder gets 24 rather than the flat-18 value of 20.
+func WieldWeight(c Combatant) int {
+	idx := strIndex(c)
+	if idx < 0 || idx >= len(strApp) {
+		return 0
+	}
+	return strApp[idx].WieldW
+}
+
 // CarryWeight returns CAN_CARRY_W for raw and exceptional strength.
 func CarryWeight(str, strAdd int) int {
 	return strApp[StrengthIndex(str, strAdd)].CarryW
