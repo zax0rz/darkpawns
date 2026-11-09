@@ -1,0 +1,76 @@
+# depth-case: wield.too-heavy
+# C-first vehicle for perform_wear's wield-weight gate, "It is too heavy for
+# you to use." (src/act.item.c:1492-1495). The God gives a mortal peer the
+# 2-handed claymore vnum 4381 (weight above a STR-1 wielder's wield_w), then
+# the peer's STR is dropped to 1 so the wield is refused.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Wieldgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wieldgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:wielder]
+Wieldpeer
+Y
+wielpass
+wielpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:wielder]
+Wieldpeer
+y
+wielpass
+wielpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Wieldpeer 8105
+load obj 4381
+give claymore Wieldpeer
+set player Wieldpeer str 1
+
+[probe]
+send:wielder wield claymore
