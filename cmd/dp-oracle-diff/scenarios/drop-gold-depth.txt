@@ -1,0 +1,108 @@
+# depth-case: drop.gold-success
+# depth-case: drop.junk-gold-message
+# C-first vehicle for perform_drop_gold's plain-drop and junk arms
+# (src/act.item.c:456-469). A mortal peer with gold drops 100 coins (plain drop
+# prints "You drop some gold." and the room act) and junks 100 coins (junk
+# prints the smoke act and "You drop some gold which disappears in a puff of
+# smoke!"). Directed send:<peer> steps run each command as the peer; a second
+# peer witnesses the room acts.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Goldgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Goldgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:dropper]
+Dropper
+Y
+droppass
+droppass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:dropper]
+Dropper
+y
+droppass
+droppass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+Dropwitness
+Y
+witpass
+witpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+Dropwitness
+y
+witpass
+witpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Dropper 8105
+teleport Dropwitness 8105
+set player Dropper gold 1000
+
+[probe]
+send:dropper drop 100 coins
+~dpclock pulse 20
+send:dropper junk 100 coins
