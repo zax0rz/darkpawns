@@ -1,0 +1,76 @@
+# depth-case: drop.donate-gold-message
+# C-first vehicle for perform_drop_gold's donate arm (src/act.item.c:445-453).
+# A mortal peer with gold donates 100 coins; SCMD_DONATE with a live
+# donation_room (config.c:159 donation_room_1 = 8053) prints the caster line
+# and the donor-room act. The primary God shares the donor's room and witnesses
+# the room act. The donation's return goes to the off-room donation room, whose
+# own "$p suddenly appears..." act needs a dedicated witness vehicle.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Dongod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dongod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:donor]
+Donor
+Y
+donpass
+donpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:donor]
+Donor
+y
+donpass
+donpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Donor 8105
+set player Donor gold 1000
+
+[probe]
+send:donor donate 100 coins
