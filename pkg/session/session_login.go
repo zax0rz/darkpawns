@@ -368,145 +368,12 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		s.forwardSnoopInput(cmd.Command, cmd.RawArgs, cmd.Args)
 	}
 
-	// A descriptor room editor owns the complete next line, including its
-	// transient improved-editor buffer. This check precedes ordinary command
-	// routing just like interpreter.c's CON_REDIT dispatch.
-	if s.player != nil && s.isRoomEditing() {
-		line := cmd.RawLine
-		if line == "" {
-			line = commandInputLine(cmd.Command, cmd.Args)
-		}
-		s.handleReditInput(line)
-		return nil
-	}
-
-	// An object OLC editor owns the complete next line, including its transient
-	// improved-editor buffer, mirroring C's CON_OEDIT case in interpreter.c
-	// which calls oedit_parse instead of the command interpreter. Like
-	// CON_REDIT it precedes the generic string-editor route so the editor's
-	// buffered output flushes in the same turn.
-	if s.player != nil && s.isOeditEditing() {
-		line := cmd.RawLine
-		if line == "" {
-			line = commandInputLine(cmd.Command, cmd.Args)
-		}
-		s.handleOeditInput(line)
-		return nil
-	}
-
-	// ZEDIT and SEDIT sessions own the complete next line, mirroring
-	// interpreter.c's CON_ZEDIT and CON_SEDIT dispatch. Neither has an
-	// improved string editor, but both must still win over ordinary command
-	// routing so a bare line such as "q" cannot become the quaff command.
-	if s.player != nil && (s.isZoneEditing() || s.isSeditEditing()) {
-		line := cmd.RawLine
-		if line == "" {
-			line = commandInputLine(cmd.Command, cmd.Args)
-		}
-		if s.isZoneEditing() {
-			s.handleZeditInput(line)
-		} else {
-			s.handleSeditInput(line)
-		}
-		return nil
-	}
-
-	// A descriptor string editor owns the complete next line. In particular,
-	// slash commands must not be rebuilt as "/ h" from tokenized JSON args;
-	// telnet supplies RawLine and direct/WebSocket clients can still use the
-	// faithful fallback reconstruction.
-	if s.player != nil && s.isTextEditing() {
-		line := cmd.RawLine
-		if line == "" {
-			line = commandInputLine(cmd.Command, cmd.Args)
-		}
-		s.handleTextEditInput(line)
-		return nil
-	}
-
-	// A medit (CON_MEDIT) session owns the complete next line while no
-	// descriptor string editor is active, mirroring C's CON_MEDIT case in
-	// interpreter.c which calls medit_parse instead of the command
-	// interpreter.
-	if s.player != nil && s.isMeditEditing() {
-		line := cmd.RawLine
-		if line == "" {
-			line = commandInputLine(cmd.Command, cmd.Args)
-		}
-		s.handleMeditInput(line)
-		return nil
-	}
-
-	// Clan plan writes use the same PLR_WRITING flag as
-	// notes/mail and are completed by the generic string editor equivalent.
-	if s.player != nil && s.player.ClanPlanWriting {
-		line := cmd.Command
-		if len(cmd.Args) > 0 {
-			line += " " + strings.Join(cmd.Args, " ")
-		}
-		if s.manager.world.HandleClanPlanInput(s.player, line) {
-			return nil
-		}
-	}
-
-	// WriteMagic intercept: a board post uses the same PLR_WRITING flag as
-	// notes/mail, but has its own C string target (mail_to = board + magic).
-	// This must precede the generic PLR_WRITING branch or board lines would be
-	// misrouted into the note writer.
-	if s.player != nil && s.player.WriteMagic != 0 && s.manager.world.Boards != nil {
-		line := cmd.Command
-		if len(cmd.Args) > 0 {
-			if strings.HasPrefix(line, "/") {
-				line += strings.Join(cmd.Args, " ")
-			} else {
-				line += " " + strings.Join(cmd.Args, " ")
-			}
-		}
-		switch line {
-		case "@", "/s":
-			s.manager.world.Boards.FinalizeBoardWrite(s.player.WriteMagic, s.player)
-			s.player.WriteMagic = 0
-			s.player.SetPlrFlag(game.PlrWriting, false)
-		case "/a":
-			// C's playing_string_cleanup deliberately keeps the post and
-			// tells the author to remove it from the board.
-			s.manager.world.Boards.AbortBoardWrite(s.player.WriteMagic, s.player)
-			s.player.WriteMagic = 0
-			s.player.SetPlrFlag(game.PlrWriting, false)
-			s.player.SendMessage("Post not aborted, use REMOVE <post #>.\r\n")
-		default:
-			if strings.HasPrefix(line, "/e") {
-				rest := strings.TrimSpace(line[2:])
-				fields := strings.Fields(rest)
-				if len(fields) >= 2 {
-					lineNumber, err := strconv.Atoi(fields[0])
-					text := strings.TrimSpace(rest[len(fields[0]):])
-					if err == nil && s.manager.world.Boards.ReviseBoardLine(s.player.WriteMagic, s.player, lineNumber, text) {
-						s.player.SendMessage("Line changed.\r\n")
-					}
-					return nil
-				}
-			}
-			s.manager.world.Boards.AppendBoardLine(s.player.WriteMagic, s.player, line)
-		}
-		return nil
-	}
-
-	// PLR_WRITING intercept: if the player is composing mail or a note,
-	// buffer the input instead of parsing commands.
-	// C equivalent: nanny() checks PLR_WRITING → calls string_add().
-	if s.player != nil && s.player.GetFlags()&(1<<game.PlrWriting) != 0 {
-		// Reconstruct the full input line from command + args
-		line := cmd.Command
-		if len(cmd.Args) > 0 {
-			line += " " + strings.Join(cmd.Args, " ")
-		}
-		// PLR_MAILING set → mail compose; unset → note write (do_write).
-		if s.player.GetFlags()&(1<<game.PlrMailing) != 0 {
-			game.HandleMailInput(s.player, line) // returns true when mail complete; PLR_WRITING cleared inside
-		} else {
-			game.HandleNoteInput(s.player, line) // returns true when note complete; PLR_WRITING cleared inside
-		}
+	// A descriptor editor, board post, clan-plan write, or mail/note in
+	// progress owns the complete next line before ordinary command routing
+	// (C's game loop checks d->str / nanny before command_interpreter;
+	// comm.c:614-627). Shared with the alias-expansion and drain paths so a
+	// line pulled from the input queue is routed identically.
+	if s.routeDescriptorLine(cmd.Command, cmd.Args, cmd.RawLine) {
 		return nil
 	}
 
@@ -578,6 +445,118 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		s.flushDirtyVars()
 	}
 	return err
+}
+
+// routeDescriptorLine applies the descriptor-safe routing C's game loop performs
+// on every line pulled from d->input, BEFORE alias expansion and
+// command_interpreter (comm.c:600-627): an active room/oedit/zedit/sedit/text/
+// medit editor, a clan-plan write, a board post (WriteMagic), or a mail/note
+// (PLR_WRITING) all consume the line. It returns true when an editor consumed
+// it. Both the transport entry (handleCommand) and the alias-expansion/drain
+// paths call it so a line carried on the input queue — exactly where C's
+// perform_complex_alias leaves its expansion — routes identically instead of
+// falling through to the command interpreter (DP-1516 item 9).
+func (s *Session) routeDescriptorLine(command string, args []string, rawLine string) bool {
+	if s.player == nil {
+		return false
+	}
+	editorLine := rawLine
+	if editorLine == "" {
+		editorLine = commandInputLine(command, args)
+	}
+	// A descriptor room editor owns the complete next line, including its
+	// transient improved-editor buffer (interpreter.c's CON_REDIT dispatch).
+	if s.isRoomEditing() {
+		s.handleReditInput(editorLine)
+		return true
+	}
+	// An object OLC editor owns the complete next line (CON_OEDIT).
+	if s.isOeditEditing() {
+		s.handleOeditInput(editorLine)
+		return true
+	}
+	// ZEDIT and SEDIT sessions own the complete next line (CON_ZEDIT/CON_SEDIT);
+	// neither has an improved string editor but both must win over ordinary
+	// command routing.
+	if s.isZoneEditing() || s.isSeditEditing() {
+		if s.isZoneEditing() {
+			s.handleZeditInput(editorLine)
+		} else {
+			s.handleSeditInput(editorLine)
+		}
+		return true
+	}
+	// A descriptor string editor owns the complete next line.
+	if s.isTextEditing() {
+		s.handleTextEditInput(editorLine)
+		return true
+	}
+	// A medit (CON_MEDIT) session owns the complete next line.
+	if s.isMeditEditing() {
+		s.handleMeditInput(editorLine)
+		return true
+	}
+	joined := command
+	if len(args) > 0 {
+		joined += " " + strings.Join(args, " ")
+	}
+	// Clan plan writes use the same PLR_WRITING flag as notes/mail.
+	if s.player.ClanPlanWriting {
+		if s.manager.world.HandleClanPlanInput(s.player, joined) {
+			return true
+		}
+	}
+	// WriteMagic intercept: a board post uses PLR_WRITING but has its own C
+	// string target (mail_to = board + magic); it must precede the generic
+	// PLR_WRITING branch.
+	if s.player.WriteMagic != 0 && s.manager.world.Boards != nil {
+		line := command
+		if len(args) > 0 {
+			if strings.HasPrefix(line, "/") {
+				line += strings.Join(args, " ")
+			} else {
+				line += " " + strings.Join(args, " ")
+			}
+		}
+		switch line {
+		case "@", "/s":
+			s.manager.world.Boards.FinalizeBoardWrite(s.player.WriteMagic, s.player)
+			s.player.WriteMagic = 0
+			s.player.SetPlrFlag(game.PlrWriting, false)
+		case "/a":
+			// C's playing_string_cleanup deliberately keeps the post and tells
+			// the author to remove it from the board.
+			s.manager.world.Boards.AbortBoardWrite(s.player.WriteMagic, s.player)
+			s.player.WriteMagic = 0
+			s.player.SetPlrFlag(game.PlrWriting, false)
+			s.player.SendMessage("Post not aborted, use REMOVE <post #>.\r\n")
+		default:
+			if strings.HasPrefix(line, "/e") {
+				rest := strings.TrimSpace(line[2:])
+				fields := strings.Fields(rest)
+				if len(fields) >= 2 {
+					lineNumber, err := strconv.Atoi(fields[0])
+					text := strings.TrimSpace(rest[len(fields[0]):])
+					if err == nil && s.manager.world.Boards.ReviseBoardLine(s.player.WriteMagic, s.player, lineNumber, text) {
+						s.player.SendMessage("Line changed.\r\n")
+					}
+					return true
+				}
+			}
+			s.manager.world.Boards.AppendBoardLine(s.player.WriteMagic, s.player, line)
+		}
+		return true
+	}
+	// PLR_WRITING intercept: composing mail (PLR_MAILING) or a note (do_write).
+	if s.player.GetFlags()&(1<<game.PlrWriting) != 0 {
+		if s.player.GetFlags()&(1<<game.PlrMailing) != 0 {
+			game.HandleMailInput(s.player, joined)
+		} else {
+			game.HandleNoteInput(s.player, joined)
+		}
+		return true
+	}
+	return false
 }
 
 // sendWelcome sends the initial game state to the player.

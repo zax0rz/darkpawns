@@ -1,0 +1,107 @@
+# depth-case: boards.full-board-refusal
+# C-first vehicle for the alias-driven board post. The complex alias
+# "write witness;body;@" expands to three commands that C leaves on the
+# descriptor input queue (interpreter.c:1055-1097); after "write witness"
+# opens the board editor (d->str), the trailing "body" and "@" are consumed by
+# string_add (comm.c:614-627) rather than the command interpreter. Repeatedly
+# posting allocates board slots (src/boards.c:228-242) until the board is full
+# and Board_write_message refuses with "The board is full." (src/boards.c:225).
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8099 99 8004 80
+force-load 8099
+
+[setup:oracle]
+Slotwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Slotwitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8004
+alias post write witness;body;@
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+post
+write Final full header

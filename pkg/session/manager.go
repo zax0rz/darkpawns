@@ -1307,6 +1307,14 @@ func (m *Manager) DrainInputQueues() {
 		// so a command deferred here resets and void-returns at execution,
 		// same as the immediate path through handleCommand.
 		job.s.resetIdleOnCommand()
+		// A drained line is a line pulled from d->input, so it is routed
+		// through an active descriptor editor before the command interpreter
+		// exactly like a transport line (comm.c:614-627); the alias-expanded
+		// commands C leaves on that queue reach string_add this way (DP-1516
+		// item 9).
+		if job.s.routeDescriptorLine(job.cmd, job.args, job.rawArgs) {
+			continue
+		}
 		if err := executeCommandRaw(job.s, job.cmd, job.args, !job.aliased, job.rawArgs); err != nil {
 			slog.Error("drained command failed",
 				"player", job.s.playerName, "command", job.cmd, "error", err)
