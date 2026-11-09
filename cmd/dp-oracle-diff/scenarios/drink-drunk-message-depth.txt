@@ -1,0 +1,81 @@
+# depth-case: drink.drunk-message
+# C-first vehicle for do_drink's post-drink "You feel drunk." line
+# (src/act.item.c:1000). A mortal peer drinks a firebreather (vnum 8003,
+# liquid 7, drink_aff {10,0,0}); with a small amount it gains 10*amount/4
+# drunkenness, so starting near the threshold crosses 10 and the line prints.
+# Full/hunger is 0 so the FULL gate does not preempt.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-obj 8003 1 8105 80
+force-load 8003
+
+[setup:oracle]
+Drunkgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Drunkgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:drinker]
+Drunkdrinker
+Y
+drinkpass
+drinkpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:drinker]
+Drunkdrinker
+y
+drinkpass
+drinkpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Drunkdrinker 8105
+get firebreather
+give firebreather Drunkdrinker
+
+[probe]
+set player Drunkdrinker hunger 0
+set player Drunkdrinker thirst 5
+set player Drunkdrinker drunk 8
+send:drinker drink firebreather

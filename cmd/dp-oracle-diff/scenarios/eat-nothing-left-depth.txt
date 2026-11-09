@@ -1,0 +1,79 @@
+# depth-case: eat.nothing-left
+# C-first vehicle for do_eat's one-bite taste exhaustion, "There's nothing left
+# now." (src/act.item.c:1152). A mortal peer tastes a gyoza dumpling (vnum 4815,
+# ITEM_FOOD, value[0]=1, unpoisoned); the taste decrements value[0] to 0, so C
+# prints "You nibble a little bit of $p." then "There's nothing left now." and
+# extracts the food. FULL is 0 so the full gate does not preempt.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-obj 4815 1 8105 48
+force-load 4815
+
+[setup:oracle]
+Tastegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tastegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:eater]
+Tasteeater
+Y
+eatpass
+eatpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:eater]
+Tasteeater
+y
+eatpass
+eatpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Tasteeater 8105
+get dumpling
+give dumpling Tasteeater
+
+[probe]
+set player Tasteeater hunger 0
+send:eater taste dumpling
