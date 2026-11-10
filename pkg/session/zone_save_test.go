@@ -124,16 +124,14 @@ func TestZoneSaveLockIsPerZone(t *testing.T) {
 	var total int64
 	var wg sync.WaitGroup
 	for range workers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			mu := zoneSaveLock(7)
 			for range increments {
 				mu.Lock()
 				total++
 				mu.Unlock()
 			}
-		}()
+		})
 	}
 	wg.Wait()
 	if want := int64(workers * increments); total != want {
@@ -165,13 +163,11 @@ func TestZoneSaveConcurrentSavesStayValid(t *testing.T) {
 	const savers = 8
 	var wg sync.WaitGroup
 	for range savers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if err := saveOeditZone(w, zone); err != nil {
 				t.Error(err)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 
@@ -303,9 +299,7 @@ func TestZoneSaveKeepsMarkerForRacingCommit(t *testing.T) {
 
 	var wg sync.WaitGroup
 	for range commits {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			mu := zoneSaveLock(zone.Number)
 			mu.Lock()
 			obj, ok := w.SnapshotObj(3001)
@@ -322,17 +316,15 @@ func TestZoneSaveKeepsMarkerForRacingCommit(t *testing.T) {
 			lastKW[my] = obj.Keywords
 			kwMu.Unlock()
 			mu.Unlock()
-		}()
+		})
 	}
 	// Saves racing the commits.
 	for range 4 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if err := saveOeditZone(w, zone); err != nil {
 				t.Error(err)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 

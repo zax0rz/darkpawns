@@ -87,8 +87,6 @@ func contentURL(root, path string) string {
 	return "/admin/files/" + root + "/content?path=" + url.QueryEscape(path)
 }
 
-func ptr(s string) *string { return &s }
-
 func TestFileEditRoundTripsAndConflicts(t *testing.T) {
 	f := newFileEditFixture(t, game.LVL_HIGOD)
 	read := f.do(http.MethodGet, contentURL("lua", "mob/guard.lua"), nil, nil)
@@ -101,11 +99,11 @@ func TestFileEditRoundTripsAndConflicts(t *testing.T) {
 	game.ScriptEngine = recorder
 	t.Cleanup(func() { game.ScriptEngine = previousEngine })
 
-	broken := f.do(http.MethodPut, contentURL("lua", "mob/guard.lua"), map[string]string{"If-Match": etag}, ptr("local x = 1\nfunction broken(\n"))
+	broken := f.do(http.MethodPut, contentURL("lua", "mob/guard.lua"), map[string]string{"If-Match": etag}, new("local x = 1\nfunction broken(\n"))
 	if broken.Code != http.StatusUnprocessableEntity || !strings.Contains(broken.Body.String(), "line 2 (end of file)") {
 		t.Fatalf("broken Lua = %d %q; want 422 naming the line", broken.Code, broken.Body.String())
 	}
-	midFile := f.do(http.MethodPut, contentURL("lua", "mob/guard.lua"), map[string]string{"If-Match": etag}, ptr("local y = 1\nx = = 2\n"))
+	midFile := f.do(http.MethodPut, contentURL("lua", "mob/guard.lua"), map[string]string{"If-Match": etag}, new("local y = 1\nx = = 2\n"))
 	if midFile.Code != http.StatusUnprocessableEntity || !strings.Contains(midFile.Body.String(), "line 2, column 5") {
 		t.Fatalf("mid-file error = %d %q", midFile.Code, midFile.Body.String())
 	}
@@ -116,23 +114,23 @@ func TestFileEditRoundTripsAndConflicts(t *testing.T) {
 		t.Fatalf("a refused save cleared the failed-scripts cache")
 	}
 
-	saved := f.do(http.MethodPut, contentURL("lua", "mob/guard.lua"), map[string]string{"If-Match": etag}, ptr("return false\n"))
+	saved := f.do(http.MethodPut, contentURL("lua", "mob/guard.lua"), map[string]string{"If-Match": etag}, new("return false\n"))
 	if saved.Code != http.StatusOK || recorder.calls != 1 {
 		t.Fatalf("save = %d, forget calls=%d, body=%s", saved.Code, recorder.calls, saved.Body.String())
 	}
-	stale := f.do(http.MethodPut, contentURL("lua", "mob/guard.lua"), map[string]string{"If-Match": etag}, ptr("return true\n"))
+	stale := f.do(http.MethodPut, contentURL("lua", "mob/guard.lua"), map[string]string{"If-Match": etag}, new("return true\n"))
 	if stale.Code != http.StatusPreconditionFailed || !strings.Contains(stale.Body.String(), "reload to compare") {
 		t.Fatalf("stale save = %d %q", stale.Code, stale.Body.String())
 	}
-	if none := f.do(http.MethodPut, contentURL("lua", "mob/guard.lua"), nil, ptr("return 1\n")); none.Code != http.StatusPreconditionRequired {
+	if none := f.do(http.MethodPut, contentURL("lua", "mob/guard.lua"), nil, new("return 1\n")); none.Code != http.StatusPreconditionRequired {
 		t.Fatalf("unconditional save = %d; want 428, never last-writer-wins", none.Code)
 	}
 
-	created := f.do(http.MethodPut, contentURL("lua", "mob/new.lua"), map[string]string{"If-None-Match": "*"}, ptr("return 1\n"))
+	created := f.do(http.MethodPut, contentURL("lua", "mob/new.lua"), map[string]string{"If-None-Match": "*"}, new("return 1\n"))
 	if created.Code != http.StatusOK {
 		t.Fatalf("create = %d %s", created.Code, created.Body.String())
 	}
-	if again := f.do(http.MethodPut, contentURL("lua", "mob/new.lua"), map[string]string{"If-None-Match": "*"}, ptr("return 2\n")); again.Code != http.StatusPreconditionFailed {
+	if again := f.do(http.MethodPut, contentURL("lua", "mob/new.lua"), map[string]string{"If-None-Match": "*"}, new("return 2\n")); again.Code != http.StatusPreconditionFailed {
 		t.Fatalf("create over an existing file = %d; want 412", again.Code)
 	}
 	del := f.do(http.MethodDelete, contentURL("lua", "mob/new.lua"), map[string]string{"If-Match": created.Header().Get("ETag")}, nil)
@@ -150,7 +148,7 @@ func TestTeditSaveStripsCRAndRefreshesLiveText(t *testing.T) {
 	t.Cleanup(func() { fileedit.RegisterTextSavedHook(nil) })
 
 	read := f.do(http.MethodGet, contentURL("tedit", "news"), nil, nil)
-	saved := f.do(http.MethodPut, contentURL("tedit", "news"), map[string]string{"If-Match": read.Header().Get("ETag")}, ptr("New news\r\nline two\r\n"))
+	saved := f.do(http.MethodPut, contentURL("tedit", "news"), map[string]string{"If-Match": read.Header().Get("ETag")}, new("New news\r\nline two\r\n"))
 	if saved.Code != http.StatusOK {
 		t.Fatalf("tedit save = %d %s", saved.Code, saved.Body.String())
 	}
@@ -188,7 +186,7 @@ func TestTeditKeepsCFieldLevelAboveTheWebDoor(t *testing.T) {
 		}
 	}
 	read := f.do(http.MethodGet, contentURL("tedit", "credits"), nil, nil)
-	rec := f.do(http.MethodPut, contentURL("tedit", "credits"), map[string]string{"If-Match": read.Header().Get("ETag")}, ptr("mine now\n"))
+	rec := f.do(http.MethodPut, contentURL("tedit", "credits"), map[string]string{"If-Match": read.Header().Get("ETag")}, new("mine now\n"))
 	if rec.Code != http.StatusForbidden || !strings.Contains(rec.Body.String(), "IMPL (40)") {
 		t.Fatalf("GRGOD credits write = %d %q", rec.Code, rec.Body.String())
 	}
@@ -204,7 +202,7 @@ func TestFileEditBuilderCanReadButCannotWrite(t *testing.T) {
 	if !strings.Contains(listing.Body.String(), `"required_label":"HIGOD"`) || !strings.Contains(listing.Body.String(), `"allowed":false`) {
 		t.Fatalf("builder listing lacks the grayed HIGOD action: %s", listing.Body.String())
 	}
-	rec := f.do(http.MethodPut, contentURL("lua", "mob/guard.lua"), map[string]string{"If-Match": read.Header().Get("ETag")}, ptr("return false\n"))
+	rec := f.do(http.MethodPut, contentURL("lua", "mob/guard.lua"), map[string]string{"If-Match": read.Header().Get("ETag")}, new("return false\n"))
 	if rec.Code != http.StatusForbidden || !strings.Contains(rec.Body.String(), "HIGOD (36)") {
 		t.Fatalf("builder write = %d %q", rec.Code, rec.Body.String())
 	}

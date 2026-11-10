@@ -149,7 +149,7 @@ func TestOLCP6ScriptOperationsWriteLiveWorld(t *testing.T) {
 	if err := olc.Apply(mobName); err != nil {
 		t.Fatal(err)
 	}
-	mobFlag, err := entityOperation(olc.KindMob, entityPatchOperation{Kind: "set_script_flag", Bit: 1, Enabled: boolPtr(true)})
+	mobFlag, err := entityOperation(olc.KindMob, entityPatchOperation{Kind: "set_script_flag", Bit: 1, Enabled: new(true)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -170,7 +170,7 @@ func TestOLCP6ScriptOperationsWriteLiveWorld(t *testing.T) {
 	if err := olc.Apply(objName); err != nil {
 		t.Fatal(err)
 	}
-	objFlag, err := entityOperation(olc.KindObject, entityPatchOperation{Kind: "set_script_flag", Bit: 2, Enabled: boolPtr(true)})
+	objFlag, err := entityOperation(olc.KindObject, entityPatchOperation{Kind: "set_script_flag", Bit: 2, Enabled: new(true)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +189,7 @@ func TestOLCP6ScriptOperationsWriteLiveWorld(t *testing.T) {
 	if err := olc.Apply(roomName); err != nil {
 		t.Fatal(err)
 	}
-	roomFlag, err := roomOperation(world, 1001, roomPatchOperation{Kind: "set_script_flag", Bit: 4, Enabled: boolPtr(true)})
+	roomFlag, err := roomOperation(world, 1001, roomPatchOperation{Kind: "set_script_flag", Bit: 4, Enabled: new(true)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -200,8 +200,6 @@ func TestOLCP6ScriptOperationsWriteLiveWorld(t *testing.T) {
 		t.Fatalf("live room script = %+v, exists=%v", room, ok)
 	}
 }
-
-func boolPtr(value bool) *bool { return &value }
 
 func sourceSwitchCases(t *testing.T, path, function string) []string {
 	t.Helper()

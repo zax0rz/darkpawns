@@ -31,11 +31,9 @@ func TestGiveGoldConservationUnderConcurrency(t *testing.T) {
 
 	var wg sync.WaitGroup
 	for range 8 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			w.performGiveGold(ch, vict, 60)
-		}()
+		})
 	}
 	wg.Wait()
 
@@ -85,9 +83,7 @@ func TestGetItemsInRoomSnapshotVsWriter(t *testing.T) {
 	// The writer churns one object in and out of the room forever: constant
 	// map-write traffic at constant memory. (An add-only writer was an
 	// unbounded slice — the very CWE-400 under repair — and OOMed the host.)
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		obj := NewObjectInstance(&parser.Obj{VNum: 42, Keywords: "coin", ShortDesc: "a coin", LongDesc: "A coin."}, -1)
 		for {
 			select {
@@ -98,7 +94,7 @@ func TestGetItemsInRoomSnapshotVsWriter(t *testing.T) {
 			_ = w.MoveObjectToRoom(obj, 1001)
 			w.ExtractObject(obj, 1001)
 		}
-	}()
+	})
 	// Drive the real bare-read site (getFromRoom) plus the accessor: the
 	// pre-fix direct w.roomItems[...] read against a locked writer is the
 	// process-fatal concurrent map access. A non-matching keyword exercises
@@ -154,9 +150,7 @@ func TestOnGossipConcurrentClearDuringCall(t *testing.T) {
 	p := NewPlayer(1, "Gossiper", 1001)
 	stop := make(chan struct{})
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-stop:
@@ -166,7 +160,7 @@ func TestOnGossipConcurrentClearDuringCall(t *testing.T) {
 			w.SetOnGossip(nil)
 			w.SetOnGossip(func(name, msg string) {})
 		}
-	}()
+	})
 	for range 2000 {
 		w.DoChannel(p, "gossip", "hello")
 	}

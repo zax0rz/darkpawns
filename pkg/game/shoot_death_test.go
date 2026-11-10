@@ -185,13 +185,11 @@ func TestRangedDamageConcurrentHPUpdates(t *testing.T) {
 	p.SetHP(100000)
 	var group sync.WaitGroup
 	for range 32 {
-		group.Add(1)
-		go func() {
-			defer group.Done()
+		group.Go(func() {
 			for range 100 {
 				w.ApplyRangedProjectileDamage(p, 1)
 			}
-		}()
+		})
 	}
 	group.Wait()
 	if p.GetHP() != 96800 {

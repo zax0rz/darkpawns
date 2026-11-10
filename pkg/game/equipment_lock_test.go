@@ -26,9 +26,7 @@ func TestEquipmentAccessIsLockedAgainstMutations(t *testing.T) {
 	stop := make(chan struct{})
 	var readers sync.WaitGroup
 	for range 4 {
-		readers.Add(1)
-		go func() {
-			defer readers.Done()
+		readers.Go(func() {
 			for {
 				select {
 				case <-stop:
@@ -46,7 +44,7 @@ func TestEquipmentAccessIsLockedAgainstMutations(t *testing.T) {
 				_ = hasKey(p, 7600)
 				_, _ = findItemByName(p, "thing")
 			}
-		}()
+		})
 	}
 
 	for range 3000 {

@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/gofrs/flock"
@@ -330,8 +331,8 @@ func syncTreeDirectories(root string) error {
 	}); err != nil {
 		return err
 	}
-	for i := len(dirs) - 1; i >= 0; i-- {
-		if err := syncUpdateDirectory(dirs[i]); err != nil {
+	for _, dir := range slices.Backward(dirs) {
+		if err := syncUpdateDirectory(dir); err != nil {
 			return err
 		}
 	}

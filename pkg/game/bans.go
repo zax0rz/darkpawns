@@ -14,6 +14,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -151,8 +152,7 @@ func (bm *BanManager) WriteBanList(path string) error {
 	w := bufio.NewWriter(f)
 	// Write in reverse order to match C recursive _write_one_node() behavior.
 	// Source: ban.c _write_one_node() — recurses to end then writes on unwind.
-	for i := len(bm.bans) - 1; i >= 0; i-- {
-		entry := bm.bans[i]
+	for _, entry := range slices.Backward(bm.bans) {
 		_, _ = fmt.Fprintf(
 			w, "%s %s %d %s\n",
 			banTypeName(entry.BanType),

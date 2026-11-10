@@ -187,26 +187,26 @@ func TestHouseLoadFloorsUnresolvableContainers(t *testing.T) {
 		{
 			name: "container index out of range",
 			items: []houseSaveItem{
-				{VNum: 3001, ContainerIndex: intPtr(9)},
+				{VNum: 3001, ContainerIndex: new(9)},
 			},
 		},
 		{
 			name: "container index is self",
 			items: []houseSaveItem{
-				{VNum: 3001, ContainerIndex: intPtr(0)},
+				{VNum: 3001, ContainerIndex: new(0)},
 			},
 		},
 		{
 			name: "container failed to load (missing prototype)",
 			items: []houseSaveItem{
-				{VNum: 3001, ContainerIndex: intPtr(1)},
+				{VNum: 3001, ContainerIndex: new(1)},
 				{VNum: 9999},
 			},
 		},
 		{
 			name: "target is not a container",
 			items: []houseSaveItem{
-				{VNum: 3001, ContainerIndex: intPtr(1)},
+				{VNum: 3001, ContainerIndex: new(1)},
 				{VNum: 3001}, // a sword is not a container
 			},
 		},
@@ -252,11 +252,9 @@ func TestHouseLoadLegacyRuntimeIDFilesFloorEverything(t *testing.T) {
 	}
 }
 
-func intPtr(n int) *int { return &n }
-
 // C Obj_from_store registers first; Crash_is_unrentable then extracts it.
 func TestHouseLoadExtractsUnrentable(t *testing.T) {
-	writeHouseFile(t, houseSaveData{RoomVNum: 4100, Items: []houseSaveItem{{VNum: 3003}, {VNum: 3001, ContainerIndex: intPtr(0)}, {VNum: 3002}}})
+	writeHouseFile(t, houseSaveData{RoomVNum: 4100, Items: []houseSaveItem{{VNum: 3003}, {VNum: 3001, ContainerIndex: new(0)}, {VNum: 3002}}})
 	w := newHouseNestingWorld(t)
 	w.GetParsedWorld().Objs[0].ExtraFlags[0] |= FlagNoRent
 	firstID := w.nextObjID

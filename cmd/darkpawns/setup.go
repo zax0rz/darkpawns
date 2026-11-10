@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -76,8 +77,8 @@ func resolveDestination(bundle, value string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for i := len(tail) - 1; i >= 0; i-- {
-		ancestor = filepath.Join(ancestor, tail[i])
+	for _, t := range slices.Backward(tail) {
+		ancestor = filepath.Join(ancestor, t)
 	}
 	realBundle, err := filepath.EvalSymlinks(bundle)
 	if err != nil {

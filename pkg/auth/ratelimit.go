@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -112,8 +113,8 @@ func GetIPFromRequest(r *http.Request) string {
 	}
 	forwarded := r.Header.Values("X-Forwarded-For")
 	hops := strings.Split(strings.Join(forwarded, ","), ",")
-	for i := len(hops) - 1; i >= 0; i-- {
-		hop := strings.TrimSpace(hops[i])
+	for _, hop := range slices.Backward(hops) {
+		hop := strings.TrimSpace(hop)
 		if hop == "" {
 			continue
 		}

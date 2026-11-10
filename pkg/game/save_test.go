@@ -335,19 +335,15 @@ func TestPlayerSaveData_ConcurrentSnapshot(t *testing.T) {
 
 	// Saver goroutines
 	for range 2 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range iterations {
 				_ = playerToSaveData(player)
 			}
-		}()
+		})
 	}
 
 	// Inventory mutator
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for range iterations {
 			item := mkItem()
 			if err := player.Inventory.AddItem(item); err != nil {
@@ -355,24 +351,20 @@ func TestPlayerSaveData_ConcurrentSnapshot(t *testing.T) {
 			}
 			player.Inventory.RemoveItem(item)
 		}
-	}()
+	})
 
 	// Equipment mutator
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for range iterations {
 			item := mkItem()
 			if err := player.Equipment.SetSlot(SlotNeck1, item); err == nil {
 				_ = player.Equipment.Unequip(SlotNeck1, player.Inventory)
 			}
 		}
-	}()
+	})
 
 	// Affect + scalar mutator
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for i := range iterations {
 			aff := &engine.Affect{SpellID: i%50 + 1, Location: 1, Duration: 5, Magnitude: 1}
 			player.AddAffect(aff)
@@ -380,18 +372,16 @@ func TestPlayerSaveData_ConcurrentSnapshot(t *testing.T) {
 			player.SetHP(90 + i%10)
 			player.SetAlignment(i%700 - 350)
 		}
-	}()
+	})
 
 	// SpellMap mutator
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for i := range iterations {
 			player.mu.Lock()
 			player.SpellMap[fmt.Sprintf("spell_%d", i%30)] = i
 			player.mu.Unlock()
 		}
-	}()
+	})
 
 	wg.Wait()
 

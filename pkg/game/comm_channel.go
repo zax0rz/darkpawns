@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -418,8 +419,8 @@ func (w *World) ReviewGossip(ch *Player) string {
 	// gossipHistory is stored newest-first, while C's do_review() walks its
 	// fixed array from slot 24 down to slot 0 (newest entries are inserted at
 	// slot 0). Preserve the player-visible oldest-first order.
-	for index := len(w.gossipHistory) - 1; index >= 0; index-- {
-		entry := w.gossipHistory[index]
+	for _, entry := range slices.Backward(w.gossipHistory) {
+
 		buf.WriteString(cyan)
 		// C: if (review[count].invis <= GET_LEVEL(ch)) name else "Someone invisible"
 		if entry.Invis > ch.GetLevel() {
