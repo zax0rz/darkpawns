@@ -256,6 +256,9 @@ func (w *World) mobGenComm(me *MobInstance, argument, channel string) {
 	}
 	argument = strings.TrimLeft(argument, " \t\r\n\v\f")
 	if argument == "" {
+		// C: "Yes, %s, fine, %s we must, but WHAT???" TO_CHAR
+		// (src/act.comm.c:1233-1239).
+		Act(w, false, me, nil, nil, nil, fmt.Sprintf("Yes, %s, fine, %s we must, but WHAT???", spec.verb, spec.verb), "", ToChar)
 		return
 	}
 	argument = deleteANSIControls(argument)
@@ -263,9 +266,22 @@ func (w *World) mobGenComm(me *MobInstance, argument, channel string) {
 	if channel == "gossip" {
 		w.recordGossip(me, mobName(me), argument)
 	}
+	// C's actor echo (src/act.comm.c:1255-1268) is TO_CHAR | TO_SLEEP. A
+	// descriptor-less mobile drops it; a switched body must see "You shout, ...".
+	Act(w, false, me, nil, nil, nil, fmt.Sprintf("You %s, '%s'", spec.verb, argument), "", ToChar)
 	format := deleteANSIControls(fmt.Sprintf("$n %ss, '%s'", spec.verb, argument))
 	senderRoom := w.GetRoomInWorld(me.GetRoom())
+	// C's channel loop skips i == ch->desc (src/act.comm.c:1278); for a switched
+	// body that descriptor is the owner's, so its session must be skipped too or
+	// it receives the room form ("A horse shouts, ...") on top of its own echo.
+	var owner *Player
+	if w.MobileDescriptorOwner != nil {
+		owner = w.MobileDescriptorOwner(me)
+	}
 	for _, player := range w.playingPlayers() {
+		if player == owner {
+			continue
+		}
 		if (spec.recipientOffFlag >= 0 && player.GetFlags()&(1<<uint(spec.recipientOffFlag)) != 0) ||
 			player.GetFlags()&(1<<uint(PlrWriting)) != 0 ||
 			w.communicationRoomSoundproof(player.GetRoom()) {

@@ -84,19 +84,58 @@ func (w *World) doRide(ch *Player, me *MobInstance, cmd string, arg string) bool
 	return true
 }
 
-// doRideMob reaches C's CAN_MOUNT(mob) refusal. NPCs have no descriptor, so
-// the final "You can't ride!" send_to_char has no player-visible recipient;
-// the source path creates no mount or follower state for an NPC rider.
+// doRideMob ports do_ride (src/act.other.c:1545-1595) for a mobile rider
+// reached through command_interpreter (order/force, or a switched body). Every
+// refusal is TO_CHAR to the rider: a descriptor-less mobile drops it, but a
+// switched body has the descriptor and must see it. CAN_MOUNT(ch) is
+// !IS_MOB(ch) && !IS_MOUNTED(ch) (src/utils.h:364-366), so a mobile rider can
+// never complete the mount and always reaches "You can't ride!".
 func (w *World) doRideMob(rider *MobInstance, mountName string) {
 	if rider == nil || !rider.IsNPC() {
 		return
 	}
-	// src/utils.h:364-366 defines CAN_MOUNT(ch) as !IS_MOB(ch) &&
-	// !IS_MOUNTED(ch). In do_ride's branch order this point is reached only
-	// after resolving a mountable target and passing both mounted checks.
-	// The Lua caller already supplies that target handle; the NPC actor cannot
-	// pass CAN_MOUNT, and C's attempted private message is descriptorless.
-	_ = mountName
+	if rider.IsFighting() {
+		Act(w, false, rider, nil, nil, nil, "You're too busy fighting!", "", ToChar)
+		return
+	}
+	room := w.GetRoomInWorld(rider.GetRoomVNum())
+	if room == nil || !isOutdoors(room) {
+		Act(w, false, rider, nil, nil, nil, "Go outside if you want to ride!", "", ToChar)
+		return
+	}
+	name, _ := OneArgument(mountName)
+	if name == "" {
+		Act(w, false, rider, nil, nil, nil, "What do you wish to ride?", "", ToChar)
+		return
+	}
+	target, found := w.resolveCharInRoomAt(rider, rider.GetRoomVNum(), name)
+	if !found {
+		Act(w, false, rider, nil, nil, nil, "No-one by that name here.", "", ToChar)
+		return
+	}
+	mountPlayer, mountMob := target.Player, target.Mob
+	if mountMob == rider {
+		Act(w, false, rider, nil, nil, nil, "That's disgusting!", "", ToChar)
+		return
+	}
+	if mountPlayer != nil {
+		Act(w, true, rider, mountPlayer, nil, nil, "You can't ride $N!", "", ToChar)
+		return
+	}
+	if rider.IsAffected(affMounted) {
+		Act(w, false, rider, nil, nil, nil, "You can't ride two beasts at once!", "", ToChar)
+		return
+	}
+	if mountMob.IsAffected(affMounted) {
+		Act(w, false, rider, nil, nil, nil, "The beast is already being ridden!", "", ToChar)
+		return
+	}
+	if !mountMob.HasFlag("mountable") {
+		Act(w, true, rider, mountMob, nil, nil, "You can't ride $N!", "", ToChar)
+		return
+	}
+	// CAN_MOUNT(mobile) is false, so the final refusal is "You can't ride!".
+	Act(w, false, rider, nil, nil, nil, "You can't ride!", "", ToChar)
 }
 
 // ---------------------------------------------------------------------------

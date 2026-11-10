@@ -92,9 +92,9 @@ func (w *World) doReport(ch *Player, me *MobInstance, cmd string, arg string) bo
 
 	// act("$n reports:", FALSE, ch, 0, 0, TO_ROOM) — act appends the CRLF.
 	Act(w, false, reporter, nil, nil, nil, "$n reports:", "", ToRoom)
-	if ch != nil {
-		ch.SendMessage("You report:\r\n")
-	}
+	// C send_to_char("You report:", ch): invisible for a descriptor-less mobile,
+	// but a switched body has a descriptor and sees it.
+	Act(w, false, reporter, nil, nil, nil, "You report:", "", ToChar)
 
 	// for (tch = world[ch->in_room].people; tch; tch = tch->next_in_room)
 	//   act(buf, FALSE, tch, 0, 0, TO_CHAR);
