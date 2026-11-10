@@ -7,6 +7,10 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+env:
+  # R1: preserve Go 1.26 save/GMCP JSON bytes.
+  GOEXPERIMENT: nojsonv2
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -25,7 +29,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.26.10'
+        go-version: '1.27.3'
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -197,18 +201,14 @@ jobs:
         node-version: '22'
     - uses: actions/setup-go@v5
       with:
-        go-version: '1.26.10'
+        go-version: '1.27.3'
 
     - name: Install golangci-lint
       uses: golangci/golangci-lint-action@v9
       with:
-        # Pin to a v2.x release built with Go ≥ 1.26 so it can load the
-        # go 1.26.4 toolchain declared in go.mod. The action's v6 line only
-        # supports golangci-lint v1.x (built with go1.24), which fails with
-        # "Go language version (go1.24) is lower than the targeted Go
-        # version (1.26.4)". Match the version used locally.
-        # Update coordinately with .golangci.yml (already v2-style).
-        version: v2.12.2
+        # Go 1.27 syntax requires a linter built with Go 1.27 or newer.
+        # Keep this pin aligned with the release workflow and local checks.
+        version: v2.15.0
 
     - name: Install gofumpt
       run: go install mvdan.cc/gofumpt@latest
@@ -243,7 +243,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-go@v5
       with:
-        go-version: '1.26.10'
+        go-version: '1.27.3'
 
     # Cache the pinned scanner BINARIES (not the project's module cache, which
     # setup-go already handles). The scanners pull their own transitive deps
@@ -258,7 +258,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/go/bin
-        key: sec-tools-go1.26.10-govulncheck1.7.0-gosec2.29.0
+        key: sec-tools-go1.27.3-govulncheck1.7.0-gosec2.29.0
 
     # Supply-chain integrity: every dependency's content matches its go.sum hash. Deterministic and
     # fast; a failure means a tampered or corrupted module — always worth blocking. (Same check reek's

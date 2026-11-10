@@ -1,5 +1,9 @@
 .PHONY: world-fidelity world-manifest expected-divergences build test run clean install test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test census-start census-wait census-status census-tool-test string-census string-census-update deadcode-ratchet deadcode-ratchet-update deadcode-ratchet-test check-ignored-go census-coverage db-migrate-build db-migrate-test
 
+# Preserve the Go 1.26 JSON bytes in saves and GMCP (R1). Go 1.27's v2-backed
+# encoding/json differs for invalid UTF-8; see the committed byte goldens.
+export GOEXPERIMENT := nojsonv2
+
 # Regenerate the port reachability report (C command table vs Go registry).
 # Deterministic; output is dated by run date. See docs/port-reachability-map.md
 # for the original manual methodology this mechanizes.

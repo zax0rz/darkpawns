@@ -359,8 +359,7 @@ func TestPulseIncrement(t *testing.T) {
 // the background processor is ticking.
 func TestCreateRaceWithBackgroundProcess(t *testing.T) {
 	eq := NewEventQueue(10 * time.Millisecond)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	fn := func(_ context.Context, source, target, obj, arg int, trigger string, et int) int64 { return 0 }
 	eq.Start(ctx)

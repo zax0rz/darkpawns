@@ -28,6 +28,10 @@ on:
         required: true
 permissions:
   contents: read
+env:
+  # R1: preserve Go 1.26 save/GMCP JSON bytes.
+  GOEXPERIMENT: nojsonv2
+
 jobs:
   native:
     strategy:

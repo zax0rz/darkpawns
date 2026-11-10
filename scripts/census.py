@@ -134,7 +134,8 @@ def start(args):
                           budget=budget.LIMIT, memory_floor_kib=budget.FLOOR_KIB, coordinator_version=budget.VERSION,
                           seed=seed, draw_parity=args.draw_parity, selection=args.scenarios or ("combined" if args.combined else "claims" if args.claims else "full"),
                           runner_sha=digest(runner),
-                          command=sys.argv, goflags=os.environ.get('GOFLAGS',''))
+                          command=sys.argv, goflags=os.environ.get('GOFLAGS',''),
+                          goexperiment=os.environ.get('GOEXPERIMENT',''))
             key = str(run)
             with budget.transaction() as state:
                 state['runs'][key] = record

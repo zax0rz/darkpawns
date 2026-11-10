@@ -1,0 +1,13 @@
+{"type":"gmcp","data":{"package":"Char.Name","json":"{\"name\":\"Walker\"}"}}
+{"type":"gmcp","data":{"package":"Char.Vitals","json":"{\"hp\":100,\"maxhp\":100,\"mp\":100,\"maxmp\":100,\"mv\":0,\"maxmv\":0}"}}
+{"type":"gmcp","data":{"package":"Char.Status","json":"{\"name\":\"Walker\",\"level\":1,\"race\":\"Human\",\"class\":\"Magic User\",\"gold\":0}"}}
+{"type":"gmcp","data":{"package":"Room.Info","json":"{\"num\":1001,\"name\":\"Room A\",\"area\":\"Proving Grounds\",\"environment\":\"Forest\",\"exits\":{\"n\":1002}}"}}
+{"type":"gmcp","data":{"package":"Room.Info","json":"{\"num\":1002,\"name\":\"Room B\",\"area\":\"Proving Grounds\",\"environment\":\"Unknown\",\"exits\":{}}"}}
+{"type":"gmcp","data":{"package":"Room.Info","json":"{\"num\":1001,\"name\":\"Room A\",\"area\":\"Proving Grounds\",\"environment\":\"Forest\",\"exits\":{\"e\":1002,\"n\":1002}}"}}
+{"type":"gmcp","data":{"package":"Comm.Channel.Text","json":"{\"channel\":\"tell\",\"talker\":\"Someone\",\"text\":\"Someone tells you, 'boo'\"}"}}
+{"type":"gmcp","data":{"package":"Comm.Channel.Text","json":"{\"channel\":\"say\",\"talker\":\"\\u003c\\u0026é\",\"text\":\"quotes\\\" slash\\\\ NUL\\u0000 é\\u2028\\u2029\\ufffd\"}"}}
+{"type":"gmcp","data":{"package":"Client.GUI","json":"{\"version\":\"3\",\"url\":\"https://example.invalid/a?x=1\\u0026y=2\"}"}}
+{"type":"gmcp","data":{"package":"Client.Map","json":"{\"url\":\"https://example.invalid/map.xml\",\"version\":\"fixture\"}"}}
+{"type":"gmcp","data":{"package":"Room.Info","json":"{\"num\":0,\"name\":\"\",\"area\":\"\",\"environment\":\"\",\"exits\":null}"}}
+{"type":"gmcp","data":{"package":"Room.Info","json":"{\"num\":0,\"name\":\"\",\"area\":\"\",\"environment\":\"\",\"exits\":{}}"}}
+{"type":"gmcp","data":{"package":"Core.Ping","json":""}}

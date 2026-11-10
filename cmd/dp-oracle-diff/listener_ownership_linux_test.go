@@ -3,7 +3,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"os"
@@ -19,8 +18,7 @@ func TestForeignListenerRejectedBeforeDial(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() { _ = ln.Close() }()
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	p, err := startProcess(ctx, "foreign fixture", t.TempDir(), os.Environ(), "sleep", "10")
 	if err != nil {
 		t.Fatal(err)
