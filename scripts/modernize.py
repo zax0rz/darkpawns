@@ -9,6 +9,7 @@ Like go fix ./..., analysis uses the current build platform and build tags.
 
 import argparse
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -57,11 +58,21 @@ def main():
     parser.add_argument("--check", action="store_true", help="fail on eligible changes; never write")
     args = parser.parse_args()
     policy = json.loads((ROOT / "scripts/modernize-policy.json").read_text())
+    modules = subprocess.check_output(
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "--", "go.mod", "**/go.mod"],
+        cwd=ROOT, text=True,
+    )
+    if {str(Path(path).parent) for path in modules.splitlines()} != set(policy["modules"]):
+        raise ValueError("module inventory changed; review modernize-policy.json")
+    # A nested research module still targets Go 1.22. Use the root-selected
+    # toolchain consistently instead of falling back to the host's older go.
+    version = subprocess.check_output(["go", "env", "GOVERSION"], cwd=ROOT, text=True).strip()
+    env = dict(os.environ, GOTOOLCHAIN=version)
     patches, exclusions = [], {}
     for module in policy["modules"]:
         result = subprocess.run(
             ["go", "fix", "-diff", *["-" + name for name in policy["analyzers"]], "./..."],
-            cwd=ROOT / module, capture_output=True, text=True,
+            cwd=ROOT / module, env=env, capture_output=True, text=True,
         )
         # -diff exits 1 when fixes are offered. Dependency download progress
         # is normal on fresh CI caches; every actual diagnostic fails closed,

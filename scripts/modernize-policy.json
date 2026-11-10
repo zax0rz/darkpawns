@@ -17,7 +17,8 @@
   "modules": [
     ".",
     "tools/db-migrate",
-    "scripts/testdata/unit-proofs"
+    "scripts/testdata/unit-proofs",
+    "docs/research/idiom-experiment/metrics"
   ],
   "excluded_files": {
     "cmd/darkpawns/wait.go": "batch 3: generated WriteString(Sprintf) rejected by QF1012; no extra modernizer",
