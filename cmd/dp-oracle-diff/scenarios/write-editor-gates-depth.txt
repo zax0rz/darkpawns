@@ -1,0 +1,82 @@
+# depth-case: write.paper-not-note
+# depth-case: write.pen-not-pen
+# depth-case: write.non-note-paper
+# depth-case: write.editor-entry
+# C do_write's object-type ladder (src/act.comm.c:1066-1100): a carried object
+# that is neither a note nor a pen is "That thing has nothing to do with
+# writing."; a pen slot holding a non-pen is "$p is no good for writing with.";
+# a note slot holding a non-note is "You can't write on $p."; a note plus a pen
+# opens the editor.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Writeuser
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Writeuser
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watch]
+Writepal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Writepal
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Writepal 8162
+load obj 1207
+load obj 1208
+load obj 8037
+
+[probe]
+write sword
+write parchment sword
+write sword quill
+write parchment quill
