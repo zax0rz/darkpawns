@@ -1160,7 +1160,11 @@ func parseTattooChoice(ch *Player, arg string, offerCount int) (int, bool) {
 		return 0, false
 	}
 	choice := atoi(arg)
-	if choice >= offerCount {
+	// C (spec_procs2.c:989/1044) only rejects choice >= num_tats; a negative
+	// choice — reachable when a huge token overflows atoi — indexes tats[choice]
+	// out of bounds, which is undefined behaviour. The port must not reproduce
+	// UB as a crash (R1a), so treat it as invalid.
+	if choice < 0 || choice >= offerCount {
 		sendToChar(ch, "Buy by number!")
 		return 0, false
 	}

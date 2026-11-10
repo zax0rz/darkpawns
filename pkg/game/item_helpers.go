@@ -395,15 +395,10 @@ func (w *World) actToRoomExclude(ch, vict *Player, msg string, obj1, obj2 any, h
 	Act(w, hide, ch, vict, obj, victObj, legacyActFormat(msg), "", ToNotVict)
 }
 
-// atoi converts string to int
+// atoi mirrors C's atoi for the item commands. It shares atoiC's glibc
+// semantics ((int)strtol: leading whitespace, optional sign, longest digit run,
+// clamp to LONG_MIN/LONG_MAX on overflow then truncate to int), so a huge token
+// wraps through the low 32 bits instead of accumulating without bound.
 func atoi(s string) int {
-	n := 0
-	for _, c := range s {
-		if c >= '0' && c <= '9' {
-			n = n*10 + int(c-'0')
-		} else {
-			break
-		}
-	}
-	return n
+	return atoiC(s)
 }
