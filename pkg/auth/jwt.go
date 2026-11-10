@@ -95,13 +95,11 @@ func GenerateJWT(playerName, role string) (string, error) {
 	claims := &Claims{
 		PlayerName: playerName,
 		Role:       role,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
-			Issuer:    JWTIssuer,
-			Subject:   playerName,
-		},
+		ExpiresAt:  jwt.NewNumericDate(expirationTime),
+		IssuedAt:   jwt.NewNumericDate(time.Now()),
+		NotBefore:  jwt.NewNumericDate(time.Now()),
+		Issuer:     JWTIssuer,
+		Subject:    playerName,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

@@ -38,11 +38,9 @@ func TestValidateJWT_RejectsHS384(t *testing.T) {
 	claims := &Claims{
 		PlayerName: "Hero",
 		Role:       "player",
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-			Issuer:    "darkpawns",
-			Subject:   "Hero",
-		},
+		ExpiresAt:  jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		Issuer:     "darkpawns",
+		Subject:    "Hero",
 	}
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS384, claims).SignedString([]byte(secret))
 	if err != nil {
@@ -61,11 +59,9 @@ func TestValidateJWT_RejectsHS512(t *testing.T) {
 	claims := &Claims{
 		PlayerName: "Hero",
 		Role:       "player",
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-			Issuer:    "darkpawns",
-			Subject:   "Hero",
-		},
+		ExpiresAt:  jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		Issuer:     "darkpawns",
+		Subject:    "Hero",
 	}
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS512, claims).SignedString([]byte(secret))
 	if err != nil {
@@ -99,11 +95,9 @@ func TestValidateJWT_RejectsWrongIssuer(t *testing.T) {
 			claims := &Claims{
 				PlayerName: "Hero",
 				Role:       "player",
-				RegisteredClaims: jwt.RegisteredClaims{
-					ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-					Issuer:    tc.issuer,
-					Subject:   "Hero",
-				},
+				ExpiresAt:  jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+				Issuer:     tc.issuer,
+				Subject:    "Hero",
 			}
 			token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secret))
 			if err != nil {

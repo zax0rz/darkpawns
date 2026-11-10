@@ -21,7 +21,7 @@ Three moving parts:
 ## Prerequisites
 
 ```bash
-# Go (see the `go` directive in go.mod for the exact minimum; currently 1.26.10)
+# Go (see the `go` directive in go.mod for the exact minimum; currently 1.27.3)
 go version
 
 # Build toolchain for the C oracle (autotools + a C compiler)
@@ -36,9 +36,17 @@ gh auth status
 ```bash
 git clone https://github.com/zax0rz/darkpawns.git
 cd darkpawns
+export GOEXPERIMENT=nojsonv2
 go build ./...        # sanity check the toolchain
 go test ./...         # unit tests should pass with no oracle present
 ```
+
+Go 1.27 builds require `GOEXPERIMENT=nojsonv2` to preserve the Go 1.26 JSON
+bytes in player saves and GMCP, including invalid UTF-8 replacement escaping.
+Keep it exported when running Go commands directly. Make targets, CI, release
+builds and `scripts/census.sh` set it themselves. The byte-golden tests fail if
+the default v2-backed encoder changes these bytes; do not regenerate their
+Go 1.26.10 baselines to accept the difference.
 
 The unit tests do **not** need the C oracle. The differential harness does.
 

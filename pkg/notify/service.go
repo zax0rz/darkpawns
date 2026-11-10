@@ -104,7 +104,7 @@ type Service struct {
 // defaults or discarding an operator's selections. Credentials are loaded from encrypted storage or legacy environment settings.
 func New(path string) (*Service, error) {
 	s := &Service{path: filepath.Clean(path), cfg: Config{Revision: 1, GossipNotice: true, Pushover: Destination{Events: []string{}}, Discord: Destination{Events: []string{}}}, status: map[string]Status{}, workers: map[string]*worker{}}
-	stored := diskConfig{Config: Config{GossipNotice: true}}
+	stored := diskConfig{GossipNotice: true}
 	data, err := os.ReadFile(s.path) // #nosec G703 -- path comes only from server configuration
 	if err == nil {
 		if err = json.Unmarshal(data, &stored); err != nil {

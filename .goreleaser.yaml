@@ -1,5 +1,7 @@
 version: 2
 project_name: darkpawns
+env:
+  - GOEXPERIMENT=nojsonv2
 before:
   hooks:
     # npm install scripts are arbitrary third-party code: they must never run

@@ -28,7 +28,7 @@ func (c *closeRecordingConn) Close() error {
 // tests assert the exit precedes the restart.
 func newCrashRecordingConn(events *[]string, second Conn) *CrashConn {
 	dials := 0
-	return NewCrashConn(&closeRecordingConn{scriptedConn: scriptedConn{outputs: []string{""}}, events: events},
+	return NewCrashConn(&closeRecordingConn{outputs: []string{""}, events: events},
 		func() (Conn, error) {
 			*events = append(*events, "dial")
 			dials++
@@ -98,9 +98,9 @@ func TestCrashStepKillsOnlyItsEngine(t *testing.T) {
 	freshConn := func() *scriptedConn {
 		return &scriptedConn{outputs: []string{"greeting\r\n", "Password: ", "PRESS RETURN", "menu", "ok\r\n"}}
 	}
-	connA := NewCrashConn(&closeRecordingConn{scriptedConn: scriptedConn{outputs: []string{""}}, events: engineA},
+	connA := NewCrashConn(&closeRecordingConn{outputs: []string{""}, events: engineA},
 		func() (Conn, error) { return freshConn(), nil }, login, killFor(engineA), restartFor(engineA))
-	connB := NewCrashConn(&closeRecordingConn{scriptedConn: scriptedConn{outputs: []string{""}}, events: engineB},
+	connB := NewCrashConn(&closeRecordingConn{outputs: []string{""}, events: engineB},
 		func() (Conn, error) { return freshConn(), nil }, login, killFor(engineB), restartFor(engineB))
 
 	if _, err := RunAudienceProbe(connA, nil, []string{CrashStep}, time.Millisecond); err != nil {
@@ -186,8 +186,8 @@ func TestParseScenarioCrashGuards(t *testing.T) {
 func TestCrashStepDropsDeadTransportOutput(t *testing.T) {
 	events := &[]string{}
 	first := &closeRecordingConn{
-		scriptedConn: scriptedConn{outputs: []string{"some queued output\r\n"}},
-		events:       events,
+		outputs: []string{"some queued output\r\n"},
+		events:  events,
 	}
 	second := &scriptedConn{outputs: []string{"greeting\r\n", "Password: ", "PRESS RETURN", "menu", "ok\r\n"}}
 	actor := NewCrashConn(first,

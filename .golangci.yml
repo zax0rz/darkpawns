@@ -53,6 +53,12 @@ linters:
           - govet
           - unused
       # Existing callers of deprecated types/functions: migration is a separate refactor task
+      # Keep the existing tattoo charm compatibility initializer unchanged in
+      # the toolchain upgrade (R1/R3); Go 1.27's linter now reports this alias.
+      - path: ^pkg/game/other_economy\.go$
+        text: '\(github.com/zax0rz/darkpawns/pkg/engine\.Affect\)\.Type is deprecated'
+        linters:
+          - staticcheck
       - text: "GetRoomInWorld is deprecated"
         linters:
           - staticcheck

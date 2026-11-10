@@ -319,8 +319,8 @@ func TestRunAudienceProbeAllowsFinalAudienceEOF(t *testing.T) {
 // step can never be probed.
 func TestRunAudienceProbeAllowsAudienceEOFBeforeRelogin(t *testing.T) {
 	primary := &reloginScriptedConn{
-		scriptedConn: scriptedConn{outputs: []string{"weather line"}, readErr: io.EOF},
-		transcript:   "welcome back",
+		outputs: []string{"weather line"}, readErr: io.EOF,
+		transcript: "welcome back",
 	}
 	driver := &scriptedConn{outputs: []string{"driver"}}
 	other := &scriptedConn{outputs: []string{"other"}}
@@ -364,9 +364,9 @@ func TestRunAudienceProbeRejectsAudienceEOFMidProbe(t *testing.T) {
 // server close that transport carries Closed, so a compare-close scenario can
 // render the disconnect instead of an invisible end-of-data.
 func TestRunAudienceProbeReportsObservedClose(t *testing.T) {
-	primary := &closeReportingConn{scriptedConn: scriptedConn{outputs: []string{"actor"}}}
-	closed := &closeReportingConn{scriptedConn: scriptedConn{readErr: io.EOF}, closed: true}
-	open := &closeReportingConn{scriptedConn: scriptedConn{outputs: []string{"peer"}}}
+	primary := &closeReportingConn{outputs: []string{"actor"}}
+	closed := &closeReportingConn{readErr: io.EOF, closed: true}
+	open := &closeReportingConn{outputs: []string{"peer"}}
 
 	blocks, err := RunAudienceProbe(primary, map[string]Conn{
 		"closed": closed,
@@ -438,7 +438,7 @@ func TestTCPConnObservedCloseTracksServerEOF(t *testing.T) {
 }
 
 func TestReloginConnForwardsObservedClose(t *testing.T) {
-	first := &closeReportingConn{scriptedConn: scriptedConn{readErr: io.EOF}, closed: true}
+	first := &closeReportingConn{readErr: io.EOF, closed: true}
 	conn := NewReloginConn(first, nil, nil, nil)
 	if !conn.ObservedClose() {
 		t.Fatal("ReloginConn must forward the current transport's close")
