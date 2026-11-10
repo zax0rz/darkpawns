@@ -1,0 +1,63 @@
+# depth-case: editor.buffer-empty-arms
+# depth-case: editor.range-and-replace-gates
+# C's improved editor (src/improved-edit.c:31-92) answers /f /i /l /n on an
+# empty buffer with "Current buffer empty." and rejects an unknown option;
+# parse_action's delete/replace gates reject malformed, reversed and
+# out-of-range spans and a buffer-missing replace pattern
+# (src/improved-edit.c:131-460). REDIT's live description field is the vehicle.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Editgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Editgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+
+[probe]
+redit
+2
+/c
+/f
+/i
+/l
+/n
+/x
+line one
+line two
+/l
+/d 9
+/d 5-1
+/d x y
+/r
+/r 'zzz' 'yyy'
+/i
+/e
+@
