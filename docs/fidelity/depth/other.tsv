@@ -50,5 +50,7 @@ do_yank	yank	yank.self-me	D2	command	oracle-green	yank-resolve-depth	handler.c:1
 do_yank	yank	yank.ordinal-second	D2	command	oracle-green	yank-resolve-depth	handler.c:1293-1297	"2.<name>" counts visible matches; a non-follower victim stops at the appreciation refusal.
 do_yank	yank	yank.ordinal-exhausted	D2	command	oracle-green	yank-resolve-depth	handler.c:1293-1299	"N.<name>" past the last visible match falls to NOPERSON.
 do_ride	ride	ride.resolver	D2	command	unit-green	TestDoRideResolvesThroughGetCharRoomVis	act.other.c:1564-1566	do_ride resolves mounts with get_char_room_vis: "me" answers with the rider ("That's disgusting!") and N.<name> counts visible matches. Shares findCharInRoom with yank; the yank oracle rows prove the shared helper live.
+do_steal	steal	steal.self-target	D1	command	oracle-green	steal-self-depth@1	act.other.c:334-337	A self-target yields "Come on now, that's rather stupid!".
+do_steal	steal	steal.peaceful-room	D1	command	oracle-green	steal-self-depth@1	act.other.c:339-343	A ROOM_PEACEFUL room yields "You can't contemplate stealing in such a place!".
 do_use	quaff	other.quaff-non-potion	D1	command	oracle-green	quaff-split-refusals-depth@1	act.other.c:952-955	A held non-potion quaffed reaches "You can only quaff potions.".
 do_split	split	other.split-no-group	D2	command	oracle-green	quaff-split-refusals-depth@1	act.other.c:859-862	An ungrouped actor with enough gold to split reaches "With whom do you wish to share your gold?".
