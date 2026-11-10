@@ -1,0 +1,105 @@
+# depth-case: steal.self-target
+# depth-case: steal.peaceful-room
+# C do_steal refuses a self-target with "Come on now, that's rather stupid!"
+# (src/act.other.c:334-337) and any steal in a ROOM_PEACEFUL room with "You
+# can't contemplate stealing in such a place!" (src/act.other.c:339-343).
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8163 4 on
+
+[setup:oracle]
+Stealgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stealgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Stealpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Stealpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Stealvictim
+Y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Stealvictim
+y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Stealpeer 8162
+teleport Stealvictim 8162
+
+[probe]
+send:peer steal sword Stealpeer
+teleport Stealpeer 8163
+teleport Stealvictim 8163
+send:peer steal sword Stealvictim
