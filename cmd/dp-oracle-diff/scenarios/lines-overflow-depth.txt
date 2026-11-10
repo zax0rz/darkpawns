@@ -1,0 +1,40 @@
+# depth-case: lines.atoi-overflow
+# C do_lines reads its argument with atoi (src/act.display.c do_lines), whose
+# glibc (int)strtol overflows: "3000000000" wraps to -1294967296, below the
+# minimum, so the command reports the minimum-size refusal.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Linespeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Linespeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+lines 3000000000
+lines 25
