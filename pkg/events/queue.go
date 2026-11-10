@@ -71,7 +71,7 @@ func (h *eventHeap) Pop() any {
 type EventQueue struct {
 	mu       sync.Mutex
 	events   eventHeap
-	nextID   uint64
+	nextID   atomic.Uint64
 	stopCh   chan struct{}
 	stopOnce sync.Once
 	pulse    int64 // current game pulse, incremented by Process()
@@ -107,7 +107,7 @@ func (eq *EventQueue) Create(delay int64, source, target, obj, argument int, tri
 		delay = 1 // events.c: "make sure its in the future"
 	}
 
-	id := atomic.AddUint64(&eq.nextID, 1)
+	id := eq.nextID.Add(1)
 
 	eq.mu.Lock()
 	defer eq.mu.Unlock()

@@ -27,9 +27,9 @@ func TestCreateAndProcess(t *testing.T) {
 	eq := NewEventQueue(10 * time.Millisecond)
 	ctx := context.Background()
 
-	var fired int64
+	var fired atomic.Int64
 	fn := func(_ context.Context, source, target, obj, arg int, trigger string, et int) int64 {
-		atomic.AddInt64(&fired, 1)
+		fired.Add(1)
 		return 0
 	}
 
@@ -40,14 +40,14 @@ func TestCreateAndProcess(t *testing.T) {
 	for range 4 {
 		eq.Process(ctx)
 	}
-	if atomic.LoadInt64(&fired) != 0 {
+	if fired.Load() != 0 {
 		t.Fatalf("event fired too early")
 	}
 
 	// Process pulse 5 — event should fire
 	eq.Process(ctx)
-	if atomic.LoadInt64(&fired) != 1 {
-		t.Fatalf("event did not fire, expected 1, got %d", atomic.LoadInt64(&fired))
+	if fired.Load() != 1 {
+		t.Fatalf("event did not fire, expected 1, got %d", fired.Load())
 	}
 }
 
@@ -57,9 +57,9 @@ func TestCancel(t *testing.T) {
 	eq := NewEventQueue(10 * time.Millisecond)
 	ctx := context.Background()
 
-	var fired int64
+	var fired atomic.Int64
 	fn := func(_ context.Context, source, target, obj, arg int, trigger string, et int) int64 {
-		atomic.AddInt64(&fired, 1)
+		fired.Add(1)
 		return 0
 	}
 
@@ -71,7 +71,7 @@ func TestCancel(t *testing.T) {
 		eq.Process(ctx)
 	}
 
-	if atomic.LoadInt64(&fired) != 0 {
+	if fired.Load() != 0 {
 		t.Fatalf("cancelled event should not fire")
 	}
 }
@@ -82,9 +82,9 @@ func TestReenqueue(t *testing.T) {
 	eq := NewEventQueue(10 * time.Millisecond)
 	ctx := context.Background()
 
-	var fired int64
+	var fired atomic.Int64
 	fn := func(_ context.Context, source, target, obj, arg int, trigger string, et int) int64 {
-		count := atomic.AddInt64(&fired, 1)
+		count := fired.Add(1)
 		if count < 3 {
 			return 2 // re-enqueue after 2 more pulses
 		}
@@ -98,8 +98,8 @@ func TestReenqueue(t *testing.T) {
 		eq.Process(ctx)
 	}
 
-	if atomic.LoadInt64(&fired) != 3 {
-		t.Fatalf("expected 3 firings, got %d", atomic.LoadInt64(&fired))
+	if fired.Load() != 3 {
+		t.Fatalf("expected 3 firings, got %d", fired.Load())
 	}
 }
 
@@ -137,9 +137,9 @@ func TestCancelBySource(t *testing.T) {
 	eq := NewEventQueue(10 * time.Millisecond)
 	ctx := context.Background()
 
-	var fired int64
+	var fired atomic.Int64
 	fn := func(_ context.Context, source, target, obj, arg int, trigger string, et int) int64 {
-		atomic.AddInt64(&fired, 1)
+		fired.Add(1)
 		return 0
 	}
 
@@ -158,8 +158,8 @@ func TestCancelBySource(t *testing.T) {
 		eq.Process(ctx)
 	}
 
-	if atomic.LoadInt64(&fired) != 1 {
-		t.Fatalf("expected only source 200's event to fire (1), got %d", atomic.LoadInt64(&fired))
+	if fired.Load() != 1 {
+		t.Fatalf("expected only source 200's event to fire (1), got %d", fired.Load())
 	}
 }
 
@@ -169,9 +169,9 @@ func TestDelayMinimum(t *testing.T) {
 	eq := NewEventQueue(10 * time.Millisecond)
 	ctx := context.Background()
 
-	var fired int64
+	var fired atomic.Int64
 	fn := func(_ context.Context, source, target, obj, arg int, trigger string, et int) int64 {
-		atomic.AddInt64(&fired, 1)
+		fired.Add(1)
 		return 0
 	}
 
@@ -179,7 +179,7 @@ func TestDelayMinimum(t *testing.T) {
 	eq.Create(0, 100, 0, 0, 0, "now", 1, fn)
 
 	eq.Process(ctx) // pulse 1 — event scheduled for pulse 1, should fire
-	if atomic.LoadInt64(&fired) != 1 {
+	if fired.Load() != 1 {
 		t.Fatalf("event with delay=0 clamped to 1 should fire on first Process")
 	}
 }
@@ -245,9 +245,9 @@ func TestStartStop(t *testing.T) {
 	eq := NewEventQueue(50 * time.Millisecond)
 	ctx, cancel := context.WithCancel(context.Background())
 
-	var fired int64
+	var fired atomic.Int64
 	fn := func(_ context.Context, source, target, obj, arg int, trigger string, et int) int64 {
-		atomic.AddInt64(&fired, 1)
+		fired.Add(1)
 		return 0
 	}
 
@@ -257,8 +257,8 @@ func TestStartStop(t *testing.T) {
 	// Wait for event to fire in background
 	time.Sleep(300 * time.Millisecond)
 
-	if atomic.LoadInt64(&fired) != 1 {
-		t.Fatalf("expected background event to fire, got %d", atomic.LoadInt64(&fired))
+	if fired.Load() != 1 {
+		t.Fatalf("expected background event to fire, got %d", fired.Load())
 	}
 
 	cancel()
@@ -309,12 +309,12 @@ func TestEventCallbackCanCreateEvents(t *testing.T) {
 	eq := NewEventQueue(10 * time.Millisecond)
 	ctx := context.Background()
 
-	var fired int64
+	var fired atomic.Int64
 	fn := func(_ context.Context, source, target, obj, arg int, trigger string, et int) int64 {
-		atomic.AddInt64(&fired, 1)
+		fired.Add(1)
 		// Scheduling another event from inside a callback must not deadlock.
 		eq.Create(2, 200, 0, 0, 0, "child", 1, func(_ context.Context, source, target, obj, arg int, trigger string, et int) int64 {
-			atomic.AddInt64(&fired, 1)
+			fired.Add(1)
 			return 0
 		})
 		return 0
@@ -323,7 +323,7 @@ func TestEventCallbackCanCreateEvents(t *testing.T) {
 	eq.Create(1, 100, 0, 0, 0, "parent", 1, fn)
 	eq.Process(ctx)
 
-	if got := atomic.LoadInt64(&fired); got != 1 {
+	if got := fired.Load(); got != 1 {
 		t.Fatalf("expected parent callback to fire once, got %d", got)
 	}
 	if eq.Pending() != 1 {
@@ -333,7 +333,7 @@ func TestEventCallbackCanCreateEvents(t *testing.T) {
 	// Process the child event.
 	eq.Process(ctx)
 	eq.Process(ctx)
-	if got := atomic.LoadInt64(&fired); got != 2 {
+	if got := fired.Load(); got != 2 {
 		t.Fatalf("expected child callback to fire once, got %d", got)
 	}
 }
