@@ -57,12 +57,17 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.27.3'
+        go-version-file: go.mod
 
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+
+    # This workflow tests a separate module, so root-package tests do not run
+    # implicitly. Check the JSON implementation before building the converter.
+    - name: Require JSON v1 byte compatibility
+      run: go test ./internal/buildcompat -run '^TestJSONV1Bytes$' -count=1
 
     # One database for the suite (the tests create their own schemas inside it)
     # and one for the end-to-end CLI proof, so a test that leaves something

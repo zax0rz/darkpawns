@@ -1,0 +1,77 @@
+# depth-case: other.quaff-non-potion
+# depth-case: other.split-no-group
+# C do_use's SCMD_QUAFF arm rejects a non-potion ("You can only quaff
+# potions.", src/act.other.c:952-955); do_split refuses an ungrouped split of
+# gold the actor holds ("With whom do you wish to share your gold?",
+# src/act.other.c:859-862).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Refusgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Refusgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Refuspeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Refuspeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Refuspeer 8162
+set player Refuspeer gold 100
+load obj 8037
+give sword Refuspeer
+
+[probe:peer]
+quaff sword
+split 10
