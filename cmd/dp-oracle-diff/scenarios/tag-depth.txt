@@ -81,7 +81,11 @@ peer
 goto 8162
 teleport Taglinkpeer 8162
 
+# Separate the asynchronous peer close from the first command flush.
+# Retain the lost-link output in its own probe block, rather than racing the
+# close notification against the command in different descriptor loops.
 [probe]
+~dpclock pulse 1
 tag
 tag xyzzy
 tag fish

@@ -39,6 +39,9 @@ Y
 <ENTER>
 1
 goto 8162
+
+# Both engines execute the load: its narration consumes RNG (R3).
+[warmup]
 load obj 8038
 
 [probe]
