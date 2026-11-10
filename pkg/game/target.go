@@ -18,7 +18,7 @@ func isnameWithAbbrevs(str, namelist string) bool {
 		return false
 	}
 	str = strings.ToLower(str)
-	for _, tok := range strings.Fields(namelist) {
+	for tok := range strings.FieldsSeq(namelist) {
 		if isAbbrev(str, tok) {
 			return true
 		}
@@ -207,7 +207,7 @@ func (w *World) ResolveFightingTarget(ch *Player) (CharTarget, bool) {
 }
 
 func isCompleteName(name, namelist string) bool {
-	for _, keyword := range strings.Fields(namelist) {
+	for keyword := range strings.FieldsSeq(namelist) {
 		if strings.EqualFold(name, keyword) {
 			return true
 		}

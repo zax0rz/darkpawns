@@ -166,8 +166,8 @@ func readTildeString(scanner *bufio.Scanner) (string, error) {
 		// the Go observation renderer incapable of reproducing room text.
 		line := strings.TrimSuffix(scanner.Text(), "\r")
 		terminatorCandidate := strings.TrimRight(line, " \t")
-		if strings.HasSuffix(terminatorCandidate, "~") {
-			parts = append(parts, strings.TrimSuffix(terminatorCandidate, "~"))
+		if before, ok := strings.CutSuffix(terminatorCandidate, "~"); ok {
+			parts = append(parts, before)
 			return strings.Join(parts, "\n"), nil
 		}
 		parts = append(parts, line)

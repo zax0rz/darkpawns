@@ -130,8 +130,8 @@ func isOriginAllowed(origin string, allowed []string, r *http.Request) bool {
 	// Check against explicit subdomain allowlists per base domain
 	for baseDomain, subs := range allowedSubdomains {
 		suffix := "." + baseDomain
-		if strings.HasSuffix(origin, suffix) {
-			prefix := strings.TrimSuffix(origin, suffix)
+		if before, ok := strings.CutSuffix(origin, suffix); ok {
+			prefix := before
 			for _, sub := range subs {
 				if prefix == sub {
 					return true

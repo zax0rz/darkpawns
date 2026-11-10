@@ -105,7 +105,7 @@ func TestVersionIsSingleSourced(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, line := range strings.Split(string(changelog), "\n") {
+	for line := range strings.SplitSeq(string(changelog), "\n") {
 		if strings.HasPrefix(line, "## ") {
 			if !strings.HasPrefix(line, "## "+version+" ") && line != "## "+version {
 				t.Fatalf("newest CHANGELOG.md entry is %q; add one for %s", line, version)

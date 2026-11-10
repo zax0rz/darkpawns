@@ -1095,11 +1095,11 @@ func resolveAudienceProbeTarget(primary Conn, peers map[string]Conn, step string
 	}
 
 	directed := strings.TrimPrefix(step, "send:")
-	space := strings.IndexByte(directed, ' ')
+	before, after, ok0 := strings.Cut(directed, " ")
 	name := directed
-	if space >= 0 {
-		name = directed[:space]
-		sendLine = directed[space+1:]
+	if ok0 {
+		name = before
+		sendLine = after
 	}
 	if name == "" {
 		return nil, "", nil, "", fmt.Errorf("directed probe has no target")

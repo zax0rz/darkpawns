@@ -63,7 +63,7 @@ func evidencePath(root, name string) (string, error) {
 	if name == "" || filepath.IsAbs(name) || strings.Contains(name, `\`) {
 		return "", fmt.Errorf("retain oracle evidence: invalid relative name %q", name)
 	}
-	for _, component := range strings.Split(filepath.ToSlash(name), "/") {
+	for component := range strings.SplitSeq(filepath.ToSlash(name), "/") {
 		if component == ".." {
 			return "", fmt.Errorf("retain oracle evidence: parent component in %q", name)
 		}

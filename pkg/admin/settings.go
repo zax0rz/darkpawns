@@ -382,7 +382,7 @@ func settingsAuditHistory(logger *audit.AuditLogger) ([]audit.AuditEvent, error)
 		return nil, err
 	}
 	var events []audit.AuditEvent
-	for _, line := range bytes.Split(data, []byte("\n")) {
+	for line := range bytes.SplitSeq(data, []byte("\n")) {
 		if len(line) == 0 {
 			continue
 		}

@@ -195,8 +195,8 @@ func shopNpcTimesMessage(obj *ObjectInstance, name string, num int) string {
 	text := name
 	if obj != nil {
 		text = obj.GetShortDesc()
-	} else if idx := strings.Index(name, "."); idx >= 0 {
-		text = name[idx+1:]
+	} else if _, after, ok := strings.Cut(name, "."); ok {
+		text = after
 	}
 	if num > 1 {
 		return fmt.Sprintf("%s (x %d)", text, num)

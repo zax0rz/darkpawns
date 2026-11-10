@@ -58,7 +58,7 @@ func TestAPIRouteDriftGate(t *testing.T) {
 		Ops  []string `json:"ops"`
 	}
 	found := false
-	for _, line := range strings.Split(out, "\n") {
+	for line := range strings.SplitSeq(out, "\n") {
 		if !strings.HasPrefix(line, dumpRoutesPrefix) {
 			continue
 		}

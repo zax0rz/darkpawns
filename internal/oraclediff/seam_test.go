@@ -196,12 +196,12 @@ func TestSeamPatchDefersPulsesOutOfInputProcessing(t *testing.T) {
 		t.Fatal("pristine command body not found")
 	}
 	originalTail := baseSource[originalStart:]
-	originalEnd := strings.Index(originalTail, "\n      }\n    }\n\n    /* send queued output")
-	if originalEnd < 0 {
+	before, _, ok := strings.Cut(originalTail, "\n      }\n    }\n\n    /* send queued output")
+	if !ok {
 		t.Fatal("pristine command body end not found")
 	}
 	productionDispatch := strings.ReplaceAll(dispatch, "d->character && !dp_clock", "d->character")
-	if strings.TrimSpace(productionDispatch[1:len(productionDispatch)-1]) != strings.TrimSpace(originalTail[:originalEnd]) {
+	if strings.TrimSpace(productionDispatch[1:len(productionDispatch)-1]) != strings.TrimSpace(before) {
 		t.Error("shared dispatch changes the original production command body (R3b)")
 	}
 	if !strings.Contains(source, "if (!waiting_for_ident(d) && ((d->character ? --(d->character->wait) : 0) <= 0) &&") {

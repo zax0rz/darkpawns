@@ -63,7 +63,7 @@ func TestPublishJobRunsNoPackageManager(t *testing.T) {
 
 func TestGoreleaserNpmHooksAreConditional(t *testing.T) {
 	config := repoFile(t, ".goreleaser.yaml")
-	for _, line := range strings.Split(config, "\n") {
+	for line := range strings.SplitSeq(config, "\n") {
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(trimmed, "#") {
 			continue

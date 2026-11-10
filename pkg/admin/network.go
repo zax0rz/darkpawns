@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/zax0rz/darkpawns/internal/launchctl"
@@ -261,9 +262,10 @@ func networkError(err error) error {
 }
 
 func networkAuditDetails(result launchctl.SaveNetworkResult) string {
-	details := "revision " + strconv.Itoa(int(result.Config.Revision))
+	var details strings.Builder
+	details.WriteString("revision " + strconv.Itoa(int(result.Config.Revision)))
 	for _, entry := range result.Diff {
-		details += "; " + entry.Field + ": " + entry.From + " -> " + entry.To
+		details.WriteString("; " + entry.Field + ": " + entry.From + " -> " + entry.To)
 	}
-	return details
+	return details.String()
 }

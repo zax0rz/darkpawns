@@ -205,7 +205,7 @@ func readCLISnapshot(ctx context.Context, path, base string, reader *adminReader
 			s.logs = "Launcher log unavailable: " + terminalText(logErr.Error())
 		}
 	}
-	for _, line := range strings.Split(s.logs, "\n") {
+	for line := range strings.SplitSeq(s.logs, "\n") {
 		if strings.HasPrefix(strings.TrimSpace(line), "ERROR ") || strings.Contains(line, "level=ERROR") || strings.Contains(line, `"level":"ERROR"`) {
 			s.errors = append(s.errors, line)
 		}
@@ -386,11 +386,12 @@ func (m watchModel) View() string {
 		uptime = "Unavailable"
 	}
 	if m.help.ShowAll {
-		text := cliTitle.Render(heading) + "\n\nKeyboard help\n\n"
+		var text strings.Builder
+		text.WriteString(cliTitle.Render(heading) + "\n\nKeyboard help\n\n")
 		for _, k := range m.keys.ShortHelp() {
-			text += k.Help().Key + "  " + k.Help().Desc + "\n"
+			text.WriteString(k.Help().Key + "  " + k.Help().Desc + "\n")
 		}
-		return lipgloss.NewStyle().Width(w).Padding(1, 2).Render(text + "\n? return to status")
+		return lipgloss.NewStyle().Width(w).Padding(1, 2).Render(text.String() + "\n? return to status")
 	}
 	body := cliTitle.Render(heading) + "\n" + ansi.Truncate(terminalText(m.data.status.Instance), w, "…") + "\n" + rule + "\n" + lipgloss.NewStyle().Width(w).Render(fmt.Sprintf("%s    Uptime %s    Release %s", state, terminalText(uptime), terminalText(version))) + "\n"
 	if m.data.err != nil {

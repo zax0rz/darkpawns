@@ -248,8 +248,8 @@ func TestMudlogStreamLevelCeiling(t *testing.T) {
 		scanner := bufio.NewScanner(response.Body)
 		for scanner.Scan() {
 			line := scanner.Text()
-			if strings.HasPrefix(line, "data: ") {
-				events <- strings.TrimPrefix(line, "data: ")
+			if after, ok := strings.CutPrefix(line, "data: "); ok {
+				events <- after
 			}
 		}
 		close(events)

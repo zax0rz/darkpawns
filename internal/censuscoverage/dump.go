@@ -58,7 +58,7 @@ func ParseDump(name, body string) Scenario {
 		})
 		lines = nil
 	}
-	for _, line := range strings.Split(body, "\n") {
+	for line := range strings.SplitSeq(body, "\n") {
 		if newLabel, ok := parseBlockHeader(line); ok {
 			flush()
 			label = newLabel

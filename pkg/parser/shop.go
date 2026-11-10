@@ -43,7 +43,7 @@ func ParseAllShopFiles(dir string) ([]ShopProto, error) {
 		return nil, nil
 	}
 	var shops []ShopProto
-	for _, field := range strings.Fields(string(indexData)) {
+	for field := range strings.FieldsSeq(string(indexData)) {
 		if field == "$" {
 			break
 		}
@@ -144,8 +144,8 @@ func parseShopRecord(lines []string, i *int, vnum int, path string) (ShopProto, 
 			if err != nil {
 				return "", err
 			}
-			if strings.HasSuffix(line, "~") {
-				builder.WriteString(strings.TrimSuffix(line, "~"))
+			if before, ok := strings.CutSuffix(line, "~"); ok {
+				builder.WriteString(before)
 				return builder.String(), nil
 			}
 			builder.WriteString(line)

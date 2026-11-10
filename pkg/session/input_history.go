@@ -37,16 +37,16 @@ func (s *Session) applyInputHistory(line string) (string, bool) {
 // at position 0, and the result is bounded by C's MAX_INPUT_LENGTH buffer.
 func performSubst(orig, subst string) (string, bool) {
 	first := subst[1:]
-	sep := strings.IndexByte(first, '^')
-	if sep < 0 {
+	before0, after0, ok0 := strings.Cut(first, "^")
+	if !ok0 {
 		return "", false
 	}
-	old, repl := first[:sep], first[sep+1:]
-	pos := strings.Index(orig, old)
-	if pos < 0 {
+	old, repl := before0, after0
+	before, after, ok := strings.Cut(orig, old)
+	if !ok {
 		return "", false
 	}
-	out := orig[:pos] + repl + orig[pos+len(old):]
+	out := before + repl + after
 	if len(out) > cMaxInputLength-1 {
 		out = out[:cMaxInputLength-1]
 	}

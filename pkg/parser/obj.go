@@ -243,8 +243,8 @@ func parseObj(lb *lineBuffer, vnum int) (Obj, string, error) {
 			for lb.Scan() {
 				descLine := lb.Text()
 				trimmed := strings.TrimRight(descLine, " \t")
-				if strings.HasSuffix(trimmed, "~") {
-					descLines = append(descLines, strings.TrimSuffix(trimmed, "~"))
+				if before, ok := strings.CutSuffix(trimmed, "~"); ok {
+					descLines = append(descLines, before)
 					break
 				}
 				descLines = append(descLines, descLine)
@@ -299,8 +299,8 @@ func readObjTildeString(lb *lineBuffer) (string, error) {
 	var result strings.Builder
 	for lb.Scan() {
 		line := strings.TrimSuffix(lb.Text(), "\r")
-		if terminator := strings.IndexByte(line, '~'); terminator >= 0 {
-			result.WriteString(line[:terminator])
+		if before, _, ok := strings.Cut(line, "~"); ok {
+			result.WriteString(before)
 			return result.String(), nil
 		}
 		result.WriteString(line)

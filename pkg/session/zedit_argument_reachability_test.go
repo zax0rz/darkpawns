@@ -33,8 +33,8 @@ func auditCZeditArgumentBranch(source, branch string) error {
 		return fmt.Errorf("changed argument-mode writer/caller set")
 	}
 	var body, incoming string
-	if strings.HasPrefix(branch, "display") {
-		n := strings.TrimPrefix(branch, "display")
+	if after, ok := strings.CutPrefix(branch, "display"); ok {
+		n := after
 		definition := regexp.MustCompile(`void zedit_disp_arg` + n + `\([^;{}]*\)\s*\{`).FindStringIndex(source)
 		if definition == nil {
 			return fmt.Errorf("missing argument display definition")
@@ -135,8 +135,8 @@ func proveCZeditArgumentBranch(t *testing.T, branch string) {
 	// Change only the target arm, leaving its incoming call graph intact.
 	// This distinguishes branch coverage from the separate caller guards.
 	start := strings.Index(source, "case ZEDIT_ARG"+strings.TrimPrefix(branch, "parse")+":")
-	if strings.HasPrefix(branch, "display") {
-		match := regexp.MustCompile(`void zedit_disp_arg` + strings.TrimPrefix(branch, "display") + `\([^;{}]*\)\s*\{`).FindStringIndex(source)
+	if after, ok0 := strings.CutPrefix(branch, "display"); ok0 {
+		match := regexp.MustCompile(`void zedit_disp_arg` + after + `\([^;{}]*\)\s*\{`).FindStringIndex(source)
 		if match == nil {
 			t.Fatal("missing display definition")
 		}
