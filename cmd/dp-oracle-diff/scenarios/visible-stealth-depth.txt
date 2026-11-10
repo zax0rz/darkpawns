@@ -1,0 +1,74 @@
+# depth-case: visible.sneak-cleanup
+# C do_visible (src/act.other.c:581-588): a sneaking actor that becomes visible
+# is told "You stop sneaking." and loses AFF_SNEAK. do_stealth grants the
+# affect first.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Sneakgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sneakgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Sneakpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Sneakpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sneakpeer 8162
+set player Sneakpeer dex 18
+skillset Sneakpeer 'stealth' 100
+
+[probe:peer]
+stealth
+visible
