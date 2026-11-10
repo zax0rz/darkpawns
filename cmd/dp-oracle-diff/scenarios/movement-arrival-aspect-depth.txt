@@ -1,0 +1,150 @@
+# depth-case: movement.arrive-fly-from-above
+# depth-case: movement.arrive-fly-from-below
+# depth-case: movement.arrive-ride-from-above
+# depth-case: movement.arrive-ride-from-below
+# C do_simple_move describes how a mover enters a room by the direction it came
+# from and the mover's state (src/act.movement.c:225-261): a flying mover
+# "flies in from above/below", a mounted one "rides in from above/below on $N".
+# A vertical exit pair and a room observer witness each arm.
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 down 8106 0
+replace-room-exits 8106 up 8105 0
+set-room-flag 8105 4 off
+set-room-flag 8106 4 off
+spawn-mob 8021 1 8105 80
+
+[setup:oracle]
+Arrivalcast
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Arrivalcast
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mover]
+Flymover
+Y
+moverpass
+moverpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mover]
+Flymover
+y
+moverpass
+moverpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:ridepeer]
+Ridemover
+Y
+ridepass
+ridepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:ridepeer]
+Ridemover
+y
+ridepass
+ridepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watch]
+Watchpeer
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Watchpeer
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Flymover 8105
+teleport Ridemover 8105
+teleport Watchpeer 8106
+skillset Arrivalcast 'fly' 100
+set Arrivalcast maxmana 5000
+set Arrivalcast mana 5000
+set Arrivalcast level 31
+cast 'fly' Flymover
+send:ridepeer ride horse
+
+[probe]
+send:mover down
+teleport Watchpeer 8105
+send:mover up
+teleport Watchpeer 8106
+send:ridepeer down
+teleport Watchpeer 8105
+send:ridepeer up

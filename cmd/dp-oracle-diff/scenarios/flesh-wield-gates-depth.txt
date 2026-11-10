@@ -76,7 +76,7 @@ teleport Fleshpeer 8105
 skillset Fleshpeer 'flesh alter' 100
 load obj 8020
 give dagger Fleshpeer
-wield dagger
+send:fleshpeer wield dagger
 
 [probe:fleshpeer]
 alter

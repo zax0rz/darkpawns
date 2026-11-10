@@ -1,0 +1,41 @@
+# depth-case: door.bad-direction
+# find_door with a non-empty direction that is not a compass word prints
+# "That's not a direction." (src/act.movement.c:376-379). do_gen_door passes the
+# second token as the direction once generic_find misses the keyword.
+
+[fixture]
+quiet-mobs
+replace-room-exits 8162 north 8161 1 gate
+
+[setup:oracle]
+Doorgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Doorgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8162
+open foo sideways
+close foo sideways
