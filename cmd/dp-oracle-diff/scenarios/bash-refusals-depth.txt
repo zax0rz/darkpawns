@@ -1,0 +1,78 @@
+# depth-case: bash.target-position-gate
+# depth-case: bash.move-gate
+# C do_bash (src/act.offensive.c:455-470): a victim below POS_FIGHTING yields
+# "You can't bash someone who's sitting already!", and an actor without the 10
+# needed moves yields "You haven't the energy!".
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+
+[setup:oracle]
+Bashpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bashpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Bashvictim
+Y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Bashvictim
+y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Bashvictim 8162
+skillset Bashpeer 'bash' 100
+send:victim sit
+
+[probe]
+bash Bashvictim
+send:victim stand
+set player Bashpeer move 0
+bash Bashvictim
