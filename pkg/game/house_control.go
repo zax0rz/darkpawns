@@ -356,15 +356,11 @@ func (w *World) Hcontrol(ch *Player, argument string) {
 	}
 }
 
-// cAtoi mirrors C's atoi for the house-control command. It returns zero when
-// no leading integer is present and otherwise stops at the first non-digit,
-// which is the branch-driving behavior used by house.c.
+// cAtoi mirrors C's atoi for the house-control command: zero when no leading
+// integer is present, otherwise the glibc value (clamp to LONG_MIN/LONG_MAX on
+// overflow, then truncate to int) — shared with atoiC.
 func cAtoi(value string) int {
-	var number int
-	if _, err := fmt.Sscanf(value, "%d", &number); err != nil {
-		return 0
-	}
-	return number
+	return atoiC(value)
 }
 
 // ---------------------------------------------------------------------------

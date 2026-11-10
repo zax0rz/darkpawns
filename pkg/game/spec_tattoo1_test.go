@@ -210,3 +210,22 @@ func TestTattoo1OfferDataIsStable(t *testing.T) {
 		t.Fatalf("offer names = %q", got)
 	}
 }
+
+// A huge buy token overflows atoi to a negative value. C (spec_procs2.c:989,
+// :1044) only rejects choice >= num_tats, so it indexes tats[choice] out of
+// bounds there — undefined behaviour the port must not reproduce as a crash
+// (R1a). parseTattooChoice must treat choice < 0 as "Buy by number!". Revert
+// proof: without the negative guard, tattoo1Offers[choice] panics.
+func TestSpecTattoo1NegativeChoiceDoesNotPanic(t *testing.T) {
+	w, actor, tattooist, messages := newTattoo1TestWorld(t, false)
+
+	for _, arg := range []string{"3000000000", "2147483648", "99999999999999999999"} {
+		clearTattoo1Messages(messages)
+		if !specTattoo1(w, actor, tattooist, "buy", arg) {
+			t.Fatalf("buy %q should be consumed", arg)
+		}
+		if got, want := messages[actor.Name], "Buy by number!\r\n"; got != want {
+			t.Fatalf("buy %q output = %q, want %q", arg, got, want)
+		}
+	}
+}

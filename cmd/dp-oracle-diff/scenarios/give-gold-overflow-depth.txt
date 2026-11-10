@@ -1,0 +1,73 @@
+# depth-case: give.gold-overflow-wrap
+# C do_give reads a coin amount with atoi (src/act.item.c do_give ->
+# perform_give_gold). glibc atoi is (int)strtol, so "3000000000" wraps to
+# -1294967296, which is <= 0, and perform_give_gold prints
+# "Heh heh heh ... we are jolly funny today, eh?".
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Givegold
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Givegold
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Givevictim
+Y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Givevictim
+y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Givevictim 8162
+
+[probe]
+give 3000000000 coins Givevictim
+give 50 coins Givevictim
