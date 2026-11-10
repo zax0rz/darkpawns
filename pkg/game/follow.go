@@ -98,9 +98,11 @@ func followMobBody(w *World, mob *MobInstance, leader combat.Combatant) {
 	}
 	master := w.combatFollowingBody(mob)
 	if master == leader {
+		Act(w, false, mob, asActor(leader), nil, nil, "You are already following $M.", "", ToChar)
 		return
 	}
 	if mob.IsAffected(affCharm) && master != nil {
+		Act(w, false, mob, asActor(master), nil, nil, "But you only feel like following $N!", "", ToChar)
 		return
 	}
 	if leader == mob {

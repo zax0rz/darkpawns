@@ -1,0 +1,106 @@
+# depth-case: switched.body-command-matrix
+# C's command_interpreter runs the resolved command as d->character, which for
+# a switched descriptor is the mobile (src/interpreter.c:1367-1481). The mobile
+# has the descriptor, so every send_to_char/act directed at it reaches the
+# player. This matrix runs each actor-lane command once with a valid argument
+# and once with an invalid one; C's transcript shows the miss messages the
+# descriptor-less actor lanes drop.
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 8021 1 8105 80
+spawn-obj 8037 1 8105 80
+
+[setup:oracle]
+Wizswitcher
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizswitcher
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Victimpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Victimpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Victimpeer 8105
+switch horse
+
+[probe]
+say hello
+say
+tell Victimpeer hi
+tell Nobody hi
+emote waves
+emote
+shout hello
+shout
+gossip hello
+gossip
+auction hello
+auction
+wake Victimpeer
+wake Nobody
+follow Victimpeer
+follow Nobody
+group Victimpeer
+group Nobody
+report
+give sword Victimpeer
+give sword Nobody
+stand
+sit
+rest
+sleep
+wake
+stand
+ride horse
+ride Nobody
+dismount

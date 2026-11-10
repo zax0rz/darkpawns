@@ -1,0 +1,80 @@
+# depth-case: follow.switched-npc-charm-master-guard
+# C-first vehicle for do_follow's charm/master guard while switched into a
+# charmed mobile (src/act.movement.c:883-911). command_interpreter runs the
+# command as d->character, which for a switched descriptor is the mobile: the
+# charm guard prints "But you only feel like following $N!" and movement away
+# from the master prints "The thought of leaving your master makes you weep.".
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 off
+set-room-flag 8162 17 on
+replace-room-exits 8162 north 8161 1 gate
+spawn-mob 8021 2 8162 80
+set-mob-aff 8021 2097152
+
+[setup:oracle]
+Charmgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Charmgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Charmhelper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Charmhelper
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8162
+teleport Charmhelper 8162
+send:observer recall
+switch horse
+follow Charmhelper
+follow Charmgod
+north
+return

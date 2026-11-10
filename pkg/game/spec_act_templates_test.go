@@ -104,7 +104,7 @@ func TestMpSoundRendersSayLineThroughAct(t *testing.T) {
 func TestMpSoundRendersEmoteLineThroughAct(t *testing.T) {
 	w := newActTemplateWorld(1001)
 	observer := addCapturedPlayer(t, w, "Pracobserver", 1001)
-	carpenter := NewMob(&parser.Mob{VNum: 8067, Keywords: "carpenter", ShortDesc: "a carpenter"}, 1001)
+	carpenter := NewMob(&parser.Mob{VNum: 8067, Keywords: "carpenter", ShortDesc: "a carpenter", Int: 11, Wis: 11}, 1001)
 	forceMobProgDraw(t, 0) // case 8067 arm 1
 
 	w.MpSound(carpenter)

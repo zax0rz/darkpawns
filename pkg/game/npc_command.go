@@ -252,36 +252,48 @@ func (w *World) npcStand(me *MobInstance) {
 // "$n says, '...'" (or exclaims/asks/states by the line's last character).
 func (w *World) npcSay(me *MobInstance, argument string) {
 	// C do_say refuses before any output when the speaker is too stupid to use
-	// language (src/act.comm.c:766-771). The refusal is TO_CHAR only, so for a
-	// descriptor-less mobile it is a silent no-op: the mobile does not speak.
-	// Mind bar (APPLY_INT -18, src/magic.c:1369-1371) drives ordinary mobs to 0
-	// here, and affect_total clamps the result at 0 (src/handler.c:354).
+	// language (src/act.comm.c:766-771). The refusal is TO_CHAR: a
+	// descriptor-less mobile drops it, but a switched body has a descriptor and
+	// must see it, so it is delivered through Act rather than returned silently.
 	if me.GetWis() == 0 || me.GetInt() == 0 {
+		Act(w, false, me, nil, nil, nil, "You are too stupid to communicate with language!", "", ToChar)
 		return
 	}
 	text := strings.TrimLeft(argument, " ")
 	if text == "" {
-		return // "Yes, but WHAT do you want to say?" to a descriptor-less mobile
+		Act(w, false, me, nil, nil, nil, "Yes, but WHAT do you want to say?", "", ToChar)
+		return
 	}
 	verb := "says"
+	youVerb := "say"
 	switch argument[len(argument)-1] {
 	case '!':
-		verb = "exclaims"
+		verb, youVerb = "exclaims", "exclaim"
 	case '?':
-		verb = "asks"
+		verb, youVerb = "asks", "ask"
 	case '.':
-		verb = "states"
+		verb, youVerb = "states", "state"
 	}
 	w.channelAct("say", false, me, nil, deleteANSIControls(fmt.Sprintf("$n %s, '%s'", verb, text)), ToRoom)
+	// C's actor echo is TO_CHAR (src/act.comm.c:816-833); PRF_NOREPEAT prints
+	// "Ok." instead, and a mobile has no such flag.
+	Act(w, false, me, nil, nil, nil, deleteANSIControls(fmt.Sprintf("You %s '%s'", youVerb, text)), "", ToChar)
 }
 
 // npcEmote is do_echo with SCMD_EMOTE (act.wizard.c:130-155) for a mobile.
 func (w *World) npcEmote(me *MobInstance, argument string) {
 	text := strings.TrimLeft(argument, " ")
 	if text == "" {
+		Act(w, false, me, nil, nil, nil, "Yes.. but what?", "", ToChar)
+		return
+	}
+	if me.GetInt() == 0 {
+		Act(w, false, me, nil, nil, nil, "You try to express yourself but cannot!", "", ToChar)
 		return
 	}
 	Act(w, false, me, nil, nil, nil, "$n "+text, "", ToRoom)
+	// C reuses the same buffer for the TO_CHAR echo (act.wizard.c:151-153).
+	Act(w, false, me, nil, nil, nil, "$n "+text, "", ToChar)
 }
 
 // npcTell is do_tell (act.comm.c) for a mobile: half_chop, get_char_vis,
@@ -290,23 +302,30 @@ func (w *World) npcEmote(me *MobInstance, argument string) {
 func (w *World) npcTell(me *MobInstance, argument string) {
 	targetName, message := splitMobileTellArgument(argument)
 	if targetName == "" || message == "" {
+		Act(w, false, me, nil, nil, nil, "Who do you wish to tell what??", "", ToChar)
 		return
 	}
 	target := w.npcVisiblePlayer(me, targetName)
 	if target == nil {
-		return // NOPERSON; a mobile target has no descriptor either
+		// C NOPERSON (src/act.comm.c:910); a mobile target has no descriptor.
+		Act(w, false, me, nil, nil, nil, "No-one by that name here.", "", ToChar)
+		return
 	}
 	if w.communicationRoomSoundproof(me.GetRoom()) {
+		Act(w, false, me, nil, nil, nil, "The walls seem to absorb your words.", "", ToChar)
 		return
 	}
 	if target.IsLinkless() {
+		Act(w, false, me, target, nil, nil, "$E's linkless at the moment.", "", ToChar|ToSleep)
 		return
 	}
 	if target.GetFlags()&(1<<uint(PlrWriting)) != 0 {
+		Act(w, false, me, target, nil, nil, "$E's writing a message right now; try again later.", "", ToChar|ToSleep)
 		return
 	}
 	if (target.GetFlags()&(1<<uint(PrfNotell)) != 0 || w.communicationRoomSoundproof(target.GetRoom())) &&
 		me.GetLevel() < lvlImmort {
+		Act(w, false, me, target, nil, nil, "$E can't hear you.", "", ToChar|ToSleep)
 		return
 	}
 	// The player path's own perform_tell carries the color sandwich, the AFK
@@ -352,25 +371,46 @@ func (w *World) npcVisiblePlayer(me *MobInstance, name string) *Player {
 // ported for mobiles.
 func (w *World) npcGive(me *MobInstance, argument string) {
 	objName, rest := oneArgument(argument)
-	if objName == "" || CIsNumber(objName) || strings.HasPrefix(strings.ToLower(objName), "all") {
-		if objName != "" {
-			slog.Warn("NPC give form not ported for mobiles; ignored", "mob_vnum", me.GetVNum(), "argument", argument)
-		}
+	if objName == "" {
+		Act(w, false, me, nil, nil, nil, "Give what to who?", "", ToChar)
+		return
+	}
+	if CIsNumber(objName) || strings.HasPrefix(strings.ToLower(objName), "all") {
+		slog.Warn("NPC give form not ported for mobiles; ignored", "mob_vnum", me.GetVNum(), "argument", argument)
 		return
 	}
 	victName, _ := oneArgument(rest)
 	if victName == "" {
+		Act(w, false, me, nil, nil, nil, "To who?", "", ToChar)
 		return
 	}
 	vict := mobRescueVictim(w, me, victName)
-	if vict == nil || vict == combat.Combatant(me) {
+	if vict == nil {
+		Act(w, false, me, nil, nil, nil, "No-one by that name here.", "", ToChar)
+		return
+	}
+	if vict == combat.Combatant(me) {
+		Act(w, false, me, nil, nil, nil, "What's the point of that?", "", ToChar)
 		return
 	}
 	obj := w.npcCarriedVis(me, objName)
 	if obj == nil {
+		Act(w, false, me, nil, nil, nil, fmt.Sprintf("You don't seem to have %s %s.", articleAN(objName), objName), "", ToChar)
 		return
 	}
 	w.npcPerformGive(me, vict, obj)
+}
+
+// articleAN mirrors C's AN() (utils.h) for the noun in a give refusal.
+func articleAN(word string) string {
+	if word == "" {
+		return "a"
+	}
+	switch unicode.ToLower(rune(word[0])) {
+	case 'a', 'e', 'i', 'o', 'u':
+		return "an"
+	}
+	return "a"
 }
 
 // npcCarriedVis is get_obj_in_list_vis(me, arg, me->carrying).

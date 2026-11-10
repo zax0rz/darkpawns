@@ -102,6 +102,9 @@ func CharacterFollow(ctx CharacterCommandContext) CharacterCommandResult {
 	}
 	target, found := ctx.World.resolveCharInRoomAt(mob, mob.GetRoomVNum(), arg)
 	if !found {
+		// C do_follow prints NOPERSON to the actor (src/act.movement.c:893-897);
+		// a descriptor-less mobile drops it, a switched body sees it.
+		Act(ctx.World, false, mob, nil, nil, nil, "No-one by that name here.", "", ToChar)
 		return CharacterCommandHandled
 	}
 	if target.Combatant == nil {

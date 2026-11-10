@@ -832,3 +832,34 @@ func TestDoEnterAndLeave(t *testing.T) {
 		}
 	})
 }
+
+// A switched mobile runs the command as itself, so followMobBody's charm guard
+// must print C's message through the mobile's descriptor (act TO_CHAR,
+// src/act.movement.c:904-911) instead of returning silently.
+func TestFollowMobBodyCharmedGuardEmitsMasterMessage(t *testing.T) {
+	w, _ := newMovementTestWorld(t)
+	master := addMovementPlayer(t, w, "Charmmaster", 1001)
+	other := addMovementPlayer(t, w, "Otherleader", 1001)
+	horse := NewMob(&parser.Mob{VNum: 9001, Keywords: "horse", ShortDesc: "a horse"}, 1001)
+	horse.SetFollowingBody(master)
+	horse.SetAffected(affCharm)
+
+	var sink strings.Builder
+	w.MobileMessageSink = func(body *MobInstance, message []byte) {
+		if body == horse {
+			sink.Write(message)
+		}
+	}
+	w.MobileDescriptorOwner = func(body *MobInstance) *Player {
+		if body == horse {
+			return master
+		}
+		return nil
+	}
+
+	followMobBody(w, horse, other)
+
+	if got := sink.String(); !strings.Contains(got, "But you only feel like following Charmmaster!") {
+		t.Fatalf("switched charmed mob output = %q, want the charm master guard", got)
+	}
+}
