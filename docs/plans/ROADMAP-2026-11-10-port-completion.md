@@ -37,7 +37,7 @@ exactly what was checked and what wasn't.
 | # | Number | Reading | Measured on |
 |---|---|---|---|
 | 1 | **Bytes**: FAIL rows in a full combined census | 0. 6,411 runs over 16 seeds, CLEAN_AFTER_RECHECK | `2026-11-08/release-v0.1.9` |
-| 2 | **Behavior**: runs where the two engines drew different random numbers | 0 of 1,873 full and 6,018 claimed runs. The release census itself wrote no draw log | `2026-11-07/claude-rehearsal-1107` |
+| 2 | **Behavior**: runs where the two engines drew different random numbers | 0 of 1,997 full and 6,335 claimed runs over 16 seeds, with the draw log present. The `v0.1.9` release census wrote no draw log because it ran without `--draw-parity` | `2026-11-10/go127-batch5-reds-combined` (Go 1.27, `3d14ccab6`) |
 | 3 | **Reach**: C output sites that C actually printed during a census | 2,963 of 5,454 sites (54.3%); 3,601 of 4,902 segments (73.5%). Up from 50.3% and 68.3% on 11-06. About 25 burn-down batches have merged since and aren't counted | `make census-coverage` on the release dump, run today |
 | 4 | **Sensitivity**: random one-letter output breaks the census catches | 23/40 (game, combat, command), 24/40 (session), 20/40 (spells). 13 of the 16 catchable misses were repaired afterward; no fresh sample since | PF-102, PF-117, PF-118 |
 
@@ -96,8 +96,8 @@ most of it is already in motion.
 Build the C→Go function index, remove or merge duplicate ports, delete
 invented and dead code (L5). Add the ratchet: CI fails when two Go functions
 cite the same C function. This comes after Phase 1's fixes land so the
-inventory runs once, on settled code. The Go 1.27 pass is nearly through
-(batch 6 merged).
+inventory runs once, on settled code. The Go 1.27 pass is done
+(#2452 and #2453 merged; CI now enforces the modernizers).
 
 ### Phase 3: the final measurement (pre-registered)
 
@@ -109,7 +109,7 @@ Written down before it runs, so the result can't be argued with afterward:
    only measures the repairs.
 3. Run random play through both engines (the play lab) and record new
    divergences per hour.
-4. Run `--combined --release` with draw parity on the exact commit to be
+4. Run `--combined --release --draw-parity` (the flag is not on by default) on the exact commit to be
    tagged, and confirm `draw-results.tsv` exists before anyone reads the
    verdict.
 
@@ -125,10 +125,10 @@ bug against a finished port, which is a normal thing for software to have.
 
 | Stream | What | Good fit | Smallest census that can fail |
 |---|---|---|---|
-| **A. Witness the uncovered sites** (L1) | Finish DP-1502's queue. Then classify what is still uncovered as C-unreachable, not player-facing, unit-proof only, or reachable-but-unwitnessed. Rerun coverage after each full census | DeepSeek in one-function slices (already running, batches 44 and 45 open) | the new scenario, plus a one-letter break that turns it red |
-| **B. Fix the known divergences** (L2) | Work by class, not by ticket (R5c): `act()` lines with embedded line breaks (DP-1509, DP-1519), hand-built `act()` lines (DP-1494), target lookups that bypass C's resolver (DP-1457, DP-1518), invented behavior (DP-1485, DP-1492), then the single items | GLM and Kimi for one-ticket fixes; Luna for a whole class | targeted scenarios for the class |
+| **A. Witness the uncovered sites** (L1) | Finish DP-1502's queue. Then classify what is still uncovered as C-unreachable, not player-facing, unit-proof only, or reachable-but-unwitnessed. Rerun coverage after each full census | DeepSeek in one-function slices (already running; batches through 43 merged) | the new scenario, plus a one-letter break that turns it red |
+| **B. Fix the known divergences** (L2) | Work by class, not by ticket (R5c): `act()` lines with embedded line breaks (DP-1509, DP-1519), hand-built `act()` lines (DP-1494), target lookups that bypass C's resolver (DP-1457, DP-1518), invented behavior (DP-1485, DP-1492), then the single items | DeepSeek or Sol for one-ticket fixes; Luna for a whole class | targeted scenarios for the class |
 | **C. Unblock the blocked units** (L3) | The lifecycle surfaces first: they are where returning players found most bugs. Shop branches that depend on C undefined behavior need a ruling from Zach (R1a), not a test | Luna (long runs); stop-tier items go to Zach | per unit |
-| **D. Repair the harness** (L4) | Object-index fixtures (DP-1517), the one-player Go store (DP-1477), lost output on long clock pulses (DP-1439, DP-1515), mid-fight draw order with spec procs (DP-1507), the wall-clock read (DP-1496), trailing space and line endings hidden by the normalizer (DP-1471), the missing draw log on release runs | Sol (stop tier, so Zach merges) | a control that must go red, per fix |
+| **D. Repair the harness** (L4) | Object-index fixtures (DP-1517), the one-player Go store (DP-1477), lost output on long clock pulses (DP-1439, DP-1515), mid-fight draw order with spec procs (DP-1507), the wall-clock read (DP-1496), trailing space and line endings hidden by the normalizer (DP-1471) | Sol (stop tier, so Zach merges) | a control that must go red, per fix |
 
 Order within Phase 1: **D first where it gates the others** (a blind harness
 makes every later green weaker), A and B in parallel, C as agents free up.
