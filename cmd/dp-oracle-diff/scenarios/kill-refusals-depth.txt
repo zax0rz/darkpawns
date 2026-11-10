@@ -1,0 +1,41 @@
+# depth-case: kill.no-arg
+# depth-case: kill.self
+# C do_kill's immortal arm (src/act.offensive.c:145-154): an empty argument
+# prints "Kill who?" and a self target prints "Your mother would be so sad.. :(".
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Killgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Killgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8162
+kill
+kill Killgod
