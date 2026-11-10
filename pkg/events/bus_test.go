@@ -56,9 +56,9 @@ func TestConcurrentPublishUnsubscribe(t *testing.T) {
 	bus := NewInProcessBus()
 	ctx := context.Background()
 
-	var count int64
+	var count atomic.Int64
 	handler := func(_ context.Context, event BusEvent) error {
-		atomic.AddInt64(&count, 1)
+		count.Add(1)
 		return nil
 	}
 
