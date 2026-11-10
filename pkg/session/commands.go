@@ -690,16 +690,26 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 						s.prependAliasedInputs(expanded[i:])
 						return nil
 					}
-					if i > 0 {
-						// C's game loop emits the command-cycle separation
-						// between entries pulled from the alias queue. Prompt
-						// normalization removes the prompt itself but retains
-						// these two blank lines.
-						s.Send("\r\n\r\n")
-					}
 					nextCmd, nextArgs := splitCommandInput(command)
+					// C's perform_complex_alias pushes the expansion onto the
+					// descriptor input queue, so a later command is consumed by
+					// an editor an earlier one opened (comm.c:614-627). An
+					// editor-consumed line still gets C's per-line prompt flush.
+					if s.routeDescriptorLine(nextCmd, nextArgs, "") {
+						if i < len(expanded)-1 {
+							s.SendPrompt()
+						}
+						continue
+					}
 					if err := executeCommandRaw(s, nextCmd, nextArgs, false, ""); err != nil {
 						return err
+					}
+					// C processes the queued entries one per game-loop pass and
+					// flushes the descriptor's prompt after each (comm.c:626-642).
+					// Emit that prompt here; the transport prompt that follows the
+					// whole command covers the last entry.
+					if i < len(expanded)-1 {
+						s.SendPrompt()
 					}
 				}
 				return nil
