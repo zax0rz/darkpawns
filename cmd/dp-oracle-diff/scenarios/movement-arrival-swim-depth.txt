@@ -1,0 +1,109 @@
+# depth-case: movement.arrive-swim-from-above
+# depth-case: movement.arrive-swim-from-below
+# C do_simple_move uses the destination room's sector to describe the entry
+# (src/act.movement.c:232,236-237): a non-flying, non-mounted mover entering an
+# underwater room "swims in from the %s / from above / from below".
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 8
+set-room-sector 8106 8
+replace-room-exits 8105 down 8106 0
+replace-room-exits 8106 up 8105 0
+set-room-flag 8105 4 off
+set-room-flag 8106 4 off
+
+[setup:oracle]
+Swimgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Swimgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mover]
+Swimmover
+Y
+moverpass
+moverpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mover]
+Swimmover
+y
+moverpass
+moverpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watch]
+Swimwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Swimwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Swimmover 8105
+teleport Swimwatch 8106
+
+[probe]
+send:mover down
+teleport Swimwatch 8105
+send:mover up
