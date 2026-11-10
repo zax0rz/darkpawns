@@ -15,8 +15,8 @@ get_from_room	get	get.room-not-found	D2	command	oracle-green	get-room	act.item.c
 get_from_room	get	get.room-success	D3	command	oracle-green	get-room	act.item.c:273-285	Actor "You get $p." and origin peer "$n gets $p.".
 get_from_room	get	get.room-all-empty	D2	command	oracle-green	get-room	act.item.c:325-326	"get all" in an empty room yields "There doesn't seem to be anything here.".
 get_from_room	get	get.room-alldot-none	D2	command	oracle-green	get-room	act.item.c:327-329	"get all.X" with no match yields "You don't see any Xss here.".
-can_take_obj	get	get.gate-count	D2	command	unit-green	TestCanTakeObjGateMessages	act.item.c:160-164	Carry-count limit yields "$p: you can't carry that many items.".
-can_take_obj	get	get.gate-weight	D2	command	unit-green	TestCanTakeObjGateMessages	act.item.c:165-169	Carry-weight limit yields "$p: you can't carry that much weight.".
+can_take_obj	get	get.gate-count	D2	command	oracle-green	carry-take-gates-depth@1;TestCanTakeObjGateMessages	act.item.c:160-164	Carry-count limit yields "$p: you can't carry that many items.".
+can_take_obj	get	get.gate-weight	D2	command	oracle-green	carry-take-gates-depth@1;TestCanTakeObjGateMessages	act.item.c:165-169	Carry-weight limit yields "$p: you can't carry that much weight.".
 can_take_obj	get	get.gate-take-flag	D2	command	unit-green	TestCanTakeObjGateMessages	act.item.c:170-174	Missing ITEM_WEAR_TAKE yields "$p: you can't take that!".
 get_from_container	get	get.container-closed	D2	command	oracle-green	get-container	act.item.c:225-226	CONT_CLOSED yields "$p is closed.".
 get_from_container	get	get.container-not-found	D2	command	oracle-green	get-container	act.item.c:231-234	Indiv miss yields "There doesn't seem to be a/an X in $p.".
@@ -24,7 +24,7 @@ get_from_container	get	get.container-success	D3	command	oracle-green	get-contain
 get_from_container	get	get.container-all-empty	D2	command	oracle-green	get-container	act.item.c:258-259	"get all" from empty container yields "$p seems to be empty.".
 get_from_container	get	get.container-alldot-none	D2	command	oracle-green	get-container	act.item.c:260-263	"get all.X" with no match yields "You can't seem to find any Xss in $p.".
 perform_get_from_container	get	get.inv-container-bypass	D5	state	unit-green	TestGetFromInvContainerBypassesCanTake	act.item.c:200	mode==FIND_OBJ_INV skips can_take_obj: own-container get ignores TAKE/weight/count.
-perform_get_from_container	get	get.inv-container-arms-full	D2	command	unit-green	TestGetFromInvContainerArmsFull	act.item.c:202-203	Distinct wording "$p: you can't hold any more items." on the inv path.
+perform_get_from_container	get	get.inv-container-arms-full	D2	command	oracle-green	carry-take-gates-depth@1;TestGetFromInvContainerArmsFull	act.item.c:202-203	Distinct wording "$p: you can't hold any more items." on the inv path.
 get_check_money	get	get.money-multi	D4	state	unit-green	TestGetCheckMoneyMultiAndSingle	act.item.c:184-189	>1 coins prints "There were N coins." plus gold delta; object vanishes.
 get_check_money	get	get.money-single	D4	state	unit-green	TestGetCheckMoneyMultiAndSingle	act.item.c:180-192	Exactly 1 coin is silent; gold+1; object vanishes.
 perform_get_from_room	get	get.onget-script	D5	hook	unit-green	TestGetFiresOnGetRoomScript	act.item.c:211,283	C fires the room onget trigger (RS_ONGET, 1<<4) after a successful room/container get. Go fired none; now wired in fireOnGet.

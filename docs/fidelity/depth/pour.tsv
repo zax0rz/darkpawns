@@ -12,3 +12,4 @@ do_pour	pour	pour.fill-from-not-fountain	D2	command	oracle-green	pour-basic	act.
 do_pour	pour	pour.pour-in-success	D3	command	oracle-green	pour-multi	act.item.c:1290-1296	"You pour the <liquid> into the <cont>." Needs a second drinkcon fixture to oracle; multi-container staging follow-up.
 do_pour	pour	pour.fill-success	D3	command	oracle-green	pour-multi	act.item.c:1300-1302	"You gently fill $p from $P." Needs a fountain fixture to oracle; follow-up.
 find_all_dots	pour	pour.liquid-conflict	D2	command	oracle-green	pour-multi	act.item.c:1283-1286	"There is already another liquid in it!" / "There is no room for more." Needs two-drinkcon staging; follow-up.
+do_pour	pour	pour.puddle-unreachable	D5	command	excluded	-	act.item.c:1250-1252	"Error, please tell a god." fires only when read_object(20, VIRTUAL) returns NULL. Object 20 (the pour puddle) is defined (lib/world/obj/0.obj), so read_object cannot fail and this arm is unreachable from a player pour.
