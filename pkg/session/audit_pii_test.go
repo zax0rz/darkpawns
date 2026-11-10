@@ -24,7 +24,7 @@ func readAuditFile(t *testing.T, path string) (string, []auditRecord) {
 		t.Fatalf("read audit log: %v", err)
 	}
 	var records []auditRecord
-	for _, line := range strings.Split(strings.TrimSpace(string(data)), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSpace(string(data)), "\n") {
 		if line == "" {
 			continue
 		}

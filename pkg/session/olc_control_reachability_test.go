@@ -156,7 +156,7 @@ func TestCReditDefaultUnreachable(t *testing.T) { proveCEditorModeClosure(t, "RE
 // cleanup. It deliberately rejects changed source shapes instead of treating
 // arbitrary injected descriptor states as reachable C gameplay.
 func auditCDescriptionRoute(editor, comm, modify, mode, menu string) error {
-	prefix := strings.Split(mode, "_")[0]
+	prefix, _, _ := strings.Cut(mode, "_")
 	lower := strings.ToLower(prefix)
 	assignment := "OLC_MODE(d) = " + mode + ";"
 	if strings.Count(editor, assignment) != 1 {

@@ -107,7 +107,7 @@ func TestWatchResizeNavigationAndUnknownData(t *testing.T) {
 		model, _ = m.Update(watchLoaded(cliSnapshot{status: portable.RuntimeStatus{State: "running", Instance: "/a/long/path"}, version: "v0.1.7", uptime: "2h", onlineKnown: true, online: []onlinePlayer{{"One", 1, 100}, {"Two", 2, 200}, {"Three", 3, 300}}, logs: strings.Repeat("log line\n", 40), errors: []string{"ERROR: a long failure message"}}))
 		m = model.(watchModel)
 		view := m.View()
-		for _, line := range strings.Split(view, "\n") {
+		for line := range strings.SplitSeq(view, "\n") {
 			if ansi.StringWidth(line) > width {
 				t.Fatalf("width %d overflows: %q\nVIEW: %q", width, line, view)
 			}

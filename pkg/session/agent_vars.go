@@ -250,7 +250,7 @@ func (s *Session) buildVarValue(varName string) any {
 // space-separated keyword string (skips "a", "an", "the").
 func firstMeaningfulKeyword(keywords string) string {
 	skip := map[string]bool{"a": true, "an": true, "the": true}
-	for _, p := range strings.Fields(keywords) {
+	for p := range strings.FieldsSeq(keywords) {
 		low := strings.ToLower(p)
 		if !skip[low] {
 			return low

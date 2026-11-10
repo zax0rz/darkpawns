@@ -591,7 +591,7 @@ func walkToTempleSquare(t *testing.T, conn net.Conn, r *bufio.Reader) {
 // presence line. Mobs render before players in the room block, so the first
 // matching line is an NPC rather than the test character.
 func firstMobKeyword(look string) string {
-	for _, line := range strings.Split(look, "\n") {
+	for line := range strings.SplitSeq(look, "\n") {
 		line = strings.TrimRight(strings.TrimSpace(line), "\r")
 		idx := -1
 		// Stock zone-80 presence phrases; the keyword is the last word

@@ -789,9 +789,9 @@ func oneWordArg(input string) (string, string) {
 		var word, rest string
 		if input[0] == '"' {
 			quoted := input[1:]
-			if close := strings.IndexByte(quoted, '"'); close >= 0 {
-				word = quoted[:close]
-				rest = quoted[close+1:]
+			if before, after, ok := strings.Cut(quoted, "\""); ok {
+				word = before
+				rest = after
 			} else {
 				word = quoted
 				rest = ""

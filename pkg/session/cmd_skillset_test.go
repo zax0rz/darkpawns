@@ -110,7 +110,7 @@ func TestCmdSkillset_NoArg_SyntaxAndSkillList(t *testing.T) {
 	}
 	// The first line holds indices 1,2,3 (holy ward / shift reality / bless),
 	// each %18s right-justified, then \r\n.
-	firstLine := strings.Split(list, "\r\n")[0]
+	firstLine, _, _ := strings.Cut(list, "\r\n")
 	if !strings.Contains(firstLine, "holy ward") || !strings.Contains(firstLine, "bless") {
 		t.Errorf("first list line should contain holy ward and bless, got %q", firstLine)
 	}

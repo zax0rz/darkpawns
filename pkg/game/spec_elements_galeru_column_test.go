@@ -165,7 +165,7 @@ func assertPeerArrivalLine(t *testing.T, literal, messages string) {
 	if got := strings.Count(literal, " "); got != 1 {
 		t.Errorf("look's bare writes = %q, want exactly one space (do_description's trailing space)", literal)
 	}
-	for _, line := range strings.Split(messages, "\n") {
+	for line := range strings.SplitSeq(messages, "\n") {
 		if !strings.Contains(line, "materialises from nowhere") {
 			continue
 		}

@@ -136,7 +136,7 @@ var setupRefusalLines = []setupRefusal{
 // matchingSetupRefusal reports the first refusal line that appears as a whole
 // normalized line in output, with its src/ citation.
 func matchingSetupRefusal(output string) (line string, cite string) {
-	for _, norm := range strings.Split(Normalize(output), "\n") {
+	for norm := range strings.SplitSeq(Normalize(output), "\n") {
 		norm = strings.TrimSpace(norm)
 		for _, r := range setupRefusalLines {
 			if norm == r.line {

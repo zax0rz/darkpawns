@@ -96,7 +96,7 @@ func suppressedFiles(t *testing.T) []string {
 		// Match only real directives — a line whose trimmed form begins with
 		// the marker — so string literals and prose mentions (e.g. in this
 		// test file) don't self-count.
-		for _, line := range strings.Split(string(b), "\n") {
+		for line := range strings.SplitSeq(string(b), "\n") {
 			if strings.HasPrefix(strings.TrimSpace(line), suppressionMarker) {
 				rel, _ := filepath.Rel(root, path)
 				hits = append(hits, rel)

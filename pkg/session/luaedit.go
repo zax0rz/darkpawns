@@ -161,7 +161,7 @@ func pathWithinLuaRoot(root, target string) bool {
 }
 
 func hasParentComponent(path string) bool {
-	for _, component := range strings.Split(filepath.ToSlash(path), "/") {
+	for component := range strings.SplitSeq(filepath.ToSlash(path), "/") {
 		if component == ".." {
 			return true
 		}

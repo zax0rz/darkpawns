@@ -464,7 +464,8 @@ func readDelete(recipient int) string {
 	fmt.Fprintf(&sb, "  To: %s\r\n", toName)
 	fmt.Fprintf(&sb, "From: %s\r\n\r\n", fromName)
 	sb.WriteString(fixedMailText(header.Text[:]))
-	message := sb.String()
+	var message strings.Builder
+	message.WriteString(sb.String())
 
 	followingBlock := header.NextBlock
 
@@ -480,7 +481,7 @@ func readDelete(recipient int) string {
 		readFromFile(dataBytes, MailBlockSize, followingBlock)
 		unmarshalMailData(&data, dataBytes)
 
-		message += fixedMailText(data.Text[:])
+		message.WriteString(fixedMailText(data.Text[:]))
 		mailAddress = followingBlock
 		followingBlock = data.BlockType
 
@@ -490,7 +491,7 @@ func readDelete(recipient int) string {
 		pushFreeList(mailAddress)
 	}
 
-	return message
+	return message.String()
 }
 
 // fixedMailText applies the C string contract to one fixed-size mail text

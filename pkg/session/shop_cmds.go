@@ -141,7 +141,7 @@ func shopListKeywordMatches(keyword, keywords string) bool {
 	// src/handler.c:isname() accepts a complete name token only. It does
 	// not accept an abbreviation that ends in the middle of an alphabetic
 	// token: "pepper" matches "pepper", while "pep" does not.
-	for _, name := range strings.Fields(strings.ToLower(keywords)) {
+	for name := range strings.FieldsSeq(strings.ToLower(keywords)) {
 		if name == keyword {
 			return true
 		}
@@ -192,8 +192,8 @@ func findShopPurchaseObject(name string, inventory []*game.ObjectInstance, viewe
 	// get_purchase_obj calls one_argument before selecting either # or slide
 	// syntax, so a trailing word after a hash selector is ignored by C.
 	name = strings.Fields(name)[0]
-	if strings.HasPrefix(name, "#") {
-		index, valid := game.ShopNumber(strings.TrimPrefix(name, "#"))
+	if after, ok := strings.CutPrefix(name, "#"); ok {
+		index, valid := game.ShopNumber(after)
 		if !valid || index < 1 {
 			return nil
 		}

@@ -798,11 +798,11 @@ func replaceEditorString(input, pattern, replacement string, all bool, maxBytes 
 		return input, 0
 	}
 	if !all {
-		idx := strings.Index(input, pattern)
-		if idx < 0 {
+		before, after, ok := strings.Cut(input, pattern)
+		if !ok {
 			return input, 0
 		}
-		return input[:idx] + replacement + input[idx+len(pattern):], 1
+		return before + replacement + after, 1
 	}
 	count := strings.Count(input, pattern)
 	if count == 0 {
