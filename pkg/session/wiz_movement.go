@@ -323,17 +323,30 @@ func cmdTeleport(s *Session, args []string) error {
 			return err
 		}
 	} else {
-		if err := s.manager.world.PlayerTransfer(target.Combatant.(*game.Player), dest); err != nil {
+		// C do_teleport moves the victim with a bare char_from_room/char_to_room
+		// pair (src/act.wizard.c:384-385), so a ridden mount is left behind —
+		// unlike do_trans, which moves it explicitly.
+		if err := s.manager.world.PlayerTransferNoMount(target.Combatant.(*game.Player), dest); err != nil {
 			return err
 		}
 	}
 	slog.Warn("wizard teleport", "by", s.player.Name, "target", target.Combatant.GetName(), "room", dest)
 	game.Act(s.manager.world, false, target.Combatant, nil, nil, nil,
 		"$n arrives from a puff of smoke.", "", game.ToRoom)
-	game.Act(s.manager.world, false, s.player, target.Combatant, nil, nil,
-		"$n has teleported you!", "", game.ToVict)
+	// C's do_switch attaches the descriptor to the switched body and clears the
+	// original's desc (src/act.wizard.c:414-421). A victim who is switched out
+	// therefore receives neither the TO_VICT notice nor look_at_room(victim)
+	// (src/act.wizard.c:383-388, src/act.informative.c:1103-1104); only the
+	// original body's departure — and any audience in the arrival room — is
+	// visible (DP-1516 item 8).
+	var targetSession *Session
 	if !target.Combatant.IsNPC() {
-		if targetSession := findSessionForPlayer(s.manager, target.Combatant.(*game.Player)); targetSession != nil {
+		targetSession = findSessionForPlayer(s.manager, target.Combatant.(*game.Player))
+	}
+	if targetSession == nil || !targetSession.isSwitched {
+		game.Act(s.manager.world, false, s.player, target.Combatant, nil, nil,
+			"$n has teleported you!", "", game.ToVict)
+		if targetSession != nil {
 			// C do_teleport calls look_at_room(victim, 0), bypassing do_look position gates.
 			if err := cmdMovementLook(targetSession); err != nil {
 				slog.Error("wizard teleport look failed", "target", target.Combatant.GetName(), "error", err)
