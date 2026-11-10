@@ -1229,26 +1229,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/settings/grapevine": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update the Grapevine intermud relay (implementor)
-         * @description Every field needs a restart; the relay connects at boot. The client secret is write-only.
-         */
-        put: operations["put-settings-grapevine"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/admin/settings/restore/apply": {
         parameters: {
             query?: never;
@@ -1515,6 +1495,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/connection-info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Active game listeners
+         * @description Public listener addresses for this server's connection page. Disabled or failed listeners are omitted.
+         */
+        get: operations["get-connections"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -1652,7 +1652,6 @@ export interface components {
             format: number;
             /** Format: date-time */
             generated_at: string;
-            grapevine: components["schemas"]["Grapevine"];
             /** Format: int64 */
             revision: number;
             server_version: string;
@@ -1690,6 +1689,16 @@ export interface components {
             pushover: components["schemas"]["Destination"];
             /** Format: int64 */
             revision: number;
+        };
+        ConnectionInfo: {
+            telnet?: components["schemas"]["ConnectionListener"];
+            telnet_tls?: components["schemas"]["ConnectionListener"];
+            whod?: components["schemas"]["ConnectionListener"];
+        };
+        ConnectionListener: {
+            bind: string;
+            /** Format: int64 */
+            port: number;
         };
         Contact: {
             /** @description SMTP host (restart required) */
@@ -2042,43 +2051,6 @@ export interface components {
         FindingIDInputBody: {
             linear_issue_id?: string;
             status?: string;
-        };
-        Grapevine: {
-            /** @description Relay client id (restart required) */
-            client_id: string;
-            /**
-             * @description Grapevine intermud mode (restart required)
-             * @enum {string}
-             */
-            mode: "off" | "presence" | "full";
-            /** @description Relay endpoint (restart required) */
-            url: string;
-        };
-        GrapevineInputBody: {
-            /** @description Relay client id (restart required) */
-            client_id: string;
-            client_secret?: string;
-            /**
-             * @description Grapevine intermud mode (restart required)
-             * @enum {string}
-             */
-            mode: "off" | "presence" | "full";
-            /** Format: int64 */
-            revision: number;
-            /** @description Relay endpoint (restart required) */
-            url: string;
-        };
-        GrapevineView: {
-            /** @description Relay client id (restart required) */
-            client_id: string;
-            client_secret_set: boolean;
-            /**
-             * @description Grapevine intermud mode (restart required)
-             * @enum {string}
-             */
-            mode: "off" | "presence" | "full";
-            /** @description Relay endpoint (restart required) */
-            url: string;
         };
         GroupMeta: {
             env_overridden?: string[] | null;
@@ -2832,7 +2804,6 @@ export interface components {
             contact: components["schemas"]["ContactView"];
             /** Format: int64 */
             format: number;
-            grapevine: components["schemas"]["GrapevineView"];
             meta: {
                 [key: string]: components["schemas"]["GroupMeta"];
             };
@@ -5559,39 +5530,6 @@ export interface operations {
             };
         };
     };
-    "put-settings-grapevine": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["GrapevineInputBody"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SettingsSaveResponse"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ErrorModel"];
-                };
-            };
-        };
-    };
     "post-settings-restore-apply": {
         parameters: {
             query?: never;
@@ -6038,6 +5976,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatusOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionInfo"];
                 };
             };
             /** @description Error */

@@ -294,7 +294,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	for _, path := range []string{
 		"/admin/settings", "/admin/settings/export", "/admin/settings/audit",
 		"/admin/network", "/admin/network/apply", "/admin/network/status",
-		"/admin/settings/sessions", "/admin/settings/access", "/admin/settings/grapevine",
+		"/admin/settings/sessions", "/admin/settings/access",
 		"/admin/settings/staff_push", "/admin/settings/contact",
 		"/admin/settings/restore/validate", "/admin/settings/restore/apply",
 		"/admin/restart",

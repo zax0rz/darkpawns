@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/grapevine"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 	"github.com/zax0rz/darkpawns/pkg/session"
 )
@@ -1011,7 +1010,7 @@ func (tc *telnetConn) sendMSSP() {
 	// PLAYERS counts playing characters, not raw sessions: SessionCount
 	// is len(manager.sessions), which includes pre-auth connections (a
 	// crawler would count its own login screen). The count uses the
-	// same mortal-visibility rule as the Grapevine heartbeat
+	// same mortal-visibility rule as the who listing
 	// (World.VisiblePlayersForMortal), so a wizinvis immortal is not
 	// revealed to crawlers either.
 	playerCount := tc.manager.SessionCount()
@@ -1043,11 +1042,6 @@ func (tc *telnetConn) sendMSSP() {
 	writeField("GENRE", "Fantasy")
 	writeField("GAMEPLAY", "Hack and Slash")
 	writeField("STATUS", "Live")
-	// INTERMUD is advertised only when the Grapevine integration can
-	// actually come up (credentials present and mode not off).
-	if grapevine.ModeFromEnv() != grapevine.ModeOff {
-		writeField("INTERMUD", "Grapevine")
-	}
 	// World-shape counts are computed from the loaded world, never
 	// hard-coded: zones/rooms/prototypes from the parser output held by
 	// game.World, help entries from World.HelpTable.

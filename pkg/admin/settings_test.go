@@ -78,7 +78,7 @@ func TestSettingsAPIGateAndRead(t *testing.T) {
 	if err := json.Unmarshal(out.Body.Bytes(), &view); err != nil {
 		t.Fatal(err)
 	}
-	if view.Revision < 1 || len(view.Meta) != 5 {
+	if view.Revision < 1 || len(view.Meta) != 4 {
 		t.Fatalf("view incomplete: %+v", view)
 	}
 }
@@ -120,15 +120,16 @@ func TestSettingsSaveConflictAndLiveApply(t *testing.T) {
 func TestSettingsSecretsAreWriteOnly(t *testing.T) {
 	handler, _, path := newSettingsTestRouter(t)
 	admin := generateTestToken(t, "admin")
-	secret := "grapevine-super-secret"
+	secret := "ntfy-super-secret"
 	body := map[string]any{
-		"revision":      1,
-		"mode":          "presence",
-		"url":           "wss://grapevine.haus/socket",
-		"client_id":     "my-client",
-		"client_secret": secret,
+		"revision":        1,
+		"url":             "",
+		"min_level":       31,
+		"min_type":        1,
+		"rate_per_minute": 30,
+		"token":           secret,
 	}
-	out := settingsRequest(handler, "PUT", "/admin/settings/grapevine", body, admin, true)
+	out := settingsRequest(handler, "PUT", "/admin/settings/staff_push", body, admin, true)
 	if out.Code != 200 {
 		t.Fatalf("save: %d %s", out.Code, out.Body.String())
 	}
@@ -144,7 +145,7 @@ func TestSettingsSecretsAreWriteOnly(t *testing.T) {
 	}
 	// Presence, not value, in every read.
 	out = settingsRequest(handler, "GET", "/admin/settings", nil, admin, true)
-	if out.Code != 200 || !strings.Contains(out.Body.String(), `"client_secret_set":true`) || strings.Contains(out.Body.String(), secret) {
+	if out.Code != 200 || !strings.Contains(out.Body.String(), `"token_set":true`) || strings.Contains(out.Body.String(), secret) {
 		t.Fatalf("read leaks or misses presence: %d %s", out.Code, out.Body.String())
 	}
 	// Exports never contain secret material even indirectly.

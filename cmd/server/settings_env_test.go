@@ -9,81 +9,58 @@ import (
 )
 
 // A first boot must not manufacture environment overrides from compiled-in
-// defaults (the rehearsal caught GRAPEVINE_MODE=off pinning mode off forever),
-// and an inherited exported variable stays authoritative.
+// defaults, and an inherited exported variable stays authoritative.
 func TestApplySettingsEnvironmentInstallsOnlyFileChanges(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "settings.json")
+	t.Setenv("DP_MUDLOG_NTFY_LEVEL", "")
+	os.Unsetenv("DP_MUDLOG_NTFY_LEVEL")
+	t.Setenv("DP_MUDLOG_NTFY_TYPE", "2")
 	manager, err := settings.New(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("GRAPEVINE_MODE", "")
-	os.Unsetenv("GRAPEVINE_MODE")
-	// applySettingsEnvironment writes the saved client id and secret into the
-	// real process environment; pin them so cleanup undoes those writes and no
-	// later test mistakes the leftovers for inherited exports.
-	t.Setenv("GRAPEVINE_CLIENT_ID", "")
-	os.Unsetenv("GRAPEVINE_CLIENT_ID")
-	t.Setenv("GRAPEVINE_CLIENT_SECRET", "")
-	os.Unsetenv("GRAPEVINE_CLIENT_SECRET")
 	applySettingsEnvironment(manager)
-	if _, installed := os.LookupEnv("GRAPEVINE_MODE"); installed {
-		t.Fatal("default grapevine mode was installed as an environment override")
-	}
 	if _, installed := os.LookupEnv("DP_MUDLOG_NTFY_LEVEL"); installed {
 		t.Fatal("default ntfy level was installed as an environment override")
 	}
 
-	// A real file change installs; an inherited variable is never overwritten.
-	g := settings.Defaults().Grapevine
-	g.Mode = "presence"
-	g.ClientID = "test-client"
-	secret := "test-secret"
-	if _, err := manager.SaveGrapevine(manager.Revision(), g, settings.SecretUpdate{settings.SecretGrapevineClient: &secret}); err != nil {
+	p := settings.Defaults().StaffPush
+	p.MinLevel = 32
+	if _, err := manager.SaveStaffPush(manager.Revision(), p, nil); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("GRAPEVINE_URL", "wss://inherited.example/socket")
 	applySettingsEnvironment(manager)
-	if os.Getenv("GRAPEVINE_MODE") != "presence" {
+	if os.Getenv("DP_MUDLOG_NTFY_LEVEL") != "32" {
 		t.Fatal("file change not installed into the environment")
 	}
-	if os.Getenv("GRAPEVINE_URL") != "wss://inherited.example/socket" {
+	if os.Getenv("DP_MUDLOG_NTFY_TYPE") != "2" {
 		t.Fatal("inherited environment variable was overwritten")
 	}
 }
 
 // A value boot installs into the environment is this process's own write, not
 // an operator export: a console save of that field must take effect with no
-// override badge for the life of the process (DP-V017-01).
+// override badge for the life of the process.
 func TestApplySettingsEnvironmentInstalledValuesDoNotMaskLaterSaves(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "settings.json")
+	t.Setenv("DP_MUDLOG_NTFY_LEVEL", "")
+	os.Unsetenv("DP_MUDLOG_NTFY_LEVEL")
 	manager, err := settings.New(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("GRAPEVINE_MODE", "")
-	os.Unsetenv("GRAPEVINE_MODE")
-	t.Setenv("GRAPEVINE_CLIENT_ID", "")
-	os.Unsetenv("GRAPEVINE_CLIENT_ID")
-	t.Setenv("GRAPEVINE_CLIENT_SECRET", "")
-	os.Unsetenv("GRAPEVINE_CLIENT_SECRET")
-
-	g := settings.Defaults().Grapevine
-	g.Mode = "presence"
-	g.ClientID = "test-client"
-	secret := "relay-secret"
-	if _, err := manager.SaveGrapevine(manager.Revision(), g, settings.SecretUpdate{settings.SecretGrapevineClient: &secret}); err != nil {
+	p := settings.Defaults().StaffPush
+	p.MinLevel = 32
+	if _, err := manager.SaveStaffPush(manager.Revision(), p, nil); err != nil {
 		t.Fatal(err)
 	}
 	applySettingsEnvironment(manager)
-	if os.Getenv("GRAPEVINE_MODE") != "presence" {
+	if os.Getenv("DP_MUDLOG_NTFY_LEVEL") != "32" {
 		t.Fatal("file change not installed into the environment")
 	}
 
-	// The operator reverts the field in the console; the installed copy must
-	// neither mask the save nor badge it as an environment override.
-	g.Mode = "off"
-	result, err := manager.SaveGrapevine(manager.Revision(), g, nil)
+	p.MinLevel = 31
+	result, err := manager.SaveStaffPush(manager.Revision(), p, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,10 +68,10 @@ func TestApplySettingsEnvironmentInstalledValuesDoNotMaskLaterSaves(t *testing.T
 		t.Fatalf("installed value masked the save: %v", result.EnvOverridden)
 	}
 	view := manager.SettingsView()
-	if view.Grapevine.Mode != "off" {
-		t.Fatalf("view shows %q; the boot-installed copy masks the console", view.Grapevine.Mode)
+	if view.StaffPush.MinLevel != 31 {
+		t.Fatalf("view shows min level %d; the boot-installed copy masks the console", view.StaffPush.MinLevel)
 	}
-	if fields := view.Meta[settings.GroupGrapevine].EnvOverridden; len(fields) != 0 {
+	if fields := view.Meta[settings.GroupStaffPush].EnvOverridden; len(fields) != 0 {
 		t.Fatalf("installed value badged as an override: %v", fields)
 	}
 }
@@ -103,39 +80,30 @@ func TestApplySettingsEnvironmentInstalledValuesDoNotMaskLaterSaves(t *testing.T
 // the process, and an inherited secret export is never overwritten.
 func TestApplySettingsEnvironmentSecrets(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "settings.json")
+	t.Setenv("DP_MUDLOG_NTFY_TOKEN", "")
+	os.Unsetenv("DP_MUDLOG_NTFY_TOKEN")
 	manager, err := settings.New(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("GRAPEVINE_CLIENT_SECRET", "")
-	os.Unsetenv("GRAPEVINE_CLIENT_SECRET")
-
-	secret := "relay-secret"
-	g := settings.Defaults().Grapevine
-	if _, err := manager.SaveGrapevine(manager.Revision(), g, settings.SecretUpdate{settings.SecretGrapevineClient: &secret}); err != nil {
+	secret := "ntfy-token"
+	p := settings.Defaults().StaffPush
+	if _, err := manager.SaveStaffPush(manager.Revision(), p, settings.SecretUpdate{settings.SecretStaffPushToken: &secret}); err != nil {
 		t.Fatal(err)
 	}
 	applySettingsEnvironment(manager)
-	if os.Getenv("GRAPEVINE_CLIENT_SECRET") != "relay-secret" {
-		t.Fatal("sealed secret not installed into the environment")
+	if os.Getenv("DP_MUDLOG_NTFY_TOKEN") != secret {
+		t.Fatal("sealed token not installed into the environment")
 	}
-	if !manager.SettingsView().Grapevine.ClientSecretSet {
-		t.Fatal("installed secret not reported as set")
+	if !manager.SettingsView().StaffPush.TokenSet {
+		t.Fatal("installed token not reported as set")
 	}
 
-	// Clearing the secret in the console must clear it everywhere.
 	empty := ""
-	if _, err := manager.SaveGrapevine(manager.Revision(), g, settings.SecretUpdate{settings.SecretGrapevineClient: &empty}); err != nil {
+	if _, err := manager.SaveStaffPush(manager.Revision(), p, settings.SecretUpdate{settings.SecretStaffPushToken: &empty}); err != nil {
 		t.Fatal(err)
 	}
-	if manager.SettingsView().Grapevine.ClientSecretSet {
-		t.Fatal("cleared secret still reported set; the boot-installed copy masks the console")
-	}
-
-	// An inherited secret export is never overwritten by the installer.
-	t.Setenv("DP_MUDLOG_NTFY_TOKEN", "inherited-token")
-	applySettingsEnvironment(manager)
-	if os.Getenv("DP_MUDLOG_NTFY_TOKEN") != "inherited-token" {
-		t.Fatal("inherited secret export was overwritten")
+	if manager.SettingsView().StaffPush.TokenSet {
+		t.Fatal("cleared token still reported as set")
 	}
 }

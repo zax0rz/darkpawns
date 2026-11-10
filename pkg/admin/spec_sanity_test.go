@@ -52,7 +52,6 @@ func TestGeneratedOpenAPISpec(t *testing.T) {
 		"/admin/settings/audit":                       {"get"},
 		"/admin/settings/contact":                     {"put"},
 		"/admin/settings/export":                      {"get"},
-		"/admin/settings/grapevine":                   {"put"},
 		"/admin/settings/restore/apply":               {"post"},
 		"/admin/settings/restore/validate":            {"post"},
 		"/admin/settings/sessions":                    {"put"},

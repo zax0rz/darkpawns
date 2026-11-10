@@ -61,16 +61,7 @@ func New(path string) (*Manager, error) {
 	data, err := os.ReadFile(m.path) // #nosec G104 -- handled below
 	switch {
 	case err == nil:
-		var stored Config
-		var decodeErr error
-		dec := json.NewDecoder(strings.NewReader(string(data)))
-		dec.DisallowUnknownFields()
-		if decodeErr = dec.Decode(&stored); decodeErr == nil {
-			decodeErr = dec.Decode(&struct{}{})
-			if decodeErr == io.EOF {
-				decodeErr = nil
-			}
-		}
+		stored, decodeErr := decodeStoredConfig(data)
 		if decodeErr == nil && stored.Format != Format {
 			decodeErr = fmt.Errorf("format %d, this server reads %d", stored.Format, Format)
 		}
@@ -115,6 +106,40 @@ func New(path string) (*Manager, error) {
 	m.applyEnvironmentOverrides()
 	m.publishLive()
 	return m, nil
+}
+
+const legacyGrapevineSecret = "grapevine_client_secret"
+
+// decodeStoredConfig keeps the settings reader strict while ignoring the
+// retired relay group and its sealed secret from older settings files.
+func decodeStoredConfig(data []byte) (Config, error) {
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(data, &fields); err != nil {
+		return Config{}, err
+	}
+	for key := range fields {
+		if strings.EqualFold(key, "grapevine") {
+			delete(fields, key)
+		}
+	}
+	cleaned, err := json.Marshal(fields)
+	if err != nil {
+		return Config{}, err
+	}
+	var stored Config
+	dec := json.NewDecoder(strings.NewReader(string(cleaned)))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&stored); err != nil {
+		return Config{}, err
+	}
+	if err := dec.Decode(&struct{}{}); err != io.EOF {
+		if err == nil {
+			return Config{}, errors.New("multiple JSON values")
+		}
+		return Config{}, err
+	}
+	delete(stored.Secrets, legacyGrapevineSecret)
+	return stored, nil
 }
 
 // Degraded reports why saves are refused (corrupt or unreadable file), or
@@ -232,8 +257,6 @@ func envSecretNames(name string) []string {
 	// These name environment variables that HOLD secrets at boot; the
 	// strings are identifiers, not credential material.
 	switch name {
-	case SecretGrapevineClient:
-		return []string{"GRAPEVINE_CLIENT_SECRET"} // #nosec G101 -- identifier, not a credential
 	case SecretStaffPushToken:
 		return []string{"DP_MUDLOG_NTFY_TOKEN"} // #nosec G101 -- identifier, not a credential
 	case SecretContactSMTP:
@@ -257,16 +280,9 @@ type SettingsView struct {
 	Revision  int64                `json:"revision"`
 	Sessions  Sessions             `json:"sessions"`
 	Access    Access               `json:"access"`
-	Grapevine GrapevineView        `json:"grapevine"`
 	StaffPush StaffPushView        `json:"staff_push"`
 	Contact   ContactView          `json:"contact"`
 	Meta      map[string]GroupMeta `json:"meta"`
-}
-
-// GrapevineView is the grapevine card plus secret presence.
-type GrapevineView struct {
-	Grapevine
-	ClientSecretSet bool `json:"client_secret_set"`
 }
 
 // StaffPushView is the staff push card plus secret presence.
@@ -298,7 +314,6 @@ func (m *Manager) SettingsView() SettingsView {
 		Revision:  m.cfg.Revision,
 		Sessions:  m.effective.Sessions,
 		Access:    m.effective.Access,
-		Grapevine: GrapevineView{Grapevine: m.effective.Grapevine, ClientSecretSet: m.secretSetLocked(SecretGrapevineClient)},
 		StaffPush: StaffPushView{StaffPush: m.effective.StaffPush, TokenSet: m.secretSetLocked(SecretStaffPushToken)},
 		Contact: ContactView{
 			Contact:            m.effective.Contact,
@@ -309,7 +324,7 @@ func (m *Manager) SettingsView() SettingsView {
 	}
 	view.Contact.Effective = view.Contact.SMTPPasswordSet && view.Contact.TurnstileSecretSet &&
 		contactComplete(view.Contact.Contact)
-	for _, group := range []string{GroupSessions, GroupAccess, GroupGrapevine, GroupStaffPush, GroupContact} {
+	for _, group := range []string{GroupSessions, GroupAccess, GroupStaffPush, GroupContact} {
 		meta := GroupMeta{RestartFields: restartFields[group]}
 		for _, path := range m.envOverridden {
 			// Every group carries its overrides, live fields included, so the
@@ -359,7 +374,6 @@ type SaveResult struct {
 type SecretUpdate map[string]*string
 
 var validSecrets = map[string]bool{
-	SecretGrapevineClient:  true,
 	SecretStaffPushToken:   true,
 	SecretContactSMTP:      true,
 	SecretContactTurnstile: true,
@@ -390,8 +404,6 @@ func (m *Manager) secretChanges(group string, changed *[]string, input SecretUpd
 
 func secretFieldName(name string) string {
 	switch name {
-	case SecretGrapevineClient:
-		return "client_secret"
 	case SecretStaffPushToken:
 		return "token"
 	case SecretContactSMTP:
@@ -459,7 +471,6 @@ func (m *Manager) commit(revision int64, changed []string, warnIncomplete bool, 
 // rejection: drafts are legal, the handler stays off.
 func (m *Manager) validateLocked(cfg Config) error {
 	err := Validate(cfg, map[string]bool{
-		SecretGrapevineClient:  m.secretIn(cfg, SecretGrapevineClient),
 		SecretStaffPushToken:   m.secretIn(cfg, SecretStaffPushToken),
 		SecretContactSMTP:      m.secretIn(cfg, SecretContactSMTP),
 		SecretContactTurnstile: m.secretIn(cfg, SecretContactTurnstile),
@@ -501,20 +512,6 @@ func (m *Manager) SaveAccess(revision int64, a Access) (SaveResult, error) {
 	})
 }
 
-// SaveGrapevine updates the relay card; secrets is write-only input.
-func (m *Manager) SaveGrapevine(revision int64, g Grapevine, secrets SecretUpdate) (SaveResult, error) {
-	changed := diffStruct(GroupGrapevine, m.current(GroupGrapevine), g)
-	result, err := m.commit(revision, changed, false, func(cfg *Config) error {
-		cfg.Grapevine = g
-		return m.secretChanges(GroupGrapevine, &changed, secrets, cfg.Secrets)
-	})
-	if err == nil {
-		// secretChanges appended to changed inside the mutation; recompute.
-		result.RestartRequired = restartFor(changed)
-	}
-	return result, err
-}
-
 // SaveStaffPush updates the ntfy push card.
 func (m *Manager) SaveStaffPush(revision int64, p StaffPush, secrets SecretUpdate) (SaveResult, error) {
 	changed := diffStruct(GroupStaffPush, m.current(GroupStaffPush), p)
@@ -551,8 +548,6 @@ func (m *Manager) current(group string) any {
 		return m.effective.Sessions
 	case GroupAccess:
 		return m.effective.Access
-	case GroupGrapevine:
-		return m.effective.Grapevine
 	case GroupStaffPush:
 		return m.effective.StaffPush
 	case GroupContact:
@@ -591,7 +586,6 @@ type Bundle struct {
 	Revision      int64     `json:"revision"`
 	Sessions      Sessions  `json:"sessions"`
 	Access        Access    `json:"access"`
-	Grapevine     Grapevine `json:"grapevine"`
 	StaffPush     StaffPush `json:"staff_push"`
 	Contact       Contact   `json:"contact"`
 }
@@ -607,7 +601,6 @@ func (m *Manager) Export(serverVersion string, now time.Time) Bundle {
 		Revision:      m.cfg.Revision,
 		Sessions:      m.effective.Sessions,
 		Access:        m.effective.Access,
-		Grapevine:     m.effective.Grapevine,
 		StaffPush:     m.effective.StaffPush,
 		Contact:       m.effective.Contact,
 	}
@@ -641,7 +634,7 @@ func (m *Manager) RestoreValidate(raw []byte) (RestorePreview, error) {
 	}
 	known := map[string]bool{
 		"format": true, "generated_at": true, "server_version": true, "revision": true,
-		"sessions": true, "access": true, "grapevine": true, "staff_push": true, "contact": true,
+		"sessions": true, "access": true, "staff_push": true, "contact": true,
 	}
 	for key := range document {
 		if !known[key] {
@@ -660,7 +653,6 @@ func (m *Manager) RestoreValidate(raw []byte) (RestorePreview, error) {
 	candidate := cloneConfig(m.cfg)
 	candidate.Sessions = bundle.Sessions
 	candidate.Access = bundle.Access
-	candidate.Grapevine = bundle.Grapevine
 	candidate.StaffPush = bundle.StaffPush
 	candidate.Contact = bundle.Contact
 	if err := m.validateLocked(candidate); err != nil {
@@ -676,7 +668,6 @@ func (m *Manager) RestoreValidate(raw []byte) (RestorePreview, error) {
 	}{
 		{GroupSessions, m.effective.Sessions, bundle.Sessions},
 		{GroupAccess, m.effective.Access, bundle.Access},
-		{GroupGrapevine, m.effective.Grapevine, bundle.Grapevine},
 		{GroupStaffPush, m.effective.StaffPush, bundle.StaffPush},
 		{GroupContact, m.effective.Contact, bundle.Contact},
 	} {
@@ -688,7 +679,7 @@ func (m *Manager) RestoreValidate(raw []byte) (RestorePreview, error) {
 			preview.RestartRequired = append(preview.RestartRequired, restartFor([]string{path})...)
 		}
 	}
-	for _, name := range []string{SecretGrapevineClient, SecretStaffPushToken, SecretContactSMTP, SecretContactTurnstile} {
+	for _, name := range []string{SecretStaffPushToken, SecretContactSMTP, SecretContactTurnstile} {
 		if m.secretIn(m.cfg, name) {
 			preview.SecretsUntouched = append(preview.SecretsUntouched, name)
 		}
@@ -723,12 +714,10 @@ func (m *Manager) RestoreApply(revision int64, raw []byte) (SaveResult, error) {
 	result, err := m.commit(revision, changed, true, func(cfg *Config) error {
 		changed = append(changed, diffStruct(GroupSessions, m.effective.Sessions, bundle.Sessions)...)
 		changed = append(changed, diffStruct(GroupAccess, m.effective.Access, bundle.Access)...)
-		changed = append(changed, diffStruct(GroupGrapevine, m.effective.Grapevine, bundle.Grapevine)...)
 		changed = append(changed, diffStruct(GroupStaffPush, m.effective.StaffPush, bundle.StaffPush)...)
 		changed = append(changed, diffStruct(GroupContact, m.effective.Contact, bundle.Contact)...)
 		cfg.Sessions = bundle.Sessions
 		cfg.Access = bundle.Access
-		cfg.Grapevine = bundle.Grapevine
 		cfg.StaffPush = bundle.StaffPush
 		cfg.Contact = bundle.Contact
 		return nil
@@ -894,9 +883,6 @@ func (m *Manager) applyEnvironmentOverridesLocked() {
 			overridden = append(overridden, field)
 		}
 	}
-	applyString("grapevine.mode", "GRAPEVINE_MODE", &effective.Grapevine.Mode)
-	applyString("grapevine.url", "GRAPEVINE_URL", &effective.Grapevine.URL)
-	applyString("grapevine.client_id", "GRAPEVINE_CLIENT_ID", &effective.Grapevine.ClientID)
 	applyString("staff_push.url", "DP_MUDLOG_NTFY_URL", &effective.StaffPush.URL)
 	applyInt("staff_push.min_level", "DP_MUDLOG_NTFY_LEVEL", 0, 60, &effective.StaffPush.MinLevel)
 	applyInt("staff_push.min_type", "DP_MUDLOG_NTFY_TYPE", 0, 63, &effective.StaffPush.MinType)
@@ -912,7 +898,7 @@ func (m *Manager) applyEnvironmentOverridesLocked() {
 		}
 	}
 	applyList("contact.turnstile_hostnames", "CONTACT_TURNSTILE_HOSTNAMES", &effective.Contact.TurnstileHostnames)
-	for _, name := range []string{SecretGrapevineClient, SecretStaffPushToken, SecretContactSMTP, SecretContactTurnstile} {
+	for _, name := range []string{SecretStaffPushToken, SecretContactSMTP, SecretContactTurnstile} {
 		for _, field := range envSecretNames(name) {
 			if value, set := m.envLookup(field); set && value != "" {
 				overridden = append(overridden, secretGroup(name)+"."+secretFieldName(name))
@@ -925,8 +911,6 @@ func (m *Manager) applyEnvironmentOverridesLocked() {
 
 func secretGroup(name string) string {
 	switch name {
-	case SecretGrapevineClient:
-		return GroupGrapevine
 	case SecretStaffPushToken:
 		return GroupStaffPush
 	default:
@@ -989,9 +973,6 @@ func (m *Manager) migrateFromEnvironment() (Config, []string, error) {
 		cfg.Access.CORSAllowedOrigins = splitList(raw)
 	}
 	setString("ADMIN_CORS_ORIGIN", &cfg.Access.AdminCORSOrigin)
-	setString("GRAPEVINE_MODE", &cfg.Grapevine.Mode)
-	setString("GRAPEVINE_URL", &cfg.Grapevine.URL)
-	setString("GRAPEVINE_CLIENT_ID", &cfg.Grapevine.ClientID)
 	setString("DP_MUDLOG_NTFY_URL", &cfg.StaffPush.URL)
 	setString("CONTACT_TO", &cfg.Contact.To)
 	setString("CONTACT_SMTP_HOST", &cfg.Contact.SMTPHost)
@@ -1006,7 +987,6 @@ func (m *Manager) migrateFromEnvironment() (Config, []string, error) {
 	//
 	//nolint:gosec
 	for name, envName := range map[string]string{
-		SecretGrapevineClient:  "GRAPEVINE_CLIENT_SECRET",
 		SecretStaffPushToken:   "DP_MUDLOG_NTFY_TOKEN",
 		SecretContactSMTP:      "CONTACT_SMTP_PASSWORD",
 		SecretContactTurnstile: "CONTACT_TURNSTILE_SECRET",
@@ -1026,7 +1006,7 @@ func (m *Manager) migrateFromEnvironment() (Config, []string, error) {
 			// group to defaults and note it. The operator still has the env.
 			notes = append(notes, "imported settings invalid ("+err.Error()+"); review in the console")
 			defaults := Defaults()
-			cfg.Sessions, cfg.Access, cfg.Grapevine, cfg.StaffPush, cfg.Contact = defaults.Sessions, defaults.Access, defaults.Grapevine, defaults.StaffPush, defaults.Contact
+			cfg.Sessions, cfg.Access, cfg.StaffPush, cfg.Contact = defaults.Sessions, defaults.Access, defaults.StaffPush, defaults.Contact
 		}
 	}
 	if err := m.persistLocked(cfg); err != nil {
@@ -1050,7 +1030,7 @@ func (m *Manager) loadSealed(sealed map[string]string) error {
 	}
 	for name := range sealed {
 		switch name {
-		case SecretGrapevineClient, SecretStaffPushToken, SecretContactSMTP, SecretContactTurnstile:
+		case SecretStaffPushToken, SecretContactSMTP, SecretContactTurnstile:
 		default:
 			return fmt.Errorf("unknown sealed secret %q", name)
 		}

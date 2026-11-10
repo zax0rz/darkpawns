@@ -73,11 +73,10 @@ func TestGossipObserverOnlyPublicGossipAndIncludesNPC(t *testing.T) {
 	if len(mirrored) != 2 || mirrored[0] != "A town crier gossips, 'public mob line'\r\n" || mirrored[1] != "Someone gossips, 'hidden mob line'\r\n" {
 		t.Fatalf("NPC projection = %q", mirrored)
 	}
-	// Grapevine can reconnect without clearing the independent ops observer.
-	w.SetOnGossip(nil)
+	// Local gossip continues to reach the independent ops observer.
 	w.NPCGossipCommand(mob, "still public")
 	if len(mirrored) != 3 {
-		t.Fatal("Grapevine replaced the observer")
+		t.Fatal("local gossip stopped reaching the observer")
 	}
 }
 

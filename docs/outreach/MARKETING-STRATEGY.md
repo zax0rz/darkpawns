@@ -95,14 +95,11 @@ GitHub (open-source server code)
     ↕
 Website (frictionless web client + live analytics)
     ↕
-Grapevine Network (MSSP tracking + cross-MUD chat)
-    ↕
 Discord (community coordination + GMCP webhooks)
 ```
 
 ### Key Integrations
 
-- **Grapevine Network** (wss://grapevine.haus/socket) — cross-MUD chat, instant community
 - **MSSP** — automatic indexing by MUD directories
 - **GMCP** — structured JSON payloads for visual UI elements alongside text
 - **Discord webhooks** — bridge game world with mobile devices
@@ -141,7 +138,7 @@ Discord (community coordination + GMCP webhooks)
 - **Target:** Software developers, systems engineers
 
 ### Phase 2: Nostalgic Soft Launch (Month 2)
-- Register on Grapevine + MUD directories
+- Submit the game to active MUD directories
 - Launch "Etch Your Name" credentialing campaign
 - Pitch Read Only Memo
 - **Target:** r/MUD, r/retrogaming, specialized outlets

@@ -6,7 +6,6 @@ import { useToast } from '../hooks/useToast';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Icon } from '../components/Icon';
 import { NetworkCard } from '../components/NetworkCard';
@@ -26,7 +25,6 @@ interface SettingsView {
   revision: number;
   sessions: Record<string, number>;
   access: { trusted_proxies?: string[]; cors_allowed_origins?: string[]; admin_cors_origin?: string };
-  grapevine: { mode: string; url: string; client_id: string; client_secret_set: boolean };
   staff_push: { url: string; min_level: number; min_type: number; rate_per_minute: number; token_set: boolean };
   contact: {
     to: string; smtp_host: string; smtp_port: number; smtp_user: string;
@@ -146,7 +144,6 @@ export function SettingsPage() {
       const savers: Record<string, (body: Record<string, unknown>) => Promise<{ result: SaveResult }>> = {
         sessions: settingsApi.saveSessions,
         access: settingsApi.saveAccess,
-        grapevine: settingsApi.saveGrapevine,
         staff_push: settingsApi.saveStaffPush,
         contact: settingsApi.saveContact,
       };
@@ -155,7 +152,7 @@ export function SettingsPage() {
       // View-only decorations (secret presence, contact effectiveness) are
       // not input-schema fields; sending them would make the strict body
       // validation reject the save. Keep exactly the editable fields.
-      const viewOnlyFields = new Set(['client_secret_set', 'token_set', 'smtp_password_set', 'turnstile_secret_set', 'effective']);
+      const viewOnlyFields = new Set(['token_set', 'smtp_password_set', 'turnstile_secret_set', 'effective']);
       for (const group of Object.keys(drafts)) {
         if (!(group in savers)) continue;
         const groupDraft = drafts[group] as Record<string, unknown> | undefined;
@@ -166,7 +163,7 @@ export function SettingsPage() {
           if (!viewOnlyFields.has(key)) base[key] = value;
         }
         const body: Record<string, unknown> = { ...base, ...groupDraft };
-        if (group === 'grapevine' || group === 'staff_push' || group === 'contact') {
+        if (group === 'staff_push' || group === 'contact') {
           for (const [field, value] of Object.entries(secretUpdates.current)) {
             if (field.startsWith(group + '.')) body[field.slice(group.length + 1)] = value;
           }
@@ -236,7 +233,6 @@ export function SettingsPage() {
 
   const sessions = { ...view.sessions, ...((drafts.sessions as object) ?? {}) };
   const access = { ...view.access, ...((drafts.access as object) ?? {}) };
-  const grapevine = { ...view.grapevine, ...((drafts.grapevine as object) ?? {}) };
   const staffPush = { ...view.staff_push, ...((drafts.staff_push as object) ?? {}) };
   const contact = { ...view.contact, ...((drafts.contact as object) ?? {}) };
   const setDraft = (group: string, patch: Record<string, unknown>) =>
@@ -300,25 +296,6 @@ export function SettingsPage() {
           <TextField label="Trusted proxies" mono value={(access.trusted_proxies ?? []).join(', ')} placeholder="127.0.0.0/8, ::1/128" onChange={(v) => setDraft('access', { trusted_proxies: v.split(',').map((s) => s.trim()).filter(Boolean) })} />
           <TextField label="CORS origins" mono value={(access.cors_allowed_origins ?? []).join(', ')} placeholder="empty = built-in defaults" onChange={(v) => setDraft('access', { cors_allowed_origins: v.split(',').map((s) => s.trim()).filter(Boolean) })} />
           <TextField label="Admin SPA origin" mono value={access.admin_cors_origin ?? ''} placeholder="empty = built-in default" onChange={(v) => setDraft('access', { admin_cors_origin: v })} />
-        </GroupCard>
-
-        <GroupCard title="Grapevine intermud" subtitle="Needs a restart; the relay connects at boot." envOverridden={view.meta.grapevine?.env_overridden ?? undefined}>
-          <label className="flex items-center justify-between gap-4 py-1.5">
-            <span className="text-sm text-ink">Mode</span>
-            <Select value={grapevine.mode as string} onValueChange={(v) => setDraft('grapevine', { mode: v })}>
-              <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="off">off</SelectItem>
-                <SelectItem value="presence">presence</SelectItem>
-                <SelectItem value="full">full</SelectItem>
-              </SelectContent>
-            </Select>
-          </label>
-          <TextField label="Relay URL" mono value={grapevine.url as string} onChange={(v) => setDraft('grapevine', { url: v })} />
-          <TextField label="Client ID" mono value={grapevine.client_id as string} onChange={(v) => setDraft('grapevine', { client_id: v })} />
-          <SecretField label="Client secret" set={view.grapevine.client_secret_set}
-            onSet={(v) => { secretUpdates.current['grapevine.client_secret'] = v; }}
-            onClear={() => { secretUpdates.current['grapevine.client_secret'] = ''; }} />
         </GroupCard>
 
         <GroupCard title="Staff-log push (ntfy)" subtitle="Needs a restart; the pusher starts at boot." envOverridden={view.meta.staff_push?.env_overridden ?? undefined}>
