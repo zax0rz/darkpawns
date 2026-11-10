@@ -55,7 +55,7 @@ jobs:
           python-version: '3.11'
       - name: Portable unit and asset-curation checks
         run: |
-          go test ./internal/portable ./internal/releaseauth ./cmd/darkpawns ./cmd/dp-release
+          go test ./internal/buildcompat ./internal/portable ./internal/releaseauth ./cmd/darkpawns ./cmd/dp-release
           python -m unittest discover -s scripts -p test_stage_portable_release.py
           python -m unittest discover -s scripts -p test_install_entry.py
           python -m unittest discover -s scripts -p test_publisher_key_copies.py
