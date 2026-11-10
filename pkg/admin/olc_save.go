@@ -39,8 +39,7 @@ func registerOLCZoneSave(api huma.API, world *game.World, database *db.DB, saver
 			return nil, huma.NewError(http.StatusServiceUnavailable, "OLC save unavailable")
 		}
 		if err := saver.SaveOLCZone(in.Zone); err != nil {
-			var conflict *olc.ZoneSaveConflict
-			if errors.As(err, &conflict) {
+			if conflict, ok := errors.AsType[*olc.ZoneSaveConflict](err); ok {
 				idle := time.Since(conflict.Entry.ClaimedAt)
 				if idle < 0 || conflict.Entry.ClaimedAt.IsZero() {
 					idle = 0

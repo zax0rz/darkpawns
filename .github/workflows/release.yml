@@ -11,6 +11,10 @@ permissions:
 concurrency:
   group: portable-release-publication
   cancel-in-progress: false
+env:
+  # R1: preserve Go 1.26 save/GMCP JSON bytes.
+  GOEXPERIMENT: nojsonv2
+
 jobs:
   validate:
     if: github.ref == 'refs/heads/main'
@@ -70,7 +74,7 @@ jobs:
           fi
       - uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.12.2
+          version: v2.15.0
       - name: Build the admin UI (install scripts disabled)
         run: |
           npm --prefix admin-ui ci --ignore-scripts

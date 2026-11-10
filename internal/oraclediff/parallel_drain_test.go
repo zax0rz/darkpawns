@@ -106,7 +106,7 @@ func TestRunAudienceProbePeerBlockOrderUnchanged(t *testing.T) {
 func TestRunAudienceProbeRetainsBlocksBeforePeerError(t *testing.T) {
 	failure := errors.New("read failed")
 	peers := map[string]Conn{
-		"alpha": &resultConn{slowConn: slowConn{delay: 30 * time.Millisecond}, output: "alpha output"},
+		"alpha": &resultConn{delay: 30 * time.Millisecond, output: "alpha output"},
 		"beta":  &resultConn{output: "beta partial", err: failure},
 		"gamma": &resultConn{err: errors.New("later peer failed")},
 	}

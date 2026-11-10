@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Fail-capable combined gate contracts, with real worker retention smoke test."""
+import json
 import os
 import shutil
 import subprocess
@@ -120,6 +121,7 @@ class CombinedTest(unittest.TestCase):
             stub = repo/'go'; stub.write_text('#!/bin/sh\nexit 0\n'); stub.chmod(0o755)
             worker = repo/'scripts/oracle_regression_worker.sh'
             worker.write_text('''#!/bin/sh
+[ "$GOEXPERIMENT" = nojsonv2 ] || exit 80
 name=${1%.txt}
 printf '%s %s\\n' "$seed" "$name" >> "$CENSUS_CALLS"
 printf 'PASS\\t%s\\t1\\n' "$name" > "$result_dir/$name"
@@ -146,6 +148,8 @@ printf 'PASS %s\\n' "$name"
             self.assertEqual((run/'full-verdict').read_text(), 'CLEAN\n')
             self.assertEqual((run/'claims-verdict').read_text(), 'CLEAN\n')
             self.assertIn('Combined gate', (run/'MANIFEST.md').read_text())
+            self.assertIn('Go build experiments: `nojsonv2`', (run/'MANIFEST.md').read_text())
+            self.assertEqual(json.loads((run/'admission.json').read_text())['goexperiment'], 'nojsonv2')
             bad = subprocess.run([script, 'start', '--combined', '--claims', '--name', 'bad'], env=env, capture_output=True)
             self.assertEqual(bad.returncode, 2)
             # DP-1427 v2: --draw-parity rides the same pool; seed-2 alpha is a

@@ -66,8 +66,7 @@ func handleLogin(database loginPlayerDB, loginAttempts *auth.LoginAttemptTracker
 		// cannot be used for oversized allocation at all.
 		r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			var maxErr *http.MaxBytesError
-			if errors.As(err, &maxErr) {
+			if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 				http.Error(w, `{"error":"request body too large"}`, http.StatusRequestEntityTooLarge)
 				return
 			}

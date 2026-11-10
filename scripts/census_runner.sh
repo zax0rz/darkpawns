@@ -88,6 +88,7 @@ write_manifest() {
 	fi
 	{
 		printf '# Census manifest — written by scripts/census.sh\n\n'
+		printf -- '- Go build experiments: `%s`\n' "${GOEXPERIMENT:-}"
 		if [[ -n "$allow_note" ]]; then
 			printf '**%s**\n\n' "$allow_note"
 		fi

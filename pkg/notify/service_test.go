@@ -113,8 +113,7 @@ func TestRoutingBoundedDeliveryAndRevision(t *testing.T) {
 	}
 	got := make(chan string, 4)
 	s.send = func(_ context.Context, id, message string) error { got <- id + ":" + message; return nil }
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	s.Run(ctx, nil)
 	for range 2 {
 		select {
@@ -190,8 +189,7 @@ func TestProviderFailureRecovery(t *testing.T) {
 	result := errors.New("provider unavailable")
 	done := make(chan struct{}, 2)
 	s.send = func(context.Context, string, string) error { done <- struct{}{}; return result }
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	s.Run(ctx, nil)
 	if err := s.Test(Discord); err != nil {
 		t.Fatal(err)
@@ -233,8 +231,7 @@ func TestHeartbeatTestSendWhileDisabled(t *testing.T) {
 	s := testService(t)
 	delivered := make(chan string, 1)
 	s.send = func(_ context.Context, id, _ string) error { delivered <- id; return nil }
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	s.Run(ctx, nil)
 	if err := s.Test(Heartbeat); err != nil {
 		t.Fatalf("heartbeat test refused: %v", err)
@@ -306,8 +303,7 @@ func TestOlderDeliveryResultDoesNotDescribeNewSettings(t *testing.T) {
 		}
 		return nil
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	s.Run(ctx, nil)
 	if err := s.Test(Discord); err != nil {
 		t.Fatal(err)

@@ -179,8 +179,7 @@ func (c *WSConn) Close() error {
 		_ = c.cmd.Process.Kill()
 	}
 	err := c.cmd.Wait()
-	var exitErr *exec.ExitError
-	if errors.As(err, &exitErr) {
+	if _, ok := errors.AsType[*exec.ExitError](err); ok {
 		return nil // killed or exited non-zero after close; nothing to report
 	}
 	return err
