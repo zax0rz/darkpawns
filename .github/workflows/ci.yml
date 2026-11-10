@@ -29,7 +29,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.27.3'
+        go-version-file: go.mod
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -38,6 +38,14 @@ jobs:
 
     - name: Install Go dependencies
       run: go mod download
+
+    - name: Require JSON v1 byte compatibility
+      run: go test ./internal/buildcompat -run '^TestJSONV1Bytes$' -count=1
+
+    - name: Reviewed Go modernizers
+      run: |
+        python3 -m unittest discover -s scripts -p 'test_modernize.py'
+        make modernize-check
 
     - name: Run Go tests with race detector
       # Nothing to configure. Every package under test opens its own SQLite file
@@ -201,7 +209,7 @@ jobs:
         node-version: '22'
     - uses: actions/setup-go@v5
       with:
-        go-version: '1.27.3'
+        go-version-file: go.mod
 
     - name: Install golangci-lint
       uses: golangci/golangci-lint-action@v9
@@ -243,7 +251,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-go@v5
       with:
-        go-version: '1.27.3'
+        go-version-file: go.mod
 
     # Cache the pinned scanner BINARIES (not the project's module cache, which
     # setup-go already handles). The scanners pull their own transitive deps

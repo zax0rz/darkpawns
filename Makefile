@@ -4,6 +4,14 @@
 # encoding/json differs for invalid UTF-8; see the committed byte goldens.
 export GOEXPERIMENT := nojsonv2
 
+.PHONY: modernize modernize-check
+# One analyzer/exclusion policy for apply and CI; RNG paths stay untouched (R3).
+modernize:
+	python3 scripts/modernize.py
+
+modernize-check:
+	python3 scripts/modernize.py --check
+
 # Regenerate the port reachability report (C command table vs Go registry).
 # Deterministic; output is dated by run date. See docs/port-reachability-map.md
 # for the original manual methodology this mechanizes.
