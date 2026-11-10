@@ -1,0 +1,92 @@
+# depth-case: teleport.switched-original-body-output
+# C-first vehicle for do_teleport against a victim who is switched out
+# (src/act.wizard.c:366-388). do_switch attaches the descriptor to the switched
+# body and clears the original's desc (src/act.wizard.c:414-421), so the victim
+# sees neither the TO_VICT notice nor look_at_room(victim)
+# (src/act.informative.c:1103-1104) and a ridden mount is left behind by the
+# bare char_from_room/char_to_room pair; only the original body's departure is
+# visible.
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 all 8161 0
+set-room-flag 8162 3 off
+set-room-flag 8162 4 off
+set-room-flag 8162 16 off
+set-room-flag 8161 3 on
+spawn-mob 8021 999 8162 80
+
+[setup:oracle]
+Ridergod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ridergod
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Helpermage
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Helpermage
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8162
+teleport Helpermage 8162
+set Helpermage level 39
+set Ridergod maxhit 5000
+set Ridergod hit 5000
+set Ridergod nohassle off
+set Ridergod level 38
+force horse sleep
+ride horse
+north
+force horse wake
+force horse stand
+set mob horse move 0
+north
+switch horse
+send:observer teleport Ridergod 8161
+return
