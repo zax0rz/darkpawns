@@ -1,0 +1,78 @@
+# depth-case: recall.experience-gate
+# depth-case: recall.bfr-room
+# C do_recall (src/act.other.c:1733-1745): a character above level 5 (or any
+# NPC) is refused with "This command is not available for someone of your
+# experience!", and a room flagged ROOM_BFR refuses with "You can't recall from
+# this magickal place.".
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8163 17 on
+
+[setup:oracle]
+Recallgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Recallgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Recallpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Recallpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Recallpeer 8162
+set player Recallpeer level 6
+
+[probe]
+send:peer recall
+set player Recallpeer level 1
+teleport Recallpeer 8163
+send:peer recall
