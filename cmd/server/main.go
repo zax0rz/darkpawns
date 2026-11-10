@@ -68,7 +68,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/grapevine"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 	"github.com/zax0rz/darkpawns/pkg/moderation"
 	"github.com/zax0rz/darkpawns/pkg/mudlog"
@@ -707,11 +706,6 @@ func main() {
 	// one.
 	manager.WirePlayerSaver(gameWorld)
 
-	// Initialize and start Grapevine WebSocket Client in background
-	gvClient := grapevine.NewClient(gameWorld)
-	gvClient.Start()
-	defer gvClient.Stop()
-
 	// Wire moderation: mute, ban, word filter, spam detection
 	if database != nil {
 		modManager := moderation.NewManager(database.SQLDB())
@@ -1303,7 +1297,7 @@ func fingerprinted(h http.Handler) http.Handler {
 
 // applySettingsEnvironment installs the settings file's effective values into
 // the process environment for the boot-time integrations that still read
-// env (Grapevine, the ntfy pusher, the contact form, proxy trust). It is
+// env (the ntfy pusher, contact form, proxy trust). It is
 // idempotent: effective already prefers an exported variable, so an
 // overridden field writes its own value back and nothing flips. Installs go
 // through the manager, which remembers what it wrote: a boot-installed
@@ -1312,8 +1306,7 @@ func fingerprinted(h http.Handler) http.Handler {
 func applySettingsEnvironment(manager *settings.Manager) {
 	effective := manager.Effective()
 	// Install only real file changes: a value equal to the compiled-in
-	// default would otherwise manufacture a phantom environment override
-	// (the first boot writing GRAPEVINE_MODE=off pinned mode off forever),
+	// default would otherwise manufacture a phantom environment override,
 	// and an inherited exported variable stays authoritative as it always
 	// was. The console badges whatever still wins.
 	install := func(name, value, defaultValue string) {
@@ -1328,9 +1321,6 @@ func applySettingsEnvironment(manager *settings.Manager) {
 	}
 	join := func(values []string) string { return strings.Join(values, ",") }
 	install("TRUSTED_PROXIES", join(effective.Access.TrustedProxies), "")
-	install("GRAPEVINE_MODE", effective.Grapevine.Mode, "off")
-	install("GRAPEVINE_URL", effective.Grapevine.URL, "wss://grapevine.haus/socket")
-	install("GRAPEVINE_CLIENT_ID", effective.Grapevine.ClientID, "")
 	install("DP_MUDLOG_NTFY_URL", effective.StaffPush.URL, "")
 	install("DP_MUDLOG_NTFY_LEVEL", strconv.Itoa(effective.StaffPush.MinLevel), "31")
 	install("DP_MUDLOG_NTFY_TYPE", strconv.Itoa(effective.StaffPush.MinType), "1")
@@ -1349,7 +1339,6 @@ func applySettingsEnvironment(manager *settings.Manager) {
 			slog.Warn("could not install settings secret into environment", "name", name, "error", err)
 		}
 	}
-	setSecret("GRAPEVINE_CLIENT_SECRET", settings.SecretGrapevineClient)
 	setSecret("DP_MUDLOG_NTFY_TOKEN", settings.SecretStaffPushToken)
 	setSecret("CONTACT_SMTP_PASSWORD", settings.SecretContactSMTP)
 	setSecret("CONTACT_TURNSTILE_SECRET", settings.SecretContactTurnstile)

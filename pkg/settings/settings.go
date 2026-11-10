@@ -1,9 +1,9 @@
 // Package settings owns the game process's operator settings file
 // (lib/data/settings.json). The launcher passes its path via DP_SETTINGS_PATH;
 // a checkout deployment defaults beside the world data. Environment variables
-// remain a compatibility override for checkout deployments and are surfaced,
-// never silently ignored: a portable instance scrubs them, so the file is the
-// single authority there.
+// remain a compatibility override for checkout deployments and are surfaced;
+// retired relay variables are ignored. A portable instance scrubs supported
+// settings variables, so the file is the single authority there.
 //
 // The file is revisioned like data/notifications.json: saves compare the
 // caller's revision and conflict instead of last-writer-wins. Secrets are
@@ -29,14 +29,12 @@ const Format = 1
 const (
 	GroupSessions  = "sessions"
 	GroupAccess    = "access"
-	GroupGrapevine = "grapevine"
 	GroupStaffPush = "staff_push"
 	GroupContact   = "contact"
 )
 
 // Secret field names, stable across the file, API and audit trail.
 const (
-	SecretGrapevineClient  = "grapevine_client_secret"
 	SecretStaffPushToken   = "staff_push_token"
 	SecretContactSMTP      = "contact_smtp_password" // #nosec G101 -- field identifier, not a credential value
 	SecretContactTurnstile = "contact_turnstile_secret"
@@ -60,15 +58,6 @@ type Access struct {
 	TrustedProxies     []string `json:"trusted_proxies" doc:"CIDRs whose X-Forwarded-For names the client; empty means the loopback default (restart required)"`
 	CORSAllowedOrigins []string `json:"cors_allowed_origins" doc:"Browser origins allowed across the game API; empty means the built-in defaults"`
 	AdminCORSOrigin    string   `json:"admin_cors_origin" doc:"Origin allowed to call the admin API; empty means the built-in default"`
-}
-
-// Grapevine holds the intermud relay. The relay connects at boot, so every
-// field applies on restart. The client secret lives only in the sealed
-// Secrets map; every view reports presence, never value.
-type Grapevine struct {
-	Mode     string `json:"mode" enum:"off,presence,full" doc:"Grapevine intermud mode (restart required)"`
-	URL      string `json:"url" doc:"Relay endpoint (restart required)"`
-	ClientID string `json:"client_id" doc:"Relay client id (restart required)"`
 }
 
 // StaffPush holds the ntfy push for the immortal log. The pusher starts at
@@ -99,7 +88,6 @@ type Config struct {
 	Revision  int64             `json:"revision"`
 	Sessions  Sessions          `json:"sessions"`
 	Access    Access            `json:"access"`
-	Grapevine Grapevine         `json:"grapevine"`
 	StaffPush StaffPush         `json:"staff_push"`
 	Contact   Contact           `json:"contact"`
 	Secrets   map[string]string `json:"secrets,omitempty"`
@@ -122,7 +110,6 @@ func Defaults() Config {
 			AccountFailureWindowMinutes: 60,
 		},
 		Access:    Access{},
-		Grapevine: Grapevine{Mode: "off", URL: "wss://grapevine.haus/socket"},
 		StaffPush: StaffPush{MinLevel: 31, MinType: 1, RatePerMinute: 30},
 	}
 }
@@ -131,7 +118,6 @@ func Defaults() Config {
 // Anything absent applies live.
 var restartFields = map[string][]string{
 	GroupAccess:    {"trusted_proxies"},
-	GroupGrapevine: {"mode", "url", "client_id", "client_secret"},
 	GroupStaffPush: {"url", "token", "min_level", "min_type", "rate_per_minute"},
 	GroupContact:   {"to", "smtp_host", "smtp_port", "smtp_user", "smtp_password", "turnstile_secret", "turnstile_hostnames"},
 }
@@ -186,36 +172,10 @@ func validateAccess(a Access) error {
 	return nil
 }
 
-func validateWebsocketURL(raw, field string) error {
-	u, err := url.Parse(raw)
-	if err != nil || (u.Scheme != "ws" && u.Scheme != "wss") || u.Host == "" || u.User != nil {
-		return fmt.Errorf("%s must be a ws:// or wss:// URL, not %q", field, raw)
-	}
-	return nil
-}
-
 func validateHTTPURL(raw, field string) error {
 	u, err := url.Parse(raw)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.User != nil {
 		return fmt.Errorf("%s must be an http:// or https:// URL, not %q", field, raw)
-	}
-	return nil
-}
-
-func validateGrapevine(g Grapevine, secretSet bool) error {
-	switch g.Mode {
-	case "off", "presence", "full":
-	default:
-		return fmt.Errorf("grapevine.mode must be off, presence or full, not %q", g.Mode)
-	}
-	if err := validateWebsocketURL(g.URL, "grapevine.url"); err != nil {
-		return err
-	}
-	if g.Mode != "off" && g.ClientID == "" {
-		return errors.New("grapevine.client_id is required unless mode is off")
-	}
-	if g.Mode != "off" && !secretSet {
-		return errors.New("grapevine.client_secret is required unless mode is off")
 	}
 	return nil
 }
@@ -297,9 +257,6 @@ func Validate(c Config, secretSet map[string]bool) error {
 		return err
 	}
 	if err := validateAccess(c.Access); err != nil {
-		return err
-	}
-	if err := validateGrapevine(c.Grapevine, secretSet[SecretGrapevineClient]); err != nil {
 		return err
 	}
 	if err := validateStaffPush(c.StaffPush, secretSet[SecretStaffPushToken]); err != nil {

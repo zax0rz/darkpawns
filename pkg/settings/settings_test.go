@@ -52,9 +52,8 @@ func TestNewWithoutFileWritesDefaults(t *testing.T) {
 func TestMigrationImportsEnvironmentAndSealsSecrets(t *testing.T) {
 	dir := t.TempDir()
 	withEnv(t, map[string]string{
-		"LOGIN_IDLE_TIMEOUT":      "90",
-		"GRAPEVINE_CLIENT_SECRET": "relay-secret",
-		"DP_MUDLOG_NTFY_TOKEN":    "ntfy-token",
+		"LOGIN_IDLE_TIMEOUT":   "90",
+		"DP_MUDLOG_NTFY_TOKEN": "ntfy-token",
 	})
 	path := filepath.Join(dir, "settings.json")
 	m, err := New(path)
@@ -64,23 +63,72 @@ func TestMigrationImportsEnvironmentAndSealsSecrets(t *testing.T) {
 	if m.Live().LoginIdleTimeout != 90*time.Second {
 		t.Fatalf("LOGIN_IDLE_TIMEOUT not imported: %v", m.Live().LoginIdleTimeout)
 	}
-	if value, ok := m.SecretValue(SecretGrapevineClient); !ok || value != "relay-secret" {
-		t.Fatalf("grapevine secret not resolvable: %q %v", value, ok)
+	if value, ok := m.SecretValue(SecretStaffPushToken); !ok || value != "ntfy-token" {
+		t.Fatalf("staff-push token not resolvable: %q %v", value, ok)
 	}
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read file: %v", err)
 	}
-	if strings.Contains(string(raw), "relay-secret") || strings.Contains(string(raw), "ntfy-token") {
+	if strings.Contains(string(raw), "ntfy-token") {
 		t.Fatal("plaintext secret material written to the settings file")
 	}
 	view := m.SettingsView()
-	if !view.Grapevine.ClientSecretSet || !view.StaffPush.TokenSet {
+	if !view.StaffPush.TokenSet {
 		t.Fatal("secret presence not reported")
 	}
 	viewJSON, _ := json.Marshal(view)
-	if strings.Contains(string(viewJSON), "relay-secret") || strings.Contains(string(viewJSON), "ntfy-token") {
+	if strings.Contains(string(viewJSON), "ntfy-token") {
 		t.Fatal("view leaks secret material")
+	}
+}
+
+func TestLegacyGrapevineSettingsAndEnvironmentAreIgnored(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "settings.json")
+	config := Defaults()
+	config.Revision = 7
+	raw, err := json.Marshal(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stored map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &stored); err != nil {
+		t.Fatal(err)
+	}
+	stored["grapevine"] = json.RawMessage(`{"mode":"full","url":"not-a-url","client_id":"legacy-client"}`)
+	stored["secrets"] = json.RawMessage(`{"grapevine_client_secret":"not-a-sealed-secret"}`)
+	raw, err = json.Marshal(stored)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, raw, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	withEnv(t, map[string]string{
+		"GRAPEVINE_MODE":          "full",
+		"GRAPEVINE_URL":           "not-a-url",
+		"GRAPEVINE_CLIENT_ID":     "legacy-client",
+		"GRAPEVINE_CLIENT_SECRET": "legacy-secret",
+	})
+	m, err := New(path)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if m.Degraded() != nil {
+		t.Fatalf("legacy values degraded the settings store: %v", m.Degraded())
+	}
+	if _, ok := m.cfg.Secrets[legacyGrapevineSecret]; ok {
+		t.Fatal("legacy sealed secret was retained")
+	}
+	if _, err := m.SaveSessions(m.Revision(), Defaults().Sessions); err != nil {
+		t.Fatalf("save after loading legacy values: %v", err)
+	}
+	raw, err = os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(strings.ToLower(string(raw)), "grapevine") {
+		t.Fatalf("saved settings retained legacy fields: %s", raw)
 	}
 }
 
@@ -138,14 +186,6 @@ func TestValidationRejections(t *testing.T) {
 		func() error {
 			_, err := m.SaveAccess(m.Revision(), Access{AdminCORSOrigin: "ftp://example.com"})
 			return err
-		},
-		func() error {
-			_, err := m.SaveGrapevine(m.Revision(), Grapevine{Mode: "sometimes", URL: "wss://grapevine.haus/socket"}, nil)
-			return err
-		},
-		func() error {
-			_, err := m.SaveGrapevine(m.Revision(), Grapevine{Mode: "presence", URL: "wss://grapevine.haus/socket", ClientID: "id"}, nil)
-			return err // secret missing
 		},
 		func() error {
 			p := Defaults().StaffPush
@@ -341,20 +381,18 @@ func TestBootInstalledEnvDoesNotMaskConsoleSaves(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
-	g := Defaults().Grapevine
-	g.Mode = "presence"
-	g.ClientID = "test-client"
-	secret := "relay-secret"
-	if _, err := m.SaveGrapevine(m.Revision(), g, SecretUpdate{SecretGrapevineClient: &secret}); err != nil {
-		t.Fatalf("save presence: %v", err)
+	p := Defaults().StaffPush
+	p.MinLevel = 32
+	if _, err := m.SaveStaffPush(m.Revision(), p, nil); err != nil {
+		t.Fatalf("save staff-push level: %v", err)
 	}
 	// Boot installs the non-default file value, exactly like the server does.
-	if installed, err := m.InstallEnv("GRAPEVINE_MODE", "presence"); err != nil || !installed {
+	if installed, err := m.InstallEnv("DP_MUDLOG_NTFY_LEVEL", "32"); err != nil || !installed {
 		t.Fatalf("InstallEnv: installed=%v err=%v", installed, err)
 	}
 	// The operator reverts the field in the console.
-	g.Mode = "off"
-	result, err := m.SaveGrapevine(m.Revision(), g, nil)
+	p.MinLevel = 31
+	result, err := m.SaveStaffPush(m.Revision(), p, nil)
 	if err != nil {
 		t.Fatalf("save off: %v", err)
 	}
@@ -362,10 +400,10 @@ func TestBootInstalledEnvDoesNotMaskConsoleSaves(t *testing.T) {
 		t.Fatalf("boot-installed variable masked the save: %v", result.EnvOverridden)
 	}
 	view := m.SettingsView()
-	if view.Grapevine.Mode != "off" {
-		t.Fatalf("effective mode = %q; the boot-installed copy masks the console", view.Grapevine.Mode)
+	if view.StaffPush.MinLevel != 31 {
+		t.Fatalf("effective min level = %d; the boot-installed copy masks the console", view.StaffPush.MinLevel)
 	}
-	if fields := view.Meta[GroupGrapevine].EnvOverridden; len(fields) != 0 {
+	if fields := view.Meta[GroupStaffPush].EnvOverridden; len(fields) != 0 {
 		t.Fatalf("boot-installed variable badged as an override: %v", fields)
 	}
 }
@@ -373,27 +411,27 @@ func TestBootInstalledEnvDoesNotMaskConsoleSaves(t *testing.T) {
 // A genuinely inherited export keeps winning and keeps its badge, including
 // against an install attempt for the same variable.
 func TestInheritedExportStillBadgesAndWins(t *testing.T) {
-	env := map[string]string{"GRAPEVINE_MODE": "presence"}
+	env := map[string]string{"DP_MUDLOG_NTFY_LEVEL": "32"}
 	withEnv(t, env)
 	m, err := New(filepath.Join(t.TempDir(), "settings.json"))
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
-	if installed, err := m.InstallEnv("GRAPEVINE_MODE", "off"); err != nil || installed {
+	if installed, err := m.InstallEnv("DP_MUDLOG_NTFY_LEVEL", "31"); err != nil || installed {
 		t.Fatalf("an inherited export was overwritten: installed=%v err=%v", installed, err)
 	}
-	if env["GRAPEVINE_MODE"] != "presence" {
-		t.Fatalf("inherited export changed to %q", env["GRAPEVINE_MODE"])
+	if env["DP_MUDLOG_NTFY_LEVEL"] != "32" {
+		t.Fatalf("inherited environment changed to %q", env["DP_MUDLOG_NTFY_LEVEL"])
 	}
-	g := Defaults().Grapevine
-	if _, err := m.SaveGrapevine(m.Revision(), g, nil); err != nil {
+	p := Defaults().StaffPush
+	if _, err := m.SaveStaffPush(m.Revision(), p, nil); err != nil {
 		t.Fatalf("save: %v", err)
 	}
 	view := m.SettingsView()
-	if view.Grapevine.Mode != "presence" {
-		t.Fatalf("inherited export must keep winning, got %q", view.Grapevine.Mode)
+	if view.StaffPush.MinLevel != 32 {
+		t.Fatalf("inherited export must keep winning, got %d", view.StaffPush.MinLevel)
 	}
-	if fields := view.Meta[GroupGrapevine].EnvOverridden; len(fields) != 1 || fields[0] != "mode" {
+	if fields := view.Meta[GroupStaffPush].EnvOverridden; len(fields) != 1 || fields[0] != "min_level" {
 		t.Fatalf("inherited export not badged: %v", fields)
 	}
 }
@@ -407,24 +445,24 @@ func TestBootInstalledSecretDoesNotMaskConsoleChanges(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
-	secret := "relay-secret"
-	g := Defaults().Grapevine
-	if _, err := m.SaveGrapevine(m.Revision(), g, SecretUpdate{SecretGrapevineClient: &secret}); err != nil {
+	secret := "ntfy-token"
+	p := Defaults().StaffPush
+	if _, err := m.SaveStaffPush(m.Revision(), p, SecretUpdate{SecretStaffPushToken: &secret}); err != nil {
 		t.Fatalf("save secret: %v", err)
 	}
 	// Boot resolves the sealed value and installs it, as setSecret does.
-	value, ok := m.SecretValue(SecretGrapevineClient)
-	if !ok || value != "relay-secret" {
+	value, ok := m.SecretValue(SecretStaffPushToken)
+	if !ok || value != "ntfy-token" {
 		t.Fatalf("secret not resolvable: %q %v", value, ok)
 	}
-	if installed, err := m.InstallEnv("GRAPEVINE_CLIENT_SECRET", value); err != nil || !installed {
+	if installed, err := m.InstallEnv("DP_MUDLOG_NTFY_TOKEN", value); err != nil || !installed {
 		t.Fatalf("InstallEnv: installed=%v err=%v", installed, err)
 	}
 	empty := ""
-	if _, err := m.SaveGrapevine(m.Revision(), g, SecretUpdate{SecretGrapevineClient: &empty}); err != nil {
+	if _, err := m.SaveStaffPush(m.Revision(), p, SecretUpdate{SecretStaffPushToken: &empty}); err != nil {
 		t.Fatalf("clear secret: %v", err)
 	}
-	if view := m.SettingsView(); view.Grapevine.ClientSecretSet {
+	if view := m.SettingsView(); view.StaffPush.TokenSet {
 		t.Fatal("cleared secret still reported set; the boot-installed copy masks the console")
 	}
 }

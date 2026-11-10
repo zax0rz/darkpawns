@@ -116,8 +116,6 @@ export const settingsApi = {
     read(http.PUT('/admin/settings/sessions', { body: body as never })),
   saveAccess: (body: Record<string, unknown>) =>
     read(http.PUT('/admin/settings/access', { body: body as never })),
-  saveGrapevine: (body: Record<string, unknown>) =>
-    read(http.PUT('/admin/settings/grapevine', { body: body as never })),
   saveStaffPush: (body: Record<string, unknown>) =>
     read(http.PUT('/admin/settings/staff_push', { body: body as never })),
   saveContact: (body: Record<string, unknown>) =>

@@ -377,8 +377,8 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /docs/build/local-server/,src/content/docs/build/local-server.md,docs,authored technical documentation,3,technical accuracy review,526,,,
 /docs/host.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,31,,,
 /docs/host/,src/content/docs/host/index.mdx,docs,authored technical documentation,3,technical accuracy review,31,,,
-/docs/host/admin-configuration.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,411,,,
-/docs/host/admin-configuration/,src/content/docs/host/admin-configuration.md,docs,authored technical documentation,3,technical accuracy review,411,,,
+/docs/host/admin-configuration.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,408,,,
+/docs/host/admin-configuration/,src/content/docs/host/admin-configuration.md,docs,authored technical documentation,3,technical accuracy review,408,,,
 /docs/host/admin-console.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,423,,,
 /docs/host/admin-console/,src/content/docs/host/admin-console.md,docs,authored technical documentation,3,technical accuracy review,423,,,
 /docs/host/dashboard-and-logs.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,890,,,
@@ -565,8 +565,6 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /docs/reference/api/admin/operations/put-settings-access/,cmd/admin-openapi/main.go,docs,generated OpenAPI operation reference,3,verify generated source and representative output,0,,,cmd/admin-openapi/main.go#/paths//admin/settings/access/put
 /docs/reference/api/admin/operations/put-settings-contact.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,0,,,cmd/admin-openapi/main.go#/paths//admin/settings/contact/put
 /docs/reference/api/admin/operations/put-settings-contact/,cmd/admin-openapi/main.go,docs,generated OpenAPI operation reference,3,verify generated source and representative output,0,,,cmd/admin-openapi/main.go#/paths//admin/settings/contact/put
-/docs/reference/api/admin/operations/put-settings-grapevine.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,0,,,cmd/admin-openapi/main.go#/paths//admin/settings/grapevine/put
-/docs/reference/api/admin/operations/put-settings-grapevine/,cmd/admin-openapi/main.go,docs,generated OpenAPI operation reference,3,verify generated source and representative output,0,,,cmd/admin-openapi/main.go#/paths//admin/settings/grapevine/put
 /docs/reference/api/admin/operations/put-settings-sessions.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,0,,,cmd/admin-openapi/main.go#/paths//admin/settings/sessions/put
 /docs/reference/api/admin/operations/put-settings-sessions/,cmd/admin-openapi/main.go,docs,generated OpenAPI operation reference,3,verify generated source and representative output,0,,,cmd/admin-openapi/main.go#/paths//admin/settings/sessions/put
 /docs/reference/api/admin/operations/put-settings-staff-push.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,0,,,cmd/admin-openapi/main.go#/paths//admin/settings/staff_push/put

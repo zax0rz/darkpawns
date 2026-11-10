@@ -230,25 +230,14 @@ type World struct {
 	// Set by the session manager. If nil, executeCommand is a no-op.
 	CommandExecFunc CommandExecFunc
 
-	// OnGossip is a callback triggered when a human player gossips.
-	OnGossip func(senderName string, message string)
-
 	// gossipObserver receives only the public mortal rendering, never raw identity.
-	// Protected by gossipMu; independent of the Grapevine callback.
+	// Protected by gossipMu.
 	gossipObserver func(line string)
 
 	// OutOfBand mirrors room renders, channel lines, and regen ticks to the
 	// session layer's structured-client protocols (GMCP). Set once by the
 	// session manager before the world starts ticking; nil disables it.
 	OutOfBand OutOfBandObserver
-}
-
-// SetOnGossip installs the gossip relay callback under the gossip lock; the
-// grapevine client rewrites it from its reconnect goroutine (VULN-040).
-func (w *World) SetOnGossip(fn func(playerName, message string)) {
-	w.gossipMu.Lock()
-	w.OnGossip = fn
-	w.gossipMu.Unlock()
 }
 
 // SetCombatEngine sets the combat engine for AI to use.
@@ -797,9 +786,8 @@ func (w *World) GetHelpFileCount() int {
 // boundary cmdWho uses — whoTargetVisible in pkg/session/cmd_info.go
 // gates on game.CanSee(viewer, target); here the viewer is a bare
 // level-1 mortal, so wizinvis immortals, invisible and hidden characters
-// are excluded. External presence surfaces (Grapevine heartbeat, MSSP
-// PLAYERS) share this rule so a hidden immortal is never revealed to an
-// outside network or crawler. Guests are ordinary in-world characters
+// are excluded. The MSSP PLAYERS field shares this rule so a hidden immortal
+// is never revealed in crawler counts. Guests are ordinary in-world characters
 // and are included.
 func (w *World) VisiblePlayersForMortal() []*Player {
 	viewer := &Player{Level: 1}

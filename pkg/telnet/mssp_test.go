@@ -144,24 +144,17 @@ func TestSendMSSP(t *testing.T) {
 		"PAY FOR PERKS": "0",
 	}
 
-	t.Run("grapevine configured advertises INTERMUD", func(t *testing.T) {
-		t.Setenv("GRAPEVINE_CLIENT_ID", "test_client")
-		t.Setenv("GRAPEVINE_CLIENT_SECRET", "test_secret")
+	t.Run("legacy relay environment does not change MSSP", func(t *testing.T) {
+		t.Setenv("GRAPEVINE_MODE", "full")
+		t.Setenv("GRAPEVINE_URL", "wss://legacy.invalid/socket")
+		t.Setenv("GRAPEVINE_CLIENT_ID", "legacy-client")
+		t.Setenv("GRAPEVINE_CLIENT_SECRET", "legacy-secret")
 		fields := run(t)
 		for name, want := range wantCommon {
 			if got := fields[name]; got != want {
 				t.Errorf("MSSP %s = %q, want %q", name, got, want)
 			}
 		}
-		if got := fields["INTERMUD"]; got != "Grapevine" {
-			t.Errorf("MSSP INTERMUD = %q, want Grapevine", got)
-		}
-	})
-
-	t.Run("grapevine unconfigured omits INTERMUD", func(t *testing.T) {
-		t.Setenv("GRAPEVINE_CLIENT_ID", "")
-		t.Setenv("GRAPEVINE_CLIENT_SECRET", "")
-		fields := run(t)
 		if got, ok := fields["INTERMUD"]; ok {
 			t.Errorf("MSSP INTERMUD = %q, want the field omitted", got)
 		}

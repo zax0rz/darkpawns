@@ -27,8 +27,8 @@ managed-instance view.
 
 ![The Sessions & limits configuration card in the local checkout preview, with editable login and connection limits.](/media/docs/admin-configuration.png)
 
-Other groups cover proxy trust, browser origins, the Grapevine relay, staff-log
-notifications, and contact-form delivery.
+Other groups cover proxy trust, browser origins, staff-log notifications, and
+contact-form delivery.
 
 ## Apply changes
 

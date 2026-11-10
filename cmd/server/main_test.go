@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"flag"
 	"os"
 	"os/exec"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/internal/bootmarker"
+	"github.com/zax0rz/darkpawns/pkg/settings"
 	"github.com/zax0rz/darkpawns/pkg/testutil"
 )
 
@@ -105,6 +107,60 @@ func parseableWorld(t *testing.T) string {
 		}
 	}
 	return worldDir
+}
+
+func TestServerBootIgnoresLegacyGrapevineSettings(t *testing.T) {
+	worldDir := parseableWorld(t)
+	root := filepath.Dir(filepath.Dir(worldDir))
+	t.Chdir(root)
+	settingsDir := filepath.Join(root, "data")
+	if err := os.MkdirAll(settingsDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	settingsPath := filepath.Join(settingsDir, "settings.json")
+	config := settings.Defaults()
+	config.Revision = 1
+	raw, err := json.Marshal(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stored map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &stored); err != nil {
+		t.Fatal(err)
+	}
+	stored["grapevine"] = json.RawMessage(`{"mode":"full","url":"not-a-url","client_id":"legacy-client"}`)
+	stored["secrets"] = json.RawMessage(`{"grapevine_client_secret":"not-a-sealed-secret"}`)
+	raw, err = json.Marshal(stored)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(settingsPath, raw, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	code, out := bootServer(t, []string{"-world", worldDir},
+		"ENVIRONMENT=development",
+		"JWT_SECRET=test-secret-that-is-at-least-32-chars-long-for-hs256",
+		"DATABASE_URL=",
+		"DP_SETTINGS_PATH="+settingsPath,
+		"GRAPEVINE_MODE=full",
+		"GRAPEVINE_URL=not-a-url",
+		"GRAPEVINE_CLIENT_ID=legacy-client",
+		"GRAPEVINE_CLIENT_SECRET=legacy-secret",
+		"DP_DUMP_API_ROUTES=1",
+	)
+	if code != 0 {
+		t.Fatalf("server boot with legacy settings exited %d\n%s", code, out)
+	}
+	if !strings.Contains(out, dumpRoutesPrefix) {
+		t.Fatalf("server did not reach route registration\n%s", out)
+	}
+	if strings.Contains(out, "settings store unusable") {
+		t.Fatalf("legacy settings degraded the store\n%s", out)
+	}
+	if strings.Contains(out, "/admin/settings/grapevine") {
+		t.Fatalf("server retained the retired integration\n%s", out)
+	}
 }
 
 // repoWorld returns the checkout's world directory, skipping if the test is not

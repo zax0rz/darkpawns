@@ -25,7 +25,7 @@ edits each setting through the owner's typed API.
   advanced operator path.
 - **Game-owned** (new `lib/data/settings.json`): every server-process setting
   that today rides an environment variable — connection limits and idle
-  timeouts, proxy trust, CORS origins, Grapevine, staff push (ntfy), contact
+  timeouts, proxy trust, CORS origins, staff push (ntfy), contact
   form. The file is revisioned, atomically written, and strict-read like the
   launcher's own JSON (`DisallowUnknownFields`), because game and file ship in
   the same release. The launcher passes its path the same way it passes
@@ -91,7 +91,6 @@ enter only as named profile selections, never free-text paths.
 | `DP_ACCOUNT_FAILURE_BUDGET` / `_WINDOW` | count / duration | off / 1h | `pkg/auth/ratelimit.go:418-422` | live | auth |
 | `TRUSTED_PROXIES` | CIDR list | `127.0.0.0/8,::1` | boot, `main.go:470` | restart | auth (drives IP bans and rate limits) |
 | `CORS_ALLOWED_ORIGINS` / `ADMIN_CORS_ORIGIN` | origin list | prod: `https://darkpawns.org` / unset | per request | live | exposure |
-| `GRAPEVINE_MODE` / `GRAPEVINE_URL` / client id+secret | enum / URL / secret | off / `wss://grapevine.haus` | `pkg/grapevine/client.go` | restart (reconnect) | exposure/secrets |
 | `DP_MUDLOG_NTFY_URL` / `_TOKEN` / `_LEVEL` / `_TYPE` / `_RATE` | URL / secret / 31 / 1 / 30min⁻¹ | off | `pkg/mudlog/ntfy.go` | restart | ops/secrets |
 | `CONTACT_TO` + `CONTACT_SMTP_HOST/PORT/USER/PASSWORD` + `CONTACT_TURNSTILE_SECRET/HOSTNAMES` | strings | all-or-handler-off | `pkg/contact/contact.go:55-61` | restart | ops/secrets |
 | `DP_MUDLET_PACKAGE_URL` / `DP_MUDLET_MAP_URL` | HTTPS URL | off | boot | restart | exposure |

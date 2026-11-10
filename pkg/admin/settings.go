@@ -136,32 +136,6 @@ func registerSettings(api huma.API, logger *audit.AuditLogger, manager *settings
 		return save(result, manager.SettingsView(), err)
 	})
 
-	type grapevineInput struct {
-		Body struct {
-			Revision int64 `json:"revision"`
-			settings.Grapevine
-			// ClientSecret is write-only: nil keeps the sealed value, an empty
-			// string clears it. It is never echoed; the view reports presence.
-			ClientSecret *string `json:"client_secret,omitempty"`
-		}
-	}
-	huma.Register(api, huma.Operation{
-		OperationID: "put-settings-grapevine",
-		Method:      http.MethodPut,
-		Path:        "/admin/settings/grapevine",
-		Summary:     "Update the Grapevine intermud relay (implementor)",
-		Description: "Every field needs a restart; the relay connects at boot. The client secret is write-only.",
-	}, func(ctx context.Context, in *grapevineInput) (*settingsSaveOutput, error) {
-		if err := available(); err != nil {
-			return nil, err
-		}
-		result, err := manager.SaveGrapevine(in.Body.Revision, in.Body.Grapevine, settings.SecretUpdate{settings.SecretGrapevineClient: in.Body.ClientSecret})
-		if err == nil {
-			auditAdmin(ctx, logger, "settings.save.grapevine", settingsAuditDetails(result), true)
-		}
-		return save(result, manager.SettingsView(), err)
-	})
-
 	type staffPushInput struct {
 		Body struct {
 			Revision int64 `json:"revision"`

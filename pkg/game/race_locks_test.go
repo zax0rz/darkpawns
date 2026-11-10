@@ -141,29 +141,3 @@ func TestBanManagerConcurrentReadWrite(t *testing.T) {
 	}()
 	wg.Wait()
 }
-
-// The grapevine reconnect goroutine clears the gossip callback while session
-// goroutines call it (VULN-040). Run under -race.
-func TestOnGossipConcurrentClearDuringCall(t *testing.T) {
-	w := raceLocksWorld(t)
-	w.SetOnGossip(func(name, msg string) {})
-	p := NewPlayer(1, "Gossiper", 1001)
-	stop := make(chan struct{})
-	var wg sync.WaitGroup
-	wg.Go(func() {
-		for {
-			select {
-			case <-stop:
-				return
-			default:
-			}
-			w.SetOnGossip(nil)
-			w.SetOnGossip(func(name, msg string) {})
-		}
-	})
-	for range 2000 {
-		w.DoChannel(p, "gossip", "hello")
-	}
-	close(stop)
-	wg.Wait()
-}
