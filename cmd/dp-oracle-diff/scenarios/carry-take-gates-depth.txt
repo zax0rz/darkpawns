@@ -1,0 +1,102 @@
+# depth-case: get.gate-weight
+# depth-case: get.gate-count
+# depth-case: get.inv-container-arms-full
+# depth-case: remove.carry-full
+# C-first vehicle for the carry-count gates that the do_get pre-gate does not
+# shadow. CAN_CARRY_N = 5 + (DEX>>1) + (LEVEL>>1) (src/utils.h:449), so a
+# level-1 DEX-1 peer carries 5. Starting below the limit and sweeping more
+# objects than it has room for reaches can_take_obj's "$p: you can't carry that
+# many items." (src/act.item.c:160-164) and, through a container,
+# perform_get_from_container's "$p: you can't hold any more items."
+# (src/act.item.c:200-203). perform_remove's count gate runs at the limit
+# (src/act.item.c:1721-1722).
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Gatefriend
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gatefriend
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:gatepeer]
+Gatepeer
+Y
+gatepass
+gatepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:gatepeer]
+Gatepeer
+y
+gatepass
+gatepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Gatepeer 8105
+set player Gatepeer dex 1
+send:gatepeer wear tunic
+# Gatepeer starts with three carried items (weapon, tunic, pack; src/class.c:
+# 521-534) and the pack holds bread and a water skin. Three swords on the floor
+# plus one more carried item leave exactly one free slot.
+load obj 8037
+drop sword
+load obj 8037
+drop sword
+load obj 8037
+drop sword
+load obj 8037
+give sword Gatepeer
+
+[probe]
+# STR 1 gives CAN_CARRY_W = 3 (src/constants.c:1025), so a 5-weight sword
+# overflows the weight arm even with a free carry slot.
+set player Gatepeer str 1
+send:gatepeer get sword
+set player Gatepeer str 18
+send:gatepeer get all
+send:gatepeer open pack
+send:gatepeer drop sword
+send:gatepeer get all pack
+send:gatepeer remove tunic
