@@ -38,12 +38,18 @@ func (w *World) doWimpy(ch *Player, me *MobInstance, cmd string, arg string) boo
 	}
 	wimpLevel := atoiC(arg)
 
-	if wimpLevel > 0 {
-		if wimpLevel > ch.GetMaxHP() {
+	// C tests `if ((wimp_lev = atoi(arg)))` then `if (wimp_lev < 0)`; the
+	// negative arm is reachable because a huge positive token wraps negative
+	// through (int)strtol (src/act.other.c:996-1006).
+	if wimpLevel != 0 {
+		switch {
+		case wimpLevel < 0:
+			ch.SendMessage("Heh, heh, heh.. we are jolly funny today, eh?\r\n")
+		case wimpLevel > ch.GetMaxHP():
 			ch.SendMessage("That doesn't make much sense, now does it?\r\n")
-		} else if wimpLevel > (ch.GetMaxHP() / 3) {
+		case wimpLevel > (ch.GetMaxHP() / 3):
 			ch.SendMessage("You can't set your wimp level above one third your hit points.\r\n")
-		} else {
+		default:
 			ch.WimpLevel = wimpLevel
 			ch.SendMessage(fmt.Sprintf("Okay, you'll wimp out if you drop below %d hit points.\r\n", wimpLevel))
 		}

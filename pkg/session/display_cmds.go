@@ -9,7 +9,6 @@ package session
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -353,31 +352,11 @@ func cmdLines(s *Session, args []string) error {
 }
 
 // parseLinesSize mirrors the C atoi call in do_lines. C accepts an optional
-// sign and leading decimal digits, returns zero when no digits are present,
-// and ignores a trailing suffix.
+// sign and leading decimal digits, returns zero when no digits are present, and
+// ignores a trailing suffix. Overflow matches glibc atoi ((int)strtol), so a
+// huge token wraps through the low 32 bits — atoiC carries that behaviour.
 func parseLinesSize(value string) int {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return 0
-	}
-
-	index := 0
-	if value[index] == '+' || value[index] == '-' {
-		index++
-	}
-	start := index
-	for index < len(value) && value[index] >= '0' && value[index] <= '9' {
-		index++
-	}
-	if index == start {
-		return 0
-	}
-
-	parsed, err := strconv.Atoi(value[:index])
-	if err != nil {
-		return 0
-	}
-	return parsed
+	return atoiC(value)
 }
 
 // cmdInfoBar implements do_infobar from act.display.c

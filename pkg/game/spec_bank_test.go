@@ -128,6 +128,13 @@ func TestAtoiC(t *testing.T) {
 		{input: "  +50coins", want: 50},
 		{input: "-5", want: -5},
 		{input: "\t42", want: 42},
+		// glibc atoi is (int)strtol: clamp to LONG_MIN/LONG_MAX on overflow,
+		// then truncate to the low 32 bits (R1 — C's bytes, not Go's).
+		{input: "3000000000", want: -1294967296},
+		{input: "4294967297", want: 1},
+		{input: "99999999999999999999", want: -1},
+		{input: "-3000000000", want: 1294967296},
+		{input: "-99999999999999999999", want: 0},
 	}
 	for _, tt := range tests {
 		if got := atoiC(tt.input); got != tt.want {

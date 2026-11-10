@@ -1,0 +1,46 @@
+# depth-case: wimpy.not-a-wimp
+# depth-case: wimpy.third-gate-live
+# depth-case: wimpy.negative-dead
+# depth-case: wimpy.overflow-wrap
+# C do_wimpy (src/act.other.c:981-1006): a character whose wimp level is zero
+# gets "At the moment, you're not a wimp. (sure, sure...)" from a bare "wimpy",
+# and a threshold above one third of maximum hit points is refused.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Wimpypeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wimpypeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+wimpy 0
+wimpy
+wimpy 20
+wimpy 3000000000
+wimpy 4294967297
+wimpy 99999999999999999999

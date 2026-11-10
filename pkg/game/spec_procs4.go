@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"math"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -671,33 +672,52 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	return false
 }
 
-// atoiC mirrors the C atoi() behavior used by SPECIAL(bank): leading spaces,
+// atoiC mirrors glibc atoi(s) == (int)strtol(s, NULL, 10): leading spaces,
 // an optional sign, and the leading decimal run are accepted; no digits yield
-// zero and trailing text is ignored.
+// zero and trailing text is ignored. strtol clamps to LONG_MIN/LONG_MAX on
+// overflow, and the cast to int keeps the low 32 bits. Reproducing the
+// clamp-then-truncate matters for callers that read the sign: C's
+// atoi("3000000000") is -1294967296, so a huge positive token reaches a
+// negative-int comparison.
 func atoiC(s string) int {
 	s = strings.TrimLeft(s, " \t\n\r\v\f")
 	if s == "" {
 		return 0
 	}
 
-	sign := 1
 	index := 0
+	negative := false
 	if s[0] == '+' || s[0] == '-' {
-		if s[0] == '-' {
-			sign = -1
-		}
+		negative = s[0] == '-'
 		index++
 	}
 	start := index
-	value := 0
+	var value int64
+	overflow := false
 	for index < len(s) && s[index] >= '0' && s[index] <= '9' {
-		value = value*10 + int(s[index]-'0')
+		digit := int64(s[index] - '0')
+		if value > (math.MaxInt64-digit)/10 {
+			overflow = true
+		} else {
+			value = value*10 + digit
+		}
 		index++
 	}
 	if index == start {
 		return 0
 	}
-	return sign * value
+	if overflow {
+		// strtol returns LONG_MAX/LONG_MIN; truncating to 32 bits gives
+		// 0x7FFFFFFFFFFFFFFF -> -1 and 0x8000000000000000 -> 0.
+		if negative {
+			return 0
+		}
+		return -1
+	}
+	if negative {
+		value = -value
+	}
+	return int(int32(value))
 }
 
 // specHorn is retained in the common registry for compatibility with direct
