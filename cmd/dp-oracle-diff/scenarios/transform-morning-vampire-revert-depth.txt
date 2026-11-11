@@ -1,0 +1,77 @@
+# C-first vampire morning-revert arm. The real Vampirism spell gives Vamppeer
+# PLR_VAMPIRE. At hour 4/day 0, transform sets AFF_VAMPIRE; one MUD hour later
+# the SUN_RISE tick makes the second ordinary transform revert the form.
+# C paths: src/spells.c:766-784; src/act.other.c:1489-1535;
+# src/comm.c:825; src/weather.c:55-66.
+# depth-case: transform.morning-revert
+
+[fixture]
+fixed-time 650336967
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Vampgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Vampgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Vamppeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Vamppeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Vamppeer 8162
+cast 'vampirism' Vamppeer
+
+[probe]
+send:peer transform
+~dpclock pulse 630
+send:peer transform

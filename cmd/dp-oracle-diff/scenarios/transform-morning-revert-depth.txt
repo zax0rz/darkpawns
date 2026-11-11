@@ -1,0 +1,82 @@
+# C-first morning revert after transforming at night through the real
+# lycanthropy spell. fixed-time 650336967 is hour 4, day 0; 630 clock pulses
+# cross into daylight on both engines before the second ordinary transform.
+# C paths: src/act.other.c:1422-1479; src/weather.c:55-66, src/comm.c:825.
+# depth-case: transform.morning-revert
+
+[fixture]
+empty-players
+quiet-mobs
+fixed-time 650336967
+
+[setup:oracle]
+Transformwolf
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Transformwolf
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Transformwatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Transformwatch
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Transformwatch 8105
+set player Transformwolf class mage
+set player Transformwolf maxmana 5000
+set player Transformwolf mana 5000
+skillset Transformwolf 'lycanthropy' 100
+set player Transformwolf level 34
+cast 'lycanthropy' Transformwolf
+~dpclock pulse 20
+
+[probe]
+transform
+~dpclock pulse 630
+transform
