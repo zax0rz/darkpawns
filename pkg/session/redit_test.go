@@ -158,6 +158,43 @@ func TestReditExitAndStringAbortReturnToMenu(t *testing.T) {
 	}
 }
 
+func TestReditStringAddOverflowKeepsOLCEditorOpen(t *testing.T) {
+	m := newReditTestManager(t)
+	s := makeCommandTestSession(t, m, "Reditgod", game.LVL_IMPL, 1001)
+	if err := ExecuteCommand(s, "redit", nil); err != nil {
+		t.Fatal(err)
+	}
+	_ = readMsgText(t, s)
+	s.handleReditInput("2")
+	_ = readMsgText(t, s)
+
+	acceptedLine := strings.Repeat("r", 240)
+	for len(s.textEdit.buffer)+len(acceptedLine)+3 <= s.textEdit.field.maxBytes {
+		s.handleReditInput(acceptedLine)
+		_ = readMsgTextOrEmpty(t, s)
+	}
+	if len(s.textEdit.buffer) == 0 {
+		t.Fatal("test did not fill the OLC description buffer")
+	}
+	overflowLine := strings.Repeat("o", 240)
+	s.handleReditInput(overflowLine)
+	if got := readMsgText(t, s); got != "String too long.  Last line skipped.\r\n" {
+		t.Fatalf("overflow output = %q", got)
+	}
+	if !s.IsTextEditing() || !s.IsRoomEditing() {
+		t.Fatal("REDIT editor closed after skipping an overflowing line")
+	}
+	if strings.Contains(s.textEdit.buffer, overflowLine) {
+		t.Fatal("overflowing OLC line was appended")
+	}
+
+	s.handleReditInput("@")
+	_ = readMsgText(t, s)
+	if s.IsTextEditing() || !s.IsRoomEditing() {
+		t.Fatal("@ did not return from the string editor to the REDIT menu")
+	}
+}
+
 func TestReditDisconnectDropsWorkingStringEditor(t *testing.T) {
 	m := newReditTestManager(t)
 	s := makeCommandTestSession(t, m, "Reditgod", game.LVL_IMPL, 1001)

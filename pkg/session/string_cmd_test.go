@@ -643,6 +643,9 @@ func TestStringEditorTruncationMessagesMatchStringAdd(t *testing.T) {
 		if got := readMsgText(t, s); got != "String too long - Truncated.\r\n" {
 			t.Fatalf("notice = %q, want capital-T CRLF variant", got)
 		}
+		if !s.IsTextEditing() {
+			t.Fatal("editor closed after first-line truncation")
+		}
 		if got := mob.Proto().Keywords; got != "abcdefghijkl\r\n" {
 			t.Errorf("truncated field = %q, want 12 bytes + CRLF", got)
 		}
@@ -660,6 +663,9 @@ func TestStringEditorTruncationMessagesMatchStringAdd(t *testing.T) {
 		s.handleTextEditInput("abcdefghij") // 10 + 5 + 3 > 15
 		if got := readMsgText(t, s); got != "String too long.  Last line skipped.\r\n" {
 			t.Fatalf("notice = %q, want two spaces and CRLF", got)
+		}
+		if !s.IsTextEditing() {
+			t.Fatal("editor closed after skipping the later line")
 		}
 		if got := mob.Proto().Keywords; got != "abc\r\n" {
 			t.Errorf("field = %q, want the previous line unchanged", got)

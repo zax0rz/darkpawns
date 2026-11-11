@@ -39,6 +39,9 @@ func TestBoardMessageCappedAtMaxLength(t *testing.T) {
 	if strings.Contains(bs.msgStorage[bs.writerSlots["Cap"]], "bbbb") {
 		t.Fatal("overflow line was appended despite the cap")
 	}
+	if _, ok := bs.writerSlots["Cap"]; !ok {
+		t.Fatal("writer slot was released after overflow; C keeps the board editor open")
+	}
 }
 
 // C binds the editor to the writer's own slot via desc->str (boards.c:268).

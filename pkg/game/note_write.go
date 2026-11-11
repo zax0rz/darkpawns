@@ -24,8 +24,10 @@ var (
 
 // noteWriteEntry holds the in-progress note text and the target object.
 type noteWriteEntry struct {
-	obj    *ObjectInstance
-	buffer string
+	obj         *ObjectInstance
+	buffer      string
+	editorBytes int
+	overflowed  bool
 }
 
 // HandleNoteInput processes one line of input from a player in note-write mode.
@@ -45,12 +47,16 @@ func HandleNoteInput(ch *Player, line string) bool {
 			ch.SendMessage("Your note was lost. (internal error)\r\n")
 			return true
 		}
-		if state.buffer == "" {
+		if state.editorBytes == 0 {
 			ch.SendMessage("You have written nothing. Note discarded.\r\n")
 			return true
 		}
 
-		state.obj.Runtime.NoteText = state.buffer
+		text := state.buffer
+		if state.overflowed || text == "" {
+			text += "\r\n"
+		}
+		state.obj.Runtime.NoteText = text
 		ch.SendMessage("Note recorded.\r\n")
 		return true
 	}
@@ -62,17 +68,23 @@ func HandleNoteInput(ch *Player, line string) bool {
 		ch.SetPlrFlag(PlrWriting, false)
 		return true
 	}
-	if state.buffer != "" {
+	if len(line)+state.editorBytes+3 > maxNoteLength {
+		notice := "String too long.  Last line skipped.\r\n"
+		if state.editorBytes == 0 {
+			state.buffer = line[:maxNoteLength-3]
+			state.editorBytes = maxNoteLength - 1 // truncated text plus C's CRLF
+			notice = "String too long - Truncated.\r\n"
+		}
+		state.overflowed = true
+		noteWriteMu.Unlock()
+		ch.SendMessage(notice)
+		return false
+	}
+	if state.editorBytes > 0 {
 		state.buffer += "\r\n"
 	}
 	state.buffer += line
-	if len(state.buffer) > maxNoteLength {
-		state.buffer = state.buffer[:maxNoteLength]
-		// Notify and flush — C does this silently but a message is friendlier
-		noteWriteMu.Unlock()
-		ch.SendMessage("Note limit reached. Type '@' on a new line to save.\r\n")
-		return false
-	}
+	state.editorBytes += len(line) + 2 // string_add stores every accepted line with CRLF.
 	noteWriteMu.Unlock()
 	return false
 }

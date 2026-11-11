@@ -6,11 +6,9 @@ import (
 	"testing"
 )
 
-// L2-005 as fidelity: C's string editor overflow (string_add, modify.c:131-150,
-// the non-improved path do_clan_plan uses) — a first line over CLAN_PLAN_LENGTH
-// truncates with C's reply and saves+exits; a later line that would cross it is
-// skipped with C's reply and saves+exits; a boundary line is accepted and the
-// editor continues.
+// string_add's improved-editor overflow path (modify.c:131-155) truncates an
+// overlong first line or skips an overlong later line while keeping the clan
+// plan editor open.
 func TestClanPlanEditorOverflowMatchesC(t *testing.T) {
 	var sent []string
 	player := NewPlayer(1, "Editor", 1001)
@@ -26,11 +24,15 @@ func TestClanPlanEditorOverflowMatchesC(t *testing.T) {
 	if !strings.Contains(strings.Join(sent, ""), "String too long - Truncated.\r\n") {
 		t.Fatalf("missing C truncation reply: %q", sent)
 	}
-	if player.ClanPlanWriting {
-		t.Fatal("editor still active after C's truncation exit")
+	if !player.ClanPlanWriting {
+		t.Fatal("editor closed after C's first-line truncation")
 	}
-	if len(clan.Plan) != MaxClanPlanBytes-1 {
-		t.Fatalf("truncated plan = %d bytes, want %d (cap-3 cut plus CRLF)", len(clan.Plan), MaxClanPlanBytes-1)
+	if got := len(player.ClanPlanBuffer); got != MaxClanPlanBytes-1 {
+		t.Fatalf("truncated plan buffer = %d bytes, want %d (cap-3 cut plus CRLF)", got, MaxClanPlanBytes-1)
+	}
+	world.HandleClanPlanInput(player, "@")
+	if player.ClanPlanWriting || len(clan.Plan) != MaxClanPlanBytes-1 {
+		t.Fatalf("@ did not save the truncated plan: writing=%t plan-bytes=%d", player.ClanPlanWriting, len(clan.Plan))
 	}
 
 	sent = nil
@@ -44,11 +46,18 @@ func TestClanPlanEditorOverflowMatchesC(t *testing.T) {
 	if !strings.Contains(strings.Join(sent, ""), "String too long.  Last line skipped.\r\n") {
 		t.Fatalf("missing C skip reply: %q", sent)
 	}
+	if !player.ClanPlanWriting {
+		t.Fatal("editor closed after C skipped the later line")
+	}
+	if strings.Contains(player.ClanPlanBuffer, "overflowing later line") {
+		t.Fatal("skipped line was stored")
+	}
+	world.HandleClanPlanInput(player, "@")
 	if player.ClanPlanWriting {
-		t.Fatal("editor still active after C's skip exit")
+		t.Fatal("@ did not close the still-active editor")
 	}
 	if strings.Contains(clan.Plan, "overflowing later line") {
-		t.Fatal("skipped line was stored")
+		t.Fatal("skipped line was stored in the saved plan")
 	}
 
 	sent = nil
