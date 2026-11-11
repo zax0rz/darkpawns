@@ -157,7 +157,7 @@ make deadcode-ratchet   # CI enforces it; the baseline only shrinks
 ```
 
 **Toolchain.** The Go version is whatever `go.mod` says on `origin/main` (Go
-1.27.3 as of 2026-11-10); never quote it from memory or from the shared
+1.27.4 as of 2026-11-11); never quote it from memory or from the shared
 checkout. Every `go` command needs `GOEXPERIMENT=nojsonv2`. The Makefile
 exports it; a direct `go test` must export it too, because Go 1.27's default
 JSON encoder changes invalid-UTF-8 bytes and the world text is Latin-1 (R1).
