@@ -1,0 +1,85 @@
+# depth-case: score.align-angels
+# depth-case: score.align-righteous
+# depth-case: score.align-path-of-right
+# depth-case: score.align-pretty-good
+# depth-case: score.align-bland-good
+# C do_score alignment ladder (src/act.informative.c:1203-1228). The god raises
+# the peer's alignment with set player align and the peer reads score, so each
+# band edge prints through the real command. Only non-negative values are
+# settable: is_number (src/interpreter.c:1175-1182) rejects a leading minus.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Scoregod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scoregod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Scorepeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Scorepeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Scorepeer 8162
+
+[probe]
+set player Scorepeer align 900
+send:peer score
+set player Scorepeer align 750
+send:peer score
+set player Scorepeer align 500
+send:peer score
+set player Scorepeer align 350
+send:peer score
+set player Scorepeer align 100
+send:peer score

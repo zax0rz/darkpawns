@@ -1,0 +1,50 @@
+# depth-case: look-in.empty-drinkcon
+# depth-case: look-in.full-drinkcon
+# C look_in_obj (src/act.informative.c:962-982): a drink container with
+# GET_OBJ_VAL(obj, 1) <= 0 says "It is empty.", otherwise it reports the
+# fullness band and the liquid type. Object 12103 is an empty silver goblet
+# (vals 1 0 0 0) and 12127 a mug holding one unit (vals 1 1 3 0); both files are
+# listed in lib/world/obj/index, so both load.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 12103 1 8162 48
+spawn-obj 12127 1 8162 48
+
+[setup:oracle]
+Drinklooker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Drinklooker
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+get goblet
+get mug
+
+[probe]
+look in goblet
+look in mug

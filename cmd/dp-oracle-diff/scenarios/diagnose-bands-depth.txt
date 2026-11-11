@@ -1,0 +1,88 @@
+# depth-case: diagnose.scratches
+# depth-case: diagnose.small-wounds
+# depth-case: diagnose.few-wounds
+# depth-case: diagnose.nasty-wounds
+# depth-case: diagnose.pretty-hurt
+# depth-case: diagnose.awful
+# C diag_char_to_char (src/act.informative.c:368-381) selects one line from
+# GET_HIT*100/GET_MAX_HIT. do_diagnose calls it on the resolved target, so the
+# god walks a peer down the band edges with set player hit.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Diagnoser
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Diagnoser
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Diagtarget
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Diagtarget
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Diagtarget 8162
+set player Diagtarget maxhit 100
+
+[probe]
+set player Diagtarget hit 95
+diagnose Diagtarget
+set player Diagtarget hit 80
+diagnose Diagtarget
+set player Diagtarget hit 60
+diagnose Diagtarget
+set player Diagtarget hit 40
+diagnose Diagtarget
+set player Diagtarget hit 20
+diagnose Diagtarget
+set player Diagtarget hit 10
+diagnose Diagtarget
