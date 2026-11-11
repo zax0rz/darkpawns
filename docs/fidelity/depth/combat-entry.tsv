@@ -93,4 +93,4 @@ do_assist	assist	assist.ordinal-exhausted	D2	command	oracle-green	assist-resolve
 
 do_kill	kill	kill.no-arg	D1	command	oracle-green	kill-refusals-depth@1	act.offensive.c:145-146	An immortal bare "kill" prints "Kill who?".
 do_kill	kill	kill.self	D1	command	oracle-green	kill-refusals-depth@1	act.offensive.c:151-152	An immortal self-target prints "Your mother would be so sad.. :(". 
-do_kill	kill	kill.equal-level	D1	command	blocked	-	act.offensive.c:151-156; act.wizard.c:2898-2900; structs.h:610	Reachable in C when two characters share a level, but no fixture can construct it: do_kill needs GET_LEVEL(ch) >= LVL_IMPL-1 (40-1) and set refuses any target level >= the actor own level, so nothing can be placed at the implementor level.
+do_kill	kill	kill.equal-level	D1	command	oracle-green	kill-equal-level-depth@1	src/act.offensive.c:151-156	A level-39 peer kills a level-39 victim: do_kill refuses equal levels before any hit, and the god reaches both peers because set refuses only a level at or above the setter own (src/act.wizard.c:2898-2900). The normalizer trims the trailing space, so TestCmdKillEqualLevelPreservesTrailingSpace pins the exact bytes (R5f).

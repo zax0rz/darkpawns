@@ -3,6 +3,7 @@
 # line reaches the follower's descriptor, so the follower lane carries it.
 
 # depth-case: ungroup.disband-follower
+# depth-case: ungroup.disband-audience
 
 [fixture]
 empty-players

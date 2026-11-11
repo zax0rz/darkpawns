@@ -1,0 +1,104 @@
+# depth-case: kill.equal-level
+# C do_kill's equal-level gate (src/act.offensive.c:151-156). do_kill sends
+# anyone below LVL_IMPL-1 to do_hit (:138-141), so the killer is a peer the god
+# raised to 39; set refuses only a level at or above the setter's own
+# (src/act.wizard.c:2898-2900), so the level-40 god can raise both peers to 39.
+# Equal levels then refuse with "No can do, buddy.. " before any hit.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Killgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Killgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Killpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Killpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Killvictim
+Y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Killvictim
+y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Killpeer 8162
+teleport Killvictim 8162
+set player Killpeer level 39
+set player Killvictim level 39
+
+[probe]
+send:peer kill Killvictim
