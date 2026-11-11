@@ -144,10 +144,9 @@ set player ItemView level 30
 set player ItemView align -1000
 set player ItemView maxhit 100000
 set player ItemView hit 100000
-force ItemPeer follow ItemMage
-group ItemPeer
 
 set player ItemBuilder level 35
+send:builder force ItemPeer follow ItemMage
 send:builder oedit 8054
 send:builder 1
 send:builder staff0901
@@ -155,15 +154,16 @@ send:builder D
 send:builder 20
 send:builder 1
 send:builder 1
-send:builder 57
+send:builder 58
 send:builder q
 send:builder y
-load obj 8054
+send:builder load obj 8054
 set player ItemMage level 30
+group all
 
 
 [probe]
-get staff0901
+send:builder give staff0901 ItemMage
 hold staff0901
 use staff0901
 ~dpclock pulse 20
@@ -180,11 +180,11 @@ send:builder D
 send:builder 20
 send:builder 1
 send:builder 1
-send:builder 58
+send:builder 59
 send:builder q
 send:builder y
-load obj 8054
-get staff0902
+send:builder load obj 8054
+send:builder give staff0902 ItemMage
 hold staff0902
 use staff0902
 ~dpclock pulse 20
@@ -201,11 +201,11 @@ send:builder D
 send:builder 20
 send:builder 1
 send:builder 1
-send:builder 59
+send:builder 60
 send:builder q
 send:builder y
-load obj 8054
-get staff0903
+send:builder load obj 8054
+send:builder give staff0903 ItemMage
 hold staff0903
 use staff0903
 ~dpclock pulse 20
@@ -222,11 +222,11 @@ send:builder D
 send:builder 20
 send:builder 1
 send:builder 1
-send:builder 60
+send:builder 61
 send:builder q
 send:builder y
-load obj 8054
-get staff0904
+send:builder load obj 8054
+send:builder give staff0904 ItemMage
 hold staff0904
 use staff0904
 ~dpclock pulse 20
@@ -236,6 +236,8 @@ score
 send:peer score
 send:observer score
 look
+send:builder force ItemPeer follow ItemMage
+group all
 send:builder oedit 8054
 send:builder 1
 send:builder staff0905
@@ -243,13 +245,14 @@ send:builder D
 send:builder 20
 send:builder 1
 send:builder 1
-send:builder 61
+send:builder 57
 send:builder q
 send:builder y
-load obj 8054
-get staff0905
+send:builder load obj 8054
+send:builder give staff0905 ItemMage
 hold staff0905
 use staff0905
+send:observer look
 ~dpclock pulse 20
 remove staff0905
 drop staff0905

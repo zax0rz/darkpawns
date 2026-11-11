@@ -5,8 +5,4 @@ postmaster-mail-login-notices-depth	entry.tsv	entry.reconnect-mail-notice	exclud
 postmaster-mail-login-notices-depth	entry.tsv	entry.world-entry-mail-notice	excluded	
 postmaster-mail-login-notices-depth	mail.tsv	mail.send-store-inert-login-notices	excluded	
 postmaster-saved-recipient-depth	mail.tsv	mail.send-store-inert-saved-recipient	excluded	
-spellmatrix-staff-olc-09-depth	cast.tsv	spell.enchant-armor.matrix-staff-olc	blocked	run-varying
-spellmatrix-staff-olc-09-depth	cast.tsv	spell.group-invisibility.matrix-staff-olc	blocked	run-varying
-spellmatrix-staff-olc-09-depth	cast.tsv	spell.hellfire.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-09-depth	cast.tsv	spell.identify.matrix-staff-olc	blocked	run-varying
-spellmatrix-staff-olc-09-depth	cast.tsv	spell.mind-poke.matrix-staff-olc	blocked	run-varying
