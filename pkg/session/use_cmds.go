@@ -79,7 +79,10 @@ func cmdRecite(s *Session, args []string) error {
 	var objectTarget interface{}
 
 	if targetName != "" {
-		// C generic_find resolves a room character first, then carried/room objects.
+		// C generic_find (src/spell_parser.c:566) resolves a room character first,
+		// then equipment, inventory, and room in that fixed order
+		// (src/handler.c:1537-1556; DP-1518). The shared GenericFindObject owns
+		// the object order so recite agrees with use (R5c).
 		if tgt, found := s.manager.world.ResolveCharInRoom(s.player, targetName); found {
 			switch {
 			case tgt.Player != nil:
@@ -87,13 +90,7 @@ func cmdRecite(s *Session, args []string) error {
 			case tgt.Mob != nil:
 				target = tgt.Mob
 			}
-		} else if obj, found := s.manager.world.ResolveObjectInInventory(s.player, targetName); found {
-			target = nil
-			objectTarget = obj
-		} else if obj, found := s.manager.world.ResolveObjectInRoom(s.player, targetName); found {
-			target = nil
-			objectTarget = obj
-		} else if obj, found := s.manager.world.ResolveObjectInEquipment(s.player, targetName); found {
+		} else if obj, _ := s.manager.world.GenericFindObject(s.player, targetName); obj != nil {
 			target = nil
 			objectTarget = obj
 		} else {

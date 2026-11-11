@@ -1,0 +1,58 @@
+# depth-case: look.target-equip-first
+# DP-1518: look_at_target (src/act.informative.c:1017) searches equipment before
+# inventory (src/handler.c:1537-1556). A worn plain dagger and a carried
+# enchanted (magic) dagger share "dagger"; C shows plain for the worn one,
+# old Go showed "(blue glow)" for the carried one. Neither dagger has an extra
+# description, so mode 5 flags are the witness. Detect magic makes the magic
+# flag visible without hiding either dagger.
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-obj 8020 1 8105 80
+spawn-obj 8078 1 8105 80
+force-load 8020
+force-load 8078
+
+[setup:oracle]
+Looktarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Looktarget
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+get vengeance
+get dagger
+wield vengeance
+cast 'detect magic'
+~dpclock pulse 20
+cast 'enchant weapon' dagger
+~dpclock pulse 20
+
+[probe]
+inventory
+look dagger
+look at dagger

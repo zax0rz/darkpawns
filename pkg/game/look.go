@@ -1261,28 +1261,25 @@ func (w *World) findObservationObject(ch *Player, name string) *ObjectInstance {
 	return object
 }
 
+// findObservationObjectWithLocation is the look-family port of C generic_find's
+// object scopes (DP-1518): look_in_obj (src/act.informative.c:924),
+// look_at_target (src/act.informative.c:1017), and do_examine
+// (src/act.informative.c:1152) all search equipment before inventory before
+// room (src/handler.c:1537-1556). It delegates to the shared GenericFindObject
+// so the order lives in exactly one place (R5c); the location is mapped back
+// to the "(carried)"/"(here)"/"(used)" vocabulary look_in_obj needs.
 func (w *World) findObservationObjectWithLocation(ch *Player, name string) (*ObjectInstance, observationObjectLocation) {
-	for _, item := range ch.Inventory.Snapshot() {
-		if observationObjectMatches(ch, item, name) {
-			return item, observationInventory
-		}
+	object, scope := w.GenericFindObject(ch, name)
+	switch scope {
+	case GenericFindEquip:
+		return object, observationEquipment
+	case GenericFindInv:
+		return object, observationInventory
+	case GenericFindRoom:
+		return object, observationRoom
+	default:
+		return nil, observationNowhere
 	}
-	for _, item := range w.GetItemsInRoom(ch.GetRoom()) {
-		if observationObjectMatches(ch, item, name) {
-			return item, observationRoom
-		}
-	}
-	for _, slot := range cWearToGoSlot {
-		item, ok := ch.Equipment.GetItemInSlot(slot)
-		if ok && observationObjectMatches(ch, item, name) {
-			return item, observationEquipment
-		}
-	}
-	return nil, observationNowhere
-}
-
-func observationObjectMatches(ch *Player, object *ObjectInstance, name string) bool {
-	return object != nil && chCanSeeObj(ch, object) && isnameWithAbbrevs(name, object.GetKeywords())
 }
 
 func findExtraDescription(name string, descriptions []parser.ExtraDesc) (string, bool) {

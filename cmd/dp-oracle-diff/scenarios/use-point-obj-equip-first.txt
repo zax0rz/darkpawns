@@ -1,0 +1,56 @@
+# depth-case: parser.use.wand-equip-first
+# DP-1518: mag_objectmagic (src/spell_parser.c:566) searches equipment before
+# inventory (src/handler.c:1537-1556). A held wand points at "ring" while a glow
+# ring is worn and a plain ring is carried; C targets the worn "a ring of holy
+# fire", old Go targeted the carried "a wedding band". The actor's "$P" line is
+# the witness (src/spell_parser.c:631-637).
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-obj 8053 1 8105 80
+spawn-obj 8007 1 8105 80
+spawn-obj 8077 1 8105 80
+force-load 8053
+force-load 8007
+force-load 8077
+
+[setup:oracle]
+Usepointequip
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Usepointequip
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+get wand
+hold wand
+get wedding
+get holy
+wear holy
+
+[probe]
+use wand ring
+~dpclock pulse 20
