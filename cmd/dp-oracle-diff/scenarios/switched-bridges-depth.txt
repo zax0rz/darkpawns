@@ -1,0 +1,60 @@
+# C-first switched bodies through the act.other Exec* bridges (DP-1516 remaining
+# half, found in PR #2474). After `switch horse`, C runs every command as the
+# mobile; the port ran it as the switching god. Each probe below is a player
+# command whose C NPC arm differs from the old god-run bytes:
+#  - display/prompt (src/act.other.c:1024): IS_NPC refusal, not Okay.
+#  - save (src/act.other.c:186): silent return, not "Saving ...".
+#  - split (src/act.other.c:823): silent return, not the gold refusal.
+#  - bug (src/act.other.c:1079): "Monsters can't have ideas - Go away.",
+#    not a file write + Okay.
+#  - brief (gen_tog, src/act.other.c:1142): silent return, not a toggle.
+# depth-case: display.switched-monster
+# depth-case: save.switched-monster
+# depth-case: split.switched-monster
+# depth-case: gen-write.switched-monster
+# depth-case: gen-tog.switched-monster
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Switchbridge
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchbridge
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+switch horse
+
+[probe]
+display on
+prompt all
+save
+split 10
+bug switched body text
+brief

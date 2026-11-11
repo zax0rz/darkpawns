@@ -9,3 +9,4 @@ do_gen_write	bug/typo/idea/todo	gen-write.success	D2	command	unit-green	TestDoGe
 do_gen_write	bug/typo/idea/todo	gen-write.record-format	D4	state	unit-green	TestDoGenWritePlayerRecordAndResponse	act.other.c:1108-1121; db.h:63-66	Focused file proof covers the C report record shape, room field, month/day slice, and doubled-dollar deletion.
 do_gen_write	bug	gen-write.entry-gates	D1	command	unit-green	TestDoGenWriteEntryGates	act.other.c:1086-1117	Unknown subcommands return silently and whitespace-only input reaches the common mistake message.
 do_gen_write	bug	gen-write.open-failure	D2	command	unit-green	TestDoGenWriteEntryGates	act.other.c:1123-1127	A report-file open failure emits C's exact apology and does not claim success.
+do_gen_write	bug	gen-write.switched-monster	D2	command	oracle-green	switched-bridges-depth@1	act.other.c:1106-1110	bug while switched into a mob prints "Monsters can't have ideas - Go away.", not a file write plus Okay (R1/R2/R5e/R5g/R5h).

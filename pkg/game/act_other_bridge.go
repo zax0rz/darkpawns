@@ -2,71 +2,93 @@ package game
 
 // ---------------------------------------------------------------------------
 // Exported wrappers — allow session-level access to unexported doXxx methods.
-// Each exported ExecXxx method delegates to the corresponding doXxx, passing
-// nil for the mob instance (since player sessions don't have one).
+// Each exported ExecXxx method delegates to the corresponding doXxx. The `me`
+// argument is the switched body when the session's descriptor rides a mobile
+// (pkg/session passes s.switchedMob, nil otherwise): C command_interpreter
+// runs every command as d->character, so a switched mobile answers as the
+// mobile (DP-1516's remaining half; the IS_NPC early-returns in the doXxx
+// bodies then give C's mob bytes instead of the owning player's).
 // ---------------------------------------------------------------------------
 
 // ExecSave saves the player's character data.
-func (w *World) ExecSave(ch *Player) { w.doSave(ch, nil, "save", "") }
+func (w *World) ExecSave(ch *Player, me *MobInstance) { w.doSave(ch, me, "save", "") }
 
 // ExecReport shows the player's report (group/health/move summary).
-func (w *World) ExecReport(ch *Player, arg string) { w.doReport(ch, nil, "report", arg) }
+func (w *World) ExecReport(ch *Player, me *MobInstance, arg string) {
+	w.doReport(ch, me, "report", arg)
+}
 
 // ExecSplit splits coins among a group.
-func (w *World) ExecSplit(ch *Player, arg string) { w.doSplit(ch, nil, "split", arg) }
+func (w *World) ExecSplit(ch *Player, me *MobInstance, arg string) { w.doSplit(ch, me, "split", arg) }
 
 // ExecWimpy sets the wimpy threshold.
-func (w *World) ExecWimpy(ch *Player, arg string) { w.doWimpy(ch, nil, "wimpy", arg) }
+func (w *World) ExecWimpy(ch *Player, me *MobInstance, arg string) { w.doWimpy(ch, me, "wimpy", arg) }
 
 // ExecDisplay sets display preferences.
-func (w *World) ExecDisplay(ch *Player, arg string) { w.doDisplay(ch, nil, "display", arg) }
+func (w *World) ExecDisplay(ch *Player, me *MobInstance, arg string) {
+	w.doDisplay(ch, me, "display", arg)
+}
 
 // ExecTransform transforms into an avatar form.
-func (w *World) ExecTransform(ch *Player, arg string) { w.doTransform(ch, nil, "transform", arg) }
+func (w *World) ExecTransform(ch *Player, me *MobInstance, arg string) {
+	w.doTransform(ch, me, "transform", arg)
+}
 
 // ExecRide mounts a rideable creature.
-func (w *World) ExecRide(ch *Player, arg string) { w.doRide(ch, nil, "ride", arg) }
+func (w *World) ExecRide(ch *Player, me *MobInstance, arg string) { w.doRide(ch, me, "ride", arg) }
 
 // ExecDismount dismounts from a ridden creature.
-func (w *World) ExecDismount(ch *Player, arg string) { w.doDismount(ch, nil, "dismount", arg) }
+func (w *World) ExecDismount(ch *Player, me *MobInstance, arg string) {
+	w.doDismount(ch, me, "dismount", arg)
+}
 
 // ExecYank yanks an item from a follower.
-func (w *World) ExecYank(ch *Player, arg string) { w.doYank(ch, nil, "yank", arg) }
+func (w *World) ExecYank(ch *Player, me *MobInstance, arg string) { w.doYank(ch, me, "yank", arg) }
 
 // ExecPeek looks inside a container or inventory.
-func (w *World) ExecPeek(ch *Player, arg string) { w.doPeek(ch, nil, "peek", arg) }
+func (w *World) ExecPeek(ch *Player, me *MobInstance, arg string) { w.doPeek(ch, me, "peek", arg) }
 
 // ExecRecall recalls to home/start location.
-func (w *World) ExecRecall(ch *Player, arg string) { w.doRecall(ch, nil, "recall", arg) }
+func (w *World) ExecRecall(ch *Player, me *MobInstance, arg string) {
+	w.doRecall(ch, me, "recall", arg)
+}
 
 // ExecAppraise estimates an item's value.
-func (w *World) ExecAppraise(ch *Player, arg string) { w.doAppraise(ch, nil, "appraise", arg) }
+func (w *World) ExecAppraise(ch *Player, me *MobInstance, arg string) {
+	w.doAppraise(ch, me, "appraise", arg)
+}
 
 // ExecScout scouts adjacent rooms.
-func (w *World) ExecScout(ch *Player, arg string) { w.doScout(ch, nil, "scout", arg) }
+func (w *World) ExecScout(ch *Player, me *MobInstance, arg string) { w.doScout(ch, me, "scout", arg) }
 
 // ExecRoll rolls dice (1-100 by default).
-func (w *World) ExecRoll(ch *Player, arg string) { w.doRoll(ch, nil, "roll", arg) }
+func (w *World) ExecRoll(ch *Player, me *MobInstance, arg string) { w.doRoll(ch, me, "roll", arg) }
 
 // ExecVisible makes the player visible.
-func (w *World) ExecVisible(ch *Player, arg string) { w.doVisible(ch, nil, "visible", arg) }
+func (w *World) ExecVisible(ch *Player, me *MobInstance, arg string) {
+	w.doVisible(ch, me, "visible", arg)
+}
 
 // ExecInactive toggles inactive/auto-away status.
-func (w *World) ExecInactive(ch *Player, arg string) { w.doInactive(ch, nil, "inactive", arg) }
+func (w *World) ExecInactive(ch *Player, me *MobInstance, arg string) {
+	w.doInactive(ch, me, "inactive", arg)
+}
 
 // ExecAFK toggles away-from-keyboard status.
-func (w *World) ExecAFK(ch *Player, arg string) { w.doAFK(ch, nil, "afk", arg) }
+func (w *World) ExecAFK(ch *Player, me *MobInstance, arg string) { w.doAFK(ch, me, "afk", arg) }
 
 // ExecAuto toggles auto-assist mode.
-func (w *World) ExecAuto(ch *Player, arg string) { w.doAuto(ch, nil, "auto", arg) }
+func (w *World) ExecAuto(ch *Player, me *MobInstance, arg string) { w.doAuto(ch, me, "auto", arg) }
 
 // ExecGenWrite writes a bug/typo/idea/todo report.
 // cmd should be "bug", "typo", "idea", or "todo".
-func (w *World) ExecGenWrite(ch *Player, cmd, arg string) { w.doGenWrite(ch, nil, cmd, arg) }
+func (w *World) ExecGenWrite(ch *Player, me *MobInstance, cmd, arg string) {
+	w.doGenWrite(ch, me, cmd, arg)
+}
 
 // ExecGenTog toggles a named player preference (brief, compact, notell,
 // etc.) — key is the real command name the player typed.
-func (w *World) ExecGenTog(ch *Player, key string) { w.doGenTog(ch, nil, key, "") }
+func (w *World) ExecGenTog(ch *Player, me *MobInstance, key string) { w.doGenTog(ch, me, key, "") }
 
 // RoomHasFlag reports whether the room at vnum has the named flag (e.g. "death", "no_recall").
 func (w *World) RoomHasFlag(vnum int, flag string) bool {
@@ -78,22 +100,34 @@ func (w *World) RoomHasFlag(vnum int, flag string) bool {
 }
 
 // ExecDrink drinks from a container or fountain.
-func (w *World) ExecDrink(ch *Player, arg string) { w.DoDrink(ch, nil, "drink", arg, scmdDrink) }
+func (w *World) ExecDrink(ch *Player, me *MobInstance, arg string) {
+	w.DoDrink(ch, me, "drink", arg, scmdDrink)
+}
 
 // ExecSip sips from a container or fountain.
-func (w *World) ExecSip(ch *Player, arg string) { w.DoDrink(ch, nil, "sip", arg, scmdSip) }
+func (w *World) ExecSip(ch *Player, me *MobInstance, arg string) {
+	w.DoDrink(ch, me, "sip", arg, scmdSip)
+}
 
 // ExecEat eats a food item.
-func (w *World) ExecEat(ch *Player, arg string) { w.DoEat(ch, nil, "eat", arg, scmdEat) }
+func (w *World) ExecEat(ch *Player, me *MobInstance, arg string) {
+	w.DoEat(ch, me, "eat", arg, scmdEat)
+}
 
 // ExecTaste tastes a food item (or sips a drink container).
-func (w *World) ExecTaste(ch *Player, arg string) { w.DoEat(ch, nil, "taste", arg, scmdTaste) }
+func (w *World) ExecTaste(ch *Player, me *MobInstance, arg string) {
+	w.DoEat(ch, me, "taste", arg, scmdTaste)
+}
 
 // ExecPour pours liquid between containers or out onto the ground.
-func (w *World) ExecPour(ch *Player, arg string) { w.DoPour(ch, nil, "pour", arg, scmdPour) }
+func (w *World) ExecPour(ch *Player, me *MobInstance, arg string) {
+	w.DoPour(ch, me, "pour", arg, scmdPour)
+}
 
 // ExecFill fills a container from a room fountain.
-func (w *World) ExecFill(ch *Player, arg string) { w.DoPour(ch, nil, "fill", arg, scmdFill) }
+func (w *World) ExecFill(ch *Player, me *MobInstance, arg string) {
+	w.DoPour(ch, me, "fill", arg, scmdFill)
+}
 
 // ExecInsult delivers a randomized insult to a named target in the room.
 func (w *World) ExecInsult(ch *Player, arg string) { DoInsult(w, ch, arg) }

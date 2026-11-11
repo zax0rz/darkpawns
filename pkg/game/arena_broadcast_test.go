@@ -108,8 +108,8 @@ func TestArenaActSleepWritingAndFullText(t *testing.T) {
 
 func TestArenaActNoBroadcastToggle(t *testing.T) {
 	w, actor, local, remote, out := arenaBroadcastWorld(t)
-	w.ExecGenTog(remote, "nobroadcast")
-	w.ExecGenTog(local, "nobroadcast")
+	w.ExecGenTog(remote, nil, "nobroadcast")
+	w.ExecGenTog(local, nil, "nobroadcast")
 	out[local.Name].Reset()
 	if remote.GetFlags()&(1<<uint(PrfNoBroad)) == 0 || remote.GetNoBroadcast() {
 		t.Fatal("toggle representation changed")
@@ -122,7 +122,7 @@ func TestArenaActNoBroadcastToggle(t *testing.T) {
 	if got := outputOf(out, local.Name); got != "Actor waves.\r\n" {
 		t.Fatalf("local NOBROAD normal act=%q", got)
 	}
-	w.ExecGenTog(remote, "nobroadcast")
+	w.ExecGenTog(remote, nil, "nobroadcast")
 	out[remote.Name].Reset()
 	remote.SetNoBroadcast(true) // Legacy bool is not what the live toggle writes.
 	Act(w, false, actor, nil, nil, nil, "$n waves.", "", ToRoom)

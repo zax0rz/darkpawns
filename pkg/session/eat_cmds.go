@@ -12,26 +12,26 @@ import (
 // cmdEat implements the eat command.
 // Source: src/act.item.c ACMD(do_eat)
 func cmdEat(s *Session, args []string) error {
-	s.manager.world.ExecEat(s.player, strings.Join(args, " "))
+	s.manager.world.ExecEat(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdTaste implements the taste command — src/act.item.c ACMD(do_eat) SCMD_TASTE.
 func cmdTaste(s *Session, args []string) error {
-	s.manager.world.ExecTaste(s.player, strings.Join(args, " "))
+	s.manager.world.ExecTaste(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdDrink implements the drink command.
 // Source: src/act.item.c ACMD(do_drink)
 func cmdDrink(s *Session, args []string) error {
-	s.manager.world.ExecDrink(s.player, strings.Join(args, " "))
+	s.manager.world.ExecDrink(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdSip implements the sip command — src/act.item.c ACMD(do_drink) SCMD_SIP.
 func cmdSip(s *Session, args []string) error {
-	s.manager.world.ExecSip(s.player, strings.Join(args, " "))
+	s.manager.world.ExecSip(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 

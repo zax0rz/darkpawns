@@ -19,12 +19,12 @@ func TestDoInactiveToggleState(t *testing.T) {
 		t.Fatalf("AddPlayer: %v", err)
 	}
 
-	w.ExecInactive(player, "ignored argument")
+	w.ExecInactive(player, nil, "ignored argument")
 	if player.GetFlags()&(1<<PrfInactive) == 0 {
 		t.Fatal("enabling inactive did not set the C preference bit")
 	}
 
-	w.ExecInactive(player, "ignored argument")
+	w.ExecInactive(player, nil, "ignored argument")
 	if player.GetFlags()&(1<<PrfInactive) != 0 {
 		t.Fatal("disabling inactive did not clear the C preference bit")
 	}

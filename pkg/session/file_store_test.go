@@ -74,7 +74,7 @@ func TestSaveSQLiteLeavesLegacyJSONUntouched(t *testing.T) {
 		t.Fatal(err)
 	}
 	e.s.player.Gold = 777
-	e.world.ExecSave(e.s.player)
+	e.world.ExecSave(e.s.player, nil)
 	r, err := e.store.GetPlayer("Recoverer")
 	if err != nil {
 		t.Fatal(err)

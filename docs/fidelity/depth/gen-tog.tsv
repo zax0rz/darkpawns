@@ -29,3 +29,4 @@ do_gen_tog	ident	gen-tog.ident-state	D4	state	unit-green	TestDoGenTogGlobalAdmin
 do_gen_tog	slowns	gen-tog.slowns-state	D4	state	unit-green	TestDoGenTogGlobalAdminToggles	act.other.c:1251-1252; config.c:202	The nameserver process-global switch is toggled in both directions with C's exact messages.
 do_gen_tog	noctell	gen-tog.clan-gate-state	D2	state	unit-green	TestDoGenTogNoCTellClanGate	act.other.c:1194-1198	The clanless early return leaves PRF_NOCTELL unchanged.
 do_gen_tog	nowiz	gen-tog.nowiz-internal-gate	D2	state	unit-green	TestDoGenTogImmortalGated	act.other.c:1200-1204	The direct handler defense rejects an unchosen mortal with Huh?!? before toggling.
+do_gen_tog	brief	gen-tog.switched-monster	D2	command	oracle-green	switched-bridges-depth@1	act.other.c:1191-1194	brief while switched into a mob returns silently (IS_NPC), and the god's PRF_BRIEF is not toggled (R1/R2/R5e/R5g/R5h).

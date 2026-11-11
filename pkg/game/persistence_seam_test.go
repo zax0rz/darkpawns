@@ -57,7 +57,7 @@ func TestDoSaveWritesStoreOfRecordWithNowhere(t *testing.T) {
 		rec := &seamRecorder{result: SaveSucceeded}
 		w, p := newSeamWorld(t, rec)
 
-		w.ExecSave(p)
+		w.ExecSave(p, nil)
 
 		if len(rec.calls) != 1 || rec.calls[0] != "save" {
 			t.Fatalf("seam calls = %v, want one save", rec.calls)
@@ -71,7 +71,7 @@ func TestDoSaveWritesStoreOfRecordWithNowhere(t *testing.T) {
 		w, p := newSeamWorld(t, rec)
 		p.SetLinkless(true)
 
-		w.ExecSave(p)
+		w.ExecSave(p, nil)
 
 		if len(rec.calls) != 0 {
 			t.Fatalf("link-dead save produced seam calls %v", rec.calls)

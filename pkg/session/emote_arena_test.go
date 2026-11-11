@@ -36,7 +36,7 @@ func TestEmoteCommandArenaBroadcast(t *testing.T) {
 	if got := renderedOutput(actor); got != "Actor waves.\r\n" {
 		t.Fatalf("actor output = %q", got)
 	}
-	m.world.ExecGenTog(remote.player, "nobroadcast")
+	m.world.ExecGenTog(remote.player, nil, "nobroadcast")
 	renderedOutput(remote)
 	emote()
 	if got := renderedOutput(remote); got != "" {
@@ -44,7 +44,7 @@ func TestEmoteCommandArenaBroadcast(t *testing.T) {
 	}
 	renderedOutput(local)
 	renderedOutput(actor)
-	m.world.ExecGenTog(remote.player, "nobroadcast")
+	m.world.ExecGenTog(remote.player, nil, "nobroadcast")
 	renderedOutput(remote)
 	remote.player.SetPosition(game.PosSleeping)
 	actor.player.SetPlrFlag(game.PrfNoRepeat, true)
