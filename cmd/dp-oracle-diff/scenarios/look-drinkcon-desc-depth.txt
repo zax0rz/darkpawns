@@ -1,0 +1,45 @@
+# depth-case: look.drinkcon-no-description
+# C show_obj_to_char mode 5 (src/act.informative.c:121-122): an object with no
+# extra description and no long description falls through to the type test, and
+# an ITEM_DRINKCON reports "It looks like a drink container.". The empty silver
+# goblet (12103) carries vals 1 0 0 0 and both its file and the room are loaded.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 12103 1 8162 48
+
+[setup:oracle]
+Desclooker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Desclooker
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+get goblet
+
+[probe]
+look goblet

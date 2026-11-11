@@ -1,0 +1,55 @@
+# depth-case: look-in.murky-contents
+# C look_in_obj (src/act.informative.c:969-971): a drink container whose
+# capacity (val0) is smaller than its contents (val1) reports murky contents.
+# No shipped prototype has that state, so an immortal builds it through OLC:
+# oedit 12103, D (which zeroes the four values), then 1 max unit and 5 current
+# units. The D key writes val0 (src/oedit.c:1272-1277) and the next prompt
+# writes val1, so the edit is the same pair the handler reads.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Murkybuilder
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Murkybuilder
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+oedit 12103
+D
+1
+5
+3
+0
+q
+y
+load obj 12103
+get goblet
+look in goblet
