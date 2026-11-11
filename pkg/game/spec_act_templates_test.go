@@ -88,7 +88,7 @@ func TestMpSoundRendersSayLineThroughAct(t *testing.T) {
 	w := newActTemplateWorld(1001)
 	observer := addCapturedPlayer(t, w, "Pracobserver", 1001)
 	petitioner := NewMob(&parser.Mob{VNum: 8066, Keywords: "petitioner", ShortDesc: "a petitioner", Int: 11, Wis: 11}, 1001)
-	forceMobProgDraw(t, 0) // case 8066 arm 1
+	forceMobProgDraw(t, 1) // C's truthy number(0,1) selects case 8066 arm 1
 
 	w.MpSound(petitioner)
 
@@ -105,7 +105,7 @@ func TestMpSoundRendersEmoteLineThroughAct(t *testing.T) {
 	w := newActTemplateWorld(1001)
 	observer := addCapturedPlayer(t, w, "Pracobserver", 1001)
 	carpenter := NewMob(&parser.Mob{VNum: 8067, Keywords: "carpenter", ShortDesc: "a carpenter", Int: 11, Wis: 11}, 1001)
-	forceMobProgDraw(t, 0) // case 8067 arm 1
+	forceMobProgDraw(t, 1) // C's truthy number(0,1) selects case 8067 arm 1
 
 	w.MpSound(carpenter)
 

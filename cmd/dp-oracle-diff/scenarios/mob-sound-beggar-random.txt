@@ -1,0 +1,44 @@
+# depth-case: mob.mp-sound-beggar-arms
+# C src/mobprog.c:554-563 chooses the first sound on nonzero number(0,1).
+# One spawned mobile is the only ambient sound source in a sealed room.
+# Two 2,000-pulse windows sample the gate; seeds 1,2,3,5,8 reach both 50/50 lines.
+# The live pulse gate is mobile_activity in src/mobact.c:143-147.
+
+[fixture]
+quiet-mobs
+replace-room-exits 8162 none
+spawn-mob 8071 1 8162 80
+
+[setup:oracle]
+Sounprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sounprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[probe]
+look
+~dpclock pulse 2000
+~dpclock pulse 2000
+look

@@ -416,11 +416,12 @@ func (w *World) MpSound(mob *MobInstance) {
 	sound := ""
 	useSay := false
 
+	// C's `if (number(0, 1))` selects the first arm for any nonzero result.
 	switch mob.GetVNum() {
 	case 8066:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if mobProgNumber(0, 1) == 0 {
+		if mobProgNumber(0, 1) != 0 {
 			sound = "Sign this, please! There's too much violence!"
 		} else {
 			sound = "You look like a kind person.. sign this petition?"
@@ -429,7 +430,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 8067:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if mobProgNumber(0, 1) == 0 {
+		if mobProgNumber(0, 1) != 0 {
 			sound = "adjusts his tool belt."
 		} else {
 			sound = "wipes the sweat of labor from his brow."
@@ -438,7 +439,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 8068:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if mobProgNumber(0, 1) == 0 {
+		if mobProgNumber(0, 1) != 0 {
 			sound = "Arch Bishop Dinive to arrive on the Day of Winter Dawning!"
 		} else {
 			sound = "By mandate of the church, no violence in town! The penalty is jail time!"
@@ -450,7 +451,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 8071:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if mobProgNumber(0, 1) == 0 {
+		if mobProgNumber(0, 1) != 0 {
 			sound = "Spare a coin, buddy?"
 			useSay = true
 		} else {
@@ -463,7 +464,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 8074:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if mobProgNumber(0, 1) == 0 {
+		if mobProgNumber(0, 1) != 0 {
 			sound = "plays a lilting tune about your mother's beauty."
 		} else {
 			sound = "sings a melody about your conquests in battle."
@@ -486,7 +487,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 16300:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if mobProgNumber(0, 1) == 0 {
+		if mobProgNumber(0, 1) != 0 {
 			sound = "smiles at you."
 		} else {
 			sound = "shuffles some papers around on his desk."
