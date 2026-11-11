@@ -21,8 +21,8 @@ func teleportRefusalWorld(t *testing.T) (*World, *MobInstance, *MobInstance, *st
 	// Spawn through the world so the bodies carry their world reference —
 	// MobInstance.SendMessage's switched-descriptor routing needs it.
 	for _, proto := range []*parser.Mob{
-		{VNum: 3001, Keywords: "gil", ShortDesc: "Gil", Level: 30},
-		{VNum: 3002, Keywords: "stalker", ShortDesc: "a stalker", Level: 30},
+		{VNum: 3001, Keywords: "gil", ShortDesc: "Gil", Level: 30, HP: parser.DiceRoll{Plus: 100}},
+		{VNum: 3002, Keywords: "stalker", ShortDesc: "a stalker", Level: 30, HP: parser.DiceRoll{Plus: 100}},
 	} {
 		w.mu.Lock()
 		w.mobs[proto.VNum] = proto
@@ -152,7 +152,7 @@ func TestCanSeeIgnoresAFFHide(t *testing.T) {
 	if err := w.AddPlayer(observer); err != nil {
 		t.Fatal(err)
 	}
-	mob := NewMob(&parser.Mob{VNum: 3001, Keywords: "stalker", ShortDesc: "a stalker"}, 1001)
+	mob := NewMob(&parser.Mob{VNum: 3001, Keywords: "stalker", ShortDesc: "a stalker", HP: parser.DiceRoll{Plus: 100}}, 1001)
 	mob.SetAffected(affHide)
 	w.mu.Lock()
 	w.activeMobs[mob.GetID()] = mob
@@ -175,7 +175,7 @@ func TestCanSeeIgnoresAFFHide(t *testing.T) {
 func TestNPCSocialCharLineReachesSwitchedBody(t *testing.T) {
 	w, _ := newActorRoomTestWorld(t, parser.Room{VNum: 1001, Name: "Pit"})
 	w.mu.Lock()
-	w.mobs[3001] = &parser.Mob{VNum: 3001, Keywords: "gil", ShortDesc: "Gil", Level: 30}
+	w.mobs[3001] = &parser.Mob{VNum: 3001, Keywords: "gil", ShortDesc: "Gil", Level: 30, HP: parser.DiceRoll{Plus: 100}}
 	w.mu.Unlock()
 	mob, err := w.SpawnMob(3001, 1001)
 	if err != nil {
@@ -207,7 +207,7 @@ func TestNPCSocialCharLineReachesSwitchedBody(t *testing.T) {
 func TestMobSendMessageSilentWithoutDescriptor(t *testing.T) {
 	w, _ := newActorRoomTestWorld(t, parser.Room{VNum: 1001, Name: "Pit"})
 	w.mu.Lock()
-	w.mobs[3001] = &parser.Mob{VNum: 3001, Keywords: "gil", ShortDesc: "Gil", Level: 30}
+	w.mobs[3001] = &parser.Mob{VNum: 3001, Keywords: "gil", ShortDesc: "Gil", Level: 30, HP: parser.DiceRoll{Plus: 100}}
 	w.mu.Unlock()
 	mob, err := w.SpawnMob(3001, 1001)
 	if err != nil {

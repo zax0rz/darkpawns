@@ -238,7 +238,7 @@ func TestCombatBodyConcurrentRetirement(t *testing.T) {
 }
 
 func TestCombatBodyTeleportDuplicate(t *testing.T) {
-	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001}, {VNum: 1002}}, Mobs: []parser.Mob{{VNum: 300, Keywords: "guard", ShortDesc: "Guard", Level: 20}}})
+	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001}, {VNum: 1002}}, Mobs: []parser.Mob{{VNum: 300, Keywords: "guard", ShortDesc: "Guard", Level: 20, HP: parser.DiceRoll{Plus: 100}}}})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -14,7 +14,7 @@ import (
 
 func zoneArmedMob(t *testing.T) (*World, *MobInstance, *Player) {
 	t.Helper()
-	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 100}}, Mobs: []parser.Mob{{VNum: 300, Keywords: "guard", ShortDesc: "a guard", Level: 30, Position: 8, DefaultPos: 8, Str: 11, Dex: 11, Int: 11, Wis: 11, Con: 11, Cha: 11, AC: 100}}, Objs: []parser.Obj{
+	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 100}}, Mobs: []parser.Mob{{VNum: 300, Keywords: "guard", ShortDesc: "a guard", Level: 30, Position: 8, DefaultPos: 8, Str: 11, Dex: 11, Int: 11, Wis: 11, Con: 11, Cha: 11, AC: 100, HP: parser.DiceRoll{Plus: 100}}}, Objs: []parser.Obj{
 		{VNum: 200, Keywords: "sword", ShortDesc: "a sword", TypeFlag: ITEM_WEAPON, Values: [4]int{0, 2, 4, 3}, ExtraFlags: [4]int{1 << itemExtraBless}, WearFlags: [4]int{1 << 13}, LoadPercent: 100},
 		{VNum: 201, Keywords: "armor", TypeFlag: ITEM_ARMOR, Values: [4]int{10}, LoadPercent: 100},
 		{VNum: 202, Keywords: "lamp", TypeFlag: ITEM_LIGHT, Values: [4]int{0, 0, -1}, LoadPercent: 100},

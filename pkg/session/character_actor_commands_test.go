@@ -27,7 +27,7 @@ func newActorPositionFixture(t *testing.T, position int) *actorPositionFixture {
 		Rooms: []parser.Room{{VNum: 1000, Name: "Void"}, {VNum: 1001, Name: "Hall"}},
 		Mobs: []parser.Mob{{
 			VNum: 99001, Keywords: "guard trainee", ShortDesc: "a guard trainee",
-			Sex: 0, Position: position, DefaultPos: combat.PosStanding,
+			Sex: 0, Position: position, DefaultPos: combat.PosStanding, HP: parser.DiceRoll{Plus: 100},
 			// C parse_simple_mob seeds INT/WIS 11 (src/db.c:1034-1035);
 			// a literal that leaves them 0 is silenced by do_say.
 			Int: 11, Wis: 11,
@@ -261,7 +261,7 @@ func TestNPCSharedExecutorWalksCOrderedSpecialStages(t *testing.T) {
 	parsed := &parser.World{
 		Rooms: []parser.Room{{VNum: 1001, Name: "Order Hall"}},
 		Mobs: []parser.Mob{
-			{VNum: actorVNum, Keywords: "actor", ShortDesc: "an actor", Position: combat.PosStanding},
+			{VNum: actorVNum, Keywords: "actor", ShortDesc: "an actor", Position: combat.PosStanding, HP: parser.DiceRoll{Plus: 100}},
 			{VNum: peerVNum, Keywords: "peer", ShortDesc: "a peer", Position: combat.PosStanding},
 		},
 		Objs: []parser.Obj{

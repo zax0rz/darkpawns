@@ -27,7 +27,7 @@ func newTestWorld(t *testing.T) (*World, *Player) {
 			{VNum: 1001, Name: "Test Room", Zone: 1},
 		},
 		Mobs: []parser.Mob{
-			{VNum: 2001},
+			{VNum: 2001, HP: parser.DiceRoll{Plus: 100}},
 		},
 		Objs: []parser.Obj{
 			{

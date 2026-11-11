@@ -18,8 +18,8 @@ func newWerewolfWorld(t *testing.T) *World {
 	w, err := NewWorld(&parser.World{
 		Rooms: []parser.Room{{VNum: 1001, Name: "Forest", Zone: 1}},
 		Mobs: []parser.Mob{
-			{VNum: 1, ShortDesc: "a werewolf", Keywords: "werewolf", Level: 11, Exp: 0},
-			{VNum: 2, ShortDesc: "a victim", Keywords: "victim", Level: 1, Exp: 100},
+			{VNum: 1, ShortDesc: "a werewolf", Keywords: "werewolf", Level: 11, Exp: 0, HP: parser.DiceRoll{Plus: 100}},
+			{VNum: 2, ShortDesc: "a victim", Keywords: "victim", Level: 1, Exp: 100, HP: parser.DiceRoll{Plus: 100}},
 		},
 	})
 	if err != nil {
