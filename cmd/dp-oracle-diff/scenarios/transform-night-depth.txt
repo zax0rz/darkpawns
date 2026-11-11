@@ -1,0 +1,76 @@
+# depth-case: transform.night-already-werewolf
+# C do_transform (src/act.other.c:1422-1476) at SUN_DARK: the first call
+# transforms, the second reaches "You can't change back until morning!".
+# The engine calendar is pinned to hour 22 (dark) for both servers; the god
+# inflicts lycanthropy on the peer, which sets PLR_WEREWOLF
+# (src/spells.c:678).
+
+[fixture]
+fixed-time 1771068861
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Lycgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lycgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Lycpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Lycpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Lycpeer 8162
+cast 'lycanthropy' Lycpeer
+
+[probe]
+send:peer transform
+send:peer transform
