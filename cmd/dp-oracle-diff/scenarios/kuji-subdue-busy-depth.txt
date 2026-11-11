@@ -1,0 +1,94 @@
+# depth-case: kuji.too-busy-fighting
+# depth-case: subdue.busy
+# C-first vehicle: BusyFightGod initiates ordinary combat against a level-11
+# Ninja, above C's low-level player-attack protection. While fighting, the
+# Ninja headbutts the connected immortal; C's early god-target branch sets
+# POS_SITTING without WAIT_STATE. The ordinary stand command then sets
+# POS_STANDING while preserving FIGHTING, and rin/subdue reach both body gates.
+# No harness directive writes combat or position state during the probe.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+BusyFightGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BusyFightGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+BusyFightNinja
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+BusyFightNinja
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player BusyFightNinja class ninja
+set player BusyFightNinja level 11
+set player BusyFightNinja maxhit 5000
+set player BusyFightNinja hit 5000
+skillset BusyFightNinja 'headbutt' 1
+skillset BusyFightNinja 'kuji-kiri rin' 100
+skillset BusyFightNinja 'subdue' 100
+goto 8105
+
+[probe]
+hit BusyFightNinja
+send:mortal headbutt BusyFightGod
+send:mortal stand
+send:mortal rin
+send:mortal subdue trainee
