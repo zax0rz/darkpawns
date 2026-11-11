@@ -123,35 +123,6 @@ func TestDoYank_Sleeping(t *testing.T) {
 	}
 }
 
-// --- Branch: success (the 3 act() lines + POS_STANDING, pronoun expansion) ---
-func TestDoYank_Success(t *testing.T) {
-	w, leader, out := yankTestWorld(t)
-	f := addYankFollower(t, w, leader, "Follower", combat.PosSitting)
-
-	w.ExecYank(leader, "Follower")
-
-	// Actor message: "You yank $M to $S feet." → male: "You yank him to his feet."
-	// (The room broadcast also reaches the leader via the sink; assert the
-	// actor's TO_CHAR line is present with correct pronoun expansion.)
-	got := out.String()
-	if want := "You yank him to his feet.\r\n"; !strings.Contains(got, want) {
-		t.Errorf("success actor msg missing %q in %q ($M/$S pronoun expansion)", want, got)
-	}
-	// Victim message: "$n yanks you to your feet." → "$n" = actor name.
-	if want := "Leader yanks you to your feet.\r\n"; !strings.Contains(got, want) {
-		t.Errorf("success victim msg missing %q in %q", want, got)
-	}
-	// Room message: "$n yanks $N to $S feet." → "$n" = Leader, "$N" = Follower,
-	// "$S" = his.
-	if want := "Leader yanks Follower to his feet.\r\n"; !strings.Contains(got, want) {
-		t.Errorf("success room msg missing %q in %q", want, got)
-	}
-	// Victim is now standing.
-	if got := f.GetPosition(); got != combat.PosStanding {
-		t.Errorf("victim position = %d, want POS_STANDING (%d)", got, combat.PosStanding)
-	}
-}
-
 // --- Branch: success with a female follower (pronoun expansion she/her) ---
 func TestDoYank_Success_FemalePronouns(t *testing.T) {
 	w, leader, out := yankTestWorld(t)
@@ -174,5 +145,50 @@ func TestDoYank_RestingFollowerIsYankable(t *testing.T) {
 	w.ExecYank(leader, "Follower")
 	if got := f.GetPosition(); got != combat.PosStanding {
 		t.Errorf("resting follower should be yankable → POS_STANDING, got pos %d", got)
+	}
+}
+
+// C's success room line (src/act.other.c:1658) is TO_NOTVICT, which excludes the
+// actor AND the victim. The victim must see only their TO_VICT line; a third
+// occupant sees the room line. Revert proof: the old actToRoom(..., ch.Name)
+// arm delivered the room line to the victim too.
+func TestDoYank_SuccessRoomLineSkipsVictim(t *testing.T) {
+	w := &World{}
+	msgs := map[string]*strings.Builder{}
+	w.MessageSink = func(name string, msg []byte) {
+		if msgs[name] == nil {
+			msgs[name] = &strings.Builder{}
+		}
+		msgs[name].Write(msg)
+	}
+	w.players = make(map[string]*Player)
+
+	leader := NewPlayer(1, "Leader", 1001)
+	leader.worldRef = w
+	w.AddPlayer(leader)
+	victim := NewPlayer(2, "Follower", 1001)
+	victim.worldRef = w
+	victim.SetFollowing(leader.Name)
+	victim.SetPosition(combat.PosSitting)
+	w.AddPlayer(victim)
+	observer := NewPlayer(3, "Watcher", 1001)
+	observer.worldRef = w
+	w.AddPlayer(observer)
+
+	w.ExecYank(leader, "Follower")
+
+	victimOut := msgs["Follower"].String()
+	if !strings.Contains(victimOut, "Leader yanks you to your feet.\r\n") {
+		t.Fatalf("victim missing TO_VICT line: %q", victimOut)
+	}
+	if strings.Contains(victimOut, "Leader yanks Follower to his feet.") {
+		t.Fatalf("victim received the TO_NOTVICT room line: %q", victimOut)
+	}
+	if obsOut := msgs["Watcher"].String(); !strings.Contains(obsOut, "Leader yanks Follower to his feet.\r\n") {
+		t.Fatalf("observer missing TO_NOTVICT room line: %q", obsOut)
+	}
+	// The success arm still stands the victim (act.other.c:1659).
+	if got := victim.GetPosition(); got != combat.PosStanding {
+		t.Fatalf("victim position = %d, want POS_STANDING (%d)", got, combat.PosStanding)
 	}
 }
