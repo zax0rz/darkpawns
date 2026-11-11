@@ -1,0 +1,103 @@
+# C do_ungroup disband arm (src/act.other.c:753-765). A leader with a grouped,
+# non-charmed mortal follower and no argument disbands the group; the pushed
+# line reaches the follower's descriptor, so the follower lane carries it.
+
+# depth-case: ungroup.disband-follower
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Ungroupgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ungroupgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:leader]
+Disbandleader
+Y
+leadpass
+leadpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:leader]
+Disbandleader
+y
+leadpass
+leadpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:follower]
+Disbandfollow
+Y
+followpass
+followpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:follower]
+Disbandfollow
+y
+followpass
+followpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Disbandleader 8162
+teleport Disbandfollow 8162
+send:follower follow Disbandleader
+send:leader group all
+
+[probe:leader]
+ungroup

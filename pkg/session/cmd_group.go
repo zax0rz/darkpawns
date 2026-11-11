@@ -137,9 +137,16 @@ func cmdUngroup(s *Session, args []string) error {
 			if m.Name == s.player.Name {
 				continue
 			}
+			// C clears AFF_GROUP and sends the disband line before it calls
+			// stop_follower, and calls stop_follower only for a non-charmed
+			// follower (src/act.other.c:757-765). Clearing the follow link
+			// silently dropped stop_follower's three player-facing lines
+			// (src/utils.c:419-426).
 			m.InGroup = false
-			m.SetFollowing("") // stop_follower — act.other.c line 764
 			m.SendMessage(disbandMsg)
+			if !m.IsAffected(game.AffCharm) {
+				game.StopFollower(s.manager.world, m)
+			}
 		}
 		s.player.InGroup = false
 		s.sendText("You disband the group.")

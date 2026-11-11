@@ -1,0 +1,74 @@
+# C do_title PLR_NOTITLE arm. do_wizutil's SCMD_NOTITLE toggle
+# (src/act.wizard.c:2123-2131) flags the peer, whose next title attempt is then
+# refused at src/act.other.c:603-605 before any parenthesis or length gate.
+
+# depth-case: title.notitle-flag
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Bylinegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bylinegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Bylinepeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Bylinepeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Bylinepeer 8162
+
+[probe]
+send:peer title Squire
+notitle Bylinepeer
+send:peer title Hackerman
