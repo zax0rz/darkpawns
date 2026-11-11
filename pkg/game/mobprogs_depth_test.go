@@ -105,14 +105,14 @@ func TestMpBribeDispatchRendersCBranches(t *testing.T) {
 		},
 		{
 			name: "cell bribe too small", vnum: 8088, amount: 50, keyword: "jailer",
-			wantPlayer:     []string{"not quite enough cash", "grins evilly"},
-			wantObserver:   []string{"against the law you\r\nknow...", "not quite enough cash", "grins evilly"},
+			wantPlayer:     []string{"not quite enough cash, either.'\r\n\r\n", "grins evilly"},
+			wantObserver:   []string{"against the law you\r\nknow...'\r\n\r\n", "not quite enough cash, either.'\r\n\r\n", "grins evilly"},
 			wantPlayerGold: 1000, wantMobGold: 450, wantRoom: 1001,
 		},
 		{
 			name: "cell bribe ejects", vnum: 8088, amount: 100, keyword: "jailer",
-			wantPlayer:     []string{"Okay.", "Thank you very much, monsieur.", "Now get outta here!", "The jailer throws you out of the cell!"},
-			wantObserver:   []string{"gives a small pile of gold coins to the jailer.", "Thank you very much, monsieur.", "Now get outta here!", "The jailer throws Briber out of the cell!"},
+			wantPlayer:     []string{"Okay.", "Thank you very much, monsieur.'\r\n\r\n", "Now get outta here!'\r\n\r\n", "The jailer throws you out of the cell!"},
+			wantObserver:   []string{"gives a small pile of gold coins to the jailer.", "Thank you very much, monsieur.'\r\n\r\n", "Now get outta here!'\r\n\r\n", "The jailer throws Briber out of the cell!"},
 			wantPlayerGold: 900, wantMobGold: 400, wantRoom: 8117,
 		},
 		{
@@ -135,7 +135,7 @@ func TestMpBribeDispatchRendersCBranches(t *testing.T) {
 		},
 		{
 			name: "prostitute entertains", vnum: 8023, amount: 5, keyword: "prostitute", spec: "prostitute",
-			wantPlayer:     []string{"Okay.", "pulls you into the shadows", "A few coins lighter"},
+			wantPlayer:     []string{"Okay.", "pulls you into the shadows, and gives you a lot more than you\r\nexpected for your money.\r\n", "A few coins lighter"},
 			wantObserver:   []string{"to the prostitute.", "pulls Briber into the shadows"},
 			wantPlayerGold: 995, wantMobGold: 500, wantRoom: 1001,
 		},

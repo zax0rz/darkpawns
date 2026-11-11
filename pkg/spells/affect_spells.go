@@ -2147,13 +2147,13 @@ func castSilkenMissile(level int, ch, ovict interface{}, world interface{}) {
 	type typeFlagger interface{ GetTypeFlag() int }
 	tf, ok := ovict.(typeFlagger)
 	if !ok {
-		sendToCaster(ch, "You can't make anything useful from that.\r\n")
+		sendSpellActToCaster("You can't make anything useful from $p.\r\n", ch, nil, ovict, world)
 		return
 	}
 
 	objType := tf.GetTypeFlag()
 	if objType != 11 && objType != 9 { // ITEM_WORN=11, ITEM_ARMOR=9
-		sendToCaster(ch, "You can't make anything useful from that.\r\n")
+		sendSpellActToCaster("You can't make anything useful from $p.\r\n", ch, nil, ovict, world)
 		return
 	}
 

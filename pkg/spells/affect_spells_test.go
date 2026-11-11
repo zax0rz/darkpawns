@@ -111,6 +111,25 @@ func TestMagAffects_ChillTouch(t *testing.T) {
 	}
 }
 
+type silkenMissileTestObject struct {
+	typ int
+}
+
+func (o silkenMissileTestObject) GetTypeFlag() int   { return o.typ }
+func (silkenMissileTestObject) GetShortDesc() string { return "a test object" }
+
+// C's TO_CHAR act() supplies another CRLF after the string's terminator
+// (src/spells.c:890-895).
+func TestSilkenMissileUnusableObjectUsesCActTerminator(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster"}
+	castSilkenMissile(10, caster, silkenMissileTestObject{typ: 17}, nil)
+
+	const want = "You can't make anything useful from a test object.\r\n\r\n"
+	if got := strings.Join(caster.messages, ""); got != want {
+		t.Fatalf("caster output bytes = %q, want %q", got, want)
+	}
+}
+
 type summonTestObject struct {
 	vnum  int
 	timer int

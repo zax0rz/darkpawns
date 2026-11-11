@@ -182,6 +182,101 @@ func TestSpecProc_SmokeAll(t *testing.T) {
 	}
 }
 
+func TestSpecCouchActPreservesCLineBreakBytes(t *testing.T) {
+	// C's act() string ends in LFCR before perform_act adds CRLF
+	// (src/spec_procs2.c:302-305).
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Pillow Room", Zone: 1},
+			{VNum: mimicRoomVnum, Name: "Mimic Home", Zone: 1},
+		},
+		Objs: []parser.Obj{{VNum: 3002, Keywords: "couch", ShortDesc: "a worn couch"}},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+	actor := NewPlayer(1, "Couchlook", 1001)
+	observer := NewPlayer(2, "Couchwatch", 1001)
+	if err := w.AddPlayer(actor); err != nil {
+		t.Fatalf("AddPlayer actor: %v", err)
+	}
+	if err := w.AddPlayer(observer); err != nil {
+		t.Fatalf("AddPlayer observer: %v", err)
+	}
+	couch, err := w.SpawnObject(3002, 1001)
+	if err != nil {
+		t.Fatalf("SpawnObject couch: %v", err)
+	}
+	w.AddItemToRoom(couch, 1001)
+	proc := newSpecProcTestMob(t, w, 1001, 10)
+	mimic := newSpecProcTestMob(t, w, mimicRoomVnum, 10)
+	messages := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
+
+	if !specCouch(w, actor, proc, "look", "couch") {
+		t.Fatal("specCouch did not handle the couch")
+	}
+	const roomBytes = "Starved and needing food to make more pillows, the mimic attacks!\n\r\r\n"
+	if got := messages[observer.Name]; !strings.HasPrefix(got, roomBytes) {
+		t.Fatalf("observer output bytes = %q, want prefix %q", got, roomBytes)
+	}
+	const actorBytes = "Starved and needing food to make more pillows, the mimic attacks you!\n\r\n\r"
+	if got := messages[actor.Name]; !strings.HasPrefix(got, actorBytes) {
+		t.Fatalf("actor output bytes = %q, want prefix %q", got, actorBytes)
+	}
+	if got := mimic.GetRoomVNum(); got != actor.GetRoomVNum() {
+		t.Fatalf("mimic room = %d, want actor room %d", got, actor.GetRoomVNum())
+	}
+}
+
+func TestSpecItohActPreservesCLineBreakBytesAndAudience(t *testing.T) {
+	// The itoh special's room acts begin and end with CRLFs, then act() adds
+	// another CRLF (src/spec_procs3.c:583-605).
+	w, err := NewWorld(&parser.World{Rooms: []parser.Room{
+		{VNum: 1001, Name: "Origin", Zone: 1},
+		{VNum: 19875, Name: "Destination", Zone: 1},
+	}})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+	actor := NewPlayer(1, "Itohactor", 1001)
+	awake := NewPlayer(2, "Itohawake", 1001)
+	sleeper := NewPlayer(3, "Itohsleeper", 1001)
+	sleeper.SetPosition(combat.PosSleeping)
+	writer := NewPlayer(4, "Itohwriter", 1001)
+	writer.SetPlrFlag(PlrWriting, true)
+	destination := NewPlayer(5, "Itohdestination", 19875)
+	for _, player := range []*Player{actor, awake, sleeper, writer, destination} {
+		if err := w.AddPlayer(player); err != nil {
+			t.Fatalf("AddPlayer %s: %v", player.Name, err)
+		}
+	}
+	messages := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
+
+	if !specItoh(w, actor, nil, "say", "itoh") {
+		t.Fatal("specItoh did not handle its command")
+	}
+	if got, want := messages[actor.Name], "\r\nWith a blinding flash of light and a crack of thunder, you are teleported...\r\n"; got != want {
+		t.Fatalf("actor bytes = %q, want %q", got, want)
+	}
+	const wantDisappear = "\r\nWith a blinding flash of light and a crack of thunder, Itohactor disappears!\r\n\r\n\r\n"
+	if got := messages[awake.Name]; got != wantDisappear {
+		t.Fatalf("origin observer bytes = %q, want %q", got, wantDisappear)
+	}
+	for _, name := range []string{sleeper.Name, writer.Name} {
+		if got := messages[name]; got != "" {
+			t.Errorf("%s received the room act: %q", name, got)
+		}
+	}
+	const wantAppear = "\r\nWith a blinding flash of light and a crack of thunder, Itohactor appears!\r\n\r\n\r\n"
+	if got := messages[destination.Name]; got != wantAppear {
+		t.Fatalf("destination observer bytes = %q, want %q", got, wantAppear)
+	}
+}
+
 // TestSpecGuild_Golden verifies guildmaster practice behavior.
 func TestSpecGuild_Golden(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)

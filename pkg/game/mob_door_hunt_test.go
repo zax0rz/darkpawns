@@ -112,7 +112,7 @@ func TestHuntVictimOpensClosedUnlockedDoor(t *testing.T) {
 	if want := "The dune stalker opens the gate.\r\n"; !strings.Contains(out["Southwatcher"], want) {
 		t.Fatalf("south room bytes = %q, want %q among them", out["Southwatcher"], want)
 	}
-	if want := "The gate is opened from the other side.\r\n"; !strings.Contains(out["Northwatcher"], want) {
+	if want := "The gate is opened from the other side.\r\n\r\n"; !strings.Contains(out["Northwatcher"], want) {
 		t.Fatalf("north room bytes = %q, want %q among them", out["Northwatcher"], want)
 	}
 	if got := out[northSleeper.Name]; strings.Contains(got, "from the other side") {

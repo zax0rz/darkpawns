@@ -960,9 +960,11 @@ func specItoh(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 		return false
 	}
 	ch.SendMessage("\r\nWith a blinding flash of light and a crack of thunder, you are teleported...\r\n")
-	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("\r\nWith a blinding flash of light and a crack of thunder, %s disappears!\r\n\r\n", ch.GetName()))
+	Act(w, false, ch, nil, nil, nil,
+		"\r\nWith a blinding flash of light and a crack of thunder, $n disappears!\r\n\r\n", "", ToRoom)
 	ch.SetRoom(19875)
-	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("\r\nWith a blinding flash of light and a crack of thunder, %s appears!\r\n\r\n", ch.GetName()))
+	Act(w, false, ch, nil, nil, nil,
+		"\r\nWith a blinding flash of light and a crack of thunder, $n appears!\r\n\r\n", "", ToRoom)
 	return true
 }
 

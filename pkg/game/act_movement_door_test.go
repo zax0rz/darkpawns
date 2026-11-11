@@ -158,9 +158,9 @@ func TestDoGenDoorFarSideActSkipsSleepingAndWritingObservers(t *testing.T) {
 	}
 	w.DoOpen(p, "door north")
 
-	const want = "The iron is opened from the other side.\r\n"
-	if got := joinedDoorMessages(messages, awake.Name); !strings.Contains(got, want) {
-		t.Fatalf("awake far observer = %q, want %q", got, want)
+	const want = "The iron is opened from the other side.\r\n\r\n"
+	if got := joinedDoorMessages(messages, awake.Name); got != want {
+		t.Fatalf("awake far observer bytes = %q, want %q", got, want)
 	}
 	if got := joinedDoorMessages(messages, sleeper.Name); strings.Contains(got, "from the other side") {
 		t.Fatalf("sleeping far observer received C room act: %q", got)

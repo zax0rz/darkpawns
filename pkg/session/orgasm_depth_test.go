@@ -62,8 +62,35 @@ func TestOrgasmMaleVictimUpdatesCState(t *testing.T) {
 	if got := victim.player.GetCondition(game.CondFull); got != 0 {
 		t.Fatalf("male victim full condition = %d, want C reset to zero", got)
 	}
+	const wantVictim = "A wonderful feeling spreads throughout your entire body as Otouchactor touches you in all the right places...\n\rYou explode with a breath-taking orgasm!!\r\nGod, you need some beer and some food.\n\r"
+	gotVictim := readSessionText(t, victim) + readSessionText(t, victim)
+	if gotVictim != wantVictim {
+		t.Fatalf("male victim output bytes = %q, want %q", gotVictim, wantVictim)
+	}
 	for _, session := range []*Session{actor, victim, observer} {
 		_ = drainSendChannel(t, session)
+	}
+}
+
+// The self-target room act has an LFCR in its format and perform_act's CRLF
+// after it (src/new_cmds.c:688-691).
+func TestOrgasmSelfActKeepsLFCRAndActCRLF(t *testing.T) {
+	m := makeTestManager(t)
+	actor := makeTestSession(t, m, "Otouchactor", 1001, true)
+	observer := makeTestSession(t, m, "Otouchobserver", 1001, true)
+	registerInWorld(t, actor)
+	registerInWorld(t, observer)
+	actor.player.SetLevel(game.LVL_IMMORT)
+
+	if err := cmdOrgasm(actor, []string{"Otouchactor"}); err != nil {
+		t.Fatalf("cmdOrgasm: %v", err)
+	}
+	if got, want := readSessionText(t, actor), "Yes, it WILL fall off if you don't stop that.\n\r"; got != want {
+		t.Fatalf("actor output bytes = %q, want %q", got, want)
+	}
+	const wantObserver = "Otouchactor just can't stop playing with himself!\n\r\r\n"
+	if got := readSessionText(t, observer); got != wantObserver {
+		t.Fatalf("observer output bytes = %q, want %q", got, wantObserver)
 	}
 }
 
@@ -90,7 +117,7 @@ func TestOrgasmFemaleActorDoesNotTriggerMaleFollowup(t *testing.T) {
 	if got := victim.player.GetCondition(game.CondFull); got != 20 {
 		t.Fatalf("female victim full condition = %d, want unchanged", got)
 	}
-	victimText := readSessionText(t, victim) + readSessionText(t, victim)
+	victimText := readSessionText(t, victim)
 	if strings.Contains(victimText, "Once is never enough") {
 		t.Fatalf("female actor triggered male-only follow-up: %q", victimText)
 	}

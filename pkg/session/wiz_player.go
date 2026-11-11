@@ -285,17 +285,17 @@ func cmdAdvance(s *Session, args []string) error {
 			_ = cmdAdvance(s, args)
 		}
 	} else {
-		promotionText := "$n makes some strange gestures.\n" +
-			"A strange feeling comes upon you,\n" +
-			"Like a giant hand, light comes down\n" +
-			"from above, grabbing your body, that\n" +
-			"begins to pulse with colored lights\n" +
-			"from inside.\n\n" +
-			"Your head seems to be filled with demons\n" +
-			"from another plane as your body dissolves\n" +
-			"to the elements of time and space itself.\n" +
-			"Suddenly a silent explosion of light\n" +
-			"snaps you back to reality.\n\n" +
+		promotionText := "$n makes some strange gestures.\r\n" +
+			"A strange feeling comes upon you,\r\n" +
+			"Like a giant hand, light comes down\r\n" +
+			"from above, grabbing your body, that\r\n" +
+			"begins to pulse with colored lights\r\n" +
+			"from inside.\r\n\r\n" +
+			"Your head seems to be filled with demons\r\n" +
+			"from another plane as your body dissolves\r\n" +
+			"to the elements of time and space itself.\r\n" +
+			"Suddenly a silent explosion of light\r\n" +
+			"snaps you back to reality.\r\n\r\n" +
 			"You feel slightly different."
 		game.Act(s.manager.world, false, s.player, victim, nil, nil,
 			promotionText, "", game.ToVict)

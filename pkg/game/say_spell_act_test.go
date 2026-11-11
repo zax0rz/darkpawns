@@ -72,6 +72,36 @@ func TestSpellActToVictimRendersCasterThroughPers(t *testing.T) {
 	}
 }
 
+func TestSpellActTerminatorsPreserveEmbeddedCLineBreakBytes(t *testing.T) {
+	// Hellfire's victim and observer acts end in the shown C terminators
+	// (src/spells.c:731-742).
+	w, caster, target, _, out := newChannelWorld(t)
+	target.SetSex(SexMale)
+	observer := channelPlayer(t, w, 4, "Observer", 1001)
+	if !w.SpellActToVictim(caster, target, "The fires of hell bring blisters on your skin!!\n\r") {
+		t.Fatal("hellfire victim act was not delivered")
+	}
+	if !w.SpellActNotVict(caster, target, "The fires of hell scorch the skin of $N!\r\n", false) {
+		t.Fatal("hellfire room act was not delivered")
+	}
+	if !w.SpellActToVictim(caster, target, "The fires of hell bring you to your knees!\r\n") {
+		t.Fatal("hellfire knockdown victim act was not delivered")
+	}
+	if !w.SpellActNotVict(caster, target, "The fires of hell bring $N to $S knees!\r\n", false) {
+		t.Fatal("hellfire knockdown room act was not delivered")
+	}
+	wantVictim := "The fires of hell bring blisters on your skin!!\n\r\r\n" +
+		"The fires of hell bring you to your knees!\r\n\r\n"
+	if got := outputOf(out, target.Name); got != wantVictim {
+		t.Fatalf("victim bytes = %q, want %q", got, wantVictim)
+	}
+	wantObserver := "The fires of hell scorch the skin of Local!\r\n\r\n" +
+		"The fires of hell bring Local to his knees!\r\n\r\n"
+	if got := outputOf(out, observer.Name); got != wantObserver {
+		t.Fatalf("observer bytes = %q, want %q", got, wantObserver)
+	}
+}
+
 func TestSpellAddFollowerRendersCFollowerAudiences(t *testing.T) {
 	w, leader, follower, _, out := newChannelWorld(t)
 	observer := channelPlayer(t, w, 4, "Observer", 1001)

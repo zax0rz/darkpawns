@@ -1736,6 +1736,15 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			if message == "" {
 				return
 			}
+			if message == result.MessageToRoom && result.DamageSkill == game.SkillGroinrip {
+				if roomActor, ok := target.(game.Actor); ok {
+					// C's post-damage act() names the victim as its actor and
+					// preserves the embedded CRLF (src/new_cmds.c:2643-2644).
+					game.Act(s.GetWorld(), true, roomActor, nil, nil, nil,
+						"$n falls to $s knees, clutching $s groin and throwing up\r\neverywhere!", "", game.ToRoom)
+					return
+				}
+			}
 			for _, p := range players {
 				if !game.CanReceiveAct(p) {
 					continue
@@ -2012,6 +2021,15 @@ func CmdTag(s SessionInterface, args []string) error {
 	if targetName != "" {
 		if resolved, _, found := game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch); found {
 			target = resolved
+		}
+	}
+	if result.Success && target != nil && target.IsNPC() {
+		if victimActor, ok := target.(game.Actor); ok {
+			// C sends this NPC acknowledgement through act(), whose own CRLF
+			// follows the string's CRLF terminator (src/new_cmds.c:2242).
+			game.Act(world, true, ch, victimActor, nil, nil,
+				"You tag $N, but $E tags you right back!\r\n", "", game.ToChar)
+			result.MessageToCh = ""
 		}
 	}
 	return sendSkillResult(s, ch, target, result)
