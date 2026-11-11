@@ -1,0 +1,73 @@
+# depth-case: ambush.no-skill
+# C do_ambush (src/act.offensive.c:1467-1471): an actor without the ambush
+# skill is refused with "You'd better not." before the action/sector/alert
+# gates.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+
+[setup:oracle]
+Ambushgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ambushgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Ambushvictim
+Y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Ambushvictim
+y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Ambushvictim 8162
+skillset Ambushgod 'ambush' 0
+
+[probe]
+ambush Ambushvictim
