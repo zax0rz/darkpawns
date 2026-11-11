@@ -686,7 +686,8 @@ func specTroll(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 				newHP = me.GetMaxHP()
 			}
 			me.SetHealth(newHP)
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s's wounds glow brightly for a moment, then disappear!", mobName(me)))
+			Act(w, true, me, nil, nil, nil,
+				"$n's wounds glow brightly for a moment, then disappear!", "", ToRoom)
 		}
 	} else if me.GetFightingBody() != nil {
 		// #nosec G404 — game RNG, not cryptographic
@@ -698,7 +699,8 @@ func specTroll(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 				newHP = me.GetMaxHP()
 			}
 			me.SetHealth(newHP)
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s's wounds glow brightly for a moment, then disappear!", mobName(me)))
+			Act(w, true, me, nil, nil, nil,
+				"$n's wounds glow brightly for a moment, then disappear!", "", ToRoom)
 		}
 	} else {
 		return false

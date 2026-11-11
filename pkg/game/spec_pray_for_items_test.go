@@ -85,6 +85,8 @@ func TestSpecPrayForItems_ItemRewardBranch(t *testing.T) {
 		t.Fatalf("AddPlayer observer: %v", err)
 	}
 	_ = lastMsg() // discard setup output
+	messages := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
 
 	altar, err := w.SpawnObject(3001, -1)
 	if err != nil {
@@ -97,6 +99,7 @@ func TestSpecPrayForItems_ItemRewardBranch(t *testing.T) {
 		t.Fatal("SetObjectExtraDesc should find the altar object")
 	}
 	player.SetGold(50)
+	player.SetAffect(affInvisible, true)
 
 	if got := specPrayForItems(w, player, nil, "pray", ""); !got {
 		t.Fatal("matching item_for_ extra description should be intercepted")
@@ -107,7 +110,10 @@ func TestSpecPrayForItems_ItemRewardBranch(t *testing.T) {
 	if got := len(w.GetItemsInRoom(1001)); got != 2 {
 		t.Errorf("room item count = %d, want generated reward plus altar", got)
 	}
-	if got := lastMsg(); got == "" {
-		t.Error("item branch should emit actor and observer messages")
+	if got, want := messages[player.GetName()], "You notice a faint light in Odin's eye.\r\nA steel sword slowly fades into existence.\r\n"; got != want {
+		t.Errorf("actor item reward bytes = %q, want %q", got, want)
+	}
+	if got, want := messages[observer.GetName()], "Someone kneels and at the altar and chants a prayer to Odin.\r\nA steel sword slowly fades into existence.\r\n"; got != want {
+		t.Errorf("observer item reward bytes = %q, want %q", got, want)
 	}
 }

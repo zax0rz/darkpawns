@@ -275,12 +275,8 @@ func specSnake(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	if number(0, 32-me.GetLevel()) != 0 {
 		return false
 	}
-	w.actMessage(
-		me.RoomVNum, me, vict,
-		"",                         // TO_CHAR (mob doesn't need a message)
-		me.GetName()+" bites you!", // TO_VICT
-		me.GetName()+" bites "+vict.GetName()+"!", // TO_ROOM
-	)
+	Act(w, true, me, vict, nil, nil, "$n bites $N!", "", ToNotVict)
+	Act(w, true, me, vict, nil, nil, "$n bites you!", "", ToVict)
 	spells.Cast(me, vict, spells.SpellPoison, me.GetLevel(), w)
 	return true
 }

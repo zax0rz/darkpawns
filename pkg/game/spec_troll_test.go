@@ -14,7 +14,7 @@ func newTrollTestWorld(t *testing.T) (*World, *MobInstance, *Player, *Player, ma
 		Mobs: []parser.Mob{{
 			VNum:      10029,
 			Keywords:  "targ troll",
-			ShortDesc: "Targ",
+			ShortDesc: "a test troll",
 			Level:     9,
 		}},
 	})
@@ -91,7 +91,7 @@ func TestSpecTroll_InjuredIdleGlowUsesCNumberArm(t *testing.T) {
 	if got, want := mob.GetHP(), 28; got != want {
 		t.Fatalf("regen HP = %d, want %d", got, want)
 	}
-	if got, want := messages[actor.Name], "Targ's wounds glow brightly for a moment, then disappear!\r\n"; got != want {
+	if got, want := messages[actor.Name], "A test troll's wounds glow brightly for a moment, then disappear!\r\n"; got != want {
 		t.Fatalf("actor room Act = %q, want %q", got, want)
 	}
 	if got, want := messages[peer.Name], messages[actor.Name]; got != want {
@@ -124,10 +124,37 @@ func TestSpecTroll_FightingUsesCombatNumberArm(t *testing.T) {
 	if got, want := mob.GetHP(), 68; got != want {
 		t.Fatalf("fighting regen HP = %d, want %d", got, want)
 	}
-	if got, want := messages[actor.Name], "Targ's wounds glow brightly for a moment, then disappear!\r\n"; got != want {
+	if got, want := messages[actor.Name], "A test troll's wounds glow brightly for a moment, then disappear!\r\n"; got != want {
 		t.Fatalf("actor fighting Act = %q, want %q", got, want)
 	}
 	if got, want := messages[peer.Name], messages[actor.Name]; got != want {
 		t.Fatalf("peer fighting Act = %q, want %q", got, want)
+	}
+}
+
+func TestSpecTroll_HideInvisibleSuppressesGlowForObserver(t *testing.T) {
+	w, mob, actor, peer, messages := newTrollTestWorld(t)
+	clearTrollMessages(messages)
+	mob.SetHealth(10)
+	mob.SetMaxHP(100)
+	mob.SetAffected(affInvisible)
+
+	previous := trollNumber
+	trollNumber = func(from, to int) int {
+		if from != 0 || to != 20 {
+			t.Fatalf("troll draw = (%d,%d), want (0,20)", from, to)
+		}
+		return 0
+	}
+	t.Cleanup(func() { trollNumber = previous })
+
+	if !specTroll(w, nil, mob, "", "") {
+		t.Fatal("invisible injured troll should handle the successful regen arm")
+	}
+	if got := messages[actor.Name] + messages[peer.Name]; got != "" {
+		t.Fatalf("invisible troll glow = %q, want no line for observers who cannot see it", got)
+	}
+	if got, want := mob.GetHP(), 28; got != want {
+		t.Fatalf("regen HP = %d, want %d", got, want)
 	}
 }
