@@ -3,6 +3,8 @@ package game
 import (
 	"strings"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // TestDonateAppearLinesCapitalized pins C act()'s CAP(lbuf) behavior
@@ -36,5 +38,40 @@ func TestDonateAppearLinesCapitalized(t *testing.T) {
 	w.performDisposeGold(ch, 25, scmdDonate, DonationRoom1)
 	if got := lastMsg(); !strings.Contains(got, "A little pile of gold coins suddenly appears in a puff of orange smoke!") {
 		t.Fatalf("gold appear line must be capitalized: got %q", got)
+	}
+}
+
+func TestDonateArrivalUsesActObjectVisibilityAndSleepAudience(t *testing.T) {
+	w, ch, _ := newDonateTestWorld(t)
+	messages := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
+
+	visible := NewPlayer(2, "Visible", DonationRoom1)
+	visible.SetAffect(affDetectInvisible, true)
+	hidden := NewPlayer(3, "Hidden", DonationRoom1)
+	sleeper := NewPlayer(4, "Sleeper", DonationRoom1)
+	sleeper.SetAffect(affDetectInvisible, true)
+	sleeper.SetPosition(combat.PosSleeping)
+	for _, observer := range []*Player{visible, hidden, sleeper} {
+		if err := w.AddPlayer(observer); err != nil {
+			t.Fatalf("AddPlayer(%s): %v", observer.GetName(), err)
+		}
+	}
+
+	obj := newDonatableItem(9110, "a hidden silver ring", "silver ring", 10)
+	obj.SetExtraFlag(0, extraFlagInvisible)
+	if err := ch.Inventory.AddItem(obj); err != nil {
+		t.Fatalf("AddItem: %v", err)
+	}
+	w.performDispose(ch, obj, scmdDonate, "donate", DonationRoom1)
+
+	if got, want := messages[visible.GetName()], "A hidden silver ring suddenly appears in a puff a smoke!\r\n"; got != want {
+		t.Errorf("visible observer output = %q, want %q", got, want)
+	}
+	if got, want := messages[hidden.GetName()], "Something suddenly appears in a puff a smoke!\r\n"; got != want {
+		t.Errorf("observer unable to see object output = %q, want %q", got, want)
+	}
+	if got := messages[sleeper.GetName()]; got != "" {
+		t.Errorf("sleeping observer output = %q, want no message", got)
 	}
 }

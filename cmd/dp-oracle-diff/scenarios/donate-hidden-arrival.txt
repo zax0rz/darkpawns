@@ -1,0 +1,74 @@
+# depth-case: donate.appear-hidden-object
+# C's null-actor act() resolves the room from the object's location and OBJS
+# substitutes "something" when a mortal observer cannot see the object. The
+# donation room is dark, while the donor gets the bread in the lit start room.
+
+[fixture]
+quiet-mobs
+spawn-obj 8010 99 8162 80
+replace-room-exits 8162 north 8053 0
+set-room-flag 8053 0 on
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+
+[probe]
+get bread
+donate bread
+~dpclock pulse 20
+~dpclock pulse 20
