@@ -1,0 +1,102 @@
+# Stock object 5200 applies races 18 and 20. After the real wield command,
+# indexed Race-18 mobile #5502 must select the wearer through APPLY_RACE_HATE.
+# #8552 is in unindexed 85.mob and is not loaded by C. The shared C affect /
+# equipment path is src/handler.c:205-238; the pulse consumer is
+# src/mobact.c:236-258. Its onpulse_pc fixture marks the wearer stunned and
+# puts the mobile on a violence wait, then returns FALSE so the later
+# race-hate scan still runs without adding a player counterattack round.
+# depth-case: wear.player-race-hate-mobile-dispatch
+
+[fixture]
+empty-players
+quiet-mobs
+mob-script 5502 oracle/race-hate-isolate.lua 128
+
+[lua-script mob/oracle/race-hate-isolate.lua]
+function onpulse_pc()
+me.timer = 2
+for i=1,10 do
+if room.char[i] and room.char[i].name == "Racehatepeer" then
+room.char[i].pos = 3
+save_char(room.char[i])
+end
+end
+save_char(me)
+return FALSE
+end
+
+[setup:oracle]
+Racehateadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Racehateadmin
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Racehatepeer
+Y
+wearpass
+wearpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Racehatepeer
+y
+wearpass
+wearpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load mob 5502
+set mob taltos level 1
+set mob taltos hitroll -20
+set mob taltos damroll -20
+teleport Racehatepeer 8105
+load obj 5200
+give dagger Racehatepeer
+force Racehatepeer wield dagger
+set player Racehatepeer maxhit 5000000
+set player Racehatepeer hit 5000000
+set player Racehatepeer hitroll -20
+set player Racehatepeer damroll -20
+
+[probe]
+send:peer look
+send:peer equipment
+~dpclock pulse 40
