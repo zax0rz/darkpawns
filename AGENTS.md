@@ -55,7 +55,7 @@ draw logs when enabled, and engine logs; retries never overwrite a red attempt.
 scripts/census.sh start --name <issue-or-run>            # full census, returns after registration
 scripts/census.sh start --name <run> --scenarios a,b,c   # targeted
 scripts/census.sh start --combined --name <run>          # full seed-1 corpus plus claimed pairs
-scripts/census.sh start --combined --release --name <run> # exclusive release gate after draining
+scripts/census.sh start --combined --release --draw-parity --name <run> # exclusive release gate after draining
 scripts/census.sh wait --run <returned-directory>        # bounded wait; ONE line
 ```
 
@@ -74,7 +74,9 @@ It executes their union once, retains the full and claims result files and
 separate verdicts, and is clean only when both verdicts are CLEAN or
 CLEAN_AFTER_RECHECK. Separate full and `--claims` runs remain available for
 diagnosis and comparisons. A release ships only from its exact-commit clean
-combined gate.
+combined gate. A release census must pass `--draw-parity` and leave a
+`draw-results.tsv`; confirm the file exists before reading the verdict (R3).
+The `v0.1.9` release census omitted the flag and had no draw log.
 
 Save the directory printed by `start` and use `--run` for every wait/status or
 cancellation. Bare reports refuse to choose among multiple unfinished runs.
@@ -149,9 +151,19 @@ go build ./...          # Full build — must pass before committing
 go vet ./...            # Static analysis — must pass before committing
 go test ./...           # All tests — must pass before committing
 go test ./pkg/game/...  # Game package tests specifically
-golangci-lint run ./... # Full lint (uses .golangci.yml)
+golangci-lint run ./... # Full lint (uses .golangci.yml; CI pins the version)
+make modernize-check    # CI enforces the reviewed go fix modernizers
 make deadcode-ratchet   # CI enforces it; the baseline only shrinks
 ```
+
+**Toolchain.** The Go version is whatever `go.mod` says on `origin/main` (Go
+1.27.3 as of 2026-11-10); never quote it from memory or from the shared
+checkout. Every `go` command needs `GOEXPERIMENT=nojsonv2`. The Makefile
+exports it; a direct `go test` must export it too, because Go 1.27's default
+JSON encoder changes invalid-UTF-8 bytes and the world text is Latin-1 (R1).
+`internal/buildcompat` fails without it. Run golangci-lint at the version
+`.github/workflows/ci.yml` pins: an older binary built with an older Go refuses
+to load the config, and that is not a lint pass.
 
 `tools/db-migrate` is a separate Go module: the root `go build ./...`, `go vet ./...`
 and `go test ./...` don't compile it. Any change to an exported symbol in a package it
@@ -172,8 +184,17 @@ work there. Do all branch work in a worktree under `~/wt/`, named
 `<agent>-<issue>` (e.g. `~/wt/glm-dp-1435`):
 
 ```bash
+git -C /home/zach/darkpawns fetch origin
 git worktree add ~/wt/<agent>-<issue> -b <branch> origin/main
 ```
+
+**Fetch before you read or start.** The shared checkout at
+`/home/zach/darkpawns` is not kept current, and other agents leave it wherever
+they leave it. Before reading any doc, brief or rule, and before branching, run
+`git fetch origin`, then read from your worktree or with
+`git show origin/main:<path>`. Rebase on `origin/main` again right before you
+report. Taught 2026-11-10, when a new agent reported the previous Go version
+from the shared checkout.
 
 Remove it with `git worktree remove ~/wt/<agent>-<issue>` once its PR merges.
 Don't put worktrees in `~` itself (230 accumulated there by 2026-10-14) or in
