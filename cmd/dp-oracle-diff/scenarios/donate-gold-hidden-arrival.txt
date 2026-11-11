@@ -1,0 +1,134 @@
+# depth-case: drop.donate-gold-arrival
+# A null-actor act() must resolve the room from the donated money object and
+# apply the room-dark visibility check per recipient (src/act.item.c:452-453).
+# Peers wait in both configured donation rooms so the seeded destination is
+# witnessed without steering the C random draw.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+set-room-flag 8053 0 on
+set-room-flag 18204 0 on
+
+[setup:oracle]
+Dongod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dongod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:donor]
+GoldDonor
+Y
+donpass
+donpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:donor]
+GoldDonor
+y
+donpass
+donpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer1]
+Goldpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer1]
+Goldpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer2]
+Goldwatch
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer2]
+Goldwatch
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport GoldDonor 8105
+teleport Goldpeer 8053
+teleport Goldwatch 18204
+set player GoldDonor gold 100
+
+[probe]
+send:donor donate 25 coins
