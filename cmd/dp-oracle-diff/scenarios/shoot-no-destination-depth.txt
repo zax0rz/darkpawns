@@ -1,0 +1,60 @@
+# depth-case: shoot.no-destination
+# depth-case: movement.no-destination
+# C do_shoot destination gate (src/act.offensive.c:832-841): an exit whose
+# to_room is NOWHERE prints "Alas, you cannot shoot that way...". C's own
+# !EXIT(ch, dir) half of :837 is dead because :816 already refuses a missing
+# exit with "Interesting Direction.", so the live cause is a dangling
+# destination. The disposable north exit below points at 9099, a vnum with no
+# room definition, so the loader keeps it and renum_world (src/db.c:951-960)
+# resolves it through real_room() to NOWHERE.
+#
+# The same exit drives the plain-movement refusal (src/act.movement.c:319-320),
+# probed here so the scenario cannot pass by dropping the exit.
+#
+# The bow gate sits above the destination gate (src/act.offensive.c:823-829),
+# so a real missile and fireweapon are equipped first.
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 9099 0
+spawn-obj 4841 1 8162 48
+spawn-obj 4802 1 8162 48
+
+[setup:oracle]
+Shootvoid
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootvoid
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+get hoopak
+get arrow
+wield hoopak
+
+[probe]
+north
+shoot arrow north nobody
