@@ -3,10 +3,15 @@
 # depth-case: score.align-path-of-right
 # depth-case: score.align-pretty-good
 # depth-case: score.align-bland-good
-# C do_score alignment ladder (src/act.informative.c:1203-1228). The god raises
+# depth-case: score.align-evil-neutral
+# depth-case: score.align-mother
+# depth-case: score.align-evil-hurts
+# depth-case: score.align-manson
+# C do_score alignment ladder (src/act.informative.c:1203-1228). The god moves
 # the peer's alignment with set player align and the peer reads score, so each
-# band edge prints through the real command. Only non-negative values are
-# settable: is_number (src/interpreter.c:1175-1182) rejects a leading minus.
+# band edge prints through the real command. Negative values are settable: do_set
+# reads a NUMBER with atoi (src/act.wizard.c:2713-2714) and clamps with
+# RANGE(-1000, 1000) (src/act.wizard.c:2759-2760); is_number is not on this path.
 
 [fixture]
 empty-players
@@ -82,4 +87,12 @@ send:peer score
 set player Scorepeer align 350
 send:peer score
 set player Scorepeer align 100
+send:peer score
+set player Scorepeer align -150
+send:peer score
+set player Scorepeer align -400
+send:peer score
+set player Scorepeer align -650
+send:peer score
+set player Scorepeer align -800
 send:peer score
