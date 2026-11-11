@@ -103,6 +103,9 @@ func init() {
 	registerCommand("think", wrapArgs(cmdThink), "Think a thought, optionally aloud.")
 	registerCommand("insult", wrapArgs(cmdInsult), "Insult a target in the room.")
 	registerCommand("dream", wrapArgs(cmdDream), "Dream — only does anything while asleep.")
+	registerActorCommand("dream", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterDream(ctx)
+	})
 
 	// Combat
 	registerCommand("hit", wrapArgs(cmdHit), "Attack a target.")
@@ -450,7 +453,13 @@ func init() {
 	registerCommand("appraise", wrapArgs(cmdAppraise), "Appraise an item's value.")
 	registerCommand("scout", wrapArgs(cmdScout), "Scout ahead for danger.")
 	registerCommand("roll", wrapArgs(cmdRoll), "Roll a random number.")
+	registerActorCommand("roll", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterRoll(ctx)
+	})
 	registerCommand("visible", wrapArgs(cmdVisible), "Make yourself visible again.")
+	registerActorCommand("visible", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterVisible(ctx)
+	})
 	// do_track lives in graph.c; its class gate is in the handler (graph.go).
 	registerCommand("track", wrapArgs(cmdTrack), "Sense which way a target went.")
 	registerCommand("inactive", wrapArgs(cmdInactive), "Toggle inactive status.")
@@ -789,7 +798,7 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	// stays in commandGateRejected, post-resolution; not duplicated here.
 	// Keep the player transport's existing effective-level source. Resolution
 	// itself receives an explicit level and never inspects mutable Session state.
-	resolved := resolveCharacterCommand(cmd, getEffectiveLevel(s))
+	resolved := resolveCharacterCommand(cmd, commandLevel(s))
 	cmd = resolved.Name
 	entry, ok := resolved.Entry, resolved.Found
 	if !ok {
@@ -907,20 +916,37 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	return entry.Handler(&commandSession{Session: s}, cmd, args)
 }
 
+// commandLevel returns the level the C ladder searches and gates with:
+// the acting body's own level (interpreter.c:915-916). A session switched
+// into a mobile resolves as that mobile; wizard flows keep their own
+// permission source (getEffectiveLevel) and are untouched.
+func commandLevel(s *Session) int {
+	if s.isSwitched && s.switchedMob != nil {
+		return s.switchedMob.GetLevel()
+	}
+	return getEffectiveLevel(s)
+}
+
 // commandGateRejected mirrors C interpreter.c:910-947 after a command row is
 // found: level/lookup hiding, frozen, switched-NPC immortal denial, position.
-// Go has no registered nil-handler/not-implemented state, so that C step is
-// intentionally absent.
+// The level and position are the acting body's (see commandLevel); the
+// switched-NPC immortal denial is C's own step (interpreter.c:920-921), kept:
+// once the search uses the mobile's level it fires exactly where C's does
+// (a high-level switched mobile), while low-level mobiles miss the search and
+// answer Huh?!? instead. Go has no registered nil-handler/not-implemented
+// state, so that C step is intentionally absent.
 func commandGateRejected(s *Session, gate commandGate) bool {
-	effectiveLevel := getEffectiveLevel(s)
-	if effectiveLevel < gate.MinLevel {
+	actorLevel := commandLevel(s)
+	if actorLevel < gate.MinLevel {
 		s.Send("Huh?!?\r\n")
 		return true
 	}
 	if s.player == nil {
 		return false
 	}
-	if s.player.GetFlags()&(1<<uint(game.PlrFrozen)) != 0 && effectiveLevel < LVL_IMPL-1 {
+	// C checks PLR_FROZEN on the acting body; a switched mobile is never
+	// frozen (do_wizutil refuses mobs), so the god's flag cannot block here.
+	if s.switchedMob == nil && s.player.GetFlags()&(1<<uint(game.PlrFrozen)) != 0 && actorLevel < LVL_IMPL-1 {
 		s.Send("You try, but the mind-numbing cold prevents you...\r\n")
 		return true
 	}
@@ -929,6 +955,9 @@ func commandGateRejected(s *Session, gate commandGate) bool {
 		return true
 	}
 	playerPos := s.player.GetPosition()
+	if s.switchedMob != nil {
+		playerPos = s.switchedMob.GetPosition()
+	}
 	if playerPos < gate.MinPosition {
 		s.Send(positionFailMessage(playerPos))
 		return true

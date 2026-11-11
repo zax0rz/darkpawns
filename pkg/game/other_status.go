@@ -117,6 +117,11 @@ func (w *World) doAuto(ch *Player, me *MobInstance, cmd string, arg string) bool
 
 func (w *World) doTransform(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if isPlayerNPC(ch, me) {
+		// C do_transform (act.other.c:1417) has no IS_NPC gate: a mobile
+		// carries no PLR flags, so it reaches the untransformable refusal
+		// (only a flagged switching god reaches the werewolf/vampire arms,
+		// which the old bridge delivered here instead).
+		ch.SendMessage("You aren't transformable!\n\r")
 		return true
 	}
 	return w.doTransformAt(ch, TimeWeatherSnapshot())
