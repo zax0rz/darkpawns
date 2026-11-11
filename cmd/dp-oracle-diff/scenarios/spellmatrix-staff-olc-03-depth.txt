@@ -156,12 +156,12 @@ send:builder 1
 send:builder 17
 send:builder q
 send:builder y
-load obj 8054
+send:builder load obj 8054
 set player ItemMage level 30
 
 
 [probe]
-get staff0301
+send:builder give staff0301 ItemMage
 hold staff0301
 use staff0301
 ~dpclock pulse 20
@@ -181,8 +181,8 @@ send:builder 1
 send:builder 18
 send:builder q
 send:builder y
-load obj 8054
-get staff0302
+send:builder load obj 8054
+send:builder give staff0302 ItemMage
 hold staff0302
 use staff0302
 ~dpclock pulse 20
@@ -202,8 +202,8 @@ send:builder 1
 send:builder 19
 send:builder q
 send:builder y
-load obj 8054
-get staff0303
+send:builder load obj 8054
+send:builder give staff0303 ItemMage
 hold staff0303
 use staff0303
 ~dpclock pulse 20
@@ -223,8 +223,8 @@ send:builder 1
 send:builder 20
 send:builder q
 send:builder y
-load obj 8054
-get staff0304
+send:builder load obj 8054
+send:builder give staff0304 ItemMage
 hold staff0304
 use staff0304
 ~dpclock pulse 20
@@ -244,8 +244,8 @@ send:builder 1
 send:builder 21
 send:builder q
 send:builder y
-load obj 8054
-get staff0305
+send:builder load obj 8054
+send:builder give staff0305 ItemMage
 hold staff0305
 use staff0305
 ~dpclock pulse 20
