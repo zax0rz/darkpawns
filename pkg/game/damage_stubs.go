@@ -204,7 +204,7 @@ func (w *World) ApplySkillDamageWithMessage(attacker, victim any, dam, attackTyp
 	case *Player:
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast, w.StopFightingBody)
+		newPos := combat.UpdatePositionAfterDamage(v, w.WoundAct, w.StopFightingBody)
 		// C's default arm: the pain line, the number(0,2) scream draw, the
 		// wounded-band line and the wimpy block (src/fight.c:1587-1614). The
 		// draw is unconditional whenever the blow exceeds a quarter of the
@@ -212,7 +212,7 @@ func (w *World) ApplySkillDamageWithMessage(attacker, victim any, dam, attackTyp
 		// only for charge left every later draw in the round one early.
 		combat.ApplySurvivingVictimDefaultArm(killer, v, dam, newPos)
 		if newPos == combat.PosDead {
-			combat.EmitDeathPositionMessage(v, w.woundBroadcast)
+			combat.EmitDeathPositionMessage(v, w.WoundAct)
 
 			w.HandleDeath(v, killer, attackType)
 		}
@@ -220,10 +220,10 @@ func (w *World) ApplySkillDamageWithMessage(attacker, victim any, dam, attackTyp
 	case *MobInstance:
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast, w.StopFightingBody)
+		newPos := combat.UpdatePositionAfterDamage(v, w.WoundAct, w.StopFightingBody)
 		combat.ApplySurvivingVictimDefaultArm(killer, v, dam, newPos)
 		if newPos == combat.PosDead {
-			combat.EmitDeathPositionMessage(v, w.woundBroadcast)
+			combat.EmitDeathPositionMessage(v, w.WoundAct)
 
 			w.HandleDeath(v, killer, attackType)
 		}
@@ -403,7 +403,7 @@ func (w *World) doDamage(ch, vict any, dam int, skill string) bool {
 		v.SetFightingBody(killer)
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast, w.StopFightingBody) == combat.PosDead {
+		if combat.UpdatePositionAfterDamage(v, w.WoundAct, w.StopFightingBody) == combat.PosDead {
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true
@@ -412,7 +412,7 @@ func (w *World) doDamage(ch, vict any, dam int, skill string) bool {
 		v.SetFightingBody(killer)
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast, w.StopFightingBody) == combat.PosDead {
+		if combat.UpdatePositionAfterDamage(v, w.WoundAct, w.StopFightingBody) == combat.PosDead {
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true
@@ -421,33 +421,18 @@ func (w *World) doDamage(ch, vict any, dam int, skill string) bool {
 	}
 }
 
-// woundBroadcast adapts World's room messaging to the signature that
-// combat.UpdatePositionAfterDamage expects (roomVNum, message, exclude).
-func (w *World) woundBroadcast(roomVNum int, message string, exclude []combat.Combatant) {
-	for _, p := range w.GetPlayersInRoom(roomVNum) {
-		if !sendOk(p, false) {
-			continue
-		}
-		excluded := false
-		for _, body := range exclude {
-			if body == p {
-				excluded = true
-				break
-			}
-		}
-		if !excluded {
-			p.SendMessage(message + "\r\n")
-		}
+// WoundAct delivers one C act(..., victim, 0, 0, TO_ROOM) wounded-band or
+// death message with its hide_invisible flag (src/fight.c:1566-1584):
+// hide=TRUE withholds the line from anyone who cannot see the victim at all
+// (a blind observer gets nothing, not a "someone"-named copy), hide=FALSE
+// delivers it with PERS masking. This is the single room broadcaster every
+// wound caller shares (melee, skills, spell damage — DP-1296, R5b).
+func (w *World) WoundAct(roomVNum int, victim combat.Combatant, format string, hideInvisible bool) {
+	actor := asActor(victim)
+	if actor == nil || w == nil {
+		return
 	}
-}
-
-// WoundBroadcast exposes woundBroadcast across the package boundary so the
-// spells package can route spell-damage wound/position messages through the
-// exact same room broadcaster melee and skills use (DP-1022). It is the
-// exported wrapper the spells package asserts via its woundBroadcaster
-// interface; keep its signature aligned with woundBroadcast.
-func (w *World) WoundBroadcast(roomVNum int, message string, exclude []combat.Combatant) {
-	w.woundBroadcast(roomVNum, message, exclude)
+	Act(w, hideInvisible, actor, nil, nil, nil, format, "", ToRoom)
 }
 
 // getAttackerName returns the name of the attacker for messages.

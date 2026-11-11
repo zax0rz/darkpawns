@@ -33,8 +33,11 @@ func TestUpdatePositionAfterDamage_WoundedBand(t *testing.T) {
 				mockCombatant: mockCombatant{name: "Victim", hp: tt.hp, position: PosFighting, fighting: &mockCombatant{name: "Attacker"}},
 			}
 			var broadcasts []string
-			got := UpdatePositionAfterDamage(v, func(_ int, msg string, _ []Combatant) {
-				broadcasts = append(broadcasts, msg)
+			got := UpdatePositionAfterDamage(v, func(_ int, victim Combatant, format string, hide bool) {
+				if !hide {
+					t.Errorf("hide = false, want true (act hide_invisible=TRUE)")
+				}
+				broadcasts = append(broadcasts, format)
 			}, nil)
 
 			if got != tt.wantPos {
@@ -78,8 +81,8 @@ func TestUpdatePositionAfterDamage_IncapExactStrings(t *testing.T) {
 		mockCombatant: mockCombatant{name: "Victim", hp: -4, position: PosFighting, fighting: &mockCombatant{name: "Attacker"}},
 	}
 	var broadcasts []string
-	UpdatePositionAfterDamage(v, func(_ int, msg string, _ []Combatant) {
-		broadcasts = append(broadcasts, msg)
+	UpdatePositionAfterDamage(v, func(_ int, victim Combatant, format string, hide bool) {
+		broadcasts = append(broadcasts, format)
 	}, nil)
 	if len(v.messages) != 1 {
 		t.Fatalf("expected 1 personal message, got %d", len(v.messages))
@@ -89,11 +92,11 @@ func TestUpdatePositionAfterDamage_IncapExactStrings(t *testing.T) {
 		t.Errorf("victim message = %q, want %q", v.messages[0], wantVictim)
 	}
 	if len(broadcasts) != 1 {
-		t.Fatalf("expected 1 room broadcast, got %d", len(broadcasts))
+		t.Fatalf("expected 1 room act, got %d", len(broadcasts))
 	}
-	wantRoom := "Victim is incapacitated and will slowly die, if not aided."
+	wantRoom := "$n is incapacitated and will slowly die, if not aided."
 	if broadcasts[0] != wantRoom {
-		t.Errorf("room broadcast = %q, want %q", broadcasts[0], wantRoom)
+		t.Errorf("room act format = %q, want %q", broadcasts[0], wantRoom)
 	}
 }
 
@@ -121,26 +124,27 @@ func TestWoundedBandBroadcastsCapitalizeAndExcludeVictim(t *testing.T) {
 		wantPos  int
 		wantRoom string
 	}{
-		{"mortally", -6, PosMortally, "A guard trainee is mortally wounded, and will die soon, if not aided."},
-		{"incap", -4, PosIncap, "A guard trainee is incapacitated and will slowly die, if not aided."},
-		{"stunned", -1, PosStunned, "A guard trainee is stunned, but will probably regain consciousness again."},
+		{"mortally", -6, PosMortally, "$n is mortally wounded, and will die soon, if not aided."},
+		{"incap", -4, PosIncap, "$n is incapacitated and will slowly die, if not aided."},
+		{"stunned", -1, PosStunned, "$n is stunned, but will probably regain consciousness again."},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			v := &msgMockCombatant{
 				mockCombatant: mockCombatant{name: "a guard trainee", hp: tc.hp, position: PosFighting},
 			}
-			var roomMsg, exclude string
-			if got := UpdatePositionAfterDamage(v, func(_ int, msg string, ex []Combatant) {
-				roomMsg, exclude = msg, testBodyNames(ex)
+			var roomMsg string
+			var actedOn Combatant
+			if got := UpdatePositionAfterDamage(v, func(_ int, victim Combatant, format string, hide bool) {
+				roomMsg, actedOn = format, victim
 			}, nil); got != tc.wantPos {
 				t.Fatalf("pos = %d, want %d", got, tc.wantPos)
 			}
 			if roomMsg != tc.wantRoom {
-				t.Errorf("room broadcast = %q, want %q (act CAP)", roomMsg, tc.wantRoom)
+				t.Errorf("room act format = %q, want %q (act CAP renders $n per observer)", roomMsg, tc.wantRoom)
 			}
-			if exclude != "a guard trainee" {
-				t.Errorf("room broadcast excluded %q, want the victim (TO_ROOM excludes ch)", exclude)
+			if actedOn != v {
+				t.Errorf("room act actor = %v, want the victim (TO_ROOM excludes ch)", actedOn)
 			}
 		})
 	}

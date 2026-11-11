@@ -87,7 +87,25 @@ func croakTestWorld(t *testing.T) (*World, map[string]string) {
 	old := combat.GetCallbacks()
 	t.Cleanup(func() { combat.SetCallbacks(old) })
 	cb := w.WireCombatCallbacks()
-	cb.Broadcast = w.WoundBroadcast
+	// Plain room delivery for the death cry (and the per-receiver fallback's
+	// nil render), captured into out by name (as the old WoundBroadcast did).
+	cb.Broadcast = func(room int, msg string, exclude []combat.Combatant) {
+		for _, p := range w.GetPlayersInRoom(room) {
+			if !sendOk(p, false) {
+				continue
+			}
+			excluded := false
+			for _, body := range exclude {
+				if any(p) == any(body) {
+					excluded = true
+					break
+				}
+			}
+			if !excluded {
+				out[p.Name] += msg + "\r\n"
+			}
+		}
+	}
 	combat.SetCallbacks(cb)
 	return w, out
 }
