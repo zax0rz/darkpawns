@@ -1,7 +1,6 @@
 package game
 
 import (
-	"slices"
 	"strings"
 	"testing"
 
@@ -205,8 +204,11 @@ func TestWeatherEvents_SynchronizedDirectEntryPoints(t *testing.T) {
 	SetWeatherWorld(w)
 
 	// Trigger all six event helpers through their synchronized direct wrappers.
-	// Only the full-moon and lunar-hunter routines broadcast globally; the gate
-	// and ghost-ship routines are room-local world changes.
+	// A level-1 mortal with no vampire/werewolf flags is untouched by the
+	// full moon (src/new_cmds.c:1310-1328) and ineligible for lunar hunters
+	// (src/new_cmds.c:2662-2683), and the gate/ghost-ship routines are
+	// room-local world changes, so no global broadcast is expected. The two
+	// invented full-moon broadcasts (R4) must not reappear.
 	fullMoon()
 	lunarHunter()
 	loadNightGate()
@@ -214,12 +216,8 @@ func TestWeatherEvents_SynchronizedDirectEntryPoints(t *testing.T) {
 	ghostShipAppear()
 	ghostShipDisappear()
 
-	wantMessages := []string{
-		"[ FULL MOON RISES ] The full moon casts an eerie glow across the land.\r\n",
-		"[ LUNAR HUNTER ] The lunar hunter rises in the east, its cry echoing across the valleys.\r\n",
-	}
-	if !slices.Equal(broadcastMessages, wantMessages) {
-		t.Errorf("broadcast messages = %#v, want %#v", broadcastMessages, wantMessages)
+	if len(broadcastMessages) != 0 {
+		t.Errorf("broadcast messages = %#v, want none", broadcastMessages)
 	}
 }
 

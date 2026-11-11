@@ -1,0 +1,117 @@
+# C-first full moon sunset: full_moon() + lunar_hunter() (src/new_cmds.c:1310-1328,
+# :2662-2683) from the sunset arm (src/weather.c:71-75) on days 22-25.
+# fixed-time 650369727 boots at hour 20 of day 21 (MOON_FULL), so one pumped
+# MUD hour crosses into the hour-21 sunset with Day+1=22 qualifying. Moonwolf
+# carries PLR_WEREWOLF via the real lycanthropy spell (src/spells.c:662-680,
+# as in transform-werewolf-success-depth); Moonhigh is set to level 20, the
+# only lunar-hunter-eligible player. The sunset tick must force-transform
+# Moonwolf with the two lunar lines and roll number(0,5) for Moonhigh (R3),
+# and must emit neither invented "[ FULL MOON" nor "[ LUNAR HUNTER" broadcast
+# (R4).
+# depth-case: weather.full-moon-transform
+# depth-case: weather.lunar-hunter-draws
+
+[fixture]
+empty-players
+quiet-mobs
+fixed-time 650369727
+
+[setup:oracle]
+Mooncaster
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mooncaster
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Moonwolf
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Moonwolf
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Moonhigh
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Moonhigh
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Moonwolf 8004
+teleport Moonhigh 8004
+set player Mooncaster class mage
+set player Mooncaster maxmana 5000
+set player Mooncaster mana 5000
+skillset Mooncaster 'lycanthropy' 100
+cast 'lycanthropy' Moonwolf
+set player Moonhigh level 20
+
+[probe]
+time
+~dpclock pulse 630
+time

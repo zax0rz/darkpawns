@@ -119,7 +119,14 @@ func (w *World) doTransform(ch *Player, me *MobInstance, cmd string, arg string)
 	if isPlayerNPC(ch, me) {
 		return true
 	}
+	return w.doTransformAt(ch, TimeWeatherSnapshot())
+}
 
+// doTransformAt is do_transform with the climate supplied by the caller. The
+// sunset tick holds weatherMu's write lock while it runs the full-moon
+// force-transforms, so the caller passes the snapshot it already owns instead
+// of re-acquiring the lock, which would deadlock (Go locks are not reentrant).
+func (w *World) doTransformAt(ch *Player, climate WorldClimateSnapshot) bool {
 	// C do_transform (act.other.c): only werewolves/vampires can transform;
 	// everyone else is rejected up front. This guard was missing from the port.
 	if ch.GetFlags()&(1<<PlrWerewolf) == 0 && ch.GetFlags()&(1<<PlrVampire) == 0 {
@@ -127,7 +134,6 @@ func (w *World) doTransform(ch *Player, me *MobInstance, cmd string, arg string)
 		return true
 	}
 
-	climate := TimeWeatherSnapshot()
 	night := climate.Weather.Sunlight == SunSet || climate.Weather.Sunlight == SunDark
 
 	// C checks werewolf first. Every branch returns, so a player carrying both
