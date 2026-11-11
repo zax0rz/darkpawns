@@ -62,6 +62,9 @@ Manifest statuses are deliberately explicit:
   cases are counted separately and left out of the completion percentage, which
   measures C parity only. Only Zach approves a divergence; an agent proposes it.
 
+An oracle proof may end in `[ws]` to record a WebSocket census; the standard claims census
+excludes these rows because it runs telnet.
+
 `scripts/gen_fidelity_depth.py` validates scenario annotations and unit-test
 symbols, then prints the actionable completion report. The manifest is the
 durable evidence; prose percentages are only snapshots.

@@ -10,6 +10,7 @@ import csv
 import pathlib
 import re
 import sys
+from manifest_claims import proof_scenario
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 MANIFEST_DIR = ROOT / "docs" / "fidelity" / "depth"
@@ -34,6 +35,16 @@ def check_pins(pins_path: pathlib.Path) -> int:
                 print(f"pin cites unknown ledger row: {scenario}: {citation}", file=sys.stderr)
                 bad += 1
     return bad
+
+
+def proof_scenarios(proof: str, where: str) -> list[str]:
+    scenarios = []
+    for part in proof.split(";"):
+        try:
+            scenarios.append(proof_scenario(part.strip()))
+        except ValueError as exc:
+            raise ValueError(f"{where}: {exc}") from exc
+    return scenarios
 
 
 def main() -> int:
@@ -73,8 +84,12 @@ def main() -> int:
                     return 1
                 # A case may cite several proofs separated by ";"; every
                 # scenario among them carries the expected divergence.
-                for part in proof.split(";"):
-                    scenario = part.strip().split("@", 1)[0]
+                try:
+                    scenarios = proof_scenarios(proof, f"{path.name}:{row['case_id']}")
+                except ValueError as exc:
+                    print(f"gen_expected_divergences: {exc}", file=sys.stderr)
+                    return 1
+                for scenario in scenarios:
                     if not (SCENARIO_DIR / f"{scenario}.txt").exists():
                         continue
                     rows.append((scenario, path.name, row["case_id"], status, stability))
@@ -92,7 +107,11 @@ def main() -> int:
                 if not proof or proof == "-":
                     no_proof += 1
                     continue
-                scenarios = [part.strip().split("@", 1)[0] for part in proof.split(";")]
+                try:
+                    scenarios = proof_scenarios(proof, f"{path.name}:{row['case_id']}")
+                except ValueError as exc:
+                    print(f"gen_expected_divergences: {exc}", file=sys.stderr)
+                    return 1
                 if not any((SCENARIO_DIR / f"{scenario}.txt").exists() for scenario in scenarios):
                     unresolved.append(f"{path.name}:{row['case_id']}:{scenarios[0]}")
     print(f"expected_divergences: {len(rows)} rows across {len(kept_scenarios)} scenarios "
