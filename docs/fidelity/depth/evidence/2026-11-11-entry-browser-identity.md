@@ -21,12 +21,11 @@ INFRA and rechecked it; the retained recheck passed. The attempt logs record
 the actual `ws://` browser-client transport. The mode remains a probe outside
 the standard telnet expected-divergence pins.
 
-The row stays blocked despite this matching transcript probe: the claims
-enumerator records scenario and seed, but not transport. Promoting it to
-`oracle-green` would make later standard claims runs execute the telnet
-transcript and overstate the browser proof. Zach's decision is whether to add
-transport-qualified claims/pins and make WS a claimed gate, or keep this probe
-advisory and the row blocked.
+The row remains blocked. The approved proof spelling was
+`entry-name-gates@1[ws]`, but `make fidelity-depth` rejects it as invalid seed
+syntax (`1[ws]`). The claims enumerator records scenario and seed, but not
+transport. Per Zach's instruction, the checker was not changed; this matching
+browser transcript remains an advisory probe and the row stays blocked.
 
 The family revert proof is
 `/home/zach/Archives/darkpawns/oracle-runs/2026-11-11/luna-l3-entry-browser-revert-proof`.
@@ -60,9 +59,11 @@ The source uses several distinct identifiers:
   was found in the current Go source search.
 
 These findings do not establish one identity key that can be applied across
-name lookup, durable player IDs, connection-level failure accounting, and
-Go-only source-IP admission. `entry.identity-consumers` stays blocked pending
-Zach's scope decision: split this umbrella by C name/index, persistent-ID, and
-Go-only connection identity consumers, or keep one row and name the remaining
-consumer that must be proven there. No lockout or identity behavior is changed
-or newly approved by this audit.
+name lookup, durable player IDs, and connection-level failure accounting.
+Zach approved splitting the umbrella on 2026-11-11. The depth manifest now has
+five separately blocked consumers: C name/index lookup, persistent ID for
+duplicate sessions, persistent ID for mail, persistent ID for house access,
+and the password-retry counter. Each remains blocked pending its own proof.
+Go-only per-IP admission/rate controls and the retired agent-key path are
+recorded in this audit but are not added as C identity consumers. No lockout or
+identity behavior changed.
