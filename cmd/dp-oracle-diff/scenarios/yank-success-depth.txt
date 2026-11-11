@@ -1,0 +1,104 @@
+# depth-case: yank.success-audience
+# C do_yank success (src/act.other.c:1656-1658): the actor sees "You yank $M to
+# $S feet." (TO_CHAR), the victim only "$n yanks you to your feet." (TO_VICT),
+# and every other occupant "$n yanks $N to $S feet." (TO_NOTVICT — excludes the
+# actor AND the victim).
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+
+[setup:oracle]
+Yankgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Yankgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:follower]
+Yankvictim
+Y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:follower]
+Yankvictim
+y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Yankwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Yankwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Yankvictim 8162
+teleport Yankwatch 8162
+send:follower follow Yankgod
+send:follower sit
+
+[probe]
+yank Yankvictim

@@ -243,39 +243,32 @@ func (w *World) doYank(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	// Extract the victim's attributes into a uniform shape (player or mob).
+	// Extract the victim's attributes into a uniform shape (player or mob) and
+	// keep the victim as an Act() target: C's do_yank hands act() ch and victim
+	// and lets it render $N/$M/$S and the TO_CHAR/TO_VICT/TO_NOTVICT audiences.
 	var (
-		victName      string
-		victSex       int
 		victFollowing string
 		victPos       int
 		victMounted   bool
-		tellVictim    func(string)
+		victimActor   Actor
 		setVictimPos  func(int)
 	)
 	switch {
 	case victimPl != nil:
-		victName = victimPl.Name
-		victSex = victimPl.GetSex()
 		victFollowing = victimPl.GetFollowing()
 		victPos = victimPl.GetPosition()
 		victMounted = victimPl.IsMounted()
-		tellVictim = func(msg string) { victimPl.SendMessage(msg) }
+		victimActor = victimPl
 		setVictimPos = func(pos int) { victimPl.SetPosition(pos) }
 	case victimMob != nil:
-		victName = victimMob.GetName()
-		victSex = victimMob.GetSex()
 		victFollowing = victimMob.GetFollowing()
 		victPos = victimMob.GetPosition()
 		// Mobs are never "mounted" in C's IS_MOUNTED sense (a mount is a mob a
 		// player rides, not the reverse); the mount sub-branch never fires here.
 		victMounted = false
-		tellVictim = func(msg string) { victimMob.SendMessage(msg) }
+		victimActor = victimMob
 		setVictimPos = func(pos int) { victimMob.SetPosition(pos) }
 	}
-
-	chPronouns := GetPronouns(ch.Name, ch.GetSex())
-	victPronouns := GetPronouns(victName, victSex)
 
 	// Self-check — act.other.c:1632 (the victim is the actor, by identity
 	// like C's victim == ch, not by name). Comes BEFORE the follower check
@@ -295,9 +288,9 @@ func (w *World) doYank(ch *Player, me *MobInstance, cmd string, arg string) bool
 	// FIGHTING and STANDING both count as up). NOT >= PosStanding.
 	if victPos > combat.PosSitting {
 		if !victMounted {
-			ch.SendMessage(ActMessage("$N is already on $S feet.", chPronouns, &victPronouns, "") + "\r\n")
+			Act(w, true, ch, victimActor, nil, nil, "$N is already on $S feet.", "", ToChar)
 		} else {
-			ch.SendMessage(ActMessage("You can't yank $M off $S mount!", chPronouns, &victPronouns, "") + "\r\n")
+			Act(w, true, ch, victimActor, nil, nil, "You can't yank $M off $S mount!", "", ToChar)
 		}
 		return true
 	}
@@ -305,16 +298,15 @@ func (w *World) doYank(ch *Player, me *MobInstance, cmd string, arg string) bool
 	// Sleeping/below — act.other.c:1650. C: GET_POS(victim) <= POS_SLEEPING.
 	if victPos <= combat.PosSleeping {
 		// sic: "is is" (R1 — keep the typo)
-		ch.SendMessage(ActMessage("$N is is no position to be yanked around!", chPronouns, &victPronouns, "") + "\r\n")
+		Act(w, true, ch, victimActor, nil, nil, "$N is is no position to be yanked around!", "", ToChar)
 		return true
 	}
 
-	// Success — act.other.c:1656-1659. The three act() lines, then POS_STANDING.
-	// $M/$S expand to the victim's objective/possessive pronouns (him/her/it,
-	// his/her/its), NOT the name.
-	ch.SendMessage(ActMessage("You yank $M to $S feet.", chPronouns, &victPronouns, "") + "\r\n")
-	tellVictim(ActMessage("$n yanks you to your feet.", chPronouns, &victPronouns, "") + "\r\n")
-	actToRoom(w, ch.GetRoomVNum(), ActMessage("$n yanks $N to $S feet.", chPronouns, &victPronouns, "")+"\r\n", ch.Name)
+	// Success — act.other.c:1656-1658. C's three act() calls; TO_NOTVICT
+	// excludes the actor AND the victim (actDeliver's ToNotVict arm).
+	Act(w, true, ch, victimActor, nil, nil, "You yank $M to $S feet.", "", ToChar)
+	Act(w, true, ch, victimActor, nil, nil, "$n yanks you to your feet.", "", ToVict)
+	Act(w, true, ch, victimActor, nil, nil, "$n yanks $N to $S feet.", "", ToNotVict)
 	setVictimPos(combat.PosStanding)
 	return true
 }
