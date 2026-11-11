@@ -266,7 +266,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/go/bin
-        key: sec-tools-go1.27.3-govulncheck1.7.0-gosec2.29.0
+        key: sec-tools-go1.27.4-govulncheck1.7.0-gosec2.29.0
 
     # Supply-chain integrity: every dependency's content matches its go.sum hash. Deterministic and
     # fast; a failure means a tampered or corrupted module — always worth blocking. (Same check reek's

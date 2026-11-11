@@ -21,7 +21,7 @@ Three moving parts:
 ## Prerequisites
 
 ```bash
-# Go (see the `go` directive in go.mod for the exact minimum; currently 1.27.3)
+# Go (see the `go` directive in go.mod for the exact minimum; currently 1.27.4)
 go version
 
 # Build toolchain for the C oracle (autotools + a C compiler)
