@@ -1,0 +1,15 @@
+claim_id	track	claim
+PF-001	port-fidelity	The first live oracle look scenario exposed three player-visible C/Go divergences.
+PF-002	port-fidelity	The original Go yank handler was plausible but differed from C in messages branches position gating pronouns and mob handling.
+PF-003	port-fidelity	A fidelity fix was tested in a function with no live callers creating verified dead code.
+MA-002	multi-agent-engineering	Agent review false-positive rates varied materially across recorded batches.
+MA-003	multi-agent-engineering	Long-running stateless agent pipelines pay an enforcement tax through repeated context reconstruction and standards drift.
+MA-004	multi-agent-engineering	A multi-agent sprint was estimated at roughly 470k tokens for 26 issues 62 fixes one deployment and one DB permissions repair.
+GM-001	game-agent-memory	Server-hosted narrative memory can be evaluated through behavioral persistence social consequence salience decay and token-cost metrics.
+RO-001	research-operations	The research-writing cron recorded 36 runs with 30 successful and six failed.
+RO-002	research-operations	The weekly-digest cron recorded 30 runs with 25 successful and five failed.
+RO-004	research-operations	Some research-writing runs consumed more than one million input tokens.
+RO-005	research-operations	Soviet cross-posting from isolated research cron sessions was persistently unavailable because agents invoked an unavailable bare CLI.
+PF-024	port-fidelity	The C oracle's 165 archived Lua scripts (one SVN commit by jravn, 2008-04-27) target a partly deleted world and depend on create_event, which the shipped C server comments out of cmdlib; the Go port made them runnable by inventing bindings C never had (create_event, mxp, get_group_lvl, skill_group), rewrote about 15 of them from a text dump (dropping banker/clerk anti-forgery checks), and left seven real C bindings as stubs 'based on ... (not shown in snippets)'.
+PF-105	port-fidelity	Go's MobInstance.WaitState stores both C wait counters, ch->wait (WAIT_STATE, src/utils.h:462-464) and GET_MOB_WAIT (written only by the Lua bridge, src/scripts.c:2017). Player skills that wait a target write the mob field (pkg/command/skill_commands.go:1792-1794), and Go's flee and cast gates read it (pkg/game/flee.go:62, pkg/game/world_bridge.go:1193), so a mob a player has just bashed cannot flee or cast in Go where C (src/act.offensive.c:377, src/spell_parser.c:845) reads only GET_MOB_WAIT; separately, the combat engine never honors script-set mob wait (src/fight.c:1977-1982).
+PF-116	process-fidelity	Google's elephant-goldfish model (Rensin, Medium 2026-04-27; open-source plugin google/elephant-goldfish-model) uses a context-rich elephant session to write a design doc listing every file to change, then has fresh goldfish sessions test, critique and implement from that doc. Candidate claim: goldfish builders are safe only with an elephant's map of where code already lives. Dark Pawns' early builders lacked one, and amnesiac clones (PF-114) followed. Later briefs (verified file:line ground truth) are an independent convergence; for a port the C source is the inherited design doc.

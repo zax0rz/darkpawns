@@ -143,10 +143,11 @@ Standing rules for every agent on this roadmap, all from `AGENTS.md`:
 
 ## 6. The stopping rule (Zach sets the numbers)
 
-Claude's suggested starting points are in the right column. They are
-suggestions; the kickoff says these targets are Zach's.
+Zach set these targets on 2026-11-11 (Phase 0). The frozen lists and the
+full decision record are in
+[`docs/research/frozen-lists-2026-11-11/`](../research/frozen-lists-2026-11-11/README.md).
 
-| Condition | Suggested target |
+| Condition | Target |
 |---|---|
 | Bytes: FAIL rows on the tagged commit | 0 |
 | Behavior: draw-divergent runs on the tagged commit | 0, with the draw log present |
@@ -157,12 +158,17 @@ suggestions; the kickoff says these targets are Zach's.
 | Random play | no new divergence in the last N hours of play (pick N; 24 is a reasonable first bar) |
 | Test audit | `pkg/game`, `pkg/session` and `pkg/command` audited; the rest listed as not audited in the report |
 
-Two things to decide deliberately rather than by drift:
+Decided on 2026-11-11:
 
-- **Whether a unit test counts as proof** for an output site, or only an
-  oracle witness does. The report can carry both columns.
-- **What the tag is called.** A plain "port complete" version (1.0 is the
-  obvious one) makes the claim legible to outsiders.
+- **Unit tests as proof:** an oracle witness is the default. A unit test
+  counts only where the oracle cannot reach the site (mid-combat states,
+  DP-1202, and long-shot random rolls), with a C cite and a revert proof.
+  The completion report carries unit-proven sites in their own column.
+- **Long-shot random rows** are settled by one standing exception for the
+  class; each row names its odds and its C line.
+- **New kinds of findings** join the next release's bar. A FAIL or draw
+  divergence in the final release census always blocks.
+- **The tag** is `v1.0.0`.
 
 ## 7. After the tag: sharing it
 
@@ -228,14 +234,9 @@ timeline are done or in progress. What's left is mostly assembly.
 A blog post that lands and a public dataset are a legitimate outcome on their
 own. The paper is worth doing but shouldn't hold the post hostage.
 
-## 8. Decisions for Zach
+## 8. Decisions for Zach (settled 2026-11-11)
 
-1. Is section 1's bounded claim the definition of done you want to ship under?
-2. The targets in section 6, especially the mutation bar, the random-play
-   window, and whether unit proofs count.
-3. Does a new *kind* of finding during Phase 1 join this release's bar, or
-   wait for the next?
-4. Should this file land on main, and should `AGENTS.md` point to it? Proposed
-   line for the documentation map (yours to approve or reword):
-   `` | [`docs/plans/ROADMAP-2026-11-10-port-completion.md`](docs/plans/ROADMAP-2026-11-10-port-completion.md) | What "done" means for the port, the lists to burn down, and the stopping rule | ``
-5. The name of the completion tag.
+All five were settled in Phase 0. Section 1's bounded claim is the definition
+of done; section 6 holds the targets and the other rulings; this file is on
+main and `AGENTS.md` links to it; the tag is `v1.0.0`. The record is in
+[`docs/research/frozen-lists-2026-11-11/README.md`](../research/frozen-lists-2026-11-11/README.md).
