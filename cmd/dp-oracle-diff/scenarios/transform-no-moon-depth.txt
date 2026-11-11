@@ -1,0 +1,80 @@
+# C-first no-moon refusal for a real werewolf-form player.
+# fixed-time 650345661 is hour 22, day 5: SUN_DARK and time_info.day in 1..5.
+# The real level-1 lycanthropy spell grants PLR_WEREWOLF; no affect bit is
+# injected. C's no-moon arm is src/act.other.c:1429-1434.
+# depth-case: transform.no-moon
+
+[fixture]
+empty-players
+quiet-mobs
+fixed-time 650345661
+
+[setup:oracle]
+Transformwolf
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Transformwolf
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Transformwatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Transformwatch
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Transformwatch 8105
+set player Transformwolf class mage
+set player Transformwolf maxmana 5000
+set player Transformwolf mana 5000
+skillset Transformwolf 'lycanthropy' 100
+set player Transformwolf level 34
+cast 'lycanthropy' Transformwolf
+~dpclock pulse 20
+
+[probe]
+transform
