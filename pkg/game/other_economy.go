@@ -570,8 +570,8 @@ func (w *World) useWandPoint(ch *Player, item *ObjectInstance, targetArg string,
 // resolveUseActionObjectTarget mirrors mag_objectmagic's generic_find lookup
 // for the object argument used only by a staff's action description
 // (src/spell_parser.c:560-565,785-790). Character matches take precedence;
-// otherwise C searches inventory, room, then equipment before using the
-// object as $P in the room act.
+// otherwise C searches equipment, inventory, then room before using the
+// object as $P in the room act (src/handler.c:1537-1556; DP-1518).
 func (w *World) resolveUseActionObjectTarget(ch *Player, targetArg string) *ObjectInstance {
 	targetArg, _ = halfChop(targetArg)
 	if targetArg == "" {
@@ -580,16 +580,8 @@ func (w *World) resolveUseActionObjectTarget(ch *Player, targetArg string) *Obje
 	if _, ok := w.ResolveCharInRoom(ch, targetArg); ok {
 		return nil
 	}
-	if obj, ok := w.ResolveObjectInInventory(ch, targetArg); ok {
-		return obj
-	}
-	if obj, ok := w.ResolveObjectInRoom(ch, targetArg); ok {
-		return obj
-	}
-	if obj, ok := w.ResolveObjectInEquipment(ch, targetArg); ok {
-		return obj
-	}
-	return nil
+	object, _ := w.GenericFindObject(ch, targetArg)
+	return object
 }
 
 // resolveMagicItemTarget mirrors generic_find's character-first target lookup
@@ -613,18 +605,13 @@ func (w *World) resolveMagicItemTarget(ch *Player, targetArg string, spellNum in
 		!si.HasTarget(spells.TarObjEquip) && !si.HasTarget(spells.TarObjWorld) {
 		return nil, nil, false
 	}
-	// C generic_find searches inventory, room, and equipment in that order
+	// C generic_find searches equipment, inventory, and room in that order
 	// before mag_objectmagic checks whether the spell accepts any object target
-	// (src/spell_parser.c:560-565,628-637). The individual TAR_OBJ_* bits do
-	// not restrict where generic_find may find that object.
-	if obj, ok := w.ResolveObjectInInventory(ch, targetArg); ok {
-		return nil, obj, true
-	}
-	if obj, ok := w.ResolveObjectInRoom(ch, targetArg); ok {
-		return nil, obj, true
-	}
-	if obj, ok := w.ResolveObjectInEquipment(ch, targetArg); ok {
-		return nil, obj, true
+	// (src/spell_parser.c:560-565,628-637; src/handler.c:1537-1556; DP-1518).
+	// The individual TAR_OBJ_* bits do not restrict where generic_find may
+	// find that object.
+	if object, _ := w.GenericFindObject(ch, targetArg); object != nil {
+		return nil, object, true
 	}
 	return nil, nil, false
 }

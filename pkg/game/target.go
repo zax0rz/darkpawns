@@ -275,6 +275,52 @@ func (w *World) ResolveObjectInRoom(ch *Player, name string) (*ObjectInstance, b
 	return resolveVisibleObject(ch, name, w.GetItemsInRoom(ch.GetRoom()), true)
 }
 
+// GenericFindScope reports which scope generic_find found its object in,
+// mirroring C generic_find's return of FIND_OBJ_EQUIP / FIND_OBJ_INV /
+// FIND_OBJ_ROOM (src/handler.c:1537-1556).
+type GenericFindScope int
+
+const (
+	GenericFindNone GenericFindScope = iota
+	GenericFindEquip
+	GenericFindInv
+	GenericFindRoom
+)
+
+// GenericFindObject is the shared object resolver for every C generic_find
+// caller that includes FIND_OBJ_EQUIP (DP-1518, R5c). C checks equipment,
+// inventory, and room in that fixed order whatever order the caller's bits
+// are written in (src/handler.c:1537-1556):
+//
+//   - equipment: first C WEAR_* match via isname_with_abbrevs, with no
+//     visibility gate and no "N." ordinal (src/handler.c:1537-1545);
+//   - inventory: get_obj_in_list_vis over ch->carrying (ordinal, CAN_SEE_OBJ
+//     or ITEM_LIGHT; src/handler.c:1328-1348);
+//   - room: get_obj_in_list_vis over room contents (same).
+//
+// Callers that also include a character bit (look_at_target,
+// mag_objectmagic) resolve the room character first via ResolveCharInRoom,
+// exactly as C checks FIND_CHAR_ROOM before FIND_OBJ_EQUIP. Callers whose
+// bitvector omits FIND_OBJ_EQUIP (get/put/door paths) do not use this
+// helper.
+func (w *World) GenericFindObject(ch *Player, name string) (*ObjectInstance, GenericFindScope) {
+	if ch == nil {
+		return nil, GenericFindNone
+	}
+	for _, object := range COrderedWorn(ch) {
+		if object != nil && isnameWithAbbrevs(name, object.GetKeywords()) {
+			return object, GenericFindEquip
+		}
+	}
+	if object, ok := w.ResolveObjectInInventory(ch, name); ok {
+		return object, GenericFindInv
+	}
+	if object, ok := w.ResolveObjectInRoom(ch, name); ok {
+		return object, GenericFindRoom
+	}
+	return nil, GenericFindNone
+}
+
 // ResolveObjectWorld mirrors C get_obj_vis: inventory, room, then the global
 // object list. The preliminary scopes apply even when the spell only carries
 // TAR_OBJ_WORLD because get_obj_vis itself performs them.

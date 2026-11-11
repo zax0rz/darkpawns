@@ -1,0 +1,50 @@
+# depth-case: examine.equip-first
+# DP-1518: do_examine (src/act.informative.c:1152) searches equipment before
+# inventory (src/handler.c:1537-1556). A worn closed backpack and a carried open
+# backpack share "pack"; C looks inside the worn one ("It is closed."), old Go
+# looked inside the carried contents.
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-obj 8038 2 8105 80
+spawn-obj 8038 2 8105 80
+force-load 8038
+
+[setup:oracle]
+Examineequip
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Examineequip
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+get pack
+get pack
+wear pack about
+open pack
+
+[probe]
+examine pack
