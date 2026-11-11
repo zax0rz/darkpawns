@@ -263,7 +263,7 @@ func TestCmdTagNPCAcknowledgment(t *testing.T) {
 	if err := ExecuteCommand(actor, "tag", []string{"goblin"}); err != nil {
 		t.Fatalf("ExecuteCommand tag NPC: %v", err)
 	}
-	if got, want := strings.Join(drainSessionText(t, actor), ""), "You tag A goblin guard, but it tags you right back!\r\n"; got != want {
+	if got, want := strings.Join(drainSessionText(t, actor), ""), "You tag A goblin guard, but it tags you right back!\r\n\r\n"; got != want {
 		t.Fatalf("NPC tag output = %q, want %q", got, want)
 	}
 	if !actor.player.HasPLRFlag(game.PlrIt) {

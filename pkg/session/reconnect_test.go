@@ -96,8 +96,10 @@ func TestPerformDupeCheckUsurpsBodyInUse(t *testing.T) {
 	if got := renderedOutput(fresh); !strings.Contains(got, "You take over your own body, already in use!\r\n") {
 		t.Fatalf("player output = %q", got)
 	}
-	if got := renderedOutput(observer); !strings.Contains(got, "body has been taken over by a new spirit!") {
-		t.Fatalf("room output = %q", got)
+	const wantRoom = "Returner suddenly keels over in pain, surrounded by a white aura...\r\n" +
+		"Returner's body has been taken over by a new spirit!\r\n"
+	if got := renderedOutput(observer); got != wantRoom {
+		t.Fatalf("room output bytes = %q, want %q", got, wantRoom)
 	}
 
 	// The old transport's teardown runs after the takeover. It must neither

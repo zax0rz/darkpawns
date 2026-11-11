@@ -552,10 +552,7 @@ func performMoveResult(w *World, ch *Player, dir int, needSpecialsCheck bool, re
 		switch f := follower.(type) {
 		case *Player:
 			if f.GetRoom() == wasIn && f.GetPosition() >= combat.PosStanding {
-				Act(nil, false, f, ch, nil, nil, "You follow $N.", "", ToChar)
-				// C's follower loop emits this notice, then the recursive
-				// perform_move() starts a separate room-look output burst.
-				f.SendMessage("\r\n")
+				Act(nil, false, f, ch, nil, nil, "You follow $N.\r\n", "", ToChar)
 				f.SetAffect(affHide, false)
 				if performMoveResult(w, f, dir, true, result) && result != nil {
 					result.Followers = append(result.Followers, f.Name)
@@ -720,13 +717,21 @@ func doDoorcmd(w *World, ch *Player, obj *ObjectInstance, door int, scmd int) {
 		}
 		msg := fmt.Sprintf("The %s %s %s%s from the other side.\r\n",
 			backName, verbIs(backName), cmdDoor[scmd], suffix)
-		for _, actor := range w.actChar(otherRoomVNum) {
-			if !sendOk(actor, false) {
-				continue
-			}
-			actor.SendMessage(msg)
-		}
+		actDoorDestinationMessage(w, otherRoomVNum, msg)
 	}
+}
+
+// actDoorDestinationMessage mirrors C's paired TO_ROOM/TO_CHAR calls for the
+// far-side door notice (src/act.movement.c:519-530). The supplied text already
+// ends in CRLF; Act appends its own CRLF as perform_act does.
+func actDoorDestinationMessage(w *World, roomVNum int, message string) {
+	actors := w.actChar(roomVNum)
+	if len(actors) == 0 {
+		return
+	}
+	actor := actors[0]
+	Act(w, false, actor, nil, nil, nil, message, "", ToRoom)
+	Act(w, false, actor, nil, nil, nil, message, "", ToChar)
 }
 
 func toggleDoorFlag(w *World, ch *Player, obj *ObjectInstance, door int, ext parser.Exit, otherRoomVNum int, backExt parser.Exit, hasBack bool, objectFlag, exitFlag int) {
@@ -1108,12 +1113,7 @@ func (w *World) mobGenDoor(m *MobInstance, argument string, scmd int) {
 			suffix = "d"
 		}
 		msg := fmt.Sprintf("The %s %s %s%s from the other side.\r\n", backName, verbIs(backName), cmdDoor[scmd], suffix)
-		for _, actor := range w.actChar(otherRoomVNum) {
-			if !sendOk(actor, false) {
-				continue
-			}
-			actor.SendMessage(msg)
-		}
+		actDoorDestinationMessage(w, otherRoomVNum, msg)
 	}
 }
 

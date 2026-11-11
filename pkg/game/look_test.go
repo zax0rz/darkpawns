@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -24,6 +25,51 @@ func TestListObjToCharCorpse(t *testing.T) {
 	w.listObjToChar(room, ch) // must not panic on the Prototype-nil corpse
 	if msg := lastMsg(); !strings.Contains(msg, "The corpse of a goblin is lying here.") {
 		t.Errorf("expected corpse long desc in room listing, got %q", msg)
+	}
+}
+
+func TestPeekPreservesCLeadingActLineBreakBytes(t *testing.T) {
+	// C uses one act() for the equipment heading and one for the inventory
+	// heading (src/act.informative.c:451,467).
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Peek Room", Zone: 1}},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+	viewer := NewPlayer(1, "Peekviewer", 1001)
+	viewer.SetLevel(LVL_IMMORT)
+	viewer.Class = ClassThief
+	viewer.SetPosition(combat.PosStanding)
+	target := NewPlayer(2, "Peektarget", 1001)
+	target.SetSex(SexMale)
+	for _, player := range []*Player{viewer, target} {
+		if err := w.AddPlayer(player); err != nil {
+			t.Fatalf("AddPlayer %s: %v", player.Name, err)
+		}
+	}
+	sword := NewObjectInstance(&parser.Obj{
+		VNum: 2001, Keywords: "sword", ShortDesc: "a plain sword",
+		WearFlags: [4]int{8193, 0, 0, 0},
+	}, -1)
+	if err := target.Inventory.AddItem(sword); err != nil {
+		t.Fatalf("AddItem sword: %v", err)
+	}
+	if err := w.EquipItem(target, sword, eqWearWield); err != nil {
+		t.Fatalf("EquipItem sword: %v", err)
+	}
+	output := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { output[name] += string(msg) }
+
+	w.doPeek(viewer, nil, "peek", target.Name)
+	for _, want := range []string{
+		"\r\nPeektarget is using:\r\n",
+		"\r\nYou attempt to peek at his inventory:\r\n",
+	} {
+		if !strings.Contains(output[viewer.Name], want) {
+			t.Errorf("peek output %q is missing C act bytes %q", output[viewer.Name], want)
+		}
 	}
 }
 

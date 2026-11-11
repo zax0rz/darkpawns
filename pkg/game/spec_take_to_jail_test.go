@@ -196,6 +196,8 @@ func TestSpecTakeToJailAlignmentInterventionOutput(t *testing.T) {
 	}
 }
 
+// The observer sees both sentences from C's one act() call, including its
+// embedded CRLF (src/fight.c:1387-1389).
 func TestSpecTakeToJailSubdueStateAndAudience(t *testing.T) {
 	parsed := &parser.World{Rooms: []parser.Room{
 		{VNum: 1001, Name: "Street"},
@@ -211,8 +213,13 @@ func TestSpecTakeToJailSubdueStateAndAudience(t *testing.T) {
 	w.MessageSink = func(name string, msg []byte) { transcript[name] += string(msg) }
 	victim := NewPlayer(1, "Victim", 1001)
 	victim.SetLevel(5)
+	victim.SetSex(SexMale)
 	if err := w.AddPlayer(victim); err != nil {
 		t.Fatalf("AddPlayer victim: %v", err)
+	}
+	observer := NewPlayer(2, "Observer", 1001)
+	if err := w.AddPlayer(observer); err != nil {
+		t.Fatalf("AddPlayer observer: %v", err)
 	}
 	mountProto := &parser.Mob{
 		VNum:        99002,
@@ -260,6 +267,11 @@ func TestSpecTakeToJailSubdueStateAndAudience(t *testing.T) {
 		"The Main Holding Cell\r\nA plain cell.\r\n[ Exits: None! ]\r\n"
 	if got := transcript[victim.GetName()]; got != want {
 		t.Fatalf("victim transcript = %q, want %q", got, want)
+	}
+	const wantObserver = "Hans the gateguard grabs Victim by the collar, and quickly beats him into submission.\r\n" +
+		"Jerking him to his feet, Hans the gateguard carts Victim off to jail.\r\n"
+	if got := transcript[observer.Name]; got != wantObserver {
+		t.Fatalf("observer bytes = %q, want %q", got, wantObserver)
 	}
 	if got := victim.GetRoomVNum(); got != 8118 {
 		t.Fatalf("victim room = %d, want 8118", got)

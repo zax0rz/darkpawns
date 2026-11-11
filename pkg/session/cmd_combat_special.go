@@ -165,8 +165,9 @@ func cmdOrgasm(s *Session, args []string) error {
 	game.Act(world, false, s.player, victim, nil, nil,
 		"You touch $N, who slumps over in orgasm!", "", game.ToChar)
 	game.Act(world, false, victim, s.player, nil, nil,
-		"A wonderful feeling spreads throughout your entire body as $N touches you in all the right places...", "", game.ToChar)
-	victim.SendMessage("You explode with a breath-taking orgasm!!\r\n")
+		"A wonderful feeling spreads throughout your entire body "+
+			"as $N touches you in all the right places...\n\r"+
+			"You explode with a breath-taking orgasm!!", "", game.ToChar)
 	game.Act(world, false, s.player, victim, nil, nil,
 		"$N collapses in a quivering, moaning heap as $n touches them..", "", game.ToNotVict)
 	addOrgasmHealth(victim)

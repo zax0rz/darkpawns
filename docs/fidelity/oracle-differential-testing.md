@@ -34,6 +34,10 @@ values and make the chosen draw player-visible where possible.
 The harness skips successfully when `DP_ORACLE_BIN` is unset so normal CI does
 not require the external C checkout. Such a skip is not oracle proof (R5a).
 
+Normalization folds trailing line breaks emitted by `act()`, so scenario
+comparisons cannot prove their exact count; keep raw-byte unit assertions and
+inspect the retained C transcript wherever a scenario reaches the call.
+
 ## Retaining Run Evidence
 
 Keep the actual Oracle evidence, not only a summary. Retained output includes:

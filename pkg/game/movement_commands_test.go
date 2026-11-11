@@ -105,6 +105,7 @@ func TestPerformMoveFollowerPositionAndHide(t *testing.T) {
 		follower := addMovementPlayer(t, w, "Hidden", 1001)
 		follower.SetFollowing(leader.Name)
 		follower.SetAffect(affHide, true)
+		output := captureMovementOutput(w)
 
 		result := w.DoMove(leader, "north")
 		if !result.Success {
@@ -115,6 +116,9 @@ func TestPerformMoveFollowerPositionAndHide(t *testing.T) {
 		}
 		if follower.IsAffected(affHide) {
 			t.Fatal("follower retained AFF_HIDE")
+		}
+		if got, want := output[follower.Name].String(), "You follow TestPlayer.\r\n\r\n"; !strings.Contains(got, want) {
+			t.Fatalf("follower notice bytes = %q, want substring %q", got, want)
 		}
 		if len(result.Followers) != 1 || result.Followers[0] != follower.Name {
 			t.Fatalf("moved followers = %#v", result.Followers)

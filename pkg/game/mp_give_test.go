@@ -173,7 +173,7 @@ func TestMpGiveObjectDemonSoulSpawnsPortal(t *testing.T) {
 	for _, want := range []string{
 		"peers at the soul, then licks his lips",
 		"says, 'This will do nicely.. you may enter!'",
-		"hideous\r\n screaming rings in your ears",
+		"A test mob pops the soul into his mouth and swallows it, as a hideous\r\n screaming rings in your ears...\r\n",
 		"a shimmering black portal materializes before you",
 		"exclaims, 'Enter the portal quickly! It will not last long!'",
 	} {

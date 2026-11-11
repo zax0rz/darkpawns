@@ -260,8 +260,9 @@ func specCouch(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 				m.SetRoom(playerRoom)
 				break
 			}
-			w.roomMessage(me.GetRoomVNum(), "Starved and needing food to make more pillows, the couch attacks!")
-			ch.SendMessage("Starved and needing food to make more pillows, the couch attacks you!\r\n\r\n")
+			Act(w, true, ch, nil, nil, nil,
+				"Starved and needing food to make more pillows, the mimic attacks!\n\r", "", ToRoom)
+			ch.SendMessage("Starved and needing food to make more pillows, the mimic attacks you!\n\r\n\r")
 			for _, m := range w.GetMobsInRoom(playerRoom) {
 				if m.GetRoomVNum() == playerRoom && m != me {
 					if err := m.Attack(ch, w); err != nil {

@@ -19,6 +19,11 @@ type mockAreaWorld struct {
 		format        string
 		hideInvisible bool
 	}
+	notVictimActs []struct {
+		actor, target interface{}
+		format        string
+		hideInvisible bool
+	}
 	calls []struct {
 		Attacker, Victim interface{}
 		Dam              int
@@ -32,6 +37,15 @@ func (w *mockAreaWorld) SpellActToRoom(actor, _ interface{}, format string, hide
 		format        string
 		hideInvisible bool
 	}{actor: actor, format: format, hideInvisible: hideInvisible})
+	return true
+}
+
+func (w *mockAreaWorld) SpellActNotVict(actor, target interface{}, format string, hideInvisible bool) bool {
+	w.notVictimActs = append(w.notVictimActs, struct {
+		actor, target interface{}
+		format        string
+		hideInvisible bool
+	}{actor: actor, target: target, format: format, hideInvisible: hideInvisible})
 	return true
 }
 
@@ -104,6 +118,25 @@ func TestCastHellfire_DealsAreaDamage_InstakillsLowLevel_SkipsCasterAndGroup(t *
 	// Grouped ally must be skipped entirely.
 	if ally.hp != 200 {
 		t.Errorf("expected grouped ally to be skipped by hellfire, got %d HP left", ally.hp)
+	}
+	wantVictim := []string{
+		"The fires of hell bring blisters on your skin!!\n\r\r\n",
+		"The fires of hell bring you to your knees!\r\n\r\n",
+	}
+	if !reflect.DeepEqual(victim.messages, wantVictim) {
+		t.Errorf("victim bytes = %#v, want %#v", victim.messages, wantVictim)
+	}
+	wantNotVictim := []string{
+		"The fires of hell scorch the skin of $N!\r\n",
+		"The fires of hell bring $N to $S knees!\r\n",
+		"The soul of $N is charred by the flames of hell!",
+	}
+	gotNotVictim := make([]string, len(world.notVictimActs))
+	for i, act := range world.notVictimActs {
+		gotNotVictim[i] = act.format
+	}
+	if !reflect.DeepEqual(gotNotVictim, wantNotVictim) {
+		t.Errorf("room act formats = %#v, want %#v", gotNotVictim, wantNotVictim)
 	}
 }
 
@@ -336,13 +369,16 @@ func TestMagAreas_MassDominateUsesCasterLevelCharmDispatch(t *testing.T) {
 // A level-31 non-NPC must be skipped; the foreign 100 let hellfire burn gods.
 func TestCastHellfire_SkipsImmortalNonNPC(t *testing.T) {
 	caster := &mockSpellsChar{name: "Caster", level: 40, roomVNum: 100}
-	god := &mockSpellsChar{name: "God", level: lvlImmort, maxHP: 5000, hp: 5000}
+	god := &mockSpellsChar{name: "God", level: lvlImmort, roomVNum: 100, maxHP: 5000, hp: 5000}
 	world := &mockAreaWorld{room: &parser.Room{}, chars: []interface{}{caster, god}}
 
 	castHellfire(40, caster, world)
 
 	if god.hp != 5000 {
 		t.Fatalf("hellfire damaged an immortal non-NPC: hp = %d, want 5000", god.hp)
+	}
+	if got, want := god.messages, []string{"The flames of hell spring up around you!!\n\r\r\n"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("immortal victim bytes = %#v, want %#v", got, want)
 	}
 }
 
