@@ -468,10 +468,10 @@ func specPrayForItems(w *World, ch *Player, me *MobInstance, cmd string, arg str
 			}
 			if gold == 0 {
 				gold = 1
-				w.actMessage(
-					ch.GetRoomVNum(), ch, nil,
-					"", "", ch.GetName()+" kneels and at the altar and chants a prayer to Odin.",
-				)
+				// C routes this room line through act(), preserving PERS and CAP
+				// for the praying character (src/spec_procs.c:2146-2147).
+				Act(w, false, ch, nil, nil, nil,
+					"$n kneels and at the altar and chants a prayer to Odin.", "", ToRoom)
 				sendToChar(ch, "You notice a faint light in Odin's eye.")
 			}
 
@@ -486,11 +486,10 @@ func specPrayForItems(w *World, ch *Player, me *MobInstance, cmd string, arg str
 				w.ExtractObject(obj, ch.GetRoomVNum())
 				continue
 			}
-			w.actMessage(
-				ch.GetRoomVNum(), ch, nil,
-				"", "", obj.GetShortDesc()+" slowly fades into existence.",
-			)
-			sendToChar(ch, obj.GetShortDesc()+" slowly fades into existence.")
+			// C's paired TO_ROOM/TO_CHAR acts use the viewer's object name and
+			// capitalize the rendered sentence (src/spec_procs.c:2153-2154).
+			Act(w, false, ch, nil, obj, nil, "$p slowly fades into existence.", "", ToRoom)
+			Act(w, false, ch, nil, obj, nil, "$p slowly fades into existence.", "", ToChar)
 			gold += obj.GetCost()
 			found = true
 		}
