@@ -33,6 +33,9 @@ W
 K
 Y
 <ENTER>
+2
+A perceptive mage in plain robes.
+@
 1
 
 [setup:port]
@@ -47,6 +50,9 @@ W
 K
 Y
 <ENTER>
+2
+A perceptive mage in plain robes.
+@
 1
 
 [setup:oracle:peer]
@@ -161,12 +167,12 @@ send:builder 79
 send:builder 81
 send:builder q
 send:builder y
-load obj 4399
+send:builder load obj 4399
+send:builder give powder ItemMage
 set player ItemMage level 30
 
 
 [probe]
-get powder
 quaff powder
 ~dpclock pulse 20
 score
@@ -181,8 +187,8 @@ send:builder 84
 send:builder 86
 send:builder q
 send:builder y
-load obj 4399
-get powder
+send:builder load obj 4399
+send:builder give powder ItemMage
 quaff powder
 ~dpclock pulse 20
 score
@@ -197,8 +203,8 @@ send:builder 88
 send:builder 89
 send:builder q
 send:builder y
-load obj 4399
-get powder
+send:builder load obj 4399
+send:builder give powder ItemMage
 quaff powder
 ~dpclock pulse 20
 score
@@ -213,8 +219,8 @@ send:builder 91
 send:builder 92
 send:builder q
 send:builder y
-load obj 4399
-get powder
+send:builder load obj 4399
+send:builder give powder ItemMage
 quaff powder
 ~dpclock pulse 20
 score
