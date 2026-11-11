@@ -1,0 +1,73 @@
+# depth-case: yank.target-unconscious
+# C do_yank (src/act.other.c:1650-1653): a follower at POS_SLEEPING or worse
+# reaches "$N is is no position to be yanked around!" (the "is is" typo is R1).
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+
+[setup:oracle]
+Yankgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Yankgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:follower]
+Yankvictim
+Y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:follower]
+Yankvictim
+y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Yankvictim 8162
+send:follower follow Yankgod
+send:follower sleep
+
+[probe]
+yank Yankvictim
