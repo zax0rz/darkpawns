@@ -13,6 +13,22 @@ import (
 // and never touches the god's flags or prints Okay. The port ran it as the
 // owning player, printing Okay and setting the god's PRF_DISP* bits.
 
+// TestCmdTransformSwitchedMobUntransformable pins do_transform's untransformable
+// refusal for a switched mobile (src/act.other.c:1417): a mobile carries no
+// PLR flags, so C answers the refusal where the old bridge ran the god's arms.
+func TestCmdTransformSwitchedMobUntransformable(t *testing.T) {
+	s, got := switchedDisplaySession(t, "switch-transform-god")
+	s.isSwitched = true
+	s.switchedMob = registerMob(t, s.manager, 2001, 1001)
+
+	if err := cmdTransform(s, []string{}); err != nil {
+		t.Fatalf("cmdTransform returned error: %v", err)
+	}
+	if len(*got) != 1 || (*got)[0] != "You aren't transformable!\n\r" {
+		t.Fatalf("switched-mob transform output = %q, want C refusal", *got)
+	}
+}
+
 func switchedDisplaySession(t *testing.T, name string) (*Session, *[]string) {
 	t.Helper()
 	m := makeTestManagerWithMobs(t)

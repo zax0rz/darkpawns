@@ -1,10 +1,13 @@
 package game
 
 import (
+	"fmt"
 	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
 // CharacterCommandContext keeps the command body separate from an optional
@@ -111,6 +114,109 @@ func CharacterFollow(ctx CharacterCommandContext) CharacterCommandResult {
 		return CharacterCommandUnsupported
 	}
 	followMobBody(ctx.World, mob, target.Combatant)
+	return CharacterCommandHandled
+}
+
+// CharacterRoll ports do_roll (src/act.other.c:1927-1945) for a mobile actor:
+// the private roll line and the room act are the only output, and one
+// number(1, max) draw (R3).
+func CharacterRoll(ctx CharacterCommandContext) CharacterCommandResult {
+	mob, ok := ctx.Actor.(*MobInstance)
+	if !ok || ctx.World == nil {
+		return CharacterCommandUnsupported
+	}
+	maxRoll := rollMaximum(extractArg(ctx.RawArgs))
+	result := rollNumber(maxRoll, dprng.Number)
+	ctx.PrivateOutput(fmt.Sprintf("You roll %d (1-%d).\r\n", result, maxRoll))
+	Act(ctx.World, false, mob, nil, nil, nil,
+		fmt.Sprintf("With a toss of the dice, $n rolls %d (1-%d).", result, maxRoll), "", ToRoom)
+	return CharacterCommandHandled
+}
+
+// CharacterVisible ports do_visible (src/act.other.c:557-585) for a mobile
+// actor. Immortal mobiles collapse to the "already fully visible" note via the
+// level arm's mob bookkeeping (immort invis levels are modeled for players
+// only; the low-mob paths carry the witness).
+func CharacterVisible(ctx CharacterCommandContext) CharacterCommandResult {
+	mob, ok := ctx.Actor.(*MobInstance)
+	if !ok || ctx.World == nil {
+		return CharacterCommandUnsupported
+	}
+	out := ctx.PrivateOutput
+	if mobHasSpellID(mob, skillNumKkZai) {
+		out("You cannot become visible until your zai ends!\r\n")
+		return CharacterCommandHandled
+	}
+	if mob.GetLevel() >= LVL_IMMORT {
+		// C perform_immort_vis (src/act.wizard.c:1622-1636); mobs carry no invis
+		// level in the port, so the already-visible arm covers the common case.
+		if !mob.IsAffected(affHide) || !mob.IsAffected(affInvisible) {
+			out("You are already fully visible.\r\n")
+			return CharacterCommandHandled
+		}
+		mobApparition(ctx.World, mob)
+		out("You are now fully visible.\r\n")
+		return CharacterCommandHandled
+	}
+	altered := false
+	if mob.IsAffected(affInvisible) {
+		mobApparition(ctx.World, mob)
+		out("You fade into view.\r\n")
+		altered = true
+	}
+	if mob.IsAffected(affSneak) {
+		out("You stop sneaking.\r\n")
+		mob.RemoveAffectBySpell(skillNumSneak)
+		mob.RemoveAffectBySpell(skillNumStealth)
+		mob.RemoveAffected(affSneak)
+		altered = true
+	}
+	if !altered {
+		out("You are already visible.\r\n")
+	}
+	return CharacterCommandHandled
+}
+
+// mobHasSpellID reports whether the mobile carries a spell record with the
+// given spell/skill id, C affected_by_spell's question for NPC bodies.
+//
+// spell records live in MobInstance.CustomData as *engine.Affect, mirroring
+// RemoveAffectBySpell's own walk.
+func mobHasSpellID(mob *MobInstance, spellID int) bool {
+	mob.mu.RLock()
+	defer mob.mu.RUnlock()
+	for _, value := range mob.CustomData {
+		if aff, ok := value.(*engine.Affect); ok && aff.SpellID == spellID {
+			return true
+		}
+	}
+	return false
+}
+
+// mobApparition is C appear() (src/fight.c:108-121) for a mobile actor.
+func mobApparition(w *World, mob *MobInstance) {
+	mob.RemoveAffectBySpell(spellInvisible)
+	mob.RemoveAffected(affInvisible)
+	mob.RemoveAffected(affHide)
+	if mob.GetLevel() < LVL_IMMORT {
+		Act(w, false, mob, nil, nil, nil, "$n slowly fades into existence.", "", ToRoom)
+	} else {
+		Act(w, false, mob, nil, nil, nil, "You feel a strange presence as $n appears, seemingly from nowhere.", "", ToRoom)
+	}
+}
+
+// CharacterDream ports do_dream (src/act.social.c:294-304) for a mobile actor.
+func CharacterDream(ctx CharacterCommandContext) CharacterCommandResult {
+	mob, ok := ctx.Actor.(*MobInstance)
+	if !ok || ctx.World == nil {
+		return CharacterCommandUnsupported
+	}
+	if mob.GetPosition() != combat.PosSleeping {
+		ctx.PrivateOutput("You daydream about better times.\r\n")
+		return CharacterCommandHandled
+	}
+	Act(ctx.World, true, mob, nil, nil, nil, "$n dreams of running naked through a field of tulips.", "", ToRoom)
+	ctx.PrivateOutput("You dream of running naked through a field of tulips.\r\n")
 	return CharacterCommandHandled
 }
 

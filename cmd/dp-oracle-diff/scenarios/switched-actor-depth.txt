@@ -1,0 +1,80 @@
+# C-first switched bodies that run stateful act.other handlers (follow-up to
+# switched-bridges-depth). After `switch horse`, C runs the command as the
+# mobile:
+#  - roll (src/act.other.c:1927): the room act names the horse, not the god.
+#  - visible (src/act.other.c:557): the mobile is level < IMMORT and already
+#    visible ("You are already visible."), not the god's immortal visibility
+#    ("You are already fully visible.").
+# The observer in the same room captures the roll act with the mob's name.
+# depth-case: roll.switched-monster
+# depth-case: visible.switched-monster
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Switchactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Switchwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Switchwatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Switchwatch 8162
+switch horse
+
+[probe]
+roll
+visible
