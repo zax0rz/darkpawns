@@ -87,7 +87,7 @@ func (m *Manager) forceAllSave(caster *Session) {
 
 	for _, target := range targets {
 		game.Act(m.world, true, caster.player, target.player, nil, nil, "$n has forced you to 'save'.", "", game.ToVict)
-		m.world.ExecSave(target.player)
+		m.world.ExecSave(target.player, nil)
 	}
 }
 

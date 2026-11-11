@@ -150,7 +150,7 @@ func TestRecoverySaveCommand(t *testing.T) {
 	e := newRecoveryEnv(t)
 	e.mutate(t)
 
-	e.world.ExecSave(e.s.player)
+	e.world.ExecSave(e.s.player, nil)
 
 	e.readback(t)
 }

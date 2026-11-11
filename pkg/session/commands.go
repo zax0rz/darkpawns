@@ -559,7 +559,7 @@ func wrapMove(direction string) command.Handler {
 func wrapToggle(key string) command.Handler {
 	return func(s common.CommandSession, _cmd string, args []string) error {
 		sess := s.(*commandSession).Session
-		sess.manager.world.ExecGenTog(sess.player, key)
+		sess.manager.world.ExecGenTog(sess.player, sess.switchedMob, key)
 		return nil
 	}
 }
@@ -824,7 +824,7 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 		return nil
 	}
 	if (cmd == "bug" || cmd == "typo" || cmd == "idea" || cmd == "todo") && rawArgs != "" {
-		s.manager.world.ExecGenWrite(s.player, cmd, strings.ReplaceAll(rawArgs, "$", "$$"))
+		s.manager.world.ExecGenWrite(s.player, s.switchedMob, cmd, strings.ReplaceAll(rawArgs, "$", "$$"))
 		return nil
 	}
 	if cmd == "send" {

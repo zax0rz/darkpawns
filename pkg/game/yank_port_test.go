@@ -37,7 +37,7 @@ func addYankFollower(t *testing.T, w *World, leader *Player, name string, pos in
 // --- Branch: no argument ---
 func TestDoYank_NoArg(t *testing.T) {
 	w, leader, out := yankTestWorld(t)
-	w.ExecYank(leader, "")
+	w.ExecYank(leader, nil, "")
 	if got, want := out.String(), "Who do you wish to yank?\r\n"; got != want {
 		t.Errorf("no-arg = %q, want %q", got, want)
 	}
@@ -46,7 +46,7 @@ func TestDoYank_NoArg(t *testing.T) {
 // --- Branch: target not found (NOPERSON) ---
 func TestDoYank_NotFound(t *testing.T) {
 	w, leader, out := yankTestWorld(t)
-	w.ExecYank(leader, "nobody")
+	w.ExecYank(leader, nil, "nobody")
 	if got, want := out.String(), "No-one by that name here.\r\n"; got != want {
 		t.Errorf("not-found = %q, want exact C NOPERSON %q", got, want)
 	}
@@ -57,7 +57,7 @@ func TestDoYank_SelfTarget(t *testing.T) {
 	w, leader, out := yankTestWorld(t)
 	// Leader follows themselves so they pass findCharInRoom (name match) and
 	// reach the self-check before the follower check.
-	w.ExecYank(leader, "Leader")
+	w.ExecYank(leader, nil, "Leader")
 	if got, want := out.String(), "That's wierd.\r\n"; got != want {
 		t.Errorf("self = %q, want %q (sic: wierd)", got, want)
 	}
@@ -72,7 +72,7 @@ func TestDoYank_NotFollower(t *testing.T) {
 	stranger.SetFollowing("") // follows no one
 	w.AddPlayer(stranger)
 
-	w.ExecYank(leader, "Stranger")
+	w.ExecYank(leader, nil, "Stranger")
 	if got, want := out.String(), "That probably wouldn't be appreciated.\r\n"; got != want {
 		t.Errorf("not-follower = %q, want %q", got, want)
 	}
@@ -83,7 +83,7 @@ func TestDoYank_AlreadyUp_NotMounted(t *testing.T) {
 	w, leader, out := yankTestWorld(t)
 	addYankFollower(t, w, leader, "Follower", combat.PosStanding)
 
-	w.ExecYank(leader, "Follower")
+	w.ExecYank(leader, nil, "Follower")
 	// C: "$N is already on $S feet." — $N = name, $S = possessive pronoun.
 	// Male follower (default sex 0) → "his".
 	got := out.String()
@@ -99,7 +99,7 @@ func TestDoYank_AlreadyUp_Mounted(t *testing.T) {
 	f := addYankFollower(t, w, leader, "Follower", combat.PosStanding)
 	f.SetAffect(affMounted, true)
 
-	w.ExecYank(leader, "Follower")
+	w.ExecYank(leader, nil, "Follower")
 	// C: "You can't yank $M off $S mount!" — $M = objective pronoun (him),
 	// $S = possessive (his). Male follower → "him"/"his".
 	got := out.String()
@@ -114,7 +114,7 @@ func TestDoYank_Sleeping(t *testing.T) {
 	w, leader, out := yankTestWorld(t)
 	addYankFollower(t, w, leader, "Follower", combat.PosSleeping)
 
-	w.ExecYank(leader, "Follower")
+	w.ExecYank(leader, nil, "Follower")
 	// C: "$N is is no position to be yanked around!" — sic: "is is".
 	got := out.String()
 	want := "Follower is is no position to be yanked around!\r\n"
@@ -129,7 +129,7 @@ func TestDoYank_Success_FemalePronouns(t *testing.T) {
 	f := addYankFollower(t, w, leader, "Girl", combat.PosSitting)
 	f.Sex = 1 // female
 
-	w.ExecYank(leader, "Girl")
+	w.ExecYank(leader, nil, "Girl")
 	// $M = "her", $S = "her" for female.
 	got := out.String()
 	if want := "You yank her to her feet.\r\n"; !strings.Contains(got, want) {
@@ -142,7 +142,7 @@ func TestDoYank_RestingFollowerIsYankable(t *testing.T) {
 	w, leader, _ := yankTestWorld(t)
 	f := addYankFollower(t, w, leader, "Follower", combat.PosResting)
 
-	w.ExecYank(leader, "Follower")
+	w.ExecYank(leader, nil, "Follower")
 	if got := f.GetPosition(); got != combat.PosStanding {
 		t.Errorf("resting follower should be yankable → POS_STANDING, got pos %d", got)
 	}
@@ -175,7 +175,7 @@ func TestDoYank_SuccessRoomLineSkipsVictim(t *testing.T) {
 	observer.worldRef = w
 	w.AddPlayer(observer)
 
-	w.ExecYank(leader, "Follower")
+	w.ExecYank(leader, nil, "Follower")
 
 	victimOut := msgs["Follower"].String()
 	if !strings.Contains(victimOut, "Leader yanks you to your feet.\r\n") {

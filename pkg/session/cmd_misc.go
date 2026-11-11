@@ -5,31 +5,31 @@ import (
 )
 
 func cmdSave(s *Session, args []string) error {
-	s.manager.world.ExecSave(s.player)
+	s.manager.world.ExecSave(s.player, s.switchedMob)
 	return nil
 }
 
 // cmdReport shows a report of surroundings.
 func cmdReport(s *Session, args []string) error {
-	s.manager.world.ExecReport(s.player, strings.Join(args, " "))
+	s.manager.world.ExecReport(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdSplit splits gold with the group.
 func cmdSplit(s *Session, args []string) error {
-	s.manager.world.ExecSplit(s.player, strings.Join(args, " "))
+	s.manager.world.ExecSplit(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdWimpy sets the wimpy threshold.
 func cmdWimpy(s *Session, args []string) error {
-	s.manager.world.ExecWimpy(s.player, strings.Join(args, " "))
+	s.manager.world.ExecWimpy(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdDisplay sets display preferences.
 func cmdDisplay(s *Session, args []string) error {
-	s.manager.world.ExecDisplay(s.player, strings.Join(args, " "))
+	s.manager.world.ExecDisplay(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
@@ -44,73 +44,73 @@ func cmdDns(s *Session, args []string) error {
 
 // cmdTransform transforms the player's appearance.
 func cmdTransform(s *Session, args []string) error {
-	s.manager.world.ExecTransform(s.player, strings.Join(args, " "))
+	s.manager.world.ExecTransform(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdRide rides a mount.
 func cmdRide(s *Session, args []string) error {
-	s.manager.world.ExecRide(s.player, strings.Join(args, " "))
+	s.manager.world.ExecRide(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdDismount dismounts from a mount.
 func cmdDismount(s *Session, args []string) error {
-	s.manager.world.ExecDismount(s.player, strings.Join(args, " "))
+	s.manager.world.ExecDismount(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdYank yanks someone from a mount or chair.
 func cmdYank(s *Session, args []string) error {
-	s.manager.world.ExecYank(s.player, strings.Join(args, " "))
+	s.manager.world.ExecYank(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdPeek peeks at another player's inventory.
 func cmdPeek(s *Session, args []string) error {
-	s.manager.world.ExecPeek(s.player, strings.Join(args, " "))
+	s.manager.world.ExecPeek(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdRecall recalls to the home city.
 func cmdRecall(s *Session, args []string) error {
-	s.manager.world.ExecRecall(s.player, strings.Join(args, " "))
+	s.manager.world.ExecRecall(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdAppraise appraises an item's value.
 func cmdAppraise(s *Session, args []string) error {
-	s.manager.world.ExecAppraise(s.player, strings.Join(args, " "))
+	s.manager.world.ExecAppraise(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdScout scouts ahead for danger.
 func cmdScout(s *Session, args []string) error {
-	s.manager.world.ExecScout(s.player, strings.Join(args, " "))
+	s.manager.world.ExecScout(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdPour pours liquid between containers or out onto the ground.
 func cmdPour(s *Session, args []string) error {
-	s.manager.world.ExecPour(s.player, strings.Join(args, " "))
+	s.manager.world.ExecPour(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdFill fills a container from a room fountain.
 func cmdFill(s *Session, args []string) error {
-	s.manager.world.ExecFill(s.player, strings.Join(args, " "))
+	s.manager.world.ExecFill(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdRoll rolls a random number.
 func cmdRoll(s *Session, args []string) error {
-	s.manager.world.ExecRoll(s.player, strings.Join(args, " "))
+	s.manager.world.ExecRoll(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdVisible makes the player visible.
 func cmdVisible(s *Session, args []string) error {
-	s.manager.world.ExecVisible(s.player, strings.Join(args, " "))
+	s.manager.world.ExecVisible(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
@@ -122,13 +122,13 @@ func cmdTrack(s *Session, args []string) error {
 
 // cmdInactive toggles inactive status.
 func cmdInactive(s *Session, args []string) error {
-	s.manager.world.ExecInactive(s.player, strings.Join(args, " "))
+	s.manager.world.ExecInactive(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdAuto toggles auto-attack mode.
 func cmdAuto(s *Session, args []string) error {
-	s.manager.world.ExecAuto(s.player, strings.Join(args, " "))
+	s.manager.world.ExecAuto(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 
@@ -137,31 +137,31 @@ func cmdAuto(s *Session, args []string) error {
 // still use its C argument contract.
 // cmdBug reports a bug.
 func cmdBug(s *Session, args []string) error {
-	s.manager.world.ExecGenWrite(s.player, "bug", strings.ReplaceAll(strings.Join(args, " "), "$", "$$"))
+	s.manager.world.ExecGenWrite(s.player, s.switchedMob, "bug", strings.ReplaceAll(strings.Join(args, " "), "$", "$$"))
 	return nil
 }
 
 // cmdTypo reports a typo.
 func cmdTypo(s *Session, args []string) error {
-	s.manager.world.ExecGenWrite(s.player, "typo", strings.ReplaceAll(strings.Join(args, " "), "$", "$$"))
+	s.manager.world.ExecGenWrite(s.player, s.switchedMob, "typo", strings.ReplaceAll(strings.Join(args, " "), "$", "$$"))
 	return nil
 }
 
 // cmdIdea submits an idea.
 func cmdIdea(s *Session, args []string) error {
-	s.manager.world.ExecGenWrite(s.player, "idea", strings.ReplaceAll(strings.Join(args, " "), "$", "$$"))
+	s.manager.world.ExecGenWrite(s.player, s.switchedMob, "idea", strings.ReplaceAll(strings.Join(args, " "), "$", "$$"))
 	return nil
 }
 
 // cmdTodo submits a todo suggestion.
 func cmdTodo(s *Session, args []string) error {
-	s.manager.world.ExecGenWrite(s.player, "todo", strings.ReplaceAll(strings.Join(args, " "), "$", "$$"))
+	s.manager.world.ExecGenWrite(s.player, s.switchedMob, "todo", strings.ReplaceAll(strings.Join(args, " "), "$", "$$"))
 	return nil
 }
 
 // cmdAFK toggles away-from-keyboard status.
 func cmdAFK(s *Session, args []string) error {
-	s.manager.world.ExecAFK(s.player, strings.Join(args, " "))
+	s.manager.world.ExecAFK(s.player, s.switchedMob, strings.Join(args, " "))
 	return nil
 }
 

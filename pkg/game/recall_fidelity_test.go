@@ -58,7 +58,7 @@ func TestRecallFreshCharMovesAndSeesOnlyLook(t *testing.T) {
 	addRecallPlayer(t, w, outputs, 2, "OldRoommate", 8162)
 	addRecallPlayer(t, w, outputs, 3, "NewRoommate", 8004)
 
-	w.ExecRecall(recaller, "")
+	w.ExecRecall(recaller, nil, "")
 
 	if got := recaller.GetRoomVNum(); got != MortalStartRoom {
 		t.Fatalf("room after recall = %d, want %d", got, MortalStartRoom)
@@ -108,7 +108,7 @@ func TestRecallHometownTargets(t *testing.T) {
 			p := addRecallPlayer(t, w, outputs, 1, "Recaller", 8162)
 			p.Hometown = tt.hometown
 
-			w.ExecRecall(p, "")
+			w.ExecRecall(p, nil, "")
 
 			if got := p.GetRoomVNum(); got != tt.want {
 				t.Errorf("hometown %d: room after recall = %d, want %d", tt.hometown, got, tt.want)
@@ -136,7 +136,7 @@ func TestRecallUnmountsBeforeTransferAndLeavesMountBehind(t *testing.T) {
 	mount.SetMountRider(recaller.Name)
 	mount.SetFollowingBody(recaller)
 
-	w.ExecRecall(recaller, "")
+	w.ExecRecall(recaller, nil, "")
 
 	if got := recaller.GetRoomVNum(); got != MortalStartRoom {
 		t.Fatalf("recall room = %d, want %d", got, MortalStartRoom)
@@ -163,7 +163,7 @@ func TestRecallGates(t *testing.T) {
 		p := addRecallPlayer(t, w, outputs, 1, "Recaller", 8162)
 		p.SetLevel(6)
 
-		w.ExecRecall(p, "")
+		w.ExecRecall(p, nil, "")
 
 		if got := outputs["Recaller"].String(); got != "This command is not available for someone of your experience!\r\n" {
 			t.Errorf("gate message = %q", got)
@@ -177,7 +177,7 @@ func TestRecallGates(t *testing.T) {
 		w, outputs := newRecallTestWorld(t)
 		p := addRecallPlayer(t, w, outputs, 1, "Recaller", 9000)
 
-		w.ExecRecall(p, "")
+		w.ExecRecall(p, nil, "")
 
 		if got := outputs["Recaller"].String(); got != "You can't recall from this magickal place.\r\n" {
 			t.Errorf("gate message = %q", got)
@@ -192,7 +192,7 @@ func TestRecallGates(t *testing.T) {
 		p := addRecallPlayer(t, w, outputs, 1, "Recaller", 8162)
 		p.SetFightingBody(NewPlayer(99999, "Target", 1001))
 
-		w.ExecRecall(p, "")
+		w.ExecRecall(p, nil, "")
 
 		if got := outputs["Recaller"].String(); got != "Your concentration is broken by your fighting!" {
 			t.Errorf("gate message = %q (no trailing CRLF in C)", got)
@@ -209,7 +209,7 @@ func TestRecallSleepingDreams(t *testing.T) {
 	p := addRecallPlayer(t, w, outputs, 1, "Recaller", 8162)
 	p.SetPosition(PosSleeping)
 
-	w.ExecRecall(p, "")
+	w.ExecRecall(p, nil, "")
 
 	if got := p.GetRoomVNum(); got != MortalStartRoom {
 		t.Fatalf("room after recall = %d, want %d", got, MortalStartRoom)

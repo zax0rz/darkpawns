@@ -120,7 +120,7 @@ func cmdHit(s *Session, args []string) error {
 
 	// C dismounts only on the branch that is about to call hit().
 	if s.player.IsMounted() {
-		s.manager.world.ExecDismount(s.player, "")
+		s.manager.world.ExecDismount(s.player, nil, "")
 	}
 
 	// C do_hit calls WAIT_STATE(ch, PULSE_VIOLENCE+2) after hit() returns,

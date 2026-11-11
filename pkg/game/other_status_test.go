@@ -118,7 +118,7 @@ func TestDoAFKToggleState(t *testing.T) {
 		t.Fatalf("AddPlayer: %v", err)
 	}
 
-	w.ExecAFK(player, "ignored argument")
+	w.ExecAFK(player, nil, "ignored argument")
 	if !player.GetAFK() || player.GetFlags()&(1<<PrfAFK) == 0 {
 		t.Fatal("enabling AFK did not set both the typed state and C preference bit")
 	}
@@ -126,7 +126,7 @@ func TestDoAFKToggleState(t *testing.T) {
 		t.Fatalf("AFK message = %q, want empty C-compatible message", player.GetAFKMessage())
 	}
 
-	w.ExecAFK(player, "ignored argument")
+	w.ExecAFK(player, nil, "ignored argument")
 	if player.GetAFK() || player.GetFlags()&(1<<PrfAFK) != 0 {
 		t.Fatal("disabling AFK did not clear both the typed state and C preference bit")
 	}

@@ -21,7 +21,7 @@ func TestLiteralSeamFillMissEndToEnd(t *testing.T) {
 		w, s := newBareSendItemHarness(t)
 		setCompact(s, compact)
 		// "bucket" is carried by nobody → the bare miss.
-		w.ExecFill(s.player, "bucket fountain")
+		w.ExecFill(s.player, nil, "bucket fountain")
 		assertBareWire(t, s, "You can't find it!")
 	}
 }
@@ -35,7 +35,7 @@ func TestLiteralSeamRecallFightingEndToEnd(t *testing.T) {
 		setCompact(s, compact)
 		foe := game.NewPlayer(2, "Foe", 1001)
 		s.player.SetFightingBody(foe)
-		w.ExecRecall(s.player, "")
+		w.ExecRecall(s.player, nil, "")
 		assertBareWire(t, s, "Your concentration is broken by your fighting!")
 	}
 }
@@ -52,7 +52,7 @@ func TestLiteralSeamSnoopSeesExactBytes(t *testing.T) {
 	s.snoopBy = spy
 	spy.snooping = s
 
-	w.ExecFill(s.player, "bucket fountain")
+	w.ExecFill(s.player, nil, "bucket fountain")
 
 	if got := renderAllOutput(s); got != "You can't find it!" {
 		t.Fatalf("target wire = %q, want the bare miss bytes", got)
@@ -84,7 +84,7 @@ func TestLiteralSeamSwitchedDescriptorRoutes(t *testing.T) {
 	// The producer addresses the switched-into body by name; the
 	// controlling session renders the bare bytes, and the body's own
 	// (descriptorless) identity sees nothing.
-	w.ExecFill(body, "bucket fountain")
+	w.ExecFill(body, nil, "bucket fountain")
 	if got := renderAllOutput(s); got != "You can't find it!" {
 		t.Fatalf("controlling session wire = %q, want the bare miss bytes", got)
 	}

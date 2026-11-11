@@ -104,6 +104,10 @@ func sameCharTarget(left, right CharTarget) bool {
 
 func (w *World) doRecall(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if isPlayerNPC(ch, me) {
+		// C do_recall (act.other.c:1733): the level and NPC gates share one arm —
+		// the experience message prints for NPCs too (unlike the silent NPC returns
+		// of e.g. do_split); the port's silent return here drops it.
+		ch.SendMessage("This command is not available for someone of your experience!\r\n")
 		return true
 	}
 
