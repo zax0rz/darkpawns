@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
-	"strings"
 )
 
 // performDispose implements perform_drop() for the junk/donate paths —
@@ -41,10 +40,9 @@ func (w *World) performDispose(ch *Player, obj *ObjectInstance, mode int, sname 
 			ch.Inventory.AddItem(obj)
 			return 0
 		}
-		// C act() uppercases the assembled message's first letter (comm.c:2477
-		// SEND_TO_Q(CAP(lbuf))), so a $p-initial line renders "A loaf of bread
-		// suddenly appears in a puff a smoke!".
-		w.roomMessage(donationRoom, capitalize(strings.ReplaceAll("$p suddenly appears in a puff a smoke!", "$p", obj.GetShortDesc())))
+		// C act() receives a NULL actor here (src/act.item.c:511), so it uses the
+		// object's room and resolves $p separately for each recipient.
+		Act(w, false, nil, nil, obj, nil, "$p suddenly appears in a puff a smoke!", "", ToRoom)
 		return 0
 	case scmdJunk:
 		value := min(max(obj.GetCost()>>4, 1), 200)
@@ -83,7 +81,9 @@ func (w *World) performDisposeGold(ch *Player, amount int, mode int, donationRoo
 			ch.SendMessage("Something went wrong. Your gold was not donated.\r\n")
 			return
 		}
-		w.roomMessage(donationRoom, capitalize(strings.ReplaceAll("$p suddenly appears in a puff of orange smoke!", "$p", moneyObj.GetShortDesc())))
+		// C act() receives a NULL actor here (src/act.item.c:453), so it uses the
+		// money object's room and applies recipient visibility and sleep gates.
+		Act(w, false, nil, nil, moneyObj, nil, "$p suddenly appears in a puff of orange smoke!", "", ToRoom)
 	}
 }
 
