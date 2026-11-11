@@ -42,10 +42,10 @@ func makeTestWorldWithMobs(t *testing.T) *game.World {
 			{VNum: 1002, Name: "Empty Vault", Zone: 1},
 		},
 		Mobs: []parser.Mob{
-			{VNum: 2001, Keywords: "goblin guard", ShortDesc: "A goblin guard", LongDesc: "A scrawny goblin stands watch.\n"},
-			{VNum: 2002, Keywords: "goblin guard", ShortDesc: "Another goblin guard", LongDesc: "Another scrawny goblin stands watch.\n"},
-			{VNum: 2003, Keywords: "the ancient dragon", ShortDesc: "An ancient dragon", LongDesc: "A massive dragon sleeps here.\n"},
-			{VNum: 2004, Keywords: "rat", ShortDesc: "A rat", LongDesc: "A small rat scurries about.\n"},
+			{VNum: 2001, Keywords: "goblin guard", ShortDesc: "A goblin guard", LongDesc: "A scrawny goblin stands watch.\n", HP: parser.DiceRoll{Plus: 100}},
+			{VNum: 2002, Keywords: "goblin guard", ShortDesc: "Another goblin guard", LongDesc: "Another scrawny goblin stands watch.\n", HP: parser.DiceRoll{Plus: 100}},
+			{VNum: 2003, Keywords: "the ancient dragon", ShortDesc: "An ancient dragon", LongDesc: "A massive dragon sleeps here.\n", HP: parser.DiceRoll{Plus: 100}},
+			{VNum: 2004, Keywords: "rat", ShortDesc: "A rat", LongDesc: "A small rat scurries about.\n", HP: parser.DiceRoll{Plus: 100}},
 		},
 		Objs: []parser.Obj{
 			{VNum: 3001, Keywords: "sword long iron", ShortDesc: "An iron longsword", TypeFlag: 5, WearFlags: [4]int{0, 8192}},

@@ -19,8 +19,8 @@ func TestForcedMobileHitEnrollsBothSides(t *testing.T) {
 	parsed := &parser.World{
 		Rooms: []parser.Room{{VNum: 1001, Name: "Hall"}},
 		Mobs: []parser.Mob{
-			{VNum: 99001, Keywords: "gil half-elf", ShortDesc: "Gil", Position: combat.PosStanding, DefaultPos: combat.PosStanding},
-			{VNum: 99002, Keywords: "dune stalker", ShortDesc: "a dune stalker", Position: combat.PosStanding, DefaultPos: combat.PosStanding},
+			{VNum: 99001, Keywords: "gil half-elf", ShortDesc: "Gil", Position: combat.PosStanding, DefaultPos: combat.PosStanding, HP: parser.DiceRoll{Plus: 100}},
+			{VNum: 99002, Keywords: "dune stalker", ShortDesc: "a dune stalker", Position: combat.PosStanding, DefaultPos: combat.PosStanding, HP: parser.DiceRoll{Plus: 100}},
 		},
 	}
 	w, err := game.NewWorld(parsed)
@@ -86,8 +86,8 @@ func TestForcedMobileHitRefusalBodies(t *testing.T) {
 	parsed := &parser.World{
 		Rooms: []parser.Room{{VNum: 1001, Name: "Hall"}},
 		Mobs: []parser.Mob{
-			{VNum: 99001, Keywords: "gil half-elf", ShortDesc: "Gil", Position: combat.PosStanding, DefaultPos: combat.PosStanding},
-			{VNum: 99002, Keywords: "dune stalker", ShortDesc: "a dune stalker", Position: combat.PosStanding, DefaultPos: combat.PosStanding},
+			{VNum: 99001, Keywords: "gil half-elf", ShortDesc: "Gil", Position: combat.PosStanding, DefaultPos: combat.PosStanding, HP: parser.DiceRoll{Plus: 100}},
+			{VNum: 99002, Keywords: "dune stalker", ShortDesc: "a dune stalker", Position: combat.PosStanding, DefaultPos: combat.PosStanding, HP: parser.DiceRoll{Plus: 100}},
 		},
 	}
 	w, err := game.NewWorld(parsed)

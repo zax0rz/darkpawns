@@ -41,7 +41,7 @@ func TestZoneResetEquipmentOwnershipAndOccupiedSlot(t *testing.T) {
 }
 
 func TestZoneResetEquipmentAttributeBoundary(t *testing.T) {
-	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 100}}, Mobs: []parser.Mob{{VNum: 300, Position: 8, DefaultPos: 8}}, Objs: []parser.Obj{{VNum: 200, LoadPercent: 100, Affects: []parser.ObjAffect{{Location: 2, Modifier: 30}}}}})
+	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 100}}, Mobs: []parser.Mob{{VNum: 300, Position: 8, DefaultPos: 8, HP: parser.DiceRoll{Plus: 100}}}, Objs: []parser.Obj{{VNum: 200, LoadPercent: 100, Affects: []parser.ObjAffect{{Location: 2, Modifier: 30}}}}})
 	if err != nil {
 		t.Fatal(err)
 	}

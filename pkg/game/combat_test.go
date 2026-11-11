@@ -16,7 +16,7 @@ func newCombatTestWorld(t *testing.T) (*World, *Player) {
 			{VNum: 1001, Name: "Combat Room", Zone: 1},
 		},
 		Mobs: []parser.Mob{
-			{VNum: 2001, ShortDesc: "a training dummy"},
+			{VNum: 2001, ShortDesc: "a training dummy", HP: parser.DiceRoll{Plus: 100}},
 		},
 		Objs: []parser.Obj{},
 	}

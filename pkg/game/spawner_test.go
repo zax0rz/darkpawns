@@ -33,7 +33,7 @@ func newZoneResetTestSpawner(t *testing.T) (*World, *Spawner) {
 			},
 			{VNum: 204, Keywords: "container", LoadPercent: 100},
 		},
-		Mobs: []parser.Mob{{VNum: 300, Keywords: "reset mob", ShortDesc: "a reset mob", Position: 8, DefaultPos: 8}},
+		Mobs: []parser.Mob{{VNum: 300, Keywords: "reset mob", ShortDesc: "a reset mob", Position: 8, DefaultPos: 8, HP: parser.DiceRoll{Plus: 100}}},
 	}
 	world, err := NewWorld(parsed)
 	if err != nil {

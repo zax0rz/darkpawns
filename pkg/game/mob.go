@@ -138,11 +138,16 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 	// Roll HP from the mob's hit dice — C read_mobile() rolls dice(hp_num, hp_size)
 	// per instance (db.c), consuming hp_num shared-PRNG draws. A prior "average"
 	// shortcut drew nothing, desyncing the seeded stream on every mob spawn.
-	hp := 0
+	// C's read_mobile computes dice(hit, mana) + move unconditionally
+	// (src/db.c:1748-1751), and dice() returns 0 without drawing when either
+	// count is non-positive (src/utils.c:66-77). A prototype whose hit dice are
+	// empty therefore lands at exactly the plus, not at an invented default: a
+	// medit-built mobile with no hit dice has no maximum, which
+	// diag_char_to_char reports as "is bleeding awfully from big wounds."
+	// (src/act.informative.c:359-381).
+	hp := proto.HP.Plus
 	if proto.HP.Num > 0 && proto.HP.Sides > 0 {
 		hp = dprng.Dice(proto.HP.Num, proto.HP.Sides) + proto.HP.Plus
-	} else {
-		hp = 100 // Default
 	}
 
 	// Initialize ability scores from prototype. C applies the level>15 random

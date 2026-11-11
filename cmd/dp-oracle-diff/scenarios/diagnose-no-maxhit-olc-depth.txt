@@ -1,0 +1,55 @@
+# depth-case: diagnose.no-max-hit
+# C diag_char_to_char (src/act.informative.c:359-381) sets percent to -1 when
+# GET_MAX_HIT is not positive, which prints "is bleeding awfully from big
+# wounds.". set clamps max_hit to RANGE(1, 5000) (src/act.wizard.c:2735-2736),
+# so the vehicle is OLC: medit stores the hit-dice count with
+# MAX(0, MIN(50, atoi(arg))) (src/medit.c:1036-1044), and the size and add the
+# same way, so a mobile can be built with no maximum at all.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Hitdicegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hitdicegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+medit 16303
+C
+0
+D
+0
+E
+0
+q
+y
+load mob 16303
+diagnose trainee
