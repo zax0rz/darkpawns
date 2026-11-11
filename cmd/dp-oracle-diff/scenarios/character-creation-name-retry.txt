@@ -4,6 +4,7 @@
 # depth-case: entry.display-case
 # depth-case: entry.retry-new
 # depth-case: entry.motd-mortal-color-on-normalized
+# depth-case: entry.browser-name-routing
 [fixture]
 quiet-mobs
 
