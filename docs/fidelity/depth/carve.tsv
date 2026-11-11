@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_carve	carve	carve.fighting-no-arg	D1	command	unit-green	TestCmdCarve_FightingNoArgsExact	interpreter.c:374; new_cmds.c:115-123	The fighting-position branch wins before the empty-argument response and preserves C punctuation.
+do_carve	carve	carve.fighting-no-arg	D1	command	unit-green	TestCmdCarve_FightingNoArgsExact	interpreter.c:374; new_cmds.c:115-123	The fighting-position branch wins before the empty-argument response and preserves C punctuation. Live witness blocked: mid-combat injection (DP-1202 - input is drained while a wait state is live, so a landed-hit fight cannot be established in the oracle harness).
 do_carve	carve	carve.no-arg	D1	command	unit-green	TestCmdCarve_NoArgs	new_cmds.c:115-123	Carve has no skill gate; a standing caller with no target receives C's exact prompt even when untrained.
 do_carve	carve	carve.target-missing	D1	command	oracle-green-multiseed	carve-depth@1,2,3,5,8	new_cmds.c:123-139	An absent room object reaches the exact target-not-found branch.
 do_carve	carve	carve.non-corpse	D2	command	oracle-green-multiseed	carve-depth@1,2,3,5,8	new_cmds.c:140-144	A visible non-corpse object reaches the initials message.
