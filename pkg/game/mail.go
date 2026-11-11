@@ -93,6 +93,8 @@ var (
 type mailWriteEntry struct {
 	recipientID int
 	buffer      string
+	editorBytes int
+	overflowed  bool
 }
 
 // mailDisabled is configured during boot, before sessions are accepted, and
@@ -598,8 +600,12 @@ func HandleMailInput(ch *Player, line string) bool {
 
 		// modify.c:218-227: STRINGADD_SAVE with text sends "Message sent!";
 		// every other editor exit sends "Mail aborted.".
-		if ok && state.buffer != "" {
-			storeMail(state.recipientID, ch.ID, state.buffer)
+		if ok && state.editorBytes > 0 {
+			text := state.buffer
+			if state.overflowed || text == "" {
+				text += "\r\n"
+			}
+			storeMail(state.recipientID, ch.ID, text)
 			ch.SendMessage("Message sent!\r\n")
 		} else {
 			ch.SendMessage("Mail aborted.\r\n")
@@ -615,13 +621,23 @@ func HandleMailInput(ch *Player, line string) bool {
 		ch.SetPlrFlag(PlrMailing, false)
 		return true
 	}
-	if state.buffer != "" {
+	if len(line)+state.editorBytes+3 > MailMaxSize {
+		notice := "String too long.  Last line skipped.\r\n"
+		if state.editorBytes == 0 {
+			state.buffer = line[:MailMaxSize-3]
+			state.editorBytes = MailMaxSize - 1 // truncated text plus C's CRLF
+			notice = "String too long - Truncated.\r\n"
+		}
+		state.overflowed = true
+		mailWriteMu.Unlock()
+		ch.SendMessage(notice)
+		return false
+	}
+	if state.editorBytes > 0 {
 		state.buffer += "\r\n"
 	}
 	state.buffer += line
-	if len(state.buffer) > MailMaxSize {
-		state.buffer = state.buffer[:MailMaxSize]
-	}
+	state.editorBytes += len(line) + 2 // string_add stores every accepted line with CRLF.
 	mailWriteMu.Unlock()
 	return false
 }

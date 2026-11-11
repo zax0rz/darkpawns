@@ -314,13 +314,10 @@ func (w *World) BeginClanPlanWrite(ch *Player, c *Clan) {
 
 // HandleClanPlanInput consumes one line while the clan plan editor is active.
 // It returns true when the line belonged to the editor, including the final @
-// and C's overflow exits. The cap is C's own: do_clan_plan runs the string
-// editor with CLAN_PLAN_LENGTH (src/clan.c:1435-1436), whose overflow
-// behaviour (string_add, src/modify.c:131-150, non-improved editor) saves and
-// leaves the editor — a first line over the cap is truncated and answered
-// with "String too long - Truncated."; a later line that would cross it is
-// skipped and answered with "String too long.  Last line skipped." (L2-005:
-// the port previously grew the buffer without bound).
+// and C's overflow replies. The cap is C's own: do_clan_plan runs the string
+// editor with CLAN_PLAN_LENGTH (src/clan.c:1435-1436). With the improved editor
+// enabled, string_add (src/modify.c:131-155) truncates an overlong first line
+// or skips a later line, then leaves the editor open.
 func (w *World) HandleClanPlanInput(ch *Player, line string) bool {
 	if !ch.ClanPlanWriting {
 		return false
@@ -334,7 +331,6 @@ func (w *World) HandleClanPlanInput(ch *Player, line string) bool {
 			// modify.c:132-137 — truncate the first line to the cap and say so.
 			ch.SendMessage("String too long - Truncated.\r\n")
 			ch.ClanPlanBuffer = line[:MaxClanPlanBytes-3] + "\r\n"
-			w.finishClanPlanWrite(ch)
 			return true
 		}
 		ch.ClanPlanBuffer = line + "\r\n"
@@ -343,10 +339,8 @@ func (w *World) HandleClanPlanInput(ch *Player, line string) bool {
 	// The buffer already carries each accepted line's CRLF, so this is C's
 	// strlen(str) + strlen(*d->str) + 3 > max_str check directly.
 	if len(ch.ClanPlanBuffer)+len(line)+3 > MaxClanPlanBytes {
-		// modify.c:145-147 — the line is skipped and the editor saves and
-		// exits (non-improved editor path).
+		// modify.c:145-151 — skip the line and keep editing (improved editor).
 		ch.SendMessage("String too long.  Last line skipped.\r\n")
-		w.finishClanPlanWrite(ch)
 		return true
 	}
 	ch.ClanPlanBuffer += line + "\r\n"
