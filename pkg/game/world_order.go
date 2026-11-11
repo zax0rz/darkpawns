@@ -52,6 +52,25 @@ func (w *World) cOrderedCharacters() []orderedCharacter {
 	return characters
 }
 
+// playingPlayersInDescriptorOrder returns the playing players in C's
+// descriptor_list order (newest connection first): full_moon and lunar_hunter
+// traverse descriptor_list (src/new_cmds.c:1314-1316,2668-2670), which
+// comm.c:1591-1603 prepends, so the newest connection iterates first. The
+// players' relative characterSequence order matches their descriptor order
+// because each character follows its descriptor at login, so filtering the
+// newest-first character_list snapshot recovers it. The playing-descriptor
+// predicate is C's !i->connected && i->character.
+func (w *World) playingPlayersInDescriptorOrder() []*Player {
+	ordered := w.cOrderedCharacters()
+	players := make([]*Player, 0, len(ordered))
+	for _, entry := range ordered {
+		if entry.player != nil && w.playerHasPlayingDescriptor(entry.player) {
+			players = append(players, entry.player)
+		}
+	}
+	return players
+}
+
 // GetAllCharsInCharacterListOrder returns every live player and mobile in
 // C's global character_list order. Area effects that traverse character_list
 // use this instead of room people order, then apply their own room predicate.

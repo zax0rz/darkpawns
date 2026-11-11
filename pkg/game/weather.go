@@ -399,7 +399,7 @@ func anotherHourLocked(mode bool, sendToOutdoor func(string), w *World) {
 			ghostShipAppearForWorld(w)
 			loadNightGateForWorld(w, timeInfo.Moon)
 			if timeInfo.Day+1 < 26 && timeInfo.Day+1 >= 22 {
-				fullMoonForWorld(w)
+				fullMoonForWorld(w, WorldClimateSnapshot{Time: timeInfo, Weather: weatherInfo})
 				lunarHunterForWorld(w)
 			}
 		case 22:
@@ -594,26 +594,41 @@ func dice(num, size int) int {
 
 // ---------------------------------------------------------------------------
 // Special weather events — Dark Pawns-specific world effects.
-// These trigger at specific times/conditions and broadcast to all players.
+// These trigger at specific times/conditions and deliver their own effects.
 // ---------------------------------------------------------------------------
 
-// fullMoon broadcasts the full moon rise to all players.
+// fullMoon force-transforms every playing vampire and werewolf (src/new_cmds.c:1310-1328).
 // Called on day 22-25 at hour 21 (sunset).
 // Class (d) test seam, kept on purpose: the weather characterization, heartbeat and race tests drive it; deadcode -test with
 // cmd/tools roots does not count this package's own tests, so it is falsely
 // listed; do not delete without moving that coverage first.
 func fullMoon() {
-	fullMoonForWorld(weatherWorldSnapshot())
+	fullMoonForWorld(weatherWorldSnapshot(), TimeWeatherSnapshot())
 }
 
-func fullMoonForWorld(w *World) {
+// fullMoonForWorld is C's full_moon (src/new_cmds.c:1310-1328): every playing
+// vampire or werewolf who is not already in transformed form receives the two
+// lunar lines and is force-transformed by do_transform. The climate is passed
+// in because the sunset tick holds weatherMu's write lock; do_transform must
+// not re-acquire it (see doTransformAt).
+func fullMoonForWorld(w *World, climate WorldClimateSnapshot) {
 	if w == nil {
 		return
 	}
-	w.SendToAll("[ FULL MOON RISES ] The full moon casts an eerie glow across the land.\r\n")
+	for _, p := range w.playingPlayersInDescriptorOrder() {
+		if !p.HasPLRFlag(PlrVampire) && !p.HasPLRFlag(PlrWerewolf) {
+			continue
+		}
+		if p.IsAffected(affVampire) || p.IsAffected(affWerewolf) {
+			continue
+		}
+		p.SendMessage("The lunar light infuses your body, forcing you to transform!\r\n")
+		p.SendMessage("Racked with the pain of the transformation, your head is thrown\r\nback and an unearthly moan escapes your lips.\r\n")
+		w.doTransformAt(p, climate)
+	}
 }
 
-// lunarHunter broadcasts the lunar hunter event.
+// lunarHunter hunts level-13+ players with vnum-7 hunters (src/new_cmds.c:2662-2683).
 // Called alongside fullMoon on day 22-25 at hour 21.
 // Class (d) test seam, kept on purpose: the weather characterization, heartbeat and race tests drive it; deadcode -test with
 // cmd/tools roots does not count this package's own tests, so it is falsely
@@ -622,11 +637,34 @@ func lunarHunter() {
 	lunarHunterForWorld(weatherWorldSnapshot())
 }
 
+// lunarHunterForWorld is C's lunar_hunter (src/new_cmds.c:2662-2683). For each
+// playing player at level 13..immort it rolls number(0,5) (short-circuit: the
+// roll happens only when the level gate passes), and on 0 creates a vnum-7
+// hunter at level (level/2)+2 hunting that player through the shared
+// create_mobile path, moves it to room 8067, and has it tell the player its
+// DIE line. The rolls run in descriptor order (newest first) on the shared
+// dprng stream, so call order here is the draw order (R3).
 func lunarHunterForWorld(w *World) {
 	if w == nil {
 		return
 	}
-	w.SendToAll("[ LUNAR HUNTER ] The lunar hunter rises in the east, its cry echoing across the valleys.\r\n")
+	for _, p := range w.playingPlayersInDescriptorOrder() {
+		if p.GetLevel() <= 12 || p.GetLevel() >= lvlImmort {
+			continue
+		}
+		if dprng.Number(0, 5) != 0 {
+			continue
+		}
+		hunter, err := w.CreateMobileI(p, 7, 8067, p.GetLevel()/2+2, true)
+		if err != nil {
+			slog.Warn("lunar hunter: create hunter failed", "player", p.GetName(), "error", err)
+			continue
+		}
+		// C char_from_room + char_to_room(8067) after create_mobile's hunting
+		// placement at 18201 (src/new_cmds.c:2675-2677).
+		hunter.SetRoom(8067)
+		w.performTell(hunter, p, "By the light of the full moon.. DIE!")
+	}
 }
 
 // loadNightGate broadcasts the night gate appearance.
