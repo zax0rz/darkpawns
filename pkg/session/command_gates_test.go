@@ -40,7 +40,8 @@ func TestCommandGateGoldenCoversCGoRegistrationsAndSocials(t *testing.T) {
 
 	for _, entry := range cmdRegistry.GetAll() {
 		if strings.HasPrefix(entry.Name, "dp954test") || strings.HasPrefix(entry.Name, "gatecascadetest") ||
-			strings.HasPrefix(entry.Name, "gatefrozentest") || strings.HasPrefix(entry.Name, "gateswitchedtest") {
+			strings.HasPrefix(entry.Name, "gatefrozentest") || strings.HasPrefix(entry.Name, "gateswitchedtest") ||
+			strings.HasPrefix(entry.Name, "gateimmobtest") {
 			continue
 		}
 		assertEntryGateMatchesGolden(t, entry.Name, entry.MinLevel, entry.MinPosition)
@@ -147,13 +148,20 @@ func TestCommandGateCascadeFrozenAndSwitchedBeforePosition(t *testing.T) {
 		}
 	})
 
-	t.Run("switched mob", func(t *testing.T) {
+	// C interpreter.c:915-916 searches with the acting body's own level: a
+	// switched low-level mobile misses the immortal row and answers Huh?!?,
+	// while a high-level switched mobile finds it and reaches the
+	// switched-NPC immortal denial (interpreter.c:920-921).
+	t.Run("switched low mob misses the search", func(t *testing.T) {
 		m := makeTestManagerWithMobs(t)
 		s := makeCommandTestSession(t, m, "wizard", LVL_IMMORT, 1001)
 		s.player.SetPosition(combat.PosSleeping)
 		s.isSwitched = true
 		s.switchedOriginalLevel = LVL_IMMORT
 		s.switchedMob = registerMob(t, m, 2001, 1001)
+		if s.switchedMob.GetLevel() >= LVL_IMMORT {
+			t.Fatalf("fixture mob level = %d, want below immortal", s.switchedMob.GetLevel())
+		}
 
 		const name = "gateswitchedtest"
 		cmdRegistry.Register(name, wrapArgs(func(*Session, []string) error {
@@ -163,8 +171,29 @@ func TestCommandGateCascadeFrozenAndSwitchedBeforePosition(t *testing.T) {
 		if err := ExecuteCommand(s, name, nil); err != nil {
 			t.Fatal(err)
 		}
+		if got := readMsgText(t, s); got != "Huh?!?\r\n" {
+			t.Errorf("switched reply = %q, want search-miss Huh", got)
+		}
+	})
+
+	t.Run("switched immortal mob hits the denial", func(t *testing.T) {
+		m := makeTestManagerWithMobs(t)
+		s := makeCommandTestSession(t, m, "wizard", LVL_IMMORT, 1001)
+		s.isSwitched = true
+		s.switchedOriginalLevel = LVL_IMMORT
+		s.switchedMob = registerMob(t, m, 2001, 1001)
+		s.switchedMob.SetLevel(LVL_IMMORT)
+
+		const name = "gateimmobtest"
+		cmdRegistry.Register(name, wrapArgs(func(*Session, []string) error {
+			t.Fatal("switched handler ran")
+			return nil
+		}), "switched immortal cascade test", LVL_IMMORT, combat.PosStanding)
+		if err := ExecuteCommand(s, name, nil); err != nil {
+			t.Fatal(err)
+		}
 		if got := readMsgText(t, s); got != "You can't use immortal commands while switched.\r\n" {
-			t.Errorf("switched reply = %q", got)
+			t.Errorf("switched immortal reply = %q", got)
 		}
 	})
 }

@@ -2,6 +2,7 @@
 # Initial invalid names and retry invalid names reach CON_GET_NAME repeatedly.
 # Raw leading/trailing spaces are unit/transport proven: scenario parser trims.
 # depth-case: entry.name-validation.live
+# depth-case: entry.browser-name-routing
 [fixture]
 quiet-mobs
 

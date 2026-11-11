@@ -75,3 +75,30 @@ func TestDonateArrivalUsesActObjectVisibilityAndSleepAudience(t *testing.T) {
 		t.Errorf("sleeping observer output = %q, want no message", got)
 	}
 }
+
+func TestDonateGoldArrivalUsesActDarknessVisibility(t *testing.T) {
+	w, ch, _ := newDonateTestWorld(t)
+	if !w.SetRoomFlagBit(DonationRoom1, 0) {
+		t.Fatal("SetRoomFlagBit(DonationRoom1, ROOM_DARK) failed")
+	}
+	if !w.IsRoomDark(DonationRoom1) {
+		t.Fatal("precondition: donation room must be dark")
+	}
+
+	hidden := NewPlayer(2, "Darkobserver", DonationRoom1)
+	if err := w.AddPlayer(hidden); err != nil {
+		t.Fatalf("AddPlayer: %v", err)
+	}
+	var hiddenOutput strings.Builder
+	w.MessageSink = func(name string, msg []byte) {
+		if name == hidden.GetName() {
+			hiddenOutput.Write(msg)
+		}
+	}
+
+	ch.SetGold(25)
+	w.performDisposeGold(ch, 25, scmdDonate, DonationRoom1)
+	if got, want := hiddenOutput.String(), "Something suddenly appears in a puff of orange smoke!\r\n"; got != want {
+		t.Fatalf("dark donation-room observer output = %q, want %q", got, want)
+	}
+}

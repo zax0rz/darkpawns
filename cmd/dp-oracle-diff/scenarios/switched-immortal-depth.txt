@@ -1,0 +1,46 @@
+# C-first switched level gate (interpreter.c:912-922): the command search runs
+# with the acting body's own level. After `switch horse`, the descriptor's
+# body is a low-level mobile, so an immortal row (whod, level 31) is invisible
+# to the search and C answers Huh?!?. The port searched with the god's
+# implementor level and answered with the immortal denial instead.
+# depth-case: interpreter.switched-immortal-huh
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Switchimmortal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchimmortal
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+switch horse
+
+[probe]
+whod
