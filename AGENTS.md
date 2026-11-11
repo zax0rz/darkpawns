@@ -19,6 +19,7 @@ Dark Pawns is a **1:1 faithful port**: the Go server must emit the *same player-
 | [`website-astro/ARCHIVE-POLICY.md`](website-astro/ARCHIVE-POLICY.md) | What recovered community material may be published |
 | [`website-astro/CONTENT-AUDIT.md`](website-astro/CONTENT-AUDIT.md) | Post-migration content review queue |
 | [`website-astro/SPEC-AUDIT.md`](website-astro/SPEC-AUDIT.md) | specification.website release checklist status |
+| [`docs/plans/ROADMAP-2026-11-10-port-completion.md`](docs/plans/ROADMAP-2026-11-10-port-completion.md) | What "done" means for the port, the lists to burn down, and the stopping rule |
 
 - **R1** player-facing bytes are law (normalization may not erase a byte class, R1b) · **R2** the command surface is part of the game · **R3** determinism & draw parity · **R4** no invention · **R5** process rules (find-one-find-the-class; verify the call path; cite C from `src/`, R5g; a green must be able to fail, R5h; a silenced surface needs a scenario that unsilences it, R5i).
 - **Cite rules by number** in commits, PRs, reviews, and Linear — "violates R4" is a complete verdict.

@@ -1,0 +1,75 @@
+list	issue	class	title	note
+L2	DP-1516	act/live divergences	Live divergences from DP-1511 witness collection: give, doors, follow, wield order, clan demote, write, switched teleport, full board	umbrella, In Progress
+L2	DP-1321	combat state	After a successful flee every command still answers as if fighting	In Progress
+L2	DP-1308	prompt/framing	sendText output skips the blank line before the prompt	
+L2	DP-1306	prompt/framing	Normal prompt printed after the pager prompt	
+L2	DP-1326	prompt/framing	Prompts are uncertified: pager prompt framing, no prompt after entering the game	
+L2	DP-1296	hand-built act()	Combat position messages bypass act()	
+L2	DP-1446	hand-built act()	pkg/spells sendAffectRoom callers paste names instead of act()	audit
+L2	DP-1514	single	stat on a player prints hardcoded Racial Hatreds and loses PLR bits	
+L2	DP-1506	single (stop tier)	C idle-kicks a dead player in the menu; Go doesn't	
+L2	DP-1504	single	look: C sends "You see nothing special.\n\r"	
+L2	DP-1495	single	ungroup disband: stop_follower lines, charm gate, walk order	check first: #2474 may have fixed it
+L2	DP-1485	invented behavior	specEvilLead invents an attack	
+L2	DP-1455	invented behavior	mickey/mallory specs: invented line, missing barks and approach	post-launch content review applies
+L2	DP-1413	single	mallory never sends Mickey after her attacker	
+L2	DP-1484	scripting	Lua mob "evil" is a boolean; C pushes 1/0	
+L2	DP-1319	scripting	Mob fight/death scripts get no target when the opponent is a mob	
+L2	DP-1478	single	Mob RemoveAffectBySpell removes every record	
+L2	DP-1465	invented behavior	OLC duplicate-edit refusal appends "(telnet; idle Ns)"	
+L2	DP-1423	single	Clan is_playing: playing descriptors vs linkless bodies	
+L2	DP-1447	lifecycle	Worn/carried object timers never tick	
+L2	DP-1444	lifecycle	Room light counter vs C's five mutation sites	audit
+L2	DP-1443	lifecycle (stop tier)	Every save_char re-equips and fires check_for_bad_stats	
+L2	DP-1425	lifecycle	Crash_save_all: skip descriptors in editor states	
+L2	DP-1424	lifecycle	Untag PLR_IT at load when another player is IT	
+L2	DP-1437	draw parity	do_peek omits its percent draw for immortals	
+L2	DP-1369	draw parity	Milestone reward skips number(1,3) and stat gains; terminator	
+L2	DP-1345	draw parity	god-skill-keys diverges at seed 2	
+L2	DP-1177	draw parity	Newbie stat-roll draw parity	
+L2	DP-1348	unported command	do_track unported	same command as DP-1361
+L2	DP-1361	unported command	track and olc unported	
+L2	DP-1294	OLC	extra-description edits truncate at 1024 bytes	
+L2	DP-1292	OLC	Live extra-description edits don't survive save/reload	
+L2	DP-1376	OLC	luaedit root listing broken by valid_directory regex	DP-1394 is its failing test
+L2	DP-1394	OLC	TestLuaEditListMatchesCFilterAndThreeColumnLayout fails	same defect as DP-1376
+L2	DP-1408	descriptors	Connection-limit refusal closes silently	
+L2	DP-1407	descriptors	dc skips close_socket's playing arm	
+L2	DP-1352	descriptors	Idle timer not reset on empty/pager/menu lines	
+L2	DP-1340	mudlog	Port the remaining C mudlog sites	
+L2	DP-1393	target lookup	restore rejects numbered targets	
+L2	DP-1390	combat	Mob hitroll/damroll lost equipment affect bonuses	
+L2	DP-1388	boards	WriteMessage leaks a board storage slot on an empty headline	
+L2	DP-1377	single	Vampire daylight water: second drink line	
+L2	DP-1372	single	Group autogold message names the killer, not the victim	
+L2	DP-1341	spells	cast 'enchant weapon' diverges	
+L2	DP-1331	spells	mag_damage: save floor, zero damage, nil world for mob casters	
+L2	DP-1313	world	Temple of the Cross accumulates bulletin boards	
+L2	DP-1322	world	zone-144 skull rider in Kir Drax'in	
+L2	DP-1354	combat	Combat teardown audit: multi-attacker, retarget, disconnect	audit
+L2	DP-1231	proof gap	compare: RNG comparison-output path unverified	
+L2	DP-1229	invented behavior	prompt reimplemented; C aliases it to do_display	
+L2	DP-1227	pager	socials/commands/wizhelp long listings: page_string not ported	
+L2	DP-1171	single	do_hide daytime sector/weather guard	
+L2	DP-1131	single	Stacked room objects use the single-object flag vocabulary	
+L2	DP-1076	character creation	do_start() runs at a different stage than C	
+L2	DP-1409	ruling	last can't show an offline player's host	needs Zach's ruling
+L2	DP-1399	ruling	Approved divergence: bound olc save failure to one attempt	needs Zach's signature
+L2	DP-1379	ruling	Guest login: approved divergence and guest scope	needs Zach's ruling
+L2	DP-1199	ruling	Admin-parity audit before any OLC/immortal waiver	needs Zach's ruling
+L4	DP-1517	harness	applyObjIndexFixtures inserts obj files at the wrong position	
+L4	DP-1515	harness	Long fight: Go actor combat lines lost at 8000 pulses	
+L4	DP-1439	harness	Long DP_CLOCK pulses lose Go actor output	
+L4	DP-1507	harness	Combat draw order drifts when a spec-proc mob acts mid-fight	may be a real divergence
+L4	DP-1496	harness (stop tier)	identify's age line reads the wall clock	
+L4	DP-1491	harness (stop tier)	switch races the peer's quit teardown	
+L4	DP-1477	harness	Census Go store holds only Testor	
+L4	DP-1471	harness	Normalizer hides clan members' trailing space	also an L2 divergence
+L4	DP-1357	harness	c-missing uses the inverted containment predicate	
+L4	DP-1367	harness	Go server keeps running when the telnet bind fails	
+L4	DP-1398	harness	Coincidence greens: steal-depth in a peaceful room	
+L5	DP-1476	dead/invented code	PF-102 probes: dead specials, CmdSkills table, serpent-kick arm, AdminCommands	
+L5	DP-1512	dead/invented code	Round-three probes: spells fallbacks, wizard guards, cmdBroadcast	
+L5	DP-1459	dead/invented code	pkg/spells AttackTypes, HandleSpellDeath, checkReagents bonus	
+L5	DP-1157	duplicate model	Dual equipment slot numbering	
+L5	DP-1132	duplicate model	Money as a VNum -1 synthetic object	
