@@ -1,0 +1,76 @@
+# depth-case: transform.night-already-vampire
+# C do_transform vampire arm (src/act.other.c:1488-1496) at SUN_DARK: the first
+# call turns the peer into a vampire, the second reaches "You can't change back
+# until morning!". The engine calendar is pinned to hour 22 (dark) for both
+# servers; the god inflicts vampirism on the peer, which sets PLR_VAMPIRE
+# (src/spells.c:784).
+
+[fixture]
+fixed-time 1771068861
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Vampgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Vampgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Vamppeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Vamppeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Vamppeer 8162
+cast 'vampirism' Vamppeer
+
+[probe]
+send:peer transform
+send:peer transform
