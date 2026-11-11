@@ -1,0 +1,83 @@
+# C-first switched-body witness for the lower-position direct call from
+# do_turn. The implementor switches into an indexed Race-9 zombie, sits through
+# that descriptor, and a good turner with the skill and mana reaches do_flee.
+# The switched player receives both terror output and do_flee's direct refusal.
+# C paths: src/new_cmds2.c:960-1021; src/act.offensive.c:371-376;
+# src/act.wizard.c:1175-1200.
+# depth-case: flee.get-on-feet-direct-caller
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+Fleedirectadmin
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fleedirectadmin
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Fleedirectturner
+Y
+turnpass
+turnpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Fleedirectturner
+y
+turnpass
+turnpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load mob 10
+teleport Fleedirectturner 8105
+skillset Fleedirectturner 'turn' 100
+set player Fleedirectturner level 11
+set player Fleedirectturner align 1000
+set player Fleedirectturner maxmana 5000
+set player Fleedirectturner mana 5000
+switch zombie
+
+[probe]
+sit
+send:peer turn

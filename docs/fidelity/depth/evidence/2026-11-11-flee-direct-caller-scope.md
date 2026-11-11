@@ -34,11 +34,21 @@ player. `do_turn` is one such possible caller if the body is undead/vampire;
 the NPC-wimpy combat path is another when its state permits. These C lines
 were grepped in this session (R5g).
 
-## Decision requested
+## Approved scope and witness
 
-Should the D1 row include output seen only by a descriptor switched into an NPC
-body? If yes, the witness needs a C-first switched-body scenario and coordination
-with Ember's switch bridge work; I did not touch those files. If no, exclude the
-row as unreachable from the ordinary player's typed `flee` command and target
-paths in the unmodified C world. The row remains blocked until Zach chooses the
-scope. No census was run because no accepted witness scope is established.
+Zach approved including switched-body-only output in this D1 row on
+2026-11-11. The C-first scenario `flee-get-on-feet-switched-turn` loads indexed
+Race-9 zombie #10, switches the implementor descriptor into its body, sits it,
+and has a skilled, good-aligned peer with ample mana issue `turn`. The retained
+transcript shows the switched player receiving `You are suddenly terrified!`
+and `Get on your feet first!` after C's direct `do_flee` call. The clean targeted
+census is
+`/home/zach/Archives/darkpawns/oracle-runs/2026-11-11/luna-l3-flee-switched-turn-loadmob`
+(seed 1, draw parity matched).
+
+R5h revert proof: for one retained run, the Go `DoFlee` refusal changed one
+byte from `!` to `?` in `pkg/game/flee.go`; the same scenario failed only on
+that switched-body line and the draw stream still matched. The NOT_CLEAN run is
+`/home/zach/Archives/darkpawns/oracle-runs/2026-11-11/luna-l3-flee-switched-turn-revert-proof`.
+The source was restored immediately after the census snapshot. The row now
+claims the switched-body scenario at seed 1 (R1/R2/R5e/R5g/R5h).
