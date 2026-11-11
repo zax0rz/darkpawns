@@ -1,12 +1,13 @@
 # depth-case: donate.appear-hidden-object
 # C's null-actor act() resolves the room from the object's location and OBJS
 # substitutes "something" for an invisible object to this mortal observer.
-# Mordecai is the first character and has holylight, so it can get the hidden
-# item and donate it to the peer in room 8053.
+# Empty player data makes Mordecai the first character with holylight, so it
+# can get the hidden item and donate it to the peer in room 8053.
 
 [fixture]
+empty-players
 quiet-mobs
-spawn-obj 16005 1 8162 160
+spawn-obj 16005 99 8162 160
 replace-room-exits 8162 north 8053 0
 
 [setup:oracle]
@@ -68,7 +69,7 @@ Y
 north
 
 [probe]
-get pack
-donate pack
+get climber
+donate climber
 ~dpclock pulse 20
 ~dpclock pulse 20
