@@ -71,3 +71,87 @@ func TestWoundActVisibleVictimReachesRoom(t *testing.T) {
 		t.Fatalf("watcher room bytes = %q, want the wounded line with the victim's name", got)
 	}
 }
+
+func TestCombatEngineRoundWoundActHidesInvisibleVictim(t *testing.T) {
+	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001, Name: "Lit Wound Room", Light: 1}}})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+
+	out := map[string]string{}
+	w.MessageSink = func(name string, msg []byte) { out[name] += string(msg) }
+	attacker := NewPlayer(1, "Attacker", 1001)
+	victim := NewPlayer(2, "Victim", 1001)
+	watcher := NewPlayer(3, "Watcher", 1001)
+	for _, player := range []*Player{attacker, victim, watcher} {
+		if err := w.AddPlayer(player); err != nil {
+			t.Fatalf("AddPlayer %s: %v", player.GetName(), err)
+		}
+	}
+
+	// A natural 20 lands one bare-handed damage point: the victim enters the
+	// stunned band at 0 HP. The lit room isolates invisibility as the reason
+	// the ordinary peer cannot see the wound act.
+	attacker.SetLevel(11)
+	attacker.SetClass(ClassMageUser) // avoids the warrior extra-attack draw
+	attacker.Stats.Str = 0
+	attacker.CopyBaseAttributes()
+	attacker.SetPosition(PosStanding)
+	victim.SetLevel(11) // above the player-vs-player protection gate
+	victim.SetHP(1)
+	victim.SetAffect(affInvisible, true)
+	if canSee(watcher, victim) {
+		t.Fatal("precondition: ordinary watcher can see the invisible victim")
+	}
+
+	ce := combat.NewCombatEngine()
+	oldCallbacks := combat.GetCallbacks()
+	t.Cleanup(func() {
+		ce.Stop()
+		combat.SetCallbacks(oldCallbacks)
+	})
+	ce.SetCallbacks(w.WireCombatCallbacks())
+	w.SetCombatEngine(ce)
+	ce.MessageFunc = func(combat.Combatant, combat.Combatant, int, int) bool { return true }
+	// Keep the engine's legacy fallback observable so restoring the old adapter
+	// makes this test fail with the leaked room line.
+	ce.SetBroadcastFunc(func(room int, message string, exclude []combat.Combatant) {
+		for _, recipient := range w.GetPlayersInRoom(room) {
+			skip := false
+			for _, excluded := range exclude {
+				if recipient == excluded {
+					skip = true
+					break
+				}
+			}
+			if skip || recipient.GetPosition() <= combat.PosSleeping {
+				continue
+			}
+			out[recipient.GetName()] += message
+		}
+	})
+	if err := ce.StartCombat(attacker, victim); err != nil {
+		t.Fatalf("StartCombat: %v", err)
+	}
+	// The victim is not enrolled for a retaliation turn; the attacker remains the
+	// active fighter for this single violence round.
+	victim.SetFightingBody(nil)
+	roller := combat.NewScriptedRoller([]int{1, 10000, 20, 0, 99, 99, 99, 99, 99})
+	combat.WithRoller(roller, ce.PerformRound)
+
+	if got := victim.GetPosition(); got != combat.PosStunned {
+		target := attacker.GetFightingBody()
+		targetName := "<nil>"
+		if target != nil {
+			targetName = target.GetName()
+		}
+		t.Fatalf("victim position = %d, want PosStunned (hp=%d, attacker position=%d, attacker target=%s, draws=%d)", got, victim.GetHP(), attacker.GetPosition(), targetName, roller.Index)
+	}
+	if got := victim.GetHP(); got != 0 {
+		t.Fatalf("victim HP = %d, want 0", got)
+	}
+	if got := out[watcher.GetName()]; got != "" {
+		t.Fatalf("ordinary peer received output for an invisible victim's wound: %q", got)
+	}
+}
