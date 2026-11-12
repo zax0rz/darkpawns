@@ -1,5 +1,7 @@
 package combat
 
+import "strings"
+
 // GameCallbacks holds the bridge functions between the combat package and the
 // game layer. The combat package only sees the Combatant interface; it uses
 // these callbacks to query other characters' state and to perform game-layer
@@ -22,7 +24,14 @@ type GameCallbacks struct {
 	// string leaks the real name to a blind observer (DP-1481 shape 3). Nil
 	// falls back to Broadcast with the render's nil-recipient result.
 	BroadcastPerReceiver func(roomVNum int, render func(to Combatant) string, exclude []Combatant)
-	SendToChar           func(name Combatant, msg string)
+	// ActRoom delivers a C act(..., ch, 0, 0, TO_ROOM) wounded-band/death line
+	// for ch=victim with hideInvisible as C passes it: hide=TRUE withholds the
+	// line from observers who cannot see the victim entirely (no "someone"
+	// substitute either), hide=FALSE delivers it with PERS masking. The game
+	// layer wires this to Act. Nil falls back to Broadcast with the expanded
+	// real-name string, keeping engine-less fixtures on the old bytes.
+	ActRoom    func(roomVNum int, victim Combatant, format string, hideInvisible bool)
+	SendToChar func(name Combatant, msg string)
 	// SendText retains the ordinary text-event route for formerly direct body messages.
 	SendText     func(body Combatant, msg string)
 	SkillMessage func(dam int, ch, vict Combatant, attackType int, roomVNum int) bool
@@ -192,6 +201,28 @@ func cbBroadcastPerReceiver(roomVNum int, render func(to Combatant) string, excl
 		return
 	}
 	cbBroadcast(roomVNum, render(nil), exclude)
+}
+
+// cbActRoom delivers one C act(..., victim, 0, 0, TO_ROOM) wounded-band or
+// death line with hideInvisible as C passes it (src/fight.c:1566-1584). When
+// the game layer has not wired ActRoom it falls back to a plain broadcast of
+// the expanded real-name string, the engine-less fixture behavior.
+func cbActRoom(room int, victim Combatant, format string, hide bool) {
+	if cb := callbacks; cb != nil && cb.ActRoom != nil {
+		cb.ActRoom(room, victim, format, hide)
+		return
+	}
+	name := "someone"
+	if victim != nil {
+		name = victim.GetName()
+	}
+	cbBroadcast(room, capitalizeFightMessage(expandActDollars(format, name)), []Combatant{victim})
+}
+
+// expandActDollars substitutes the C act codes the wounded/death lines use
+// ($n = the acted name) once, for the engine-less fallback.
+func expandActDollars(format, name string) string {
+	return strings.Replace(format, "$n", name, 1)
 }
 
 // persName mirrors C's PERS(ch, to): the actor's name when the recipient can

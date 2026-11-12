@@ -96,8 +96,8 @@ func (w *spellDeathWorld) HandleDeath(victim, killer combat.Combatant, attackTyp
 // can prove inflictDamage no longer routes through it.
 func (w *spellDeathWorld) HandleSpellDeath(victim interface{}) { w.spellDeathCalls++ }
 
-func (w *spellDeathWorld) WoundBroadcast(roomVNum int, message string, exclude []combat.Combatant) {
-	w.woundMsgs = append(w.woundMsgs, message)
+func (w *spellDeathWorld) WoundAct(roomVNum int, victim combat.Combatant, format string, hideInvisible bool) {
+	w.woundMsgs = append(w.woundMsgs, format)
 }
 
 const testSpellNum = 12 // arbitrary spell number, echoed as attackType

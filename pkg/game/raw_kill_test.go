@@ -37,7 +37,7 @@ func rawKillWorld(t *testing.T) (*World, *Player) {
 	old := combat.GetCallbacks()
 	t.Cleanup(func() { combat.SetCallbacks(old) })
 	cb := w.WireCombatCallbacks()
-	cb.Broadcast = w.WoundBroadcast
+	cb.ActRoom = w.WoundAct
 	combat.SetCallbacks(cb)
 	return w, p
 }

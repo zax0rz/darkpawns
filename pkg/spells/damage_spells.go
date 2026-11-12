@@ -301,11 +301,11 @@ func consumeReagent(ch interface{}, spellNum, level int, casterMsg string) int {
 }
 
 // woundBroadcaster lets spell damage route wound/position messages through the
-// same room broadcaster melee and skills use (game.World.WoundBroadcast →
-// woundBroadcast). Kept as a narrow interface so the spells package needn't
-// import game.
+// same C act(..., victim, TO_ROOM) delivery melee and skills use
+// (game.World.WoundAct). Kept as a narrow interface so the spells package
+// needn't import game.
 type woundBroadcaster interface {
-	WoundBroadcast(roomVNum int, message string, exclude []combat.Combatant)
+	WoundAct(roomVNum int, victim combat.Combatant, format string, hideInvisible bool)
 }
 
 // spellDeathPipeline is the melee DeathFunc path (game.World.HandleDeath). Spell
@@ -433,9 +433,9 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		var wb func(roomVNum int, message string, exclude []combat.Combatant)
+		var wb func(roomVNum int, victim combat.Combatant, format string, hideInvisible bool)
 		if b, ok := world.(woundBroadcaster); ok {
-			wb = b.WoundBroadcast
+			wb = b.WoundAct
 		}
 		var stopFighting func(combat.Combatant)
 		if sfb, ok := world.(interface{ StopFightingBody(combat.Combatant) }); ok {
