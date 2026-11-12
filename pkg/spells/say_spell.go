@@ -106,7 +106,15 @@ func SaySpell(ch any, spellNum int, tch, tobj any, world any) {
 			}
 			targetMsg = "$n stares at you and utters the words, '" + spellForTarget + "'."
 		}
-		sendAct(capitalizeActMessage(targetMsg)+"\r\n", ch, nil, tch, world)
+		// C spell_parser.c:336-343: act(..., TO_VICT) — the target observes
+		// $n through PERS (unseen casters that aren't in the target's line of
+		// sight are "someone"). Routed through the bridge for the same
+		// audiences the game layer's Act enforces (DP-1446).
+		if renderer, ok := world.(interface {
+			SpellActToVictim(caster, victim interface{}, format string) bool
+		}); !ok || !renderer.SpellActToVictim(ch, tch, targetMsg) {
+			sendAct(capitalizeActMessage(targetMsg)+"\r\n", ch, nil, tch, world)
+		}
 	}
 }
 
