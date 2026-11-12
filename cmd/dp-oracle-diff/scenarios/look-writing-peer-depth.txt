@@ -1,0 +1,75 @@
+# depth-case: look.writing-peer
+# C list_one_char's general path (src/act.informative.c:559-561) appends
+# " (writing)" while PLR_WRITING is set, and the board writer sets it the moment
+# a message's headline is accepted (src/boards.c:264-266). The peer writes to a
+# spawned bulletin board in the god's room and stays in the editor while the god
+# looks.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8099 1 8162 48
+
+[setup:oracle]
+Writegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Writegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Writepeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Writepeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Writepeer 8162
+
+[probe]
+send:peer write A test headline
+look
