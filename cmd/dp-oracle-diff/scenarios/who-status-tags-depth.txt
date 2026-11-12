@@ -1,0 +1,79 @@
+# depth-case: who.outlaw-tag
+# depth-case: who.notell-tag
+# depth-case: who.inactive-tag
+# C do_who's status suffixes (src/act.informative.c:1907-1920): PRF_NOTELL prints
+# " (notell)", PRF_INACTIVE prints " (INACTIVE)", and PLR_OUTLAW prints
+# " (OUTLAW)". All three live on the peer, so the tags follow the peer's flags
+# through the long who list.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Whotagod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Whotagod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Whotagpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Whotagpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Whotagpeer 8162
+
+[probe]
+set player Whotagpeer outlaw on
+who
+send:peer notell
+who
+send:peer inactive
+who
