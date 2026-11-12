@@ -55,4 +55,5 @@ get tome
 get spear
 get scroll
 recite tome spear
+~dpclock pulse 20
 recite scroll spear
