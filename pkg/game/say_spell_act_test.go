@@ -172,3 +172,62 @@ func TestMagAffectsRoomLineHidesInvisibleTarget(t *testing.T) {
 		t.Fatalf("target output = %q, want %q", got, want)
 	}
 }
+
+// saySpellVictimBridge exposes room iteration and SpellActToVictim without
+// SaySpellDeliver so SaySpell exercises its fallback SpellActToVictim branch
+// (src/spell_parser.c:335-343, DP-1446) against the real *World.
+type saySpellVictimBridge struct {
+	w *World
+}
+
+func (b saySpellVictimBridge) ForEachPlayerInRoomInterface(room int, fn func(any)) {
+	b.w.ForEachPlayerInRoomInterface(room, fn)
+}
+
+func (b saySpellVictimBridge) ForEachMobInRoomInterface(room int, fn func(any)) {
+	b.w.ForEachMobInRoomInterface(room, fn)
+}
+
+func (b saySpellVictimBridge) SpellActToVictim(ch, vict any, format string) bool {
+	return b.w.SpellActToVictim(ch, vict, format)
+}
+
+func TestSaySpellVictimLineRoutesThroughSpellActToVictim(t *testing.T) {
+	t.Run("invisible caster renders Someone to mortal target", func(t *testing.T) {
+		w, caster, target, _, out := newChannelWorld(t)
+		caster.Class = ClassMageUser
+		target.Class = ClassMageUser
+		caster.SetAffect(affInvisible, true)
+
+		spells.SaySpell(caster, spells.SpellArmor, target, nil, saySpellVictimBridge{w: w})
+
+		if got, want := outputOf(out, target.Name), "Someone stares at you and utters the words, 'holy ward'.\r\n"; got != want {
+			t.Fatalf("target = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("sleeping target receives nothing", func(t *testing.T) {
+		w, caster, target, _, out := newChannelWorld(t)
+		caster.Class = ClassMageUser
+		target.Class = ClassMageUser
+		target.SetPosition(combat.PosSleeping)
+
+		spells.SaySpell(caster, spells.SpellArmor, target, nil, saySpellVictimBridge{w: w})
+
+		if got := outputOf(out, target.Name); got != "" {
+			t.Fatalf("sleeping target = %q, want nothing (C: !AWAKE)", got)
+		}
+	})
+
+	t.Run("visible caster renders caster name", func(t *testing.T) {
+		w, caster, target, _, out := newChannelWorld(t)
+		caster.Class = ClassMageUser
+		target.Class = ClassMageUser
+
+		spells.SaySpell(caster, spells.SpellArmor, target, nil, saySpellVictimBridge{w: w})
+
+		if got, want := outputOf(out, target.Name), "Actor stares at you and utters the words, 'holy ward'.\r\n"; got != want {
+			t.Fatalf("target = %q, want %q", got, want)
+		}
+	})
+}
