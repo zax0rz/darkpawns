@@ -18,3 +18,6 @@ do_score	score	score.align-evil-neutral	D2	command	oracle-green	score-align-band
 do_score	score	score.align-mother	D2	command	oracle-green	score-align-bands-depth@1	act.informative.c:1220-1221	Alignment -400 reads "I actually think you would kill your own mother.".
 do_score	score	score.align-evil-hurts	D2	command	oracle-green	score-align-bands-depth@1	act.informative.c:1222-1223	Alignment -650 reads "You are so evil it hurts.".
 do_score	score	score.align-manson	D2	command	oracle-green	score-align-bands-depth@1	act.informative.c:1224-1225	Alignment -800 reads "Charles Manson is in your fan club.".
+do_who	who	who.notell-tag	D2	command	oracle-green	who-status-tags-depth@1	act.informative.c:1908-1909	A peer with PRF_NOTELL is suffixed " (notell)" in the long who list.
+do_who	who	who.inactive-tag	D2	command	oracle-green	who-status-tags-depth@1	act.informative.c:1914-1915	A peer with PRF_INACTIVE is suffixed " (INACTIVE)"; inactive also changes the peer prompt, which the scenario captures too.
+do_who	who	who.outlaw-tag	D2	command	oracle-green	who-status-tags-depth@1	act.informative.c:1918-1919	A peer with PLR_OUTLAW is suffixed " (OUTLAW)"; the flag is set by the wizard set command and survives the who listing.
