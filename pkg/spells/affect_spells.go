@@ -757,7 +757,16 @@ func MagPoints(level int, ch, victim interface{}, spellNum, savetype int, world 
 		if ch == victim {
 			sendToVictim(victim, "Your wounds mend beneath your hands!\r\n")
 		} else {
-			sendAct("Your wounds start to heal beneath $n's hands!\r\n", ch, nil, victim, world)
+			// C magic.c:1821: act("Your wounds start to heal beneath $n's
+			// hands!", TRUE, ch, 0, victim, TO_VICT). The per-recipient
+			// substitution hides an unseen healer as "someone" — the old
+			// hand-paste always printed the healer's real name (DP-1446).
+			const layHandsAct = "Your wounds start to heal beneath $n's hands!"
+			if renderer, ok := world.(interface {
+				SpellActToVictim(caster, victim interface{}, format string) bool
+			}); !ok || !renderer.SpellActToVictim(ch, victim, layHandsAct) {
+				sendAct(layHandsAct+"\r\n", ch, nil, victim, world)
+			}
 		}
 	}
 
