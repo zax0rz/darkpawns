@@ -1,0 +1,81 @@
+# depth-case: damage.wounded-hide-invisible
+# DP-1296 oracle witness: one hit() opener against an invisible mob.
+# The first player is the crowned Implementor, toggles holylight, and remains
+# the opener; a mortal peer shares the room but cannot see the mob. Strength 0
+# makes the normal bare-handed damage floor exactly one, and HP 1 lands in the
+# stunned band on a hit. Seed 42 pins the opening roll.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+set-mob-aff 16303 2
+
+[setup:oracle]
+Godtog
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Godtog
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Tickpeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Tickpeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Tickpeer 8105
+holylight
+set Godtog str 0
+set Godtog hitroll 100
+set trainee ac 0
+set trainee maxhit 1
+set trainee hit 1
+
+[probe]
+hit trainee

@@ -122,19 +122,26 @@ func NewCombatEngine() *CombatEngine {
 	}
 }
 
-// SetBroadcastFunc sets the function used to broadcast messages to rooms
-// woundRoomAct adapts BroadcastFunc to the wounded/death act shape: engine
-// fixtures keep the plain broadcast of the expanded line (C's hide rules live
-// in the game-layer Act wiring, not in engine fixtures).
+// woundRoomAct routes wounded/death lines through the game's Act bridge when
+// one is wired, preserving C's hide_invisible handling. Engine-only fixtures
+// without that bridge keep the expanded BroadcastFunc fallback.
 func (ce *CombatEngine) woundRoomAct() func(roomVNum int, victim Combatant, format string, hideInvisible bool) {
-	return func(room int, victim Combatant, format string, _ bool) {
-		if ce.BroadcastFunc == nil || victim == nil {
+	return func(room int, victim Combatant, format string, hideInvisible bool) {
+		if victim == nil {
+			return
+		}
+		if ce.Callbacks != nil && ce.Callbacks.ActRoom != nil {
+			ce.Callbacks.ActRoom(room, victim, format, hideInvisible)
+			return
+		}
+		if ce.BroadcastFunc == nil {
 			return
 		}
 		ce.BroadcastFunc(room, capitalizeFightMessage(expandActDollars(format, victim.GetName())), []Combatant{victim})
 	}
 }
 
+// SetBroadcastFunc sets the function used to broadcast messages to rooms.
 func (ce *CombatEngine) SetBroadcastFunc(fn func(roomVNum int, message string, exclude []Combatant)) {
 	ce.BroadcastFunc = fn
 }
