@@ -88,6 +88,11 @@ type Player struct {
 	// representation for this field.
 	InvisLevel int `json:"-"`
 
+	// switchedOriginal points to the immortal Player currently switched into
+	// this borrowed Player body (C: ch->desc->original), so GET_REAL_LEVEL
+	// visibility checks in pkg/game can read the original immortal's level.
+	switchedOriginal *Player
+
 	// ActiveAffects is a list of active spell/status effects on this player.
 	// This is separate from the Affects bitmask — bitmask tracks AFF_* flags,
 	// while ActiveAffects tracks spell effects with duration/stacking.

@@ -1592,6 +1592,9 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 
 	// 3b. M-16: Auto-return from switched body on disconnect
 	if s.isSwitched {
+		if s.switchedPlayer != nil {
+			s.switchedPlayer.SetSwitchedOriginal(nil)
+		}
 		if s.switchedOriginal != nil {
 			slog.Warn(
 				"auto-return on disconnect",

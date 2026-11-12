@@ -87,6 +87,28 @@ func (p *Player) GetLevel() int {
 	return p.Level
 }
 
+// GetSwitchedOriginal returns the immortal Player currently switched into this
+// borrowed Player body, or nil if not PC-switched.
+func (p *Player) GetSwitchedOriginal() *Player {
+	if p == nil {
+		return nil
+	}
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.switchedOriginal
+}
+
+// SetSwitchedOriginal records or clears the immortal Player switched into this
+// borrowed Player body.
+func (p *Player) SetSwitchedOriginal(orig *Player) {
+	if p == nil || orig == p {
+		return
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.switchedOriginal = orig
+}
+
 // GetInvisLevel returns C's GET_INVIS_LEV value for immortal wizinvis.
 func (p *Player) GetInvisLevel() int {
 	p.mu.RLock()

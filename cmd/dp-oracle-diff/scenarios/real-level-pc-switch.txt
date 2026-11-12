@@ -1,0 +1,107 @@
+# C-first witness for GET_REAL_LEVEL in CAN_SEE/PERS (src/utils.h:285-287,529-530,552).
+# God A (Goda) sets wizinvis 35, above a mortal's level. God B (Switchgod,
+# LVL_IMPL) switches into a linkless mortal (Mortal) in the same room.
+# God A says something; God B must see God A's name, not "Someone".
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Switchgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:goda]
+Goda
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:goda]
+Goda
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Mortal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Mortal
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set player Goda level 39
+teleport Goda 8162
+teleport Mortal 8162
+
+[peer-drop]
+mortal
+
+[probe]
+switch Mortal
+send:goda invis 35
+send:goda say hello
+return
