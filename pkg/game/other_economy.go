@@ -298,16 +298,12 @@ func (w *World) tattooRoomAct(ch *Player, skull *MobInstance, format string) {
 // NOMAGIC uses act with hide_invisible FALSE; unseen casters are still
 // announced as "someone" (spell_parser.c:424-432; utils.h:515-530).
 func (w *World) tattooNoMagicRoom(ch *Player, format string) {
-	for _, player := range w.GetPlayersInRoom(ch.GetRoom()) {
-		if player == ch || !sendOk(player, false) {
-			continue
-		}
-		name := ch.Name
-		if !w.tattooCanSee(player, ch) {
-			name = "someone"
-		}
-		player.SendMessage(cap(strings.ReplaceAll(format, "$n", name)) + "\r\n")
-	}
+	// C's NOMAGIC path is a plain act(..., TO_ROOM) with hide FALSE
+	// (spell_parser.c:419-432): one Act gives the room the same awake
+	// audience ("awake gate"), PERS masking ("someone" to observers who
+	// cannot see the caster — same bits as tattooCanSee), and capitalised
+	// delivery the hand-rolled name-paste skipped (DP-1446).
+	Act(w, false, ch, nil, nil, nil, format, "", ToRoom)
 }
 
 // tattooSpellWorld restricts benign self-spell room messages to C act's

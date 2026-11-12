@@ -163,33 +163,29 @@ func GetPositionFromHP(hp, currentPos int) int {
 // is intentionally left to the death handler, so PosDead emits no message here.
 //
 // Mirrors update_pos, wound messages and !AWAKE stop (src/fight.c:1489,
-// 1546-1632). broadcast
-// may be nil to suppress the third-person room message.
-func UpdatePositionAfterDamage(victim Combatant, broadcast func(roomVNum int, message string, exclude []Combatant), stopFighting func(Combatant)) int {
+// 1546-1632). actRoom — when non-nil — delivers the C act() TO_ROOM line
+// (hide_invisible FALSE/TRUE as this helper passes): the game layer wires it
+// to Act with C's audiences. Nil falls back to the combat callback table so
+// engine-less fixtures keep working.
+func UpdatePositionAfterDamage(victim Combatant, actRoom func(roomVNum int, victim Combatant, format string, hideInvisible bool), stopFighting func(Combatant)) int {
 	newPos := GetPositionFromHP(victim.GetHP(), victim.GetPosition())
 	victim.SetPosition(newPos)
 
-	name := victim.GetName()
 	room := victim.GetRoom()
-	// C's act() capitalizes the first byte of the assembled line (comm.c:2477
-	// CAP) and TO_ROOM excludes the victim, who receives the "You are ..." form
+	// C's act() renders $n per recipient ("someone" to observers who cannot
+	// see the victim, then capitalizes the first byte via comm.c:2477 CAP)
+	// and TO_ROOM excludes the victim, who receives the "You are ..." form
 	// instead (fight.c:1560-1580).
 	switch newPos {
 	case PosMortally:
 		sendCombatMessage(victim, "You are mortally wounded, and will die soon, if not aided.\r\n")
-		if broadcast != nil {
-			broadcast(room, capitalizeFightMessage(fmt.Sprintf("%s is mortally wounded, and will die soon, if not aided.", name)), []Combatant{victim})
-		}
+		emitRoomAct(actRoom, room, victim, "$n is mortally wounded, and will die soon, if not aided.", true)
 	case PosIncap:
 		sendCombatMessage(victim, "You are incapacitated an will slowly die, if not aided.\r\n")
-		if broadcast != nil {
-			broadcast(room, capitalizeFightMessage(fmt.Sprintf("%s is incapacitated and will slowly die, if not aided.", name)), []Combatant{victim})
-		}
+		emitRoomAct(actRoom, room, victim, "$n is incapacitated and will slowly die, if not aided.", true)
 	case PosStunned:
 		sendCombatMessage(victim, "You're stunned, but will probably regain consciousness again.\r\n")
-		if broadcast != nil {
-			broadcast(room, capitalizeFightMessage(fmt.Sprintf("%s is stunned, but will probably regain consciousness again.", name)), []Combatant{victim})
-		}
+		emitRoomAct(actRoom, room, victim, "$n is stunned, but will probably regain consciousness again.", true)
 	}
 
 	// src/fight.c:1630-1632 — !AWAKE victims can no longer fight back. C's
@@ -318,15 +314,61 @@ func DeathCry(ch Combatant) string {
 	return strings.Join(rooms, ";")
 }
 
+// woundFormat is C's $n form of one wounded-band room line (src/fight.c
+// position switch), used by both UpdatePositionAfterDamage and
+// emitDamagePositionMessage through emitWoundBand — the two ports united.
+func woundFormat(newPos int) (string, bool) {
+	switch newPos {
+	case PosMortally:
+		return "$n is mortally wounded, and will die soon, if not aided.", true
+	case PosIncap:
+		return "$n is incapacitated and will slowly die, if not aided.", true
+	case PosStunned:
+		return "$n is stunned, but will probably regain consciousness again.", true
+	}
+	return "", false
+}
+
+// emitRoomAct delivers one C act(..., victim, 0, 0, TO_ROOM) line with its
+// hide_invisible flag. A non-nil actRoom wins (the game layer wires it to Act
+// with C's audiences); nil falls back to the combat callback table.
+func emitRoomAct(actRoom func(roomVNum int, victim Combatant, format string, hideInvisible bool), room int, victim Combatant, format string, hide bool) {
+	if actRoom != nil {
+		actRoom(room, victim, format, hide)
+		return
+	}
+	cbActRoom(room, victim, format, hide)
+}
+
+// emitWoundBand delivers the C wounded-band messages for a victim at newPos:
+// the direct victim line (receive of send_to_char, per C) and the room act()
+// with hide_invisible TRUE (src/fight.c:1566-1584), which withholds the line
+// from observers who cannot see the victim.
+func emitWoundBand(victim Combatant, newPos int) {
+	room, ok := woundFormat(newPos)
+	if !ok {
+		return
+	}
+	switch newPos {
+	case PosMortally:
+		sendCombatMessage(victim, "You are mortally wounded, and will die soon, if not aided.\r\n")
+	case PosIncap:
+		sendCombatMessage(victim, "You are incapacitated an will slowly die, if not aided.\r\n")
+	case PosStunned:
+		sendCombatMessage(victim, "You're stunned, but will probably regain consciousness again.\r\n")
+	}
+	emitRoomAct(nil, victim.GetRoom(), victim, room, true)
+}
+
 // EmitDeathPositionMessage emits the POS_DEAD branch of damage(). It is kept
 // separate from UpdatePositionAfterDamage because the latter is also used by
 // callers that only need the wounded-band transition; the actual C death
-// pipeline owns this message immediately before death_cry/raw_kill.
-func EmitDeathPositionMessage(victim Combatant, broadcast func(roomVNum int, message string, exclude []Combatant)) {
+// pipeline owns this message immediately before death_cry/raw_kill. C's
+// act() for the dead uses hide_invisible FALSE (src/fight.c:1582).
+func EmitDeathPositionMessage(victim Combatant, actRoom func(roomVNum int, victim Combatant, format string, hideInvisible bool)) {
 	sendCombatMessage(victim, "You are dead!  Sorry...\r\n")
-	if broadcast != nil {
-		broadcast(victim.GetRoom(),
-			capitalizeFightMessage(fmt.Sprintf("%s is dead!  R.I.P.", victim.GetName())), []Combatant{victim})
+	if actRoom != nil {
+		actRoom(victim.GetRoom(), victim, "$n is dead!  R.I.P.", false)
 	}
 }
 
@@ -670,21 +712,10 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 
 func emitDamagePositionMessage(ch, victim Combatant, dam, newPos int, victimName string, roomVNum int) {
 	switch newPos {
-	case PosMortally:
-		sendCombatMessage(victim, "You are mortally wounded, and will die soon, if not aided.\r\n")
-		cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
-			return capitalizeFightMessage(fmt.Sprintf("%s is mortally wounded, and will die soon, if not aided.", persName(victim, to)))
-		}, []Combatant{victim})
-	case PosIncap:
-		sendCombatMessage(victim, "You are incapacitated an will slowly die, if not aided.\r\n")
-		cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
-			return capitalizeFightMessage(fmt.Sprintf("%s is incapacitated and will slowly die, if not aided.", persName(victim, to)))
-		}, []Combatant{victim})
-	case PosStunned:
-		sendCombatMessage(victim, "You're stunned, but will probably regain consciousness again.\r\n")
-		cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
-			return capitalizeFightMessage(fmt.Sprintf("%s is stunned, but will probably regain consciousness again.", persName(victim, to)))
-		}, []Combatant{victim})
+	case PosMortally, PosIncap, PosStunned:
+		// United with UpdatePositionAfterDamage's wounded-band arms — one
+		// switch, one hide_invisible delivery (src/fight.c:1566-1584).
+		emitWoundBand(victim, newPos)
 	case PosDead:
 		sendCombatMessage(victim, "You are dead!  Sorry...\r\n")
 		// act(..., TO_ROOM) excludes the victim (fight.c:1582).

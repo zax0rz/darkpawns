@@ -122,7 +122,26 @@ func NewCombatEngine() *CombatEngine {
 	}
 }
 
-// SetBroadcastFunc sets the function used to broadcast messages to rooms
+// woundRoomAct routes wounded/death lines through the game's Act bridge when
+// one is wired, preserving C's hide_invisible handling. Engine-only fixtures
+// without that bridge keep the expanded BroadcastFunc fallback.
+func (ce *CombatEngine) woundRoomAct() func(roomVNum int, victim Combatant, format string, hideInvisible bool) {
+	return func(room int, victim Combatant, format string, hideInvisible bool) {
+		if victim == nil {
+			return
+		}
+		if ce.Callbacks != nil && ce.Callbacks.ActRoom != nil {
+			ce.Callbacks.ActRoom(room, victim, format, hideInvisible)
+			return
+		}
+		if ce.BroadcastFunc == nil {
+			return
+		}
+		ce.BroadcastFunc(room, capitalizeFightMessage(expandActDollars(format, victim.GetName())), []Combatant{victim})
+	}
+}
+
+// SetBroadcastFunc sets the function used to broadcast messages to rooms.
 func (ce *CombatEngine) SetBroadcastFunc(fn func(roomVNum int, message string, exclude []Combatant)) {
 	ce.BroadcastFunc = fn
 }
@@ -1072,9 +1091,9 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		// Skipping it dropped those draws and bytes: the werewolf diagnostic
 		// lost the victim's failed-flee draws, which shifted the dice stream
 		// and changed a later claw's damage (R1/R3).
-		newPos := UpdatePositionAfterDamage(defender, ce.BroadcastFunc, ce.StopCombat)
+		newPos := UpdatePositionAfterDamage(defender, ce.woundRoomAct(), ce.StopCombat)
 		if newPos == PosDead {
-			EmitDeathPositionMessage(defender, ce.BroadcastFunc)
+			EmitDeathPositionMessage(defender, ce.woundRoomAct())
 			ce.handleDeath(defender, attacker)
 			return true
 		}
@@ -1119,14 +1138,14 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		return true
 	}
 
-	newPos := UpdatePositionAfterDamage(defender, ce.BroadcastFunc, ce.StopCombat)
+	newPos := UpdatePositionAfterDamage(defender, ce.woundRoomAct(), ce.StopCombat)
 	if newPos != PosDead {
 		return ce.handleSurvivingVictimState(attacker, defender, damage, newPos)
 	}
 
 	// damage() emits its POS_DEAD bytes, then the death callback owns XP,
 	// autogold, death_cry and the silent corpse (src/fight.c:1644-1691, 573-578).
-	EmitDeathPositionMessage(defender, ce.BroadcastFunc)
+	EmitDeathPositionMessage(defender, ce.woundRoomAct())
 	// The death callback owns XP/autogold before raw_kill's cry/corpse. A
 	// false return is die_with_killer's canceled tail (fight.c:599): the
 	// healed body keeps fighting, so this exchange has not ended.

@@ -15,6 +15,11 @@ import (
 // package-level variables they replace.
 func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	cb := &combat.GameCallbacks{}
+	// Wounded-band/death room lines go through Act with C's hide_invisible
+	// flags (src/fight.c:1566-1584), not a pre-expanded broadcast (DP-1296).
+	cb.ActRoom = func(room int, victim combat.Combatant, format string, hideInvisible bool) {
+		w.WoundAct(room, victim, format, hideInvisible)
+	}
 	pre := w.damageBeforeMessageCallbacks()
 	cb.DamageNewbieExp = pre.DamageNewbieExp
 	cb.StopFighting = pre.StopFighting

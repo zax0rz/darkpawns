@@ -465,6 +465,23 @@ func roomObjectVisibleFlags(ch *Player, object *ObjectInstance) string {
 	return "          " + strings.Join(flags, "")
 }
 
+// listsHiddenBody is list_char_to_char's second disjunct: a looker carrying
+// PRF_HOLYLIGHT lists a body that is otherwise filtered for AFF_HIDE, as long as
+// its real level covers the body's invis level
+// (src/act.informative.c:635-638). The sense-life "hidden presence" line is the
+// else of that same chain, so a holylight immortal with sense life gets the
+// listing rather than the hint.
+func listsHiddenBody(viewer *Player, body interface{}) bool {
+	if !viewer.GetHolyLight() {
+		return false
+	}
+	invis := 0
+	if iv, ok := body.(invisLevelSubject); ok {
+		invis = iv.GetInvisLevel()
+	}
+	return viewer.GetLevel() >= invis
+}
+
 func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView) []string {
 	type character struct {
 		actor Actor
@@ -485,8 +502,9 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 		if mobHasRider(mob) {
 			continue
 		}
-		if !canSee(ch, mob) || mob.IsAffected(affHide) {
-			if mob.IsAffected(affHide) && ch.IsAffected(affSenseLife) {
+		hidden := mob.IsAffected(affHide)
+		if (!canSee(ch, mob) || hidden) && !listsHiddenBody(ch, mob) {
+			if hidden && ch.IsAffected(affSenseLife) {
 				lines = append(lines, "You sense a hidden presence in the room.")
 			}
 			continue
@@ -505,8 +523,9 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 		if player == nil || player == ch {
 			continue
 		}
-		if !canSee(ch, player) || player.IsAffected(affHide) {
-			if player.IsAffected(affHide) && ch.IsAffected(affSenseLife) {
+		hidden := player.IsAffected(affHide)
+		if (!canSee(ch, player) || hidden) && !listsHiddenBody(ch, player) {
+			if hidden && ch.IsAffected(affSenseLife) {
 				lines = append(lines, "You sense a hidden presence in the room.")
 			}
 			continue

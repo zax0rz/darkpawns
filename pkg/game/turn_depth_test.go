@@ -152,8 +152,27 @@ func TestDoTurnLowManaSubtractsQuarterCostAfterRoomActs(t *testing.T) {
 func TestDoTurnDisintegratesEligibleUndeadAtFifteenLevelAdvantage(t *testing.T) {
 	w, actor, observer := turnDepthWorld(t, false)
 	oldCallbacks := combat.GetCallbacks()
+	messages := capturePlayerMessages(w)
 	callbacks := w.WireCombatCallbacks()
-	callbacks.Broadcast = w.WoundBroadcast
+	// DeathCry's per-receiver fallback lands on cb.Broadcast; bridge it to the
+	// capture map (as the deleted WoundBroadcast plain broadcaster did).
+	callbacks.Broadcast = func(room int, msg string, exclude []combat.Combatant) {
+		for _, p := range w.GetPlayersInRoom(room) {
+			excluded := false
+			for _, body := range exclude {
+				if any(p) == any(body) {
+					excluded = true
+					break
+				}
+			}
+			if !excluded {
+				if messages[p.Name] == nil {
+					messages[p.Name] = &strings.Builder{}
+				}
+				messages[p.Name].WriteString(msg + "\r\n")
+			}
+		}
+	}
 	combat.SetCallbacks(callbacks)
 	t.Cleanup(func() { combat.SetCallbacks(oldCallbacks) })
 	for _, vnum := range []int{99006, 99007} {
@@ -161,7 +180,6 @@ func TestDoTurnDisintegratesEligibleUndeadAtFifteenLevelAdvantage(t *testing.T) 
 			t.Fatal(err)
 		}
 	}
-	messages := capturePlayerMessages(w)
 
 	w.DoTurn(actor)
 
