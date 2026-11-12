@@ -279,7 +279,7 @@ func (w *World) tattooCanSee(observer, caster *Player) bool {
 	if observer == caster {
 		return true
 	}
-	if realLevel(observer, w) < caster.GetInvisLevel() {
+	if caster.GetInvisLevel() > 0 && realLevel(observer, w) < caster.GetInvisLevel() {
 		return false
 	}
 	lightOK := !observer.IsAffected(affBlind) && (!w.IsRoomDark(observer.GetRoom()) || observer.IsAffected(affInfravision))
