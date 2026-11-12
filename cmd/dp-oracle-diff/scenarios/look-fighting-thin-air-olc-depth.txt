@@ -1,0 +1,56 @@
+# depth-case: look.fighting-thin-air
+# C list_one_char's general path (src/act.informative.c:596-598): a character at
+# POS_FIGHTING whose FIGHTING() pointer is NULL prints "$n is here struggling
+# with thin air.". Nothing assigns that pair directly, but the position writers
+# are generic: medit takes any value from 0 to NUM_POSITIONS-1 for both the load
+# position and the default position (src/medit.c:1059-1066), 7 is POS_FIGHTING
+# (src/structs.h:216) and 8 is POS_STANDING, and parse_simple_mob reads the load
+# position from the world file (src/db.c:1092). A prototype saved with 7/8
+# therefore spawns fighting-off-balance with no opponent, and because
+# GET_POS != GET_DEFAULT_POS it skips the at-rest branch at :511.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Thinairgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Thinairgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+medit 16303
+I
+7
+J
+8
+q
+y
+load mob 16303
+look
