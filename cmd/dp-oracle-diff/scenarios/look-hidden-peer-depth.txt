@@ -1,0 +1,77 @@
+# depth-case: look.hidden-peer
+# C list_one_char's general path (src/act.informative.c:553-558) appends
+# " (hidden)" to a character carrying AFF_HIDE, and list_char_to_char lists such
+# a character when the looker has PRF_HOLYLIGHT and its real level covers the
+# character's invis level (:635-638). do_hide grants the affect when its draw
+# beats the skill (src/act.other.c:288-307), so the god hands the peer a trained
+# hide skill with the wizard skillset command, turns holylight on, and looks.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Hidegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hidegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Hidepeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Hidepeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Hidepeer 8162
+skillset Hidepeer 'hide' 100
+
+[probe]
+holylight
+send:peer hide
+look
