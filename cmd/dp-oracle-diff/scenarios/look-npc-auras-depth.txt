@@ -1,0 +1,87 @@
+# depth-case: look.npc-red-aura
+# depth-case: look.npc-blue-aura
+# depth-case: look.npc-blind
+# depth-case: look.player-red-aura
+# depth-case: look.player-blue-aura
+# C list_one_char's NPC-at-rest block (src/act.informative.c:513-541): when the
+# looker carries AFF_DETECT_ALIGN an evil mobile is prefixed "(Red Aura) " and a
+# good one "(Blue Aura) ", and AFF_BLIND appends "...$e is groping around
+# blindly!". set mob align moves the mobile between the two aura arms.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 80
+set-mob-aff 16303 1
+
+[setup:oracle]
+Auragod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Auragod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Aurapeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Aurapeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Aurapeer 8162
+cast 'detect alignment'
+~dpclock pulse 20
+
+[probe]
+set mob trainee align -500
+look
+set mob trainee align 500
+look
+set player Aurapeer align -500
+look
+set player Aurapeer align 500
+look

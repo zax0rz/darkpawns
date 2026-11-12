@@ -1,0 +1,90 @@
+# depth-case: who.rank-impl
+# depth-case: who.rank-grgod
+# depth-case: who.rank-higod
+# depth-case: who.rank-legend
+# depth-case: who.rank-god
+# depth-case: who.short-trailing-repeat
+# depth-case: who.rank-titan
+# depth-case: who.rank-immort
+# C do_who's short list (src/act.informative.c:1775-1826) tags each visible
+# player by level band, including the [  GOD   ] band at LVL_GOD (src/structs.h:618). The god itself is level 40 and prints [ *IMP*  ]; one
+# peer is re-levelled between who calls so every band is reached with a single
+# extra connection (set refuses only a level at or above the setter's own).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Whogod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Whogod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Rankpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Rankpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Rankpeer 8162
+
+[probe]
+set player Rankpeer level 38
+who -s
+set player Rankpeer level 36
+who -s
+set player Rankpeer level 35
+who -s
+set player Rankpeer level 34
+who -s
+set player Rankpeer level 32
+who -s
+set player Rankpeer level 31
+who -s
