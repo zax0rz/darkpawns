@@ -58,6 +58,7 @@ func (m *Manager) detachPCSwitch(s *Session, connected bool) {
 	s.switchedMob = nil
 	m.mu.Unlock()
 	if body != nil {
+		body.SetSwitchedOriginal(nil)
 		body.SetLinkless(true)
 	}
 	if original != nil {

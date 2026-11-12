@@ -135,6 +135,7 @@ func cmdSwitch(s *Session, args []string) error {
 	m.mu.Unlock()
 	if target.Player != nil {
 		s.switchedOriginal.SetLinkless(true)
+		target.Player.SetSwitchedOriginal(s.switchedOriginal)
 		target.Player.SetLinkless(false)
 	}
 	s.Send("Okay.\r\n")
