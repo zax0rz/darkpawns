@@ -172,3 +172,31 @@ func TestMagAffectsRoomLineHidesInvisibleTarget(t *testing.T) {
 		t.Fatalf("target output = %q, want %q", got, want)
 	}
 }
+
+func TestSaySpellTargetLineRendersThroughAct(t *testing.T) {
+	t.Run("invisible caster renders Someone to mortal target", func(t *testing.T) {
+		w, caster, target, _, out := newChannelWorld(t)
+		caster.Class = ClassMageUser
+		target.Class = ClassMageUser
+		caster.SetAffect(affInvisible, true)
+
+		spells.SaySpell(caster, spells.SpellArmor, target, nil, w)
+
+		if got, want := outputOf(out, target.Name), "Someone stares at you and utters the words, 'holy ward'.\r\n"; got != want {
+			t.Fatalf("target = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("sleeping target receives nothing", func(t *testing.T) {
+		w, caster, target, _, out := newChannelWorld(t)
+		caster.Class = ClassMageUser
+		target.Class = ClassMageUser
+		target.SetPosition(combat.PosSleeping)
+
+		spells.SaySpell(caster, spells.SpellArmor, target, nil, w)
+
+		if got := outputOf(out, target.Name); got != "" {
+			t.Fatalf("sleeping target = %q, want nothing (C: !AWAKE)", got)
+		}
+	})
+}
