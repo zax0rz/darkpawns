@@ -30,6 +30,15 @@ class ValidateTests(unittest.TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIn("invalid seeds", errors[0])
 
+    def test_accepts_ws_proof_and_requires_its_scenario(self):
+        valid = dict(row("browser", "oracle-green"), proof="browser@1[ws]", manifest="m.tsv", line="4")
+        missing = dict(row("missing-browser", "oracle-green"), proof="missing-browser@1[ws]", manifest="m.tsv", line="5")
+        with unittest.mock.patch("gen_fidelity_depth.validate_unit_rows", return_value=[]):
+            self.assertEqual(validate([valid], {"browser": {"browser"}}), [])
+            errors = validate([missing], {})
+        self.assertEqual(len(errors), 1)
+        self.assertIn("missing scenario missing-browser", errors[0])
+
 
 if __name__ == "__main__":
     unittest.main()

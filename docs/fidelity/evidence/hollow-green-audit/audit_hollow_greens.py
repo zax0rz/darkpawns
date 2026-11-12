@@ -560,20 +560,32 @@ def intended(row, comments, evidence_refusals):
 
 
 def scenario_proofs(proof):
-    """[(name, seeds)] for every part of a proof column naming a scenario."""
+    """[(name, seeds, transport)] for every parsed scenario proof."""
     out = []
     for part in (proof or "").split(";"):
         part = part.strip()
         if not part:
             continue
+        transport = None
+        if "[" in part or "]" in part:
+            match = re.fullmatch(r"([^\[\]]+)\[([^\[\]]+)\]", part)
+            if not match:
+                raise ValueError(f"invalid transport suffix in {part!r}; expected one [ws] suffix")
+            if match[2] != "ws":
+                raise ValueError(f"unsupported transport suffix [{match[2]}]; only [ws] is allowed")
+            part, transport = match[1], match[2]
+            if "@" not in part:
+                raise ValueError("[ws] suffix must follow a scenario seed list")
         seeds = []
         name = part
         if "@" in part:
             name, seed_spec = part.split("@", 1)
             seeds = [s.strip() for s in seed_spec.split(",") if s.strip()]
+        if transport == "ws" and (not seeds or any(not re.fullmatch(r"[1-9][0-9]*", seed) for seed in seeds)):
+            raise ValueError(f"invalid seed list in WS proof {part!r}")
         name = name.strip()
         if re.fullmatch(r"[a-z0-9][a-z0-9\-]*", name):
-            out.append((name, seeds))
+            out.append((name, seeds, transport))
     return out
 
 
@@ -616,7 +628,10 @@ def main():
             row = {k: (f[i] if i < len(f) else "") for k, i in idx.items()}
             if not row.get("status", "").startswith("oracle-green"):
                 continue
-            for scen_name, _seeds in scenario_proofs(row.get("proof", "")):
+            for scen_name, _seeds, transport in scenario_proofs(row.get("proof", "")):
+                # This audit compares rows with an ordinary telnet census.
+                if transport == "ws":
+                    continue
                 if scen_name not in scen_corpus:
                     scen_corpus[scen_name] = ""
                 scen_corpus[scen_name] += " " + (
@@ -647,7 +662,10 @@ def main():
             proofs = scenario_proofs(row.get("proof", ""))
             if not proofs:
                 continue
-            for scen_name, seeds in proofs:
+            for scen_name, seeds, transport in proofs:
+                # A telnet census cannot prove the separate WS-qualified row.
+                if transport == "ws":
+                    continue
                 n_pairs += 1
                 reasons = []
                 if not snap.has_scenario(scen_name):

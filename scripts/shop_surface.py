@@ -12,12 +12,14 @@ import re
 import sys
 import tempfile
 from collections import Counter
+from manifest_claims import parse_oracle_proof
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 HEADER = ['system', 'c_site', 'function', 'branch', 'status', 'proof', 'owner', 'notes']
 STATUSES = {'proven', 'delegated', 'fixed', 'unreachable', 'blocked'}
 SITE = re.compile(r'(src/[\w.-]+\.c):([1-9][0-9]*)(?:-([1-9][0-9]*))?$')
-TOKEN = re.compile(r'(?:Test\w+|[a-z0-9][a-z0-9-]*@[1-9][0-9]*(?:,[1-9][0-9]*)*)$')
+TEST_TOKEN = re.compile(r'Test\w+$')
+SCENARIO_TOKEN = re.compile(r'[a-z0-9][a-z0-9-]*$')
 FAMILIES = {'core': 'core shop transaction surface', 'special': 'special-procedure shop surface'}
 
 
@@ -61,12 +63,22 @@ def check(root=ROOT, verify_inventory=True):
         if not row['owner'] or not row['notes']:
             errors.append(f'{where}: owner and reasoning required')
         for token in tokens:
-            if not TOKEN.fullmatch(token):
-                errors.append(f'{where}: invalid proof token {token!r}')
-            elif token.startswith('Test'):
-                if token not in tests:
+            if token.startswith('Test'):
+                if not TEST_TOKEN.fullmatch(token):
+                    errors.append(f'{where}: invalid proof token {token!r}')
+                elif token not in tests:
                     errors.append(f'{where}: missing test {token}')
-            elif not (root / 'cmd/dp-oracle-diff/scenarios' / (token.split('@')[0] + '.txt')).is_file():
+                continue
+            try:
+                proof = parse_oracle_proof(token)
+            except ValueError as exc:
+                errors.append(f'{where}: invalid proof token {token!r}: {exc}')
+                continue
+            if not proof.has_seed_list:
+                errors.append(f'{where}: oracle proof requires an explicit seed: {token!r}')
+            elif not SCENARIO_TOKEN.fullmatch(proof.scenario):
+                errors.append(f'{where}: invalid proof token {token!r}')
+            elif proof.scenario and not (root / 'cmd/dp-oracle-diff/scenarios' / (proof.scenario + '.txt')).is_file():
                 errors.append(f'{where}: missing scenario {token}')
     if verify_inventory:
         inventory = root / 'docs/fidelity/depth/surface-inventory.tsv'
@@ -90,6 +102,9 @@ def self_test():
         path = root / 'docs/fidelity/depth/surface/shops-behavior.tsv'
         path.parent.mkdir(parents=True)
         (root / 'src').mkdir()
+        scenario_dir = root / 'cmd/dp-oracle-diff/scenarios'
+        scenario_dir.mkdir(parents=True)
+        (scenario_dir / 'sample.txt').write_text('# sample\n')
         (root / 'src/shop.c').write_text('void f() {}\n')
         (root / 'proof_test.go').write_text('func TestShopProof(t *testing.T) {}\n')
         row = ['core', 'src/shop.c:1', 'f', 'branch', 'delegated', 'TestShopProof', 'shared owner', 'boundary proof']
@@ -100,10 +115,17 @@ def self_test():
                 writer.writerows(changed)
             return check(root, False)
         assert not run([row])
+        ws_row = row.copy()
+        ws_row[5] = 'sample@1[ws]'
+        assert not run([ws_row]), 'supported WS proof should resolve its scenario'
         for index, value in [(0, 'wrong'), (1, 'src/shop.c:99'), (4, 'guess'), (5, 'run-name'), (5, 'TestMissing'), (5, 'missing@1'), (6, '')]:
             changed = row.copy()
             changed[index] = value
             assert run([changed]), (index, value)
+        for proof in ('sample@1[foo]', 'sample@1[telnet]', 'sample@1[ws'):
+            changed = ws_row.copy()
+            changed[5] = proof
+            assert run([changed]), f'unsupported/malformed transport accepted: {proof}'
         assert run([row, row]), 'duplicate branch control'
     print('shop-surface: self-test passed')
 
