@@ -1,0 +1,90 @@
+# depth-case: drink.water-thirst-table
+# depth-case: look-in.firebreather-color
+# C-first vehicle for the drink_aff/color_liquid table rows (DP-1377;
+# src/constants.c:967-984, :990-1010). A mortal peer at thirst 14 drinks from
+# a water canteen (vnum 8012, water = drink_aff[0] {0,1,10}): the amount is
+# number(3,8), so C's thirst gain 10*amount/4 is 7-20 and crosses 20 from 14
+# at every seed — "You don't feel thirsty any more." (act.item.c:1003) prints
+# in C. The unfixed Go table (thirst 1) gained at most 2 and never printed it.
+# The same probe looks into a firebreather bottle (vnum 8003, liquid 7, 8 of
+# 8 units -> amt 3): C's color_liquid[7] is "green", the unfixed Go table
+# said "crimson" (act.informative.c:972-977).
+# Directed send:<peer> steps keep each condition set and its drink adjacent.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-obj 8012 1 8105 80
+force-load 8012
+spawn-obj 8003 1 8105 80
+force-load 8003
+
+[setup:oracle]
+Drinkgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Drinkgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:drinker]
+Drinker
+Y
+drinkpass
+drinkpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:drinker]
+Drinker
+y
+drinkpass
+drinkpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Drinker 8105
+get canteen
+give canteen Drinker
+
+[probe]
+set player Drinker hunger 0
+set player Drinker drunk 0
+set player Drinker thirst 14
+send:drinker drink canteen
+send:drinker look in bottle
