@@ -122,20 +122,16 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 		victim = ch
 	}
 
-	// Apply saving throw — half damage on success
-	if dam > 0 && magSavingThrow(victim, savetype) {
-		dam /= 2
-		if dam < 1 {
-			dam = 1
-		}
+	// Saving throw: C calls mag_savingthrow() unconditionally — the draw is
+	// consumed even when the base damage is 0 — and halves with dam >>= 1,
+	// so a successful save can halve 1 down to 0 (DP-1331; magic.c:822-824).
+	if magSavingThrow(victim, savetype) {
+		dam >>= 1
 	}
 
-	// Inflict damage. mag_damage's noise and soul-leech effects run only
-	// when damage() returns TRUE (magic.c:826-848).
-	dealt := false
-	if dam > 0 {
-		dealt = inflictDamage(ch, victim, dam, spellNum, world)
-	}
+	// C always calls damage(), even for 0: the miss message, fight
+	// enrollment and the noise draws all run (DP-1331; magic.c:827).
+	dealt := inflictDamage(ch, victim, dam, spellNum, world)
 	if !dealt {
 		return
 	}
@@ -425,14 +421,14 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 		// zero-damage spells receive the miss branch; both consume the message
 		// selector draw and remain player-visible (fight.c:1480, 296-327).
 		combat.EmitSkillMessage(dam, chCombat, victCombat, attackType, chCombat.GetRoom())
-		if dam <= 0 {
-			// Fully absorbed (immortal victim, or a clamped protection result):
-			// no state damage/death — matches damage() after the message path.
-			return false
-		}
 
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
+		// A zero amount (immortal victim, clamped protection, or a save halving
+		// 1 to 0) flows through the same tail as C's damage(): update_pos
+		// re-prints the stunned band for an already-down victim, the default
+		// arm runs, and the return value is TRUE so the caller's noise draws
+		// run (fight.c:1480-1700; DP-1331).
 		var wb func(roomVNum int, victim combat.Combatant, format string, hideInvisible bool)
 		if b, ok := world.(woundBroadcaster); ok {
 			wb = b.WoundAct
