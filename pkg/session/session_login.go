@@ -265,6 +265,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			if err != nil {
 				return s.abortEntry(fmt.Errorf("restore character: %w", err))
 			}
+			s.manager.untagItIfPlayingPresent(p)
 			if aliases, aErr := game.ReadAliases(p.Name); aErr == nil {
 				p.Aliases = aliases
 			}
@@ -557,6 +558,27 @@ func (s *Session) routeDescriptorLine(command string, args []string, rawLine str
 		return true
 	}
 	return false
+}
+
+// untagItIfPlayingPresent ports store_to_char's tag-game check
+// (src/db.c:2510-2519): if any CON_PLAYING non-NPC descriptor currently holds
+// PLR_IT, clear PLR_IT from the loading player.
+func (m *Manager) untagItIfPlayingPresent(p *game.Player) {
+	if m == nil || p == nil || !p.HasPLRFlag(game.PlrIt) {
+		return
+	}
+	m.mu.RLock()
+	hasPlayingIt := false
+	for _, sess := range m.sessions {
+		if sess != nil && sess.isConPlayingLocked() && !sess.player.IsNPC() && sess.player.HasPLRFlag(game.PlrIt) {
+			hasPlayingIt = true
+			break
+		}
+	}
+	m.mu.RUnlock()
+	if hasPlayingIt {
+		p.SetPlrFlag(game.PlrIt, false)
+	}
 }
 
 // sendWelcome sends the initial game state to the player.
