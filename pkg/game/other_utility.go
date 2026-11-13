@@ -7,6 +7,8 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // ---------------------------------------------------------------------------
@@ -443,7 +445,7 @@ func (w *World) doRoll(ch *Player, me *MobInstance, cmd string, arg string) bool
 // same 32-bit representation before it reaches number(int, int).
 func rollMaximum(arg string) uint32 {
 	first, _ := oneArgument(arg)
-	maxRoll := cIntToUint32(atoiC(first))
+	maxRoll := cIntToUint32(common.AtoiC(first))
 	if maxRoll == 0 {
 		return 100
 	}

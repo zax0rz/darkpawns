@@ -10,8 +10,9 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
-
 	"github.com/zax0rz/darkpawns/pkg/game"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // showFields is C's show subcommand table (src/act.wizard.c:2251-2267): the
@@ -109,7 +110,7 @@ func cmdShow(s *Session, args []string) error {
 		if value == "." {
 			selected = s.manager.world.GetRoomZone(s.player.GetRoomVNum())
 		} else if value != "" && game.CIsNumber(value) {
-			selected = cAtoi(value)
+			selected = common.AtoiC(value)
 		}
 		matched := false
 		for _, zone := range zones {
@@ -264,7 +265,7 @@ func cmdShow(s *Session, args []string) error {
 		if !game.CIsNumber(value) {
 			return nil
 		}
-		number := cAtoi(value)
+		number := common.AtoiC(value)
 		for _, zone := range s.manager.world.GetAllZones() {
 			if zone.Number == number {
 				s.Send(showZoneHooks(s.manager.world, number))

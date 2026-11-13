@@ -2,6 +2,8 @@ package game
 
 import (
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // ItemType represents a CircleMUD item type constant.
@@ -395,10 +397,10 @@ func (w *World) actToRoomExclude(ch, vict *Player, msg string, obj1, obj2 any, h
 	Act(w, hide, ch, vict, obj, victObj, legacyActFormat(msg), "", ToNotVict)
 }
 
-// atoi mirrors C's atoi for the item commands. It shares atoiC's glibc
+// atoi mirrors C's atoi for the item commands. It shares common.AtoiC's glibc
 // semantics ((int)strtol: leading whitespace, optional sign, longest digit run,
 // clamp to LONG_MIN/LONG_MAX on overflow then truncate to int), so a huge token
 // wraps through the low 32 bits instead of accumulating without bound.
 func atoi(s string) int {
-	return atoiC(s)
+	return common.AtoiC(s)
 }

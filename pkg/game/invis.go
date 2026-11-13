@@ -1,6 +1,10 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
+)
 
 const spellInvisible = 29 // C SPELL_INVISIBLE (src/spell_parser.c:85)
 
@@ -22,7 +26,7 @@ func (w *World) DoInvis(ch *Player, argument string) {
 		return
 	}
 
-	level := atoiC(arg)
+	level := common.AtoiC(arg)
 	if level > ch.GetLevel() {
 		ch.SendMessage("You can't go invisible above your own level.\r\n")
 	} else if level < 1 {

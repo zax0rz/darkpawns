@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -1263,9 +1264,17 @@ func cmdVstat(s *Session, args []string) error {
 	}
 
 	cat := strings.ToLower(args[0])
-	vnum, err := strconv.Atoi(args[1])
-	if err != nil {
+	// C do_vstat (src/act.wizard.c:1387-1396) gates on isdigit(*buf2) — the
+	// first byte only — then parses with atoi, so a digit-leading token with
+	// trailing junk parses ("5abc" is 5) and a huge token wraps negative
+	// through (int)strtol and answers "A NEGATIVE number??".
+	if args[1] == "" || !isASCIIDigit(args[1][0]) {
 		s.Send("Usage: vstat { obj | mob } <number>\r\n")
+		return nil
+	}
+	vnum := common.AtoiC(args[1])
+	if vnum < 0 {
+		s.Send("A NEGATIVE number??\r\n")
 		return nil
 	}
 

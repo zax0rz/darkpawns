@@ -1,0 +1,70 @@
+# depth-case: wiz.vstat-negative-vnum
+# C do_vstat (src/act.wizard.c:1393-1395): a negative number answers
+# "A NEGATIVE number??" for both the mob and object branches.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Vstatgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Vstatgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Vstatpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Vstatpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Vstatpeer 8162
+
+[probe]
+vstat obj 99999999999999999999

@@ -3,9 +3,9 @@ package session
 import (
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"golang.org/x/crypto/bcrypt"
@@ -190,7 +190,7 @@ func cmdSetText(s *Session, args []string, rawArgs string) error {
 		}
 	}
 
-	valueInt := cAtoi(value)
+	valueInt := common.AtoiC(value)
 	if field.typ == setNumber {
 		valueInt = clampSetValue(field.name, valueInt, target.player, target.mob)
 	}
@@ -388,32 +388,6 @@ func setCap(value string) string {
 		return ""
 	}
 	return strings.ToUpper(value[:1]) + value[1:]
-}
-
-func cAtoi(input string) int {
-	input = strings.TrimLeft(input, cCommandWhitespace)
-	if input == "" {
-		return 0
-	}
-	start := 0
-	if input[0] == '+' || input[0] == '-' {
-		start = 1
-	}
-	end := start
-	for end < len(input) && input[end] >= '0' && input[end] <= '9' {
-		end++
-	}
-	if end == start {
-		return 0
-	}
-	v, err := strconv.Atoi(input[:end])
-	if err != nil {
-		if input[0] == '-' {
-			return -int(^uint(0)>>1) - 1
-		}
-		return int(^uint(0) >> 1)
-	}
-	return v
 }
 
 func setCPlayerFlag(p *game.Player, bit int, enabled bool) {

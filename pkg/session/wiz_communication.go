@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 func cmdGecho(s *Session, args []string) error {
@@ -330,7 +332,7 @@ func cmdWiznetText(s *Session, rawArgs string) error {
 		prefix, _ := game.OneArgument(argument[1:])
 		if game.CIsNumber(prefix) {
 			first, remainder := wiznetHalfChop(argument[1:])
-			level = cAtoi(first)
+			level = common.AtoiC(first)
 			if level < LVL_IMMORT {
 				level = LVL_IMMORT
 			}

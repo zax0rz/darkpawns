@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -31,7 +32,7 @@ func TestLoadCArgumentHelpers(t *testing.T) {
 		{name: "object is not obj", got: loadIsAbbrev("object", "obj"), want: false},
 		{name: "keyword prefix", got: loadNameMatches("bre", "loaf bread"), want: true},
 		{name: "keyword substring is not enough", got: loadNameMatches("rea", "bread"), want: false},
-		{name: "atoi prefix", got: loadAtoi("25abc"), want: 25},
+		{name: "atoi prefix", got: common.AtoiC("25abc"), want: 25},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

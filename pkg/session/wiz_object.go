@@ -3,10 +3,10 @@ package session
 import (
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
@@ -66,7 +66,10 @@ func cmdLoad(s *Session, args []string) error {
 		return nil
 	}
 	if !isName {
-		vnum = loadAtoi(value)
+		// C do_load (src/act.wizard.c:1292-1296) parses with atoi, so a huge
+		// digit-leading token wraps negative through (int)strtol and answers
+		// "A NEGATIVE number??" instead of reaching the vnum lookup.
+		vnum = common.AtoiC(value)
 		if vnum < 0 {
 			s.Send("A NEGATIVE number??\r\n")
 			return nil
@@ -123,18 +126,6 @@ func loadIsAbbrev(arg, word string) bool {
 
 func loadStartsWithDigit(value string) bool {
 	return value != "" && value[0] >= '0' && value[0] <= '9'
-}
-
-func loadAtoi(value string) int {
-	end := 0
-	for end < len(value) && value[end] >= '0' && value[end] <= '9' {
-		end++
-	}
-	parsed, err := strconv.Atoi(value[:end])
-	if err != nil {
-		return 0
-	}
-	return parsed
 }
 
 func findMobLoadVNum(s *Session, name string) (int, bool) {

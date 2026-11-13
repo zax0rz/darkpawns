@@ -11,6 +11,8 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // seditMode mirrors the SEDIT_* values in src/olc.h. The holes are part of
@@ -99,13 +101,13 @@ func cmdSedit(s *Session, args []string) error {
 				s.seditSend("Save which zone?\r\n")
 				return nil
 			}
-			number = atoiC(buf2) * 100
+			number = common.AtoiC(buf2) * 100
 		} else {
 			s.seditSend("Yikes!  Stop that, someone will get hurt!\r\n")
 			return nil
 		}
 	} else {
-		number = atoiC(buf1)
+		number = common.AtoiC(buf1)
 	}
 
 	if save {
@@ -527,13 +529,13 @@ func (s *Session) parseSeditLocked(arg string) {
 			return
 		}
 	case seditOpen1:
-		applyOLC(olc.Operation{Kind: olc.OpSetShopOpenHour1, Shop: &state.shop, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetShopOpenHour1, Shop: &state.shop, Value: common.AtoiC(arg)})
 	case seditOpen2:
-		applyOLC(olc.Operation{Kind: olc.OpSetShopOpenHour2, Shop: &state.shop, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetShopOpenHour2, Shop: &state.shop, Value: common.AtoiC(arg)})
 	case seditClose1:
-		applyOLC(olc.Operation{Kind: olc.OpSetShopCloseHour1, Shop: &state.shop, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetShopCloseHour1, Shop: &state.shop, Value: common.AtoiC(arg)})
 	case seditClose2:
-		applyOLC(olc.Operation{Kind: olc.OpSetShopCloseHour2, Shop: &state.shop, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetShopCloseHour2, Shop: &state.shop, Value: common.AtoiC(arg)})
 	case seditBuyProfit:
 		if value, ok := parseSeditFloat(arg); ok {
 			state.shop.BuyProfit = value
@@ -543,41 +545,41 @@ func (s *Session) parseSeditLocked(arg string) {
 			state.shop.SellProfit = value
 		}
 	case seditTypeMenu:
-		state.olcVal = applyOLCClamp(atoiC(arg), 0, len(olc.ItemTypeNames)-1)
+		state.olcVal = applyOLCClamp(common.AtoiC(arg), 0, len(olc.ItemTypeNames)-1)
 		s.seditSend("Enter namelist (return for none) :-\r\n| ")
 		state.mode = seditNamelist
 		return
 	case seditDeleteType:
-		seditRemoveBuyType(&state.shop, atoiC(arg))
+		seditRemoveBuyType(&state.shop, common.AtoiC(arg))
 		s.seditShowNamelistMenuLocked()
 		return
 	case seditNewProduct:
-		if !s.seditAddProductLocked(atoiC(arg)) {
+		if !s.seditAddProductLocked(common.AtoiC(arg)) {
 			return
 		}
 		s.seditShowProductsMenuLocked()
 		return
 	case seditDeleteProduct:
-		applyOLC(olc.Operation{Kind: olc.OpRemoveShopProduct, Shop: &state.shop, Index: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpRemoveShopProduct, Shop: &state.shop, Index: common.AtoiC(arg)})
 		s.seditShowProductsMenuLocked()
 		return
 	case seditNewRoom:
-		if !s.seditAddRoomLocked(atoiC(arg)) {
+		if !s.seditAddRoomLocked(common.AtoiC(arg)) {
 			return
 		}
 		s.seditShowRoomsMenuLocked()
 		return
 	case seditDeleteRoom:
-		applyOLC(olc.Operation{Kind: olc.OpRemoveShopRoom, Shop: &state.shop, Index: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpRemoveShopRoom, Shop: &state.shop, Index: common.AtoiC(arg)})
 		s.seditShowRoomsMenuLocked()
 		return
 	case seditShopFlags:
-		if s.seditToggleFlagLocked(&state.shop.Bitvector, atoiC(arg), len(olc.ShopFlagNames)) {
+		if s.seditToggleFlagLocked(&state.shop.Bitvector, common.AtoiC(arg), len(olc.ShopFlagNames)) {
 			s.seditShowShopFlagsMenuLocked()
 			return
 		}
 	case seditNoTrade:
-		if s.seditToggleFlagLocked(&state.shop.WithWho, atoiC(arg), len(olc.ShopTradeNames)) {
+		if s.seditToggleFlagLocked(&state.shop.WithWho, common.AtoiC(arg), len(olc.ShopTradeNames)) {
 			s.seditShowNoTradeMenuLocked()
 			return
 		}
@@ -730,7 +732,7 @@ func (s *Session) parseSeditRoomsMenuLocked(arg string) {
 }
 
 func (s *Session) parseSeditKeeperLocked(arg string) bool {
-	number := atoiC(arg)
+	number := common.AtoiC(arg)
 	if number != -1 {
 		if _, ok := s.manager.world.SnapshotMob(number); !ok {
 			s.seditSend("That mobile does not exist, try again : ")

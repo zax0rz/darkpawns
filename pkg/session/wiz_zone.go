@@ -9,6 +9,8 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // cmdAdmobs mirrors C adjust_mobs() (src/olc.c:279-307). The C handler
@@ -56,7 +58,7 @@ func cmdZreset(s *Session, args []string) error {
 			zoneIndex = zresetZoneIndex(zones, curRoom.Zone)
 		}
 	} else {
-		zoneIndex = zresetZoneIndex(zones, cAtoi(arg))
+		zoneIndex = zresetZoneIndex(zones, common.AtoiC(arg))
 	}
 
 	if zoneIndex < 0 {
@@ -235,18 +237,7 @@ func cmdMlist(s *Session, args []string) error {
 }
 
 func mlistAtoi(value string) int {
-	if value == "" {
-		return 0
-	}
-	sign := 1
-	switch value[0] {
-	case '-':
-		sign = -1
-		value = value[1:]
-	case '+':
-		value = value[1:]
-	}
-	return sign * loadAtoi(value)
+	return common.AtoiC(value)
 }
 
 // cmdSysfile — show system file (bugs/ideas/todo/typos) (LVL_GOD)

@@ -9,6 +9,8 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/admin"
 	"github.com/zax0rz/darkpawns/pkg/game"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 type shutdownPlan struct {
@@ -223,7 +225,7 @@ func cmdWizlock(s *Session, args []string) error {
 
 	when := "currently"
 	if len(args) > 0 {
-		val := cAtoi(args[0])
+		val := common.AtoiC(args[0])
 		if val < 0 || val > s.player.Level {
 			s.Send("Invalid wizlock value.\r\n")
 			return nil
