@@ -79,3 +79,43 @@ func TestManager_GetCombatEngine(t *testing.T) {
 		t.Error("GetCombatEngine should return a non-nil CombatEngine")
 	}
 }
+
+func TestCheckIdlePasswordsMenuSession(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "MenuIdler", 1001, true)
+	closed := false
+	s.SetCloseFunc(func() { closed = true })
+	s.showMainMenu()
+	drainSendChannel(t, s)
+
+	m.mu.Lock()
+	m.sessions["menuidler"] = s
+	m.mu.Unlock()
+
+	// First 15s tic sets idleTicsSet without disconnecting.
+	m.CheckIdlePasswords()
+	if closed || !s.idleTicsSet {
+		t.Fatalf("after 1st tic: closed=%v idleTicsSet=%v, want false/true", closed, s.idleTicsSet)
+	}
+
+	// Second 15s tic emits "\r\nTimed out... goodbye.\r\n", closes, and unregisters.
+	m.CheckIdlePasswords()
+	if !closed {
+		t.Fatal("after 2nd tic: expected session to close")
+	}
+	if !s.SendClosed() {
+		t.Fatal("after 2nd tic: expected send channel to close")
+	}
+	if _, ok := m.sessions["menuidler"]; ok {
+		t.Fatal("after 2nd tic: expected session to be removed from manager")
+	}
+	var got string
+	for msg := range s.send {
+		if f, ok := RenderTerminalFrame(msg); ok {
+			got += f.Text
+		}
+	}
+	if got != "\r\nTimed out... goodbye.\r\n" {
+		t.Fatalf("timeout bytes = %q, want %q", got, "\r\nTimed out... goodbye.\r\n")
+	}
+}

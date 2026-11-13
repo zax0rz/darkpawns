@@ -80,6 +80,7 @@ func (s *Session) startReturningMenu(passwordHash string, failedPasswords ...int
 func (s *Session) showMainMenu() {
 	s.manager.mu.Lock()
 	s.menuActive = true
+	s.idleTicsSet = false
 	s.manager.mu.Unlock()
 	s.menuStage = "menu"
 	s.sendCharCreatePrompt("menu", menuText, menuOptions)

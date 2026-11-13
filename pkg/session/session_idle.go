@@ -44,13 +44,19 @@ func (s *Session) maybeRefreshToken() {
 // Errors
 func (m *Manager) CheckIdlePasswords() {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 
 	var toDelete []string
+	var timedOut []struct {
+		sess   *Session
+		staged bool
+	}
 
 	for name, s := range m.sessions {
-		// Only check pre-login sessions (not yet authenticated)
-		if s.authenticated {
+		// C src/comm.c:2170-2186: check_idle_passwords checks CON_PASSWORD,
+		// CON_GET_NAME, and CON_MENU (including authenticated sessions
+		// returned to the menu after death).
+		inMenu := s.menuActive && s.menuStage == "menu"
+		if s.authenticated && !inMenu {
 			continue
 		}
 
@@ -59,10 +65,13 @@ func (m *Manager) CheckIdlePasswords() {
 			continue
 		}
 
-		// Timed out
+		// Timed out (C src/comm.c:2183: SEND_TO_Q("\r\nTimed out... goodbye.\r\n", d))
 		timeoutMsg, err := json.Marshal(ServerMessage{
-			Type: MsgError,
-			Data: ErrorData{Message: "\r\nTimed out... goodbye.\r\n"},
+			Type: MsgEvent,
+			Data: EventData{
+				Type: "raw",
+				Text: "\r\nTimed out... goodbye.\r\n",
+			},
 		})
 		staged := err == nil && s.stageHeartbeat(timeoutMsg, "", false)
 		if err == nil && !staged {
@@ -71,21 +80,39 @@ func (m *Manager) CheckIdlePasswords() {
 			default:
 			}
 		}
-
-		// Close the connection
-		if s.conn != nil && !staged {
-			_ = s.conn.Close()
+		if staged {
+			// Queue the heartbeat close barrier synchronously before
+			// EndOutputTurn runs, then wait for the writer to drain and close
+			// the underlying transport asynchronously so we don't deadlock
+			// EndOutputTurn.
+			s.CloseSend()
 		}
 
 		toDelete = append(toDelete, name)
+		timedOut = append(timedOut, struct {
+			sess   *Session
+			staged bool
+		}{sess: s, staged: staged})
 	}
 
 	for _, name := range toDelete {
-		// Close channel and remove
-		if s, ok := m.sessions[name]; ok {
-			s.CloseSend()
-			delete(m.sessions, name)
+		delete(m.sessions, name)
+	}
+	m.mu.Unlock()
+
+	for _, item := range timedOut {
+		if item.staged {
+			go func(s *Session) {
+				if s.drainBeforeCloseFunc != nil {
+					s.drainBeforeCloseFunc()
+				} else if s.writerDone != nil {
+					<-s.writerDone
+				}
+				s.Close()
+			}(item.sess)
+			continue
 		}
+		item.sess.CloseAfterSend()
 	}
 
 	if len(toDelete) > 0 {
