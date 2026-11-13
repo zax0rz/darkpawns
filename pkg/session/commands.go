@@ -156,15 +156,39 @@ func init() {
 	registerCommand("inventory", wrapBodyArgs(cmdInventoryBody), "Show your inventory.")
 	registerCommand("equipment", wrapBodyArgs(cmdEquipmentBody), "Show your equipped items.")
 	registerCommand("wear", wrapArgs(cmdWear), "Wear an item from your inventory.")
+	registerActorCommand("wear", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterWear(ctx)
+	})
 	registerCommand("remove", wrapArgs(cmdRemove), "Remove an equipped item.")
+	registerActorCommand("remove", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterRemove(ctx)
+	})
 	registerCommand("wield", wrapArgs(cmdWield), "Wield a weapon.")
+	registerActorCommand("wield", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterWield(ctx)
+	})
 	registerCommand("hold", wrapArgs(cmdHold), "Hold an item.")
+	registerActorCommand("hold", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterGrab(ctx)
+	})
 	// C gives grab and hold distinct level gates despite sharing do_grab.
 	registerCommand("grab", wrapArgs(cmdHold), "Hold an item.")
+	registerActorCommand("grab", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterGrab(ctx)
+	})
 	registerCommand("get", wrapArgs(cmdGet), "Pick up an item from the room, container, or corpse.", "take")
 	registerCommand("give", wrapArgs(cmdGive), "Give an item or gold to another character.")
 	registerActorCommand("give", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCGiveCommand(mob, arg) }))
 	registerCommand("put", wrapArgs(cmdPut), "Put an item into a container.")
+	registerActorCommand("put", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterPut(ctx)
+	})
 	registerCommand("drop", wrapArgs(cmdDrop), "Drop an item from your inventory.")
 	registerCommand("junk", wrapArgs(cmdJunk), "Destroy an item for a small experience reward.")
 	registerCommand("donate", wrapArgs(cmdDonate), "Donate an item to the donation room.")
@@ -539,6 +563,13 @@ func npcActorHandler(run func(*game.World, *game.MobInstance, string)) character
 		run(ctx.World, mob, ctx.RawArgs)
 		return game.CharacterCommandHandled
 	}
+}
+
+func withCharacterCommandArgs(ctx game.CharacterCommandContext, args []string) game.CharacterCommandContext {
+	if ctx.RawArgs == "" && len(args) > 0 {
+		ctx.RawArgs = strings.Join(args, " ")
+	}
+	return ctx
 }
 
 func registerNPCRefusals() {
