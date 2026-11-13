@@ -1,0 +1,56 @@
+# Ordinary-player byte sample for the session-owned observation handlers
+# rerouted through the shared execution context. The existing switched-body
+# witness covers their C `ch` mapping; this vehicle proves unswitched output
+# remains unchanged for each rerouted command family.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 70 1 8162 80
+
+[setup:oracle]
+Observationbasic
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Observationbasic
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+abilities
+gold
+consider satan
+commands
+<ENTER>
+socials
+<ENTER>
+map
+review
+weather
+whoami
+version
+who
+help no-such-observation-topic
+? no-such-observation-topic

@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/command"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
@@ -37,13 +39,36 @@ func cmdAbils(s *Session) error {
 	if p == nil {
 		return nil
 	}
+	return cmdAbilsForBody(s, p)
+}
+
+func cmdAbilsBody(ctx command.ExecutionContext, _ []string) error {
+	s := commandSessionFromContext(ctx)
+	body := ctx.Body
+	if s == nil || body == nil {
+		return nil
+	}
+	if _, ok := body.(*game.Player); ok {
+		return cmdAbils(s)
+	}
+	return cmdAbilsForBody(s, body)
+}
+
+func cmdAbilsForBody(s *Session, body combat.Combatant) error {
+	stats, ok := body.(interface {
+		GetCon() int
+		GetCha() int
+	})
+	if s == nil || body == nil || !ok {
+		return nil
+	}
 	s.Send("Your current ability scores:\r\n")
-	s.Send(fmt.Sprintf("Strength:      (%s)\r\n", getAbilName(cDisplayAbility(p.GetStr()))))
-	s.Send(fmt.Sprintf("Dexterity:     (%s)\r\n", getAbilName(cDisplayAbility(p.GetDex()))))
-	s.Send(fmt.Sprintf("Intelligence:  (%s)\r\n", getAbilName(cDisplayAbility(p.GetInt()))))
-	s.Send(fmt.Sprintf("Wisdom:        (%s)\r\n", getAbilName(cDisplayAbility(p.GetWis()))))
-	s.Send(fmt.Sprintf("Constitution:  (%s)\r\n", getAbilName(cDisplayAbility(p.GetCon()))))
-	s.Send(fmt.Sprintf("Charisma:      (%s)\r\n", getAbilName(p.GetCha())))
+	s.Send(fmt.Sprintf("Strength:      (%s)\r\n", getAbilName(cDisplayAbility(body.GetStr()))))
+	s.Send(fmt.Sprintf("Dexterity:     (%s)\r\n", getAbilName(cDisplayAbility(body.GetDex()))))
+	s.Send(fmt.Sprintf("Intelligence:  (%s)\r\n", getAbilName(cDisplayAbility(body.GetInt()))))
+	s.Send(fmt.Sprintf("Wisdom:        (%s)\r\n", getAbilName(cDisplayAbility(body.GetWis()))))
+	s.Send(fmt.Sprintf("Constitution:  (%s)\r\n", getAbilName(cDisplayAbility(stats.GetCon()))))
+	s.Send(fmt.Sprintf("Charisma:      (%s)\r\n", getAbilName(stats.GetCha())))
 	return nil
 }
 
@@ -66,9 +91,42 @@ func cmdCoins(s *Session) error {
 	if p == nil {
 		return nil
 	}
-	s.Send(fmt.Sprintf("You are currently carrying %d coins,\r\n", p.Gold))
-	s.Send(fmt.Sprintf("and in your bank account, you have %d coins.\r\n", p.BankGold))
-	s.Send(fmt.Sprintf("Your current net-worth is %d coins.\r\n", p.Gold+p.BankGold))
+	return cmdCoinsForBody(s, p.GetGold(), p.BankGold)
+}
+
+func cmdCoinsBody(ctx command.ExecutionContext, _ []string) error {
+	s := commandSessionFromContext(ctx)
+	body := ctx.Body
+	if s == nil || body == nil {
+		return nil
+	}
+	if _, ok := body.(*game.Player); ok {
+		return cmdCoins(s)
+	}
+	carrier, ok := body.(interface{ GetGold() int })
+	if !ok {
+		return nil
+	}
+	return cmdCoinsForBody(s, carrier.GetGold(), 0)
+}
+
+func cmdCoinsForBody(s *Session, gold, bankGold int) error {
+	s.Send(fmt.Sprintf("You are currently carrying %d coins,\r\n", gold))
+	s.Send(fmt.Sprintf("and in your bank account, you have %d coins.\r\n", bankGold))
+	s.Send(fmt.Sprintf("Your current net-worth is %d coins.\r\n", gold+bankGold))
+	return nil
+}
+
+func cmdReviewBody(ctx command.ExecutionContext, args []string) error {
+	s := commandSessionFromContext(ctx)
+	body := ctx.Body
+	if s == nil || body == nil {
+		return nil
+	}
+	if _, ok := body.(*game.Player); ok {
+		return cmdReview(s)
+	}
+	PageString(s, game.DoReview(body, s.manager.world).MessageToCh)
 	return nil
 }
 
@@ -441,6 +499,140 @@ func cmdScore(s *Session) error {
 	// add a second CRLF.
 	s.sendLiteralText(buf.String())
 	return nil
+}
+
+// cmdScoreBody keeps the descriptor on the session and renders score from the
+// dispatched body. C's do_score has a distinct NPC branch at
+// src/act.informative.c:1270-1300; the player branch remains byte-identical.
+func cmdScoreBody(ctx command.ExecutionContext, _ []string) error {
+	s := commandSessionFromContext(ctx)
+	switch body := ctx.Body.(type) {
+	case *game.Player:
+		if s == nil {
+			return nil
+		}
+		return cmdScore(s)
+	case *game.MobInstance:
+		if s == nil {
+			return nil
+		}
+		return cmdScoreMob(s, body)
+	default:
+		return nil
+	}
+}
+
+func cmdScoreMob(s *Session, mob *game.MobInstance) error {
+	if mob == nil {
+		return nil
+	}
+	var buf strings.Builder
+	green, red, normal := "", "", ""
+	// C read_mobile sets ch->player.time.birth to time(0) for every mob
+	// (src/db.c:1760), so age(ch) is 17 with month and day both zero
+	// (src/utils.c:329-340).
+	fmt.Fprintf(&buf, "%s%s%s                           Age: 17 years (It's your birthday today.)\r\n", green, mob.GetName(), normal)
+
+	manaLabel := scoreManaLabel(mob.GetClass())
+	fmt.Fprintf(&buf,
+		"Hit points: %s%d%s(%s%d%s)  %s points: %s%d%s(%s%d%s)  Movement points: %s%d%s(%s%d%s)\r\n",
+		green, mob.GetHP(), normal, red, mob.GetMaxHP(), normal,
+		manaLabel,
+		green, mob.GetMana(), normal, red, mob.GetMaxMana(), normal,
+		green, mob.GetMove(), normal, red, mob.GetMaxMove(), normal)
+	buf.WriteString(alignmentText(mob.GetAlignment()))
+	buf.WriteString("\r\n")
+	buf.WriteString(acText(mob.GetAC()))
+	buf.WriteString("\r\n")
+	fmt.Fprintf(&buf, "Experience:    %s%d%s points\r\n", green, mob.GetExp(), normal)
+	fmt.Fprintf(&buf, "Coins carried: %s%d%s gold coins    ", green, mob.GetGold(), normal)
+	// NPC bank gold, kill count, PK count and death count live in C's
+	// zero-initialized dummy_mob player-special record (src/db.c:104,1281).
+	fmt.Fprintf(&buf, "Coins in bank: %s0%s gold coins\r\n", green, normal)
+	buf.WriteString("Kills: 0  Pks: 0  Deaths: 0\r\n")
+
+	carriedWeight := mob.Runtime.CarriedWeight
+	for _, item := range mob.InventorySnapshot() {
+		if item != nil {
+			carriedWeight += item.GetWeight()
+		}
+	}
+	weight := -1
+	if carriedWeight > 0 {
+		weight = combat.CarryWeight(mob.GetStr(), mob.GetStrAdd()) / carriedWeight
+		if weight < -1 {
+			weight = -1
+		}
+	}
+	switch {
+	case weight >= 4:
+		buf.WriteString("Your pack is light.\r\n")
+	case weight == 3:
+		buf.WriteString("Your pack is fairly light.\r\n")
+	case weight == 2:
+		buf.WriteString("Your pack is fairly heavy.\r\n")
+	case weight == 1:
+		buf.WriteString("Your pack is heavy.\r\n")
+	case weight == 0:
+		buf.WriteString("Your pack is almost too heavy to lift.\r\n")
+	default:
+		buf.WriteString("Your pack is empty.\r\n")
+	}
+	buf.WriteString(scoreMobPositionText(mob))
+	buf.WriteString("\r\n")
+	if mob.IsAffected(game.AffBlind) {
+		buf.WriteString("You have been blinded!\r\n")
+	}
+	if mob.IsAffected(game.AffWerewolf) {
+		buf.WriteString("You're a lycanthrope!\r\n")
+	}
+	if mob.IsAffected(game.AffVampire) {
+		buf.WriteString("You're a vampire!\r\n")
+	}
+	if mob.IsAffected(game.AffMount) {
+		buf.WriteString("You're mounted.\r\n")
+	}
+	if mob.IsAffected(game.AffFleshAlter) {
+		fmt.Fprintf(&buf, "Your hand is a %s!\r\n", fleshAlterWeapon(mob.GetLevel()))
+	}
+
+	var visibleAffects []string
+	for _, affect := range mob.OrderedAffects() {
+		if affect == nil {
+			continue
+		}
+		bitvector := scoreActiveAffectCBitvector(affect.Flags)
+		if bitvector&(1<<18|1<<17|1<<20|1<<38) != 0 || bitvector&(1<<24) != 0 && affect.Magnitude == 0 {
+			continue
+		}
+		visibleAffects = append(visibleAffects, fmt.Sprintf("%-24.24s", spells.GetSpellName(affect.SpellID)))
+	}
+	if len(visibleAffects) > 0 {
+		buf.WriteString("Spells affecting you:\r\n")
+		for i, affect := range visibleAffects {
+			buf.WriteString("     " + affect)
+			if (i+1)%2 == 0 {
+				buf.WriteString("\r\n")
+			}
+		}
+	}
+
+	s.sendLiteralText(buf.String())
+	return nil
+}
+
+func scoreMobPositionText(mob *game.MobInstance) string {
+	if mob.GetPosition() != game.PosFighting {
+		return positionText(mob.GetPosition())
+	}
+	target := mob.GetFightingBody()
+	if target == nil {
+		return "You are fighting thin air."
+	}
+	if actor := game.AsActor(target); actor != nil {
+		return fmt.Sprintf("You are fighting %s.", game.PersName(actor, mob))
+	}
+	return positionText(game.PosFighting)
 }
 
 // scoreEquipmentAffectNames mirrors C's affected_names[] table in
@@ -889,11 +1081,11 @@ func whoHasFlag(player *game.Player, bit int) bool {
 
 // whoStatusForSession appends C's do_who status tags in exact order
 // (src/act.informative.c:1880-1919).
-func whoStatusForSession(viewer, player *game.Player, sess *Session, outOfBody bool) string {
+func whoStatusForSession(viewer game.Actor, player *game.Player, sess *Session, outOfBody bool) string {
 	var status strings.Builder
 	// src/act.informative.c:1880-1883: C checks GET_LEVEL(ch) >= LEVEL_IMMORT
 	// (plain viewer level, not GET_REAL_LEVEL) before falling back to (invis).
-	if invisLev := player.GetInvisLevel(); invisLev > 0 && viewer != nil && viewer.GetLevel() >= LVL_IMMORT {
+	if invisLev := player.GetInvisLevel(); invisLev > 0 && whoViewerLevel(viewer) >= LVL_IMMORT {
 		fmt.Fprintf(&status, " (i%d)", invisLev)
 	} else if player.IsAffected(game.AffInvisible) {
 		status.WriteString(" (invis)")
@@ -960,8 +1152,7 @@ func whoStatusForSession(viewer, player *game.Player, sess *Session, outOfBody b
 	return status.String()
 }
 
-func whoTargetVisible(s *Session, target *game.Player, opts whoOptions) bool {
-	viewer := s.player
+func whoTargetVisibleForBody(s *Session, viewer game.Actor, target *game.Player, opts whoOptions) bool {
 	if viewer == nil || target == nil || !game.CanSee(viewer, target) {
 		return false
 	}
@@ -977,7 +1168,7 @@ func whoTargetVisible(s *Session, target *game.Player, opts whoOptions) bool {
 	}
 	if room, ok := s.manager.world.GetRoom(target.GetRoom()); ok && room != nil &&
 		(room.HasFlag(roomNoWhoFlagBit) || roomFlagNamed(room.Flags, "no_who_room", "no_who")) &&
-		viewer.GetLevel() < LVL_IMPL {
+		whoViewerLevel(viewer) < LVL_IMPL {
 		return false
 	}
 	if opts.sameZone && s.manager.world.GetRoomZone(viewer.GetRoom()) != s.manager.world.GetRoomZone(target.GetRoom()) {
@@ -1007,19 +1198,25 @@ func roomFlagNamed(flags []string, names ...string) bool {
 	return false
 }
 
-func whoColorEnabled(viewer *game.Player) bool {
-	if viewer == nil {
-		return false
+func whoColorEnabled(viewer game.Actor) bool {
+	if player, ok := viewer.(*game.Player); ok && player != nil {
+		return hasSparseColor(player.GetFlags())
 	}
-	flags := viewer.GetFlags()
-	return hasSparseColor(flags)
+	return false
 }
 
-func renderWhoLong(viewer, player *game.Player) string {
+func whoViewerLevel(viewer game.Actor) int {
+	if leveled, ok := viewer.(interface{ GetLevel() int }); ok && leveled != nil {
+		return leveled.GetLevel()
+	}
+	return 0
+}
+
+func renderWhoLong(viewer game.Actor, player *game.Player) string {
 	return renderWhoLongWithSession(viewer, player, nil, false)
 }
 
-func renderWhoLongWithSession(viewer, player *game.Player, sess *Session, outOfBody bool) string {
+func renderWhoLongWithSession(viewer game.Actor, player *game.Player, sess *Session, outOfBody bool) string {
 	level := player.GetLevel()
 	name, title := player.GetName(), player.GetTitle()
 	var line string
@@ -1046,7 +1243,7 @@ func renderWhoLongWithSession(viewer, player *game.Player, sess *Session, outOfB
 	return line + "\r\n"
 }
 
-func renderWhoShort(viewer, player *game.Player) string {
+func renderWhoShort(viewer game.Actor, player *game.Player) string {
 	rank := whoShortRank(player.GetLevel())
 	if rank == "" {
 		rank = fmt.Sprintf("[ %2d  %s ]", player.GetLevel(), whoClassAbbrev(player.GetClass()))
@@ -1073,6 +1270,32 @@ func whoSessionTarget(sess *Session) (*game.Player, bool) {
 }
 
 func cmdWho(s *Session, args []string) error {
+	if s == nil {
+		return nil
+	}
+	return cmdWhoForBody(s, s.player, args)
+}
+
+func cmdWhoBody(ctx command.ExecutionContext, args []string) error {
+	s := commandSessionFromContext(ctx)
+	body := ctx.Body
+	if s == nil || body == nil {
+		return nil
+	}
+	if _, ok := body.(*game.Player); ok {
+		return cmdWho(s, args)
+	}
+	viewer, ok := body.(game.Actor)
+	if !ok {
+		return nil
+	}
+	return cmdWhoForBody(s, viewer, args)
+}
+
+func cmdWhoForBody(s *Session, viewer game.Actor, args []string) error {
+	if s == nil || viewer == nil {
+		return nil
+	}
 	opts, ok := parseWhoArgs(args)
 	if !ok {
 		s.Send(whoFormat)
@@ -1095,11 +1318,11 @@ func cmdWho(s *Session, args []string) error {
 	lastShort := ""
 	for _, sess := range sessions {
 		target, outOfBody := whoSessionTarget(sess)
-		if !whoTargetVisible(s, target, opts) {
+		if !whoTargetVisibleForBody(s, viewer, target, opts) {
 			continue
 		}
 		if opts.short {
-			lastShort = renderWhoShort(s.player, target)
+			lastShort = renderWhoShort(viewer, target)
 			out.WriteString(lastShort)
 			count++
 			if count%4 == 0 {
@@ -1107,7 +1330,7 @@ func cmdWho(s *Session, args []string) error {
 			}
 			continue
 		}
-		out.WriteString(renderWhoLongWithSession(s.player, target, sess, outOfBody))
+		out.WriteString(renderWhoLongWithSession(viewer, target, sess, outOfBody))
 		count++
 	}
 	if opts.short {
@@ -1230,10 +1453,35 @@ func cmdHelp(s *Session, args []string) error {
 	return cmdHelpText(s, strings.Join(args, " "))
 }
 
+func cmdHelpBody(ctx command.ExecutionContext, args []string) error {
+	s := commandSessionFromContext(ctx)
+	body := ctx.Body
+	if s == nil || body == nil {
+		return nil
+	}
+	if _, ok := body.(*game.Player); ok {
+		return cmdHelp(s, args)
+	}
+	return cmdHelpTextForBody(s, body.GetLevel(), body.GetName(), strings.Join(args, " "))
+}
+
 // cmdHelpText is the transport-aware do_help path. C's handler receives the
 // original argument remainder after skip_spaces, so the lookup and miss line
 // retain internal whitespace instead of rebuilding it from tokenized words.
 func cmdHelpText(s *Session, argument string) error {
+	level := 0
+	name := ""
+	if s != nil && s.player != nil {
+		level = s.player.GetLevel()
+		name = s.player.GetName()
+	}
+	return cmdHelpTextForBody(s, level, name, argument)
+}
+
+func cmdHelpTextForBody(s *Session, level int, bodyName, argument string) error {
+	if s == nil {
+		return nil
+	}
 	// no argument → page_string the help screen (C: page_string(ch->desc, help, 0)).
 	if argument == "" {
 		liveTextEditMu.RLock()
@@ -1255,20 +1503,13 @@ func cmdHelpText(s *Session, argument string) error {
 		// C: "There is no help on: %s\r\n" + mudlog + append to misc/help file.
 		// The usage-file append remains a separate unported site.
 		s.Send(fmt.Sprintf("There is no help on: %s\r\n", argument))
-		s.manager.mu.RLock()
-		name := s.player.GetName()
-		if s.isSwitched && s.switchedMob != nil {
-			name = s.switchedMob.GetName()
-		}
-		s.manager.mu.RUnlock()
-		game.MudLog(fmt.Sprintf("HELP: %s attempted to get help on %s", name, argument), game.MudlogNormal, game.LVL_IMMORT, true)
+		game.MudLog(fmt.Sprintf("HELP: %s attempted to get help on %s", bodyName, argument), game.MudlogNormal, game.LVL_IMMORT, true)
 		return nil
 	}
 
 	// Mortals cannot see wizonly entries — existence is hidden, same as a miss
 	// (C: GET_LEVEL(ch) < LVL_IMMORT && strstr(entry, "wizonly")).
-	if s.player != nil && s.player.GetLevel() < LVL_IMMORT &&
-		strings.Contains(entry.Entry, "wizonly") {
+	if level < LVL_IMMORT && strings.Contains(entry.Entry, "wizonly") {
 		s.Send(fmt.Sprintf("There is no help on: %s\r\n", argument))
 		return nil
 	}
@@ -1286,11 +1527,11 @@ func cmdHelpText(s *Session, argument string) error {
 	// Body: after the keyword line. C's pointer stops AT the first '\n' and
 	// that newline terminates the dash line; here the message framing supplies
 	// that break, so the body starts past the newline.
-	body := entry.Entry
-	if i := strings.IndexByte(body, '\n'); i >= 0 {
-		body = body[i+1:]
+	helpBody := entry.Entry
+	if i := strings.IndexByte(helpBody, '\n'); i >= 0 {
+		helpBody = helpBody[i+1:]
 	}
-	PageString(s, body)
+	PageString(s, helpBody)
 	return nil
 }
 

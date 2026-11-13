@@ -13,7 +13,7 @@ const (
 
 // DoConsider compares ch with a visible character in the same room.
 // Source: act.informative.c do_consider() lines 2330-2431.
-func (w *World) DoConsider(ch *Player, argument string) {
+func (w *World) DoConsider(ch combat.Combatant, argument string) {
 	if ch == nil {
 		return
 	}

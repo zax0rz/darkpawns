@@ -68,7 +68,7 @@ func charKeywords(c combat.Combatant) string {
 // The returned CharTarget carries both the combat.Combatant and the concrete
 // *Player / *MobInstance so callers needing typed access (consider, look,
 // hit) don't have to re-resolve or type-switch blindly.
-func (w *World) ResolveCharInRoom(ch *Player, name string) (CharTarget, bool) {
+func (w *World) ResolveCharInRoom(ch combat.Combatant, name string) (CharTarget, bool) {
 	if ch == nil {
 		return CharTarget{}, false
 	}
@@ -143,7 +143,7 @@ func (w *World) resolveCharInRoomAt(ch combat.Combatant, roomVNum int, name stri
 // room pass retains get_char_room_vis abbreviation semantics.
 // The global fallback retains legacy ordering; C character_list insertion order
 // (handler.c:1303-1325) remains outside the room-identity repair.
-func (w *World) ResolveCharWorld(ch *Player, name string) (CharTarget, bool) {
+func (w *World) ResolveCharWorld(ch combat.Combatant, name string) (CharTarget, bool) {
 	if target, ok := w.ResolveCharInRoom(ch, name); ok {
 		return target, true
 	}
@@ -182,7 +182,7 @@ func (w *World) ResolveCharWorld(ch *Player, name string) (CharTarget, bool) {
 
 	matched := 0
 	for _, candidate := range candidates {
-		if !canSee(ch, asActor(candidate)) || !isCompleteName(name, charKeywords(candidate)) {
+		if !canSee(asActor(ch), asActor(candidate)) || !isCompleteName(name, charKeywords(candidate)) {
 			continue
 		}
 		matched++
@@ -195,7 +195,7 @@ func (w *World) ResolveCharWorld(ch *Player, name string) (CharTarget, bool) {
 
 // ResolveFightingTarget returns the actual FIGHTING(ch) body. Command text
 // selects a body once; a default target must not select another same-name mob.
-func (w *World) ResolveFightingTarget(ch *Player) (CharTarget, bool) {
+func (w *World) ResolveFightingTarget(ch combat.Combatant) (CharTarget, bool) {
 	if ch == nil {
 		return CharTarget{}, false
 	}
@@ -215,7 +215,7 @@ func isCompleteName(name, namelist string) bool {
 	return false
 }
 
-func resolveVisibleObject(ch *Player, name string, objects []*ObjectInstance, lightAlwaysVisible bool) (*ObjectInstance, bool) {
+func resolveVisibleObject(ch Actor, name string, objects []*ObjectInstance, lightAlwaysVisible bool) (*ObjectInstance, bool) {
 	n := GetNumber(&name)
 	if n == 0 {
 		return nil, false
@@ -237,19 +237,20 @@ func resolveVisibleObject(ch *Player, name string, objects []*ObjectInstance, li
 }
 
 // ResolveObjectInInventory mirrors get_obj_in_list_vis over ch->carrying.
-func (w *World) ResolveObjectInInventory(ch *Player, name string) (*ObjectInstance, bool) {
-	if ch == nil || ch.Inventory == nil {
+func (w *World) ResolveObjectInInventory(ch combat.Combatant, name string) (*ObjectInstance, bool) {
+	if ch == nil {
 		return nil, false
 	}
-	return resolveVisibleObject(ch, name, ch.Inventory.FindItems(""), true)
+	return resolveVisibleObject(asActor(ch), name, observationBodyInventory(ch), true)
 }
 
 // ResolveObjectInEquipment mirrors do_cast's ordered NUM_WEARS scan.
-func (w *World) ResolveObjectInEquipment(ch *Player, name string) (*ObjectInstance, bool) {
-	if ch == nil || ch.Equipment == nil {
+func (w *World) ResolveObjectInEquipment(ch combat.Combatant, name string) (*ObjectInstance, bool) {
+	if ch == nil {
 		return nil, false
 	}
-	for _, object := range COrderedWorn(ch) {
+	for cPosition := range cWearToGoSlot {
+		object, _ := observationBodyEquipped(ch, cPosition)
 		if object != nil && isCompleteName(name, object.GetKeywords()) {
 			return object, true
 		}
@@ -258,9 +259,10 @@ func (w *World) ResolveObjectInEquipment(ch *Player, name string) (*ObjectInstan
 }
 
 // ResolveObjectInEquipmentVis mirrors get_object_in_equip_vis (src/handler.c:1384-1394).
-func (w *World) ResolveObjectInEquipmentVis(ch *Player, name string) (*ObjectInstance, bool) {
-	for _, object := range COrderedWorn(ch) {
-		if object != nil && canSeeObject(ch, object) && isnameWithAbbrevs(name, object.GetKeywords()) {
+func (w *World) ResolveObjectInEquipmentVis(ch combat.Combatant, name string) (*ObjectInstance, bool) {
+	for cPosition := range cWearToGoSlot {
+		object, _ := observationBodyEquipped(ch, cPosition)
+		if object != nil && canSeeObject(asActor(ch), object) && isnameWithAbbrevs(name, object.GetKeywords()) {
 			return object, true
 		}
 	}
@@ -268,11 +270,11 @@ func (w *World) ResolveObjectInEquipmentVis(ch *Player, name string) (*ObjectIns
 }
 
 // ResolveObjectInRoom mirrors get_obj_in_list_vis over room contents.
-func (w *World) ResolveObjectInRoom(ch *Player, name string) (*ObjectInstance, bool) {
+func (w *World) ResolveObjectInRoom(ch combat.Combatant, name string) (*ObjectInstance, bool) {
 	if ch == nil {
 		return nil, false
 	}
-	return resolveVisibleObject(ch, name, w.GetItemsInRoom(ch.GetRoom()), true)
+	return resolveVisibleObject(asActor(ch), name, w.GetItemsInRoom(ch.GetRoom()), true)
 }
 
 // GenericFindScope reports which scope generic_find found its object in,
@@ -303,11 +305,12 @@ const (
 // exactly as C checks FIND_CHAR_ROOM before FIND_OBJ_EQUIP. Callers whose
 // bitvector omits FIND_OBJ_EQUIP (get/put/door paths) do not use this
 // helper.
-func (w *World) GenericFindObject(ch *Player, name string) (*ObjectInstance, GenericFindScope) {
+func (w *World) GenericFindObject(ch combat.Combatant, name string) (*ObjectInstance, GenericFindScope) {
 	if ch == nil {
 		return nil, GenericFindNone
 	}
-	for _, object := range COrderedWorn(ch) {
+	for cPosition := range cWearToGoSlot {
+		object, _ := observationBodyEquipped(ch, cPosition)
 		if object != nil && isnameWithAbbrevs(name, object.GetKeywords()) {
 			return object, GenericFindEquip
 		}

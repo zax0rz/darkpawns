@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/command"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -97,6 +99,44 @@ func cmdCommands(s *Session, args []string) error {
 	return nil
 }
 
+func cmdCommandsBody(ctx command.ExecutionContext, args []string) error {
+	s := commandSessionFromContext(ctx)
+	body := ctx.Body
+	if s == nil || body == nil {
+		return nil
+	}
+	if _, ok := body.(*game.Player); ok {
+		return cmdCommands(s, args)
+	}
+	return cmdCommandsForBody(s, body, args)
+}
+
+func cmdCommandsForBody(s *Session, body combat.Combatant, args []string) error {
+	level, name, self := body.GetLevel(), body.GetName(), true
+	if len(args) > 0 {
+		var target *game.Player
+		actor, ok := body.(game.Actor)
+		if ok {
+			for _, candidate := range s.manager.world.GetAllPlayers() {
+				if strings.EqualFold(candidate.GetName(), args[0]) && game.CanSee(actor, candidate) {
+					target = candidate
+					break
+				}
+			}
+		}
+		if target == nil {
+			s.Send("Who is that?\r\n")
+			return nil
+		}
+		if body.GetLevel() < target.GetLevel() {
+			s.Send("You can't see the commands of people above your level.\r\n")
+			return nil
+		}
+		level, name, self = target.GetLevel(), target.GetName(), false
+	}
+	return sendCommandsForBody(s, level, name, self, cCommandsForLevel, false)
+}
+
 // cmdSocials — "socials" lists the available social commands.
 // Source: act.informative.c do_commands/SCMD_SOCIALS — lists commands whose handler is
 // do_action (the social handler). The Go equivalent is the game.Socials map.
@@ -137,6 +177,69 @@ func cmdSocials(s *Session, args []string) error {
 	// C always appends one final CRLF after the listing, even when the last
 	// row already ended a seven-column line, then hands the complete buffer to
 	// page_string().
+	buf.WriteString("\r\n")
+	PageString(s, buf.String())
+	return nil
+}
+
+func cmdSocialsBody(ctx command.ExecutionContext, args []string) error {
+	s := commandSessionFromContext(ctx)
+	body := ctx.Body
+	if s == nil || body == nil {
+		return nil
+	}
+	if _, ok := body.(*game.Player); ok {
+		return cmdSocials(s, args)
+	}
+	return cmdSocialsForBody(s, body, args)
+}
+
+func cmdSocialsForBody(s *Session, body combat.Combatant, args []string) error {
+	level, name, self := body.GetLevel(), body.GetName(), true
+	if len(args) > 0 {
+		resolved, ok := s.manager.world.ResolveCharWorld(body, args[0])
+		if !ok || resolved.Mob != nil || resolved.Player == nil {
+			s.Send("Who is that?\r\n")
+			return nil
+		}
+		target := resolved.Player
+		if body.GetLevel() < target.GetLevel() {
+			s.Send("You can't see the commands of people above your level.\r\n")
+			return nil
+		}
+		level, name, self = target.GetLevel(), target.GetName(), false
+	}
+	return sendCommandsForBody(s, level, name, self, cSocialsForLevel, true)
+}
+
+func sendCommandsForBody(s *Session, level int, name string, self bool, commands func(int) []string, socials bool) error {
+	names := commands(level)
+	if len(names) == 0 {
+		if socials {
+			s.Send("\r\n")
+		} else {
+			s.Send("No commands available.\r\n")
+		}
+		return nil
+	}
+	label := "commands"
+	if socials {
+		label = "socials"
+	}
+	var buf strings.Builder
+	buf.WriteString("The following " + label + " are available to ")
+	if self {
+		buf.WriteString("you")
+	} else {
+		buf.WriteString(name)
+	}
+	buf.WriteString(":\r\n")
+	for i, commandName := range names {
+		fmt.Fprintf(&buf, "%-11s", commandName)
+		if (i+1)%7 == 0 {
+			buf.WriteString("\r\n")
+		}
+	}
 	buf.WriteString("\r\n")
 	PageString(s, buf.String())
 	return nil

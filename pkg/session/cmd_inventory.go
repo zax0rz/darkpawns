@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/command"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -176,10 +177,10 @@ func (s *Session) SaveToStore(p *game.Player, why string, loadRoom int) game.Sav
 	return s.savePlayer(p, why, loadRoom)
 }
 
-// cmdInventory shows the player's inventory.
-// Delegates to the game-layer DoInventory for C-faithful formatting.
-func cmdInventory(s *Session, args []string) error {
-	s.manager.world.DoInventory(s.player)
+func cmdInventoryBody(ctx command.ExecutionContext, _ []string) error {
+	if ctx.World != nil && ctx.Body != nil {
+		ctx.World.DoInventory(ctx.Body)
+	}
 	return nil
 }
 
@@ -187,6 +188,13 @@ func cmdInventory(s *Session, args []string) error {
 // Delegates to the game-layer DoEquipment for C-faithful formatting.
 func cmdEquipment(s *Session, args []string) error {
 	s.manager.world.DoEquipment(s.player)
+	return nil
+}
+
+func cmdEquipmentBody(ctx command.ExecutionContext, _ []string) error {
+	if ctx.World != nil && ctx.Body != nil {
+		ctx.World.DoEquipment(ctx.Body)
+	}
 	return nil
 }
 
