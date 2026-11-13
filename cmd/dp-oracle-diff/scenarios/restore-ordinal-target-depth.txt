@@ -1,0 +1,44 @@
+# depth-case: restore.ordinal-target
+# C do_restore resolves its target with get_char_vis (src/act.wizard.c:1588-1593),
+# which checks the room first and then walks the global character list honouring a
+# numeric prefix (src/handler.c:1302-1325). "1.trainee" therefore restores the
+# spawned mobile rather than answering NOPERSON.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 80
+
+[setup:oracle]
+Restoregod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Restoregod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+restore 1.trainee
