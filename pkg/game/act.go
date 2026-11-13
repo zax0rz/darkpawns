@@ -164,7 +164,7 @@ func canSeeWithHide(observer, subject Actor, hide bool) bool {
 	}
 
 	// C compares GET_REAL_LEVEL(sub) with GET_INVIS_LEV(obj) first (src/utils.h:529-530).
-	if invis, ok := subject.(invisLevelSubject); ok && realLevel(observer, nil) < invis.GetInvisLevel() {
+	if invis, ok := subject.(invisLevelSubject); ok && invis.GetInvisLevel() > 0 && realLevel(observer, nil) < invis.GetInvisLevel() {
 		return false
 	}
 	// C's IMM_CAN_SEE is MORT_CAN_SEE || PRF_HOLYLIGHT. Level only gates the
@@ -227,6 +227,9 @@ func visibilityWorld(observer Actor) *World {
 // realLevel mirrors C's GET_REAL_LEVEL(ch) (src/utils.h:285-287): when an
 // immortal has switched into a mobile or another player, visibility checks
 // use the original immortal's level rather than the borrowed body's level.
+// Callers skip it when the subject's invis level is 0: no level is negative,
+// so C's comparison always passes, and a mob observer's lookup reads the
+// session table under the manager lock.
 func realLevel(ch any, w *World) int {
 	switch body := ch.(type) {
 	case *Player:

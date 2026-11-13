@@ -24,7 +24,7 @@ func (w *World) combatCanSee(observer, subject combat.Combatant) bool {
 	}
 
 	// GET_REAL_LEVEL is checked before HOLYLIGHT in C's CAN_SEE macro (src/utils.h:285-287,529-530).
-	if invisLevel, ok := subject.(invisLevelSubject); ok && realLevel(observer, w) < invisLevel.GetInvisLevel() {
+	if invisLevel, ok := subject.(invisLevelSubject); ok && invisLevel.GetInvisLevel() > 0 && realLevel(observer, w) < invisLevel.GetInvisLevel() {
 		return false
 	}
 	lightOK := !observerState.IsAffected(affBlind) &&

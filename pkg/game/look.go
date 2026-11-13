@@ -479,7 +479,7 @@ func listsHiddenBody(viewer *Player, body interface{}) bool {
 	if iv, ok := body.(invisLevelSubject); ok {
 		invis = iv.GetInvisLevel()
 	}
-	return realLevel(viewer, nil) >= invis
+	return invis <= 0 || realLevel(viewer, nil) >= invis
 }
 
 func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView) []string {
