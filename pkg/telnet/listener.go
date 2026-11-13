@@ -180,7 +180,7 @@ func serve(ln net.Listener, manager *session.Manager) {
 			connMu.Lock()
 			if connCount >= int(maxTotalConns.Load()) {
 				connMu.Unlock()
-				_ = conn.Close() //nolint:errcheck // best-effort cleanup
+				refuseFullConnection(conn)
 				slog.Warn("Telnet: max total connections reached, rejecting", "remote_addr", conn.RemoteAddr())
 				continue
 			}
@@ -271,6 +271,20 @@ func refuseBannedConnection(conn net.Conn, host string) {
 	}
 	_ = conn.Close()
 	game.MudLog(fmt.Sprintf("Connection attempt denied from [%s]", host), game.MudlogComplete, game.LVL_GOD, true)
+}
+
+// refuseFullConnection ports src/comm.c:1510-1514: C writes
+// "Sorry, Dark Pawns is full right now... please try again later!\r\n"
+// to the descriptor before closing it.
+//
+// Plain telnet only: the TLS port shares this accept loop and drops an
+// over-limit connection before the handshake, so plaintext written there
+// would be garbage. Callers must not hold connMu.
+func refuseFullConnection(conn net.Conn) {
+	if !isTLSConn(conn) {
+		_, _ = conn.Write([]byte("Sorry, Dark Pawns is full right now... please try again later!\r\n"))
+	}
+	_ = conn.Close() //nolint:errcheck // best-effort cleanup
 }
 
 func ipFromAddr(addr string) string {
