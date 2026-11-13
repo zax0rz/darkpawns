@@ -10,10 +10,10 @@
 [fixture]
 empty-players
 quiet-mobs
+spawn-mob 70 1 8162 80
 spawn-mob 8021 1 8162 80
 give-object 8021 12132 1 80
 equip-object 8021 12120 1 16 80
-spawn-mob 70 1 8162 80
 
 [setup:oracle]
 Switchgate
