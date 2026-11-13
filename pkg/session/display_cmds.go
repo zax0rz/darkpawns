@@ -12,6 +12,8 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // Infobar state constants — from structs.h
@@ -354,9 +356,9 @@ func cmdLines(s *Session, args []string) error {
 // parseLinesSize mirrors the C atoi call in do_lines. C accepts an optional
 // sign and leading decimal digits, returns zero when no digits are present, and
 // ignores a trailing suffix. Overflow matches glibc atoi ((int)strtol), so a
-// huge token wraps through the low 32 bits — atoiC carries that behaviour.
+// huge token wraps through the low 32 bits — common.AtoiC carries that behaviour.
 func parseLinesSize(value string) int {
-	return atoiC(value)
+	return common.AtoiC(value)
 }
 
 // cmdInfoBar implements do_infobar from act.display.c

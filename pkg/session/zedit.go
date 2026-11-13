@@ -11,6 +11,8 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // zeditMode mirrors the ZEDIT_* values in src/olc.h. ZEDIT works on a
@@ -79,13 +81,13 @@ func cmdZedit(s *Session, args []string) error {
 				s.zeditSend("Save which zone?\r\n")
 				return nil
 			}
-			number = atoiC(second) * 100
+			number = common.AtoiC(second) * 100
 		} else if getEffectiveLevel(s) >= LVL_HIGOD {
 			// C routes every nonnumeric ZEDIT argument through the
 			// high-god branch: only the exact `new <zone>` shape creates
 			// a zone, and every other spelling gets this same prompt.
 			if strings.HasPrefix(first, "new") && second != "" {
-				return zeditNewZone(s, atoiC(second))
+				return zeditNewZone(s, common.AtoiC(second))
 			}
 			s.zeditSend("Specify a new zone number.\r\n")
 			return nil
@@ -94,7 +96,7 @@ func cmdZedit(s *Session, args []string) error {
 			return nil
 		}
 	} else {
-		number = atoiC(first)
+		number = common.AtoiC(first)
 	}
 
 	if save {
@@ -564,7 +566,7 @@ func (s *Session) parseZeditLocked(line string) {
 		state.dirtyHeader = true
 		s.zeditShowMenuLocked()
 	case zeditZoneReset:
-		number := atoiC(line)
+		number := common.AtoiC(line)
 		if !isASCIIDigit(firstByte(line)) || number < 0 || number > 2 {
 			s.zeditSend("Try again (0-2) : ")
 			return
@@ -573,7 +575,7 @@ func (s *Session) parseZeditLocked(line string) {
 		state.dirtyHeader = true
 		s.zeditShowMenuLocked()
 	case zeditZoneLife:
-		number := atoiC(line)
+		number := common.AtoiC(line)
 		if !isASCIIDigit(firstByte(line)) || number < 0 || number > 240 {
 			s.zeditSend("Try again (0-240) : ")
 			return
@@ -588,7 +590,7 @@ func (s *Session) parseZeditLocked(line string) {
 			applyOLC(olc.Operation{
 				Kind:  olc.OpSetZoneTopRoom,
 				Zone:  &state.zone,
-				Value: atoiC(line),
+				Value: common.AtoiC(line),
 				Low:   state.zone.Number * 100,
 				High:  32000,
 			})
@@ -596,7 +598,7 @@ func (s *Session) parseZeditLocked(line string) {
 			applyOLC(olc.Operation{
 				Kind:  olc.OpSetZoneTopRoom,
 				Zone:  &state.zone,
-				Value: atoiC(line),
+				Value: common.AtoiC(line),
 				Low:   state.zone.Number * 100,
 				High:  zones[state.zoneIndex+1].Number*100 - 1,
 			})
@@ -660,7 +662,7 @@ func (s *Session) parseZeditNewLocked(line string) {
 	if state == nil {
 		return
 	}
-	pos := atoiC(line)
+	pos := common.AtoiC(line)
 	if !isASCIIDigit(firstByte(line)) || pos < 0 || pos > len(state.zone.Commands) {
 		s.zeditShowMenuLocked()
 		return
@@ -681,7 +683,7 @@ func (s *Session) parseZeditDeleteLocked(line string) {
 	if state == nil {
 		return
 	}
-	pos := atoiC(line)
+	pos := common.AtoiC(line)
 	if isASCIIDigit(firstByte(line)) {
 		state.dirtyCommands = true
 		if pos >= 0 && pos < len(state.zone.Commands) {
@@ -696,7 +698,7 @@ func (s *Session) parseZeditChangeLocked(line string) {
 	if state == nil {
 		return
 	}
-	pos := atoiC(line)
+	pos := common.AtoiC(line)
 	if !isASCIIDigit(firstByte(line)) || pos < 0 || pos >= len(state.zone.Commands) {
 		s.zeditShowMenuLocked()
 		return
@@ -762,7 +764,7 @@ func (s *Session) parseZeditArg1Locked(line string) {
 		s.zeditSend("Must be a numeric value, try again : ")
 		return
 	}
-	number := atoiC(line)
+	number := common.AtoiC(line)
 	cmd := &state.zone.Commands[state.position]
 	switch cmd.Command {
 	case "M":
@@ -794,7 +796,7 @@ func (s *Session) parseZeditArg2Locked(line string) {
 		s.zeditSend("Must be a numeric value, try again : ")
 		return
 	}
-	number := atoiC(line)
+	number := common.AtoiC(line)
 	cmd := &state.zone.Commands[state.position]
 	switch cmd.Command {
 	case "M", "O":
@@ -862,7 +864,7 @@ func (s *Session) parseZeditArg3Locked(line string) {
 		s.zeditSend("Must be a numeric value, try again : ")
 		return
 	}
-	number := atoiC(line)
+	number := common.AtoiC(line)
 	cmd := &state.zone.Commands[state.position]
 	switch cmd.Command {
 	case "E":

@@ -1,0 +1,189 @@
+# DP-1523 audit — every strconv.Atoi call under pkg/ (non-test), one row per call.
+# Enumerated 2026-11-13 on origin/main (47f75fe19). Columns:
+#   go_site            Go file:line of the call
+#   c_site             src/ site it ports (read this session, R5g), or — when C has no counterpart
+#   c_parse            what C uses there: atoi / strtol / sscanf / is_number+atoi / fscanf / —
+#   verdict            switch-to-helper | already-matches-C | match-C-other-parser | not-player-input
+#   why                one line; overflow = input of >18 digits that (int)strtol wraps/saturates
+#
+# Player-typed numbers C reads with atoi == (int)strtol: skip leading isspace, optional
+# sign, stop at first non-digit; overflow clamps to LONG_MIN/LONG_MAX then keeps the low
+# 32 bits ("3000000000" -> -1294967296, "99999999999999999999" -> -1). strconv.Atoi instead
+# rejects trailing junk and errors on overflow, so every player-input atoi port below
+# diverges on digit-leading junk and/or huge tokens until switched to common.AtoiC.
+go_site	c_site	c_parse	verdict	why
+# --- wizard load/vstat: fixed in this PR (the two witnessed DP-1523 reds) ---
+pkg/session/wiz_object.go:133	src/act.wizard.c:1292-1296	atoi	switch-to-helper	FIXED: loadAtoi (wiz_object.go:128-138 on origin/main) returned 0 on Atoi error so "load obj 99999999999999999999" created a bug; C atoi wraps to -1 and answers "A NEGATIVE number??".
+pkg/session/wiz_stats.go:1266	src/act.wizard.c:1393-1395	atoi	switch-to-helper	FIXED: strconv.Atoi error answered the usage line; C atoi wraps to -1 and answers "A NEGATIVE number??" for both obj and mob branches.
+# --- wizard movement class (follow-up batch: needs C-first red scenario) ---
+pkg/session/parse_helpers.go:32	src/act.wizard.c:1513,1742; src/new_cmds2.c:829	atoi	switch-to-helper	parseSignedIntPrefix serves dig, dc and advance: its digit run only fails Atoi on >int64 input, where C atoi wraps (dig room, dc desc_num, advance level all take the wrapped value).
+pkg/session/wiz_movement.go:277	src/act.wizard.c:197-203	atoi (isdigit-gated at :198)	switch-to-helper	parseLeadingInt feeds goto/at: overflow wrap can land on a valid vnum (e.g. 2^32+N) that Go refuses with "No room exists with that number.".
+# --- who/users class (follow-up batch; C parses ranges with sscanf, not atoi) ---
+pkg/session/cmd_info.go:572	src/act.informative.c:1988	sscanf %d-%d	match-C-other-parser	users -l range low: sscanf stops at junk and wraps overflow through int; Atoi rejects both, so "users -l 5abc-10" diverges.
+pkg/session/cmd_info.go:578	src/act.informative.c:1988	sscanf %d-%d	match-C-other-parser	users -l range high, same class.
+pkg/session/cmd_info.go:769	src/act.informative.c:1701	sscanf %d-%d	match-C-other-parser	who level range low (parseWhoLevelRange): same sscanf-vs-Atoi class.
+pkg/session/cmd_info.go:775	src/act.informative.c:1701	sscanf %d-%d	match-C-other-parser	who level range high, same class.
+pkg/session/cmd_info.go:801	src/act.informative.c:1701-1724	sscanf %d-%d	match-C-other-parser	who space-separated upper extension: deliberate port addition on top of the sscanf divergences above.
+pkg/session/cmd_info.go:834	src/act.informative.c:1701-1724	sscanf %d-%d	match-C-other-parser	who -l space-separated upper, same.
+# --- boards class (follow-up batch) ---
+pkg/boards/boards.go:747	src/boards.c:330	isdigit(*number) then atoi	switch-to-helper	Board read: C atoi("5abc") is 5 and overflow wraps negative into the "That message exists only in your imagination." arm; Go refuses and shows the board instead.
+pkg/boards/boards.go:809	src/boards.c:381-383	isdigit(*number) then atoi	switch-to-helper	Board remove: same class as read.
+pkg/session/session_login.go:538	src/improved-edit.c:392-397	atoi	switch-to-helper	Board /e line edit: C atoi overflow answers "Line number must be higher than 0."; Go swallows the line silently on Atoi error.
+# --- clan class (follow-up batch; all is_number-gated, gates already match C) ---
+pkg/game/clan_settings.go:113	src/clan.c:1106-1111	is_number then atoi	switch-to-helper	clan ranks: overflow token passes isClanNumber but Atoi error leaves 0 where C wraps negative and hits the rank-range refusal.
+pkg/game/clan_settings.go:192	src/clan.c:1190-1194	is_number then atoi	switch-to-helper	clan select-by-number, same overflow class.
+pkg/game/clan_settings.go:208	src/clan.c:1202-1206	is_number then atoi	switch-to-helper	clan rank select, same overflow class.
+pkg/game/clan_settings.go:309	src/clan.c:1373-1378	is_number then atoi	switch-to-helper	clan privilege rank, same overflow class.
+pkg/game/clan_economy.go:36	src/clan.c:1029-1034	is_number then atoi	switch-to-helper	clan tax amount, same overflow class.
+pkg/game/clan_economy.go:88	src/clan.c:1313-1318	is_number then atoi	switch-to-helper	clan application level, same overflow class.
+pkg/game/clan_bank.go:55	src/clan.c:940-954	is_number then atoi	switch-to-helper	clan bank deposit/withdraw amount, same overflow class.
+pkg/game/clan_admin.go:15	src/clan.c:134-139	is_number then atoi	switch-to-helper	clan rename: C overflow wraps negative and refuses "There is no clan with that number."; Go Atoi error leaves 0 and renames clan 0.
+pkg/game/comm_channel.go:315	src/act.comm.c:1464	atoi (no gate)	switch-to-helper	ctell imm clan number: C atoi("5abc") is 5 and overflow wraps negative, both refused only by the <= 0 / > count check; Go refuses "5abc" outright.
+pkg/game/comm_channel.go:350	src/act.comm.c:1501-1513	is_number then atoi	switch-to-helper	ctell #rank: C overflow keeps the wrapped negative minlev and prints it in " (%d) "; Go Atoi error turns it into 0 — visible byte difference in the tell.
+# --- economy/item class (follow-up batch) ---
+pkg/game/other_economy.go:33	src/act.other.c:835-839	is_number then atoi	switch-to-helper	split: C overflow wraps <= 0 and answers "Sorry, you can't do that."; Go Atoi error answers "How many coins do you wish to split with your group?".
+pkg/game/item_donate.go:104	src/act.item.c:587-589	is_number then atoi	switch-to-helper	junk/donate N coins: C overflow wraps negative into perform_drop_gold's "Heh heh heh.. we are jolly funny today, eh?"; Go treats the token as an item name instead.
+pkg/game/shop_trade.go:179	src/shop.c:404-405	is_number then atoi	switch-to-helper	ShopNumber '#' buy index: C overflow wraps negative and misses the shop; Go returns not-ok.
+pkg/game/inventory.go:277	src/handler.c:798-817	all-digit gate then atoi	switch-to-helper	GetNumber ("2.guard"): C overflow returns a wrapped negative, which is truthy and fails the find; Go returns 0 and takes the "can't see THAT many" arm — different bytes.
+# --- text editor class (follow-up batch) ---
+pkg/session/tedit.go:975	src/improved-edit.c:329-397	atoi	switch-to-helper	parseEditorInt feeds /d and /l ranges: C overflow wraps into "Line numbers must be greater than 0." territory; Go reports no range.
+pkg/session/wiz_info.go:839	src/act.wizard.c:2304-2306	is_number then atoi	switch-to-helper	show shops selector: C overflow wraps negative into show_shops' miss arm; Go Atoi error falls to "This isn't a shop!".
+# --- engine data, save files, config: not player input, no change ---
+pkg/session/command_order.go:46	—	—	not-player-input	Embeds command_order.tsv (build-time command table); panics on bad data, never sees a player byte.
+pkg/session/command_order.go:50	—	—	not-player-input	Same table, level column.
+pkg/session/command_gates.go:76	—	—	not-player-input	Embeds command_gates.tsv; same class.
+pkg/session/command_gates.go:80	—	—	not-player-input	Same table, position column.
+pkg/session/c_command_list.go:35	—	—	not-player-input	Embeds the C command table TSV for reachability checks.
+pkg/session/c_command_list.go:97	—	—	not-player-input	Same table.
+pkg/session/zedit.go:1080	—	—	not-player-input	Rewrites zone-file lines the engine itself wrote; fields[0] is a vnum from disk, not a typed token.
+pkg/olc/new_zone.go:70	—	—	not-player-input	Same zone-file rewrite class.
+pkg/session/clock_control.go:45	—	—	not-player-input	DP_CLOCK seam control for deterministic tests; invisible to a telnet player (R4).
+pkg/session/session_pump.go:41	—	—	not-player-input	LOGIN_IDLE_TIMEOUT env var.
+pkg/session/manager.go:70	—	—	not-player-input	WEBSOCKET_MAX_CONNS_PER_IP env var.
+pkg/session/manager.go:78	—	—	not-player-input	WEBSOCKET_MAX_TOTAL_CONNS env var.
+pkg/mudlog/ntfy.go:54	—	—	not-player-input	DP_MUDLOG_NTFY_LEVEL env var.
+pkg/mudlog/ntfy.go:59	—	—	not-player-input	DP_MUDLOG_NTFY_TYPE env var.
+pkg/mudlog/ntfy.go:64	—	—	not-player-input	DP_MUDLOG_NTFY_RATE env var.
+pkg/game/socials.go:58	—	—	not-player-input	Socials file fields (lib data, engine-written).
+pkg/game/socials.go:62	—	—	not-player-input	Socials file fields.
+pkg/game/spawner.go:73	—	—	not-player-input	Room-flag data from lib/world, not a typed token.
+pkg/game/graph.go:273	—	—	not-player-input	HUNTING player id set by engine code (Itoa of an assigned id), never typed at a prompt.
+pkg/game/hunting_mudlog.go:95	—	—	not-player-input	Same HUNTING id class; parses only engine-written values.
+pkg/game/aliases.go:276	src/alias.c:92-100	fscanf %d	not-player-input	Alias save-file length header, written by the engine at save time.
+pkg/game/aliases.go:305	src/alias.c:92-100	fscanf %d	not-player-input	Alias save-file type field, same class.
+pkg/combat/fight_messages.go:92	—	—	not-player-input	Fight-message file fields (lib data, engine-written).
+# --- pkg/parser: world-file loaders, one row per call ---
+pkg/parser/mob.go:117	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:132	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:139	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:143	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:180	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:319	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:359	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:360	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:364	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:367	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:368	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:369	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:370	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:371	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:372	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:375	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:376	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:378	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:433	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:434	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:448	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:449	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:450	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:469	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:483	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:497	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:511	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:525	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:539	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:553	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:567	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:581	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:609	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/mob.go:626	src/db.c:1139 (mob stat parse class)	atoi	not-player-input	Mob file stats/affs/positions; same lib/world data argument.
+pkg/parser/obj.go:109	src/db.c:1139 (obj parse class)	atoi	not-player-input	Obj file values/affects; same lib/world data argument.
+pkg/parser/obj.go:177	src/db.c:1139 (obj parse class)	atoi	not-player-input	Obj file values/affects; same lib/world data argument.
+pkg/parser/obj.go:192	src/db.c:1139 (obj parse class)	atoi	not-player-input	Obj file values/affects; same lib/world data argument.
+pkg/parser/obj.go:201	src/db.c:1139 (obj parse class)	atoi	not-player-input	Obj file values/affects; same lib/world data argument.
+pkg/parser/obj.go:202	src/db.c:1139 (obj parse class)	atoi	not-player-input	Obj file values/affects; same lib/world data argument.
+pkg/parser/obj.go:269	src/db.c:1139 (obj parse class)	atoi	not-player-input	Obj file values/affects; same lib/world data argument.
+pkg/parser/obj.go:285	src/db.c:1139 (obj parse class)	atoi	not-player-input	Obj file values/affects; same lib/world data argument.
+pkg/parser/obj.go:286	src/db.c:1139 (obj parse class)	atoi	not-player-input	Obj file values/affects; same lib/world data argument.
+pkg/parser/obj.go:318	src/db.c:1139 (obj parse class)	atoi	not-player-input	Obj file values/affects; same lib/world data argument.
+pkg/parser/shop.go:84	src/shop.c:1152,1160 (shop file load class)	fscanf/atoi	not-player-input	Shop file fields; same lib/world data argument.
+pkg/parser/shop.go:121	src/shop.c:1152,1160 (shop file load class)	fscanf/atoi	not-player-input	Shop file fields; same lib/world data argument.
+pkg/parser/shop.go:191	src/shop.c:1152,1160 (shop file load class)	fscanf/atoi	not-player-input	Shop file fields; same lib/world data argument.
+pkg/parser/wld.go:140	src/db.c:842 (room/exit parse class)	atoi	not-player-input	World file rooms/exits/door states; same lib/world data argument.
+pkg/parser/wld.go:208	src/db.c:842 (room/exit parse class)	atoi	not-player-input	World file rooms/exits/door states; same lib/world data argument.
+pkg/parser/wld.go:211	src/db.c:842 (room/exit parse class)	atoi	not-player-input	World file rooms/exits/door states; same lib/world data argument.
+pkg/parser/wld.go:231	src/db.c:842 (room/exit parse class)	atoi	not-player-input	World file rooms/exits/door states; same lib/world data argument.
+pkg/parser/wld.go:254	src/db.c:842 (room/exit parse class)	atoi	not-player-input	World file rooms/exits/door states; same lib/world data argument.
+pkg/parser/wld.go:306	src/db.c:842 (room/exit parse class)	atoi	not-player-input	World file rooms/exits/door states; same lib/world data argument.
+pkg/parser/wld.go:308	src/db.c:842 (room/exit parse class)	atoi	not-player-input	World file rooms/exits/door states; same lib/world data argument.
+pkg/parser/wld.go:309	src/db.c:842 (room/exit parse class)	atoi	not-player-input	World file rooms/exits/door states; same lib/world data argument.
+pkg/parser/zon.go:62	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:81	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:82	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:83	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:141	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:142	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:143	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:144	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:148	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:149	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:150	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:151	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:155	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:156	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:157	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:161	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:162	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:163	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:164	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:168	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:169	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:170	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:171	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:175	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:176	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:177	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:178	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:182	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:183	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:184	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:185	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:189	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:190	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:191	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/parser/zon.go:192	src/db.c:842,1139 (zone-table load class)	atoi	not-player-input	Zone-file reset commands and header constants; lib/world machine-generated decimal, so Atoi and atoi agree on every present value; any bad field fails world load loudly.
+pkg/admin/handlers.go:386	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/handlers.go:452	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/huma.go:150	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/huma.go:278	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/huma.go:349	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/huma.go:415	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/huma_completion.go:195	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/huma_completion.go:261	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/huma_completion.go:279	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/huma_completion.go:334	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/olc.go:341	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/olc.go:354	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/olc_entity_write.go:385	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/olc_new_zone.go:43	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/olc_reads.go:115	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/olc_reads.go:75	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/admin/olc_write.go:406	—	—	not-player-input	Web admin API (Huma/OLC/handlers), no C counterpart; invisible at a telnet prompt (R4).
+pkg/apidoc/connections.go:30	—	—	not-player-input	Admin API diagnostics, no C counterpart.
+pkg/auth/ratelimit.go:419	—	—	not-player-input	Internal rate-limit configuration, not a command argument.
+pkg/contact/contact.go:74	—	—	not-player-input	Contact-rate limit configuration.
+pkg/settings/store.go:836	—	—	not-player-input	Env-backed setting lookup, not a typed game command.
+pkg/settings/store.go:940	—	—	not-player-input	Env-backed setting lookup, not a typed game command.
+pkg/telnet/listener.go:103	—	—	not-player-input	Env-var listener tuning, not a typed game command.
+pkg/telnet/listener.go:84	—	—	not-player-input	Env-var listener tuning, not a typed game command.
+pkg/telnet/listener.go:92	—	—	not-player-input	Env-var listener tuning, not a typed game command.

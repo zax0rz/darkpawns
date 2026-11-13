@@ -11,6 +11,8 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // This file ports CircleMUD 3.0's oedit.c (the OLC object editor) behind the
@@ -176,13 +178,13 @@ func cmdOedit(s *Session, args []string) error {
 				s.oeditSend("Save which zone?\r\n")
 				return nil
 			}
-			number = atoiC(buf2) * 100
+			number = common.AtoiC(buf2) * 100
 		} else {
 			s.oeditSend("Yikes!  Stop that, someone will get hurt!\r\n")
 			return nil
 		}
 	} else {
-		number = atoiC(buf1)
+		number = common.AtoiC(buf1)
 	}
 
 	if save {
@@ -1092,7 +1094,7 @@ func (s *Session) parseOeditLocked(arg string) {
 		s.finishOeditLocked()
 		return
 	case oeditType:
-		number := atoiC(arg)
+		number := common.AtoiC(arg)
 		if number < 1 || number >= numItemTypes {
 			// C: type 0 is not selectable even though the menu lists it.
 			s.oeditSendLocked("Invalid choice, try again : ")
@@ -1100,7 +1102,7 @@ func (s *Session) parseOeditLocked(arg string) {
 		}
 		obj.TypeFlag = number
 	case oeditExtras:
-		number := atoiC(arg)
+		number := common.AtoiC(arg)
 		if number < 0 || number > numItemFlags {
 			// C's extras error path only redisplays the menu — no message
 			// (src/oedit.c:1191-1197), unlike the wear path.
@@ -1114,7 +1116,7 @@ func (s *Session) parseOeditLocked(arg string) {
 		s.oeditShowExtraMenuLocked()
 		return
 	case oeditWear:
-		number := atoiC(arg)
+		number := common.AtoiC(arg)
 		if number < 0 || number > numItemWears {
 			s.oeditSendLocked("That's not a valid choice!\r\n")
 			s.oeditShowWearMenuLocked()
@@ -1127,9 +1129,9 @@ func (s *Session) parseOeditLocked(arg string) {
 		s.oeditShowWearMenuLocked()
 		return
 	case oeditWeight:
-		obj.Weight = atoiC(arg)
+		obj.Weight = common.AtoiC(arg)
 	case oeditCost:
-		obj.Cost = atoiC(arg)
+		obj.Cost = common.AtoiC(arg)
 	case oeditCostPerDay:
 		load := oeditRoundFloat(float32(atofC(arg)), 0.01)
 		if load < 0.0 {
@@ -1139,16 +1141,16 @@ func (s *Session) parseOeditLocked(arg string) {
 		}
 		obj.LoadPercent = float64(load)
 	case oeditTimer:
-		state.timer = atoiC(arg)
+		state.timer = common.AtoiC(arg)
 	case oeditLevel:
 		// C's object level flags are compiled out.
 	case oeditValue1:
-		applyOLC(olc.Operation{Kind: olc.OpSetObjValue1, Obj: obj, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetObjValue1, Obj: obj, Value: common.AtoiC(arg)})
 		state.olcVal = 1
 		s.oeditShowVal2MenuLocked()
 		return
 	case oeditValue2:
-		number := atoiC(arg)
+		number := common.AtoiC(arg)
 		switch obj.TypeFlag {
 		case itemScroll, itemPotion:
 			if number < 0 || number >= numSpells {
@@ -1159,7 +1161,7 @@ func (s *Session) parseOeditLocked(arg string) {
 			}
 		case itemContainer:
 			// C re-reads arg (src/oedit.c:1299) and treats 1..4 as toggles.
-			number = atoiC(arg)
+			number = common.AtoiC(arg)
 			switch {
 			case number < 0 || number > 4:
 				s.oeditShowContainerFlagsLocked()
@@ -1175,15 +1177,15 @@ func (s *Session) parseOeditLocked(arg string) {
 		}
 		return
 	case oeditValue3:
-		number := atoiC(arg)
+		number := common.AtoiC(arg)
 		applyOLC(olc.Operation{Kind: olc.OpSetObjValue3, Obj: obj, Value: number})
 		s.oeditShowVal4MenuLocked()
 		return
 	case oeditValue4:
-		number := atoiC(arg)
+		number := common.AtoiC(arg)
 		applyOLC(olc.Operation{Kind: olc.OpSetObjValue4, Obj: obj, Value: number})
 	case oeditPromptApply:
-		number := atoiC(arg)
+		number := common.AtoiC(arg)
 		if number == 0 {
 			break
 		}
@@ -1195,7 +1197,7 @@ func (s *Session) parseOeditLocked(arg string) {
 		s.oeditShowApplyMenuLocked()
 		return
 	case oeditApply:
-		number := atoiC(arg)
+		number := common.AtoiC(arg)
 		switch {
 		case number == 0:
 			applyOLC(olc.Operation{
@@ -1227,12 +1229,12 @@ func (s *Session) parseOeditLocked(arg string) {
 		return
 	case oeditApplyMod:
 		affect := state.affects[state.olcVal]
-		affect.Modifier = atoiC(arg)
+		affect.Modifier = common.AtoiC(arg)
 		applyOLC(olc.Operation{Kind: olc.OpSetObjAffect, Affects: &state.affects, Index: state.olcVal, Affect: &affect})
 		s.oeditShowPromptApplyMenuLocked()
 		return
 	case oeditScriptMenu:
-		switch atoiC(arg) {
+		switch common.AtoiC(arg) {
 		case 0:
 			break
 		case 1:
@@ -1251,7 +1253,7 @@ func (s *Session) parseOeditLocked(arg string) {
 		s.oeditShowScriptMenuLocked()
 		return
 	case oeditScriptFlags:
-		if i := atoiC(arg); i == 0 {
+		if i := common.AtoiC(arg); i == 0 {
 			s.oeditShowScriptMenuLocked()
 			return
 		} else if i > 0 && i <= numOScriptFlags {
@@ -1272,7 +1274,7 @@ func (s *Session) parseOeditLocked(arg string) {
 		s.oeditShowExtraDescMenuLocked()
 		return
 	case oeditExtraDescMenu:
-		switch atoiC(arg) {
+		switch common.AtoiC(arg) {
 		case 0:
 			// If something was left out, unlink this node and everything
 			// after it (C sets the pointing pointer to NULL).

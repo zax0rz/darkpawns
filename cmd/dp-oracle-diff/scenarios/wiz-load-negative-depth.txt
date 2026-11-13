@@ -1,0 +1,70 @@
+# depth-case: wiz.load-negative-vnum
+# C do_load (src/act.wizard.c:1293-1295): a negative number answers
+# "A NEGATIVE number??" before any vnum lookup.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Loadgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Loadgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Loadpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Loadpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Loadpeer 8162
+
+[probe]
+load obj 99999999999999999999

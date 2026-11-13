@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 func HouseCanEnter(ch *Player, houseVNum int, control []HouseControl) bool {
@@ -111,7 +113,7 @@ func (w *World) HcontrolBuildHouse(ch *Player, arg string) {
 	// C's atoi() returns zero for a non-numeric token. Keep that behavior at
 	// this command boundary; inventing an "invalid vnum" branch changes the
 	// player-facing path (house.c:398-404).
-	virtHouse := cAtoi(args[0])
+	virtHouse := common.AtoiC(args[0])
 	message := ""
 	var save bool
 
@@ -210,7 +212,7 @@ func (w *World) HcontrolDestroyHouse(ch *Player, arg string) {
 		return
 	}
 
-	vnum := cAtoi(args[0])
+	vnum := common.AtoiC(args[0])
 
 	w.mu.Lock()
 	i := findHouse(w.HouseControl, vnum)
@@ -263,7 +265,7 @@ func (w *World) HcontrolPayHouse(ch *Player, arg string) {
 		return
 	}
 
-	vnum := cAtoi(args[0])
+	vnum := common.AtoiC(args[0])
 
 	w.mu.Lock()
 	i := findHouse(w.HouseControl, vnum)
@@ -293,8 +295,8 @@ func (w *World) HcontrolSetKey(ch *Player, arg string) {
 		return
 	}
 
-	vnum := cAtoi(args[0])
-	keyVNum := cAtoi(args[1])
+	vnum := common.AtoiC(args[0])
+	keyVNum := common.AtoiC(args[1])
 
 	w.mu.Lock()
 	i := findHouse(w.HouseControl, vnum)
@@ -354,13 +356,6 @@ func (w *World) Hcontrol(ch *Player, argument string) {
 	default:
 		ch.SendMessage(HcontrolFormat)
 	}
-}
-
-// cAtoi mirrors C's atoi for the house-control command: zero when no leading
-// integer is present, otherwise the glibc value (clamp to LONG_MIN/LONG_MAX on
-// overflow, then truncate to int) — shared with atoiC.
-func cAtoi(value string) int {
-	return atoiC(value)
 }
 
 // ---------------------------------------------------------------------------

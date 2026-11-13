@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // TestSpecBank verifies the banker spec proc moves coins between carried gold
@@ -137,8 +139,8 @@ func TestAtoiC(t *testing.T) {
 		{input: "-99999999999999999999", want: 0},
 	}
 	for _, tt := range tests {
-		if got := atoiC(tt.input); got != tt.want {
-			t.Errorf("atoiC(%q) = %d, want %d", tt.input, got, tt.want)
+		if got := common.AtoiC(tt.input); got != tt.want {
+			t.Errorf("common.AtoiC(%q) = %d, want %d", tt.input, got, tt.want)
 		}
 	}
 }

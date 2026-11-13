@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // ---------------------------------------------------------------------------
@@ -36,7 +38,7 @@ func (w *World) doWimpy(ch *Player, me *MobInstance, cmd string, arg string) boo
 		ch.SendMessage("Specify at how many hit points you want to wimp out at.  (0 to disable)\r\n")
 		return true
 	}
-	wimpLevel := atoiC(arg)
+	wimpLevel := common.AtoiC(arg)
 
 	// C tests `if ((wimp_lev = atoi(arg)))` then `if (wimp_lev < 0)`; the
 	// negative arm is reachable because a huge positive token wraps negative

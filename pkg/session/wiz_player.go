@@ -9,6 +9,8 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/spells"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // ---------------------------------------------------------------------------
@@ -418,7 +420,7 @@ func cmdSkillset(s *Session, args []string) error {
 		return nil
 	}
 	valueToken := strings.Fields(valueStr)[0]
-	value := cAtoi(valueToken)
+	value := common.AtoiC(valueToken)
 	if value < 0 {
 		s.Send("Minimum value for learned is 0.\n\r")
 		return nil

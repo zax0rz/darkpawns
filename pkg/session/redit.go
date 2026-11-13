@@ -11,6 +11,8 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // These values mirror the REDIT_MODE constants in src/olc.h. Keeping the
@@ -90,7 +92,7 @@ func cmdRedit(s *Session, args []string) error {
 			s.reditSend("Save which zone?\r\n")
 			return nil
 		}
-		zoneNumber := atoiC(args[1])
+		zoneNumber := common.AtoiC(args[1])
 		zone, ok := olcZoneForVNum(s.manager.world, zoneNumber*100)
 		if !ok {
 			s.reditSend("Sorry, there is no zone for that number!\r\n")
@@ -118,7 +120,7 @@ func cmdRedit(s *Session, args []string) error {
 		s.reditSend("Yikes!  Stop that, someone will get hurt!\r\n")
 		return nil
 	}
-	number := atoiC(first)
+	number := common.AtoiC(first)
 	// The duplicate-editor gate runs before zone lookup and authorization,
 	// matching do_olc's descriptor scan order. C relies on its single-threaded
 	// interpreter for atomicity; here the claim itself is the check, so two
@@ -379,7 +381,7 @@ func (s *Session) parseReditLocked(line string) {
 			Kind:      olc.OpSetExitKey,
 			Room:      &state.room,
 			Direction: game.DirectionNames[state.value],
-			Value:     atoiC(line),
+			Value:     common.AtoiC(line),
 		})
 		state.mode = reditExitMenu
 		s.reditDisplayExitMenuLocked()
@@ -481,7 +483,7 @@ func (s *Session) parseReditMainLocked(line string) {
 
 func (s *Session) parseReditFlagsLocked(line string) {
 	state := s.roomEdit
-	number := atoiC(line)
+	number := common.AtoiC(line)
 	if number < 0 || number > len(olc.RoomFlagNames) {
 		s.reditSend("That's not a valid choice!\r\n")
 		s.reditDisplayFlagsLocked()
@@ -504,7 +506,7 @@ func (s *Session) parseReditFlagsLocked(line string) {
 
 func (s *Session) parseReditSectorLocked(line string) {
 	state := s.roomEdit
-	number := atoiC(line)
+	number := common.AtoiC(line)
 	if number < 0 || number >= len(olc.SectorNames) {
 		s.reditSend("Invalid choice!")
 		s.reditDisplaySectorLocked()
@@ -554,7 +556,7 @@ func (s *Session) parseReditExitMenuLocked(line string) {
 
 func (s *Session) parseReditExitNumberLocked(line string) {
 	state := s.roomEdit
-	number := atoiC(line)
+	number := common.AtoiC(line)
 	err := olc.Apply(olc.Operation{
 		Kind:      olc.OpSetExitTarget,
 		Room:      &state.room,
@@ -575,7 +577,7 @@ func (s *Session) parseReditExitNumberLocked(line string) {
 
 func (s *Session) parseReditDoorFlagsLocked(line string) {
 	state := s.roomEdit
-	number := atoiC(line)
+	number := common.AtoiC(line)
 	if number < 0 || number > 2 {
 		s.reditSend("That's not a valid choice!\r\n")
 		s.reditDisplayExitFlagLocked()
@@ -593,7 +595,7 @@ func (s *Session) parseReditDoorFlagsLocked(line string) {
 
 func (s *Session) parseReditExtraMenuLocked(line string) {
 	state := s.roomEdit
-	number := atoiC(line)
+	number := common.AtoiC(line)
 	if number == 0 {
 		if state.currentExtra < len(state.room.ExtraDescs) &&
 			(!state.extraMeta[state.currentExtra].keywordSet || !state.extraMeta[state.currentExtra].descriptionSet) {
@@ -647,7 +649,7 @@ func (s *Session) parseReditExtraMenuLocked(line string) {
 
 func (s *Session) parseReditCopyLocked(line string) {
 	state := s.roomEdit
-	number := atoiC(line)
+	number := common.AtoiC(line)
 	if number != -1 {
 		room, ok := s.manager.world.SnapshotRoom(number)
 		if !ok {
@@ -663,7 +665,7 @@ func (s *Session) parseReditCopyLocked(line string) {
 
 func (s *Session) parseReditScriptMenuLocked(line string) {
 	state := s.roomEdit
-	switch atoiC(line) {
+	switch common.AtoiC(line) {
 	case 0:
 		state.olcVal = 1
 		state.mode = reditMainMenu
@@ -682,7 +684,7 @@ func (s *Session) parseReditScriptMenuLocked(line string) {
 }
 
 func (s *Session) parseReditScriptFlagsLocked(line string) {
-	number := atoiC(line)
+	number := common.AtoiC(line)
 	if number == 0 {
 		s.roomEdit.mode = reditScriptMenu
 		s.reditDisplayScriptMenuLocked()

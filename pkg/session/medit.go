@@ -10,6 +10,8 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // This file ports CircleMUD 3.0's medit.c (the OLC mobile editor) behind the
@@ -98,13 +100,13 @@ func cmdMedit(s *Session, args []string) error {
 				s.meditSend("Save which zone?\r\n")
 				return nil
 			}
-			number = atoiC(buf2) * 100
+			number = common.AtoiC(buf2) * 100
 		} else {
 			s.meditSend("Yikes!  Stop that, someone will get hurt!\r\n")
 			return nil
 		}
 	} else {
-		number = atoiC(buf1)
+		number = common.AtoiC(buf1)
 	}
 
 	if save {
@@ -685,7 +687,7 @@ func (s *Session) parseMeditLocked(arg string) {
 		s.finishMeditLocked(cleanupMeditAll)
 		return
 	case meditNPCFlags:
-		i := atoiC(arg)
+		i := common.AtoiC(arg)
 		if i == 0 {
 			break
 		}
@@ -697,7 +699,7 @@ func (s *Session) parseMeditLocked(arg string) {
 		s.meditShowMobFlagsLocked()
 		return
 	case meditAffFlags:
-		i := atoiC(arg)
+		i := common.AtoiC(arg)
 		if i == 0 {
 			break
 		}
@@ -716,7 +718,7 @@ func (s *Session) parseMeditLocked(arg string) {
 			mob.Noise = ""
 		}
 	case meditScriptMenu:
-		i := atoiC(arg)
+		i := common.AtoiC(arg)
 		switch i {
 		case 0:
 			break
@@ -739,7 +741,7 @@ func (s *Session) parseMeditLocked(arg string) {
 		s.meditShowScriptMenuLocked()
 		return
 	case meditScriptFlags:
-		if i := atoiC(arg); i == 0 {
+		if i := common.AtoiC(arg); i == 0 {
 			s.meditShowScriptMenuLocked()
 			return
 		} else if i > 0 && i <= len(olc.MobScriptFlagNames) {
@@ -750,40 +752,40 @@ func (s *Session) parseMeditLocked(arg string) {
 		return
 
 	case meditSex:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobSex, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobSex, Mob: mob, Value: common.AtoiC(arg)})
 	case meditHitroll:
 		// C sets GET_HITROLL; the parser stores file THAC0 = 20 - hitroll.
-		applyOLC(olc.Operation{Kind: olc.OpSetMobHitroll, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobHitroll, Mob: mob, Value: common.AtoiC(arg)})
 	case meditDamroll:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobDamroll, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobDamroll, Mob: mob, Value: common.AtoiC(arg)})
 	case meditNDD:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobNumDamageDice, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobNumDamageDice, Mob: mob, Value: common.AtoiC(arg)})
 	case meditSDD:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobSizeDamageDice, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobSizeDamageDice, Mob: mob, Value: common.AtoiC(arg)})
 	case meditNumHPDice:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobNumHPDice, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobNumHPDice, Mob: mob, Value: common.AtoiC(arg)})
 	case meditSizeHPDice:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobSizeHPDice, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobSizeHPDice, Mob: mob, Value: common.AtoiC(arg)})
 	case meditAddHP:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobAddHP, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobAddHP, Mob: mob, Value: common.AtoiC(arg)})
 	case meditAC:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobAC, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobAC, Mob: mob, Value: common.AtoiC(arg)})
 	case meditExp:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobExp, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobExp, Mob: mob, Value: common.AtoiC(arg)})
 	case meditGold:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobGold, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobGold, Mob: mob, Value: common.AtoiC(arg)})
 	case meditPos:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobPosition, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobPosition, Mob: mob, Value: common.AtoiC(arg)})
 	case meditDefaultPos:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobDefaultPosition, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobDefaultPosition, Mob: mob, Value: common.AtoiC(arg)})
 	case meditAttack:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobAttack, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobAttack, Mob: mob, Value: common.AtoiC(arg)})
 	case meditLevel:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobLevel, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobLevel, Mob: mob, Value: common.AtoiC(arg)})
 	case meditAlignment:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobAlignment, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobAlignment, Mob: mob, Value: common.AtoiC(arg)})
 	case meditRace:
-		applyOLC(olc.Operation{Kind: olc.OpSetMobRace, Mob: mob, Value: atoiC(arg)})
+		applyOLC(olc.Operation{Kind: olc.OpSetMobRace, Mob: mob, Value: common.AtoiC(arg)})
 
 	default:
 		// C: "We should never get here." (sysserr + cleanup_olc).

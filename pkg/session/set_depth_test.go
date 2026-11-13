@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 func TestSetRegistrationUsesCEntryGate(t *testing.T) {
@@ -108,8 +110,8 @@ func TestSetRawValueUsesCFieldRemainder(t *testing.T) {
 
 func TestSetCAtoiMatchesAtoiPrefixBehavior(t *testing.T) {
 	for input, want := range map[string]int{"": 0, "-12tail": -12, "+7 rest": 7, "words": 0} {
-		if got := cAtoi(input); got != want {
-			t.Errorf("cAtoi(%q) = %d, want %d", input, got, want)
+		if got := common.AtoiC(input); got != want {
+			t.Errorf("common.AtoiC(%q) = %d, want %d", input, got, want)
 		}
 	}
 }
