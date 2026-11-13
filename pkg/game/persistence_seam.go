@@ -61,6 +61,12 @@ func (w *World) SavePlayerRecord(p *Player, why string, loadRoom int, kind SaveK
 	}
 	seq := p.CrashSeq()
 	res := w.PlayerSaver(p, why, loadRoom)
+	if res == SaveSucceeded {
+		// C's char_to_store un-equips and re-equips char_eq[i] via equip_char
+		// (src/db.c:2632-2637), firing check_for_bad_stats (src/handler.c:749)
+		// after copying points into the store record.
+		w.ReplayEquipmentBadStats(p)
+	}
 	if kind == SaveCrash && res == SaveSucceeded && w.ObjectSaver != nil {
 		if err := w.ObjectSaver(p, 1); err != nil {
 			slog.Error("object snapshot save failed", "player", p.GetName(), "error", err)

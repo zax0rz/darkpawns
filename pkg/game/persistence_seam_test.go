@@ -234,3 +234,42 @@ func TestCheckIdlingSavesBeforeVoidTransfer(t *testing.T) {
 		t.Fatalf("player room after CheckIdling = %d, want the void (1)", p.GetRoomVNum())
 	}
 }
+
+// TestSavePlayerRecordReplaysEquipmentBadStats: C's char_to_store re-equips
+// worn items via equip_char, firing check_for_bad_stats on every successful
+// save_char (db.c:2632-2637, handler.c:749, DP-1443).
+func TestSavePlayerRecordReplaysEquipmentBadStats(t *testing.T) {
+	w, p, obj, out := badStatsWorld(t, ApplyDex)
+	if err := w.EquipItem(p, obj, 6); err != nil {
+		t.Fatal(err)
+	}
+	out[p.Name].Reset()
+	p.SetHP(200)
+
+	if res := w.SavePlayerRecord(p, "skipped", LoadRoomNowhere, SaveCrash); res != SaveSkipped {
+		t.Fatalf("skipped save = %v, want SaveSkipped", res)
+	}
+	if p.GetHP() != 200 || outputOf(out, p.Name) != "" {
+		t.Fatalf("skipped save fired bad stats: hp=%d out=%q", p.GetHP(), outputOf(out, p.Name))
+	}
+
+	var hpAtSave int
+	rec := &seamRecorder{
+		result: SaveSucceeded,
+		onCall: func(pl *Player) { hpAtSave = pl.GetHP() },
+	}
+	w.PlayerSaver = rec.saver()
+
+	if res := w.SavePlayerRecord(p, "save", LoadRoomNowhere, SaveCrash); res != SaveSucceeded {
+		t.Fatalf("save = %v, want SaveSucceeded", res)
+	}
+	if hpAtSave != 200 {
+		t.Fatalf("stored snapshot HP = %d, want 200 (char_to_store copies points before equip_char)", hpAtSave)
+	}
+	if p.GetHP() != 160 {
+		t.Fatalf("post-save HP = %d, want 160", p.GetHP())
+	}
+	if got := outputOf(out, p.Name); got != "You trip over your own feet and hit your head!\n\r" {
+		t.Fatalf("post-save bad-stat bytes = %q", got)
+	}
+}

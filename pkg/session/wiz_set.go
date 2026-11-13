@@ -249,7 +249,9 @@ func cmdSetText(s *Session, args []string, rawArgs string) error {
 	// (src/act.wizard.c:3064) and for a file target through char_to_store
 	// (:3067); both run after the acknowledgement line, before the file write
 	// and "Saved in file." (R3a).
-	if target.player != nil && s.manager != nil && s.manager.world != nil {
+	// Offline file targets bypass SavePlayerRecord (db.c:2632-2637); live
+	// players run ReplayEquipmentBadStats inside SavePlayerRecord via SaveCharSite.
+	if target.file && target.player != nil && s.manager != nil && s.manager.world != nil {
 		s.manager.world.ReplayEquipmentBadStats(target.player)
 	}
 
