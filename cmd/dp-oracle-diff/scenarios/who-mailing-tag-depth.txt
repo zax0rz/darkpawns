@@ -1,0 +1,77 @@
+# depth-case: who.mailing-tag
+# C do_who's long list appends " (mailing)" while PLR_MAILING is set
+# (src/act.informative.c:1885-1886). The postmaster special proc intercepts the
+# mail command for any player in its room (SPECIAL(postmaster), src/mail.c:475-497)
+# and postmaster_send_mail sets the flag once the level, gold and addressee gates
+# pass (src/mail.c:505-544; MIN_MAIL_LEVEL 2 and STAMP_PRICE 25 in src/mail.h).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 3010 1 8162 80
+
+[setup:oracle]
+Mailgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mailgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Mailpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Mailpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Mailpeer 8162
+set player Mailpeer level 2
+set player Mailpeer gold 100
+
+[probe]
+send:peer mail Mailgod
+who
