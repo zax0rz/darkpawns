@@ -1,0 +1,85 @@
+# C-first witness for do_who OLC and tedit suffixes (src/act.informative.c:1893-1904):
+# (Object Edit), (Mobile Edit), (Zone Edit), (Shop Edit), (Room Edit), (Text Edit).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Whoobs
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Whoobs
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:editor]
+Whoedit
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:editor]
+Whoedit
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+advance Whoedit 38
+
+[probe]
+send:editor oedit 3100
+who
+send:editor q
+send:editor medit 3100
+who
+send:editor q
+send:editor zedit 3100
+who
+send:editor q
+send:editor sedit 3100
+who
+send:editor q
+send:editor redit 3100
+who
+send:editor q
+send:editor tedit background
+who
+send:editor /a

@@ -888,12 +888,57 @@ func whoHasFlag(player *game.Player, bit int) bool {
 }
 
 func whoStatus(player *game.Player) string {
+	return whoStatusForSession(nil, player, nil, false)
+}
+
+// whoStatusForSession appends C's do_who status tags in exact order
+// (src/act.informative.c:1880-1919).
+func whoStatusForSession(viewer, player *game.Player, sess *Session, outOfBody bool) string {
 	var status strings.Builder
+	// src/act.informative.c:1880-1883: C checks GET_LEVEL(ch) >= LEVEL_IMMORT
+	// (plain viewer level, not GET_REAL_LEVEL) before falling back to (invis).
+	if invisLev := player.GetInvisLevel(); invisLev > 0 && viewer != nil && viewer.GetLevel() >= LVL_IMMORT {
+		fmt.Fprintf(&status, " (i%d)", invisLev)
+	} else if player.IsAffected(game.AffInvisible) {
+		status.WriteString(" (invis)")
+	}
 	flags := player.GetFlags()
 	if flags&(1<<uint(game.PlrMailing)) != 0 {
 		status.WriteString(" (mailing)")
 	} else if flags&(1<<uint(game.PlrWriting)) != 0 {
 		status.WriteString(" (writing)")
+	}
+	if outOfBody {
+		status.WriteString(" (out of body)")
+	}
+	if sess != nil {
+		sess.textEditMu.Lock()
+		isOedit := sess.oedit != nil
+		isMedit := sess.mobEdit != nil
+		isZedit := sess.zedit != nil
+		isSedit := sess.sedit != nil
+		isRedit := sess.roomEdit != nil
+		isTedit := sess.textEdit != nil && !sess.textEdit.playingEditor &&
+			!isOedit && !isMedit && !isZedit && !isSedit && !isRedit
+		sess.textEditMu.Unlock()
+		if isOedit {
+			status.WriteString(" (Object Edit)")
+		}
+		if isMedit {
+			status.WriteString(" (Mobile Edit)")
+		}
+		if isZedit {
+			status.WriteString(" (Zone Edit)")
+		}
+		if isSedit {
+			status.WriteString(" (Shop Edit)")
+		}
+		if isRedit {
+			status.WriteString(" (Room Edit)")
+		}
+		if isTedit {
+			status.WriteString(" (Text Edit)")
+		}
 	}
 	if flags&(1<<uint(game.PrfDeaf)) != 0 {
 		status.WriteString(" (deaf)")
@@ -975,6 +1020,10 @@ func whoColorEnabled(viewer *game.Player) bool {
 }
 
 func renderWhoLong(viewer, player *game.Player) string {
+	return renderWhoLongWithSession(viewer, player, nil, false)
+}
+
+func renderWhoLongWithSession(viewer, player *game.Player, sess *Session, outOfBody bool) string {
 	level := player.GetLevel()
 	name, title := player.GetName(), player.GetTitle()
 	var line string
@@ -996,7 +1045,7 @@ func renderWhoLong(viewer, player *game.Player) string {
 	default:
 		line = fmt.Sprintf("[ %2d  %s ] %s %s", level, whoClassAbbrev(player.GetClass()), name, title)
 	}
-	line += whoStatus(player)
+	line += whoStatusForSession(viewer, player, sess, outOfBody)
 	line += closeCode
 	return line + "\r\n"
 }
@@ -1011,6 +1060,20 @@ func renderWhoShort(viewer, player *game.Player) string {
 		return "\x1b[33m" + line + "\x1b[0m"
 	}
 	return line
+}
+
+func whoSessionTarget(sess *Session) (*game.Player, bool) {
+	if sess == nil || sess.SendClosed() || !sess.hasTransport() {
+		return nil, false
+	}
+	if sess.manager != nil {
+		sess.manager.mu.RLock()
+		defer sess.manager.mu.RUnlock()
+	}
+	if sess.isSwitched && sess.switchedOriginal != nil {
+		return sess.switchedOriginal, true
+	}
+	return sess.player, false
 }
 
 func cmdWho(s *Session, args []string) error {
@@ -1035,11 +1098,12 @@ func cmdWho(s *Session, args []string) error {
 	count := 0
 	lastShort := ""
 	for _, sess := range sessions {
-		if !whoTargetVisible(s, sess.player, opts) {
+		target, outOfBody := whoSessionTarget(sess)
+		if !whoTargetVisible(s, target, opts) {
 			continue
 		}
 		if opts.short {
-			lastShort = renderWhoShort(s.player, sess.player)
+			lastShort = renderWhoShort(s.player, target)
 			out.WriteString(lastShort)
 			count++
 			if count%4 == 0 {
@@ -1047,7 +1111,7 @@ func cmdWho(s *Session, args []string) error {
 			}
 			continue
 		}
-		out.WriteString(renderWhoLong(s.player, sess.player))
+		out.WriteString(renderWhoLongWithSession(s.player, target, sess, outOfBody))
 		count++
 	}
 	if opts.short {
