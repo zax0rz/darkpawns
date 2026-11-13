@@ -1,7 +1,7 @@
 # depth-case: wizard.atoi-junk-and-overflow
 # C find_target_room gates on the first byte with isdigit and then atoi's the
 # whole token (src/act.wizard.c:197-203), so a digit-leading token with junk
-# parses and an overflowing token wraps through (int)strtol -- 4295035458 is
+# parses and an overflowing token wraps through (int)strtol -- 4294975458 is
 # 2^32 + 8162 and lands back on room 8162, while dc's bare atoi
 # (src/act.wizard.c:1742) treats "1abc" as connection 1 and a huge token as a
 # wrapped negative that matches nothing. The DP-1523 movement batch.
@@ -42,7 +42,7 @@ Y
 goto 8162
 
 [probe]
-goto 4295035458
-at 4295035458 look
+goto 4294975458
+at 4294975458 look
 dc 1abc
 dc 99999999999999999999
