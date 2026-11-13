@@ -1,0 +1,76 @@
+# depth-case: wiz.snoop-already-snooping
+# C do_snoop's check order (src/act.wizard.c:1146-1160) is snoop_by, then
+# victim->desc->snooping == ch->desc ("Don't be stupid."), then the level test
+# ("You can't."). Because the stupid check comes first, the peer can reach it
+# even though it could not snoop a higher-level god: the god snoops the peer
+# first, so the god's descriptor is snooping the peer's, and the peer's snoop of
+# the god hits the stupid arm before the hierarchy gate.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Snoopgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Snoopgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Snooprank
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Snooprank
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Snooprank 8162
+set player Snooprank level 38
+
+[probe]
+snoop Snooprank
+send:peer snoop Snoopgod
