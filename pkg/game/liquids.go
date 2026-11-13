@@ -34,24 +34,26 @@ const (
 
 // Liquids is the indexed list of all liquid types.
 // Index by LIQ_x constant to get the matching Liquid.
-// Ported from src/constants.c drink_aff[] and drinks[].
+// Ported from src/constants.c drink_aff[] (constants.c:967-984),
+// drinks[] (constants.c:918-936) and color_liquid[] (constants.c:990-1010).
+// Columns are DRUNK/FULL/THIRST (structs.h:566-568).
 var Liquids = []Liquid{
-	LiqWater:      {Name: "water", Color: "clear", DrunkAffect: 0, FullAffect: 0, ThirstAffect: 1},
-	LiqBeer:       {Name: "beer", Color: "brown", DrunkAffect: 3, FullAffect: 2, ThirstAffect: 2},
-	LiqWine:       {Name: "wine", Color: "clear", DrunkAffect: 5, FullAffect: 2, ThirstAffect: 2},
-	LiqAle:        {Name: "ale", Color: "brown", DrunkAffect: 2, FullAffect: 2, ThirstAffect: 2},
-	LiqDarkAle:    {Name: "dark ale", Color: "dark", DrunkAffect: 1, FullAffect: 2, ThirstAffect: 2},
-	LiqWhisky:     {Name: "whiskey", Color: "golden", DrunkAffect: 6, FullAffect: 1, ThirstAffect: 1},
-	LiqLemonade:   {Name: "lemonade", Color: "pink", DrunkAffect: 0, FullAffect: 1, ThirstAffect: 8},
-	LiqFirebrt:    {Name: "firebreather", Color: "crimson", DrunkAffect: 10, FullAffect: 0, ThirstAffect: 0},
+	LiqWater:      {Name: "water", Color: "clear", DrunkAffect: 0, FullAffect: 1, ThirstAffect: 10},
+	LiqBeer:       {Name: "beer", Color: "brown", DrunkAffect: 3, FullAffect: 2, ThirstAffect: 5},
+	LiqWine:       {Name: "wine", Color: "clear", DrunkAffect: 5, FullAffect: 2, ThirstAffect: 5},
+	LiqAle:        {Name: "ale", Color: "brown", DrunkAffect: 2, FullAffect: 2, ThirstAffect: 5},
+	LiqDarkAle:    {Name: "dark ale", Color: "dark", DrunkAffect: 1, FullAffect: 2, ThirstAffect: 5},
+	LiqWhisky:     {Name: "whiskey", Color: "golden", DrunkAffect: 6, FullAffect: 1, ThirstAffect: 4},
+	LiqLemonade:   {Name: "lemonade", Color: "red", DrunkAffect: 0, FullAffect: 1, ThirstAffect: 8},
+	LiqFirebrt:    {Name: "firebreather", Color: "green", DrunkAffect: 10, FullAffect: 0, ThirstAffect: 0},
 	LiqLocalspc:   {Name: "local speciality", Color: "clear", DrunkAffect: 3, FullAffect: 3, ThirstAffect: 3},
-	LiqSlime:      {Name: "slime mold juice", Color: "green", DrunkAffect: 0, FullAffect: 4, ThirstAffect: -8},
+	LiqSlime:      {Name: "slime mold juice", Color: "light green", DrunkAffect: 0, FullAffect: 4, ThirstAffect: -8},
 	LiqMilk:       {Name: "milk", Color: "white", DrunkAffect: 0, FullAffect: 3, ThirstAffect: 6},
 	LiqTea:        {Name: "tea", Color: "brown", DrunkAffect: 0, FullAffect: 1, ThirstAffect: 6},
 	LiqCoffee:     {Name: "coffee", Color: "black", DrunkAffect: 0, FullAffect: 1, ThirstAffect: 6},
 	LiqBlood:      {Name: "blood", Color: "red", DrunkAffect: 0, FullAffect: 2, ThirstAffect: -1},
 	LiqSaltwater:  {Name: "salt water", Color: "clear", DrunkAffect: 0, FullAffect: 1, ThirstAffect: -2},
-	LiqClearwater: {Name: "clear water", Color: "clear", DrunkAffect: 0, FullAffect: 0, ThirstAffect: 13},
+	LiqClearwater: {Name: "clear water", Color: "crystal clear", DrunkAffect: 0, FullAffect: 0, ThirstAffect: 13},
 }
 
 // Liquid names for display — matches drinks[] from src/constants.c

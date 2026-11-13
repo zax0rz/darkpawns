@@ -197,9 +197,13 @@ func TestDoDrink_WaterSeededRNG(t *testing.T) {
 	if item.GetValue(1) != 10-wantAmount {
 		t.Errorf("water amount: got remaining %d, want %d", item.GetValue(1), 10-wantAmount)
 	}
-	// Water has thirst affect 1; full/thirst affect 0.
-	if ch.GetCondition(CondThirst) != 10+wantAmount/4 {
-		t.Errorf("water thirst: got %d, want %d", ch.GetCondition(CondThirst), 10+wantAmount/4)
+	// C's drink_aff[0] for water is {DRUNK 0, FULL 1, THIRST 10}
+	// (src/constants.c:969): amount 5 gains full 1*5/4 and thirst 10*5/4.
+	if ch.GetCondition(CondFull) != 0+wantAmount/4 {
+		t.Errorf("water full: got %d, want %d", ch.GetCondition(CondFull), 0+wantAmount/4)
+	}
+	if ch.GetCondition(CondThirst) != 10+10*wantAmount/4 {
+		t.Errorf("water thirst: got %d, want %d", ch.GetCondition(CondThirst), 10+10*wantAmount/4)
 	}
 }
 

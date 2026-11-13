@@ -58,7 +58,15 @@ func TestVampireConsumableDepth(t *testing.T) {
 							}
 							blocked := vampire && liq != LiqBlood && (sun == SunSet || sun == SunDark)
 							full, thirst, drunk := 10, 10, 0
-							da, fa, ta := GetDrinkAffects(liq)
+							// C literals from src/constants.c:969-984 (drink_aff),
+							// not GetDrinkAffects: the wants must fail if the
+							// table regresses again (R5h, DP-1377).
+							aff := map[int][3]int{
+								LiqWater: {0, 1, 10},
+								LiqBeer:  {3, 2, 5},
+								LiqBlood: {0, 2, -1},
+							}[liq]
+							da, fa, ta := aff[0], aff[1], aff[2]
 							drunk += da * amount / 4
 							if !blocked {
 								full += fa * amount / 4
