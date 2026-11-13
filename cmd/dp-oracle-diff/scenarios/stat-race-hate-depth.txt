@@ -1,0 +1,50 @@
+# depth-case: stat.racial-hatreds
+# depth-case: stat.crash-flag-on-equip
+# C do_stat loops the five GET_RACE_HATE slots through mob_race_name
+# (src/act.wizard.c:891-898, and a negative slot prints "None" at :692-697).
+# Stock object 5200 applies a race hate through APPLY_RACE_HATE in affect_modify
+# (src/handler.c:205-237; APPLY_RACE_HATE is 25, src/structs.h:524), so the real
+# wield command fills a slot and the stat line reports it. The same object move
+# also witnesses PLR_CRASH: obj_from_char sets it (src/handler.c:592-595) and
+# do_stat prints it as CSH (src/constants.c:474), which is why C shows
+# "PLR: CSH" where the port showed NOBITS.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Racehate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Racehate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load obj 5200
+wield dagger
+
+[probe]
+stat Racehate

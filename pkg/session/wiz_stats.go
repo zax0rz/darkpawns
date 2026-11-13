@@ -356,7 +356,15 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 	autoExit := p.GetAutoExit()
 
 	s.Send("PRF: " + colorWrap(wizardPreferenceFlags(preferenceFlags, autoExit), ansiGreen, normal) + "\r\n")
-	s.Send("Racial Hatreds: " + colorWrap("None None None None None", ansiGreen, normal) + "\r\n")
+	// C do_stat loops the five GET_RACE_HATE slots through mob_race_name
+	// (src/act.wizard.c:891-898); a negative slot prints "None" (:692-697).
+	// The slots are filled by APPLY_RACE_HATE in affect_modify
+	// (src/handler.c:205-237), so a worn object can put a race name here.
+	hates := make([]string, 0, 5)
+	for i := 0; i < 5; i++ {
+		hates = append(hates, statRaceHateName(p.RaceHates[i]))
+	}
+	s.Send("Racial Hatreds: " + colorWrap(strings.Join(hates, " "), ansiGreen, normal) + "\r\n")
 	if p.GetLevel() >= LVL_IMMORT {
 		poofIn, poofOut := p.PoofIn, p.PoofOut
 		if poofIn == "" {
@@ -517,6 +525,15 @@ func wizardClassName(class int) string {
 		return game.PCClassTypes[class]
 	}
 	return "UNDEFINED"
+}
+
+// statRaceHateName is C's mob_race_name (src/act.wizard.c:692-697): a negative
+// slot prints "None", otherwise the mobile race table supplies the name.
+func statRaceHateName(race int) string {
+	if race < 0 || race >= len(wizardMobRaceNames) {
+		return "None"
+	}
+	return wizardMobRaceNames[race]
 }
 
 func wizardPositionName(position int) string {
