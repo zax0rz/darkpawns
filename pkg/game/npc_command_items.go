@@ -143,9 +143,7 @@ func (w *World) npcPutDirect(me *MobInstance, argument string) CharacterCommandR
 }
 
 func (w *World) npcPerformPut(me *MobInstance, object, container *ObjectInstance) {
-	// C perform_put checks GET_OBJ_WEIGHT(cont), which is the container's
-	// base weight and excludes its current contents (src/act.item.c:55).
-	if container.GetWeight()+object.GetWeight() > container.GetValue(contCapacity) {
+	if container.GetTotalWeight()+object.GetWeight() > container.GetValue(contCapacity) {
 		Act(w, false, me, nil, object, container, "$p won't fit in $P.", "", ToChar)
 		return
 	}
