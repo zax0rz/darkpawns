@@ -1283,6 +1283,17 @@ func readCString(b []byte) string {
 	return string(b)
 }
 
+func cSexToGo(cSex byte) int {
+	switch cSex {
+	case 1: // C SEX_MALE
+		return game.SexMale
+	case 2: // C SEX_FEMALE
+		return game.SexFemale
+	default: // C SEX_NEUTRAL (0)
+		return game.SexNeutral
+	}
+}
+
 func decodeShippedPlayerRecord(rec []byte) (*db.PlayerRecord, int64, error) {
 	const (
 		offName          = 0
@@ -1339,7 +1350,7 @@ func decodeShippedPlayerRecord(rec []byte) (*db.PlayerRecord, int64, error) {
 	name := readCString(rec[offName : offName+lenName])
 	description := readCString(rec[offDescription : offDescription+lenDescription])
 	title := readCString(rec[offTitle : offTitle+lenTitle])
-	sex := int(rec[offSex])
+	sex := cSexToGo(rec[offSex])
 	class := int(rec[offClass])
 	level := int(rec[offLevel])
 	hometown := int(int16(binary.LittleEndian.Uint16(rec[offHometown : offHometown+2])))

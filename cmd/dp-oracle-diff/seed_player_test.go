@@ -204,11 +204,15 @@ func TestPrepareGoReloginDBSeedsTestorTwin(t *testing.T) {
 	// Height and weight live in the CharacterData payload (save.go's
 	// char_player_data mirror), not in a column.
 	var charData struct {
+		Sex    int `json:"sex"`
 		Height int `json:"height"`
 		Weight int `json:"weight"`
 	}
 	if err := json.Unmarshal(record.CharacterData, &charData); err != nil {
 		t.Fatalf("decode twin CharacterData: %v", err)
+	}
+	if charData.Sex != game.SexMale {
+		t.Fatalf("twin sex = %d, want %d (SexMale)", charData.Sex, game.SexMale)
 	}
 	if charData.Height != 175 || charData.Weight != 159 {
 		t.Fatalf("twin creation rolls drifted: height=%d weight=%d", charData.Height, charData.Weight)
