@@ -1,12 +1,17 @@
 package session
 
 import (
-	"strconv"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // parseSignedIntPrefix mirrors C atoi(): trim surrounding whitespace, accept
 // an optional sign, consume leading decimal digits, and ignore a suffix.
+// C's atoi never fails, so the bool reports only whether any digits were
+// present; overflow wraps through (int)strtol and keeps the wrapped value —
+// common.AtoiC carries that, which matters for dig/dc/advance where a huge
+// token lands on a C refusal arm keyed to the wrapped sign.
 func parseSignedIntPrefix(value string) (int, bool) {
 	value = strings.TrimSpace(value)
 	if value == "" {
@@ -14,11 +19,7 @@ func parseSignedIntPrefix(value string) (int, bool) {
 	}
 
 	index := 0
-	sign := 1
 	if value[0] == '+' || value[0] == '-' {
-		if value[0] == '-' {
-			sign = -1
-		}
 		index++
 	}
 	start := index
@@ -28,10 +29,5 @@ func parseSignedIntPrefix(value string) (int, bool) {
 	if index == start {
 		return 0, false
 	}
-
-	parsed, err := strconv.Atoi(value[start:index])
-	if err != nil {
-		return 0, false
-	}
-	return sign * parsed, true
+	return common.AtoiC(value), true
 }
