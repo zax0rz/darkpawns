@@ -3,7 +3,8 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"strconv"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // performDispose implements perform_drop() for the junk/donate paths —
@@ -101,7 +102,18 @@ func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donati
 		return
 	}
 
-	if amount, err := strconv.Atoi(arg1); err == nil {
+	// C do_drop gates the coin form with is_number (src/act.item.c:587-589)
+	// and then atoi: only all-digit tokens reach perform_drop_gold, and an
+	// overflowing token wraps negative into its "Heh heh heh.." arm.
+	allDigits := arg1 != ""
+	for _, digit := range arg1 {
+		if digit < '0' || digit > '9' {
+			allDigits = false
+			break
+		}
+	}
+	if allDigits {
+		amount := common.AtoiC(arg1)
 		arg2, _ := oneArgument(rest)
 		if arg2 == "coins" || arg2 == "coin" {
 			w.performDisposeGold(ch, amount, mode, donationRoom)

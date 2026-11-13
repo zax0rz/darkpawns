@@ -1,11 +1,11 @@
 package game
 
 import (
-	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // Inventory represents a player's inventory.
@@ -274,8 +274,9 @@ func GetNumber(name *string) int {
 			return 0
 		}
 	}
-	n, _ := strconv.Atoi(numStr)
-	return n
+	// C get_number returns atoi's value (handler.c:798-817): an overflowing
+	// run wraps negative and stays truthy for the caller's count scan.
+	return common.AtoiC(numStr)
 }
 
 // GetObjNum finds the newest live object with this prototype vnum.

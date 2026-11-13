@@ -1,0 +1,47 @@
+# depth-case: economy.atoi-junk-and-overflow
+# C's coin-taking commands gate with is_number and then atoi: do_split
+# (src/act.other.c:823-839) answers "Sorry, you can't do that." for the
+# wrapped negative; do_drop's junk/donate coin form (src/act.item.c:587-589)
+# reaches perform_drop_gold's "Heh heh heh.. we are jolly funny today, eh?"
+# (src/act.item.c:433-434). The DP-1523 economy batch.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Econgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Econgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+split 99999999999999999999
+junk 99999999999999999999 coins
+donate 99999999999999999999 coins
+junk 5abc coins
