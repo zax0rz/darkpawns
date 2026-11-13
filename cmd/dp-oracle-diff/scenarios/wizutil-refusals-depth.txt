@@ -1,0 +1,76 @@
+# depth-case: wiz.unaffect-removes-all
+# depth-case: wiz.thaw-not-frozen
+# C do_wizutil's THAW arm (src/act.wizard.c:2156-2159) refuses a victim who is
+# not frozen, and its UNAFFECT arm (:2196-2205) strips every affect and reports
+# "All spells removed." to the actor.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wizutilgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizutilgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Wizutilpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Wizutilpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Wizutilpeer 8162
+
+[probe]
+holylight
+thaw Wizutilpeer
+cast 'invisibility' Wizutilpeer
+~dpclock pulse 20
+unaffect Wizutilpeer
