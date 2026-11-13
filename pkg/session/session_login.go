@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/telemetry"
@@ -535,9 +535,17 @@ func (s *Session) routeDescriptorLine(command string, args []string, rawLine str
 				rest := strings.TrimSpace(line[2:])
 				fields := strings.Fields(rest)
 				if len(fields) >= 2 {
-					lineNumber, err := strconv.Atoi(fields[0])
+					// C improved-edit PARSE_EDIT parses the line number with
+					// atoi (src/improved-edit.c:392-458): digit-leading junk
+					// parses, and a huge token wraps negative through
+					// (int)strtol, taking the "must be higher than 0" arm.
+					lineNumber := common.AtoiC(fields[0])
 					text := strings.TrimSpace(rest[len(fields[0]):])
-					if err == nil && s.manager.world.Boards.ReviseBoardLine(s.player.WriteMagic, s.player, lineNumber, text) {
+					if lineNumber < 1 {
+						s.player.SendMessage("Line number must be higher than 0.\r\n")
+						return true
+					}
+					if s.manager.world.Boards.ReviseBoardLine(s.player.WriteMagic, s.player, lineNumber, text) {
 						s.player.SendMessage("Line changed.\r\n")
 					}
 					return true
