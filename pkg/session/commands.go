@@ -9,7 +9,6 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/command"
-	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
@@ -71,7 +70,7 @@ func init() {
 		name string
 		idx  int
 	}{{"north", 0}, {"east", 1}, {"south", 2}, {"west", 3}, {"up", 4}, {"down", 5}} {
-		registerActorCommand(dir.name, func(idx int) command.ActorHandler {
+		registerActorCommand(dir.name, func(idx int) characterActorHandler {
 			return func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
 				return game.CharacterMove(ctx, idx)
 			}
@@ -169,12 +168,12 @@ func init() {
 	registerCommand("drop", wrapArgs(cmdDrop), "Drop an item from your inventory.")
 	registerCommand("junk", wrapArgs(cmdJunk), "Destroy an item for a small experience reward.")
 	registerCommand("donate", wrapArgs(cmdDonate), "Donate an item to the donation room.")
-	registerCommand("eat", wrapArgs(cmdEat), "Eat some food.")
-	registerCommand("taste", wrapArgs(cmdTaste), "Nibble a little bit of some food.")
-	registerCommand("drink", wrapArgs(cmdDrink), "Drink from a container.")
-	registerCommand("sip", wrapArgs(cmdSip), "Sip from a container without drinking it.")
-	registerCommand("pour", wrapArgs(cmdPour), "Pour liquid from one container to another.")
-	registerCommand("fill", wrapArgs(cmdFill), "Fill a container from a fountain.")
+	registerCommand("eat", wrapBodyArgs(cmdEat), "Eat some food.")
+	registerCommand("taste", wrapBodyArgs(cmdTaste), "Nibble a little bit of some food.")
+	registerCommand("drink", wrapBodyArgs(cmdDrink), "Drink from a container.")
+	registerCommand("sip", wrapBodyArgs(cmdSip), "Sip from a container without drinking it.")
+	registerCommand("pour", wrapBodyArgs(cmdPour), "Pour liquid from one container to another.")
+	registerCommand("fill", wrapBodyArgs(cmdFill), "Fill a container from a fountain.")
 	registerCommand("quaff", wrapArgs(cmdQuaff), "Quaff a potion.")
 
 	// Info
@@ -421,8 +420,8 @@ func init() {
 	registerCommand("users", wrapArgs(cmdUsers), "Show connected players.")
 
 	// Other commands (act_other.go)
-	registerCommand("save", wrapArgs(cmdSave), "Save your character.")
-	registerCommand("report", wrapArgs(cmdReport), "Show report of your surroundings.")
+	registerCommand("save", wrapBodyArgs(cmdSave), "Save your character.")
+	registerCommand("report", wrapBodyArgs(cmdReport), "Show report of your surroundings.")
 	registerActorCommand("report", npcActorHandler(func(w *game.World, mob *game.MobInstance, _ string) { w.NPCReportCommand(mob) }))
 	// C's do_force hands the line to command_interpreter for any body, so a
 	// mobile can be forced or ordered to run group exactly as a player can
@@ -433,37 +432,37 @@ func init() {
 	registerActorCommand("group", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) {
 		w.GroupCommand(mob, arg)
 	}))
-	registerCommand("split", wrapArgs(cmdSplit), "Split gold with your group.")
-	registerCommand("wimpy", wrapArgs(cmdWimpy), "Set your wimpy threshold.")
-	registerCommand("display", wrapArgs(cmdDisplay), "Set display preferences.")
-	registerCommand("transform", wrapArgs(cmdTransform), "Transform your appearance.")
+	registerCommand("split", wrapBodyArgs(cmdSplit), "Split gold with your group.")
+	registerCommand("wimpy", wrapBodyArgs(cmdWimpy), "Set your wimpy threshold.")
+	registerCommand("display", wrapBodyArgs(cmdDisplay), "Set display preferences.")
+	registerCommand("transform", wrapBodyArgs(cmdTransform), "Transform your appearance.")
 	// "mount" is src/interpreter.c's other top-level name for do_ride — identical handler, same subcmd.
-	registerCommand("ride", wrapArgs(cmdRide), "Ride a mount.", "mount")
+	registerCommand("ride", wrapBodyArgs(cmdRide), "Ride a mount.", "mount")
 	registerActorCommand("ride", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
 		return game.CharacterMount(ctx)
 	})
-	registerCommand("dismount", wrapArgs(cmdDismount), "Dismount from your mount.")
+	registerCommand("dismount", wrapBodyArgs(cmdDismount), "Dismount from your mount.")
 	registerActorCommand("dismount", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
 		return game.CharacterDismount(ctx)
 	})
-	registerCommand("yank", wrapArgs(cmdYank), "Yank someone from a mount or chair.")
-	registerCommand("peek", wrapArgs(cmdPeek), "Peek at another player's inventory.")
-	registerCommand("recall", wrapArgs(cmdRecall), "Recall to your home city.")
+	registerCommand("yank", wrapBodyArgs(cmdYank), "Yank someone from a mount or chair.")
+	registerCommand("peek", wrapBodyArgs(cmdPeek), "Peek at another player's inventory.")
+	registerCommand("recall", wrapBodyArgs(cmdRecall), "Recall to your home city.")
 	registerCommand("stealth", wrapSkill(command.CmdStealth), "Enter stealth mode.")
-	registerCommand("appraise", wrapArgs(cmdAppraise), "Appraise an item's value.")
-	registerCommand("scout", wrapArgs(cmdScout), "Scout ahead for danger.")
-	registerCommand("roll", wrapArgs(cmdRoll), "Roll a random number.")
+	registerCommand("appraise", wrapBodyArgs(cmdAppraise), "Appraise an item's value.")
+	registerCommand("scout", wrapBodyArgs(cmdScout), "Scout ahead for danger.")
+	registerCommand("roll", wrapBodyArgs(cmdRoll), "Roll a random number.")
 	registerActorCommand("roll", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
 		return game.CharacterRoll(ctx)
 	})
-	registerCommand("visible", wrapArgs(cmdVisible), "Make yourself visible again.")
+	registerCommand("visible", wrapBodyArgs(cmdVisible), "Make yourself visible again.")
 	registerActorCommand("visible", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
 		return game.CharacterVisible(ctx)
 	})
 	// do_track lives in graph.c; its class gate is in the handler (graph.go).
 	registerCommand("track", wrapArgs(cmdTrack), "Sense which way a target went.")
-	registerCommand("inactive", wrapArgs(cmdInactive), "Toggle inactive status.")
-	registerCommand("auto", wrapArgs(cmdAuto), "Toggle automatic exits, looting, gold, and split.")
+	registerCommand("inactive", wrapBodyArgs(cmdInactive), "Toggle inactive status.")
+	registerCommand("auto", wrapBodyArgs(cmdAuto), "Toggle automatic exits, looting, gold, and split.")
 	// Preference toggles (act.other.c do_gen_tog) — each is its own top-level
 	// command in the original C, not a unified dispatcher; src/interpreter.c
 	// lines 366-666.
@@ -486,11 +485,11 @@ func init() {
 	registerCommand("nobroadcast", wrapToggle("nobroadcast"), "Toggle deafness to broadcasts.")
 	registerCommand("ident", wrapToggle("ident"), "Toggle ident lookups.")
 	registerCommand("slowns", wrapToggle("slowns"), "Toggle nameserver resolution.")
-	registerCommand("bug", wrapArgs(cmdBug), "Report a bug.")
-	registerCommand("typo", wrapArgs(cmdTypo), "Report a typo.")
-	registerCommand("idea", wrapArgs(cmdIdea), "Submit an idea.")
-	registerCommand("todo", wrapArgs(cmdTodo), "Submit a todo suggestion.")
-	registerCommand("afk", wrapArgs(cmdAFK), "Toggle away-from-keyboard status.")
+	registerCommand("bug", wrapGenWrite("bug"), "Report a bug.")
+	registerCommand("typo", wrapGenWrite("typo"), "Report a typo.")
+	registerCommand("idea", wrapGenWrite("idea"), "Submit an idea.")
+	registerCommand("todo", wrapGenWrite("todo"), "Submit a todo suggestion.")
+	registerCommand("afk", wrapBodyArgs(cmdAFK), "Toggle away-from-keyboard status.")
 
 	// Ban system (ported from ban.c)
 	registerCommand("ban", wrapArgs(cmdBan), "Ban a site (admin only).")
@@ -512,7 +511,7 @@ func init() {
 	registerCommand("grats", wrapArgs(cmdGratz), "Congratulate someone on the channel.")
 	registerCommand("newbie", wrapArgs(cmdNewbieChannel), "Ask a question on the newbie channel.")
 	registerCommand("ctell", wrapArgs(cmdCTell), "Send a message to your clan.")
-	registerCommand("prompt", wrapArgs(cmdPrompt), "Set your prompt.")
+	registerCommand("prompt", wrapBodyArgs(cmdPrompt), "Set your prompt.")
 	registerCommand("reply", wrapArgs(cmdReply), "Reply to the last tell.")
 	registerCommand(".", wrapArgs(cmdReply), "Reply to the last tell.")
 	registerCommand("write", wrapArgs(cmdWrite), "Write on an object.")
@@ -525,12 +524,13 @@ func init() {
 
 	// Alias (game pkg)
 	registerCommand("alias", wrapArgs(cmdAlias), "Manage command aliases.")
+	registerNPCRefusals()
 
 	// Admin commands (game pkg bans) — duplicate of whod.c port; let the first one win
 	// (no re-register here to avoid overwriting minPosition)
 }
 
-func npcActorHandler(run func(*game.World, *game.MobInstance, string)) command.ActorHandler {
+func npcActorHandler(run func(*game.World, *game.MobInstance, string)) characterActorHandler {
 	return func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
 		mob, ok := ctx.Actor.(*game.MobInstance)
 		if !ok || ctx.World == nil {
@@ -541,24 +541,76 @@ func npcActorHandler(run func(*game.World, *game.MobInstance, string)) command.A
 	}
 }
 
+func registerNPCRefusals() {
+	for _, refusal := range []struct{ name, message string }{
+		{"alias", ""},
+		{"brief", ""},
+		{"bug", "Monsters can't have ideas - Go away.\r\n"},
+		{"cast", ""},
+		{"color", ""},
+		{"compact", ""},
+		{"display", "Monsters don't need displays.  Go away.\r\n"},
+		{"idea", "Monsters can't have ideas - Go away.\r\n"},
+		{"levels", "You ain't nothin' but a hound-dog.\r\n"},
+		{"noauction", ""},
+		{"nobroadcast", ""},
+		{"noctell", ""},
+		{"nogossip", ""},
+		{"nograts", ""},
+		{"nonewbie", ""},
+		{"norepeat", ""},
+		{"noshout", ""},
+		{"nosummon", ""},
+		{"notell", ""},
+		{"prompt", "Monsters don't need displays.  Go away.\r\n"},
+		{"quest", ""},
+		{"qui", ""},
+		{"quit", ""},
+		{"reallyquit", ""},
+		{"recall", "This command is not available for someone of your experience!\r\n"},
+		{"save", ""},
+		{"split", ""},
+		{"title", "Your title is fine... go away.\r\n"},
+		{"typo", "Monsters can't have ideas - Go away.\r\n"},
+		{"will", ""},
+	} {
+		message := refusal.message
+		registerActorCommand(refusal.name, func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+			if ctx.Actor == nil || !ctx.Actor.IsNPC() {
+				return game.CharacterCommandUnsupported
+			}
+			if message != "" && ctx.PrivateOutput != nil {
+				ctx.PrivateOutput(message)
+			}
+			return game.CharacterCommandHandled
+		})
+	}
+}
+
 // wrapArgs adapts a func(*Session, []string) error to command.Handler.
 func wrapArgs(fn func(*Session, []string) error) command.Handler {
-	return func(s common.CommandSession, _cmd string, args []string) error {
-		return fn(s.(*commandSession).Session, args)
+	return func(ctx command.ExecutionContext, _cmd string, args []string) error {
+		return fn(commandSessionFromContext(ctx), args)
+	}
+}
+
+func wrapBodyArgs(fn func(command.ExecutionContext, []string) error) command.Handler {
+	return func(ctx command.ExecutionContext, _cmd string, args []string) error {
+		return fn(ctx, args)
 	}
 }
 
 // wrapNoArgs adapts a func(*Session) error to command.Handler.
 func wrapNoArgs(fn func(*Session) error) command.Handler {
-	return func(s common.CommandSession, _cmd string, args []string) error {
-		return fn(s.(*commandSession).Session)
+	return func(ctx command.ExecutionContext, _cmd string, args []string) error {
+		return fn(commandSessionFromContext(ctx))
 	}
 }
 
 // wrapMove adapts cmdMove to the registry handler signature.
 func wrapMove(direction string) command.Handler {
-	return func(s common.CommandSession, _cmd string, args []string) error {
-		return cmdMove(s.(*commandSession).Session, direction)
+	return func(ctx command.ExecutionContext, _cmd string, args []string) error {
+		return cmdMove(commandSessionFromContext(ctx), direction)
 	}
 }
 
@@ -566,17 +618,59 @@ func wrapMove(direction string) command.Handler {
 // etc. — src/interpreter.c each registers do_gen_tog under its own command
 // name, not a unified "toggle <name>" dispatcher) to command.Handler.
 func wrapToggle(key string) command.Handler {
-	return func(s common.CommandSession, _cmd string, args []string) error {
-		sess := s.(*commandSession).Session
-		sess.manager.world.ExecGenTog(sess.player, sess.switchedMob, key)
+	return func(ctx command.ExecutionContext, _cmd string, args []string) error {
+		player, mob := executionBodyParts(ctx)
+		ctx.World.ExecGenTog(player, mob, key)
+		return nil
+	}
+}
+
+func wrapGenWrite(cmd string) command.Handler {
+	return func(ctx command.ExecutionContext, _cmd string, args []string) error {
+		player, mob := executionBodyParts(ctx)
+		arg := ctx.RawArgs
+		if arg == "" {
+			arg = strings.Join(args, " ")
+		}
+		ctx.World.ExecGenWrite(player, mob, cmd, strings.ReplaceAll(arg, "$", "$$"))
 		return nil
 	}
 }
 
 // wrapSkill adapts a skill command (which uses command.SessionInterface) to command.Handler.
 func wrapSkill(fn func(command.SessionInterface, []string) error) command.Handler {
-	return func(s common.CommandSession, _cmd string, args []string) error {
-		return fn(s.(*commandSession).Session, args)
+	return func(ctx command.ExecutionContext, _cmd string, args []string) error {
+		return fn(commandSessionFromContext(ctx), args)
+	}
+}
+
+func commandSessionFromContext(ctx command.ExecutionContext) *Session {
+	switch session := ctx.Session.(type) {
+	case *commandSession:
+		return session.Session
+	case *commandSessionWrapper:
+		return session.session
+	default:
+		return nil
+	}
+}
+
+func executionBodyParts(ctx command.ExecutionContext) (*game.Player, *game.MobInstance) {
+	switch body := ctx.Body.(type) {
+	case *game.Player:
+		return body, nil
+	case *game.MobInstance:
+		// These legacy world bridges use the player argument for descriptor
+		// delivery and the mob argument for the acting body. Keep the owner
+		// available for output while deriving the actor solely from ctx.Body.
+		if ctx.Session != nil {
+			if player, ok := ctx.Session.GetPlayer().(*game.Player); ok {
+				return player, body
+			}
+		}
+		return nil, body
+	default:
+		return nil, nil
 	}
 }
 
@@ -729,6 +823,12 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 		}
 	}
 
+	// Resolve the command body once, after descriptor alias expansion. C's
+	// command_interpreter uses d->character for the command body and the
+	// descriptor itself for output, paging, aliases, and editor state.
+	ctx := characterCommandContextForSession(s)
+	ctx.RawArgs = rawArgs
+
 	// C command_interpreter draws number(0,3) at the top of every playing
 	// character command and clears AFF_HIDE on 0 (interpreter.c:889-890). It
 	// draws *before* skip_spaces and the empty-argument return
@@ -736,8 +836,8 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	// replacement is empty — draws too. This must follow alias expansion and
 	// precede command lookup.
 	// #nosec G404 — game RNG, not cryptographic
-	if s.player != nil && commandNumber(0, 3) == 0 {
-		s.player.SetAffect(game.AffHide, false)
+	if ctx.Body != nil {
+		clearCharacterHideOnDraw(ctx.Body, commandNumber)
 	}
 
 	if cmdStr == "" {
@@ -796,19 +896,19 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	// matches them misses here and falls through to the exact-match registry
 	// below — the only way Go-only names resolve (R4). Position/frozen gating
 	// stays in commandGateRejected, post-resolution; not duplicated here.
-	// Keep the player transport's existing effective-level source. Resolution
-	// itself receives an explicit level and never inspects mutable Session state.
-	resolved := resolveCharacterCommand(cmd, commandLevel(s))
+	// Resolution filters by the body level before choosing a prefix, matching
+	// src/interpreter.c:910-916. The context has already captured the body.
+	resolved := resolveCharacterCommand(cmd, commandLevel(ctx))
 	cmd = resolved.Name
 	entry, ok := resolved.Entry, resolved.Found
 	if !ok {
 		// Socials are C command rows (do_action); a social the socials file
 		// defines but the command table does not list is "Huh?!?" in C.
 		if _, found := game.Socials[cmd]; found && isCSocial(cmd) {
-			if commandGateRejected(s, mustCommandGate(cmd)) {
+			if commandGateRejected(ctx, mustCommandGate(cmd)) {
 				return nil
 			}
-			if runSpecials(s, cmd, args, rawArgs) {
+			if runSpecials(ctx, cmd, args, rawArgs) {
 				return nil
 			}
 			game.DoAction(s.manager.world, s.player, cmd, strings.Join(args, " "))
@@ -822,18 +922,14 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 		return nil
 	}
 
-	if commandGateRejected(s, commandGate{MinLevel: entry.MinLevel, MinPosition: entry.MinPosition}) {
+	if commandGateRejected(ctx, commandGate{MinLevel: entry.MinLevel, MinPosition: entry.MinPosition}) {
 		return nil
 	}
 	// C runs special() only after the command resolves and clears its refusal
 	// ladder (interpreter.c:910-949), and it passes CMD_NAME — the resolved
 	// name, never the typed abbreviation — so a typed "s" reaches no_move_south
 	// as "south". A word C answers with "Huh?!?" never reaches a special.
-	if runSpecials(s, cmd, args, rawArgs) {
-		return nil
-	}
-	if (cmd == "bug" || cmd == "typo" || cmd == "idea" || cmd == "todo") && rawArgs != "" {
-		s.manager.world.ExecGenWrite(s.player, s.switchedMob, cmd, strings.ReplaceAll(rawArgs, "$", "$$"))
+	if runSpecials(ctx, cmd, args, rawArgs) {
 		return nil
 	}
 	if cmd == "send" {
@@ -893,73 +989,49 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	// (Manager.DrainInputQueues), which queues wait>0 commands at the
 	// handleCommand funnel (session_login.go) and drains one per pulse.
 	//
-	// C's command_interpreter runs the resolved command as d->character, which
-	// for a switched session is the switched body rather than the owning
-	// player. A command with a mobile lane runs as that body here; a command
-	// without one keeps the session handler so descriptor commands (return,
-	// unswitch, and the wizard switch ladder) still work (DP-1516 items 3, 8).
-	// A mobile lane that answers CharacterCommandUnsupported must NOT swallow
-	// the command: several actor lanes were written for descriptor-less NPCs
-	// and print nothing on a miss, so falling through restores the session
-	// handler instead of a silent no-op (DP-1516 #2440 review).
-	if s.isSwitched && s.switchedMob != nil && entry.ActorHandler != nil {
-		switch entry.ActorHandler(game.CharacterCommandContext{
-			Actor:         s.switchedMob,
-			World:         s.manager.world,
-			PrivateOutput: func(text string) { s.Send(text) },
-			RawArgs:       rawArgs,
-		}, cmd, args) {
-		case game.CharacterCommandHandled:
-			return nil
-		}
-	}
-	return entry.Handler(&commandSession{Session: s}, cmd, args)
+	// The registry gives every handler the same resolved body/descriptor pair.
+	// Descriptor-owned operations still use ctx.Session; body-aware handlers and
+	// actor adapters use ctx.Body.
+	return entry.Execute(ctx, cmd, args)
 }
 
-// commandLevel returns the level the C ladder searches and gates with:
-// the acting body's own level (interpreter.c:915-916). A session switched
-// into a mobile resolves as that mobile; wizard flows keep their own
-// permission source (getEffectiveLevel) and are untouched.
-func commandLevel(s *Session) int {
-	if s.isSwitched && s.switchedMob != nil {
-		return s.switchedMob.GetLevel()
+// commandLevel returns the level the C ladder searches and gates with
+// (interpreter.c:910-916). It reads the resolved body, the same ch passed to
+// command_interpreter in C; permission checks outside the command ladder keep
+// their separate effective-level helpers.
+func commandLevel(ctx command.ExecutionContext) int {
+	if ctx.Body == nil {
+		return 0
 	}
-	return getEffectiveLevel(s)
+	return ctx.Body.GetLevel()
 }
 
 // commandGateRejected mirrors C interpreter.c:910-947 after a command row is
 // found: level/lookup hiding, frozen, switched-NPC immortal denial, position.
-// The level and position are the acting body's (see commandLevel); the
-// switched-NPC immortal denial is C's own step (interpreter.c:920-921), kept:
-// once the search uses the mobile's level it fires exactly where C's does
-// (a high-level switched mobile), while low-level mobiles miss the search and
-// answer Huh?!? instead. Go has no registered nil-handler/not-implemented
-// state, so that C step is intentionally absent.
-func commandGateRejected(s *Session, gate commandGate) bool {
-	actorLevel := commandLevel(s)
+// The level and position come from the shared body context; the switched-NPC
+// immortal denial is C's own step (interpreter.c:920-921): a high-level mobile
+// reaches it, while a low-level mobile misses lookup and answers Huh?!?.
+func commandGateRejected(ctx command.ExecutionContext, gate commandGate) bool {
+	actorLevel := commandLevel(ctx)
 	if actorLevel < gate.MinLevel {
-		s.Send("Huh?!?\r\n")
+		ctx.SendPrivate("Huh?!?\r\n")
 		return true
 	}
-	if s.player == nil {
+	if ctx.Body == nil {
 		return false
 	}
-	// C checks PLR_FROZEN on the acting body; a switched mobile is never
-	// frozen (do_wizutil refuses mobs), so the god's flag cannot block here.
-	if s.switchedMob == nil && s.player.GetFlags()&(1<<uint(game.PlrFrozen)) != 0 && actorLevel < LVL_IMPL-1 {
-		s.Send("You try, but the mind-numbing cold prevents you...\r\n")
+	// C checks PLR_FROZEN on the body. NPCs have no player flags.
+	if player, ok := ctx.Body.(*game.Player); ok && player.GetFlags()&(1<<uint(game.PlrFrozen)) != 0 && actorLevel < LVL_IMPL-1 {
+		ctx.SendPrivate("You try, but the mind-numbing cold prevents you...\r\n")
 		return true
 	}
-	if s.isSwitched && s.switchedMob != nil && gate.MinLevel >= LVL_IMMORT {
-		s.Send("You can't use immortal commands while switched.\r\n")
+	if ctx.Body.IsNPC() && gate.MinLevel >= LVL_IMMORT {
+		ctx.SendPrivate("You can't use immortal commands while switched.\r\n")
 		return true
 	}
-	playerPos := s.player.GetPosition()
-	if s.switchedMob != nil {
-		playerPos = s.switchedMob.GetPosition()
-	}
-	if playerPos < gate.MinPosition {
-		s.Send(positionFailMessage(playerPos))
+	bodyPosition := ctx.Body.GetPosition()
+	if bodyPosition < gate.MinPosition {
+		ctx.SendPrivate(positionFailMessage(bodyPosition))
 		return true
 	}
 	return false
@@ -1007,37 +1079,33 @@ func warnUnsupportedSpecialOnce(specName string) {
 // MOB_EXTRACT; the room's objects. Every oncmd script is gated on !IS_NPC(ch)
 // except the room-object one, so a session switched into a mobile runs only the
 // specials and the room-object script.
-func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
-	if s.player == nil || s.manager == nil || s.manager.world == nil {
+func runSpecials(ctx command.ExecutionContext, name string, args []string, rawArgs string) bool {
+	if ctx.Body == nil || ctx.World == nil || ctx.Session == nil {
 		return false
 	}
-	w := s.manager.world
+	w := ctx.World
 	// C's special() is offered the descriptor's character (src/interpreter.c:
 	// 1407-1481 walks ch = d->character): the switched mobile or player when a
 	// session is switched, never the owning player. Every special below
 	// receives that acting body through CharacterSpecialContext.Actor, and the
 	// walk reads that body's room, worn and carried lists (DP-1474).
-	actorIsNPC := s.isSwitched && s.switchedMob != nil
+	actorIsNPC := ctx.Body.IsNPC()
 	var actorMob *game.MobInstance
-	actorPlayer := s.player
-	if actorIsNPC {
-		actorMob = s.switchedMob
-	} else if s.isSwitched && s.switchedPlayer != nil {
-		actorPlayer = s.switchedPlayer
-	}
-	specialCtx := game.CharacterSpecialContext{PrivateOutput: func(text string) { s.Send(text) }}
+	actorPlayer, _ := ctx.Body.(*game.Player)
+	actorMob, _ = ctx.Body.(*game.MobInstance)
+	specialCtx := game.CharacterSpecialContext{Actor: ctx.Body, PrivateOutput: ctx.Session.Send}
 	var roomVNum int
 	var wornList, carriedList []*game.ObjectInstance
 	if actorMob != nil {
-		specialCtx.Actor = actorMob
 		roomVNum = actorMob.GetRoomVNum()
 		wornList = game.COrderedMobWorn(actorMob)
 		carriedList = actorMob.InventorySnapshot()
-	} else {
-		specialCtx.Actor = actorPlayer
+	} else if actorPlayer != nil {
 		roomVNum = actorPlayer.GetRoomVNum()
 		wornList = game.COrderedWorn(actorPlayer)
 		carriedList = game.COrderedCarrying(actorPlayer)
+	} else {
+		return false
 	}
 	arg := strings.Join(args, " ")
 	scriptText := specialScriptText(name, args, rawArgs)

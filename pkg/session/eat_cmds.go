@@ -5,33 +5,38 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/command"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 // cmdEat implements the eat command.
 // Source: src/act.item.c ACMD(do_eat)
-func cmdEat(s *Session, args []string) error {
-	s.manager.world.ExecEat(s.player, s.switchedMob, strings.Join(args, " "))
+func cmdEat(ctx command.ExecutionContext, args []string) error {
+	player, mob := executionBodyParts(ctx)
+	ctx.World.ExecEat(player, mob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdTaste implements the taste command — src/act.item.c ACMD(do_eat) SCMD_TASTE.
-func cmdTaste(s *Session, args []string) error {
-	s.manager.world.ExecTaste(s.player, s.switchedMob, strings.Join(args, " "))
+func cmdTaste(ctx command.ExecutionContext, args []string) error {
+	player, mob := executionBodyParts(ctx)
+	ctx.World.ExecTaste(player, mob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdDrink implements the drink command.
 // Source: src/act.item.c ACMD(do_drink)
-func cmdDrink(s *Session, args []string) error {
-	s.manager.world.ExecDrink(s.player, s.switchedMob, strings.Join(args, " "))
+func cmdDrink(ctx command.ExecutionContext, args []string) error {
+	player, mob := executionBodyParts(ctx)
+	ctx.World.ExecDrink(player, mob, strings.Join(args, " "))
 	return nil
 }
 
 // cmdSip implements the sip command — src/act.item.c ACMD(do_drink) SCMD_SIP.
-func cmdSip(s *Session, args []string) error {
-	s.manager.world.ExecSip(s.player, s.switchedMob, strings.Join(args, " "))
+func cmdSip(ctx command.ExecutionContext, args []string) error {
+	player, mob := executionBodyParts(ctx)
+	ctx.World.ExecSip(player, mob, strings.Join(args, " "))
 	return nil
 }
 

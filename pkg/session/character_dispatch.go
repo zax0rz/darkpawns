@@ -5,6 +5,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/command"
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
@@ -12,20 +13,11 @@ import (
 
 var characterCommandNumber = dprng.Number
 
-// characterCommandContext keeps the acting body separate from the descriptor
-// that may control it. A mobile dispatched by force has no Session; a switched
-// body keeps the real Session that owns its descriptor.
-type characterCommandContext struct {
-	actor   combat.Combatant
-	session *Session
-	manager *Manager
-}
-
 // characterCommandContextForSession selects the body C's command_interpreter
 // sees while retaining the descriptor-owning session.
-func characterCommandContextForSession(s *Session) characterCommandContext {
+func characterCommandContextForSession(s *Session) command.ExecutionContext {
 	if s == nil {
-		return characterCommandContext{}
+		return command.ExecutionContext{}
 	}
 	// Switch ownership fields and the attached player are published under
 	// manager.mu. Snapshot them together; do not call helpers that reacquire
@@ -37,15 +29,24 @@ func characterCommandContextForSession(s *Session) characterCommandContext {
 		s.manager.mu.RLock()
 		defer s.manager.mu.RUnlock()
 	}
+	ctx := command.ExecutionContext{Session: &commandSession{Session: s}}
+	if s.manager != nil {
+		ctx.World = s.manager.world
+	}
 	if s.isSwitched {
 		if s.switchedMob != nil {
-			return characterCommandContext{actor: s.switchedMob, session: s, manager: s.manager}
+			ctx.Body = s.switchedMob
+			return ctx
 		}
 		if s.switchedPlayer != nil {
-			return characterCommandContext{actor: s.switchedPlayer, session: s, manager: s.manager}
+			ctx.Body = s.switchedPlayer
+			return ctx
 		}
 	}
-	return characterCommandContext{actor: s.player, session: s, manager: s.manager}
+	if s.player != nil {
+		ctx.Body = s.player
+	}
+	return ctx
 }
 
 // characterCommandResolution uses the existing ordered C command table and
@@ -67,15 +68,15 @@ type characterCommandPreparation struct {
 // prepareCharacterCommand is the direct-interpreter prelude for a real body.
 // Transport input continues through executeCommandRaw, whose existing
 // empty-line behavior is a separate legacy boundary.
-func prepareCharacterCommand(ctx characterCommandContext, line string, draw func(int, int) int) characterCommandPreparation {
-	clearCharacterHideOnDraw(ctx.actor, draw)
+func prepareCharacterCommand(ctx command.ExecutionContext, line string, draw func(int, int) int) characterCommandPreparation {
+	clearCharacterHideOnDraw(ctx.Body, draw)
 	name, args := splitCommandInput(line)
 	if name == "" {
 		return characterCommandPreparation{Empty: true}
 	}
 	level := 0
-	if ctx.actor != nil {
-		level = ctx.actor.GetLevel()
+	if ctx.Body != nil {
+		level = ctx.Body.GetLevel()
 	}
 	return characterCommandPreparation{
 		Args:    args,
@@ -85,18 +86,26 @@ func prepareCharacterCommand(ctx characterCommandContext, line string, draw func
 }
 
 func (m *Manager) executeCharacterCommand(actor combat.Combatant, sess *Session, line string) game.CharacterCommandResult {
-	return dispatchCharacterCommand(characterCommandContext{actor: actor, session: sess, manager: m}, line, characterCommandNumber)
+	return dispatchCharacterCommand(command.ExecutionContext{Body: actor, Session: commandSessionForCharacter(sess), World: m.world}, line, characterCommandNumber)
 }
 
 // executeCharacterCommandDirect dispatches a direct C ACMD call. The C caller
 // already selected the command body and passed its argument pointer, so this
 // path skips command_interpreter's draw, name resolution, gates, and specials.
 func (m *Manager) executeCharacterCommandDirect(actor combat.Combatant, sess *Session, commandName, rawArgs string) game.CharacterCommandResult {
-	return dispatchCharacterCommandDirect(characterCommandContext{actor: actor, session: sess, manager: m}, commandName, rawArgs)
+	return dispatchCharacterCommandDirect(command.ExecutionContext{Body: actor, Session: commandSessionForCharacter(sess), World: m.world, RawArgs: rawArgs}, commandName, rawArgs)
 }
 
-func dispatchCharacterCommandDirect(ctx characterCommandContext, commandName, rawArgs string) game.CharacterCommandResult {
-	if ctx.actor == nil {
+func commandSessionForCharacter(sess *Session) common.CommandSession {
+	if sess == nil {
+		return nil
+	}
+	return &commandSession{Session: sess}
+}
+
+func dispatchCharacterCommandDirect(ctx command.ExecutionContext, commandName, rawArgs string) game.CharacterCommandResult {
+	ctx.RawArgs = rawArgs
+	if ctx.Body == nil {
 		return game.CharacterCommandUnsupported
 	}
 	commandName = strings.ToLower(strings.TrimSpace(commandName))
@@ -104,8 +113,8 @@ func dispatchCharacterCommandDirect(ctx characterCommandContext, commandName, ra
 		if _, exists := game.Socials[commandName]; !exists || !isCSocial(commandName) {
 			return game.CharacterCommandUnsupported
 		}
-		mob, ok := ctx.actor.(*game.MobInstance)
-		w := characterWorld(ctx)
+		mob, ok := ctx.Body.(*game.MobInstance)
+		w := ctx.World
 		if !ok || w == nil {
 			return game.CharacterCommandUnsupported
 		}
@@ -116,18 +125,16 @@ func dispatchCharacterCommandDirect(ctx characterCommandContext, commandName, ra
 	if !found || entry == nil || entry.ActorHandler == nil {
 		return game.CharacterCommandUnsupported
 	}
-	result := entry.ActorHandler(game.CharacterCommandContext{
-		Actor: ctx.actor, World: characterWorld(ctx), PrivateOutput: characterPrivateFunc(ctx), RawArgs: rawArgs,
-	}, commandName, strings.Fields(rawArgs))
+	result := entry.ActorHandler(ctx, commandName, strings.Fields(rawArgs))
 	if result == game.CharacterCommandHandled {
 		return result
 	}
 	return game.CharacterCommandUnsupported
 }
 
-func dispatchCharacterCommand(ctx characterCommandContext, line string, draw func(int, int) int) game.CharacterCommandResult {
+func dispatchCharacterCommand(ctx command.ExecutionContext, line string, draw func(int, int) int) game.CharacterCommandResult {
 	prepared := prepareCharacterCommand(ctx, line, draw)
-	if ctx.actor == nil {
+	if ctx.Body == nil {
 		return game.CharacterCommandUnsupported
 	}
 	if prepared.Empty {
@@ -164,16 +171,15 @@ func dispatchCharacterCommand(ctx characterCommandContext, line string, draw fun
 	if entry.ActorHandler == nil {
 		return game.CharacterCommandUnsupported
 	}
-	result := entry.ActorHandler(game.CharacterCommandContext{
-		Actor: ctx.actor, World: characterWorld(ctx), PrivateOutput: characterPrivateFunc(ctx), RawArgs: prepared.RawArgs,
-	}, prepared.Command.Name, prepared.Args)
+	ctx.RawArgs = prepared.RawArgs
+	result := entry.ActorHandler(ctx, prepared.Command.Name, prepared.Args)
 	if result == game.CharacterCommandHandled || result == game.CharacterCommandUnsupported {
 		return result
 	}
 	return game.CharacterCommandUnsupported
 }
 
-func dispatchCharacterSocial(ctx characterCommandContext, name, rawArgs string) game.CharacterCommandResult {
+func dispatchCharacterSocial(ctx command.ExecutionContext, name, rawArgs string) game.CharacterCommandResult {
 	minimum, ok := game.SocialMinPosition(name)
 	if !ok {
 		return game.CharacterCommandUnsupported
@@ -188,8 +194,8 @@ func dispatchCharacterSocial(ctx characterCommandContext, name, rawArgs string) 
 	if special == game.SpecialUnsupported {
 		return game.CharacterCommandUnsupported
 	}
-	if mob, ok := ctx.actor.(*game.MobInstance); ok {
-		if w := characterWorld(ctx); w != nil {
+	if mob, ok := ctx.Body.(*game.MobInstance); ok {
+		if w := ctx.World; w != nil {
 			w.NPCSocialCommand(mob, name, rawArgs)
 			return game.CharacterCommandHandled
 		}
@@ -197,55 +203,52 @@ func dispatchCharacterSocial(ctx characterCommandContext, name, rawArgs string) 
 	return game.CharacterCommandUnsupported
 }
 
-func actorCommandGateRejected(ctx characterCommandContext, minLevel, minPosition int) bool {
-	if ctx.actor == nil {
+func actorCommandGateRejected(ctx command.ExecutionContext, minLevel, minPosition int) bool {
+	if ctx.Body == nil {
 		return true
 	}
-	if ctx.actor.GetLevel() < minLevel {
+	if ctx.Body.GetLevel() < minLevel {
 		characterPrivate(ctx, "Huh?!?\r\n")
 		return true
 	}
-	if player, ok := ctx.actor.(*game.Player); ok && player.GetFlags()&(1<<uint(game.PlrFrozen)) != 0 && ctx.actor.GetLevel() < LVL_IMPL-1 {
+	if player, ok := ctx.Body.(*game.Player); ok && player.GetFlags()&(1<<uint(game.PlrFrozen)) != 0 && ctx.Body.GetLevel() < LVL_IMPL-1 {
 		characterPrivate(ctx, "You try, but the mind-numbing cold prevents you...\r\n")
 		return true
 	}
-	if ctx.actor.IsNPC() && minLevel >= LVL_IMMORT {
+	if ctx.Body.IsNPC() && minLevel >= LVL_IMMORT {
 		characterPrivate(ctx, "You can't use immortal commands while switched.\r\n")
 		return true
 	}
-	if ctx.actor.GetPosition() < minPosition {
-		characterPrivate(ctx, positionFailMessage(ctx.actor.GetPosition()))
+	if ctx.Body.GetPosition() < minPosition {
+		characterPrivate(ctx, positionFailMessage(ctx.Body.GetPosition()))
 		return true
 	}
 	return false
 }
 
-func characterWorld(ctx characterCommandContext) *game.World {
-	if ctx.manager != nil {
-		return ctx.manager.world
-	}
-	if ctx.session != nil && ctx.session.manager != nil {
-		return ctx.session.manager.world
-	}
-	return nil
+func characterWorld(ctx command.ExecutionContext) *game.World {
+	return ctx.World
 }
 
-func characterPrivateFunc(ctx characterCommandContext) func(string) {
-	if ctx.session == nil {
+func characterPrivateFunc(ctx command.ExecutionContext) func(string) {
+	if ctx.PrivateOutput != nil {
+		return ctx.PrivateOutput
+	}
+	if ctx.Session == nil {
 		return nil
 	}
-	return func(text string) { ctx.session.Send(text) }
+	return ctx.Session.Send
 }
 
-func characterPrivate(ctx characterCommandContext, text string) {
+func characterPrivate(ctx command.ExecutionContext, text string) {
 	if send := characterPrivateFunc(ctx); send != nil {
 		send(text)
 	}
 }
 
-func runCharacterSpecials(ctx characterCommandContext, name, rawArgs string) game.SpecialResult {
+func runCharacterSpecials(ctx command.ExecutionContext, name, rawArgs string) game.SpecialResult {
 	w := characterWorld(ctx)
-	actor, ok := ctx.actor.(*game.MobInstance)
+	actor, ok := ctx.Body.(*game.MobInstance)
 	if w == nil || !ok || actor == nil {
 		return game.SpecialUnsupported
 	}
@@ -327,8 +330,8 @@ func runCharacterSpecials(ctx characterCommandContext, name, rawArgs string) gam
 	return game.SpecialDeclined
 }
 
-func actorSpecialContext(ctx characterCommandContext) game.CharacterSpecialContext {
-	return game.CharacterSpecialContext{Actor: ctx.actor, PrivateOutput: characterPrivateFunc(ctx)}
+func actorSpecialContext(ctx command.ExecutionContext) game.CharacterSpecialContext {
+	return game.CharacterSpecialContext{Actor: ctx.Body, PrivateOutput: characterPrivateFunc(ctx)}
 }
 
 // cRawCommandRemainder mirrors the line pointer returned by C's any_one_arg

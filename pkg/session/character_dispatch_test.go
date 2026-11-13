@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/command"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -15,11 +16,11 @@ func TestCharacterCommandContextKeepsActiveBodyAndRealSession(t *testing.T) {
 	switched := &Session{manager: manager, player: owner, isSwitched: true, switchedMob: mob}
 
 	ctx := characterCommandContextForSession(switched)
-	if ctx.actor != mob {
-		t.Fatalf("acting body = %T %v, want switched mob %p", ctx.actor, ctx.actor, mob)
+	if ctx.Body != mob {
+		t.Fatalf("acting body = %T %v, want switched mob %p", ctx.Body, ctx.Body, mob)
 	}
-	if ctx.session != switched {
-		t.Fatalf("descriptor session = %p, want original live session %p", ctx.session, switched)
+	if commandSessionFromContext(ctx) != switched {
+		t.Fatalf("descriptor session = %p, want original live session %p", commandSessionFromContext(ctx), switched)
 	}
 }
 
@@ -30,8 +31,8 @@ func TestCharacterCommandContextKeepsSwitchedPlayerBody(t *testing.T) {
 	switched := &Session{manager: manager, player: borrowed, isSwitched: true, switchedOriginal: owner, switchedPlayer: borrowed}
 
 	ctx := characterCommandContextForSession(switched)
-	if ctx.actor != borrowed || ctx.session != switched {
-		t.Fatalf("context body/session = %p/%p, want %p/%p", ctx.actor, ctx.session, borrowed, switched)
+	if ctx.Body != borrowed || commandSessionFromContext(ctx) != switched {
+		t.Fatalf("context body/session = %p/%p, want %p/%p", ctx.Body, commandSessionFromContext(ctx), borrowed, switched)
 	}
 }
 
@@ -55,7 +56,7 @@ func TestDispatchCharacterCommandDirectUsesExactCommandBody(t *testing.T) {
 	if _, ok := cmdRegistry.Lookup("tel"); ok {
 		t.Fatal("tel unexpectedly has a registered body; the abbreviation control is ambiguous")
 	}
-	ctx := characterCommandContext{actor: f.actor, manager: f.manager}
+	ctx := command.ExecutionContext{Body: f.actor, World: f.world}
 	if got := dispatchCharacterCommandDirect(ctx, "tell", "Observer exact body"); got != game.CharacterCommandHandled {
 		t.Fatalf("exact tell dispatch = %v, want handled", got)
 	}
@@ -109,7 +110,7 @@ func TestPrepareCharacterCommandDrawsBeforeEmptyAndUnknownResults(t *testing.T) 
 			actor := game.NewPlayer(1, "Owner", 1001)
 			actor.SetAffect(game.AffHide, true)
 			calls := 0
-			prepared := prepareCharacterCommand(characterCommandContext{actor: actor}, test.line, func(min, max int) int {
+			prepared := prepareCharacterCommand(command.ExecutionContext{Body: actor}, test.line, func(min, max int) int {
 				calls++
 				if min != 0 || max != 3 {
 					t.Fatalf("draw bounds = %d..%d, want 0..3", min, max)
@@ -139,7 +140,7 @@ func TestPrepareCharacterCommandPreservesCArgumentPointerRemainder(t *testing.T)
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			prepared := prepareCharacterCommand(characterCommandContext{actor: actor}, test.line, func(int, int) int { return 1 })
+			prepared := prepareCharacterCommand(command.ExecutionContext{Body: actor}, test.line, func(int, int) int { return 1 })
 			if prepared.Empty || prepared.Command.Name != test.wantCommand {
 				t.Fatalf("command preparation = %+v, want command %q", prepared, test.wantCommand)
 			}
@@ -165,7 +166,7 @@ func TestPrepareCharacterCommandClearsHideOnZeroForPlayerAndMob(t *testing.T) {
 		} else {
 			actor.(*game.Player).SetAffect(game.AffHide, true)
 		}
-		prepared := prepareCharacterCommand(characterCommandContext{actor: actor}, "look", func(int, int) int { return 0 })
+		prepared := prepareCharacterCommand(command.ExecutionContext{Body: actor}, "look", func(int, int) int { return 0 })
 		if prepared.Empty {
 			t.Fatalf("non-empty command unexpectedly prepared empty for %T", actor)
 		}

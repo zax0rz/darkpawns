@@ -119,7 +119,7 @@ func mustWorld(t *testing.T, parsed *parser.World) *game.World {
 func TestRunSpecialsRoomObjScriptNPCGates(t *testing.T) {
 	t.Run("pc-runs-all-four-arms", func(t *testing.T) {
 		_, s := newOnCmdGatesWorld(t)
-		if runSpecials(s, "look", nil, "") {
+		if runSpecials(characterCommandContextForSession(s), "look", nil, "") {
 			t.Fatal("runSpecials consumed the command though no script handled it")
 		}
 		want := []string{
@@ -148,7 +148,7 @@ func TestRunSpecialsRoomObjScriptNPCGates(t *testing.T) {
 		s.isSwitched = true
 		s.switchedMob = mob
 
-		runSpecials(s, "look", nil, "")
+		runSpecials(characterCommandContextForSession(s), "look", nil, "")
 		got := *scriptGateCalls(t)
 		want := []string{"gate-obj.lua:oncmd:owner=obj:me=npc"}
 		if len(got) != 1 || got[0] != want[0] {

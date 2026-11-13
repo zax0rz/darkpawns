@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/command"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -25,7 +26,7 @@ func TestSwitchedBodyUnsupportedActorLaneFallsThrough(t *testing.T) {
 		sess.Send("session-handler-ran")
 		return nil
 	}), "switched fall-through probe", 0, combat.PosDead)
-	if err := cmdRegistry.SetActorHandler(name, func(game.CharacterCommandContext, string, []string) game.CharacterCommandResult {
+	if err := cmdRegistry.SetActorHandler(name, func(command.ExecutionContext, string, []string) game.CharacterCommandResult {
 		return game.CharacterCommandUnsupported
 	}); err != nil {
 		t.Fatal(err)

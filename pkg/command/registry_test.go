@@ -4,8 +4,6 @@ import (
 	"errors"
 	"strings"
 	"testing"
-
-	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // mockCommandSession satisfies common.CommandSession
@@ -26,7 +24,7 @@ func TestRegistry_RegisterAndLookup(t *testing.T) {
 	r := NewRegistry()
 
 	handlerCalled := false
-	var handler Handler = func(s common.CommandSession, cmd string, args []string) error {
+	var handler Handler = func(ctx ExecutionContext, cmd string, args []string) error {
 		handlerCalled = true
 		return nil
 	}
@@ -72,7 +70,7 @@ func TestRegistry_RegisterAndLookup(t *testing.T) {
 
 func TestRegistry_GetAll(t *testing.T) {
 	r := NewRegistry()
-	h := func(s common.CommandSession, cmd string, args []string) error { return nil }
+	h := func(ctx ExecutionContext, cmd string, args []string) error { return nil }
 
 	r.Register("look", h, "look help", 1, 0, "l")
 	r.Register("score", h, "score help", 1, 0, "sc")
@@ -117,19 +115,19 @@ func TestRegistry_Middleware(t *testing.T) {
 	// Add a test middleware that increments a counter
 	mw1Called := 0
 	var mw1 Middleware = func(next Handler) Handler {
-		return func(s common.CommandSession, cmd string, args []string) error {
+		return func(ctx ExecutionContext, cmd string, args []string) error {
 			mw1Called++
-			return next(s, cmd, args)
+			return next(ctx, cmd, args)
 		}
 	}
 
 	// Add another middleware that intercepts and returns error
 	var mwIntercept Middleware = func(next Handler) Handler {
-		return func(s common.CommandSession, cmd string, args []string) error {
+		return func(ctx ExecutionContext, cmd string, args []string) error {
 			if len(args) > 0 && args[0] == "intercept" {
 				return errors.New("intercepted")
 			}
-			return next(s, cmd, args)
+			return next(ctx, cmd, args)
 		}
 	}
 
@@ -137,7 +135,7 @@ func TestRegistry_Middleware(t *testing.T) {
 	r.Use(mwIntercept)
 
 	handlerCalled := false
-	r.Register("say", func(s common.CommandSession, cmd string, args []string) error {
+	r.Register("say", func(ctx ExecutionContext, cmd string, args []string) error {
 		handlerCalled = true
 		return nil
 	}, "Say something", 1, 0)
@@ -179,8 +177,8 @@ func TestMiddleware_Whitelist(t *testing.T) {
 	r := NewRegistry()
 	r.Use(WhitelistMiddleware("look", "score"))
 
-	r.Register("look", func(s common.CommandSession, cmd string, args []string) error { return nil }, "", 1, 0)
-	r.Register("shout", func(s common.CommandSession, cmd string, args []string) error { return nil }, "", 1, 0)
+	r.Register("look", func(ctx ExecutionContext, cmd string, args []string) error { return nil }, "", 1, 0)
+	r.Register("shout", func(ctx ExecutionContext, cmd string, args []string) error { return nil }, "", 1, 0)
 
 	sess := &mockCommandSession{}
 
@@ -207,8 +205,8 @@ func TestMiddleware_Logging(t *testing.T) {
 	r := NewRegistry()
 	r.Use(LoggingMiddleware())
 
-	r.Register("look", func(s common.CommandSession, cmd string, args []string) error { return nil }, "", 1, 0)
-	r.Register("errorcmd", func(s common.CommandSession, cmd string, args []string) error { return errors.New("err") }, "", 1, 0)
+	r.Register("look", func(ctx ExecutionContext, cmd string, args []string) error { return nil }, "", 1, 0)
+	r.Register("errorcmd", func(ctx ExecutionContext, cmd string, args []string) error { return errors.New("err") }, "", 1, 0)
 
 	sess := &mockCommandSession{}
 

@@ -131,7 +131,7 @@ func TestReportColorUsesCNRMNotCMP(t *testing.T) {
 	m.sessions[s.player.Name] = s
 
 	statColorLevel(t, s, false, true) // C_NRM only
-	if err := cmdReport(s, nil); err != nil {
+	if err := cmdReport(characterCommandContextForSession(s), nil); err != nil {
 		t.Fatal(err)
 	}
 	got := statColorOutput(t, s)
@@ -144,7 +144,7 @@ func TestReportColorUsesCNRMNotCMP(t *testing.T) {
 	}
 
 	statColorLevel(t, s, false, false)
-	if err := cmdReport(s, nil); err != nil {
+	if err := cmdReport(characterCommandContextForSession(s), nil); err != nil {
 		t.Fatal(err)
 	}
 	got = statColorOutput(t, s)

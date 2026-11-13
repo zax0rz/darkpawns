@@ -98,7 +98,7 @@ func TestCmdSipDoesNotConsumeOrPoison(t *testing.T) {
 		t.Fatalf("AddItem: %v", err)
 	}
 
-	if err := cmdSip(s, []string{"waterskin"}); err != nil {
+	if err := cmdSip(characterCommandContextForSession(s), []string{"waterskin"}); err != nil {
 		t.Fatalf("cmdSip: %v", err)
 	}
 	if msg := readSessionText(t, s); !strings.Contains(msg, "tastes like") {
@@ -124,7 +124,7 @@ func TestCmdDrinkConsumesAndAppliesPoison(t *testing.T) {
 	}
 	s.player.SetCondition(game.CondThirst, 0)
 
-	if err := cmdDrink(s, []string{"waterskin"}); err != nil {
+	if err := cmdDrink(characterCommandContextForSession(s), []string{"waterskin"}); err != nil {
 		t.Fatalf("cmdDrink: %v", err)
 	}
 	if msg := readSessionText(t, s); !strings.Contains(msg, "You drink the") {
@@ -152,7 +152,7 @@ func TestCmdTasteDecrementsBitesWithoutFullyConsuming(t *testing.T) {
 		t.Fatalf("AddItem: %v", err)
 	}
 
-	if err := cmdTaste(s, []string{"bread"}); err != nil {
+	if err := cmdTaste(characterCommandContextForSession(s), []string{"bread"}); err != nil {
 		t.Fatalf("cmdTaste: %v", err)
 	}
 	if msg := readSessionText(t, s); !strings.Contains(msg, "nibble") {
@@ -175,7 +175,7 @@ func TestCmdTasteRemovesItemOnceBitesRunOut(t *testing.T) {
 		t.Fatalf("AddItem: %v", err)
 	}
 
-	if err := cmdTaste(s, []string{"bread"}); err != nil {
+	if err := cmdTaste(characterCommandContextForSession(s), []string{"bread"}); err != nil {
 		t.Fatalf("cmdTaste: %v", err)
 	}
 	readSessionText(t, s) // "You nibble..."
@@ -197,7 +197,7 @@ func TestCmdEatRemovesItemImmediately(t *testing.T) {
 		t.Fatalf("AddItem: %v", err)
 	}
 
-	if err := cmdEat(s, []string{"bread"}); err != nil {
+	if err := cmdEat(characterCommandContextForSession(s), []string{"bread"}); err != nil {
 		t.Fatalf("cmdEat: %v", err)
 	}
 	if msg := readSessionText(t, s); !strings.Contains(msg, "You eat") {

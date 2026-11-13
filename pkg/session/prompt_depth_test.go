@@ -29,14 +29,14 @@ func TestCmdPromptMatchesCDoDisplay(t *testing.T) {
 	actor := makeCommandTestSession(t, m, "Prompttest", 1, 1001)
 	registerInWorld(t, actor)
 
-	if err := cmdPrompt(actor, nil); err != nil {
+	if err := cmdPrompt(characterCommandContextForSession(actor), nil); err != nil {
 		t.Fatalf("cmdPrompt no argument: %v", err)
 	}
 	if got, want := readMsgText(t, actor), "Usage: prompt { H | M | V | T | F | all | none }\r\n"; got != want {
 		t.Fatalf("no-argument response = %q, want %q", got, want)
 	}
 
-	if err := cmdPrompt(actor, []string{"all"}); err != nil {
+	if err := cmdPrompt(characterCommandContextForSession(actor), []string{"all"}); err != nil {
 		t.Fatalf("cmdPrompt all: %v", err)
 	}
 	if got, want := readMsgText(t, actor), "Okay.\r\n"; got != want {
@@ -48,7 +48,7 @@ func TestCmdPromptMatchesCDoDisplay(t *testing.T) {
 		}
 	}
 
-	if err := cmdPrompt(actor, []string{"off"}); err != nil {
+	if err := cmdPrompt(characterCommandContextForSession(actor), []string{"off"}); err != nil {
 		t.Fatalf("cmdPrompt off: %v", err)
 	}
 	assertNoSessionMessage(t, actor)
@@ -58,7 +58,7 @@ func TestCmdPromptMatchesCDoDisplay(t *testing.T) {
 		}
 	}
 
-	if err := cmdPrompt(actor, []string{"hmv"}); err != nil {
+	if err := cmdPrompt(characterCommandContextForSession(actor), []string{"hmv"}); err != nil {
 		t.Fatalf("cmdPrompt hmv: %v", err)
 	}
 	if got, want := readMsgText(t, actor), "Okay.\r\n"; got != want {
@@ -75,7 +75,7 @@ func TestCmdPromptMatchesCDoDisplay(t *testing.T) {
 		}
 	}
 
-	if err := cmdPrompt(actor, []string{"none"}); err != nil {
+	if err := cmdPrompt(characterCommandContextForSession(actor), []string{"none"}); err != nil {
 		t.Fatalf("cmdPrompt none: %v", err)
 	}
 	if got, want := readMsgText(t, actor), "Okay.\r\n"; got != want {
@@ -87,7 +87,7 @@ func TestCmdPromptMatchesCDoDisplay(t *testing.T) {
 		}
 	}
 
-	if err := cmdPrompt(actor, []string{"on"}); err != nil {
+	if err := cmdPrompt(characterCommandContextForSession(actor), []string{"on"}); err != nil {
 		t.Fatalf("cmdPrompt on: %v", err)
 	}
 	if got, want := readMsgText(t, actor), "Okay.\r\n"; got != want {

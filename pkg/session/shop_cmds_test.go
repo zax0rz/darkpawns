@@ -131,7 +131,7 @@ func TestSwitchedShopKeeperResetsSortOnCommand(t *testing.T) {
 	actor.switchedMob = keeper
 	shop.LastSort = 9
 
-	if handled := runSpecials(actor, "look", nil, ""); handled {
+	if handled := runSpecials(characterCommandContextForSession(actor), "look", nil, ""); handled {
 		t.Fatal("shopkeeper special unexpectedly handled look")
 	}
 	if shop.LastSort != 0 {
