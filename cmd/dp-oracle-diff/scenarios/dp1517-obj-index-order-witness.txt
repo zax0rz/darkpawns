@@ -1,0 +1,39 @@
+# DP-1517 harness regression: adding 58.obj and 162.obj must preserve the
+# sorted C obj_index used by real_object() binary search.
+[fixture]
+empty-players
+quiet-mobs
+add-obj-index 58.obj
+add-obj-index 162.obj
+
+[setup:oracle]
+Gateitems
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gateitems
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[probe]
+load obj 5804
+load obj 16200

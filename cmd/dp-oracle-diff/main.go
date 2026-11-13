@@ -1649,122 +1649,102 @@ func applyMobAffFixtures(worldDir string, fixtures []oraclediff.MobAffFixture) e
 	return nil
 }
 
-// applyObjIndexFixtures appends filenames to the disposable obj index so
+// applyObjIndexFixtures adds filenames to the disposable obj index so
 // the boot loader parses otherwise-unindexed .obj prototypes. The index is a
 // whitespace-separated filename list terminated by "$" (db.c index_boot /
 // parser indexedDataFileNames read the same format on both servers).
 func applyObjIndexFixtures(worldDir string, fixtures []oraclediff.ObjIndexFixture) error {
-	if len(fixtures) == 0 {
-		return nil
-	}
-	path := filepath.Join(worldDir, "obj", "index")
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("read obj index: %w", err)
-	}
-	fileNumber := func(name string) int {
-		n, err := strconv.Atoi(strings.TrimSuffix(name, ".obj"))
-		if err != nil {
-			return -1
-		}
-		return n
-	}
-	existing := strings.Fields(string(data))
-	insertNum := fileNumber(fixtures[0].FileName)
-	insertAt := len(existing)
-	for i, name := range existing {
-		if name == "$" {
-			insertAt = i
-			break
-		}
-		if n := fileNumber(name); n > insertNum {
-			insertAt = i
-			break
-		}
-	}
-	// The index must stay ordered by vnum range: C's real_object() binary
-	// searches obj_index, which index_boot builds in index-file order.
-	added := make([]string, 0, len(fixtures))
+	filenames := make([]string, 0, len(fixtures))
 	for _, fixture := range fixtures {
-		if !slices.Contains(existing, fixture.FileName) {
-			added = append(added, fixture.FileName)
-		}
+		filenames = append(filenames, fixture.FileName)
 	}
-	if len(added) == 0 {
-		return nil
-	}
-	slices.SortStableFunc(added, func(a, b string) int {
-		return fileNumber(a) - fileNumber(b)
-	})
-	names := append([]string{}, existing[:insertAt]...)
-	names = append(names, added...)
-	names = append(names, existing[insertAt:]...)
-	updated := []byte(strings.Join(names, "\n") + "\n")
-	info, err := os.Stat(path)
-	if err != nil {
-		return fmt.Errorf("stat obj index: %w", err)
-	}
-	if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir
-		return fmt.Errorf("write obj index: %w", err)
-	}
-	return nil
+	return applyIndexFileFixtures(worldDir, "obj", ".obj", filenames)
 }
 
-// applyWldIndexFixtures appends filenames to the disposable wld/index so
+// applyWldIndexFixtures adds filenames to the disposable wld/index so
 // the boot loader parses otherwise-unindexed authoritative room files. The
 // world-file index is a whitespace-separated list terminated by "$", just
 // like the object index.
 func applyWldIndexFixtures(worldDir string, fixtures []oraclediff.WldIndexFixture) error {
+	filenames := make([]string, 0, len(fixtures))
+	for _, fixture := range fixtures {
+		filenames = append(filenames, fixture.FileName)
+	}
+	return applyIndexFileFixtures(worldDir, "wld", ".wld", filenames)
+}
+
+// applyIndexFileFixtures inserts each new numeric file at its own position
+// before the index terminator. Existing entries retain their relative order;
+// this matters because C's real_object() binary-searches index_boot order.
+func applyIndexFileFixtures(worldDir, indexDir, extension string, fixtures []string) error {
 	if len(fixtures) == 0 {
 		return nil
 	}
-	path := filepath.Join(worldDir, "wld", "index")
+	path := filepath.Join(worldDir, indexDir, "index")
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("read wld index: %w", err)
+		return fmt.Errorf("read %s index: %w", indexDir, err)
 	}
-	fileNumber := func(name string) int {
-		n, err := strconv.Atoi(strings.TrimSuffix(name, ".wld"))
+	number := func(name string) int {
+		n, err := strconv.Atoi(strings.TrimSuffix(name, extension))
 		if err != nil {
 			return -1
 		}
 		return n
 	}
-	existing := strings.Fields(string(data))
-	insertNum := fileNumber(fixtures[0].FileName)
-	insertAt := len(existing)
-	for i, name := range existing {
-		if name == "$" {
-			insertAt = i
-			break
-		}
-		if n := fileNumber(name); n > insertNum {
-			insertAt = i
-			break
-		}
+	names := strings.Fields(string(data))
+	terminator := slices.Index(names, "$")
+	if terminator < 0 {
+		return fmt.Errorf("%s index has no $ terminator", indexDir)
+	}
+
+	existing := make(map[string]struct{}, len(names))
+	for _, name := range names[:terminator] {
+		existing[name] = struct{}{}
 	}
 	added := make([]string, 0, len(fixtures))
-	for _, fixture := range fixtures {
-		if !slices.Contains(existing, fixture.FileName) {
-			added = append(added, fixture.FileName)
+	for _, name := range fixtures {
+		if _, ok := existing[name]; ok {
+			continue
 		}
+		existing[name] = struct{}{}
+		added = append(added, name)
 	}
 	if len(added) == 0 {
 		return nil
 	}
 	slices.SortStableFunc(added, func(a, b string) int {
-		return fileNumber(a) - fileNumber(b)
+		aNumber, bNumber := number(a), number(b)
+		switch {
+		case aNumber < bNumber:
+			return -1
+		case aNumber > bNumber:
+			return 1
+		default:
+			return 0
+		}
 	})
-	names := append([]string{}, existing[:insertAt]...)
-	names = append(names, added...)
-	names = append(names, existing[insertAt:]...)
+
+	for _, name := range added {
+		insertAt := slices.IndexFunc(names[:terminator], func(existingName string) bool {
+			return number(existingName) > number(name)
+		})
+		if insertAt < 0 {
+			insertAt = terminator
+		}
+		names = append(names, "")
+		copy(names[insertAt+1:], names[insertAt:])
+		names[insertAt] = name
+		terminator++
+	}
+
 	updated := []byte(strings.Join(names, "\n") + "\n")
 	info, err := os.Stat(path)
 	if err != nil {
-		return fmt.Errorf("stat wld index: %w", err)
+		return fmt.Errorf("stat %s index: %w", indexDir, err)
 	}
-	if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir and a validated fixture filename
-		return fmt.Errorf("write wld index: %w", err)
+	if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil { // #nosec G703 -- dev oracle-diff harness; path is a filepath.Join of a trusted world dir
+		return fmt.Errorf("write %s index: %w", indexDir, err)
 	}
 	return nil
 }
