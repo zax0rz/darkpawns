@@ -41,12 +41,12 @@ pkg/game/clan_admin.go:15	src/clan.c:134-139	is_number then atoi	switch-to-helpe
 pkg/game/comm_channel.go:315	src/act.comm.c:1464	atoi (no gate)	switch-to-helper	ctell imm clan number: C atoi("5abc") is 5 and overflow wraps negative, both refused only by the <= 0 / > count check; Go refuses "5abc" outright.
 pkg/game/comm_channel.go:350	src/act.comm.c:1501-1513	is_number then atoi	switch-to-helper	ctell #rank: C overflow keeps the wrapped negative minlev and prints it in " (%d) "; Go Atoi error turns it into 0 — visible byte difference in the tell.
 # --- economy/item class (follow-up batch) ---
-pkg/game/other_economy.go:33	src/act.other.c:835-839	is_number then atoi	switch-to-helper	split: C overflow wraps <= 0 and answers "Sorry, you can't do that."; Go Atoi error answers "How many coins do you wish to split with your group?".
-pkg/game/item_donate.go:104	src/act.item.c:587-589	is_number then atoi	switch-to-helper	junk/donate N coins: C overflow wraps negative into perform_drop_gold's "Heh heh heh.. we are jolly funny today, eh?"; Go treats the token as an item name instead.
-pkg/game/shop_trade.go:179	src/shop.c:404-405	is_number then atoi	switch-to-helper	ShopNumber '#' buy index: C overflow wraps negative and misses the shop; Go returns not-ok.
-pkg/game/inventory.go:277	src/handler.c:798-817	all-digit gate then atoi	switch-to-helper	GetNumber ("2.guard"): C overflow returns a wrapped negative, which is truthy and fails the find; Go returns 0 and takes the "can't see THAT many" arm — different bytes.
+pkg/game/other_economy.go:33	src/act.other.c:835-839	is_number then atoi	fixed	FIXED (economy batch): digit-loop gate kept + common.AtoiC; red on origin/main: kimi-dp1523-econ-red, green: kimi-dp1523-econ-green.
+pkg/game/item_donate.go:104	src/act.item.c:587-589	is_number then atoi	fixed	FIXED (economy batch): all-digit gate (C is_number; also excludes "-5", which bare Atoi accepted) + common.AtoiC into perform_drop_gold.
+pkg/game/shop_trade.go:179	src/shop.c:404-405	is_number then atoi	fixed	FIXED (economy batch): common.AtoiC; no observable divergence found (wrapped negative and 0 both miss the shop), kept for C parity.
+pkg/game/inventory.go:277	src/handler.c:798-817	all-digit gate then atoi	fixed	FIXED (economy batch): common.AtoiC returns C's wrapped negative, which callers' count scans treat exactly like C; no probe distinguishes the arms.
 # --- text editor class (follow-up batch) ---
-pkg/session/tedit.go:975	src/improved-edit.c:329-397	atoi	switch-to-helper	parseEditorInt feeds /d and /l ranges: C overflow wraps into "Line numbers must be greater than 0." territory; Go reports no range.
+pkg/session/tedit.go:975	src/improved-edit.c:329-397	atoi	match-C-other-parser	C /d and /l parse ranges with sscanf(" %d - %d ") (src/improved-edit.c:217,279), not atoi -- same class as who/users, which Zach approved leaving as-is; revisit with a dedicated sscanf decision.
 pkg/session/wiz_info.go:839	src/act.wizard.c:2304-2306	is_number then atoi	switch-to-helper	show shops selector: C overflow wraps negative into show_shops' miss arm; Go Atoi error falls to "This isn't a shop!".
 # --- engine data, save files, config: not player input, no change ---
 pkg/session/command_order.go:46	—	—	not-player-input	Embeds command_order.tsv (build-time command table); panics on bad data, never sees a player byte.
