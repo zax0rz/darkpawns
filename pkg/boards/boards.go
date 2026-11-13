@@ -15,10 +15,11 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // safeInt32 converts an int to int32 with overflow protection.
@@ -743,9 +744,15 @@ func (bs *BoardSystem) DisplayMsg(boardType int, ch BoardPlayer, arg string) boo
 		return false
 	}
 
-	// Parse message number
-	msg, err := strconv.Atoi(arg)
-	if err != nil || msg <= 0 {
+	// Parse message number. C boards.c:330-332 gates on the FIRST byte with
+	// isdigit and then atoi, so digit-leading junk parses ("1junk" is 1) and
+	// a huge token wraps negative through (int)strtol into the imagination
+	// arm below; only a non-digit first byte or an atoi of 0 returns 0.
+	if arg[0] < '0' || arg[0] > '9' {
+		return false
+	}
+	msg := common.AtoiC(arg)
+	if msg == 0 {
 		return false
 	}
 
@@ -806,8 +813,13 @@ func (bs *BoardSystem) RemoveMsg(boardType int, ch BoardPlayer, arg string) bool
 		return false
 	}
 
-	msg, err := strconv.Atoi(arg)
-	if err != nil || msg <= 0 {
+	// C boards.c:378-381: isdigit on the first byte, then atoi — the same
+	// digit-leading-junk and overflow-wrap semantics as Board_display_msg.
+	if arg[0] < '0' || arg[0] > '9' {
+		return false
+	}
+	msg := common.AtoiC(arg)
+	if msg == 0 {
 		return false
 	}
 

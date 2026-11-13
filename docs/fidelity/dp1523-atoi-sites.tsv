@@ -26,9 +26,9 @@ pkg/session/cmd_info.go:775	src/act.informative.c:1701	sscanf %d-%d	match-C-othe
 pkg/session/cmd_info.go:801	src/act.informative.c:1701-1724	sscanf %d-%d	match-C-other-parser	who space-separated upper extension: deliberate port addition on top of the sscanf divergences above.
 pkg/session/cmd_info.go:834	src/act.informative.c:1701-1724	sscanf %d-%d	match-C-other-parser	who -l space-separated upper, same.
 # --- boards class (follow-up batch) ---
-pkg/boards/boards.go:747	src/boards.c:330	isdigit(*number) then atoi	switch-to-helper	Board read: C atoi("5abc") is 5 and overflow wraps negative into the "That message exists only in your imagination." arm; Go refuses and shows the board instead.
-pkg/boards/boards.go:809	src/boards.c:381-383	isdigit(*number) then atoi	switch-to-helper	Board remove: same class as read.
-pkg/session/session_login.go:538	src/improved-edit.c:392-397	atoi	switch-to-helper	Board /e line edit: C atoi overflow answers "Line number must be higher than 0."; Go swallows the line silently on Atoi error.
+pkg/boards/boards.go:747	src/boards.c:330	isdigit(*number) then atoi	fixed	FIXED (boards batch, PR see DP-1523 follow-ups): first-byte digit gate + common.AtoiC; red on origin/main retained at kimi-dp1523-boards-red, green at kimi-dp1523-boards-fixed.
+pkg/boards/boards.go:809	src/boards.c:381-383	isdigit(*number) then atoi	fixed	FIXED (boards batch): same C-gate parse as DisplayMsg.
+pkg/session/session_login.go:538	src/improved-edit.c:392-397	atoi	fixed	FIXED (boards batch): common.AtoiC + the "Line number must be higher than 0." arm for wrapped/non-numeric line numbers (src/improved-edit.c:392-458).
 # --- clan class (follow-up batch; all is_number-gated, gates already match C) ---
 pkg/game/clan_settings.go:113	src/clan.c:1106-1111	is_number then atoi	switch-to-helper	clan ranks: overflow token passes isClanNumber but Atoi error leaves 0 where C wraps negative and hits the rank-range refusal.
 pkg/game/clan_settings.go:192	src/clan.c:1190-1194	is_number then atoi	switch-to-helper	clan select-by-number, same overflow class.

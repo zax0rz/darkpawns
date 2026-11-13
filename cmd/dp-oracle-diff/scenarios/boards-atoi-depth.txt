@@ -1,0 +1,55 @@
+# depth-case: boards.atoi-junk-and-overflow
+# C Board_display_msg and Board_remove_msg gate on the FIRST byte with
+# isdigit and then parse with atoi (src/boards.c:330-332, 378-381): a
+# digit-leading token with junk parses ("1junk" is message 1) and a huge
+# token wraps negative through (int)strtol into "That message exists only in
+# your imagination.". The board write editor's /e parses its line number
+# with atoi too, so a huge token takes "Line number must be higher than 0."
+# (src/improved-edit.c:392-458). This is the DP-1523 boards batch.
+
+[fixture]
+quiet-mobs
+spawn-obj 19652 2 8004 196
+
+[setup:oracle]
+Boardatoi
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Boardatoi
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+recall
+
+[probe]
+write
+write depth headline
+board body
+/e 99999999999999999999 revised body
+@
+read 1junk
+read 99999999999999999999
+remove 99999999999999999999
+remove 1junk
+look board
