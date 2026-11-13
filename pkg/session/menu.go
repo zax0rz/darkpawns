@@ -488,6 +488,7 @@ func (s *Session) reloadCharacterFromStore() error {
 	if err != nil {
 		return fmt.Errorf("reload %s: %w", s.player.Name, err)
 	}
+	s.manager.untagItIfPlayingPresent(p)
 	if aliases, aErr := game.ReadAliases(p.Name); aErr == nil {
 		p.Aliases = aliases
 	}
