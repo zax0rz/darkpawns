@@ -71,6 +71,7 @@ set Pagegod class mage
 set Pagegod maxmana 5000
 set Pagegod mana 5000
 cast 'invisibility' Vispeer
+~dpclock pulse 20
 
 [probe]
 page Vispeer hello there

@@ -72,6 +72,7 @@ set Statgod class mage
 set Statgod maxmana 5000
 set Statgod mana 5000
 cast 'invisibility' Vispeer
+~dpclock pulse 20
 
 [probe]
 stat player Vispeer

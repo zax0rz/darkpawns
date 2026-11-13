@@ -72,6 +72,7 @@ set Setgod class mage
 set Setgod maxmana 5000
 set Setgod mana 5000
 cast 'invisibility' Vispeer
+~dpclock pulse 20
 
 [probe]
 set player Vispeer level 32
