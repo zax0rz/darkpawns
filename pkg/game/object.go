@@ -93,9 +93,13 @@ func (o *ObjectInstance) GetWearFlags() [4]int {
 // World.SpawnObject so it carries a registry identity.
 func NewObjectInstance(proto *parser.Obj, roomVNum int) *ObjectInstance {
 	obj := &ObjectInstance{
-		Prototype:  proto,
-		VNum:       proto.VNum,
-		RoomVNum:   roomVNum,
+		Prototype: proto,
+		VNum:      proto.VNum,
+		RoomVNum:  roomVNum,
+		// read_object copies the prototype wholesale (db.c:1951), and the
+		// prototype timer is only ever non-zero after oedit's in-memory save
+		// (oedit.c:1260-1263) — file protos load 0 (DP-1447).
+		Timer:      proto.Timer,
 		Contains:   make([]*ObjectInstance, 0),
 		CustomData: make(map[string]any),
 		Runtime:    ObjectRuntimeState{},

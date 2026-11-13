@@ -39,12 +39,36 @@ func (p *Player) HasLight() bool {
 // update_char_objects — handler.c:1016
 // ---------------------------------------------------------------------------
 
-// updateCharObjects processes the held light exactly where C's point_update
-// calls update_char_objects (limits.c:521-525). C checks WEAR_HOLD and value[2],
-// emits separate actor and room acts at the one-hour and zero-hour boundaries,
-// then removes an unmodified light when it expires.
+// updateCharObjects ports C's update_char_objects (handler.c:1046-1082): the
+// held-light burn, then — on every path through the light block — a timer
+// walk over every worn item (use 2) and the whole carried list (use 1). The
+// walk only decrements timers; extraction stays with the global object walk
+// in the point update (limits.c:553+), so a worn or carried corpse decays
+// faster than one on the ground (DP-1447).
 func (w *World) updateCharObjects(p *Player) {
-	if p == nil || p.Equipment == nil {
+	if p == nil {
+		return
+	}
+	w.burnHeldLight(p)
+
+	if p.Equipment != nil {
+		for _, item := range p.Equipment.Snapshot() {
+			UpdateObject(item, 2)
+		}
+	}
+	if p.Inventory != nil {
+		for _, item := range p.Inventory.Snapshot() {
+			UpdateObject(item, 1)
+		}
+	}
+}
+
+// burnHeldLight is update_char_objects' WEAR_HOLD block (handler.c:1053-1074):
+// value[2] counts down by one per call, with separate actor and room acts at
+// the one-hour and zero-hour boundaries, and an unmodified light is removed
+// when it expires. C falls through to the timer walks after every arm.
+func (w *World) burnHeldLight(p *Player) {
+	if p.Equipment == nil {
 		return
 	}
 	item, ok := p.Equipment.GetItemInSlot(SlotHold)

@@ -262,7 +262,10 @@ func (s *Session) startOedit(number int, zone *parser.Zone) error {
 		zoneNumber: zone.Number,
 		isNew:      !exists,
 		mode:       oeditMainMenu,
-		affects:    make([]parser.ObjAffect, maxObjAffect),
+		// oedit_setup reads the live prototype's timer into the editor
+		// (src/oedit.c:967-990); the working copy commits it back below.
+		timer:   obj.Timer,
+		affects: make([]parser.ObjAffect, maxObjAffect),
 	}
 	for i, affect := range obj.Affects {
 		if i >= maxObjAffect {
@@ -1475,6 +1478,7 @@ func (s *Session) saveOeditInternallyLocked() {
 	state := s.oedit
 	obj := state.obj
 	obj.VNum = state.number
+	obj.Timer = state.timer
 
 	// Compact non-zero affect slots back into the parser's slice form. C's
 	// disk writer skips location 0 the same way (:438-443).
