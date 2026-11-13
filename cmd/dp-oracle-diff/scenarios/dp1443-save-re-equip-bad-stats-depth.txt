@@ -1,0 +1,88 @@
+# Lifecycle: save_char -> char_to_store re-equips worn gear and triggers check_for_bad_stats (DP-1443).
+# depth-case: persist.save-re-equip-bad-stats
+#
+# C's char_to_store (src/db.c:2632-2637) un-equips and re-equips char_eq[i]
+# via equip_char(ch, char_eq[i], i), which calls check_for_bad_stats(ch)
+# (src/handler.c:749) for each worn slot. When a worn character has a zero
+# stat (here DEX 0 via a -5 DEX robe on base DEX 5), every save emits the
+# bad-stat warning and deals 40 TYPE_SUFFERING self-damage (a draw site).
+#
+# RED on pre-fix Go: SavePlayerRecord (pkg/game/persistence_seam.go:58) never
+# calls ReplayEquipmentBadStats, so `save` emits only `Saving ...` and deals
+# 0 damage.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+SaveGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SaveGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+SaveVictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+SaveVictim
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport SaveVictim 8004
+set player SaveVictim level 15
+set player SaveVictim maxhit 500
+set player SaveVictim hit 500
+set player SaveVictim dex 5
+load obj 4406
+give robe SaveVictim
+force SaveVictim wear robe
+
+[probe]
+send:victim save
+send:victim score
