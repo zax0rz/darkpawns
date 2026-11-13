@@ -1,20 +1,23 @@
 # depth-case: lua.fight-npc-target-binding
 # C-first vehicle for run_script's ch binding when the opponent is a mobile
-# (DP-1319). A God gives the rat prototype the archived snake script and the
-# MS_FIGHTING flag through medit's script menu (the name and flags write to
-# the live prototype, src/medit.c script menu), loads a rat and a level-95
-# mold (so snake.lua's number(0, 102 - ch.level) roll is one in eight), tanks
-# both with set, charms the rat and orders it to kill the mold. The rat's
-# fight trigger then runs run_script(victim, ch=rat, ...) with the MOLD as ch
-# (fight.c:1889-1892): C binds the mobile through char_to_table
-# (scripts.c:1727-1729), so snake.lua reads ch.level and eventually prints
-# the bite acts. The unfixed Go dropped the mobile opponent, ch stayed unset,
-# the script errored on ch.level and no bite ever printed.
+# (DP-1319). The fixture gives the rat prototype a fight script: a charmed
+# rat ordered to kill a mold makes hit() end in run_script(victim, ch=rat)
+# with the MOLD as ch (fight.c:1889-1892), and C binds that mobile through
+# char_to_table (scripts.c:1727-1729), so the act pair renders with $N = the
+# mold every round. The unfixed Go dropped the mobile opponent: ch stayed
+# unset, the act call errored on ch, and no line ever printed.
 
 [fixture]
 empty-players
 quiet-mobs
 replace-room-exits 10049 none
+mob-script 4500 oracle/glm1319fight.lua 256
+
+[lua-script mob/oracle/glm1319fight.lua]
+function fight()
+  act("$n sniffs at $N suspiciously!", TRUE, me, NIL, ch, TO_NOTVICT)
+  act("$n sniffs at you suspiciously!", TRUE, me, NIL, ch, TO_VICT)
+end
 
 [setup:oracle]
 Snakegod
@@ -48,22 +51,14 @@ Y
 goto 10049
 
 [probe]
-medit 4500
-S
-1
-archive/snake
-2
-9
-0
-Q
-y
 load mob 4500
 load mob 4501
-set mold level 95
 set rat hit 5000
 set rat maxhit 5000
 set mold hit 5000
 set mold maxhit 5000
+set mold hitroll -20
+set mold damroll -50
 cast 'charm person' rat
 order rat kill mold
-~dpclock pulse 200
+~dpclock pulse 100
