@@ -1,0 +1,85 @@
+# C-first DP-1521 dispatcher proof. The owner stays in the Board Room while
+# switching globally into a horse in room 8162. The horse has a carried pepper
+# and an equipped cutlass, distinct from the owner's body. The successful
+# switch's "Okay." is part of the compared probe (R5j).
+# The low-level horse proves lookup hiding and its sleeping position gate,
+# followed by NPC-only refusals. Satan Klaus proves the switched-NPC immortal
+# gate after a command row is visible at the body's own level.
+# depth-case: command_interpreter.switched-body-gates-and-npc-refusals
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8021 1 8162 80
+give-object 8021 12132 1 80
+equip-object 8021 12120 1 16 80
+spawn-mob 70 1 8162 80
+
+[setup:oracle]
+Switchgate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchgate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+switch horse
+whod
+todo a switched body refusal
+alias
+brief
+cast heal
+color on
+compact
+display on
+prompt all
+levels
+recall
+bug a switched body report
+idea a switched body idea
+noauction
+nobroadcast
+noctell
+nogossip
+nograts
+nonewbie
+norepeat
+noshout
+nosummon
+notell
+quest
+qui
+quit
+reallyquit
+save
+split 10
+title switched title
+typo a switched body typo
+will heal
+sleep
+stand
+return
+switch satan
+whod
+todo a high-level switched body refusal

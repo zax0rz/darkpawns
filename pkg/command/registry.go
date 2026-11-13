@@ -14,17 +14,54 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
-// Handler is the function signature for command handlers.
-// It receives the session, the resolved command name, and the command arguments.
-type Handler func(common.CommandSession, string, []string) error
+// ExecutionContext carries the body a command acts on separately from the
+// descriptor-owning session. A switched mob is Body while Session remains the
+// immortal's descriptor; for ordinary and PC-switched play, Body is the active
+// player.
+type ExecutionContext struct {
+	Body    combat.Combatant
+	Session common.CommandSession
+	World   *game.World
+	RawArgs string
+	// PrivateOutput is used by direct actor calls that have no descriptor. A
+	// live session context leaves it nil and writes through Session.
+	PrivateOutput func(string)
+}
+
+// SendPrivate writes through the descriptor currently owned by the session.
+func (ctx ExecutionContext) SendPrivate(text string) {
+	if ctx.PrivateOutput != nil {
+		ctx.PrivateOutput(text)
+	} else if ctx.Session != nil {
+		ctx.Session.Send(text)
+	}
+}
+
+// CharacterContext adapts the shared execution context for game-level actor
+// implementations that use the narrower character command contract.
+func (ctx ExecutionContext) CharacterContext() game.CharacterCommandContext {
+	privateOutput := ctx.PrivateOutput
+	if privateOutput == nil && ctx.Session != nil {
+		privateOutput = ctx.Session.Send
+	}
+	return game.CharacterCommandContext{
+		Actor: ctx.Body, World: ctx.World, PrivateOutput: privateOutput, RawArgs: ctx.RawArgs,
+	}
+}
+
+// Handler receives the shared command context, the resolved command name, and
+// tokenized arguments.
+type Handler func(ExecutionContext, string, []string) error
 
 // ActorHandler handles a command for an explicit character body. The same
-// Entry retains its existing player Handler and C-derived command metadata.
-type ActorHandler func(game.CharacterCommandContext, string, []string) game.CharacterCommandResult
+// Entry retains its session handler and C-derived command metadata. It receives
+// the same body and descriptor context as the ordinary handler.
+type ActorHandler func(ExecutionContext, string, []string) game.CharacterCommandResult
 
 // Entry holds metadata for a registered command.
 type Entry struct {
@@ -138,9 +175,38 @@ func (r *Registry) GetAll() []*Entry {
 
 // Execute looks up and executes a command.
 func (r *Registry) Execute(s common.CommandSession, cmdStr string, args []string) error {
+	var body combat.Combatant
+	if s != nil {
+		if player, ok := s.GetPlayer().(*game.Player); ok && player != nil {
+			body = player
+		}
+	}
+	return r.ExecuteContext(ExecutionContext{Session: s, Body: body}, cmdStr, args)
+}
+
+// ExecuteContext looks up and executes a command with an already resolved body
+// context. The actor and session lanes share this one execution context.
+func (r *Registry) ExecuteContext(ctx ExecutionContext, cmdStr string, args []string) error {
 	entry, ok := r.Lookup(cmdStr)
 	if !ok {
 		return fmt.Errorf("unknown command: %s", cmdStr)
 	}
-	return entry.Handler(s, cmdStr, args)
+	return entry.Execute(ctx, cmdStr, args)
+}
+
+// Execute invokes the body's actor handler when available, then the session
+// handler if the actor lane does not implement that case.
+func (entry *Entry) Execute(ctx ExecutionContext, cmdStr string, args []string) error {
+	if entry == nil {
+		return fmt.Errorf("cannot execute a nil command entry")
+	}
+	if ctx.Body != nil && ctx.Body.IsNPC() && entry.ActorHandler != nil {
+		if entry.ActorHandler(ctx, cmdStr, args) == game.CharacterCommandHandled {
+			return nil
+		}
+	}
+	if entry.Handler == nil {
+		return fmt.Errorf("command %q has no handler", entry.Name)
+	}
+	return entry.Handler(ctx, cmdStr, args)
 }

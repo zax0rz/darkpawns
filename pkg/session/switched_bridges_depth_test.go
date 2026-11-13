@@ -21,7 +21,7 @@ func TestCmdTransformSwitchedMobUntransformable(t *testing.T) {
 	s.isSwitched = true
 	s.switchedMob = registerMob(t, s.manager, 2001, 1001)
 
-	if err := cmdTransform(s, []string{}); err != nil {
+	if err := cmdTransform(characterCommandContextForSession(s), []string{}); err != nil {
 		t.Fatalf("cmdTransform returned error: %v", err)
 	}
 	if len(*got) != 1 || (*got)[0] != "You aren't transformable!\n\r" {
@@ -46,7 +46,7 @@ func TestCmdDisplaySwitchedMobRefusesAsNpc(t *testing.T) {
 	s.isSwitched = true
 	s.switchedMob = registerMob(t, s.manager, 2001, 1001)
 
-	if err := cmdDisplay(s, []string{"on"}); err != nil {
+	if err := cmdDisplay(characterCommandContextForSession(s), []string{"on"}); err != nil {
 		t.Fatalf("cmdDisplay returned error: %v", err)
 	}
 	if len(*got) != 1 || (*got)[0] != "Monsters don't need displays.  Go away.\r\n" {
@@ -66,7 +66,7 @@ func TestCmdRecallSwitchedMobSpeaksExperience(t *testing.T) {
 	s.isSwitched = true
 	s.switchedMob = registerMob(t, s.manager, 2001, 1001)
 
-	if err := cmdRecall(s, []string{}); err != nil {
+	if err := cmdRecall(characterCommandContextForSession(s), []string{}); err != nil {
 		t.Fatalf("cmdRecall returned error: %v", err)
 	}
 	if len(*got) != 1 || (*got)[0] != "This command is not available for someone of your experience!\r\n" {
@@ -81,7 +81,7 @@ func TestCmdPromptSwitchedMobRefusesAsNpc(t *testing.T) {
 	s.isSwitched = true
 	s.switchedMob = registerMob(t, s.manager, 2001, 1001)
 
-	if err := cmdPrompt(s, []string{"all"}); err != nil {
+	if err := cmdPrompt(characterCommandContextForSession(s), []string{"all"}); err != nil {
 		t.Fatalf("cmdPrompt returned error: %v", err)
 	}
 	if len(*got) != 1 || (*got)[0] != "Monsters don't need displays.  Go away.\r\n" {

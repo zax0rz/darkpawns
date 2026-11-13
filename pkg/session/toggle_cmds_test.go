@@ -73,13 +73,13 @@ func TestAutoUsesDoAutoAndAutoexitIsUnregistered(t *testing.T) {
 	}
 
 	initial := s.player.GetAutoExit()
-	if err := cmdAuto(s, []string{"exits"}); err != nil {
+	if err := cmdAuto(characterCommandContextForSession(s), []string{"exits"}); err != nil {
 		t.Fatalf("cmdAuto exits: %v", err)
 	}
 	if s.player.GetAutoExit() == initial {
 		t.Error("auto exits did not toggle PRF_AUTOEXIT")
 	}
-	if err := cmdAuto(s, []string{"exits"}); err != nil {
+	if err := cmdAuto(characterCommandContextForSession(s), []string{"exits"}); err != nil {
 		t.Fatalf("cmdAuto exits second toggle: %v", err)
 	}
 	if s.player.GetAutoExit() != initial {

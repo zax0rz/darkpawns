@@ -10,8 +10,8 @@ import (
 
 func (m *Manager) RegisterCommand(name string, handler func(common.CommandSession, []string) error, minLevel int) {
 	// Bridge common.CommandSession handler into cmdRegistry; command name is unused by the legacy signature.
-	wrapped := func(s common.CommandSession, _cmd string, args []string) error {
-		return handler(s, args)
+	wrapped := func(ctx command.ExecutionContext, _cmd string, args []string) error {
+		return handler(ctx.Session, args)
 	}
 	cmdRegistry.Register(name, command.Handler(wrapped), name+" (registered via RegisterCommand)", minLevel, 0)
 	slog.Debug("RegisterCommand: registered", "name", name, "minLevel", minLevel)

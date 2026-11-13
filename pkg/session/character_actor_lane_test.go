@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/command"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -63,8 +64,8 @@ func TestRegisteredNPCActorLanesRunCBody(t *testing.T) {
 		}
 		// C's raw remainder begins at the delimiter (one_argument lowercases
 		// and drops fill words; extractArg mirrors it).
-		result := entry.ActorHandler(game.CharacterCommandContext{
-			Actor: f.actor, World: f.world, RawArgs: " the Observer",
+		result := entry.ActorHandler(command.ExecutionContext{
+			Body: f.actor, World: f.world, RawArgs: " the Observer",
 		}, "follow", nil)
 		if result != game.CharacterCommandHandled {
 			t.Fatalf("result = %v, want handled", result)

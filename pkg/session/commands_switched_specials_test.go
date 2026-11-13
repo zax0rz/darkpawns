@@ -50,7 +50,7 @@ func TestRunSpecialsSwitchedActorIsMobBody(t *testing.T) {
 	})
 
 	s := &Session{manager: manager, player: owner, isSwitched: true, switchedMob: mob}
-	if !runSpecials(s, "south", nil, "") {
+	if !runSpecials(characterCommandContextForSession(s), "south", nil, "") {
 		t.Fatal("the probe special did not consume the command")
 	}
 	if legacySaw != nil {
@@ -98,10 +98,10 @@ func TestRunSpecialsSwitchedUnsupportedDoesNotTrap(t *testing.T) {
 	})
 
 	s := &Session{manager: manager, player: owner, isSwitched: true, switchedMob: mob}
-	if runSpecials(s, "return", nil, "") {
+	if runSpecials(characterCommandContextForSession(s), "return", nil, "") {
 		t.Fatal("an unported NPC lane consumed `return`; a switched immortal is trapped in the body")
 	}
-	if runSpecials(s, "south", nil, "") {
+	if runSpecials(characterCommandContextForSession(s), "south", nil, "") {
 		t.Fatal("an unported NPC lane consumed `south`; the command must reach its handler")
 	}
 }

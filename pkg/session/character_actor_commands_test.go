@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/command"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
@@ -216,7 +217,7 @@ func TestNPCFloorObjectOnCmdReceivesExactRawCommandWithRunScript(t *testing.T) {
 	game.ScriptEngine = engine
 	t.Cleanup(func() { game.ScriptEngine = previousEngine })
 
-	ctx := characterCommandContext{actor: actor, manager: m}
+	ctx := command.ExecutionContext{Body: actor, World: m.world}
 	// Run the configured Lua file through the real scripting engine first.
 	if got := runCharacterSpecials(ctx, "say", "  hello  "); got != game.SpecialHandled {
 		t.Fatalf("real object RunScript result = %v, want handled", got)
@@ -329,7 +330,7 @@ func TestNPCSharedExecutorWalksCOrderedSpecialStages(t *testing.T) {
 		t.Fatalf("place floor object: %v", err)
 	}
 
-	result := dispatchCharacterCommand(characterCommandContext{actor: actor, manager: m}, "sit", func(int, int) int { return 1 })
+	result := dispatchCharacterCommand(command.ExecutionContext{Body: actor, World: m.world}, "sit", func(int, int) int { return 1 })
 	if result != game.CharacterCommandHandled {
 		t.Fatalf("dispatch result = %v, want handled", result)
 	}
@@ -354,7 +355,7 @@ func TestNPCSharedExecutorBlocksLegacyOnlyAssignedSpecial(t *testing.T) {
 			delete(game.RoomSpecAssign, 1001)
 		}
 	})
-	result := dispatchCharacterCommand(characterCommandContext{actor: f.actor, manager: f.manager}, "sit", func(int, int) int { return 1 })
+	result := dispatchCharacterCommand(command.ExecutionContext{Body: f.actor, World: f.world}, "sit", func(int, int) int { return 1 })
 	if result != game.CharacterCommandUnsupported {
 		t.Fatalf("legacy-only room special result = %v, want unsupported", result)
 	}
@@ -415,8 +416,8 @@ func callRegisteredActorCommand(t *testing.T, f *actorPositionFixture, name stri
 		t.Fatalf("%s has no registered actor callback", name)
 	}
 	playerHandler := entry.Handler
-	result := entry.ActorHandler(game.CharacterCommandContext{
-		Actor: f.actor, World: f.world,
+	result := entry.ActorHandler(command.ExecutionContext{
+		Body: f.actor, World: f.world,
 		PrivateOutput: func(line string) { private.WriteString(line) },
 	}, name, nil)
 	if reflect.ValueOf(entry.Handler).Pointer() != reflect.ValueOf(playerHandler).Pointer() {
@@ -542,7 +543,7 @@ func TestRegisteredActorCallbacksWithoutPrivateDescriptorOnlyShowRoomAct(t *test
 	if !ok || entry.ActorHandler == nil {
 		t.Fatal("sit has no registered actor callback")
 	}
-	result := entry.ActorHandler(game.CharacterCommandContext{Actor: f.actor, World: f.world}, "sit", nil)
+	result := entry.ActorHandler(command.ExecutionContext{Body: f.actor, World: f.world}, "sit", nil)
 	if result != game.CharacterCommandHandled {
 		t.Fatalf("actor callback result = %v, want handled", result)
 	}

@@ -5,16 +5,14 @@ import (
 	"log/slog"
 	"strings"
 	"time"
-
-	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // LoggingMiddleware returns a middleware that logs every command execution.
 func LoggingMiddleware() Middleware {
 	return func(next Handler) Handler {
-		return func(s common.CommandSession, cmdStr string, args []string) error {
+		return func(ctx ExecutionContext, cmdStr string, args []string) error {
 			start := time.Now()
-			err := next(s, cmdStr, args)
+			err := next(ctx, cmdStr, args)
 			duration := time.Since(start)
 
 			if err != nil {
@@ -44,11 +42,11 @@ func WhitelistMiddleware(allowed ...string) Middleware {
 	}
 
 	return func(next Handler) Handler {
-		return func(s common.CommandSession, cmdStr string, args []string) error {
+		return func(ctx ExecutionContext, cmdStr string, args []string) error {
 			if !allowedSet[strings.ToLower(cmdStr)] {
 				return fmt.Errorf("unknown command: %s", cmdStr)
 			}
-			return next(s, cmdStr, args)
+			return next(ctx, cmdStr, args)
 		}
 	}
 }

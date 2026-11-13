@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/command"
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // C and Go use the same numeric player-level scale at the dispatcher boundary:
@@ -40,8 +41,13 @@ func registerCommand(name string, handler command.Handler, helpText string, alia
 	cmdRegistry.Register(name, handler, helpText, gate.MinLevel, gate.MinPosition, aliases...)
 }
 
-func registerActorCommand(name string, handler command.ActorHandler) {
-	if err := cmdRegistry.SetActorHandler(name, handler); err != nil {
+type characterActorHandler func(game.CharacterCommandContext, string, []string) game.CharacterCommandResult
+
+func registerActorCommand(name string, handler characterActorHandler) {
+	adapted := command.ActorHandler(func(ctx command.ExecutionContext, cmd string, args []string) game.CharacterCommandResult {
+		return handler(ctx.CharacterContext(), cmd, args)
+	})
+	if err := cmdRegistry.SetActorHandler(name, adapted); err != nil {
 		panic(err)
 	}
 }
