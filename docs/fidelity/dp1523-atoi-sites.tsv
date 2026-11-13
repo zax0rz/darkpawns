@@ -30,16 +30,16 @@ pkg/boards/boards.go:747	src/boards.c:330	isdigit(*number) then atoi	fixed	FIXED
 pkg/boards/boards.go:809	src/boards.c:381-383	isdigit(*number) then atoi	fixed	FIXED (boards batch): same C-gate parse as DisplayMsg.
 pkg/session/session_login.go:538	src/improved-edit.c:392-397	atoi	fixed	FIXED (boards batch): common.AtoiC + the "Line number must be higher than 0." arm for wrapped/non-numeric line numbers (src/improved-edit.c:392-458).
 # --- clan class (follow-up batch; all is_number-gated, gates already match C) ---
-pkg/game/clan_settings.go:113	src/clan.c:1106-1111	is_number then atoi	switch-to-helper	clan ranks: overflow token passes isClanNumber but Atoi error leaves 0 where C wraps negative and hits the rank-range refusal.
-pkg/game/clan_settings.go:192	src/clan.c:1190-1194	is_number then atoi	switch-to-helper	clan select-by-number, same overflow class.
-pkg/game/clan_settings.go:208	src/clan.c:1202-1206	is_number then atoi	switch-to-helper	clan rank select, same overflow class.
-pkg/game/clan_settings.go:309	src/clan.c:1373-1378	is_number then atoi	switch-to-helper	clan privilege rank, same overflow class.
-pkg/game/clan_economy.go:36	src/clan.c:1029-1034	is_number then atoi	switch-to-helper	clan tax amount, same overflow class.
-pkg/game/clan_economy.go:88	src/clan.c:1313-1318	is_number then atoi	switch-to-helper	clan application level, same overflow class.
-pkg/game/clan_bank.go:55	src/clan.c:940-954	is_number then atoi	switch-to-helper	clan bank deposit/withdraw amount, same overflow class.
-pkg/game/clan_admin.go:15	src/clan.c:134-139	is_number then atoi	switch-to-helper	clan rename: C overflow wraps negative and refuses "There is no clan with that number."; Go Atoi error leaves 0 and renames clan 0.
-pkg/game/comm_channel.go:315	src/act.comm.c:1464	atoi (no gate)	switch-to-helper	ctell imm clan number: C atoi("5abc") is 5 and overflow wraps negative, both refused only by the <= 0 / > count check; Go refuses "5abc" outright.
-pkg/game/comm_channel.go:350	src/act.comm.c:1501-1513	is_number then atoi	switch-to-helper	ctell #rank: C overflow keeps the wrapped negative minlev and prints it in " (%d) "; Go Atoi error turns it into 0 — visible byte difference in the tell.
+pkg/game/clan_settings.go:113	src/clan.c:1106-1111	is_number then atoi	fixed	FIXED (clan batch): isClanNumber gate kept (matches C is_number) + common.AtoiC so overflow wraps like C atoi; red on origin/main: kimi-dp1523-clan-red2, green: kimi-dp1523-clan-green2.
+pkg/game/clan_settings.go:192	src/clan.c:1190-1194	is_number then atoi	fixed	FIXED (clan batch): isClanNumber gate kept (matches C is_number) + common.AtoiC so overflow wraps like C atoi; red on origin/main: kimi-dp1523-clan-red2, green: kimi-dp1523-clan-green2.
+pkg/game/clan_settings.go:208	src/clan.c:1202-1206	is_number then atoi	fixed	FIXED (clan batch): isClanNumber gate kept (matches C is_number) + common.AtoiC so overflow wraps like C atoi; red on origin/main: kimi-dp1523-clan-red2, green: kimi-dp1523-clan-green2.
+pkg/game/clan_settings.go:309	src/clan.c:1373-1378	is_number then atoi	fixed	FIXED (clan batch): isClanNumber gate kept (matches C is_number) + common.AtoiC so overflow wraps like C atoi; red on origin/main: kimi-dp1523-clan-red2, green: kimi-dp1523-clan-green2.
+pkg/game/clan_economy.go:36	src/clan.c:1029-1034	is_number then atoi	fixed	FIXED (clan batch): isClanNumber gate kept (matches C is_number) + common.AtoiC so overflow wraps like C atoi; red on origin/main: kimi-dp1523-clan-red2, green: kimi-dp1523-clan-green2.
+pkg/game/clan_economy.go:88	src/clan.c:1313-1318	is_number then atoi	fixed	FIXED (clan batch): isClanNumber gate kept (matches C is_number) + common.AtoiC so overflow wraps like C atoi; red on origin/main: kimi-dp1523-clan-red2, green: kimi-dp1523-clan-green2.
+pkg/game/clan_bank.go:55	src/clan.c:940-954	is_number then atoi	fixed	FIXED (clan batch): isClanNumber gate kept (matches C is_number) + common.AtoiC so overflow wraps like C atoi; red on origin/main: kimi-dp1523-clan-red2, green: kimi-dp1523-clan-green2.
+pkg/game/clan_admin.go:15	src/clan.c:134-139	is_number then atoi	fixed	FIXED (clan batch): isClanNumber gate kept (matches C is_number) + common.AtoiC so overflow wraps like C atoi; red on origin/main: kimi-dp1523-clan-red2, green: kimi-dp1523-clan-green2.
+pkg/game/comm_channel.go:315	src/act.comm.c:1464	atoi (no gate)	fixed	FIXED (clan batch): isClanNumber gate kept (matches C is_number) + common.AtoiC so overflow wraps like C atoi; red on origin/main: kimi-dp1523-clan-red2, green: kimi-dp1523-clan-green2.
+pkg/game/comm_channel.go:350	src/act.comm.c:1501-1513	is_number then atoi	fixed	FIXED (clan batch): isClanNumber gate kept (matches C is_number) + common.AtoiC so overflow wraps like C atoi; red on origin/main: kimi-dp1523-clan-red2, green: kimi-dp1523-clan-green2.
 # --- economy/item class (follow-up batch) ---
 pkg/game/other_economy.go:33	src/act.other.c:835-839	is_number then atoi	switch-to-helper	split: C overflow wraps <= 0 and answers "Sorry, you can't do that."; Go Atoi error answers "How many coins do you wish to split with your group?".
 pkg/game/item_donate.go:104	src/act.item.c:587-589	is_number then atoi	switch-to-helper	junk/donate N coins: C overflow wraps negative into perform_drop_gold's "Heh heh heh.. we are jolly funny today, eh?"; Go treats the token as an item name instead.

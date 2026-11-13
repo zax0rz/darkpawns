@@ -3,10 +3,10 @@ package game
 import (
 	"fmt"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/screen"
 )
 
@@ -310,9 +310,11 @@ func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) boo
 	// C uses a separate clan-number syntax for immortals. Its validation is
 	// intentionally before the empty-message gate, and its rank lookup uses
 	// clan[c] (the source's one-based command number against a zero-based array).
+	// C parses the number with bare atoi (src/act.comm.c:1464): digit-leading
+	// junk selects the clan and overflow wraps negative into the refusal.
 	if ch.GetLevel() >= LVLImmort {
 		first, remainder := halfChop(arg)
-		clanNumber, _ = strconv.Atoi(first)
+		clanNumber = common.AtoiC(first)
 		if clanNumber <= 0 || w.Clans == nil || clanNumber > w.Clans.ClanCount() {
 			ch.SendMessage("There is no clan with that number.\r\n")
 			return true
@@ -347,7 +349,7 @@ func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) boo
 			ch.SendMessage("Try entering in a number.\r\n")
 			return true
 		}
-		minLevel, _ = strconv.Atoi(rankText)
+		minLevel = common.AtoiC(rankText)
 		clanForRank := (*Clan)(nil)
 		if w.Clans != nil {
 			// Match C's clan[c] access. A missing slot is treated as a zero-rank
