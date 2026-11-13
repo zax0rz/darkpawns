@@ -3,10 +3,10 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
@@ -29,13 +29,9 @@ func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) boo
 				return true
 			}
 		}
-		var err error
-		amount, err = strconv.Atoi(arg)
-		if err != nil {
-			slog.Warn("split amount parse failed", "player", ch.Name, "arg", arg, "error", err)
-			ch.SendMessage("How many coins do you wish to split with your group?\r\n")
-			return true
-		}
+		// C is_number+atoi (src/act.other.c:823-839): the digit loop above is
+		// the gate, and atoi wraps overflow negative into the <= 0 arm below.
+		amount = common.AtoiC(arg)
 	}
 	if amount <= 0 {
 		ch.SendMessage("Sorry, you can't do that.\r\n")
