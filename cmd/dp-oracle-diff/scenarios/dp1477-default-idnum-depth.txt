@@ -1,0 +1,51 @@
+# C-first witness for DP-1477: in default mode (no empty-players, no seed-player),
+# C's shipped lib/etc/players has 4 records (top_idnum = 4), so create_entry
+# (src/db.c:3057) assigns ++top_idnum = 5 to a freshly created character, printed
+# by stat player (src/act.wizard.c:716-720, "IDNum: [    5]"). On origin/main,
+# Go seeds only Testor (id 1) and never advances the sequence in default mode,
+# assigning idnum 2.
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Freshid
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Freshid
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:wiz]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port:wiz]
+Testor
+testpassword
+<ENTER>
+1
+
+[probe]
+send:wiz stat player Freshid

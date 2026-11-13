@@ -64,14 +64,18 @@ func TestSeedPlayerRejectsEmptyPlayers(t *testing.T) {
 }
 
 // writeShippedPfile synthesizes a C player file of char_file_u records
-// carrying the given idnums (sizeof 1656, idnum at offset 392 — the layout
-// topShippedIDNum parses).
+// carrying the given idnums (sizeof 1656, idnum at offset 392, name at offset 0).
 func writeShippedPfile(t *testing.T, idnums ...int64) string {
 	t.Helper()
 	const recordSize, idnumOffset = 1656, 392
 	var buf []byte
-	for _, id := range idnums {
+	for idx, id := range idnums {
 		record := make([]byte, recordSize)
+		name := "Player" + string(rune('A'+idx))
+		if id == 1 {
+			name = "Testor"
+		}
+		copy(record[0:21], name)
 		binary.LittleEndian.PutUint64(record[idnumOffset:], uint64(id))
 		buf = append(buf, record...)
 	}
@@ -82,31 +86,85 @@ func writeShippedPfile(t *testing.T, idnums ...int64) string {
 	return path
 }
 
-// topShippedIDNum must return C's top_idnum: the highest idnum the shipped
+// decodeShippedPlayers must return C's top_idnum: the highest idnum the shipped
 // records hold, not the record count.
-func TestTopShippedIDNum(t *testing.T) {
-	top, err := topShippedIDNum(writeShippedPfile(t, 1, 2, 3, 4))
+func TestDecodeShippedPlayersTopIDNum(t *testing.T) {
+	recs, top, err := decodeShippedPlayers(writeShippedPfile(t, 1, 2, 3, 4))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(recs) != 4 || top != 4 {
+		t.Fatalf("len=%d top=%d, want 4 and 4", len(recs), top)
+	}
+	recs, top, err = decodeShippedPlayers(writeShippedPfile(t, 7, 2))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(recs) != 2 || top != 7 {
+		t.Fatalf("len=%d top=%d, want 2 and 7 (highest, not count)", len(recs), top)
+	}
+}
+
+func oracleShippedPlayersPath(t *testing.T) string {
+	t.Helper()
+	if root := os.Getenv("DP_ORACLE_ROOT"); root != "" {
+		p := filepath.Join(root, "lib", "etc", "players")
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+	home, err := os.UserHomeDir()
+	if err == nil {
+		p := filepath.Join(home, "darkpawns-c-oracle", "lib", "etc", "players")
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+	t.Skip("C oracle shipped lib/etc/players not found")
+	return ""
+}
+
+// TestDecodeShippedPlayersOracleFile verifies that decodeShippedPlayers reads
+// all four char_file_u records from C's shipped lib/etc/players and preserves
+// each record's idnum, name, level, and class.
+func TestDecodeShippedPlayersOracleFile(t *testing.T) {
+	pfile := oracleShippedPlayersPath(t)
+	records, top, err := decodeShippedPlayers(pfile)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if top != 4 {
 		t.Fatalf("top = %d, want 4", top)
 	}
-	if _, err := topShippedIDNum(writeShippedPfile(t, 7, 2)); err != nil {
-		t.Fatal(err)
+	want := []struct {
+		id    int
+		name  string
+		level int
+		class int
+	}{
+		{id: 1, name: "Testor", level: game.LVL_IMPL, class: game.ClassWarrior},
+		{id: 2, name: "Oraklet", level: 0, class: game.ClassWarrior},
+		{id: 3, name: "Buildbot", level: 1, class: game.ClassWarrior},
+		{id: 4, name: "Coracle", level: 1, class: game.ClassWarrior},
 	}
-	if top, _ := topShippedIDNum(writeShippedPfile(t, 7, 2)); top != 7 {
-		t.Fatalf("top = %d, want 7 (highest, not count)", top)
+	if len(records) != len(want) {
+		t.Fatalf("decoded %d records, want %d", len(records), len(want))
+	}
+	for i, w := range want {
+		got := records[i]
+		if got.ID != w.id || got.Name != w.name || got.Level != w.level || got.Class != w.class {
+			t.Fatalf("record %d = {ID:%d Name:%q Level:%d Class:%d}, want %+v",
+				i, got.ID, got.Name, got.Level, got.Class, w)
+		}
 	}
 }
 
-// The twin must be C's shipped first player (lib/etc/players record 0):
-// init_char's first-player block (BootstrapFirstPlayerGod ports db.c:3014-3074)
-// plus the creation rolls the shipped record kept. Without the store seeded
-// this way the port cannot log Testor in, and every seed-player scenario
-// diverges — the red control in the PR description demonstrates exactly that.
+// The twin must be C's shipped players (lib/etc/players records 0..3). Without
+// seeding all four records and advancing NextPlayerID in every non-empty mode,
+// Oraklet/Buildbot/Coracle collide in C only and new characters get ID 2 in Go
+// vs ID 5 in C.
 func TestPrepareGoReloginDBSeedsTestorTwin(t *testing.T) {
-	url, err := prepareGoReloginDB(t.TempDir(), false, true, writeShippedPfile(t, 1, 2, 3, 4))
+	url, err := prepareGoReloginDB(t.TempDir(), false, true, oracleShippedPlayersPath(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,24 +237,24 @@ func TestPrepareGoReloginDBSeedsTestorTwin(t *testing.T) {
 	}
 }
 
-// Default off: without the fixture the placeholder path is exactly what it
-// was before seed-player existed.
 // The boot store mirrors C's player file: empty-players starts empty on both
-// sides; every other mode holds the shipped first player's twin and nothing
-// else (C's file record 0, lib/etc/players).
+// sides; every other mode holds twins of all four shipped players and advances
+// the ID sequence past top_idnum.
 func TestPrepareGoReloginDBBootStoreNames(t *testing.T) {
+	pfile := oracleShippedPlayersPath(t)
 	modes := []struct {
 		name                     string
 		emptyPlayers, seedPlayer bool
 		want                     []string
+		wantNextID               int
 	}{
 		{name: "empty-players", emptyPlayers: true},
-		{name: "default", want: []string{"Testor"}},
-		{name: "seed-player", seedPlayer: true, want: []string{"Testor"}},
+		{name: "default", want: []string{"Testor", "Oraklet", "Buildbot", "Coracle"}, wantNextID: 5},
+		{name: "seed-player", seedPlayer: true, want: []string{"Testor", "Oraklet", "Buildbot", "Coracle"}, wantNextID: 5},
 	}
 	for _, mode := range modes {
 		t.Run(mode.name, func(t *testing.T) {
-			url, err := prepareGoReloginDB(t.TempDir(), mode.emptyPlayers, mode.seedPlayer, writeShippedPfile(t, 1, 2, 3, 4))
+			url, err := prepareGoReloginDB(t.TempDir(), mode.emptyPlayers, mode.seedPlayer, pfile)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -215,6 +273,15 @@ func TestPrepareGoReloginDBBootStoreNames(t *testing.T) {
 			for i := range names {
 				if names[i] != mode.want[i] {
 					t.Fatalf("boot store names = %v, want %v", names, mode.want)
+				}
+			}
+			if mode.wantNextID > 0 {
+				created := &db.PlayerRecord{Name: "Fresh", Password: "x", Level: 1, RoomVNum: 8004}
+				if err := store.CreatePlayer(created); err != nil {
+					t.Fatal(err)
+				}
+				if created.ID != mode.wantNextID {
+					t.Fatalf("next created player got ID %d, want %d", created.ID, mode.wantNextID)
 				}
 			}
 		})
