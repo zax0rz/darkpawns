@@ -432,10 +432,7 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 		targetNameForSession = resolved.Player.Name
 	}
 	target := findSessionByName(s.manager, targetNameForSession)
-	// The fallback is fixture-only; C's do_wizutil lookup (get_char_vis,
-	// src/act.wizard.c:2077-2103) is visibility-gated, so a target the world
-	// resolver refused must not reappear here either.
-	if target == nil || target.player == nil || !game.CanSee(s.player, target.player) {
+	if target == nil || target.player == nil {
 		s.Send("There is no such player.\r\n")
 		return nil
 	}

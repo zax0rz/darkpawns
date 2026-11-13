@@ -240,20 +240,7 @@ func cmdPageText(s *Session, argument string) error {
 
 	target := s
 	if !strings.EqualFold(targetName, "self") && !strings.EqualFold(targetName, "me") {
-		// C do_page resolves with get_char_vis (src/act.comm.c:1082-1083) and
-		// then requires a live descriptor: room first, then the players-only
-		// world pass, both CAN_SEE-gated. The session fallback is fixture-only
-		// and stays visibility-gated so an invisible target still gets C's
-		// refusal.
-		target = nil
-		if resolved, ok := s.manager.world.ResolveCharWorld(s.player, targetName); ok && resolved.Player != nil {
-			target = findSessionForPlayer(s.manager, resolved.Player)
-		}
-		if target == nil {
-			if sess := findSessionByName(s.manager, targetName); sess != nil && sess.player != nil && game.CanSee(s.player, sess.player) {
-				target = sess
-			}
-		}
+		target = findSessionByName(s.manager, targetName)
 	}
 	if target == nil || target.player == nil || !target.authenticated {
 		s.Send("There is no such person in the game!")

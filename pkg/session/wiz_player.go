@@ -79,11 +79,7 @@ func cmdRestore(s *Session, args []string) error {
 
 	s.Send("Okay.\r\n")
 	if target := resolved.Player; target != nil {
-		// C act("The hand of $N touches you...", TRUE, vict, 0, ch, TO_CHAR)
-		// (src/act.wizard.c:1615-1616): $N renders "someone" when the victim
-		// cannot see the restoring god.
-		game.Act(s.manager.world, true, target, s.player, nil, nil,
-			"The hand of $N touches you, healing your wounds and leaving you refreshed!\r\n", "", game.ToChar)
+		target.SendMessage(fmt.Sprintf("The hand of %s touches you, healing your wounds and leaving you refreshed!\r\n", s.player.Name))
 	}
 	return nil
 }

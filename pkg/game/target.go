@@ -138,28 +138,6 @@ func (w *World) resolveCharInRoomAt(ch combat.Combatant, roomVNum int, name stri
 	return CharTarget{}, false
 }
 
-// ResolvePlayerWorld ports get_player_vis(ch, name, inroom=0)
-// (src/handler.c:1263-1276): the world-wide pass over registered players only,
-// exact case-insensitive full-name match (no abbreviations, no numeric
-// prefix), gated by CAN_SEE. C calls it from do_stat's player branch and
-// do_set's PC-field branch, where a numeric prefix is deliberately not
-// honoured.
-func (w *World) ResolvePlayerWorld(ch combat.Combatant, name string) (CharTarget, bool) {
-	if ch == nil || name == "" {
-		return CharTarget{}, false
-	}
-	for _, p := range w.GetAllPlayers() {
-		if !strings.EqualFold(p.GetName(), name) {
-			continue
-		}
-		if !canSee(asActor(ch), asActor(p)) {
-			return CharTarget{}, false
-		}
-		return newCharTarget(p), true
-	}
-	return CharTarget{}, false
-}
-
 // ResolveCharWorld is the canonical world-scope character resolver. It checks
 // the caster's room first, then the global character list. Global matches use complete keywords (C isname), while the
 // room pass retains get_char_room_vis abbreviation semantics.

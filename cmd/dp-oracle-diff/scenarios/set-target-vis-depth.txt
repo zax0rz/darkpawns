@@ -68,8 +68,10 @@ Y
 [warmup]
 goto 8162
 teleport Vispeer 8162
-set Vispeer level 31
-force Vispeer invis
+set Setgod class mage
+set Setgod maxmana 5000
+set Setgod mana 5000
+cast 'invisibility' Vispeer
 
 [probe]
 set player Vispeer level 32
