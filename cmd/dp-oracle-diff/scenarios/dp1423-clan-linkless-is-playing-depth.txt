@@ -1,0 +1,118 @@
+# Lifecycle: clan commands gate live-vs-stored lookup on is_playing (CON_PLAYING) (DP-1423).
+# depth-case: clan.linkless-is-playing
+#
+# C's is_playing(name) (src/utils.c:754-768) requires d->connected ==
+# CON_PLAYING. In do_clan_ranks (src/clan.c:1131-1151), an offline/non-playing
+# clan member is NOT matched by is_playing(), so C updates the stored player
+# record in player_fl via load_char/save_char_file_u (setting clan_rank = 1).
+#
+# RED on pre-fix Go: doClanRanks only walked w.AllPlayers() without checking
+# playerHasPlayingDescriptor or StoredPlayers/EditStoredPlayer, so an offline
+# member's stored rank remained 2 when `clan members` read the store.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Clangod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clangod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:applicant]
+Clanmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:applicant]
+Clanmate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:member]
+Zclanlink
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:member]
+Zclanlink
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+force Clanmate goto 8162
+force Zclanlink goto 8162
+clan create Clanmate Wolves
+clan set ranks 3 Wolves
+clan set applev 1 Wolves
+force Zclanlink clan apply Wolves
+force Clanmate clan enroll Zclanlink
+force Clanmate clan promote Zclanlink
+force Zclanlink save
+force Zclanlink reallyquit
+~dpclock pulse 1
+
+[probe]
+clan set ranks 4 Wolves
+force Clanmate clan set title 2 Officer
+force Clanmate clan members

@@ -129,8 +129,12 @@ func (w *World) doClanDestroy(ch *Player, arg string) {
 		return
 	}
 
-	// Clear clan from all online members
+	// Clear clan from CON_PLAYING members (C: is_playing, clan.c:262).
+	playingNames := w.playingPlayerNames()
 	for _, p := range w.players {
+		if !playingNames[p.Name] {
+			continue
+		}
 		if p.ClanID == c.ID {
 			p.ClanID = 0
 			p.ClanRank = 0
@@ -145,7 +149,7 @@ func (w *World) doClanDestroy(ch *Player, arg string) {
 		slog.Error("clan destroy: read players", "error", err)
 	}
 	for _, p := range players {
-		if _, online := w.players[p.Name]; online || p.ClanID != c.ID {
+		if playingNames[p.Name] || p.ClanID != c.ID {
 			continue
 		}
 		if err := w.EditStoredPlayer(p.Name, func(current *Player) {
@@ -161,6 +165,18 @@ func (w *World) doClanDestroy(ch *Player, arg string) {
 	w.Clans.RemoveClan(i)
 	w.SaveClans()
 	ch.SendMessage("Clan deleted.\r\n")
+}
+
+// playingPlayerNames returns the set of player names with an active
+// CON_PLAYING descriptor, matching C's is_playing() gate (src/utils.c:754-768).
+func (w *World) playingPlayerNames() map[string]bool {
+	playing := make(map[string]bool)
+	for _, p := range w.players {
+		if w.playerHasPlayingDescriptor(p) {
+			playing[p.Name] = true
+		}
+	}
+	return playing
 }
 
 // ---------------------------------------------------------------------------

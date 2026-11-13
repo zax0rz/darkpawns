@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/common"
 )
@@ -132,8 +133,12 @@ func (w *World) doClanRanks(ch *Player, arg string) {
 		ch.SetGold(ch.GetGold() - 5000)
 	}
 
-	// Adjust existing clan members' ranks
+	// Adjust existing clan members' ranks (C: is_playing or stored, clan.c:1131-1151).
+	playingNames := w.playingPlayerNames()
 	for _, p := range w.AllPlayers() {
+		if !playingNames[p.Name] {
+			continue
+		}
 		if p.ClanID == c.ID {
 			if p.ClanRank < c.Ranks && p.ClanRank > 0 {
 				p.ClanRank = 1
@@ -143,6 +148,27 @@ func (w *World) doClanRanks(ch *Player, arg string) {
 			}
 			// C saves each adjusted member (clan.c:1138).
 			w.saveCharSiteInRoom(p, "clan ranks")
+		}
+	}
+	stored, err := w.StoredPlayers()
+	if err != nil {
+		slog.Error("clan ranks: read players", "error", err)
+	}
+	for _, p := range stored {
+		if playingNames[p.Name] || p.ClanID != c.ID {
+			continue
+		}
+		if err := w.EditStoredPlayer(p.Name, func(current *Player) {
+			if current.ClanID == c.ID {
+				if current.ClanRank < c.Ranks && current.ClanRank > 0 {
+					current.ClanRank = 1
+				}
+				if current.ClanRank == c.Ranks {
+					current.ClanRank = newRanks
+				}
+			}
+		}); err != nil {
+			slog.Error("clan ranks: save offline member", "name", p.Name, "error", err)
 		}
 	}
 
