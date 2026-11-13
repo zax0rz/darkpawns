@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/telemetry"
@@ -265,6 +265,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 			if err != nil {
 				return s.abortEntry(fmt.Errorf("restore character: %w", err))
 			}
+			s.manager.untagItIfPlayingPresent(p)
 			if aliases, aErr := game.ReadAliases(p.Name); aErr == nil {
 				p.Aliases = aliases
 			}
@@ -535,9 +536,17 @@ func (s *Session) routeDescriptorLine(command string, args []string, rawLine str
 				rest := strings.TrimSpace(line[2:])
 				fields := strings.Fields(rest)
 				if len(fields) >= 2 {
-					lineNumber, err := strconv.Atoi(fields[0])
+					// C improved-edit PARSE_EDIT parses the line number with
+					// atoi (src/improved-edit.c:392-458): digit-leading junk
+					// parses, and a huge token wraps negative through
+					// (int)strtol, taking the "must be higher than 0" arm.
+					lineNumber := common.AtoiC(fields[0])
 					text := strings.TrimSpace(rest[len(fields[0]):])
-					if err == nil && s.manager.world.Boards.ReviseBoardLine(s.player.WriteMagic, s.player, lineNumber, text) {
+					if lineNumber < 1 {
+						s.player.SendMessage("Line number must be higher than 0.\r\n")
+						return true
+					}
+					if s.manager.world.Boards.ReviseBoardLine(s.player.WriteMagic, s.player, lineNumber, text) {
 						s.player.SendMessage("Line changed.\r\n")
 					}
 					return true
@@ -557,6 +566,27 @@ func (s *Session) routeDescriptorLine(command string, args []string, rawLine str
 		return true
 	}
 	return false
+}
+
+// untagItIfPlayingPresent ports store_to_char's tag-game check
+// (src/db.c:2510-2519): if any CON_PLAYING non-NPC descriptor currently holds
+// PLR_IT, clear PLR_IT from the loading player.
+func (m *Manager) untagItIfPlayingPresent(p *game.Player) {
+	if m == nil || p == nil || !p.HasPLRFlag(game.PlrIt) {
+		return
+	}
+	m.mu.RLock()
+	hasPlayingIt := false
+	for _, sess := range m.sessions {
+		if sess != nil && sess.isConPlayingLocked() && !sess.player.IsNPC() && sess.player.HasPLRFlag(game.PlrIt) {
+			hasPlayingIt = true
+			break
+		}
+	}
+	m.mu.RUnlock()
+	if hasPlayingIt {
+		p.SetPlrFlag(game.PlrIt, false)
+	}
 }
 
 // sendWelcome sends the initial game state to the player.

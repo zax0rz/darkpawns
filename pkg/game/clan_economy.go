@@ -1,8 +1,6 @@
 package game
 
-import (
-	"strconv"
-)
+import "github.com/zax0rz/darkpawns/pkg/common"
 
 func (w *World) doClanMoney(ch *Player, arg string, action int) {
 	if arg == "" {
@@ -33,7 +31,7 @@ func (w *World) doClanMoney(ch *Player, arg string, action int) {
 		return
 	}
 
-	amount, _ := strconv.Atoi(arg)
+	amount := common.AtoiC(arg)
 
 	if amount < 0 || amount > 10000 {
 		ch.SendMessage("Please pick a number between 0 and 10,000 coins.\r\n")
@@ -85,7 +83,7 @@ func (w *World) doClanAppLevel(ch *Player, arg string) {
 		return
 	}
 
-	appLevel, _ := strconv.Atoi(arg)
+	appLevel := common.AtoiC(arg)
 
 	if appLevel < 1 || appLevel > 30 {
 		ch.SendMessage("The application level can go from 1 to 30.\r\n")

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log/slog"
 	"sort"
-	"strconv"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -269,13 +269,19 @@ func isLeadingDigit(value string) bool {
 	return value[0] >= '0' && value[0] <= '9'
 }
 
+// parseLeadingInt feeds goto/at's find_target_room port (src/act.wizard.c:197-203):
+// C gates on isdigit of the first byte and then atoi's the whole token, so a
+// digit-leading token with junk parses and an overflowing one wraps through
+// (int)strtol -- possibly onto a valid vnum (2^32+N).
 func parseLeadingInt(value string) (int, bool) {
 	end := 0
 	for end < len(value) && value[end] >= '0' && value[end] <= '9' {
 		end++
 	}
-	vnum, err := strconv.Atoi(value[:end])
-	return vnum, err == nil
+	if end == 0 {
+		return 0, false
+	}
+	return common.AtoiC(value), true
 }
 
 // ---------------------------------------------------------------------------

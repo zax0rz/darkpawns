@@ -72,7 +72,7 @@ func (w *World) DoWrite(ch *Player, argument string) {
 		Act(nil, false, ch, nil, pen, nil, "$p is no good for writing with.", "", ToChar)
 	case paper.GetTypeFlag() != ITEM_NOTE:
 		Act(nil, false, ch, nil, paper, nil, "You can't write on $p.", "", ToChar)
-	case paper.Runtime.NoteText != "":
+	case paper.ActionDescription() != "":
 		ch.SendMessage("There's something written on it already.\r\n")
 	default:
 		// we can write - hooray!

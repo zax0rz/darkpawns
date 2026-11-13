@@ -1,10 +1,10 @@
 package game
 
 import (
-	"strconv"
 	"strings"
 	"unicode"
 
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/olc"
 )
 
@@ -176,6 +176,7 @@ func ShopNumber(token string) (int, bool) {
 			return 0, false
 		}
 	}
-	n, err := strconv.Atoi(token)
-	return n, err == nil
+	// atoi, not Atoi: overflow wraps through (int)strtol and the wrapped
+	// negative simply misses the shop, like C.
+	return common.AtoiC(token), true
 }

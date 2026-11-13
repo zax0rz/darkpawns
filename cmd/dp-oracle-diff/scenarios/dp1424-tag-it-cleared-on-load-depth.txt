@@ -1,0 +1,100 @@
+# Lifecycle: store_to_char clears PLR_IT at load when a CON_PLAYING player is IT (DP-1424).
+# depth-case: tag.clear-it-on-load
+#
+# C's store_to_char (src/db.c:2510-2519) scans descriptor_list for any
+# CON_PLAYING non-NPC character with PLR_IT and removes PLR_IT from the
+# loading character if found.
+#
+# RED on pre-fix Go: RecordToPlayer restores PLR_IT without checking for an
+# active CON_PLAYING IT holder, so Tagstale keeps (IT) across relogin while
+# Tagholder is already IT in the world.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Tagstale
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:port]
+Tagstale
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:oracle:holder]
+Tagholder
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:port:holder]
+Tagholder
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[relogin:oracle]
+Tagstale
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Tagstale
+oraclepass
+<ENTER>
+1
+
+[warmup]
+teleport Tagholder 8004
+set player Tagholder level 1
+set player Tagstale level 1
+
+[probe]
+tag Tagstale
+reallyquit
+~dpclock pulse 1
+send:holder tag Tagholder
+<RELOGIN>
+send:holder look
+tag Tagstale

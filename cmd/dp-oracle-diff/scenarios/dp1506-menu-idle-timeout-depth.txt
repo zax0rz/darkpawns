@@ -1,0 +1,64 @@
+# depth-case: entry.menu-idle-timeout
+# DP-1506: C's check_idle_passwords (src/comm.c:2170-2186) kicks CON_PASSWORD,
+# CON_GET_NAME, and CON_MENU after two 15s idle tics (heartbeat every
+# 15 * PASSES_PER_SEC = 150 pulses, src/comm.c:810-813) with
+# "\r\nTimed out... goodbye.\r\n" and STATE(d) = CON_CLOSE — including an
+# authenticated character returned to CON_MENU after death.
+
+[fixture]
+quiet-mobs
+seed-player
+compare-close
+spawn-obj 8010 1 8162 80
+spawn-mob 14516 1 8101 145
+
+[setup:oracle]
+Corpass
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Corpass
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[probe]
+send:testor set player Corpass level 6
+north
+east
+south
+west
+kill zoomaster
+send:testor ~dpclock pulse 100
+send:testor ~dpclock pulse 150
+send:testor ~dpclock pulse 150

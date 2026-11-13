@@ -1,0 +1,75 @@
+# Lifecycle: Crash_save_all skips descriptors in OLC/text editor states (DP-1425).
+# depth-case: persist.autosave-skips-editor
+#
+# C's Crash_save_all (src/objsave.c:1215) gates on (d->connected == CON_PLAYING)
+# && !IS_NPC(d->character). A player flagged PLR_CRASH (picked up bread) who
+# enters an OLC editor (CON_OEDIT) before the 10-minute autosave slot
+# (comm.c:832-837) is NOT saved by Crash_save_all. After <CRASH> and relogin,
+# the bread is absent from inventory.
+#
+# RED on pre-fix Go: Manager.CrashSaveAll checked menu/creation/linkless but
+# not editor states, so Go autosaved the player while in CON_OEDIT and the
+# bread survived <CRASH>.
+
+[fixture]
+empty-players
+quiet-mobs
+force-load 8010
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Editauto
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Editauto
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Editauto
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Editauto
+oraclepass
+<ENTER>
+1
+
+[probe]
+goto 8162
+get bread
+oedit 3100
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+<CRASH>
+inventory
