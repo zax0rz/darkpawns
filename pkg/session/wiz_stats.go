@@ -47,7 +47,16 @@ func cmdStat(s *Session, args []string) error {
 			s.Send("Stats on which player?\r\n")
 			return nil
 		}
-		if sess := findSessionByName(s.manager, args[1]); sess != nil && sess.player != nil {
+		// C's player branch resolves with get_player_vis (src/act.wizard.c:1022,
+		// handler.c:1263-1276): world-wide players only, exact full name,
+		// CAN_SEE -- an invisible or linkless-session target answers "No such
+		// player around." The session fallback is fixture-only and stays
+		// visibility-gated so live play cannot re-find a refused target.
+		if victim, ok := s.manager.world.ResolvePlayerWorld(s.player, args[1]); ok && victim.Player != nil {
+			s.sendStatPlayer(victim.Player)
+			return nil
+		}
+		if sess := findSessionByName(s.manager, args[1]); sess != nil && sess.player != nil && game.CanSee(s.player, sess.player) {
 			s.sendStatPlayer(sess.player)
 			return nil
 		}

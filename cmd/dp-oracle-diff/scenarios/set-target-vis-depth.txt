@@ -1,0 +1,76 @@
+# depth-case: set.target-visibility
+# C do_set's player branch resolves with get_player_vis (src/act.wizard.c:2633)
+# and its creature branch with get_char_vis (src/act.wizard.c:2641) -- both
+# CAN_SEE-gated, so an invisible target answers "There is no such player." /
+# "There is no such creature." and no field is written. The wizard
+# target-resolution batch.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Setgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Setgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Vispeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Vispeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Vispeer 8162
+set Vispeer level 31
+force Vispeer invis
+
+[probe]
+set player Vispeer level 32
+set Vispeer level 32
