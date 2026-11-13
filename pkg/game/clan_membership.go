@@ -30,8 +30,9 @@ func (w *World) doClanEnroll(ch *Player, arg string) {
 	if targetArg == "" {
 		ch.SendMessage("The following players have applied to your clan:\r\n" +
 			"-----------------------------------------------\r\n")
+		playingNames := w.playingPlayerNames()
 		for _, p := range w.players {
-			if p.ClanID == c.ID && p.ClanRank == 0 {
+			if playingNames[p.Name] && p.ClanID == c.ID && p.ClanRank == 0 {
 				ch.SendMessage(fmt.Sprintf("%s\r\n", p.Name))
 			}
 		}
@@ -40,7 +41,7 @@ func (w *World) doClanEnroll(ch *Player, arg string) {
 			BasicMudLogf("SYSERR: clan applicants: %v", err)
 		}
 		for _, p := range players {
-			if _, online := w.players[p.Name]; !online && p.ClanID == c.ID && p.ClanRank == 0 {
+			if !playingNames[p.Name] && p.ClanID == c.ID && p.ClanRank == 0 {
 				ch.SendMessage(fmt.Sprintf("%s\r\n", p.Name))
 			}
 		}
