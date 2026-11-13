@@ -1,0 +1,78 @@
+# depth-case: clan.atoi-junk-and-overflow
+# C's clan subcommands gate with is_number and then atoi (src/clan.c:940-954,
+# 1029-1034, 1106-1111, 1190-1194, 1202-1206, 1313-1318, 1373-1378;
+# src/act.comm.c:1451-1470 for ctell): a huge token wraps negative through
+# (int)strtol and takes the negative/range refusal arms, and ctell parses its
+# clan number with bare atoi, so digit-leading junk ("1abc") still selects
+# clan 1. The DP-1523 clan batch.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Clangod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clangod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:leader]
+Clanmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:leader]
+Clanmate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+clan create Clanmate Wolves
+
+[probe]
+clan set appfee 99999999999999999999 Wolves
+clan set dues 99999999999999999999 Wolves
+clan rename 99999999999999999999 Ravens
+clan set title 99999999999999999999 1 Chief
+clan withdraw 99999999999999999999 Wolves
+ctell 1abc hello clan
