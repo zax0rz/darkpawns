@@ -1,0 +1,81 @@
+# C-first DP-1521 object handling witness. The immortal stays in 8105 while
+# the switched body is in 8162 with its own bag, pepper, short sword, and long
+# sword. C command bodies are do_put (src/act.item.c:77), do_wear
+# (:1584), do_wield (:1661), do_grab (:1685), and do_remove (:1732).
+# The switched body must own every inventory and equipment lookup and update.
+# Object data in lib/world/obj/80.obj: bag 8032 has capacity 30 and weight 2;
+# long sword 8022 weighs 8; scale mail jacket 8045 weighs 25. C obj_to_obj
+# accumulates contained weight into the bag (src/handler.c:951-955), so after
+# putting the long sword in the bag, putting the scale mail must refuse at 35.
+# depth-case: switched-object-handling.put-mobile-inventory
+# depth-case: switched-object-handling.put-accumulated-container-weight
+# depth-case: switched-object-handling.wear-mobile-inventory
+# depth-case: switched-object-handling.wield-mobile-equipment
+# depth-case: switched-object-handling.hold-mobile-equipment
+# depth-case: switched-object-handling.grab-mobile-equipment
+# depth-case: switched-object-handling.remove-mobile-equipment
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 70 1 8162 80
+spawn-mob 69 1 8162 80
+give-object 69 12132 1 80
+give-object 69 8032 1 80
+give-object 69 8037 1 80
+give-object 69 8045 1 80
+equip-object 69 8022 999 16 80
+
+[setup:oracle]
+Switchedobj
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchedobj
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+switch clone
+look
+inventory
+equipment
+remove long
+put long bag
+put scale bag
+inventory
+wear short
+equipment
+remove short
+hold short
+equipment
+remove short
+grab short
+equipment
+remove short
+wield short
+equipment
+remove short
+equipment
