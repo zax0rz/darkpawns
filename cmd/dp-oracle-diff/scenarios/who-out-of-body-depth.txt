@@ -1,0 +1,108 @@
+# depth-case: who.out-of-body-tag
+# C-first witness for do_who switched-session listing and (out of body)
+# (src/act.informative.c:1752-1755,1890-1891) for both mob switch and PC switch.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 70 1 8162 80
+
+[setup:oracle]
+Whoimm
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Whoimm
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:obs]
+Whoobs
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:obs]
+Whoobs
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Whovict
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Whovict
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Whovict 8162
+
+[peer-drop]
+mortal
+
+[probe]
+switch satan
+send:obs who
+return
+switch Whovict
+send:obs who
+return
+send:obs who

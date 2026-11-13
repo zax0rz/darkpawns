@@ -1,0 +1,110 @@
+# depth-case: who.wizinvis-tag
+# depth-case: who.invis-tag
+# C-first witness for do_who invisibility tags (src/act.informative.c:1880-1883).
+# Immortal viewer sees (iN) when GET_INVIS_LEV(tch) > 0, without (invis).
+# Mortal viewer (GET_LEVEL(ch) < LEVEL_IMMORT) sees (invis) when AFF_INVISIBLE
+# is set, even if GET_INVIS_LEV(tch) > 0.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Whoview
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Whoview
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Whomort
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Whomort
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:invispeer]
+Whoinvis
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:invispeer]
+Whoinvis
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 3001
+holylight
+advance Whoinvis 35
+teleport Whomort 3001
+teleport Whoinvis 3001
+cast 'detect invisibility' Whomort
+~dpclock pulse 20
+cast 'invisibility' Whoinvis
+~dpclock pulse 20
+send:invispeer invis 1
+
+[probe]
+who
+send:peer who
