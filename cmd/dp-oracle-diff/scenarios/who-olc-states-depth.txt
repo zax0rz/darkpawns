@@ -1,3 +1,9 @@
+# depth-case: who.object-edit-state
+# depth-case: who.mobile-edit-state
+# depth-case: who.zone-edit-state
+# depth-case: who.shop-edit-state
+# depth-case: who.room-edit-state
+# depth-case: who.text-edit-state
 # C-first witness for do_who OLC and tedit suffixes (src/act.informative.c:1893-1904):
 # (Object Edit), (Mobile Edit), (Zone Edit), (Shop Edit), (Room Edit), (Text Edit).
 

@@ -1,3 +1,5 @@
+# depth-case: who.wizinvis-tag
+# depth-case: who.invis-tag
 # C-first witness for do_who invisibility tags (src/act.informative.c:1880-1883).
 # Immortal viewer sees (iN) when GET_INVIS_LEV(tch) > 0, without (invis).
 # Mortal viewer (GET_LEVEL(ch) < LEVEL_IMMORT) sees (invis) when AFF_INVISIBLE
