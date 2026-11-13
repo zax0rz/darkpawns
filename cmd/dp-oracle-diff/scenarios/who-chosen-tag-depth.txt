@@ -1,0 +1,73 @@
+# depth-case: who.chosen-tag
+# C do_who's long list prints "&y[ Chosen ] $n $t" for a player who is chosen of
+# the gods (src/act.informative.c:1868-1871), keyed on IS_CHOSEN. The wizard set
+# command toggles PLR_CHOSEN (src/act.wizard.c:2599 field "chosen"; the flag arm
+# is :3036), so the god marks the peer and runs who.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Chosengod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Chosengod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Chosenpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Chosenpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Chosenpeer 8162
+
+[probe]
+set player Chosenpeer chosen on
+who
