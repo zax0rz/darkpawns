@@ -1208,14 +1208,10 @@ func applyGoHouseControlFixtures(goWork string, fixtures []oraclediff.HouseContr
 // prepareGoReloginDB creates the port's throwaway SQLite store. The C oracle's
 // copied lib keeps its existing player file unless the scenario empties it, and
 // the Go store mirrors that at boot: an empty-players scenario starts with an
-// empty store on both sides; every other scenario holds the shipped first
-// player's Testor twin and nothing else. The twin stops the next fresh creation
-// being crowned God (init_char's first-player rule) exactly as C's shipped
-// player does. A seed-player scenario logs the port in as that player instead
-// of creating a fresh character, so neither engine rolls creation draws; it
-// also matches the shipped bad_pws and the ++top_idnum sequence C hands the
-// next creation.
-func prepareGoReloginDB(goWork string, emptyPlayers, seedPlayer bool, shippedPfile string) (string, error) {
+// empty store on both sides; every other scenario seeds a Go twin of every
+// char_file_u record in C's shipped player file and advances the ID sequence
+// past the highest shipped idnum (build_player_index / create_entry, src/db.c).
+func prepareGoReloginDB(goWork string, emptyPlayers, _ bool, shippedPfile string) (string, error) {
 	url := "sqlite://" + filepath.Join(goWork, "relogin.db")
 	if emptyPlayers {
 		return url, nil
@@ -1225,104 +1221,268 @@ func prepareGoReloginDB(goWork string, emptyPlayers, seedPlayer bool, shippedPfi
 		return "", fmt.Errorf("create relogin store: %w", err)
 	}
 	defer func() { _ = store.Close() }()
-	record, err := testorTwinRecord()
+
+	records, top, err := decodeShippedPlayers(shippedPfile)
 	if err != nil {
 		return "", err
 	}
-	if err := store.CreatePlayer(record); err != nil {
-		return "", fmt.Errorf("seed relogin store: %w", err)
+	for _, record := range records {
+		if err := store.CreatePlayer(record); err != nil {
+			return "", fmt.Errorf("seed relogin store (%s): %w", record.Name, err)
+		}
+		if record.FailedLoginAttempts > 0 {
+			// The insert statement does not carry the failed-login counter; the
+			// shipped bad_pws would otherwise be lost.
+			if err := store.SetFailedLoginAttempts(record.ID, record.FailedLoginAttempts); err != nil {
+				return "", fmt.Errorf("seed relogin store login counter (%s): %w", record.Name, err)
+			}
+		}
 	}
-	if seedPlayer {
-		// The insert statement does not carry the failed-login counter; the
-		// twin's shipped bad_pws would otherwise be lost.
-		if err := store.SetFailedLoginAttempts(record.ID, record.FailedLoginAttempts); err != nil {
-			return "", fmt.Errorf("seed relogin store login counter: %w", err)
-		}
-		// C's next fresh mortal takes ++top_idnum from the shipped player
-		// file; without advancing the sequence the port's takes 2, and the
-		// IDNum prints diverge in stat/set/whois/finger output.
-		top, err := topShippedIDNum(shippedPfile)
-		if err != nil {
-			return "", err
-		}
-		if err := store.SetNextPlayerID(top + 1); err != nil {
-			return "", fmt.Errorf("seed relogin store id sequence: %w", err)
-		}
+	// C's next fresh mortal takes ++top_idnum from the shipped player file in
+	// every non-empty mode; without advancing the sequence the port's IDs
+	// diverge in stat/set/whois/finger output.
+	if err := store.SetNextPlayerID(top + 1); err != nil {
+		return "", fmt.Errorf("seed relogin store id sequence: %w", err)
 	}
 	return url, nil
 }
 
-// topShippedIDNum returns C's top_idnum for the shipped player file: the
-// highest idnum any char_file_u record holds. The layout is frozen by the
-// struct's *DO*NOT*CHANGE* warnings (src/structs.h): sizeof 1656, idnum at
-// offset 392 (char_specials_saved.idnum, a 64-bit long on this build).
-// C's boot derives the same value while building the player index
-// (build_player_index, src/db.c), and create_entry assigns ++top_idnum to
-// every new character.
-func topShippedIDNum(pfile string) (int64, error) {
-	const (
-		recordSize  = 1656
-		idnumOffset = 392
-		idnumSize   = 8
-	)
+const shippedPlayerRecordSize = 1656
+
+// decodeShippedPlayers decodes every char_file_u record in C's shipped player
+// file and returns the decoded Go PlayerRecords together with C's top_idnum.
+// The layout is frozen by the struct's *DO*NOT*CHANGE* warnings (src/structs.h):
+// sizeof 1656, idnum at offset 392 (char_specials_saved.idnum, 64-bit long).
+func decodeShippedPlayers(pfile string) ([]*db.PlayerRecord, int64, error) {
 	data, err := os.ReadFile(filepath.Clean(pfile)) // #nosec G703 -- harness-joined path under the C oracle checkout, never request-derived
 	if err != nil {
-		return 0, fmt.Errorf("read shipped player file: %w", err)
+		return nil, 0, fmt.Errorf("read shipped player file: %w", err)
 	}
-	if len(data)%recordSize != 0 {
-		return 0, fmt.Errorf("shipped player file %s is %d bytes, not a whole number of %d-byte records", pfile, len(data), recordSize)
+	if len(data) == 0 || len(data)%shippedPlayerRecordSize != 0 {
+		return nil, 0, fmt.Errorf("shipped player file %s is %d bytes, expected non-empty multiple of %d-byte records", pfile, len(data), shippedPlayerRecordSize)
 	}
+	records := make([]*db.PlayerRecord, 0, len(data)/shippedPlayerRecordSize)
 	var top int64
-	for off := 0; off+recordSize <= len(data); off += recordSize {
-		raw := binary.LittleEndian.Uint64(data[off+idnumOffset : off+idnumOffset+idnumSize])
-		if raw > math.MaxInt64 {
-			// A shipped idnum is a small positive number; anything that
-			// reinterprets negative is not an id.
-			continue
+	for off := 0; off+shippedPlayerRecordSize <= len(data); off += shippedPlayerRecordSize {
+		rec, idnum, err := decodeShippedPlayerRecord(data[off : off+shippedPlayerRecordSize])
+		if err != nil {
+			return nil, 0, fmt.Errorf("record at offset %d: %w", off, err)
 		}
-		if id := int64(raw); id > top {
-			top = id
+		records = append(records, rec)
+		if idnum > top {
+			top = idnum
 		}
 	}
-	return top, nil
+	return records, top, nil
 }
 
-// testorTwinRecord is the port-side twin of the C checkout's shipped first
-// player: record 0 of lib/etc/players, decoded from C's char_file_u (name
-// Testor, Warrior, sex male, str 17 / int 9 / wis 13 / dex 16 / con 13 /
-// cha 8, weight 159, height 175, hometown 1, played 14s, last_logon
-// 1783904500, bad_pws 1). BootstrapFirstPlayerGod ports the same init_char
-// block that wrote C's record — level LVL_IMPL (40), exp 7,000,000,
-// 500/100/82 points, every skill at 100, conditions -1, no display
-// preferences — so those fields match by construction, as do the Warrior
-// class title and the constructor's AC default. C's load_room is -1 and its
-// level is LVL_IMPL, so C's nanny '1' places the body at immort_start_room
-// (src/config.c:149); the twin seeds that effective room. The shipped
-// record's bad_pws is 1, so both engines print the LOGIN FAILURES line at
-// login (src/interpreter.c:1929-1937). The password is the one the C record
-// has verified since the pfile shipped: "testpassword".
-func testorTwinRecord() (*db.PlayerRecord, error) {
-	p := game.NewCharacterWithStats(1, "Testor", game.ClassWarrior, game.RaceHuman, game.SexMale,
-		game.CharStats{Str: 17, Int: 9, Wis: 13, Dex: 16, Con: 13, Cha: 8})
-	game.BootstrapFirstPlayerGod(p)
-	p.Hometown = 1
-	p.Height = 175
-	p.Weight = 159
-	p.Birth = 1783904463
-	p.PlayedDuration = 14
-	p.SetRoom(1204)
+func readCString(b []byte) string {
+	if idx := bytes.IndexByte(b, 0); idx >= 0 {
+		b = b[:idx]
+	}
+	return string(b)
+}
+
+func cSexToGo(cSex byte) int {
+	switch cSex {
+	case 1: // C SEX_MALE
+		return game.SexMale
+	case 2: // C SEX_FEMALE
+		return game.SexFemale
+	default: // C SEX_NEUTRAL (0)
+		return game.SexNeutral
+	}
+}
+
+func decodeShippedPlayerRecord(rec []byte) (*db.PlayerRecord, int64, error) {
+	const (
+		offName          = 0
+		lenName          = 21
+		offDescription   = 21
+		lenDescription   = 240
+		offTitle         = 261
+		lenTitle         = 81
+		offSex           = 342
+		offClass         = 343
+		offLevel         = 344
+		offHometown      = 346
+		offBirth         = 352
+		offPlayed        = 360
+		offWeight        = 364
+		offHeight        = 365
+		offPwd           = 366
+		lenPwd           = 11
+		offAlignment     = 384
+		offIDNum         = 392
+		offSkills        = 448
+		lenSkills        = 201
+		offWimpLevel     = 656
+		offFreezeLevel   = 660
+		offInvisLevel    = 662
+		offLoadRoom      = 664
+		offPref          = 668
+		offBadPws        = 684
+		offConditions    = 685
+		offRace          = 712
+		offOrigCon       = 716
+		offClanRank      = 717
+		offSpellsToLearn = 720
+		offOlcZone       = 724
+		offClan          = 744
+		offAbilities     = 808
+		offMana          = 816
+		offMaxMana       = 818
+		offHit           = 820
+		offMaxHit        = 822
+		offMove          = 824
+		offMaxMove       = 826
+		offArmor         = 828
+		offGold          = 832
+		offBankGold      = 836
+		offExp           = 840
+		offHitroll       = 844
+		offDamroll       = 845
+		offLastLogon     = 1616
+		offHost          = 1624
+		lenHost          = 31
+	)
+
+	name := readCString(rec[offName : offName+lenName])
+	description := readCString(rec[offDescription : offDescription+lenDescription])
+	title := readCString(rec[offTitle : offTitle+lenTitle])
+	sex := cSexToGo(rec[offSex])
+	class := int(rec[offClass])
+	level := int(rec[offLevel])
+	hometown := int(int16(binary.LittleEndian.Uint16(rec[offHometown : offHometown+2])))
+	birth := int64(binary.LittleEndian.Uint64(rec[offBirth : offBirth+8]))
+	played := int64(int32(binary.LittleEndian.Uint32(rec[offPlayed : offPlayed+4])))
+	weight := int(rec[offWeight])
+	height := int(rec[offHeight])
+	cPwd := readCString(rec[offPwd : offPwd+lenPwd])
+	alignment := int(int32(binary.LittleEndian.Uint32(rec[offAlignment : offAlignment+4])))
+	rawID := binary.LittleEndian.Uint64(rec[offIDNum : offIDNum+8])
+	if rawID > math.MaxInt64 {
+		return nil, 0, fmt.Errorf("idnum %d overflows int64", rawID)
+	}
+	idnum := int64(rawID)
+
+	wimpLevel := int(int32(binary.LittleEndian.Uint32(rec[offWimpLevel : offWimpLevel+4])))
+	freezeLevel := int(rec[offFreezeLevel])
+	invisLevel := int(int16(binary.LittleEndian.Uint16(rec[offInvisLevel : offInvisLevel+2])))
+	loadRoom := int(int16(binary.LittleEndian.Uint16(rec[offLoadRoom : offLoadRoom+2])))
+	pref0 := binary.LittleEndian.Uint32(rec[offPref : offPref+4])
+	badPws := int(rec[offBadPws])
+	condDrunk := int(int8(rec[offConditions]))
+	condFull := int(int8(rec[offConditions+1]))
+	condThirst := int(int8(rec[offConditions+2]))
+	race := int(int32(binary.LittleEndian.Uint32(rec[offRace : offRace+4])))
+	origCon := int(rec[offOrigCon])
+	clanRank := int(rec[offClanRank])
+	spellsToLearn := int(int32(binary.LittleEndian.Uint32(rec[offSpellsToLearn : offSpellsToLearn+4])))
+	olcZone := int(int32(binary.LittleEndian.Uint32(rec[offOlcZone : offOlcZone+4])))
+	clan := int(int32(binary.LittleEndian.Uint32(rec[offClan : offClan+4])))
+
+	stats := game.CharStats{
+		Str:    int(int8(rec[offAbilities])),
+		StrAdd: int(int8(rec[offAbilities+1])),
+		Int:    int(int8(rec[offAbilities+2])),
+		Wis:    int(int8(rec[offAbilities+3])),
+		Dex:    int(int8(rec[offAbilities+4])),
+		Con:    int(int8(rec[offAbilities+5])),
+		Cha:    int(int8(rec[offAbilities+6])),
+	}
+
+	p := game.RestoreCharacterWithStats(int(idnum), name, class, race, stats)
+	p.Sex = sex
+	p.Description = description
+	game.SetTitle(p, title)
+	p.SetLevel(level)
+	if p.Inventory != nil {
+		p.Inventory.SetCapacity(p.GetStr(), p.GetStrAdd(), p.GetDex(), p.GetLevel())
+	}
+	p.SetExp(int(int32(binary.LittleEndian.Uint32(rec[offExp : offExp+4]))))
+	p.Mana = int(int16(binary.LittleEndian.Uint16(rec[offMana : offMana+2])))
+	p.MaxMana = int(int16(binary.LittleEndian.Uint16(rec[offMaxMana : offMaxMana+2])))
+	p.Health = int(int16(binary.LittleEndian.Uint16(rec[offHit : offHit+2])))
+	p.MaxHealth = int(int16(binary.LittleEndian.Uint16(rec[offMaxHit : offMaxHit+2])))
+	p.Move = int(int16(binary.LittleEndian.Uint16(rec[offMove : offMove+2])))
+	p.MaxMove = int(int16(binary.LittleEndian.Uint16(rec[offMaxMove : offMaxMove+2])))
+	p.AC = int(int16(binary.LittleEndian.Uint16(rec[offArmor : offArmor+2])))
+	p.Gold = int(int32(binary.LittleEndian.Uint32(rec[offGold : offGold+4])))
+	p.BankGold = int(int32(binary.LittleEndian.Uint32(rec[offBankGold : offBankGold+4])))
+	p.Hitroll = int(int8(rec[offHitroll]))
+	p.Damroll = int(int8(rec[offDamroll]))
+	p.Alignment = alignment
+	p.Hometown = hometown
+	p.Height = height
+	p.Weight = weight
+	p.Birth = birth
+	p.PlayedDuration = played
+	p.OrigCon = origCon
+	p.WimpLevel = wimpLevel
+	p.FreezeLevel = freezeLevel
+	p.InvisLevel = invisLevel
+	p.Practices = spellsToLearn
+	p.ClanID = clan
+	p.ClanRank = clanRank
+	p.Conditions[game.CondDrunk] = condDrunk
+	p.Conditions[game.CondFull] = condFull
+	p.Conditions[game.CondThirst] = condThirst
+	p.Drunk = condDrunk
+	p.Hunger = condFull
+	p.Thirst = condThirst
+
+	p.SetPlrFlag(game.PrfDisphp, pref0&(1<<4) != 0)
+	p.SetPlrFlag(game.PrfDispmmana, pref0&(1<<5) != 0)
+	p.SetPlrFlag(game.PrfDispmove, pref0&(1<<6) != 0)
+	p.SetAutoExit(pref0&(1<<7) != 0)
+
+	for num := 1; num < lenSkills; num++ {
+		val := int(rec[offSkills+num])
+		if val <= 0 {
+			continue
+		}
+		skillName := game.SkillStorageName(num)
+		if skillName != "" {
+			p.SetSkill(skillName, val)
+		}
+	}
+
+	room := loadRoom
+	if room < 0 {
+		if level >= game.LVL_IMMORT {
+			room = game.ImmortStartRoom
+		} else {
+			room = game.MortalStartRoom
+		}
+	}
+	p.SetRoom(room)
+
+	lastLogon := int64(binary.LittleEndian.Uint64(rec[offLastLogon : offLastLogon+8]))
+	p.LastLogon = lastLogon
+	host := readCString(rec[offHost : offHost+lenHost])
+
 	record, err := db.PlayerToRecord(p, nil)
 	if err != nil {
-		return nil, fmt.Errorf("encode Testor twin: %w", err)
+		return nil, 0, fmt.Errorf("encode %s twin: %w", name, err)
 	}
-	hash, err := bcrypt.GenerateFromPassword([]byte("testpassword"), bcrypt.MinCost)
-	if err != nil {
-		return nil, fmt.Errorf("hash Testor twin password: %w", err)
+	record.OlcZone = olcZone
+	record.Host = host
+	record.FailedLoginAttempts = badPws
+	record.LastLogon = lastLogon
+	if strings.EqualFold(name, "Testor") {
+		// The password is the one the C record has verified since the pfile
+		// shipped: "testpassword". Other shipped records hold C DES crypt()
+		// hashes whose plaintext is not in the repo.
+		hash, err := bcrypt.GenerateFromPassword([]byte("testpassword"), bcrypt.MinCost)
+		if err != nil {
+			return nil, 0, fmt.Errorf("hash %s twin password: %w", name, err)
+		}
+		record.Password = string(hash)
+	} else {
+		record.Password = cPwd
 	}
-	record.Password = string(hash)
-	record.FailedLoginAttempts = 1
-	record.LastLogon = 1783904500
-	return record, nil
+	return record, idnum, nil
 }
 
 func withFreshMUDEnv(env []string, enabled bool) []string {

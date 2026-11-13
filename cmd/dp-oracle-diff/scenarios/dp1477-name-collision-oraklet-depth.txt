@@ -1,0 +1,53 @@
+# C-first witness for DP-1477: C's shipped lib/etc/players contains Oraklet
+# (idnum 2, char_file_u record 1), so nanny's CON_GET_NAME (src/interpreter.c:1762-1797)
+# finds Oraklet via load_char and prompts "Password: " instead of new-character
+# confirmation. On origin/main, Go's store seeds only Testor and treats Oraklet as new.
+[fixture]
+quiet-mobs
+no-settle
+compare-close
+
+[setup:oracle]
+Colwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Colwatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+<RELOGIN>
+
+[relogin:oracle]
+Oraklet
+~dpclock pulse 1
+wrongpass
+wrongpass
+wrongpass
+
+[relogin:port]
+Oraklet
+~dpclock pulse 1
+wrongpass
+wrongpass
+wrongpass
