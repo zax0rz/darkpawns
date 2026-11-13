@@ -1,0 +1,80 @@
+# depth-case: who.deaf-tag
+# depth-case: who.afk-tag
+# depth-case: who.quest-tag
+# C do_who's status suffixes (src/act.informative.c:1906-1912): PRF_DEAF prints
+# " (deaf)", PRF_QUEST prints " (quest)" and PRF_AFK prints " (AFK)". Each is a
+# toggle the peer flips itself: deaf is the noshout command (SCMD_DEAF,
+# src/interpreter.c:577), and afk and quest are their own commands
+# (src/interpreter.c:326, :628).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Tagbgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tagbgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Tagbpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Tagbpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Tagbpeer 8162
+
+[probe]
+send:peer noshout
+who
+send:peer quest
+who
+send:peer afk
+who
