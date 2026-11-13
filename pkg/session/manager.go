@@ -1954,7 +1954,7 @@ func (m *Manager) CrashSaveAll(why string) {
 		if s == nil || s.player == nil || !s.authenticated || s.isGuest {
 			continue
 		}
-		if s.charCreating || s.creationSaved || s.menuActive {
+		if s.charCreating || s.creationSaved || s.menuActive || s.conEditorActive.Load() || s.inOLCEditorState() {
 			continue
 		}
 		if s.player.IsLinkless() {
