@@ -112,7 +112,10 @@ func cmdStat(s *Session, args []string) error {
 		s.sendStatObjectInstance(object)
 		return nil
 	}
-	if sess := findSessionByName(s.manager, target); sess != nil && sess.player != nil {
+	// Fixture-only fallback (unit tests register no world players); C's chain
+	// ends at get_obj_vis, so keep it visibility-gated to match get_char_vis's
+	// CAN_SEE refusals for invisible targets.
+	if sess := findSessionByName(s.manager, target); sess != nil && sess.player != nil && game.CanSee(s.player, sess.player) {
 		s.sendStatPlayer(sess.player)
 		return nil
 	}

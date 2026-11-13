@@ -83,7 +83,7 @@ func cmdRestore(s *Session, args []string) error {
 		// (src/act.wizard.c:1615-1616): $N renders "someone" when the victim
 		// cannot see the restoring god.
 		game.Act(s.manager.world, true, target, s.player, nil, nil,
-			"The hand of $N touches you, healing your wounds and leaving you refreshed!\r\n", "", game.ToChar)
+			"The hand of $N touches you, healing your wounds and leaving you refreshed!", "", game.ToChar)
 	}
 	return nil
 }
