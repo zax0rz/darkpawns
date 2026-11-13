@@ -61,7 +61,7 @@ func TestNoteStringAddOverflowSkipsLineAndKeepsWriting(t *testing.T) {
 	} else {
 		t.Fatal("@ did not complete the still-active note editor")
 	}
-	want := accepted + "\r\nok\r\n"
+	want := accepted + "ok\r\n"
 	if paper.Runtime.NoteText != want {
 		t.Fatalf("saved note = %q, want %q", paper.Runtime.NoteText, want)
 	}

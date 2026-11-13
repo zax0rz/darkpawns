@@ -1,0 +1,55 @@
+# depth-case: look.note-with-text
+# C show_obj_to_char mode 5 (src/act.informative.c:108-117) prints
+# "There is something written upon it:" plus the note body when an ITEM_NOTE
+# carries an action_description, and "It's blank." otherwise. do_look reaches
+# mode 5 when the object has no extra description (:1069); "read" is do_look
+# with SCMD_READ (src/interpreter.c:636), so it prints the same block. The
+# god writes on a blank note with the write editor (19510, type 16, from the
+# indexed 195.obj), looks and reads it, then a second write must hit do_write's
+# "already written" gate (src/act.comm.c:1094).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Notegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Notegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+load obj 19510
+load obj 1208
+hold quill
+write tome
+A line about the sun.
+@
+look tome
+read tome
+write tome
