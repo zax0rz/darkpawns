@@ -911,7 +911,7 @@ func (m *Manager) flushAsyncPrompts() {
 		if s.inputBusy.Load() || !s.hasTransport() || s.SendClosed() {
 			continue
 		}
-		if s.outputSincePrompt.Load() > 0 && !s.IsCharCreating() && !s.IsMenuActive() && !s.IsPaging() {
+		if s.outputSincePrompt.Load() > 0 && !s.IsCharCreating() && !s.IsMenuActive() {
 			s.SendPrompt()
 		}
 	}

@@ -414,6 +414,27 @@ func TestLevelsEntersPagerForLongOutput(t *testing.T) {
 	}
 }
 
+func TestPagerResetsIdleTimer(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeCommandTestSession(t, m, "Pageridle", 1, 1001)
+	var sb strings.Builder
+	for i := 1; i <= 50; i++ {
+		sb.WriteString(pageTag(1))
+		sb.WriteByte('\n')
+	}
+	PageString(s, sb.String())
+	if !s.IsPaging() {
+		t.Fatal("setup failed: did not enter pager mode")
+	}
+	_ = drainSendChannel(t, s)
+
+	s.player.SetIdleTimer(8)
+	s.navigatePager("r")
+	if got := s.player.GetIdleTimer(); got != 0 {
+		t.Errorf("GetIdleTimer() after pager input = %d, want 0 (comm.c:600)", got)
+	}
+}
+
 // unicode import guard: keep the linter happy if a future assertion needs it.
 var _ = unicode.IsLetter
 
