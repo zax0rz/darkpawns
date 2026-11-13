@@ -1,0 +1,74 @@
+# depth-case: who.writing-tag
+# C do_who's long list appends " (writing)" while PLR_WRITING is set
+# (src/act.informative.c:1886-1888), and the board writer sets that flag as soon
+# as a headline is accepted (src/boards.c:264-266). The peer writes to a spawned
+# bulletin board and stays in the editor while the god runs who.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8099 1 8162 48
+
+[setup:oracle]
+Wwgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wwgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Wwpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Wwpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Wwpeer 8162
+
+[probe]
+send:peer write A test headline
+who
