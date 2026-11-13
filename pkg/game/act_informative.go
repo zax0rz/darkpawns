@@ -44,7 +44,7 @@ func chCanSee(ch *Player, target any) bool {
 	return !ch.IsAffected(affBlind)
 }
 
-func chCanSeeObj(ch *Player, obj *ObjectInstance) bool {
+func chCanSeeObj(ch Actor, obj *ObjectInstance) bool {
 	if ch == nil || obj == nil {
 		return false
 	}
@@ -56,12 +56,20 @@ func chCanSeeObj(ch *Player, obj *ObjectInstance) bool {
 // ChCanSeeInDark is the exported dark-vision check (infravision/immortal).
 func ChCanSeeInDark(ch *Player) bool { return chCanSeeInDark(ch) }
 
-func chCanSeeInDark(ch *Player) bool {
+func chCanSeeInDark(ch Actor) bool {
 	// CAN_SEE_IN_DARK(ch) is exactly AFF_INFRAVISION or PRF_HOLYLIGHT
 	// (src/utils.h:451-452). Immortal level alone does not grant dark vision;
 	// the first-player God reaches LVL_IMPL through init_char without the
 	// advance_level() holy-light assignment (src/db.c:3014-3074).
-	return ch.GetHolyLight() || ch.IsAffected(affInfravision)
+	holyLight := false
+	if viewer, ok := ch.(holyLightSubject); ok {
+		holyLight = viewer.GetHolyLight()
+	}
+	affected := false
+	if viewer, ok := ch.(interface{ IsAffected(int) bool }); ok {
+		affected = viewer.IsAffected(affInfravision)
+	}
+	return holyLight || affected
 }
 
 func (w *World) isRoomDark(vnum int) bool {

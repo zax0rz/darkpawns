@@ -411,7 +411,10 @@ func (w *World) updateGossipHistory(name, message string, invisLevel int) {
 // Matches C: do_review() in new_cmds.c (src/new_cmds.c:1369-1391). Each entry
 // is CCCYN + name + ": " + CCYEL + text + CCNRM, all at C_CMP, and ends in
 // "\n\r" (not "\r\n"); the header lines end in "\r\n".
-func (w *World) ReviewGossip(ch *Player) string {
+func (w *World) ReviewGossip(ch combat.Combatant) string {
+	if ch == nil {
+		return ""
+	}
 	w.gossipMu.RLock()
 	defer w.gossipMu.RUnlock()
 

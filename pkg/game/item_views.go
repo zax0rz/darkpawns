@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // ---------------------------------------------------------------------------
@@ -108,20 +110,22 @@ var cWearWhere = []string{
 
 // DoEquipment prints the player's equipped items in C WEAR_ order.
 // Source: C do_equipment() (src/act.informative.c:1470-1495)
-func (w *World) DoEquipment(ch *Player) {
+func (w *World) DoEquipment(ch combat.Combatant) {
+	if ch == nil {
+		return
+	}
 	var b strings.Builder
 	b.WriteString("You are using:\r\n")
 
 	found := false
 	for i := range cWearToGoSlot {
-		slot := cWearToGoSlot[i]
-		item, ok := ch.Equipment.GetItemInSlot(slot)
+		item, ok := observationBodyEquipped(ch, i)
 		if !ok || item == nil {
 			continue
 		}
 		found = true
 		b.WriteString(cWearWhere[i])
-		if chCanSeeObj(ch, item) {
+		if chCanSeeObj(observationBodyActor(ch), item) {
 			b.WriteString(item.GetShortDesc())
 			b.WriteString(coloredEquipmentObjectFlags(ch, ch, item, i))
 			b.WriteString("\r\n")
@@ -139,9 +143,9 @@ func (w *World) DoEquipment(ch *Player) {
 // coloredEquipmentObjectFlags adds the equipment-only covered annotation.
 // C's show_obj_to_char receives the wearer's worn_on position and marks an
 // item covered when another equipped item hides that position.
-func coloredEquipmentObjectFlags(viewer, wearer *Player, object *ObjectInstance, cPos int) string {
+func coloredEquipmentObjectFlags(viewer, wearer combat.Combatant, object *ObjectInstance, cPos int) string {
 	flags := coloredObjectVisibleFlags(viewer, object)
-	if !equipmentPositionCovered(wearer, cPos) {
+	if !observationBodyEquipmentPositionCovered(wearer, cPos) {
 		return flags
 	}
 	if flags == "" {
@@ -150,8 +154,8 @@ func coloredEquipmentObjectFlags(viewer, wearer *Player, object *ObjectInstance,
 	return flags + " (covered)"
 }
 
-func equipmentPositionCovered(ch *Player, cPos int) bool {
-	if ch == nil || ch.Equipment == nil {
+func observationBodyEquipmentPositionCovered(body combat.Combatant, cPos int) bool {
+	if body == nil {
 		return false
 	}
 	var coverSlot EquipmentSlot
@@ -165,20 +169,33 @@ func equipmentPositionCovered(ch *Player, cPos int) bool {
 	default:
 		return false
 	}
-	item, ok := ch.Equipment.GetItemInSlot(coverSlot)
-	return ok && item != nil
+	if player, ok := body.(*Player); ok {
+		if player.Equipment == nil {
+			return false
+		}
+		item, exists := player.Equipment.GetItemInSlot(coverSlot)
+		return exists && item != nil
+	}
+	if mob, ok := body.(*MobInstance); ok {
+		for cPosition, slot := range cWearToGoSlot {
+			if slot == coverSlot {
+				item, exists := mob.EquipmentSnapshot()[cPosition]
+				return exists && item != nil
+			}
+		}
+	}
+	return false
 }
 
 // DoInventory prints the player's inventory with C's object-clumping format.
 // Source: C do_inventory() + list_obj_to_char() + oc_show_list() (mode 15)
-func (w *World) DoInventory(ch *Player) {
+func (w *World) DoInventory(ch combat.Combatant) {
+	if ch == nil {
+		return
+	}
 	var b strings.Builder
 	b.WriteString("You are carrying:\r\n")
-
-	var items []*ObjectInstance
-	if ch.Inventory != nil {
-		items = ch.Inventory.Snapshot()
-	}
+	items := observationBodyInventory(ch)
 	b.WriteString(w.renderObjectListMode15(ch, items))
 	ch.SendMessage(b.String())
 }
@@ -189,7 +206,7 @@ func (w *World) DoInventory(ch *Player) {
 // and reverse discovery order mirror oc_add_front + oc_show_list. This block is
 // sent raw (like C send_to_char), so it is NOT routed through the capitalizing
 // act() path used for ordinary observation lines.
-func (w *World) renderObjectListMode15(ch *Player, items []*ObjectInstance) string {
+func (w *World) renderObjectListMode15(ch combat.Combatant, items []*ObjectInstance) string {
 	type group struct {
 		line  string
 		count int
@@ -199,7 +216,7 @@ func (w *World) renderObjectListMode15(ch *Player, items []*ObjectInstance) stri
 	order := make([]string, 0)
 
 	for _, item := range items {
-		if item == nil || !chCanSeeObj(ch, item) {
+		if item == nil || !chCanSeeObj(observationBodyActor(ch), item) {
 			continue
 		}
 		text := item.GetShortDesc()
@@ -235,7 +252,7 @@ func (w *World) renderObjectListMode15(ch *Player, items []*ObjectInstance) stri
 
 // formatOCShowListLine renders one entry the way C oc_show_list() does for
 // mode 15 (wide, indented, with weights).
-func formatOCShowListLine(text string, count, weight int, item *ObjectInstance, ch *Player) string {
+func formatOCShowListLine(text string, count, weight int, item *ObjectInstance, ch combat.Combatant) string {
 	var b strings.Builder
 
 	if count == 1 {
@@ -263,10 +280,10 @@ func formatOCShowListLine(text string, count, weight int, item *ObjectInstance, 
 	if extras&(1<<itemExtraInvisible) != 0 {
 		appendExtra("...it is invisible ")
 	}
-	if extras&(1<<itemExtraBless) != 0 && ch.IsAffected(affDetectAlign) {
+	if extras&(1<<itemExtraBless) != 0 && observationBodyAffected(ch, affDetectAlign) {
 		appendExtra("...it glows blue")
 	}
-	if extras&(1<<itemExtraMagic) != 0 && ch.IsAffected(affDetectMagic) {
+	if extras&(1<<itemExtraMagic) != 0 && observationBodyAffected(ch, affDetectMagic) {
 		appendExtra("...it glows gold")
 	}
 	if extras&(1<<itemExtraGlow) != 0 {

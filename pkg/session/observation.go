@@ -6,14 +6,24 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/command"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 func cmdLook(s *Session, args []string) error {
-	if s.player == nil {
+	return cmdLookForBody(s, s.player, args)
+}
+
+func cmdLookBody(ctx command.ExecutionContext, args []string) error {
+	return cmdLookForBody(commandSessionFromContext(ctx), ctx.Body, args)
+}
+
+func cmdLookForBody(s *Session, body combat.Combatant, args []string) error {
+	if s == nil || body == nil {
 		return fmt.Errorf("not logged in")
 	}
-	return s.sendObservation(s.manager.world.DoLook(s.player, "look", strings.Join(args, " ")), "")
+	return s.sendObservation(s.manager.world.DoLook(body, "look", strings.Join(args, " ")), "")
 }
 
 // cmdMovementLook is the one allowed observation/movement cross-cut: C room
@@ -28,32 +38,48 @@ func cmdMovementLook(s *Session) error {
 	return s.sendObservationForPlayer(s.manager.world.DoLookRoom(player, false), "", player)
 }
 
-func cmdRead(s *Session, args []string) error {
-	if s.player == nil {
-		return fmt.Errorf("not logged in")
-	}
-	return s.sendObservation(s.manager.world.DoLook(s.player, "read", strings.Join(args, " ")), "")
+func cmdReadBody(ctx command.ExecutionContext, args []string) error {
+	return cmdReadForBody(commandSessionFromContext(ctx), ctx.Body, args)
 }
 
-func cmdExamine(s *Session, args []string) error {
-	if s.player == nil {
+func cmdReadForBody(s *Session, body combat.Combatant, args []string) error {
+	if s == nil || body == nil {
 		return fmt.Errorf("not logged in")
 	}
-	return s.sendObservation(s.manager.world.DoExamine(s.player, strings.Join(args, " ")), "")
+	return s.sendObservation(s.manager.world.DoLook(body, "read", strings.Join(args, " ")), "")
 }
 
-func cmdExits(s *Session, _ []string) error {
-	if s.player == nil {
-		return fmt.Errorf("not logged in")
-	}
-	return s.sendObservation(s.manager.world.DoExits(s.player), "")
+func cmdExamineBody(ctx command.ExecutionContext, args []string) error {
+	return cmdExamineForBody(commandSessionFromContext(ctx), ctx.Body, args)
 }
 
-func cmdDiagnose(s *Session, args []string) error {
-	if s.player == nil {
+func cmdExamineForBody(s *Session, body combat.Combatant, args []string) error {
+	if s == nil || body == nil {
 		return fmt.Errorf("not logged in")
 	}
-	return s.sendObservation(s.manager.world.DoDiagnose(s.player, strings.Join(args, " ")), "")
+	return s.sendObservation(s.manager.world.DoExamine(body, strings.Join(args, " ")), "")
+}
+
+func cmdExitsBody(ctx command.ExecutionContext, _ []string) error {
+	return cmdExitsForBody(commandSessionFromContext(ctx), ctx.Body)
+}
+
+func cmdExitsForBody(s *Session, body combat.Combatant) error {
+	if s == nil || body == nil {
+		return fmt.Errorf("not logged in")
+	}
+	return s.sendObservation(s.manager.world.DoExits(body), "")
+}
+
+func cmdDiagnoseBody(ctx command.ExecutionContext, args []string) error {
+	return cmdDiagnoseForBody(commandSessionFromContext(ctx), ctx.Body, args)
+}
+
+func cmdDiagnoseForBody(s *Session, body combat.Combatant, args []string) error {
+	if s == nil || body == nil {
+		return fmt.Errorf("not logged in")
+	}
+	return s.sendObservation(s.manager.world.DoDiagnose(body, strings.Join(args, " ")), "")
 }
 
 // sendObservation is the thin dual renderer: game-owned messages travel

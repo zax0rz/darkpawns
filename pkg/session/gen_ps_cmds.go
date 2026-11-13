@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/zax0rz/darkpawns/pkg/command"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -247,8 +248,31 @@ func cmdClear(s *Session, args []string) error {
 // boot by load_compile_time() (src/version.c). The port used to print
 // "Built with: <go version>" here, which C has no such line for (R4).
 func cmdVersion(s *Session, args []string) error {
+	if s == nil {
+		return nil
+	}
+	level := 0
+	if s.player != nil {
+		level = s.player.GetLevel()
+	}
+	return cmdVersionForLevel(s, level)
+}
+
+func cmdVersionBody(ctx command.ExecutionContext, args []string) error {
+	s := commandSessionFromContext(ctx)
+	body := ctx.Body
+	if s == nil || body == nil {
+		return nil
+	}
+	if _, ok := body.(*game.Player); ok {
+		return cmdVersion(s, args)
+	}
+	return cmdVersionForLevel(s, body.GetLevel())
+}
+
+func cmdVersionForLevel(s *Session, level int) error {
 	s.Send("Dark Pawns 2.3-")
-	if s.player != nil && s.player.Level >= LVL_IMMORT {
+	if level >= LVL_IMMORT {
 		if compileTime := game.CompileTimeString(); compileTime != "" {
 			s.Send("Compile Time: " + compileTime)
 		}
@@ -262,6 +286,19 @@ func cmdWhoami(s *Session, args []string) error {
 		return nil
 	}
 	s.Send(s.player.Name)
+	return nil
+}
+
+func cmdWhoamiBody(ctx command.ExecutionContext, args []string) error {
+	s := commandSessionFromContext(ctx)
+	body := ctx.Body
+	if s == nil || body == nil {
+		return nil
+	}
+	if _, ok := body.(*game.Player); ok {
+		return cmdWhoami(s, args)
+	}
+	s.Send(body.GetName())
 	return nil
 }
 

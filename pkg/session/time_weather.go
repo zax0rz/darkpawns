@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/command"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -81,7 +83,26 @@ func cmdTime(s *Session, args []string) error {
 // cmdWeather renders the canonical weather state with C's OUTSIDE gate.
 // Source: act.informative.c do_weather() lines 1546-1563.
 func cmdWeather(s *Session, args []string) error {
+	if s == nil || s.player == nil {
+		return nil
+	}
+	return cmdWeatherForBody(s, s.player)
+}
+
+func cmdWeatherBody(ctx command.ExecutionContext, args []string) error {
+	s := commandSessionFromContext(ctx)
+	body := ctx.Body
+	if s == nil || body == nil {
+		return nil
+	}
+	if _, ok := body.(*game.Player); ok {
+		return cmdWeather(s, args)
+	}
+	return cmdWeatherForBody(s, body)
+}
+
+func cmdWeatherForBody(s *Session, body combat.Combatant) error {
 	snapshot := game.WeatherSnapshot()
-	s.Send(formatMudWeather(snapshot, s.manager.world.IsOutside(s.player.GetRoom())))
+	s.Send(formatMudWeather(snapshot, s.manager.world.IsOutside(body.GetRoom())))
 	return nil
 }

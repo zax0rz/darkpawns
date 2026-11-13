@@ -1,0 +1,111 @@
+# C-first DP-1521 observation witness. The immortal is moved to room 8105,
+# then switches into the level-9 clone in room 8162 with its own pepper and
+# long sword. Satan Klaus remains in the room as the consider target; the lower
+# body level also distinguishes the wizonly help gate.
+# The probe exercises every body-backed observation path through the switched
+# descriptor; the mob's room, inventory, equipment, level, stats, and name
+# differ from the immortal's.
+# depth-case: look.switched-body-room
+# depth-case: look.switched-body-self-exclusion
+# depth-case: read.switched-body-object
+# depth-case: examine.switched-body-object
+# depth-case: exits.switched-body-room
+# depth-case: diagnose.switched-body-target
+# depth-case: glance.switched-body-target
+# depth-case: inventory.switched-body
+# depth-case: equipment.switched-body
+# depth-case: score.switched-body
+# depth-case: abilities.switched-body
+# depth-case: gold.switched-body
+# depth-case: consider.switched-body
+# depth-case: commands.switched-body-level
+# depth-case: socials.switched-body-level
+# depth-case: map.switched-body-room-and-level
+# depth-case: review.switched-body-level
+# depth-case: weather.switched-body-room
+# depth-case: whoami.switched-body-name
+# depth-case: version.switched-body-level
+# depth-case: who.switched-body-viewer
+# depth-case: help.switched-body-wizonly-gate
+# depth-case: help.short-alias-switched-body-wizonly-gate
+# depth-case: command_interpreter.position-gate-switched-body
+# C: cmd_info north is POS_STANDING (src/interpreter.c:314); the position
+# refusal is emitted at src/interpreter.c:936. Oracle transcript [north]:
+# "In your dreams, or what?" Look/read are at
+# src/act.informative.c:1097-1135, inventory at :1460-1468, equipment at
+# :1470-1495, and score at :1168-1460.
+# C marks look POS_RESTING (src/interpreter.c:532); while the switched body is
+# asleep this must be refused by the command ladder before do_look runs. This
+# isolates the body-position gate from movement's own position handling.
+# The `help advance` probe exercises do_help's GET_LEVEL(ch) wizonly gate
+# (src/act.informative.c:1640-1652); paging remains on the descriptor.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 70 1 8162 80
+spawn-mob 69 1 8162 80
+give-object 69 12132 1 80
+equip-object 69 8022 999 16 80
+
+[setup:oracle]
+Switchobs
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchobs
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+switch clone
+abilities
+gold
+whoami
+version
+help advance
+? advance
+weather
+consider satan
+commands
+<ENTER>
+socials
+<ENTER>
+map
+review
+who
+sleep
+look
+score
+north
+wake
+look
+read pepper
+examine pepper
+exits
+diagnose satan
+glance satan
+inventory
+equipment

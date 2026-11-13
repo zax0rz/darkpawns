@@ -3,6 +3,9 @@ package session
 import (
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/command"
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -162,8 +165,27 @@ func mapRecurse(thisroom int, x, y, overlap, dontleavezone int, display *[][]int
 // CmdMap implements the do_map() command (faithful C-to-Go port).
 // Usage: map [a|b|c]
 func CmdMap(s *Session, args []string) error {
+	if s == nil || s.player == nil {
+		return nil
+	}
+	return cmdMapForBody(s, s.player, args)
+}
+
+func cmdMapBody(ctx command.ExecutionContext, args []string) error {
+	s := commandSessionFromContext(ctx)
+	body := ctx.Body
+	if s == nil || body == nil {
+		return nil
+	}
+	if _, ok := body.(*game.Player); ok {
+		return CmdMap(s, args)
+	}
+	return cmdMapForBody(s, body, args)
+}
+
+func cmdMapForBody(s *Session, body combat.Combatant, args []string) error {
 	// Level check — same as C: if (GET_LEVEL(ch)<LVL_IMMORT) { stc(...); return; }
-	if s.player == nil || s.player.Level < LVL_IMMORT {
+	if body == nil || body.GetLevel() < LVL_IMMORT {
 		s.Send("Type HELP MAP to see a map of town.\r\n")
 		return nil
 	}
@@ -180,7 +202,7 @@ func CmdMap(s *Session, args []string) error {
 	y := jjMapMaxY / 2
 
 	// Same as C: thisroom = ch->in_room;
-	thisroom := s.player.GetRoomVNum()
+	thisroom := body.GetRoom()
 
 	// Determine mapping mode — same as C:
 	// if (!*argument) i = 1;
@@ -271,7 +293,7 @@ func CmdMap(s *Session, args []string) error {
 
 // init registers the map command.
 func init() {
-	registerCommand("map", wrapArgs(CmdMap), "Display a map of the world.")
+	registerCommand("map", wrapBodyArgs(cmdMapBody), "Display a map of the world.")
 }
 
 // Room type alias for brevity — maps to parser.Room

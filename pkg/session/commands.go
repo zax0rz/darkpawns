@@ -80,8 +80,8 @@ func init() {
 	registerCommand("leave", wrapNoArgs(cmdLeave), "Leave for the outdoors.")
 
 	// Look
-	registerCommand("look", wrapArgs(cmdLook), "Look around the room.")
-	registerCommand("read", wrapArgs(cmdRead), "Read a nearby object or room feature.")
+	registerCommand("look", wrapBodyArgs(cmdLookBody), "Look around the room.")
+	registerCommand("read", wrapBodyArgs(cmdReadBody), "Read a nearby object or room feature.")
 
 	// Communication
 	registerCommand("say", wrapArgs(cmdSay), "Say something to the room.")
@@ -153,8 +153,8 @@ func init() {
 	})
 
 	// Items
-	registerCommand("inventory", wrapArgs(cmdInventory), "Show your inventory.")
-	registerCommand("equipment", wrapArgs(cmdEquipment), "Show your equipped items.")
+	registerCommand("inventory", wrapBodyArgs(cmdInventoryBody), "Show your inventory.")
+	registerCommand("equipment", wrapBodyArgs(cmdEquipmentBody), "Show your equipped items.")
 	registerCommand("wear", wrapArgs(cmdWear), "Wear an item from your inventory.")
 	registerCommand("remove", wrapArgs(cmdRemove), "Remove an equipped item.")
 	registerCommand("wield", wrapArgs(cmdWield), "Wield a weapon.")
@@ -177,17 +177,17 @@ func init() {
 	registerCommand("quaff", wrapArgs(cmdQuaff), "Quaff a potion.")
 
 	// Info
-	registerCommand("score", wrapNoArgs(cmdScore), "Show your character stats.")
-	registerCommand("who", wrapArgs(cmdWho), "List all online players.")
+	registerCommand("score", wrapBodyArgs(cmdScoreBody), "Show your character stats.")
+	registerCommand("who", wrapBodyArgs(cmdWhoBody), "List all online players.")
 	registerCommand("where", wrapArgs(cmdWhere), "Show player locations.")
-	registerCommand("gold", wrapNoArgs(cmdCoins), "Display your gold and bank balance (C alias of coins).")
-	registerCommand("abilities", wrapNoArgs(cmdAbils), "Show your ability scores.")
+	registerCommand("gold", wrapBodyArgs(cmdCoinsBody), "Display your gold and bank balance (C alias of coins).")
+	registerCommand("abilities", wrapBodyArgs(cmdAbilsBody), "Show your ability scores.")
 	registerCommand("levels", wrapNoArgs(cmdLevels), "Show XP table for your class.")
-	registerCommand("review", wrapNoArgs(cmdReview), "Show recent gossip history.")
+	registerCommand("review", wrapBodyArgs(cmdReviewBody), "Show recent gossip history.")
 	registerCommand("whois", wrapArgs(cmdWhois), "Look up a player's info.")
 	registerCommand("finger", wrapArgs(cmdWhois), "Look up a player's info (C alias of whois).")
-	registerCommand("help", wrapArgs(cmdHelp), "Show available commands or help for a topic.")
-	registerCommand("?", wrapArgs(cmdHelp), "Show available commands or help for a topic.")
+	registerCommand("help", wrapBodyArgs(cmdHelpBody), "Show available commands or help for a topic.")
+	registerCommand("?", wrapBodyArgs(cmdHelpBody), "Show available commands or help for a topic.")
 	registerCommand("credits", wrapArgs(cmdCredits), "Show who built this game.")
 	registerCommand("news", wrapArgs(cmdNews), "Show current game news.")
 	registerCommand("info", wrapArgs(cmdInfoText), "Show game information.")
@@ -209,8 +209,8 @@ func init() {
 	registerCommand("string", wrapArgs(cmdString), "Edit the strings of live mobs and objects.")
 	registerCommand("players", wrapArgs(cmdPlayers), "Show all registered players.")
 	registerCommand("clear", wrapArgs(cmdClear), "Clear the screen.", "cls")
-	registerCommand("whoami", wrapArgs(cmdWhoami), "Show your own name.")
-	registerCommand("version", wrapArgs(cmdVersion), "Show the game version.")
+	registerCommand("whoami", wrapBodyArgs(cmdWhoamiBody), "Show your own name.")
+	registerCommand("version", wrapBodyArgs(cmdVersionBody), "Show the game version.")
 
 	// Group
 	registerCommand("follow", wrapArgs(cmdFollow), "Follow another player.")
@@ -348,11 +348,11 @@ func init() {
 	registerCommand("wnewbie", wrapArgs(cmdNewbie), "Give newbie equipment to a player (C name).")
 
 	// Informative
-	registerCommand("consider", wrapArgs(cmdConsider), "Compare yourself to a target.")
-	registerCommand("examine", wrapArgs(cmdExamine), "Examine something in detail.")
-	registerCommand("exits", wrapArgs(cmdExits), "List obvious exits.")
+	registerCommand("consider", wrapBodyArgs(cmdConsiderBody), "Compare yourself to a target.")
+	registerCommand("examine", wrapBodyArgs(cmdExamineBody), "Examine something in detail.")
+	registerCommand("exits", wrapBodyArgs(cmdExitsBody), "List obvious exits.")
 	registerCommand("time", wrapArgs(cmdTime), "Show the current time.")
-	registerCommand("weather", wrapArgs(cmdWeather), "Show the current weather.")
+	registerCommand("weather", wrapBodyArgs(cmdWeatherBody), "Show the current weather.")
 	registerCommand("title", wrapArgs(cmdTitle), "Set your title.")
 
 	// Quit — two explicit entries mirroring C's SCMD_QUIT / SCMD_REALLY_QUIT
@@ -409,11 +409,11 @@ func init() {
 
 	// Informative commands (act_informative.go)
 	registerCommand("color", wrapArgs(cmdColor), "Toggle ANSI color.")
-	registerCommand("commands", wrapArgs(cmdCommands), "List available commands.")
-	registerCommand("socials", wrapArgs(cmdSocials), "List available socials.")
+	registerCommand("commands", wrapBodyArgs(cmdCommandsBody), "List available commands.")
+	registerCommand("socials", wrapBodyArgs(cmdSocialsBody), "List available socials.")
 	registerCommand("wizhelp", wrapArgs(cmdWizhelp), "List privileged (immortal) commands.")
 	// "glance" is src/interpreter.c's other top-level name for do_diagnose — identical handler.
-	registerCommand("diagnose", wrapArgs(cmdDiagnose), "Diagnose health status of a target.", "glance")
+	registerCommand("diagnose", wrapBodyArgs(cmdDiagnoseBody), "Diagnose health status of a target.", "glance")
 	registerCommand("toggle", wrapArgs(cmdToggle), "Toggle a player preference.")
 	registerCommand("lines", wrapArgs(cmdLines), "Set your screen line count (7-50).")
 	registerCommand("infobar", wrapArgs(cmdInfoBar), "Toggle the bottom status infobar.")
@@ -950,6 +950,9 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 		return cmdWiznetText(s, rawArgs)
 	}
 	if (cmd == "help" || cmd == "?") && rawArgs != "" {
+		if ctx.Body != nil {
+			return cmdHelpTextForBody(s, ctx.Body.GetLevel(), ctx.Body.GetName(), rawArgs)
+		}
 		return cmdHelpText(s, rawArgs)
 	}
 	if (cmd == "gtell" || cmd == "gsay") && rawArgs != "" {

@@ -740,7 +740,7 @@ func DoGroinrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 // DoReview implements do_review() — show recent gossip history.
 // Matches C: do_review() in new_cmds.c.
-func DoReview(ch *Player, world *World) SkillResult {
+func DoReview(ch combat.Combatant, world *World) SkillResult {
 	return SkillResult{
 		Success:     true,
 		MessageToCh: world.ReviewGossip(ch),

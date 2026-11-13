@@ -82,11 +82,11 @@ type DoorView struct {
 	Locked    bool
 }
 
-func (r *ObservationResult) literal(ch *Player, text string) {
+func (r *ObservationResult) literal(ch combat.Combatant, text string) {
 	r.Messages = append(r.Messages, ObservationMessage{
 		Format:  r.takeLinePrefix() + normalizeObservationText(text),
 		Literal: true,
-		Actor:   ch,
+		Actor:   observationBodyActor(ch),
 	})
 }
 
@@ -102,7 +102,7 @@ func (r *ObservationResult) literal(ch *Player, text string) {
 // the brackets and onto the first character-list entry instead, which is a
 // different byte stream from C's. An empty bare write still consumes it: with
 // colour off C's send_to_char("") writes nothing and the space stands alone.
-func (r *ObservationResult) bare(ch *Player, text string) {
+func (r *ObservationResult) bare(ch combat.Combatant, text string) {
 	prefix := r.takeLinePrefix()
 	if text == "" && prefix == "" {
 		return
@@ -110,25 +110,25 @@ func (r *ObservationResult) bare(ch *Player, text string) {
 	r.Messages = append(r.Messages, ObservationMessage{
 		Format: prefix + text,
 		Bare:   true,
-		Actor:  ch,
+		Actor:  observationBodyActor(ch),
 	})
 }
 
 // raw queues a block sent verbatim via SendMessage — bypassing act(), so it is
 // neither capitalized nor $-substituted. Mirrors C send_to_char for list output
 // (inventory / look-in container). Ordering is preserved with other messages.
-func (r *ObservationResult) raw(ch *Player, text string) {
+func (r *ObservationResult) raw(ch combat.Combatant, text string) {
 	r.Messages = append(r.Messages, ObservationMessage{
 		Format: r.takeLinePrefix() + text,
 		Raw:    true,
-		Actor:  ch,
+		Actor:  observationBodyActor(ch),
 	})
 }
 
-func (r *ObservationResult) act(ch *Player, target Actor, obj *ObjectInstance, format string) {
+func (r *ObservationResult) act(ch combat.Combatant, target Actor, obj *ObjectInstance, format string) {
 	r.Messages = append(r.Messages, ObservationMessage{
 		Format: r.takeLinePrefix() + format,
-		Actor:  ch,
+		Actor:  observationBodyActor(ch),
 		Target: target,
 		Object: obj,
 	})
@@ -144,14 +144,18 @@ func (w *World) RenderObservationMessages(result ObservationResult) {
 			// through the literal sink: Player.SendLiteral → a "raw" event,
 			// which RenderTerminalFrame passes to the terminal untouched
 			// (pkg/session/terminal.go:123-127).
-			if p, ok := message.Actor.(*Player); ok && p != nil {
-				p.SendLiteral(message.Format)
+			if message.Actor != nil {
+				if player, ok := message.Actor.(*Player); ok {
+					player.SendLiteral(message.Format)
+				} else {
+					message.Actor.SendMessage(message.Format)
+				}
 			}
 			continue
 		}
 		if message.Raw {
-			if p, ok := message.Actor.(*Player); ok && p != nil {
-				p.SendMessage(message.Format)
+			if message.Actor != nil {
+				message.Actor.SendMessage(message.Format)
 			}
 			continue
 		}
@@ -183,7 +187,7 @@ func (w *World) RenderObservationMessages(result ObservationResult) {
 }
 
 // DoLook routes look/read syntax to the canonical observation operations.
-func (w *World) DoLook(ch *Player, cmd, arg string) ObservationResult {
+func (w *World) DoLook(ch combat.Combatant, cmd, arg string) ObservationResult {
 	var result ObservationResult
 	if ch == nil {
 		return result
@@ -192,7 +196,7 @@ func (w *World) DoLook(ch *Player, cmd, arg string) ObservationResult {
 		result.literal(ch, "You can't see anything but stars!")
 		return result
 	}
-	if ch.IsAffected(affBlind) {
+	if observationBodyAffected(ch, affBlind) {
 		result.literal(ch, "You can't see a damned thing, you're blind!")
 		return result
 	}
@@ -221,7 +225,7 @@ func (w *World) DoLook(ch *Player, cmd, arg string) ObservationResult {
 }
 
 // DoLookRoom observes the viewer's current room.
-func (w *World) DoLookRoom(ch *Player, ignoreBrief bool) ObservationResult {
+func (w *World) DoLookRoom(ch combat.Combatant, ignoreBrief bool) ObservationResult {
 	if ch == nil {
 		return ObservationResult{}
 	}
@@ -237,7 +241,7 @@ func (w *World) DoLookRoom(ch *Player, ignoreBrief bool) ObservationResult {
 // DoLookRoomAt observes a specific room without moving the viewer. It is used
 // by entry-state rendering and preserves the same visibility rules as a normal
 // room look.
-func (w *World) DoLookRoomAt(ch *Player, roomVNum int, ignoreBrief bool) ObservationResult {
+func (w *World) DoLookRoomAt(ch combat.Combatant, roomVNum int, ignoreBrief bool) ObservationResult {
 	if ch == nil {
 		return ObservationResult{}
 	}
@@ -250,15 +254,15 @@ func (w *World) DoLookRoomAt(ch *Player, roomVNum int, ignoreBrief bool) Observa
 	return w.observeRoom(ch, room, ignoreBrief, true)
 }
 
-func (w *World) observeRoom(ch *Player, room *parser.Room, ignoreBrief, includeView bool) ObservationResult {
+func (w *World) observeRoom(ch combat.Combatant, room *parser.Room, ignoreBrief, includeView bool) ObservationResult {
 	result := ObservationResult{roomDelivery: true}
 	if room == nil {
 		result.literal(ch, "You are in a void.")
 		return result
 	}
 
-	isBlind := ch.IsAffected(affBlind)
-	isDark := w.isRoomDark(room.VNum) && !chCanSeeInDark(ch)
+	isBlind := observationBodyAffected(ch, affBlind)
+	isDark := w.isRoomDark(room.VNum) && !chCanSeeInDark(observationBodyActor(ch))
 	if isBlind || isDark {
 		cyan, normal := observationColors(ch, "\x1b[36m"), observationColors(ch, "\x1b[0m")
 		if isBlind {
@@ -270,16 +274,18 @@ func (w *World) observeRoom(ch *Player, room *parser.Room, ignoreBrief, includeV
 		return result
 	}
 
-	showDescription := ch.GetFlags()&(1<<uint(PrfBrief)) == 0 || ignoreBrief || w.roomIsDeath(room)
+	showDescription := observationBodyFlags(ch)&(1<<uint(PrfBrief)) == 0 || ignoreBrief || w.roomIsDeath(room)
 	view := w.buildRoomView(ch, room, showDescription)
 	if includeView {
 		result.Room = &view
-		result.viewer = ch
+		if player, ok := ch.(*Player); ok {
+			result.viewer = player
+		}
 	}
 
 	cyan, normal := observationColors(ch, "\x1b[36m"), observationColors(ch, "\x1b[0m")
 	roomName := room.Name
-	if ch.GetRoomFlags() {
+	if observationBodyRoomFlags(ch) {
 		roomName = formatRoomFlags(room)
 	}
 	result.literal(ch, cyan+roomName+normal)
@@ -290,7 +296,7 @@ func (w *World) observeRoom(ch *Player, room *parser.Room, ignoreBrief, includeV
 			result.linePrefix = " "
 		}
 	}
-	if ch.GetAutoExit() {
+	if observationBodyAutoExit(ch) {
 		result.literal(ch, w.autoExitsText(ch, room))
 	}
 
@@ -314,7 +320,7 @@ func (w *World) observeRoom(ch *Player, room *parser.Room, ignoreBrief, includeV
 	return result
 }
 
-func (w *World) appendDarkOccupants(result *ObservationResult, ch *Player, room *parser.Room) {
+func (w *World) appendDarkOccupants(result *ObservationResult, ch combat.Combatant, room *parser.Room) {
 	for _, mob := range sortedMobs(w.GetMobsInRoom(room.VNum)) {
 		if mob == nil || mob.HasMobFlag(MobFlagExtract) {
 			continue // C list_char_to_char skips MOB_EXTRACT before visibility checks
@@ -359,7 +365,7 @@ func (w *World) appendDarkOccupants(result *ObservationResult, ch *Player, room 
 	}
 }
 
-func (w *World) buildRoomView(ch *Player, room *parser.Room, showDescription bool) RoomView {
+func (w *World) buildRoomView(ch combat.Combatant, room *parser.Room, showDescription bool) RoomView {
 	view := RoomView{
 		VNum:  room.VNum,
 		Name:  room.Name,
@@ -383,14 +389,14 @@ func (w *World) buildRoomView(ch *Player, room *parser.Room, showDescription boo
 		}
 	}
 	for _, item := range w.GetItemsInRoom(room.VNum) {
-		if item != nil && chCanSeeObj(ch, item) {
+		if item != nil && chCanSeeObj(observationBodyActor(ch), item) {
 			view.Items = append(view.Items, normalizeObservationText(item.GetLongDesc()))
 		}
 	}
 	return view
 }
 
-func (w *World) roomObjectLines(ch *Player, room *parser.Room) []string {
+func (w *World) roomObjectLines(ch combat.Combatant, room *parser.Room) []string {
 	type group struct {
 		line  string
 		count int
@@ -399,7 +405,7 @@ func (w *World) roomObjectLines(ch *Player, room *parser.Room) []string {
 	groups := make(map[string]*group)
 	order := make([]string, 0)
 	for _, item := range w.GetItemsInRoom(room.VNum) {
-		if item == nil || !chCanSeeObj(ch, item) {
+		if item == nil || !chCanSeeObj(observationBodyActor(ch), item) {
 			continue
 		}
 		line := normalizeObservationText(item.GetLongDesc())
@@ -438,7 +444,7 @@ func (w *World) roomObjectLines(ch *Player, room *parser.Room) []string {
 // roomObjectVisibleFlags renders the second line emitted by C's oc_show_list
 // for room contents. It deliberately differs from show_obj_to_char: room
 // lists use the plain "...it glows" vocabulary, not parenthesized flags.
-func roomObjectVisibleFlags(ch *Player, object *ObjectInstance) string {
+func roomObjectVisibleFlags(ch combat.Combatant, object *ObjectInstance) string {
 	if object == nil {
 		return ""
 	}
@@ -447,10 +453,10 @@ func roomObjectVisibleFlags(ch *Player, object *ObjectInstance) string {
 	if extras&(1<<itemExtraInvisible) != 0 {
 		flags = append(flags, "...it is invisible ")
 	}
-	if extras&(1<<itemExtraBless) != 0 && ch.IsAffected(affDetectAlign) {
+	if extras&(1<<itemExtraBless) != 0 && observationBodyAffected(ch, affDetectAlign) {
 		flags = append(flags, "...it glows blue")
 	}
-	if extras&(1<<itemExtraMagic) != 0 && ch.IsAffected(affDetectMagic) {
+	if extras&(1<<itemExtraMagic) != 0 && observationBodyAffected(ch, affDetectMagic) {
 		flags = append(flags, "...it glows gold")
 	}
 	if extras&(1<<itemExtraGlow) != 0 {
@@ -471,8 +477,8 @@ func roomObjectVisibleFlags(ch *Player, object *ObjectInstance) string {
 // (src/act.informative.c:635-638). The sense-life "hidden presence" line is the
 // else of that same chain, so a holylight immortal with sense life gets the
 // listing rather than the hint.
-func listsHiddenBody(viewer *Player, body interface{}) bool {
-	if !viewer.GetHolyLight() {
+func listsHiddenBody(viewer combat.Combatant, body interface{}) bool {
+	if !observationBodyHolyLight(viewer) {
 		return false
 	}
 	invis := 0
@@ -482,7 +488,7 @@ func listsHiddenBody(viewer *Player, body interface{}) bool {
 	return invis <= 0 || realLevel(viewer, nil) >= invis
 }
 
-func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView) []string {
+func (w *World) roomCharacterLines(ch combat.Combatant, room *parser.Room, view *RoomView) []string {
 	type character struct {
 		actor Actor
 		seq   uint64
@@ -492,7 +498,7 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 	characters := make([]character, 0)
 	var lines []string
 	for _, mob := range w.GetMobsInRoom(room.VNum) {
-		if mob == nil || mob.HasMobFlag(MobFlagExtract) {
+		if mob == nil || combat.Combatant(mob) == ch || mob.HasMobFlag(MobFlagExtract) {
 			continue // act.informative.c:list_one_char skips MOB_EXTRACT first
 		}
 		// C list_char_to_char suppresses a mount while get_rider(mob) is
@@ -503,8 +509,8 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 			continue
 		}
 		hidden := mob.IsAffected(affHide)
-		if (!canSee(ch, mob) || hidden) && !listsHiddenBody(ch, mob) {
-			if hidden && ch.IsAffected(affSenseLife) {
+		if (!canSee(observationBodyActor(ch), mob) || hidden) && !listsHiddenBody(ch, mob) {
+			if hidden && observationBodyAffected(ch, affSenseLife) {
 				lines = append(lines, "You sense a hidden presence in the room.")
 			}
 			continue
@@ -520,12 +526,12 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 	}
 	players := w.GetPlayersInRoom(room.VNum)
 	for _, player := range players {
-		if player == nil || player == ch {
+		if player == nil || combat.Combatant(player) == ch {
 			continue
 		}
 		hidden := player.IsAffected(affHide)
-		if (!canSee(ch, player) || hidden) && !listsHiddenBody(ch, player) {
-			if hidden && ch.IsAffected(affSenseLife) {
+		if (!canSee(observationBodyActor(ch), player) || hidden) && !listsHiddenBody(ch, player) {
+			if hidden && observationBodyAffected(ch, affSenseLife) {
 				lines = append(lines, "You sense a hidden presence in the room.")
 			}
 			continue
@@ -558,7 +564,7 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 // DoLookTarget resolves room features and nearby objects in the authoritative
 // observation order, then characters. Room extra descriptions deliberately
 // win over objects with the same keyword.
-func (w *World) DoLookTarget(ch *Player, arg string) ObservationResult {
+func (w *World) DoLookTarget(ch combat.Combatant, arg string) ObservationResult {
 	var result ObservationResult
 	arg = strings.TrimSpace(arg)
 	if arg == "" {
@@ -576,9 +582,9 @@ func (w *World) DoLookTarget(ch *Player, arg string) ObservationResult {
 		result.literal(ch, desc)
 		return result
 	}
-	for _, slot := range cWearToGoSlot {
-		item, ok := ch.Equipment.GetItemInSlot(slot)
-		if !ok || !chCanSeeObj(ch, item) {
+	for cPosition := range cWearToGoSlot {
+		item, ok := observationBodyEquipped(ch, cPosition)
+		if !ok || !chCanSeeObj(observationBodyActor(ch), item) {
 			continue
 		}
 		if desc, found := findExtraDescription(arg, item.GetExtraDescs()); found {
@@ -587,8 +593,8 @@ func (w *World) DoLookTarget(ch *Player, arg string) ObservationResult {
 			return result
 		}
 	}
-	for _, item := range ch.Inventory.Snapshot() {
-		if item == nil || !chCanSeeObj(ch, item) {
+	for _, item := range observationBodyInventory(ch) {
+		if item == nil || !chCanSeeObj(observationBodyActor(ch), item) {
 			continue
 		}
 		if desc, found := findExtraDescription(arg, item.GetExtraDescs()); found {
@@ -598,7 +604,7 @@ func (w *World) DoLookTarget(ch *Player, arg string) ObservationResult {
 		}
 	}
 	for _, item := range w.GetItemsInRoom(room.VNum) {
-		if item == nil || !chCanSeeObj(ch, item) {
+		if item == nil || !chCanSeeObj(observationBodyActor(ch), item) {
 			continue
 		}
 		if desc, found := findExtraDescription(arg, item.GetExtraDescs()); found {
@@ -628,7 +634,7 @@ func (w *World) DoLookTarget(ch *Player, arg string) ObservationResult {
 // (src/modify.c:762). nextLine supplies that following line so the two can be
 // emitted as one write; the transport terminates every message it is handed.
 // Returns true when the line was merged and the caller must not emit it again.
-func appendLookedDescription(result *ObservationResult, ch *Player, description string, nextLine func() string) bool {
+func appendLookedDescription(result *ObservationResult, ch combat.Combatant, description string, nextLine func() string) bool {
 	if descriptionEndsLine(description) {
 		result.raw(ch, description)
 		return false
@@ -647,11 +653,11 @@ func descriptionEndsLine(text string) bool {
 // description is the race (or flesh-alter) sentence, which C builds with
 // sprintf and no capitalization (act.informative.c:400-411). The merged write
 // keeps the cap() the ordinary literal path applies so both paths agree.
-func appendLookedDescriptionPlayer(result *ObservationResult, ch *Player, description string, raceLine func() string) bool {
+func appendLookedDescriptionPlayer(result *ObservationResult, ch combat.Combatant, description string, raceLine func() string) bool {
 	return appendLookedDescription(result, ch, description, func() string { return cap(raceLine()) })
 }
 
-func (w *World) appendCharacterLook(result *ObservationResult, ch *Player, target CharTarget) {
+func (w *World) appendCharacterLook(result *ObservationResult, ch combat.Combatant, target CharTarget) {
 	if target.Player != nil {
 		player := target.Player
 		raceLine := func() string {
@@ -684,7 +690,8 @@ func (w *World) appendCharacterLook(result *ObservationResult, ch *Player, targe
 		// diag_char_to_char builds PERS(i,ch), CAPs it, and appends the condition
 		// sentence (act.informative.c:363-382) — the same bytes act() renders.
 		diagLine := func() string {
-			return cap(performAct("$N "+diagCondition(mob.GetHP(), mob.GetMaxHP()), ch, mob, nil, nil, "", "", ch))
+			bodyActor := observationBodyActor(ch)
+			return cap(performAct("$N "+diagCondition(mob.GetHP(), mob.GetMaxHP()), bodyActor, mob, nil, nil, "", "", bodyActor))
 		}
 		merged := false
 		if description != "" {
@@ -704,25 +711,25 @@ func (w *World) appendCharacterLook(result *ObservationResult, ch *Player, targe
 // after look_at_char (act.informative.c:1022-1029). It applies to mob targets as
 // well as players: the target hears "$n looks at you." when it can see the
 // looker, and the rest of the room sees "$n looks at $N.".
-func (w *World) appendLookAtNotifications(ch *Player, target CharTarget) {
+func (w *World) appendLookAtNotifications(ch combat.Combatant, target CharTarget) {
 	if ch == nil || target.Combatant == nil {
 		return
 	}
 	victim := asActor(target.Combatant)
-	if victim == nil || victim == Actor(ch) {
+	if victim == nil || victim == observationBodyActor(ch) {
 		return
 	}
-	if canSee(victim, ch) {
-		Act(w, true, ch, victim, nil, nil, "$n looks at you.", "", ToVict)
+	if canSee(victim, observationBodyActor(ch)) {
+		Act(w, true, observationBodyActor(ch), victim, nil, nil, "$n looks at you.", "", ToVict)
 	}
-	Act(w, true, ch, victim, nil, nil, "$n looks at $N.", "", ToNotVict)
+	Act(w, true, observationBodyActor(ch), victim, nil, nil, "$n looks at $N.", "", ToNotVict)
 }
 
 // appendCharacterAffectLook ports the direct player-visible status lines in
 // C look_at_char (act.informative.c:408-438). They are deliberately separate
 // from the generic room-listing status rendering: look_at_char always exposes
 // these lines to its viewer.
-func appendCharacterAffectLook(result *ObservationResult, ch *Player, target *Player) {
+func appendCharacterAffectLook(result *ObservationResult, ch combat.Combatant, target *Player) {
 	if target.Tattoo != TattooNone {
 		tattoo := tattooDescription(target.Tattoo)
 		if tattoo != "" {
@@ -762,7 +769,7 @@ func tattooDescription(tattoo int) string {
 // appendPeekInventory is the inventory half of C look_at_char. It is part of
 // the ordinary look_at_char path, so both look-at-character and peek preserve
 // the same class, higher-immortal, visibility, and per-object RNG gates.
-func appendPeekInventory(result *ObservationResult, ch *Player, target Actor) {
+func appendPeekInventory(result *ObservationResult, ch combat.Combatant, target Actor) {
 	if ch == nil || target == nil || ch == target {
 		return
 	}
@@ -781,7 +788,7 @@ func appendPeekInventory(result *ObservationResult, ch *Player, target Actor) {
 	items := characterInventory(target)
 	found := false
 	for _, item := range items {
-		if item == nil || !chCanSeeObj(ch, item) {
+		if item == nil || !chCanSeeObj(observationBodyActor(ch), item) {
 			continue
 		}
 		// C number(0,20) is evaluated only after CAN_SEE_OBJ succeeds.
@@ -796,22 +803,17 @@ func appendPeekInventory(result *ObservationResult, ch *Player, target Actor) {
 }
 
 func characterInventory(target Actor) []*ObjectInstance {
-	switch typed := target.(type) {
-	case *Player:
-		if typed.Inventory != nil {
-			return typed.Inventory.Snapshot()
-		}
-	case *MobInstance:
-		return typed.Inventory
+	if body, ok := target.(combat.Combatant); ok {
+		return observationBodyInventory(body)
 	}
 	return nil
 }
 
 // DoLookDirection renders C's direction preface, exit state, and—when open—the
 // complete destination room without moving the character.
-func (w *World) DoLookDirection(ch *Player, direction int) ObservationResult {
+func (w *World) DoLookDirection(ch combat.Combatant, direction int) ObservationResult {
 	var result ObservationResult
-	if ch.IsFighting() {
+	if ch.GetFightingBody() != nil {
 		result.literal(ch, "You're a little busy right now!")
 		return result
 	}
@@ -856,7 +858,7 @@ func (w *World) DoLookDirection(ch *Player, direction int) ObservationResult {
 
 // DoLookIn renders container and drink-container contents using instance
 // values and searches inventory, room, and equipment.
-func (w *World) DoLookIn(ch *Player, arg string) ObservationResult {
+func (w *World) DoLookIn(ch combat.Combatant, arg string) ObservationResult {
 	var result ObservationResult
 	arg = strings.TrimSpace(arg)
 	if arg == "" {
@@ -918,9 +920,9 @@ func (w *World) DoLookIn(ch *Player, arg string) ObservationResult {
 
 // DoExits lists only open obvious exits, with immortal vnums exactly where C
 // exposes them.
-func (w *World) DoExits(ch *Player) ObservationResult {
+func (w *World) DoExits(ch combat.Combatant) ObservationResult {
 	var result ObservationResult
-	if ch.IsAffected(affBlind) {
+	if observationBodyAffected(ch, affBlind) {
 		result.literal(ch, "You can't see a damned thing, you're blind!")
 		return result
 	}
@@ -943,7 +945,7 @@ func (w *World) DoExits(ch *Player) ObservationResult {
 		label := strings.ToUpper(direction[:1]) + direction[1:]
 		if ch.GetLevel() >= LVL_IMMORT {
 			result.literal(ch, fmt.Sprintf("%-5s - [%5d] %s", label, destination.VNum, destination.Name))
-		} else if w.isRoomDark(destination.VNum) && !chCanSeeInDark(ch) {
+		} else if w.isRoomDark(destination.VNum) && !chCanSeeInDark(observationBodyActor(ch)) {
 			result.literal(ch, fmt.Sprintf("%-5s - Too dark to tell", label))
 		} else {
 			result.literal(ch, fmt.Sprintf("%-5s - %s", label, destination.Name))
@@ -957,7 +959,7 @@ func (w *World) DoExits(ch *Player) ObservationResult {
 }
 
 // DoExamine is C's look-at-target followed by the container contents probe.
-func (w *World) DoExamine(ch *Player, arg string) ObservationResult {
+func (w *World) DoExamine(ch combat.Combatant, arg string) ObservationResult {
 	first, _ := splitArg(arg)
 	if first == "" {
 		var result ObservationResult
@@ -979,7 +981,7 @@ func (w *World) DoExamine(ch *Player, arg string) ObservationResult {
 
 // DoDiagnose ports do_diagnose/diag_char_to_char. With no explicit target C
 // diagnoses the current opponent, otherwise it asks who.
-func (w *World) DoDiagnose(ch *Player, arg string) ObservationResult {
+func (w *World) DoDiagnose(ch combat.Combatant, arg string) ObservationResult {
 	var result ObservationResult
 	first, _ := splitArg(arg)
 	var target CharTarget
@@ -1010,14 +1012,14 @@ func (w *World) DoDiagnose(ch *Player, arg string) ObservationResult {
 
 // Legacy game callers (mobprogs/specprocs/death display) now consume the same
 // canonical results instead of maintaining a second observation implementation.
-func (w *World) doLook(ch *Player, me *MobInstance, cmd, arg string) bool {
+func (w *World) doLook(ch combat.Combatant, me *MobInstance, cmd, arg string) bool {
 	_ = me
 	result := w.DoLook(ch, cmd, arg)
 	w.RenderObservationMessages(result)
 	return true
 }
 
-func (w *World) lookAtRoom(ch *Player, ignoreBrief bool) {
+func (w *World) lookAtRoom(ch combat.Combatant, ignoreBrief bool) {
 	w.RenderObservationMessages(w.DoLookRoom(ch, ignoreBrief))
 }
 
@@ -1032,7 +1034,7 @@ func (w *World) LookAtRoomForSpell(victim any) {
 	w.lookAtRoom(player, false)
 }
 
-func (w *World) listObjToChar(room *parser.Room, ch *Player) {
+func (w *World) listObjToChar(room *parser.Room, ch combat.Combatant) {
 	var result ObservationResult
 	for _, line := range w.roomObjectLines(ch, room) {
 		result.literal(ch, line)
@@ -1048,7 +1050,7 @@ func (w *World) getExitForDirection(room *parser.Room, direction int) (parser.Ex
 	return exit, ok
 }
 
-func (w *World) autoExitsText(ch *Player, room *parser.Room) string {
+func (w *World) autoExitsText(ch combat.Combatant, room *parser.Room) string {
 	// C builds the list one direction at a time, appending a trailing space after
 	// every entry, and wraps an imm-only closed door in
 	// CCRED(ch, C_CMP) "(" dir ")" CCCYN(ch, C_NRM) (src/act.informative.c:663-674).
@@ -1126,7 +1128,7 @@ func diagCondition(hp, maxHP int) string {
 	}
 }
 
-func appendObjectLook(result *ObservationResult, ch *Player, object *ObjectInstance, mode int) {
+func appendObjectLook(result *ObservationResult, ch combat.Combatant, object *ObjectInstance, mode int) {
 	if object == nil {
 		return
 	}
@@ -1164,7 +1166,7 @@ func appendObjectLook(result *ObservationResult, ch *Player, object *ObjectInsta
 // show_obj_to_char and list_obj_to_char, without color. This is the form used
 // by C's oc_show_list-derived views (room contents, container contents,
 // inventory), which stay plain at every color level (src/oc.c:82-170).
-func objectVisibleFlags(ch *Player, object *ObjectInstance) string {
+func objectVisibleFlags(ch combat.Combatant, object *ObjectInstance) string {
 	return objectFlagAnnotations(ch, object, false)
 }
 
@@ -1172,11 +1174,11 @@ func objectVisibleFlags(ch *Player, object *ObjectInstance) string {
 // complete color level (COLOR_LEV(ch)==C_CMP) the bless/magic/glow phrases are
 // wrapped in KBLU/KYEL/KWHT and reset with KNRM before the closing paren
 // (src/act.informative.c:132-164, src/screen.h). Levels 0-2 stay plain.
-func coloredObjectVisibleFlags(ch *Player, object *ObjectInstance) string {
+func coloredObjectVisibleFlags(ch combat.Combatant, object *ObjectInstance) string {
 	return objectFlagAnnotations(ch, object, completeObservationColor(ch))
 }
 
-func objectFlagAnnotations(ch *Player, object *ObjectInstance, colorize bool) string {
+func objectFlagAnnotations(ch combat.Combatant, object *ObjectInstance, colorize bool) string {
 	if object == nil {
 		return ""
 	}
@@ -1184,10 +1186,10 @@ func objectFlagAnnotations(ch *Player, object *ObjectInstance, colorize bool) st
 	if object.HasExtraFlag(0, itemExtraInvisible) {
 		flags = append(flags, "(invisible)")
 	}
-	if object.HasExtraFlag(0, itemExtraBless) && ch.IsAffected(affDetectAlign) {
+	if object.HasExtraFlag(0, itemExtraBless) && observationBodyAffected(ch, affDetectAlign) {
 		flags = append(flags, glowAnnotation("\x1b[34m", "blue glow", colorize)) // KBLU
 	}
-	if object.HasExtraFlag(0, itemExtraMagic) && ch.IsAffected(affDetectMagic) {
+	if object.HasExtraFlag(0, itemExtraMagic) && observationBodyAffected(ch, affDetectMagic) {
 		flags = append(flags, glowAnnotation("\x1b[33m", "yellow glow", colorize)) // KYEL
 	}
 	if object.HasExtraFlag(0, itemExtraGlow) {
@@ -1218,11 +1220,11 @@ func glowAnnotation(color, phrase string, colorize bool) string {
 // on COLOR_LEV(ch)==C_CMP, so levels 0-2 must stay plain here; this is
 // deliberately stricter than observationColors, which colors other views at
 // level >= 2. The level itself comes from pkg/screen.
-func completeObservationColor(ch *Player) bool {
+func completeObservationColor(ch combat.Combatant) bool {
 	return screen.CompleteOn(colorLevel(ch))
 }
 
-func appendPlayerEquipment(result *ObservationResult, ch, target *Player) {
+func appendPlayerEquipment(result *ObservationResult, ch combat.Combatant, target *Player) {
 	if target.Equipment == nil {
 		return
 	}
@@ -1232,17 +1234,17 @@ func appendPlayerEquipment(result *ObservationResult, ch, target *Player) {
 	result.act(ch, target, nil, "\r\n$N is using:")
 	for cPos, slot := range cWearToGoSlot {
 		item, _ := target.Equipment.GetItemInSlot(slot)
-		if item == nil || !chCanSeeObj(ch, item) {
+		if item == nil || !chCanSeeObj(observationBodyActor(ch), item) {
 			continue
 		}
-		if equipmentPositionCovered(target, cPos) && ch != target && ch.GetLevel() <= LVL_IMMORT {
+		if observationBodyEquipmentPositionCovered(target, cPos) && ch != target && ch.GetLevel() <= LVL_IMMORT {
 			continue
 		}
 		result.literal(ch, cWearWhere[cPos]+item.GetShortDesc()+coloredEquipmentObjectFlags(ch, target, item, cPos))
 	}
 }
 
-func appendMobEquipment(result *ObservationResult, ch *Player, target *MobInstance) {
+func appendMobEquipment(result *ObservationResult, ch combat.Combatant, target *MobInstance) {
 	equipment := target.EquipmentSnapshot()
 	if len(equipment) == 0 {
 		return
@@ -1255,7 +1257,7 @@ func appendMobEquipment(result *ObservationResult, ch *Player, target *MobInstan
 	sort.Ints(positions)
 	for _, position := range positions {
 		item := equipment[position]
-		if item == nil || !chCanSeeObj(ch, item) {
+		if item == nil || !chCanSeeObj(observationBodyActor(ch), item) {
 			continue
 		}
 		where := "<used>               "
@@ -1275,7 +1277,7 @@ const (
 	observationEquipment
 )
 
-func (w *World) findObservationObject(ch *Player, name string) *ObjectInstance {
+func (w *World) findObservationObject(ch combat.Combatant, name string) *ObjectInstance {
 	object, _ := w.findObservationObjectWithLocation(ch, name)
 	return object
 }
@@ -1287,7 +1289,7 @@ func (w *World) findObservationObject(ch *Player, name string) *ObjectInstance {
 // room (src/handler.c:1537-1556). It delegates to the shared GenericFindObject
 // so the order lives in exactly one place (R5c); the location is mapped back
 // to the "(carried)"/"(here)"/"(used)" vocabulary look_in_obj needs.
-func (w *World) findObservationObjectWithLocation(ch *Player, name string) (*ObjectInstance, observationObjectLocation) {
+func (w *World) findObservationObjectWithLocation(ch combat.Combatant, name string) (*ObjectInstance, observationObjectLocation) {
 	object, scope := w.GenericFindObject(ch, name)
 	switch scope {
 	case GenericFindEquip:
@@ -1317,7 +1319,7 @@ func findExtraDescription(name string, descriptions []parser.ExtraDesc) (string,
 	return "", false
 }
 
-func (w *World) playerPresenceLine(player, viewer *Player) string {
+func (w *World) playerPresenceLine(player *Player, viewer combat.Combatant) string {
 	// list_one_char's general branch for a player (act.informative.c:546-611).
 	buf := player.GetName() + " " + strings.TrimSpace(player.GetTitle())
 	buf += presenceTags(player)
@@ -1335,7 +1337,7 @@ func (w *World) playerPresenceLine(player, viewer *Player) string {
 	case player.IsMounted():
 		buf += " is here, mounted on "
 		if mount := w.riddenMount(player); mount != nil {
-			buf += persName(mount, viewer) + "."
+			buf += persName(mount, observationBodyActor(viewer)) + "."
 		} else {
 			buf += "thin air."
 		}
@@ -1351,14 +1353,14 @@ func (w *World) playerPresenceLine(player, viewer *Player) string {
 	return buf
 }
 
-func mobPresenceLine(mob *MobInstance, viewer *Player) string {
+func mobPresenceLine(mob *MobInstance, viewer combat.Combatant) string {
 	if mob.Proto() != nil && mob.Proto().LongDesc != "" && mob.GetPosition() == mob.Proto().DefaultPos {
 		// list_one_char's default-position branch (act.informative.c:511-526).
 		prefix := ""
 		if mob.IsAffected(affInvisible) {
 			prefix = "*"
 		}
-		if viewer.IsAffected(affDetectAlign) {
+		if observationBodyAffected(viewer, affDetectAlign) {
 			switch align := mob.GetAlignment(); {
 			case align <= -350:
 				prefix += "(Red Aura) "
@@ -1391,21 +1393,21 @@ func presenceTags(i interface{ IsAffected(int) bool }) string {
 }
 
 // fightingPresence is list_one_char's fighting text.
-func fightingPresence(target combat.Combatant, viewer *Player) string {
+func fightingPresence(target combat.Combatant, viewer combat.Combatant) string {
 	switch target {
 	case nil:
 		return " is here struggling with thin air."
 	case viewer:
 		return " is here, fighting YOU!"
 	default:
-		return " is here, fighting " + persName(asActor(target), viewer) + "!"
+		return " is here, fighting " + persName(asActor(target), observationBodyActor(viewer)) + "!"
 	}
 }
 
 // alignAuraTag is " (Red Aura)" / " (Blue Aura)" for a viewer with
 // AFF_DETECT_ALIGN.
-func alignAuraTag(i interface{ GetAlignment() int }, viewer *Player) string {
-	if !viewer.IsAffected(affDetectAlign) {
+func alignAuraTag(i interface{ GetAlignment() int }, viewer combat.Combatant) string {
+	if !observationBodyAffected(viewer, affDetectAlign) {
 		return ""
 	}
 	switch align := i.GetAlignment(); {
@@ -1490,7 +1492,7 @@ func formatRoomFlags(room *parser.Room) string {
 	return fmt.Sprintf("[%5d] %s [ %s ] [ %s ]", room.VNum, room.Name, flagText, sector)
 }
 
-func observationColors(ch *Player, code string) string {
+func observationColors(ch combat.Combatant, code string) string {
 	if !screen.NormalOn(colorLevel(ch)) {
 		return ""
 	}
@@ -1499,8 +1501,8 @@ func observationColors(ch *Player, code string) string {
 
 // colorLevel is C's COLOR_LEV(ch), defined once in pkg/screen so this package and
 // pkg/session cannot drift apart on the thresholds again.
-func colorLevel(ch *Player) int {
-	return screen.LevelFromFlags(ch.GetFlags(), uint(PrfColor1), uint(PrfColor2))
+func colorLevel(ch combat.Combatant) int {
+	return screen.LevelFromFlags(observationBodyFlags(ch), uint(PrfColor1), uint(PrfColor2))
 }
 
 // doDescription is do_description (act.informative.c:2757-2803), which
