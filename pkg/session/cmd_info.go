@@ -887,10 +887,6 @@ func whoHasFlag(player *game.Player, bit int) bool {
 	return player.GetFlags()&(1<<uint(bit)) != 0
 }
 
-func whoStatus(player *game.Player) string {
-	return whoStatusForSession(nil, player, nil, false)
-}
-
 // whoStatusForSession appends C's do_who status tags in exact order
 // (src/act.informative.c:1880-1919).
 func whoStatusForSession(viewer, player *game.Player, sess *Session, outOfBody bool) string {

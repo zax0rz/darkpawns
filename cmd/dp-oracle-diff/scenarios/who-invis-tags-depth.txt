@@ -93,14 +93,16 @@ Y
 
 [warmup]
 goto 3001
+holylight
 advance Whoinvis 35
 teleport Whomort 3001
 teleport Whoinvis 3001
 cast 'detect invisibility' Whomort
+~dpclock pulse 20
 cast 'invisibility' Whoinvis
+~dpclock pulse 20
+send:invispeer invis 1
 
 [probe]
-who
-send:invispeer invis 1
 who
 send:peer who
