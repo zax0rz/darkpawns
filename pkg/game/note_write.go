@@ -1,8 +1,11 @@
 package game
 
 // note_write.go — note-writing state machine for ITEM_NOTE objects.
-// Mirrors the mail writing subsystem (mail.go) but stores text directly
-// on the object's Runtime.NoteText rather than writing to a mail file.
+// Ports C's do_write + string_add for notes: the text lands on the object's
+// own action_description (Runtime.NoteText; see ObjectInstance.ActionDescription)
+// and the editor commits silently — C's playing_string_cleanup has no note
+// branch, so '@' prints nothing (src/modify.c:218-236; witnessed in
+// deepseek-dp1502-note-text-gap).
 //
 // Source: act.comm.c do_write() — ch->desc->str = &paper->action_description
 // In C, string_add() appended lines until '@' was entered alone on a line.
@@ -34,6 +37,14 @@ type noteWriteEntry struct {
 // Returns true when writing is complete (line == "@"), false while buffering.
 // Clears PLR_WRITING on completion or error.
 // Called from session_login.go PLR_WRITING intercept when PLR_MAILING is unset.
+//
+// '@' commits with no message: for a note, C's string_add takes the
+// STRINGADD_SAVE path through playing_string_cleanup, which only handles mail
+// and board posts (src/modify.c:127-156,218-236). An empty note leaves C's
+// action_description NULL, so the object simply stays blank — there is no
+// "discarded" message anywhere in src/. Accepted lines are stored each with a
+// trailing CRLF, exactly as string_add appends "\r\n" after every line
+// (src/modify.c:216-217).
 func HandleNoteInput(ch *Player, line string) bool {
 	if line == "@" {
 		noteWriteMu.Lock()
@@ -43,21 +54,17 @@ func HandleNoteInput(ch *Player, line string) bool {
 
 		ch.SetPlrFlag(PlrWriting, false)
 
-		if !ok {
-			ch.SendMessage("Your note was lost. (internal error)\r\n")
-			return true
+		if ok && state.buffer != "" {
+			text := state.buffer
+			if text[len(text)-1] != '\n' {
+				// First-line truncation stores the raw prefix; C's SAVE path
+				// still leaves the "\r\n" terminator on the stored string.
+				text += "\r\n"
+			}
+			state.obj.Runtime.NoteText = text
 		}
-		if state.editorBytes == 0 {
-			ch.SendMessage("You have written nothing. Note discarded.\r\n")
-			return true
-		}
-
-		text := state.buffer
-		if state.overflowed || text == "" {
-			text += "\r\n"
-		}
-		state.obj.Runtime.NoteText = text
-		ch.SendMessage("Note recorded.\r\n")
+		// With no entry or no text, C leaves paper->action_description NULL:
+		// nothing is stored and nothing is printed.
 		return true
 	}
 
@@ -80,10 +87,7 @@ func HandleNoteInput(ch *Player, line string) bool {
 		ch.SendMessage(notice)
 		return false
 	}
-	if state.editorBytes > 0 {
-		state.buffer += "\r\n"
-	}
-	state.buffer += line
+	state.buffer += line + "\r\n"
 	state.editorBytes += len(line) + 2 // string_add stores every accepted line with CRLF.
 	noteWriteMu.Unlock()
 	return false

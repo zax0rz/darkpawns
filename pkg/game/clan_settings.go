@@ -3,7 +3,8 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"strconv"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 func (w *World) doClanPrivate(ch *Player, arg string) {
@@ -111,7 +112,7 @@ func (w *World) doClanRanks(ch *Player, arg string) {
 		return
 	}
 
-	newRanks, _ := strconv.Atoi(arg)
+	newRanks := common.AtoiC(arg)
 
 	if newRanks == c.Ranks {
 		ch.SendMessage("The clan already has this number of ranks.\r\n")
@@ -215,7 +216,7 @@ func (w *World) doClanTitles(ch *Player, arg string) {
 			ch.SendMessage("You need to specify a clan number.\r\n")
 			return
 		}
-		idx, _ := strconv.Atoi(a1)
+		idx := common.AtoiC(a1)
 		c = w.Clans.GetClanByIndex(idx)
 		if c == nil {
 			ch.SendMessage("There is no clan with that number.\r\n")
@@ -231,7 +232,7 @@ func (w *World) doClanTitles(ch *Player, arg string) {
 		return
 	}
 
-	rank, _ := strconv.Atoi(a1)
+	rank := common.AtoiC(a1)
 
 	if rank < 1 || rank > c.Ranks {
 		ch.SendMessage("This clan has no such rank number.\r\n")
@@ -332,7 +333,7 @@ func (w *World) doClanSP(ch *Player, arg string, priv int) {
 		return
 	}
 
-	rank, _ := strconv.Atoi(arg)
+	rank := common.AtoiC(arg)
 
 	if rank < 1 || rank > c.Ranks {
 		ch.SendMessage("There is no such rank in the clan.\r\n")

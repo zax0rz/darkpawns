@@ -80,6 +80,7 @@ func (s *Session) startReturningMenu(passwordHash string, failedPasswords ...int
 func (s *Session) showMainMenu() {
 	s.manager.mu.Lock()
 	s.menuActive = true
+	s.idleTicsSet = false
 	s.manager.mu.Unlock()
 	s.menuStage = "menu"
 	s.sendCharCreatePrompt("menu", menuText, menuOptions)
@@ -488,6 +489,7 @@ func (s *Session) reloadCharacterFromStore() error {
 	if err != nil {
 		return fmt.Errorf("reload %s: %w", s.player.Name, err)
 	}
+	s.manager.untagItIfPlayingPresent(p)
 	if aliases, aErr := game.ReadAliases(p.Name); aErr == nil {
 		p.Aliases = aliases
 	}

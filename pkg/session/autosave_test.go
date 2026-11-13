@@ -106,6 +106,10 @@ func TestAutosaveEligibility(t *testing.T) {
 	linkdead.player.SetLinkless(true)
 	linkdead.player.MarkCrashNeeded()
 
+	editor := h.addSession(t, "Editorian")
+	editor.markConEditorState(true)
+	editor.player.MarkCrashNeeded()
+
 	for range 10 {
 		h.m.AutosaveTick()
 	}
@@ -118,7 +122,7 @@ func TestAutosaveEligibility(t *testing.T) {
 	}
 	// Skipped-but-flagged characters keep PLR_CRASH (the retry policy):
 	// the calls list above proves none of them was written.
-	for name, s := range map[string]*Session{"guest": guest, "menu": menu, "creating": creating, "linkdead": linkdead} {
+	for name, s := range map[string]*Session{"guest": guest, "menu": menu, "creating": creating, "linkdead": linkdead, "editor": editor} {
 		if !s.player.NeedsCrashSave() {
 			t.Fatalf("%s character lost its flag without a save", name)
 		}

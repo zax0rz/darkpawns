@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -836,10 +835,9 @@ func showDetailedShop(w *game.World, value string, roomVNum int) string {
 			return "This isn't a shop!\n\r"
 		}
 	} else if game.CIsNumber(value) {
-		shopNumber, err := strconv.Atoi(value)
-		if err == nil {
-			selected = shopNumber - 1
-		}
+		// C show_shops: is_number then atoi minus one (src/shop.c:1428-1429);
+		// overflow wraps negative into the "Illegal shop number." arm below.
+		selected = common.AtoiC(value) - 1
 	}
 	if selected < 0 || selected >= len(shops) {
 		return "Illegal shop number.\n\r"

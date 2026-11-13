@@ -136,6 +136,24 @@ func (o *ObjectInstance) GetLongDesc() string {
 	return "A generic object lies here."
 }
 
+// ActionDescription is the per-object written text, C's action_description
+// (src/structs.h obj_data). C's read_object struct-copies the prototype, so a
+// fresh instance shows the prototype's text; do_write's "already written"
+// gate, string_add's first line, look and read all use the one instance field
+// (src/act.comm.c:1094,1099; src/modify.c:115-216; src/act.informative.c:106-117).
+// Writing allocates the instance's own buffer, so two copies of a note never
+// share text. C's fread_string returns NULL for an empty obj-file line
+// (src/db.c:2735-2741), so "" models NULL everywhere here.
+func (o *ObjectInstance) ActionDescription() string {
+	if o.Runtime.NoteText != "" {
+		return o.Runtime.NoteText
+	}
+	if o.Prototype != nil {
+		return o.Prototype.ActionDesc
+	}
+	return ""
+}
+
 // GetKeywords returns the object's keywords for targeting.
 // Checks Runtime.Keywords first so synthetic objects (corpses) work without a prototype.
 func (o *ObjectInstance) GetKeywords() string {

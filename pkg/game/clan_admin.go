@@ -2,7 +2,8 @@ package game
 
 import (
 	"log/slog"
-	"strconv"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 func (w *World) doClanRename(ch *Player, arg string) {
@@ -12,7 +13,7 @@ func (w *World) doClanRename(ch *Player, arg string) {
 		ch.SendMessage("You need to specify a clan number.\r\n")
 		return
 	}
-	clanIdx, _ := strconv.Atoi(arg1)
+	clanIdx := common.AtoiC(arg1)
 	if clanIdx < 0 || clanIdx >= w.Clans.ClanCount() {
 		ch.SendMessage("There is no clan with that number.\r\n")
 		return

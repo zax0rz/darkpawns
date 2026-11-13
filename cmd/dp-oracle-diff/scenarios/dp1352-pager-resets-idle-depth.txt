@@ -1,0 +1,106 @@
+# Lifecycle: pager navigation input resets the idle timer just like any
+# other dequeued input line (DP-1352).
+# depth-case: idle.pager-resets-timer
+#
+# C resets char_specials.timer and returns a voided character at the game-loop
+# dequeue point, before routing to d->showstr_count / show_string()
+# (src/comm.c:599-618). Therefore pressing `r` (or RETURN / `b` / `q`) inside
+# the output pager resets the idle timer to 0, so eight further silent hours
+# leave the player in the room and the ninth voids them.
+#
+# RED on pre-fix Go: MsgPagerInput -> handlePagerInputMsg -> navigatePager
+# bypassed resetIdleOnCommand(), so the timer stayed at 8 after `r` and the
+# very next silent hour pulled the player into the void.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Pageridle
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:port]
+Pageridle
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:oracle:watch]
+Voidwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Voidwitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Voidwitness level 31
+teleport Voidwitness 8004
+set player Pageridle level 1
+send:watch look
+
+[probe]
+levels
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+r
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+send:watch look
+~dpclock pulse 630
+send:watch look
+q
+look

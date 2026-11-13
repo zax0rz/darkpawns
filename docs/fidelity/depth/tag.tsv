@@ -5,3 +5,4 @@ do_tag	tag	tag.npc-tags-back	D2	command	oracle-green	tag-depth	new_cmds.c:2240-2
 do_tag	tag	tag.linkless	D1	command	oracle-green	tag-depth	new_cmds.c:2216-2218	Live C witness (tag-depth; peer-drop keeps Taglinkpeer in the room with desc=NULL) reaches "No way! They're linkless!".
 do_tag	tag	tag.not-it	D1	command	oracle-green	tag-nonit-depth	new_cmds.c:2229-2233	Live C witness (tag-nonit-depth): tagging the peer while the peer is IT reaches "But you are not it!".
 do_tag	tag	tag.other-player	D2	command	oracle-green	tag-nonit-depth	new_cmds.c:2256-2264	Live C witness (tag-nonit-depth): the actor (IT) tags the peer and the marker transfers with the three TAG acts.
+store_to_char	login	tag.clear-it-on-load	D4	state	oracle-green	dp1424-tag-it-cleared-on-load-depth@1	db.c:2510-2519	store_to_char scans descriptor_list for a CON_PLAYING non-NPC player with PLR_IT and clears PLR_IT from the loading player if found (DP-1424, R1/R4).

@@ -28,8 +28,11 @@ type ObjectRuntimeState struct {
 	// Mail
 	MailText string `json:"mail_text,omitempty"`
 
-	// Note — written content from do_write (action_description equivalent).
-	// Set when a player writes on an ITEM_NOTE object.
+	// Note — the object's written content, C's action_description.
+	// do_write fills it through the note editor; look and read show it.
+	// A fresh instance starts as the prototype's ActionDesc — see
+	// ObjectInstance.ActionDescription. Like C's objsave (src/objsave.c
+	// obj_file_elem), it is deliberately not persisted: rent drops the text.
 	NoteText string `json:"note_text,omitempty"`
 
 	// Horse mount

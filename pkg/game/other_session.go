@@ -16,12 +16,12 @@ func (w *World) doSave(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
+	// C do_save (act.other.c:191-196): "Saving %s.\r\n" before save_char + Crash_crashsave.
+	ch.SendMessage(fmt.Sprintf("Saving %s.\r\n", ch.Name))
+
 	// C do_save: save_char + Crash_crashsave (act.other.c:198-199).
 	if res := w.SavePlayerRecord(ch, "save", LoadRoomNowhere, SaveCrash); res == SaveFailed {
 		slog.Error("store-of-record save failed for save command", "player", ch.Name)
 	}
-
-	// C do_save (act.other.c): "Saving %s.\r\n" with GET_NAME(ch).
-	ch.SendMessage(fmt.Sprintf("Saving %s.\r\n", ch.Name))
 	return true
 }
