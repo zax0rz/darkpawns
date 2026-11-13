@@ -29,18 +29,18 @@ func cmdRestore(s *Session, args []string) error {
 		return nil
 	}
 
-	targetSess := findSessionByName(s.manager, targetName)
-	var targetMob *game.MobInstance
-	if targetSess == nil && s.manager != nil && s.manager.world != nil {
-		targetMob = s.manager.world.GetMobByName(targetName)
-	}
-	if targetSess == nil && targetMob == nil {
+	// C do_restore resolves with get_char_vis (src/act.wizard.c:1588-1593): the
+	// room first, then the global character list with a numeric prefix honoured
+	// (src/handler.c:1302-1325). ResolveCharWorld is the port's equivalent, so
+	// "1.trainee" restores the spawned mobile instead of answering NOPERSON
+	// (DP-1393).
+	resolved, found := s.manager.world.ResolveCharWorld(s.player, targetName)
+	if !found {
 		s.Send("No-one by that name here.\r\n")
 		return nil
 	}
 
-	if targetSess != nil && targetSess.player != nil {
-		target := targetSess.player
+	if target := resolved.Player; target != nil {
 		target.SetHealth(target.GetMaxHP())
 		target.SetMana(target.GetMaxMana())
 		target.SetMove(target.GetMaxMove())
@@ -68,18 +68,18 @@ func cmdRestore(s *Session, args []string) error {
 			}
 			target.CopyBaseAttributes() // src/act.wizard.c:1612; no total
 		}
-	} else if targetMob != nil {
-		targetMob.SetHealth(targetMob.GetMaxHP())
-		targetMob.SetMana(targetMob.GetMaxMana())
-		targetMob.SetMove(targetMob.GetMaxMove())
-		if targetMob.GetHP() > 0 && targetMob.GetPosition() <= combat.PosStunned {
-			targetMob.SetPosition(combat.PosStanding)
+	} else if target := resolved.Mob; target != nil {
+		target.SetHealth(target.GetMaxHP())
+		target.SetMana(target.GetMaxMana())
+		target.SetMove(target.GetMaxMove())
+		if target.GetHP() > 0 && target.GetPosition() <= combat.PosStunned {
+			target.SetPosition(combat.PosStanding)
 		}
 	}
 
 	s.Send("Okay.\r\n")
-	if targetSess != nil && targetSess.player != nil {
-		targetSess.Send(fmt.Sprintf("The hand of %s touches you, healing your wounds and leaving you refreshed!\r\n", s.player.Name))
+	if target := resolved.Player; target != nil {
+		target.SendMessage(fmt.Sprintf("The hand of %s touches you, healing your wounds and leaving you refreshed!\r\n", s.player.Name))
 	}
 	return nil
 }

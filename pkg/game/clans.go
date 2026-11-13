@@ -271,7 +271,10 @@ func (m *ClanManager) GetClanByIndex(idx int) *Clan {
 // isClanNumber mirrors C's is_number in src/interpreter.c:1175. Unlike the
 // permissive fmt.Sscanf helper used by older Go command code, C accepts only
 // decimal digit bytes (and, historically, also treats the empty string as a
-// number; callers in clan.c guard empty arguments where needed).
+// number; callers in clan.c guard empty arguments where needed). Callers parse
+// the gated token with common.AtoiC, not strconv.Atoi: C's atoi wraps overflow
+// through (int)strtol and the refusal arms below depend on the wrapped sign
+// (DP-1523 clan batch; src/clan.c is_number-then-atoi sites).
 func isClanNumber(s string) bool {
 	for i := 0; i < len(s); i++ {
 		if s[i] < '0' || s[i] > '9' {

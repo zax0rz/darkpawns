@@ -1143,13 +1143,18 @@ func appendObjectLook(result *ObservationResult, ch combat.Combatant, object *Ob
 		return
 	}
 	if object.GetTypeFlag() == ITEM_NOTE {
+		// C reads one per-object field, action_description, for both the
+		// mailed-letter text and a written note; a fresh instance starts
+		// as the prototype's (src/db.c read_object's struct copy; look and
+		// read both route through show_obj_to_char mode 5,
+		// src/act.informative.c:106-117,183-199).
 		if object.Runtime.MailText != "" {
 			mailText := strings.TrimRight(object.Runtime.MailText, "\x00")
 			result.literal(ch, "There is something written upon it:\r\n\r\n"+mailText)
 			return
 		}
-		if object.Prototype != nil && object.Prototype.ActionDesc != "" {
-			result.literal(ch, "There is something written upon it:\r\n\r\n"+object.Prototype.ActionDesc)
+		if actionDesc := object.ActionDescription(); actionDesc != "" {
+			result.literal(ch, "There is something written upon it:\r\n\r\n"+actionDesc)
 		} else {
 			result.literal(ch, "It's blank.")
 		}

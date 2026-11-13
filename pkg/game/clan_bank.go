@@ -2,7 +2,8 @@ package game
 
 import (
 	"fmt"
-	"strconv"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 func (w *World) doClanBank(ch *Player, arg string, action int) {
@@ -52,7 +53,7 @@ func (w *World) doClanBank(ch *Player, arg string, action int) {
 		return
 	}
 
-	amount, _ := strconv.Atoi(arg)
+	amount := common.AtoiC(arg)
 
 	switch action {
 	case CBWithdraw:

@@ -911,7 +911,7 @@ func (m *Manager) flushAsyncPrompts() {
 		if s.inputBusy.Load() || !s.hasTransport() || s.SendClosed() {
 			continue
 		}
-		if s.outputSincePrompt.Load() > 0 && !s.IsCharCreating() && !s.IsMenuActive() && !s.IsPaging() {
+		if s.outputSincePrompt.Load() > 0 && !s.IsCharCreating() && !s.IsMenuActive() {
 			s.SendPrompt()
 		}
 	}
@@ -1954,7 +1954,7 @@ func (m *Manager) CrashSaveAll(why string) {
 		if s == nil || s.player == nil || !s.authenticated || s.isGuest {
 			continue
 		}
-		if s.charCreating || s.creationSaved || s.menuActive {
+		if s.charCreating || s.creationSaved || s.menuActive || s.conEditorActive.Load() || s.inOLCEditorState() {
 			continue
 		}
 		if s.player.IsLinkless() {

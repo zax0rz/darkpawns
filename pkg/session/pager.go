@@ -244,6 +244,10 @@ func (s *Session) handlePagerInputMsg(data json.RawMessage) error {
 // navigatePager applies one pager navigation command (the raw input line). It is
 // split from handlePagerInputMsg so unit tests can drive it with a plain string.
 func (s *Session) navigatePager(line string) {
+	// C: comm.c:599-609 resets timer and returns from void on every dequeued
+	// input line BEFORE routing to d->showstr_count / show_string() (comm.c:617).
+	s.resetIdleOnCommand()
+
 	// C: any_one_arg(input, buf) — take the first whitespace-delimited word.
 	// For paging the first word is all that matters (q/r/b or a number).
 	buf := strings.TrimSpace(line)
