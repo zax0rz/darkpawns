@@ -1,0 +1,76 @@
+# DP-1533 control vehicle: the save-path reversal WITHOUT any affect expiry.
+# get/drop sets PLR_CRASH (src/handler.c:596-598 obj_from_char), and the
+# one-minute autosave slot (src/comm.c:832-837) fires Crash_save_all
+# (src/objsave.c:1211-1223) at autosave_time minutes (src/config.c:125),
+# whose char_to_store reverses the live affect list (db.c:2576-2577 strip,
+# 2627-2631 re-add with the prepending affect_to_char). Both stacked affects
+# outlive the whole run, so any order flip is the save path alone.
+# depth-case: dp-1533.save-flip-control
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Splord
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Splord
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+cast 'protection from good' Splord
+~dpclock pulse 630
+cast 'haste' Splord
+~dpclock pulse 630
+stat Splord
+load obj 14128
+drop blade
+stat Splord
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+~dpclock pulse 600
+stat Splord
+~dpclock pulse 600
+stat Splord

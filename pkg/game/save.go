@@ -499,17 +499,25 @@ func migrateFlagsV1(old uint64) uint64 {
 // writers (the session's savePlayer and the close/menu/creation paths); C's
 // object rent write (Crash_crashsave) does not run char_to_store and must not
 // call this.
+//
+// Records past MAX_AFFECT are removed through affect_remove, which runs
+// affect_total (src/handler.c), so a truncating save recomputes the totals.
 func (p *Player) ApplyCharToStoreSideEffects() {
 	p.mu.Lock()
-	defer p.mu.Unlock()
+	truncated := false
 	if n := len(p.ActiveAffects); n > 0 {
 		if n > cMaxAffect {
 			n = cMaxAffect
+			truncated = true
 		}
 		live := make([]*engine.Affect, 0, n)
 		for i := n - 1; i >= 0; i-- {
 			live = append(live, p.ActiveAffects[i])
 		}
 		p.ActiveAffects = live
+	}
+	p.mu.Unlock()
+	if truncated {
+		p.AffectTotal()
 	}
 }
