@@ -1654,6 +1654,9 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 		// C's close_socket saves a playing character with load_room NOWHERE
 		// (comm.c:2130).
 		if rec, err := s.playerRecordForSave(s.player, game.LoadRoomNowhere); err == nil {
+			// C close_socket's save_char runs char_to_store
+			// (src/db.c:2547-2639) before the record is written.
+			s.player.ApplyCharToStoreSideEffects()
 			if err := m.db.SavePlayer(rec); err != nil {
 				slog.Error("DB save error", "player", playerName, "error", err)
 			}
