@@ -379,3 +379,41 @@ func (w *World) DoSpecComm(ch *Player, argument string, ask bool) {
 	}
 	Act(w, false, ch, victim, nil, nil, actionOthers, "", ToNotVict)
 }
+
+// DoSpecCommMobile is do_spec_comm for a mobile body. PLR_NOSHOUT is false
+// for NPCs by C's PLR_FLAGGED macro; the mobile's descriptor is still used by
+// send_to_char/act when a wizard has switched into it.
+func (w *World) DoSpecCommMobile(ch *MobInstance, argument string, ask bool) {
+	if ch == nil {
+		return
+	}
+	actionSing, actionPlur := "whisper to", "whispers to"
+	actionOthers := "$n whispers something to $N."
+	if ask {
+		actionSing, actionPlur = "ask", "asks"
+		actionOthers = "$n asks $N a question."
+	}
+	targetName, message := halfChop(argument)
+	if targetName == "" || message == "" {
+		ch.SendMessage(fmt.Sprintf("Whom do you want to %s.. and what??\r\n", actionSing))
+		return
+	}
+	target, found := w.ResolveCharInRoom(ch, targetName)
+	if !found {
+		ch.SendMessage("No-one by that name here.\r\n")
+		return
+	}
+	victim := asActor(target.Combatant)
+	if target.Combatant == ch {
+		ch.SendMessage("You can't get your mouth close enough to your ear...\r\n")
+		return
+	}
+	message = deleteANSIControls(message)
+	Act(nil, false, ch, victim, nil, nil,
+		fmt.Sprintf("$n %s you, '%s'", actionPlur, message), "", ToVict)
+	// NPC player_specials point at C's shared zeroed dummy_mob, so
+	// PRF_NOREPEAT is clear and the descriptor receives the normal echo.
+	Act(nil, false, ch, victim, nil, nil,
+		fmt.Sprintf("You %s %s, '%s'\r\n", actionSing, victim.GetName(), message), "", ToChar)
+	Act(w, false, ch, victim, nil, nil, actionOthers, "", ToNotVict)
+}
