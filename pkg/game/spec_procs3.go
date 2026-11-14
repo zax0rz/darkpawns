@@ -285,8 +285,10 @@ func specClericCombat(w *World, me *MobInstance, vict combat.Combatant) bool {
 		castClericSpell(w, me, vict, spells.SpellPoison)
 	case lspell >= 17 && lspell <= 19:
 		castClericSpell(w, me, vict, spells.SpellEarthquake)
-	case lspell <= 24:
-		// Intentionally do nothing (matches C: cases 20-24 break)
+	case lspell >= 20 && lspell <= 24:
+		// Intentionally do nothing (matches C: cases 20-24 break). C has no
+		// case 12, so lspell 12 falls through to default's harm
+		// (spec_procs.c:1532-1543).
 	default:
 		castClericSpell(w, me, vict, spells.SpellHarm)
 	}

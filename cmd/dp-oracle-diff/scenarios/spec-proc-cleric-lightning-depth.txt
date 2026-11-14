@@ -1,0 +1,78 @@
+# C-first vehicle for SPECIAL(cleric)'s call-lightning arm (spec_procs.c:1488-1497).
+# Room 8105 is OUTSIDE (no INDOORS bit) and non-peaceful; at seed 1 the boot
+# pressure roll lands raining (db.c:447-458), so the arm's sky gate holds from
+# the first exchange. The scriptless vnum-11023 cleric reaches the combat-time
+# special from the native seam; aggressive world behaviour opens the fight.
+# C path: src/spec_procs.c:1425-1610; src/mobact.c:54-93; src/fight.c:1898-2032.
+# depth-case: mob.cleric-lightning-site-live
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 11023 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+Clericgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clericgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+weather
+hit rajah
+~dpclock pulse 20
+weather
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+weather
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+weather
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+weather
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+weather
