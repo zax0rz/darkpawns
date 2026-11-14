@@ -425,7 +425,7 @@ func setShopTemper(path string, shopVNum, temper int) error {
 	if err := skipIntList(); err != nil { // buy types
 		return err
 	}
-	for msg := 0; msg < 7; msg++ { // no_such_item1/2, do_not_buy, missing_cash1/2, buy, sell
+	for msg := range 7 { // no_such_item1/2, do_not_buy, missing_cash1/2, buy, sell
 		closed := false
 		for i < len(lines) {
 			line := lines[i]
