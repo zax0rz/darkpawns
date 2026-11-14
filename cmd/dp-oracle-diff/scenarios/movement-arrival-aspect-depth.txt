@@ -138,6 +138,7 @@ set Arrivalcast maxmana 5000
 set Arrivalcast mana 5000
 set Arrivalcast level 31
 cast 'fly' Flymover
+~dpclock pulse 25
 send:ridepeer ride horse
 
 [probe]

@@ -120,4 +120,5 @@ wear orb
 [probe]
 equipment
 use orb ItemPeer
+~dpclock pulse 25
 look

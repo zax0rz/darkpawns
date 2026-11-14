@@ -72,5 +72,6 @@ set Identifytarget level 6
 
 [probe]
 cast 'identify' Identifytarget
+~dpclock pulse 25
 load mob 3
 cast 'identify' test

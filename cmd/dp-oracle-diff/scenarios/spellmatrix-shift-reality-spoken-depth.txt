@@ -76,4 +76,5 @@ set player Telecast level 34
 
 [probe]
 cast 'shift reality' Telecast
+~dpclock pulse 25
 look

@@ -111,6 +111,7 @@ set player LycanDrink level 34
 
 [probe]
 cast 'lycanthropy' LycanDrink
+~dpclock pulse 25
 cast 'vampirism' VampDrink
 cast 'vampirism' LycanDrink
 cast 'lycanthropy' VampDrink

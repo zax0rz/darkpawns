@@ -76,4 +76,5 @@ set player Clonecas level 34
 
 [probe]
 cast 'clone' Clonecas
+~dpclock pulse 25
 look
