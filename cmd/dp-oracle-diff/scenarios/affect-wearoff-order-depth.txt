@@ -1,0 +1,50 @@
+# depth-case: affect.wear-off-newest-first
+# C-first vehicle for the player affect list order (DP-1530). A God casts the
+# three detects back to back — alignment, then invisibility, then magic — all
+# at duration 12+level (src/magic.c:1000-1050), so they expire the same mud
+# hour. C's master_affect_to_char PREPENDS (handler.c:391-392) and
+# affect_update walks ch->affected from the head (magic.c:431-456), so the
+# wear-off messages arrive newest-first: detect magic, detect invisibility,
+# detect alignment. The unfixed Go kept ActiveAffects oldest-first and spoke
+# oldest-first. The mid-window stat pins the SPL listing, which both engines
+# already render newest-first.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wearordergod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wearordergod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+cast 'detect alignment'
+cast 'detect invisibility'
+cast 'detect magic'
+~dpclock pulse 630
+stat Wearordergod
+~dpclock pulse 33500

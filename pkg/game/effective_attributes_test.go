@@ -246,8 +246,10 @@ func TestPlayerJoinAffectUsesNewestMatchingRecord(t *testing.T) {
 	if got := len(p.ActiveAffects); got != 2 {
 		t.Fatalf("joined affect count = %d, want 2", got)
 	}
-	if p.ActiveAffects[0] != older || p.ActiveAffects[1] != joined {
-		t.Fatalf("JoinAffect did not replace the newest matching node: %#v", p.ActiveAffects)
+	// C prepends (handler.c:391-392), so the merged record sits at the head
+	// and the untouched older record behind it (DP-1530).
+	if p.ActiveAffects[0] != joined || p.ActiveAffects[1] != older {
+		t.Fatalf("JoinAffect did not put the merged record at the head: %#v", p.ActiveAffects)
 	}
 	if got, want := joined.Duration, 10; got != want {
 		t.Fatalf("joined duration = %d, want %d from C's newest matching record", got, want)

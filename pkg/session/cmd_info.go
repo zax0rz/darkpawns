@@ -2,7 +2,6 @@ package session
 
 import (
 	"fmt"
-	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -437,10 +436,10 @@ func cmdScore(s *Session) error {
 		}
 
 		// Also check ActiveAffects (for spells that don't have MasterAffects)
-		// Player.ActiveAffects appends new effects; C's affect_to_char prepends
-		// them to ch->affected. Walk this slice backwards to retain C's visible
-		// newest-first order (handler.c:415-420).
-		for _, aff := range slices.Backward(p.ActiveAffects) {
+		// Player.AddAffect prepends like C's affect_to_char (handler.c:415-420,
+		// DP-1530), so the raw slice is already C's newest-first ch->affected
+		// order.
+		for _, aff := range p.ActiveAffects {
 
 			// ActiveAffects.Flags uses engine.AFF_* positions. Convert them
 			// back to C's AFF_* positions before applying the exclusion list

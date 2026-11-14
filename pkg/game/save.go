@@ -371,6 +371,11 @@ func restoreAffects(saved []saveAffect) []*engine.Affect {
 	if len(saved) == 0 {
 		return nil
 	}
+	// C saves ch->affected head-first into the record array (newest first,
+	// db.c:2547-2556) and loads it back with one affect_to_char per entry,
+	// each of which PREPENDS (db.c:2474-2480) — so a save/load cycle flips
+	// the list, and the save format is newest-first. The file was written in
+	// list order, so restore by prepending each record (DP-1530).
 	affects := make([]*engine.Affect, 0, len(saved))
 	now := time.Now()
 	for _, sa := range saved {
@@ -401,7 +406,10 @@ func restoreAffects(saved []saveAffect) []*engine.Affect {
 			}
 		}
 
-		affects = append(affects, a)
+		// Prepending reproduces store_to_char's affect_to_char loop: file
+		// order [newest...oldest] restores to [oldest...newest] (db.c:2474-
+		// 2480; DP-1530).
+		affects = append([]*engine.Affect{a}, affects...)
 	}
 	return affects
 }

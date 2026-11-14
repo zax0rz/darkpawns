@@ -1,0 +1,291 @@
+# Wide-cite audit, 2026-11-14. Written by DeepSeek for Zach's overnight list. Do not edit by hand.
+# Question: for act.informative.c and act.wizard.c, which depth-manifest rows are "covered" only by a C citation range wider than 20 lines, and does the retained C transcript of the scenario the row names actually print text from that range?
+# Frame: docs/fidelity/depth/*.tsv at origin/main 90c3c6b58, rows with status oracle-green*. A row is in frame when EVERY citation of that file in its c_site is a range longer than 20 lines; single-line and <=20-line citations are out of frame.
+# Evidence: retained seed-1 C blocks from /home/zach/Archives/darkpawns/oracle-runs/2026-11-13/hydrogen-dp1477-combined/census-dump (go-head 16bef904f; full corpus, 1,879 scenarios). The C blocks are engine-side and seed-deterministic, so this dump remains valid evidence at later Go heads; every cited line was re-read against src/ at 90c3c6b58.
+# Test: for each in-frame row, every C string literal in the cited lines with at least 8 characters of fixed text (format specifiers removed) is a candidate. Each candidate is searched in the scenario's normalized C blocks, ANSI stripped, with whitespace-tolerant matching. Verdict:
+#   witnessed     = at least one candidate literal appears in C's blocks
+#   not-witnessed = at least one candidate exists and none appears
+#   cant-tell     = no retained block, every block empty, no candidate literal in the range, or the only candidates belong to a class the normalizer erases or masks (version/build stamp, uptime, wall clock, player counts)
+# Limitation: witnessed is an any-literal test. A wide range that prints its header and none of its branches still counts. literals_found/literals_total is the strength column: under 25% means the transcript touched the range, not the row's claim.
+# Counts: 280 rows in frame (act.wizard.c 163, act.informative.c 117): witnessed 202, not-witnessed 53, cant-tell 25. By file: act.wizard.c 147/13/3, act.informative.c 55/40/22. Of the 202 witnessed rows, 54 matched under 25% of their candidates, 75 between 25% and 50%, 47 between 50% and 75%, and 26 at 75% or more.
+# columns: file	manifest	case_id	status	scenario	seeds	cited_range	range_length	literals_total	literals_found	verdict	evidence
+act.informative.c	cast.tsv	spell.adrenaline-boost.matrix-spoken-effect	oracle-green-multiseed	spellmatrix-mag-affects-batch-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.change-density.matrix-spoken-effect	oracle-green-multiseed	spellmatrix-mag-affects-batch-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.chill-touch.matrix-spoken-state	oracle-green	spellmatrix-chill-touch-spoken-depth	1	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.curse.matrix-spoken-state	oracle-green-multiseed	spellmatrix-mag-affects-spoken-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.dream-travel.matrix-spoken-effect	oracle-green-multiseed	spellmatrix-mag-affects-batch-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.flame-strike.matrix-spoken-effect	oracle-green-multiseed	spellmatrix-mag-affects-batch-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.greater-perception.matrix-spoken-effect	oracle-green-multiseed	spellmatrix-mag-affects-batch-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.group-heal.matrix-spoken-state	oracle-green-multiseed	spellmatrix-mag-groups-missing-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.group-invis.matrix-spoken-state	oracle-green-multiseed	spellmatrix-mag-groups-missing-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.heal.matrix-spoken-state	oracle-green-multiseed	spellmatrix-mag-points-missing-depth	1,2,3,5,8	1371-1412	42	6	0	cant-tell	normalizer erases this class; longest You are summonable by other players.
+act.informative.c	cast.tsv	spell.holy-shield.matrix-spoken-state	oracle-green-multiseed	spellmatrix-mag-groups-missing-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.invulnerability.matrix-spoken-effect	oracle-green-multiseed	spellmatrix-mag-affects-batch-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.know-align.matrix-spoken-effect	oracle-green-multiseed	spellmatrix-mag-affects-batch-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.lesser-perception.matrix-spoken-effect	oracle-green-multiseed	spellmatrix-mag-affects-batch-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.mass-heal.matrix-spoken-state	oracle-green-multiseed	spellmatrix-mag-points-missing-depth	1,2,3,5,8	1371-1412	42	6	0	cant-tell	normalizer erases this class; longest You are summonable by other players.
+act.informative.c	cast.tsv	spell.mind-bar.matrix-spoken-effect	oracle-green-multiseed	spellmatrix-mag-affects-batch-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.poison.matrix-spoken-state	oracle-green-multiseed	spellmatrix-mag-affects-spoken-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.psychic-shield.matrix-spoken-effect	oracle-green-multiseed	spellmatrix-mag-affects-batch-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.sanctuary.matrix-spoken-effect	oracle-green-multiseed	spellmatrix-mag-affects-batch-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.slow.matrix-spoken-effect	oracle-green-multiseed	spellmatrix-mag-affects-batch-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.strength.matrix-spoken-state	oracle-green-multiseed	spellmatrix-mag-affects-spoken-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.transparency.matrix-spoken-effect	oracle-green-multiseed	spellmatrix-mag-affects-batch-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	cast.tsv	spell.word-of-intellect.matrix-spoken-effect	oracle-green-multiseed	spellmatrix-mag-affects-batch-depth	1,2,3,5,8	1371-1412	42	6	1	witnessed	1/6 literals; e.g. Spells affecting you:
+act.informative.c	clear.tsv	clear.argument-ignored	oracle-green	clear-depth		2120-2170	51	1	0	cant-tell	normalizer erases this class; longest Dark Pawns 2.3-
+act.informative.c	clear.tsv	clear.no-argument	oracle-green	clear-depth		2120-2170	51	1	0	cant-tell	normalizer erases this class; longest Dark Pawns 2.3-
+act.informative.c	clear.tsv	cls.argument-ignored	oracle-green	clear-depth		2120-2170	51	1	0	cant-tell	normalizer erases this class; longest Dark Pawns 2.3-
+act.informative.c	clear.tsv	cls.no-argument	oracle-green	clear-depth		2120-2170	51	1	0	cant-tell	normalizer erases this class; longest Dark Pawns 2.3-
+act.informative.c	color.tsv	color.extra-argument	oracle-green	color-depth		2469-2498	30	4	2	witnessed	2/4 literals; e.g. complete
+act.informative.c	commands.tsv	commands.no-argument	oracle-green	commands-depth		2585-2675	91	6	2	witnessed	2/6 literals; e.g. Who is that?
+act.informative.c	commands.tsv	commands.target-peer	oracle-green	commands-depth		2633-2675	43	6	2	witnessed	2/6 literals; e.g. Who is that?
+act.informative.c	commands.tsv	commands.target-self	oracle-green	commands-depth		2633-2675	43	6	2	witnessed	2/6 literals; e.g. Who is that?
+act.informative.c	consider.tsv	consider.target-level-description	oracle-green-multiseed	consider-depth		2345-2431	87	22	2	witnessed	2/22 literals; e.g. looks to be in better physical shape than you,
+act.informative.c	diagnose.tsv	diagnose.diag-alias	oracle-green-multiseed	diagnose-depth	1,2,3,5,8	2433-2455	23	1	1	witnessed	1/1 literals; e.g. Diagnose who?
+act.informative.c	diagnose.tsv	diagnose.glance-alias	oracle-green-multiseed	diagnose-depth	1,2,3,5,8	2433-2455	23	1	1	witnessed	1/1 literals; e.g. Diagnose who?
+act.informative.c	diagnose.tsv	diagnose.player-aliases	oracle-green-multiseed	diagnose-player-depth	1,2,3,5,8	2433-2455	23	1	0	not-witnessed	none of 1 literals; longest Diagnose who?
+act.informative.c	diagnose.tsv	diagnose.private-output	oracle-green-multiseed	diagnose-player-depth	1,2,3,5,8	354-385	32	8	1	witnessed	1/8 literals; e.g. is in excellent condition.
+act.informative.c	equipment.tsv	equipment.empty	oracle-green	equipment-glance-depth		1470-1495	26	3	2	witnessed	2/3 literals; e.g. You are using:
+act.informative.c	equipment.tsv	equipment.look-all-c-slots	oracle-green	egon-equipment-all-slots		1470-1495	26	3	1	witnessed	1/3 literals; e.g. You are using:
+act.informative.c	equipment.tsv	equipment.sleeping	oracle-green	equipment-glance-depth		1470-1495	26	3	2	witnessed	2/3 literals; e.g. You are using:
+act.informative.c	equipment.tsv	glance.target-condition	oracle-green	equipment-glance-depth		354-390	37	8	1	witnessed	1/8 literals; e.g. is in excellent condition.
+act.informative.c	exits.tsv	exits.argument-ignored	oracle-green-multiseed	exits-depth	1,2,3,5,8	683-725	43	3	1	witnessed	1/3 literals; e.g. Obvious exits:
+act.informative.c	exits.tsv	exits.no-open	oracle-green-multiseed	exits-no-open	1,2,3,5,8	693-724	32	2	0	not-witnessed	none of 2 literals; longest Too dark to tell
+act.informative.c	exits.tsv	exits.open-mortal	oracle-green-multiseed	exits-depth	1,2,3,5,8	683-725	43	3	1	witnessed	1/3 literals; e.g. Obvious exits:
+act.informative.c	exits.tsv	exits.sleeping-entry	oracle-green-multiseed	exits-no-open	1,2,3,5,8	683-725	43	3	0	not-witnessed	none of 3 literals; longest You can't see a damned thing, you're blind!
+act.informative.c	future.tsv	future.arguments-ignored	oracle-green-multiseed	future-depth	1,2,3,5,8	2131-2153	23	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.informative.c	future.tsv	future.static-page	oracle-green-multiseed	future-depth	1,2,3,5,8	2131-2153	23	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.informative.c	handbook.tsv	handbook.argument-ignored	oracle-green-multiseed	handbook-immortal-depth	1,2,3,5,8	2117-2147	31	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.informative.c	handbook.tsv	handbook.static-page	oracle-green-multiseed	handbook-immortal-depth	1,2,3,5,8	2117-2147	31	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.informative.c	help.tsv	help.alias-immortal	oracle-green-multiseed	help-immortal-depth	1,2,3,5,8	1640-1669	30	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.informative.c	help.tsv	help.alias-raw-spacing	oracle-green-multiseed	help-depth	1,2,3,5,8	1588-1614	27	3	0	not-witnessed	none of 3 literals; longest HELP: %s attempted to get help on %s
+act.informative.c	help.tsv	help.miss-raw-spacing	oracle-green-multiseed	help-depth	1,2,3,5,8	1588-1614	27	3	0	not-witnessed	none of 3 literals; longest HELP: %s attempted to get help on %s
+act.informative.c	help.tsv	help.prefix-first-match	oracle-green-multiseed	help-depth	1,2,3,5,8	1594-1630	37	4	0	not-witnessed	none of 4 literals; longest HELP: %s attempted to get help on %s
+act.informative.c	help.tsv	help.topic-display	oracle-green-multiseed	help-depth	1,2,3,5,8	1639-1669	31	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.informative.c	help.tsv	help.wizonly-visible	oracle-green-multiseed	help-immortal-depth	1,2,3,5,8	1631-1669	39	1	0	not-witnessed	none of 1 literals; longest There is no help on: %s
+act.informative.c	home.tsv	home.look-after-transfer	oracle-green	home-depth	1,2,3,5,8	1098-1132	35	3	0	not-witnessed	none of 3 literals; longest You can't see a damned thing, you're blind!
+act.informative.c	immlist.tsv	immlist.static-page	oracle-green-multiseed	immlist-depth	1,2,3,5,8	2117-2144	28	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.informative.c	imotd.tsv	imotd.static-page	oracle-green-multiseed	imotd-depth	1,2,3,5,8	2117-2158	42	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.informative.c	info.tsv	score.equipment-ac-worn	oracle-green-multiseed	score-about-worn-gear	1,2,3,5,8	1240-1265	26	12	0	not-witnessed	none of 12 literals; longest are getting pretty sweaty with all that armor on.
+act.informative.c	info.tsv	score.fresh-char	oracle-green	info-basic		1703-1830	128	7	1	witnessed	1/7 literals; e.g. Players -------
+act.informative.c	info.tsv	score.state-variants	oracle-green-multiseed	score-state-variants		1168-1405	238	68	8	witnessed	8/68 literals; e.g. (It's your birthday today.)
+act.informative.c	info.tsv	score.state-variants.position	oracle-green	score-state-depth		1168-1405	238	68	8	witnessed	8/68 literals; e.g. (It's your birthday today.)
+act.informative.c	info.tsv	time.clock-variants	oracle-green-multiseed	info-pulse-variants		1501-1529	29	1	0	not-witnessed	none of 1 literals; longest It is %d o'clock %s, on
+act.informative.c	info.tsv	time.frozen-render	oracle-green	info-basic		1501-1529	29	1	0	not-witnessed	none of 1 literals; longest It is %d o'clock %s, on
+act.informative.c	info.tsv	weather.boot-state	oracle-green-multiseed	info-basic		1568-1600	33	1	0	not-witnessed	none of 1 literals; longest No help available.
+act.informative.c	info.tsv	weather.sky-variants	oracle-green-multiseed	info-pulse-variants		1568-1600	33	1	0	not-witnessed	none of 1 literals; longest No help available.
+act.informative.c	info.tsv	where.immort-listing	oracle-green	info-where-immort		2253-2280	28	2	1	witnessed	1/2 literals; e.g. Players -------
+act.informative.c	info.tsv	where.immort-mob-and-obj	oracle-green-multiseed	wizard-stat-where-depth	1,2,3	2203-2306	104	6	1	witnessed	1/6 literals; e.g. , which is
+act.informative.c	info.tsv	where.immort-zone-arg	oracle-green	where-immort-zone-arg		2283-2320	38	2	0	not-witnessed	none of 2 literals; longest You ain't nothin' but a hound-dog.
+act.informative.c	informative.tsv	score.colour-levels	oracle-green	score-color-levels-depth	1	1184-1275	92	35	3	witnessed	3/35 literals; e.g. (It's your birthday today.)
+act.informative.c	informative.tsv	toggle.output	oracle-green-multiseed	informative-residual-depth	1,2	2500-2579	80	22	0	not-witnessed	none of 22 literals; longest Hit Pnt Display: %-3s
+act.informative.c	informative.tsv	users.output	oracle-green-multiseed	informative-residual-depth	1,2	1948-2115	168	5	0	not-witnessed	none of 5 literals; longest Num Class Name State Idl Login@ Site
+act.informative.c	informative.tsv	who.colour-levels	oracle-green	who-color-levels-depth	1	1780-1865	86	10	0	not-witnessed	none of 10 literals; longest %s[ GRGOD ] %-12.12s%s%s
+act.informative.c	lua.tsv	look.do-description-space	oracle-green	lua-bind-objects		2757-2803	47	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.informative.c	lua.tsv	look.list-one-char-auras	oracle-green	lua-bind-objects		494-626	133	27	0	not-witnessed	none of 27 literals; longest ...$e is surrounded by a glowing sphere!
+act.informative.c	mold.tsv	mold.success-room-description	oracle-green-multiseed	mold-depth	1,2,3,5,8	241-285	45	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.informative.c	motd.tsv	motd.static-page	oracle-green-multiseed	motd-depth	1,2,3,5,8	2117-2158	42	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.informative.c	news.tsv	news.static-page	oracle-green-multiseed	news-depth	1,2,3,5,8	2117-2158	42	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.informative.c	peek.tsv	peek.equipment-and-inventory	oracle-green-multiseed	peek-depth	1,2,3,5,8	388-466	79	9	0	not-witnessed	none of 9 literals; longest On %s right arm is a tattoo %s... it %sglows%s softly.
+act.informative.c	peek.tsv	peek.failure-original-look-argument	oracle-green	peek-failure-depth	1	1098-1135	38	3	0	not-witnessed	none of 3 literals; longest You can't see a damned thing, you're blind!
+act.informative.c	peek.tsv	peek.mob-target	oracle-green-multiseed	peek-depth	1,2,3,5,8	388-490	103	12	1	witnessed	1/12 literals; e.g. You can't see anything.
+act.informative.c	peek.tsv	peek.mortal-success	oracle-green-multiseed	peek-success-depth	1,2,3,5,8	388-490	103	12	0	not-witnessed	none of 12 literals; longest On %s right arm is a tattoo %s... it %sglows%s softly.
+act.informative.c	peek.tsv	peek.player-target	oracle-green-multiseed	peek-depth	1,2,3,5,8	388-490	103	12	1	witnessed	1/12 literals; e.g. You can't see anything.
+act.informative.c	players.tsv	players.trailing-arguments-ignored	oracle-green-multiseed	players-depth	1,2,3,5,8	2117-2195	79	3	1	witnessed	1/3 literals; e.g. A list of registered players:
+act.informative.c	policy.tsv	policy.arguments-ignored	oracle-green-multiseed	policy-depth	1,2,3,5,8	2128-2150	23	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.informative.c	policy.tsv	policy.static-page	oracle-green-multiseed	policy-depth	1,2,3,5,8	2128-2150	23	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.informative.c	quaff.tsv	spell.armor.matrix-potion	oracle-green-multiseed	spellmatrix-world-potion-affects-depth	1,2,3,5,8	1391-1412	22	1	1	witnessed	1/1 literals; e.g. Spells affecting you:
+act.informative.c	quaff.tsv	spell.bless.matrix-potion	oracle-green-multiseed	spellmatrix-world-potion-affects-depth	1,2,3,5,8	1391-1412	22	1	1	witnessed	1/1 literals; e.g. Spells affecting you:
+act.informative.c	quaff.tsv	spell.cure-critic.matrix-potion	oracle-green-multiseed	spellmatrix-world-potion-cure-critic-depth	1,2,3,5,8	1391-1412	22	1	0	not-witnessed	none of 1 literals; longest Spells affecting you:
+act.informative.c	quaff.tsv	spell.cure-light.matrix-potion	oracle-green-multiseed	spellmatrix-world-potion-cure-light-route-depth	1,2,3,5,8	1391-1412	22	1	0	not-witnessed	none of 1 literals; longest Spells affecting you:
+act.informative.c	quaff.tsv	spell.invigorate.matrix-potion	oracle-green-multiseed	spellmatrix-world-potion-points-depth	1,2,3,5,8	1391-1412	22	1	0	not-witnessed	none of 1 literals; longest Spells affecting you:
+act.informative.c	quaff.tsv	spell.poison.matrix-potion	oracle-green-multiseed	spellmatrix-world-potion-points-depth	1,2,3,5,8	1391-1412	22	1	0	not-witnessed	none of 1 literals; longest Spells affecting you:
+act.informative.c	quaff.tsv	spell.remove-poison.matrix-potion	oracle-green-multiseed	spellmatrix-world-potion-remove-poison-route-depth	1,2,3,5,8	1391-1412	22	1	1	witnessed	1/1 literals; e.g. Spells affecting you:
+act.informative.c	quaff.tsv	spell.sanctuary.matrix-potion	oracle-green-multiseed	spellmatrix-world-potion-affects-depth	1,2,3,5,8	1391-1412	22	1	1	witnessed	1/1 literals; e.g. Spells affecting you:
+act.informative.c	quaff.tsv	spell.strength.matrix-potion	oracle-green-multiseed	spellmatrix-world-potion-strength-depth	1,2,3,5,8	1391-1412	22	1	1	witnessed	1/1 literals; e.g. Spells affecting you:
+act.informative.c	quaff.tsv	spell.vitality.matrix-potion	oracle-green-multiseed	spellmatrix-world-potion-points-depth	1,2,3,5,8	1391-1412	22	1	0	not-witnessed	none of 1 literals; longest Spells affecting you:
+act.informative.c	recite.tsv	spell.detect-alignment.matrix-scroll	oracle-green-multiseed	spellmatrix-world-scroll-perception-heal-depth	1,2,3,5,8	1391-1412	22	1	1	witnessed	1/1 literals; e.g. Spells affecting you:
+act.informative.c	recite.tsv	spell.detect-magic.matrix-scroll	oracle-green-multiseed	spellmatrix-world-scroll-perception-heal-depth	1,2,3,5,8	1391-1412	22	1	1	witnessed	1/1 literals; e.g. Spells affecting you:
+act.informative.c	recite.tsv	spell.infravision.matrix-scroll	oracle-green-multiseed	recite-infravision	1,2,3,5,8	1391-1412	22	1	0	not-witnessed	none of 1 literals; longest Spells affecting you:
+act.informative.c	recite.tsv	spell.know-align.matrix-scroll	oracle-green-multiseed	spellmatrix-world-scroll-know-align-depth	1,2,3,5,8	1391-1412	22	1	1	witnessed	1/1 literals; e.g. Spells affecting you:
+act.informative.c	recite.tsv	spell.mass-heal.matrix-scroll	oracle-green-multiseed	spellmatrix-world-scroll-mass-heal-depth	1,2,3,5,8	1391-1412	22	1	0	not-witnessed	none of 1 literals; longest Spells affecting you:
+act.informative.c	recite.tsv	spell.strength.matrix-scroll	oracle-green-multiseed	spellmatrix-world-scroll-teleport-strength-depth	1,2,3,5,8	1391-1412	22	1	1	witnessed	1/1 literals; e.g. Spells affecting you:
+act.informative.c	retsu.tsv	retsu.success-actor-destination	oracle-green-multiseed	retsu-depth	1,2,3,5,8	725-840	116	21	0	not-witnessed	none of 21 literals; longest You hear someone or something moving around nearby.
+act.informative.c	socials-command.tsv	socials.target-peer	oracle-green-multiseed	socials-command-depth	1,2,3,5,8	2640-2669	30	6	4	witnessed	4/6 literals; e.g. Who is that?
+act.informative.c	socials-command.tsv	socials.target-self	oracle-green-multiseed	socials-command-depth	1,2,3,5,8	2640-2669	30	6	4	witnessed	4/6 literals; e.g. Who is that?
+act.informative.c	spec-procs.tsv	mob.teleport-victim-player-teleport	oracle-green-multiseed	spec-proc-teleport-victim	1,2,3,5,8	725-840	116	21	0	not-witnessed	none of 21 literals; longest You hear someone or something moving around nearby.
+act.informative.c	spec-procs.tsv	mob.whirlpool-destination-look	oracle-green-multiseed	spec-proc-whirlpool	1,2,3,5,8	1098-1125	28	3	0	not-witnessed	none of 3 literals; longest You can't see a damned thing, you're blind!
+act.informative.c	spec-procs.tsv	room.elements-galeru-alive-destination-look	oracle-green-multiseed	spec-proc-elements-galeru-alive-dead		725-840	116	21	0	not-witnessed	none of 21 literals; longest You hear someone or something moving around nearby.
+act.informative.c	spec-procs.tsv	room.elements-galeru-column-destination-look	oracle-green-multiseed	spec-proc-elements-galeru-column		725-840	116	21	0	not-witnessed	none of 21 literals; longest You hear someone or something moving around nearby.
+act.informative.c	spec-procs.tsv	room.elements-master-column-audience	oracle-green-multiseed	spec-proc-elements-master-column-none		725-840	116	21	0	not-witnessed	none of 21 literals; longest You hear someone or something moving around nearby.
+act.informative.c	spec-procs.tsv	room.elements-master-column-four-talisman	oracle-green-multiseed	spec-proc-elements-master-column-all		725-840	116	21	0	not-witnessed	none of 21 literals; longest You hear someone or something moving around nearby.
+act.informative.c	spec-procs.tsv	room.elements-master-column-no-talisman	oracle-green-multiseed	spec-proc-elements-master-column-none		725-840	116	21	0	not-witnessed	none of 21 literals; longest You hear someone or something moving around nearby.
+act.informative.c	spec-procs.tsv	room.fly-exit-up-high-level-gate	oracle-green-multiseed	spec-proc-fly-exit-up-high	1,2,3,5,8	725-840	116	21	0	not-witnessed	none of 21 literals; longest You hear someone or something moving around nearby.
+act.informative.c	spec-procs.tsv	room.portal-to-temple-destination-look	oracle-green-multiseed	spec-proc-portal-to-temple	1,2,3,5,8	665-840	176	25	0	not-witnessed	none of 25 literals; longest You hear someone or something moving around nearby.
+act.informative.c	spec-procs.tsv	room.start-room-hometown-routing	oracle-green	spec-proc-start-room		725-825	101	21	0	not-witnessed	none of 21 literals; longest You hear someone or something moving around nearby.
+act.informative.c	spec-procs.tsv	room.suck-in-look-output	oracle-green	spec-proc-suck-in		1098-1125	28	3	0	not-witnessed	none of 3 literals; longest You can't see a damned thing, you're blind!
+act.informative.c	tedit.tsv	tedit.live-cache	oracle-green-multiseed	tedit-depth	1,2,3,5,8	2117-2158	42	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.informative.c	tedit.tsv	tedit.shared-live-buffer	oracle-green-multiseed	tedit-boundaries-depth	1,2,3,5,8	2117-2158	42	0	0	cant-tell	no fixed text >= 8 chars in the cited range
+act.wizard.c	advance.tsv	advance.demote	oracle-green	advance-depth		1530-1579	50	16	14	witnessed	14/16 literals; e.g. You are momentarily enveloped by darkness!
+act.wizard.c	advance.tsv	advance.promote	oracle-green	advance-depth		1530-1579	50	16	14	witnessed	14/16 literals; e.g. You are momentarily enveloped by darkness!
+act.wizard.c	advance.tsv	advance.promote-to-impl	oracle-green-multiseed	advance-depth		1530-1579	50	16	14	witnessed	14/16 literals; e.g. You are momentarily enveloped by darkness!
+act.wizard.c	cast.tsv	spell.mental-lapse-spoken	oracle-green-multiseed	cast-mental-lapse-spoken-depth	1,2,3,5,8	3444-3473	30	7	0	not-witnessed	none of 7 literals; longest Cant hunt higher than your level.
+act.wizard.c	checkload.tsv	checkload.invalid-type	oracle-green-multiseed	checkload-depth	1,2,3,5,8	3833-3859	27	2	2	witnessed	2/2 literals; e.g. That mob does not exist.
+act.wizard.c	checkload.tsv	checkload.mob-report	oracle-green-multiseed	checkload-depth	1,2,3,5,8	3681-3721	41	2	1	witnessed	1/2 literals; e.g. Removed from room
+act.wizard.c	checkload.tsv	checkload.object-equipped	oracle-green-multiseed	checkload-depth	1,2,3,5,8	3736-3785	50	4	1	witnessed	1/4 literals; e.g. Loaded to room
+act.wizard.c	checkload.tsv	checkload.object-given	oracle-green-multiseed	checkload-depth	1,2,3,5,8	3736-3794	59	5	1	witnessed	1/5 literals; e.g. Loaded to room
+act.wizard.c	checkload.tsv	checkload.object-load-room	oracle-green-multiseed	checkload-depth	1,2,3,5,8	3723-3763	41	2	1	witnessed	1/2 literals; e.g. Loaded to room
+act.wizard.c	checkload.tsv	checkload.object-no-load	oracle-green-multiseed	checkload-depth	1,2,3,5,8	3681-3817	137	8	3	witnessed	3/8 literals; e.g. Removed from room
+act.wizard.c	checkload.tsv	checkload.object-put	oracle-green-multiseed	checkload-depth	1,2,3,5,8	3736-3775	40	3	1	witnessed	1/3 literals; e.g. Loaded to room
+act.wizard.c	comm.tsv	echo.immort	oracle-green	comm-echo-immort		130-154	25	2	1	witnessed	1/2 literals; e.g. Yes.. but what?
+act.wizard.c	dark.tsv	dark.argument-ignored	oracle-green	dark-depth		3214-3236	23	5	3	witnessed	3/5 literals; e.g. The peace of the ancients fills your
+act.wizard.c	dark.tsv	dark.fighter-peace	oracle-green	dark-depth		3214-3236	23	5	3	witnessed	3/5 literals; e.g. The peace of the ancients fills your
+act.wizard.c	date.tsv	date.machine-time	oracle-green	date-depth		1802-1830	29	2	3	cant-tell	every C block for date-depth is empty
+act.wizard.c	dns.tsv	dns.delete-prefix-matches	oracle-green	dns-depth		3122-3143	22	2	1	witnessed	1/2 literals; e.g. Delete what?
+act.wizard.c	dns.tsv	dns.unknown-subcommand-silent	oracle-green	dns-depth		3163-3208	46	1	0	not-witnessed	none of 1 literals; longest IP Address Host Name
+act.wizard.c	force.tsv	force.room-all-notification	oracle-green-multiseed	force-room-all	1,2,3,5,8	1882-1906	25	2	0	not-witnessed	none of 2 literals; longest (GC) %s forced room %d to %s
+act.wizard.c	goto.tsv	goto.god-room-gate	oracle-green-multiseed	goto-godroom-depth	1,2,3,5,8	218-239	22	3	1	witnessed	1/3 literals; e.g. You are not godly enough to use that room!
+act.wizard.c	goto.tsv	goto.numeric-success	oracle-green-multiseed	goto-depth	1,2,3,5,8	275-305	31	2	0	not-witnessed	none of 2 literals; longest $n appears with an ear-splitting bang.
+act.wizard.c	goto.tsv	goto.private-room-gate	oracle-green-multiseed	goto-private-depth	1,2,3,5,8	218-239	22	3	1	witnessed	1/3 literals; e.g. There's a private conversation going on in that room.
+act.wizard.c	home.tsv	home.numeric-set	oracle-green-multiseed	home-depth	1,2,3,5,8	3270-3293	24	3	1	witnessed	1/3 literals; e.g. That room does not exist.
+act.wizard.c	home.tsv	home.one-argument-boundary	oracle-green	home-depth	1	3244-3275	32	5	2	witnessed	2/5 literals; e.g. That room does not exist.
+act.wizard.c	idlist.tsv	idlist.success	oracle-green-multiseed	idlist-depth	1,2,3,5,8	3585-3693	109	14	1	witnessed	1/14 literals; e.g. Ok. Id list complete.
+act.wizard.c	levels.tsv	levels.npc-branch	oracle-green	levels-npc-depth	1	1175-1208	34	7	0	not-witnessed	none of 7 literals; longest You can't do that, the body is already in use!
+act.wizard.c	load.tsv	load.invalid-kind	oracle-green-multiseed	load-depth	1,2,3,5,8	1280-1380	101	15	5	witnessed	5/15 literals; e.g. Object name not found.
+act.wizard.c	load.tsv	load.mob-success	oracle-green-multiseed	load-depth	1,2,3,5,8	1287-1315	29	5	2	witnessed	2/5 literals; e.g. Usage: load { obj | mob } <number or name>
+act.wizard.c	load.tsv	load.object-cost-gate	oracle-green-multiseed	load-depth-gates	1,2,3,5,8	1322-1364	43	3	1	witnessed	1/3 literals; e.g. You're not godly enough to load that!
+act.wizard.c	load.tsv	load.object-success-audience	oracle-green-multiseed	load-depth	1,2,3,5,8	1349-1380	32	6	1	witnessed	1/6 literals; e.g. That'll have to be either 'obj' or 'mob'.
+act.wizard.c	purge.tsv	purge.npc-cleanup	oracle-green-multiseed	purge-npc-depth	1,2,3,5,8	1454-1478	25	3	1	witnessed	1/3 literals; e.g. Nothing here by that name.
+act.wizard.c	purge.tsv	purge.npc-target	oracle-green-multiseed	purge-npc-depth	1,2,3,5,8	1430-1456	27	5	1	witnessed	1/5 literals; e.g. Nothing here by that name.
+act.wizard.c	restore.tsv	restore.success	oracle-green-multiseed	restore-depth	1,2,3,5,8	1594-1618	25	2	1	witnessed	1/2 literals; e.g. refreshed!
+act.wizard.c	rlist.tsv	rlist.no-argument	oracle-green-multiseed	rlist-depth	1,2,3,5,8	3342-3365	24	1	1	witnessed	1/1 literals; e.g. The desired zone does not exist.
+act.wizard.c	show.tsv	show.hooks-invalid-zone	oracle-green-multiseed	show-depth	1,2,3,5,8	2461-2489	29	4	2	witnessed	2/4 literals; e.g. You must supply a zone number!
+act.wizard.c	show.tsv	show.hooks-valid	oracle-green-multiseed	show-hooks-topology	1,2,3,5,8	2461-2487	27	4	0	not-witnessed	none of 4 literals; longest You must supply a zone number!
+act.wizard.c	show.tsv	show.no-argument	oracle-green-multiseed	show-depth	1,2,3,5,8	2234-2303	70	4	3	witnessed	3/4 literals; e.g. godrooms
+act.wizard.c	show.tsv	show.prefix-zone-invalid	oracle-green-multiseed	show-depth	1,2,3,5,8	2284-2314	31	2	1	witnessed	1/2 literals; e.g. That is not a valid zone.
+act.wizard.c	show.tsv	show.stats	oracle-green-multiseed	show-depth	1,2,3,5,8	2356-2387	32	8	1	witnessed	1/8 literals; e.g. Current stats:
+act.wizard.c	shutdown.tsv	shutdown.unknown-option	oracle-green-multiseed	shutdown-depth	1,2,3,5,8	1083-1110	28	9	1	witnessed	1/9 literals; e.g. Unknown shutdown option.
+act.wizard.c	snoop.tsv	snoop.no-argument	oracle-green-multiseed	snoop-depth	1,2,3,5,8	1120-1142	23	2	2	witnessed	2/2 literals; e.g. You aren't snooping anyone.
+act.wizard.c	wizard.tsv	set.file-missing	oracle-green-multiseed	wizard-file-output-depth	1,2,3,5,8	2648-2671	24	3	2	witnessed	2/3 literals; e.g. Sorry, you can't do that.
+act.wizard.c	wizard.tsv	stat.character-spell-affects	oracle-green-multiseed	wizard-stat-where-depth	1,2,3	966-992	27	1	0	not-witnessed	none of 1 literals; longest SPL: (%3dhr) %s%-21s%s
+act.wizard.c	wizard.tsv	stat.color-levels-raw	oracle-green	wizard-stat-color-depth	1	422-976	555	68	13	witnessed	13/68 literals; e.g. Description:
+act.wizard.c	wizard.tsv	stat.fallback-missing	oracle-green-multiseed	wizard-report-depth	1,2	995-1073	79	10	8	witnessed	8/10 literals; e.g. Stats on which mobile?
+act.wizard.c	wizard.tsv	stat.file-missing	oracle-green-multiseed	wizard-report-depth	1,2	995-1073	79	10	8	witnessed	8/10 literals; e.g. Stats on which mobile?
+act.wizard.c	wizard.tsv	stat.fresh-mortal-idnum	oracle-green-multiseed	player-idnum-alignment	1,2,3,5,8	995-1073	79	10	0	cant-tell	normalizer erases this class; longest Nothing around by that name.
+act.wizard.c	wizard.tsv	stat.mob-missing	oracle-green-multiseed	wizard-report-depth	1,2	995-1073	79	10	8	witnessed	8/10 literals; e.g. Stats on which mobile?
+act.wizard.c	wizard.tsv	stat.mob-success	oracle-green-multiseed	wizard-valid-reports-depth	1,2	701-994	294	34	4	witnessed	4/34 literals; e.g. Monster Class:
+act.wizard.c	wizard.tsv	stat.no-argument	oracle-green-multiseed	wizard-residual-depth	1,2	995-1073	79	10	1	witnessed	1/10 literals; e.g. Stats on who or what?
+act.wizard.c	wizard.tsv	stat.object-affect-output	oracle-green	wizard-stat-object-affect-depth		585-685	101	14	1	witnessed	1/14 literals; e.g. Affections:
+act.wizard.c	wizard.tsv	stat.object-contents-census	oracle-green	wizard-stat-object-contents-depth		515-667	153	24	6	witnessed	6/24 literals; e.g. Can be worn on:
+act.wizard.c	wizard.tsv	stat.object-extra-description-census	oracle-green	wizard-stat-object-extra-desc-depth		515-546	32	4	1	witnessed	1/4 literals; e.g. Can be worn on:
+act.wizard.c	wizard.tsv	stat.object-fallback-success	oracle-green-multiseed	wizard-valid-reports-depth	1,2	995-1073	79	10	0	cant-tell	normalizer erases this class; longest Nothing around by that name.
+act.wizard.c	wizard.tsv	stat.object-missing	oracle-green-multiseed	wizard-report-depth	1,2	995-1073	79	10	8	witnessed	8/10 literals; e.g. Stats on which mobile?
+act.wizard.c	wizard.tsv	stat.object-success	oracle-green-multiseed	wizard-valid-reports-depth	1,2	515-700	186	26	7	witnessed	7/26 literals; e.g. Can be worn on:
+act.wizard.c	wizard.tsv	stat.player-missing	oracle-green-multiseed	wizard-report-depth	1,2	995-1073	79	10	8	witnessed	8/10 literals; e.g. Stats on which mobile?
+act.wizard.c	wizard.tsv	stat.player-success	oracle-green-multiseed	wizard-valid-reports-depth	1,2	701-994	294	34	4	witnessed	4/34 literals; e.g. Monster Class:
+act.wizard.c	wizard.tsv	stat.room-extra-description-census	oracle-green	wizard-stat-room-extra-desc-depth		410-451	42	6	1	witnessed	1/6 literals; e.g. Description:
+act.wizard.c	wizard.tsv	stat.room-success	oracle-green-multiseed	wizard-valid-reports-depth	1,2	410-514	105	9	2	witnessed	2/9 literals; e.g. Description:
+act.wizard.c	wizard.tsv	switch.already-switched	oracle-green-multiseed	wizard-switch-already-player	1,2,3,5,8	1175-1204	30	6	1	witnessed	1/6 literals; e.g. You're already switched.
+act.wizard.c	wizard.tsv	switch.mob-success	oracle-green-multiseed	wizard-switch-depth	1,2	1175-1204	30	6	3	witnessed	3/6 literals; e.g. No such character.
+act.wizard.c	wizard.tsv	switch.mortal-player-level-gate	oracle-green-multiseed	wizard-switch-player-level	1,2,3,5,8	1175-1204	30	6	1	witnessed	1/6 literals; e.g. You aren't holy enough to use a mortal's body.
+act.wizard.c	wizard.tsv	switch.no-argument	oracle-green-multiseed	wizard-residual-depth	1,2	1175-1204	30	6	1	witnessed	1/6 literals; e.g. Switch with who?
+act.wizard.c	wizard.tsv	switch.one-argument	oracle-green-multiseed	wizard-switch-depth	1,2	1175-1204	30	6	3	witnessed	3/6 literals; e.g. No such character.
+act.wizard.c	wizard.tsv	switch.player-in-use	oracle-green-multiseed	wizard-switch-depth	1,2	1175-1204	30	6	3	witnessed	3/6 literals; e.g. No such character.
+act.wizard.c	wizard.tsv	switch.player-success	oracle-green-multiseed	wizard-switch-player	1,2,3,5,8	1175-1204	30	6	0	not-witnessed	none of 6 literals; longest You can't do that, the body is already in use!
+act.wizard.c	wizard.tsv	switch.self-target	oracle-green-multiseed	wizard-switch-depth	1,2	1175-1204	30	6	3	witnessed	3/6 literals; e.g. No such character.
+act.wizard.c	wizard.tsv	switch.switched-npc-gate	oracle-green-multiseed	wizard-switch-depth	1,2	1175-1204	30	6	3	witnessed	3/6 literals; e.g. No such character.
+act.wizard.c	wizard.tsv	switch.target-not-found	oracle-green-multiseed	wizard-switch-depth	1,2	1175-1204	30	6	3	witnessed	3/6 literals; e.g. No such character.
+act.wizard.c	wizard.tsv	sysfile.bugs-prefix	oracle-green-multiseed	wizard-sysfile-depth	1,2	3412-3443	32	3	2	witnessed	2/3 literals; e.g. That isn't a file!
+act.wizard.c	wizard.tsv	sysfile.case-insensitive	oracle-green-multiseed	wizard-sysfile-depth	1,2	3412-3443	32	3	2	witnessed	2/3 literals; e.g. That isn't a file!
+act.wizard.c	wizard.tsv	sysfile.ideas-prefix	oracle-green-multiseed	wizard-sysfile-depth	1,2	3412-3443	32	3	2	witnessed	2/3 literals; e.g. That isn't a file!
+act.wizard.c	wizard.tsv	sysfile.invalid	oracle-green-multiseed	wizard-sysfile-depth	1,2	3412-3443	32	3	2	witnessed	2/3 literals; e.g. That isn't a file!
+act.wizard.c	wizard.tsv	sysfile.no-argument	oracle-green-multiseed	wizard-residual-depth	1,2	3412-3443	32	3	1	witnessed	1/3 literals; e.g. That isn't a file!
+act.wizard.c	wizard.tsv	sysfile.read-page	oracle-green	wizard-sysfile-read-page		3412-3443	32	3	0	not-witnessed	none of 3 literals; longest Error with file_to_string_alloc in do_sysfile
+act.wizard.c	wizard.tsv	sysfile.todo-prefix	oracle-green-multiseed	wizard-sysfile-depth	1,2	3412-3443	32	3	2	witnessed	2/3 literals; e.g. That isn't a file!
+act.wizard.c	wizard.tsv	sysfile.trailing-words	oracle-green-multiseed	wizard-sysfile-depth	1,2	3412-3443	32	3	2	witnessed	2/3 literals; e.g. That isn't a file!
+act.wizard.c	wizard.tsv	sysfile.typos-prefix	oracle-green-multiseed	wizard-sysfile-depth	1,2	3412-3443	32	3	2	witnessed	2/3 literals; e.g. That isn't a file!
+act.wizard.c	wizard.tsv	syslog.brief-prefix	oracle-green-multiseed	wizard-syslog-depth	1,2	3079-3105	27	3	1	witnessed	1/3 literals; e.g. Usage: syslog { Off | Brief | Normal | Complete }
+act.wizard.c	wizard.tsv	syslog.complete-prefix	oracle-green-multiseed	wizard-syslog-depth	1,2	3079-3105	27	3	1	witnessed	1/3 literals; e.g. Usage: syslog { Off | Brief | Normal | Complete }
+act.wizard.c	wizard.tsv	syslog.full-brief	oracle-green-multiseed	wizard-syslog-depth	1,2	3079-3105	27	3	1	witnessed	1/3 literals; e.g. Usage: syslog { Off | Brief | Normal | Complete }
+act.wizard.c	wizard.tsv	syslog.invalid	oracle-green-multiseed	wizard-syslog-depth	1,2	3079-3105	27	3	1	witnessed	1/3 literals; e.g. Usage: syslog { Off | Brief | Normal | Complete }
+act.wizard.c	wizard.tsv	syslog.no-argument	oracle-green-multiseed	wizard-residual-depth	1,2	3079-3105	27	3	0	not-witnessed	none of 3 literals; longest Usage: syslog { Off | Brief | Normal | Complete }
+act.wizard.c	wizard.tsv	syslog.normal-transition	oracle-green-multiseed	wizard-syslog-depth	1,2	3079-3105	27	3	1	witnessed	1/3 literals; e.g. Usage: syslog { Off | Brief | Normal | Complete }
+act.wizard.c	wizard.tsv	syslog.off-prefix	oracle-green-multiseed	wizard-syslog-depth	1,2	3079-3105	27	3	1	witnessed	1/3 literals; e.g. Usage: syslog { Off | Brief | Normal | Complete }
+act.wizard.c	wizard.tsv	syslog.query-brief	oracle-green-multiseed	wizard-syslog-depth	1,2	3079-3105	27	3	1	witnessed	1/3 literals; e.g. Usage: syslog { Off | Brief | Normal | Complete }
+act.wizard.c	wizard.tsv	syslog.query-complete	oracle-green-multiseed	wizard-syslog-depth	1,2	3079-3105	27	3	1	witnessed	1/3 literals; e.g. Usage: syslog { Off | Brief | Normal | Complete }
+act.wizard.c	wizard.tsv	syslog.query-complete-again	oracle-green-multiseed	wizard-syslog-depth	1,2	3079-3105	27	3	1	witnessed	1/3 literals; e.g. Usage: syslog { Off | Brief | Normal | Complete }
+act.wizard.c	wizard.tsv	syslog.query-normal-after-brief	oracle-green-multiseed	wizard-syslog-depth	1,2	3079-3105	27	3	1	witnessed	1/3 literals; e.g. Usage: syslog { Off | Brief | Normal | Complete }
+act.wizard.c	wizard.tsv	syslog.query-off-again	oracle-green-multiseed	wizard-syslog-depth	1,2	3079-3105	27	3	1	witnessed	1/3 literals; e.g. Usage: syslog { Off | Brief | Normal | Complete }
+act.wizard.c	wizard.tsv	syslog.trailing-words	oracle-green-multiseed	wizard-syslog-depth	1,2	3079-3105	27	3	1	witnessed	1/3 literals; e.g. Usage: syslog { Off | Brief | Normal | Complete }
+act.wizard.c	wizard.tsv	teleport.invalid-room	oracle-green-multiseed	teleport-depth	1,2	365-394	30	7	3	witnessed	3/7 literals; e.g. Use 'goto' to teleport yourself.
+act.wizard.c	wizard.tsv	teleport.missing-destination	oracle-green-multiseed	teleport-depth	1,2	365-394	30	7	3	witnessed	3/7 literals; e.g. Use 'goto' to teleport yourself.
+act.wizard.c	wizard.tsv	teleport.no-argument	oracle-green-multiseed	wizard-residual-depth	1,2	365-394	30	7	1	witnessed	1/7 literals; e.g. Whom do you wish to teleport?
+act.wizard.c	wizard.tsv	teleport.self-target	oracle-green-multiseed	teleport-depth	1,2	365-394	30	7	3	witnessed	3/7 literals; e.g. Use 'goto' to teleport yourself.
+act.wizard.c	wizard.tsv	teleport.success-audience	oracle-green-multiseed	teleport-depth	1,2	365-394	30	7	3	witnessed	3/7 literals; e.g. Use 'goto' to teleport yourself.
+act.wizard.c	wizard.tsv	teleport.target-not-found	oracle-green-multiseed	teleport-depth	1,2	365-394	30	7	3	witnessed	3/7 literals; e.g. Use 'goto' to teleport yourself.
+act.wizard.c	wizard.tsv	teleport.two-argument	oracle-green-multiseed	teleport-depth	1,2	365-394	30	7	3	witnessed	3/7 literals; e.g. Use 'goto' to teleport yourself.
+act.wizard.c	wizard.tsv	transfer.no-argument	oracle-green-multiseed	wizard-residual-depth	1,2	309-364	56	8	1	witnessed	1/8 literals; e.g. Whom do you wish to transfer?
+act.wizard.c	wizard.tsv	transfer.one-argument	oracle-green-multiseed	transfer-depth	1,2	309-364	56	8	3	witnessed	3/8 literals; e.g. That doesn't make much sense, does it?
+act.wizard.c	wizard.tsv	transfer.success-audience	oracle-green-multiseed	transfer-depth	1,2	309-364	56	8	3	witnessed	3/8 literals; e.g. That doesn't make much sense, does it?
+act.wizard.c	wizard.tsv	transfer.target-not-found	oracle-green-multiseed	transfer-depth	1,2	309-364	56	8	3	witnessed	3/8 literals; e.g. That doesn't make much sense, does it?
+act.wizard.c	wizard.tsv	vnum.invalid-category	oracle-green-multiseed	wizard-report-depth	1,2	395-426	32	4	3	witnessed	3/4 literals; e.g. Usage: vnum { obj | mob } <name>
+act.wizard.c	wizard.tsv	vnum.mob-missing	oracle-green-multiseed	wizard-report-depth	1,2	395-426	32	4	3	witnessed	3/4 literals; e.g. Usage: vnum { obj | mob } <name>
+act.wizard.c	wizard.tsv	vnum.mob-success	oracle-green-multiseed	wizard-valid-reports-depth	1,2	395-426	32	4	0	not-witnessed	none of 4 literals; longest Usage: vnum { obj | mob } <name>
+act.wizard.c	wizard.tsv	vnum.no-argument	oracle-green-multiseed	wizard-residual-depth	1,2	395-426	32	4	1	witnessed	1/4 literals; e.g. Usage: vnum { obj | mob } <name>
+act.wizard.c	wizard.tsv	vnum.obj-missing	oracle-green-multiseed	wizard-report-depth	1,2	395-426	32	4	3	witnessed	3/4 literals; e.g. Usage: vnum { obj | mob } <name>
+act.wizard.c	wizard.tsv	vnum.obj-success	oracle-green-multiseed	wizard-valid-reports-depth	1,2	395-426	32	4	0	not-witnessed	none of 4 literals; longest Usage: vnum { obj | mob } <name>
+act.wizard.c	wizard.tsv	vstat.invalid-category	oracle-green-multiseed	wizard-report-depth	1,2	1382-1422	41	5	3	witnessed	3/5 literals; e.g. There is no monster with that number.
+act.wizard.c	wizard.tsv	vstat.mob-missing	oracle-green-multiseed	wizard-report-depth	1,2	1382-1422	41	5	3	witnessed	3/5 literals; e.g. There is no monster with that number.
+act.wizard.c	wizard.tsv	vstat.no-argument	oracle-green-multiseed	wizard-residual-depth	1,2	1382-1422	41	5	1	witnessed	1/5 literals; e.g. Usage: vstat { obj | mob } <number>
+act.wizard.c	wizard.tsv	vstat.obj-missing	oracle-green-multiseed	wizard-report-depth	1,2	1382-1422	41	5	3	witnessed	3/5 literals; e.g. There is no monster with that number.
+act.wizard.c	wizard.tsv	vstat.room-missing	oracle-green-multiseed	wizard-report-depth	1,2	1382-1422	41	5	3	witnessed	3/5 literals; e.g. There is no monster with that number.
+act.wizard.c	wizard.tsv	wizlock.above-own-level-invalid	oracle-green-multiseed	wizard-wizlock-depth	1,2	1769-1801	33	5	2	witnessed	2/5 literals; e.g. Invalid wizlock value.
+act.wizard.c	wizard.tsv	wizlock.atoi-nonnumeric	oracle-green-multiseed	wizard-wizlock-depth	1,2	1769-1801	33	5	2	witnessed	2/5 literals; e.g. Invalid wizlock value.
+act.wizard.c	wizard.tsv	wizlock.negative-invalid	oracle-green-multiseed	wizard-wizlock-depth	1,2	1769-1801	33	5	2	witnessed	2/5 literals; e.g. Invalid wizlock value.
+act.wizard.c	wizard.tsv	wizlock.no-argument	oracle-green-multiseed	god-system-residuals	1,2	1769-1801	33	5	1	witnessed	1/5 literals; e.g. currently
+act.wizard.c	wizard.tsv	wizlock.one-argument	oracle-green-multiseed	wizard-wizlock-depth	1,2	1769-1801	33	5	2	witnessed	2/5 literals; e.g. Invalid wizlock value.
+act.wizard.c	wizard.tsv	wizlock.query-level-one	oracle-green-multiseed	wizard-wizlock-depth	1,2	1769-1801	33	5	2	witnessed	2/5 literals; e.g. Invalid wizlock value.
+act.wizard.c	wizard.tsv	wizlock.query-level-three	oracle-green-multiseed	wizard-wizlock-depth	1,2	1769-1801	33	5	2	witnessed	2/5 literals; e.g. Invalid wizlock value.
+act.wizard.c	wizard.tsv	wizlock.query-level-two	oracle-green-multiseed	wizard-wizlock-depth	1,2	1769-1801	33	5	2	witnessed	2/5 literals; e.g. Invalid wizlock value.
+act.wizard.c	wizard.tsv	wizlock.query-open	oracle-green-multiseed	wizard-wizlock-depth	1,2	1769-1801	33	5	2	witnessed	2/5 literals; e.g. Invalid wizlock value.
+act.wizard.c	wizard.tsv	wizlock.query-open-again	oracle-green-multiseed	wizard-wizlock-depth	1,2	1769-1801	33	5	2	witnessed	2/5 literals; e.g. Invalid wizlock value.
+act.wizard.c	wizard.tsv	wizlock.set-level-one	oracle-green-multiseed	wizard-wizlock-depth	1,2	1769-1801	33	5	2	witnessed	2/5 literals; e.g. Invalid wizlock value.
+act.wizard.c	wizard.tsv	wizlock.set-level-two	oracle-green-multiseed	wizard-wizlock-depth	1,2	1769-1801	33	5	2	witnessed	2/5 literals; e.g. Invalid wizlock value.
+act.wizard.c	wizard.tsv	wizlock.set-open	oracle-green-multiseed	wizard-wizlock-depth	1,2	1769-1801	33	5	2	witnessed	2/5 literals; e.g. Invalid wizlock value.
+act.wizard.c	wizard.tsv	wiznet.broadcast	oracle-green-multiseed	wizard-wiznet-depth	1,2	1912-2034	123	11	4	witnessed	4/11 literals; e.g. Usage: wiznet <text> | #<level> <text> | *<emotetext> |
+act.wizard.c	wizard.tsv	wiznet.chosen-recipient	oracle-green-multiseed	wizard-wiznet-depth	1,2	1912-2034	123	11	4	witnessed	4/11 literals; e.g. Usage: wiznet <text> | #<level> <text> | *<emotetext> |
+act.wizard.c	wizard.tsv	wiznet.emote	oracle-green-multiseed	wizard-wiznet-depth	1,2	1912-2034	123	11	4	witnessed	4/11 literals; e.g. Usage: wiznet <text> | #<level> <text> | *<emotetext> |
+act.wizard.c	wizard.tsv	wiznet.emote-empty	oracle-green-multiseed	wizard-wiznet-depth	1,2	1912-2034	123	11	4	witnessed	4/11 literals; e.g. Usage: wiznet <text> | #<level> <text> | *<emotetext> |
+act.wizard.c	wizard.tsv	wiznet.escaped-at	oracle-green-multiseed	wizard-wiznet-depth	1,2	1912-2034	123	11	4	witnessed	4/11 literals; e.g. Usage: wiznet <text> | #<level> <text> | *<emotetext> |
+act.wizard.c	wizard.tsv	wiznet.level-above-owner	oracle-green-multiseed	wizard-wiznet-depth	1,2	1912-2034	123	11	4	witnessed	4/11 literals; e.g. Usage: wiznet <text> | #<level> <text> | *<emotetext> |
+act.wizard.c	wizard.tsv	wiznet.level-empty	oracle-green-multiseed	wizard-wiznet-depth	1,2	1912-2034	123	11	4	witnessed	4/11 literals; e.g. Usage: wiznet <text> | #<level> <text> | *<emotetext> |
+act.wizard.c	wizard.tsv	wiznet.level-prefix	oracle-green-multiseed	wizard-wiznet-depth	1,2	1912-2034	123	11	4	witnessed	4/11 literals; e.g. Usage: wiznet <text> | #<level> <text> | *<emotetext> |
+act.wizard.c	wizard.tsv	wiznet.no-argument	oracle-green-multiseed	wizard-wiznet-depth	1,2	1912-2034	123	11	4	witnessed	4/11 literals; e.g. Usage: wiznet <text> | #<level> <text> | *<emotetext> |
+act.wizard.c	wizard.tsv	wiznet.nonnumeric-prefix	oracle-green-multiseed	wizard-wiznet-depth	1,2	1912-2034	123	11	4	witnessed	4/11 literals; e.g. Usage: wiznet <text> | #<level> <text> | *<emotetext> |
+act.wizard.c	wizard.tsv	wiznet.norepeat	oracle-green-multiseed	wizard-wiznet-depth	1,2	1912-2034	123	11	4	witnessed	4/11 literals; e.g. Usage: wiznet <text> | #<level> <text> | *<emotetext> |
+act.wizard.c	wizard.tsv	wiznet.nowiz	oracle-green-multiseed	wizard-wiznet-gates-depth	1,2	1912-2034	123	11	1	witnessed	1/11 literals; e.g. You are offline!
+act.wizard.c	wizard.tsv	wiznet.usage	oracle-green-multiseed	wizard-wiznet-depth	1,2	1912-2034	123	11	4	witnessed	4/11 literals; e.g. Usage: wiznet <text> | #<level> <text> | *<emotetext> |
+act.wizard.c	wizard.tsv	wizutil.unaffect-vampire	oracle-green-multiseed	wizard-unaffect-depth	1,2,3,5,8	2174-2209	36	9	3	witnessed	3/9 literals; e.g. Un-vamped!
+act.wizard.c	wizard.tsv	wnewbie.abbrev-target	oracle-green-multiseed	wizard-wnewbie-depth	1,2	3516-3544	29	5	3	witnessed	3/5 literals; e.g. Whom do you wish to newbie?
+act.wizard.c	wizard.tsv	wnewbie.case-insensitive	oracle-green-multiseed	wizard-wnewbie-depth	1,2	3516-3544	29	5	3	witnessed	3/5 literals; e.g. Whom do you wish to newbie?
+act.wizard.c	wizard.tsv	wnewbie.global-player	oracle-green-multiseed	wizard-wnewbie-depth	1,2	3516-3544	29	5	3	witnessed	3/5 literals; e.g. Whom do you wish to newbie?
+act.wizard.c	wizard.tsv	wnewbie.local-player	oracle-green-multiseed	wizard-wnewbie-depth	1,2	3516-3544	29	5	3	witnessed	3/5 literals; e.g. Whom do you wish to newbie?
+act.wizard.c	wizard.tsv	wnewbie.no-argument	oracle-green-multiseed	wizard-residual-depth	1,2	3516-3544	29	5	1	witnessed	1/5 literals; e.g. Whom do you wish to newbie?
+act.wizard.c	wizard.tsv	wnewbie.self-target	oracle-green-multiseed	wizard-wnewbie-depth	1,2	3516-3544	29	5	3	witnessed	3/5 literals; e.g. Whom do you wish to newbie?
+act.wizard.c	wizard.tsv	wnewbie.target-not-found	oracle-green-multiseed	wizard-wnewbie-depth	1,2	3516-3544	29	5	3	witnessed	3/5 literals; e.g. Whom do you wish to newbie?
+act.wizard.c	wizard.tsv	wnewbie.trailing-words	oracle-green-multiseed	wizard-wnewbie-depth	1,2	3516-3544	29	5	3	witnessed	3/5 literals; e.g. Whom do you wish to newbie?
+act.wizard.c	wizard.tsv	zlist.atoi-prefix-missing	oracle-green-multiseed	wizard-zlist-depth	1,2	3545-3574	30	2	1	witnessed	1/2 literals; e.g. No zone file for that number.
+act.wizard.c	wizard.tsv	zlist.current-zone-default	oracle-green-multiseed	wizard-zlist-depth	1,2	3545-3574	30	2	1	witnessed	1/2 literals; e.g. No zone file for that number.
+act.wizard.c	wizard.tsv	zlist.explicit-numeric-file	oracle-green-multiseed	wizard-zlist-depth	1,2	3545-3574	30	2	1	witnessed	1/2 literals; e.g. No zone file for that number.
+act.wizard.c	wizard.tsv	zlist.missing-file	oracle-green-multiseed	wizard-zlist-depth	1,2	3545-3574	30	2	1	witnessed	1/2 literals; e.g. No zone file for that number.
+act.wizard.c	wizard.tsv	zlist.no-argument	oracle-green-multiseed	wizard-residual-depth	1,2	3545-3574	30	2	0	not-witnessed	none of 2 literals; longest No zone file for that number.
+act.wizard.c	wizard.tsv	zlist.nonnumeric-atoi-zero	oracle-green-multiseed	wizard-zlist-depth	1,2	3545-3574	30	2	1	witnessed	1/2 literals; e.g. No zone file for that number.
+act.wizard.c	wizard.tsv	zlist.pager-entry	oracle-green-multiseed	wizard-zlist-depth	1,2	3545-3574	30	2	1	witnessed	1/2 literals; e.g. No zone file for that number.
+act.wizard.c	wizard.tsv	zlist.trailing-argument-ignored	oracle-green-multiseed	wizard-zlist-depth	1,2	3545-3574	30	2	1	witnessed	1/2 literals; e.g. No zone file for that number.
+act.wizard.c	wizard.tsv	zreset.current-zone	oracle-green-multiseed	wizard-zreset-depth	1,2	2035-2076	42	6	2	witnessed	2/6 literals; e.g. Reset world.
+act.wizard.c	wizard.tsv	zreset.invalid	oracle-green-multiseed	wizard-zreset-depth	1,2	2035-2076	42	6	2	witnessed	2/6 literals; e.g. Reset world.
+act.wizard.c	wizard.tsv	zreset.no-argument	oracle-green-multiseed	wizard-residual-depth	1,2	2035-2076	42	6	1	witnessed	1/6 literals; e.g. You must specify a zone.
+act.wizard.c	wizard.tsv	zreset.numeric-prefix	oracle-green-multiseed	wizard-zreset-depth	1,2	2035-2076	42	6	2	witnessed	2/6 literals; e.g. Reset world.
+act.wizard.c	wizard.tsv	zreset.numeric-zone	oracle-green-multiseed	wizard-zreset-depth	1,2	2035-2076	42	6	2	witnessed	2/6 literals; e.g. Reset world.
+act.wizard.c	wizard.tsv	zreset.trailing-words	oracle-green-multiseed	wizard-zreset-depth	1,2	2035-2076	42	6	2	witnessed	2/6 literals; e.g. Reset world.
+act.wizard.c	wizard.tsv	zreset.world	oracle-green-multiseed	wizard-zreset-depth	1,2	2035-2076	42	6	2	witnessed	2/6 literals; e.g. Reset world.
