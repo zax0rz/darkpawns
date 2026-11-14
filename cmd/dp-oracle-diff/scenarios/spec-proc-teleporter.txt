@@ -46,7 +46,7 @@ goto 8105
 [probe]
 set master hit 100
 hit master
-~dpclock pulse 20
+~dpclock pulse 25
 score
 
 # depth-case: mob.teleporter-entry-gates

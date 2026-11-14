@@ -61,8 +61,13 @@ set Kenderpeek level 30
 
 [probe]
 peek Skullgrin
+~dpclock pulse 25
 peek Skullgrin
+~dpclock pulse 25
 peek Skullgrin
+~dpclock pulse 25
 peek Skullgrin
+~dpclock pulse 25
 peek Skullgrin
+~dpclock pulse 25
 inventory
