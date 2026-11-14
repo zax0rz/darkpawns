@@ -2,6 +2,8 @@
 package game
 
 import (
+	"sync/atomic"
+
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -13,6 +15,15 @@ type ObjectInstance struct {
 
 	// Link to prototype
 	Prototype *parser.Obj
+
+	// liveExtraDescs is the published extra-description list for this instance.
+	// Both writers publish here: do_string's instance-local edits (C's
+	// obj->ex_description on the instance) and World.SetLiveObjExtraDesc's
+	// prototype write-through (C mutates the prototype node this instance
+	// shares). Readers — look, examine, the string command itself — load it
+	// atomically, so a builder editing an object that another player is looking
+	// at is not a data race. nil means "no published list: read the prototype".
+	liveExtraDescs atomic.Pointer[[]parser.ExtraDesc]
 
 	// Location
 	RoomVNum int // -1 if not in a room
@@ -324,17 +335,21 @@ func (o *ObjectInstance) GetAffects() []parser.ObjAffect {
 // GetExtraDescs returns the object's extra descriptions, including runtime
 // extra descriptions added via Lua extra() (stored in CustomData).
 //
-// An instance mutated by do_string owns a full snapshot (Runtime.ExtraDescs)
-// because C edits the live obj_data's ex_description list in place: the field
-// added by "string obj x description <keyword>" must be found first, and a
-// field whose description was replaced must keep its original position.
+// An instance mutated by do_string owns a published snapshot
+// (Runtime.ExtraDescs / liveExtraDescs) because C edits the live obj_data's
+// ex_description list in place: the field added by
+// "string obj x description <keyword>" must be found first, and a field whose
+// description was replaced must keep its original position.
 func (o *ObjectInstance) GetExtraDescs() []parser.ExtraDesc {
-	if o.Runtime.ExtraDescsLive {
-		return o.Runtime.ExtraDescs
+	if live := o.liveExtraDescs.Load(); live != nil {
+		return *live
 	}
 	var descs []parser.ExtraDesc
 	if o.Prototype != nil {
-		descs = o.Prototype.ExtraDescs
+		// Copy: the prototype slice is shared by every instance standing in the
+		// world, and the CustomData append below must not write into its spare
+		// capacity.
+		descs = append([]parser.ExtraDesc(nil), o.Prototype.ExtraDescs...)
 	}
 	// Append runtime extra descs from CustomData (set by Lua extra())
 	if o.CustomData != nil {
