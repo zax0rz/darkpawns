@@ -31,6 +31,12 @@ R1A_EXCLUDED_CELLS = {
         "src/spell_parser.c:804",
         "src/spell_parser.c:809",
     ),
+    (59, "staff"): (
+        "R1a",
+        "src/spells.c:837",
+        "src/spell_parser.c:602",
+        "src/spell_parser.c:605",
+    ),
 }
 ROUTINE_MAP = (
     ("MAG_DAMAGE", "mag_damage"),
@@ -265,6 +271,11 @@ def self_test() -> None:
                     "R1a src/spells.c:361 src/spell_parser.c:713 "
                     "src/spell_parser.c:602 src/spell_parser.c:605 "
                     "src/spell_parser.c:804 src/spell_parser.c:809"
+                )
+            if spell_id == 59:
+                row["notes"] = (
+                    "boundary R1a src/spells.c:837 src/spell_parser.c:602 "
+                    "src/spell_parser.c:605"
                 )
             for route in ROUTES:
                 row[f"{route}_status"] = (
