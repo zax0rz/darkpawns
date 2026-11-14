@@ -1,0 +1,50 @@
+# depth-case: session.switched-body-toggle-silent
+# depth-case: session.switched-body-wizutil-gate
+# C do_toggle returns immediately for an NPC (src/act.informative.c:2504-2505).
+# C do_wizutil's first gate refuses a body below LVL_IMMORT that is not
+# PLR_CHOSEN with the exact "Huh?!?\r\n" line (src/act.wizard.c:2083-2086); a
+# mobile's shared dummy PLR flags are zeroed, so the level-9 clone is refused.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8162 80
+
+[setup:oracle]
+Switchsession
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchsession
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+switch clone
+
+[probe]
+toggle
+mute
+pardon
+mute satan
+pardon satan
