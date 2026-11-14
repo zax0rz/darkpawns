@@ -1,0 +1,47 @@
+# C-first witness for do_kuji_kiri after do_restore mutates the shared
+# dummy_mob skill array. Satan Klaus is level 40 in room 8162. Restoring him
+# while the first-player Implementor is in that room sets every shared NPC
+# skill to 100; switching into him must execute rin as that body.
+# depth-case: kuji-kiri.shared-dummy-skill-restore
+# depth-case: kuji-kiri.switched-mobile-rin-success
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 70 1 8162 80
+
+[setup:oracle]
+KujiRestore
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+KujiRestore
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+restore satan
+switch satan
+
+[probe]
+rin

@@ -62,6 +62,13 @@ type World struct {
 	// reads and writes this one zeroed value; a player keeps its own record.
 	npcDummyLastTell atomic.Int64
 
+	// npcDummySkillState mirrors dummy_mob.saved.skills (src/db.c:104,1281;
+	// src/utils.h:343). NPCs share this array; restore and Lua set_skill can
+	// mutate it, so its initial zero values are not immutable constants.
+	npcDummySkillMu        sync.RWMutex
+	npcDummySkillDefault   int
+	npcDummySkillOverrides map[int]int
+
 	// zoneResetMu serializes boot, manual, admin and heartbeat resets.
 	// It precedes brief World/Spawner locks; no lifecycle lock is acquired.
 	zoneResetMu      sync.Mutex

@@ -75,6 +75,11 @@ func cmdRestore(s *Session, args []string) error {
 		if target.GetHP() > 0 && target.GetPosition() <= combat.PosStunned {
 			target.SetPosition(combat.PosStanding)
 		}
+		if getEffectiveLevel(s) >= LVL_GRGOD && target.GetLevel() >= LVL_IMMORT {
+			// C SET_SKILL writes through every NPC's shared dummy_mob pointer
+			// (src/db.c:104,1281; src/act.wizard.c:1599-1601).
+			s.manager.world.RestoreDummyMobSkills()
+		}
 	}
 
 	s.Send("Okay.\r\n")

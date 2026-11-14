@@ -77,6 +77,7 @@ func TestCmdRestoreRestoresVisibleMob(t *testing.T) {
 	actor := makeCommandTestSession(t, m, "Restoregod", LVL_IMPL, 1001)
 	registerInWorld(t, actor)
 	mob := registerMob(t, m, 2001, 1001)
+	mob.SetLevel(game.LVL_IMMORT)
 	mob.SetHealth(1)
 	mob.SetMana(2)
 	mob.SetMove(3)
@@ -93,6 +94,10 @@ func TestCmdRestoreRestoresVisibleMob(t *testing.T) {
 	}
 	if got, want := mob.GetPosition(), combat.PosStanding; got != want {
 		t.Fatalf("mob position = %d, want %d after positive-HP update_pos", got, want)
+	}
+	rinSkill := game.FindSkillNum("kuji-kiri rin")
+	if got := m.world.DummyMobSkill(rinSkill); got != 100 {
+		t.Fatalf("restored shared mobile skill = %d, want C's 100", got)
 	}
 }
 
