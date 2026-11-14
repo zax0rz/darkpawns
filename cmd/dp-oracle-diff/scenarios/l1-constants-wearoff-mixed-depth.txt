@@ -1,0 +1,193 @@
+# L1 constants.c spell_wear_off_msg[] slice (10 real messages in 1271-1322):
+# - fly (1272), metalskin (1284), invulnerability (1285), know align (1305),
+#   intellect (1307), smokescreen (1310), protection from good (1314),
+#   flamestrike (1315), haste (1316), water breathe (1321)
+# Casts are staggered one MUD hour apart (630 pulses) and the expiry hours are
+# distinct: smokescreen 3, flamestrike 7, metalskin 8, globe 11, intellect 13,
+# protection from good 30, know align 50 (scroll 4819 level 30, 12+30), haste
+# 55, fly 57, water breathe 59. The late self-casts sit well after the recite
+# so no expiry shares a tick. Violent casts land on a durable mortal peer
+# (outlaw + peace); the know-align route is the only castable one for that
+# spell: recite scroll 4819, whose enchant manuals no-op on a char target.
+
+# depth-case: constants.spell-wearoff-batch4
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Constmix
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Constmix
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Targetmix
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Targetmix
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Targetmix 8105
+set Constmix outlaw on
+set Targetmix maxhit 5000
+set Targetmix hit 5000
+set Constmix align 0
+load obj 4819
+
+[probe]
+cast 'smokescreen' Targetmix
+~dpclock pulse 20
+peace
+~dpclock pulse 610
+cast 'flame strike' Targetmix
+~dpclock pulse 20
+peace
+~dpclock pulse 610
+send:victim time
+cast 'metalskin' Constmix
+~dpclock pulse 630
+cast 'globe of invulnerability' Constmix
+~dpclock pulse 630
+cast 'word of intellect' Constmix
+~dpclock pulse 630
+cast 'protection from good' Constmix
+~dpclock pulse 630
+send:victim time
+recite book
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+cast 'haste' Constmix
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+cast 'fly' Constmix
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+cast 'waterbreathe' Constmix
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
