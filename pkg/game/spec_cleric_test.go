@@ -11,8 +11,9 @@ import (
 // and C do_stand entry path (spec_procs.c:1425-1442). A sleeping cleric must
 // not stand; a sitting cleric emits the room-only do_stand line before acting.
 
-// TestSpecCleric_Lspell12IsAnOffensiveNoOp pins the intentional hole in C's
-// offensive switch: lspell 12 has no spell case (spec_procs.c:1558-1578).
+// TestSpecCleric_Lspell12FallsToDefaultHarm pins C's switch fall-through:
+// lspell 12 has no case, so it reaches default and casts harm
+// (spec_procs.c:1532-1543).
 
 // TestSpecCleric_EarthquakeUsesNPCRoomMessage covers the lspell 17-19 arm
 // and call_magic's NPC area-spell room narration (spec_procs.c:1558-1578;
@@ -109,9 +110,10 @@ func TestSpecCleric_EntryGatesAndStand(t *testing.T) {
 	}
 }
 
-// TestSpecCleric_Lspell12IsAnOffensiveNoOp pins the intentional hole in C's
-// offensive switch: lspell 12 has no spell case (spec_procs.c:1558-1578).
-func TestSpecCleric_Lspell12IsAnOffensiveNoOp(t *testing.T) {
+// TestSpecCleric_Lspell12FallsToDefaultHarm pins C's switch fall-through:
+// lspell 12 has no case, so it reaches default and casts harm
+// (spec_procs.c:1532-1543).
+func TestSpecCleric_Lspell12FallsToDefaultHarm(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
 	mob := prepareClericTestCombat(t, w, player, 15)
 	_ = lastMsg()              // discard the spawn-room line
@@ -120,8 +122,8 @@ func TestSpecCleric_Lspell12IsAnOffensiveNoOp(t *testing.T) {
 	if got := specCleric(w, nil, mob, "", ""); !got {
 		t.Fatal("eligible cleric should consume its special tick")
 	}
-	if got := lastMsg(); got != "" {
-		t.Errorf("lspell=12 offensive no-op emitted player bytes: %q", got)
+	if got := lastMsg(); !strings.Contains(got, "utters the words") {
+		t.Errorf("lspell=12 should fall to default's harm cast, got %q", got)
 	}
 }
 
