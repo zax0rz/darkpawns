@@ -1,0 +1,136 @@
+capture-statistics	blocks=30	empty-open=0	empty-closed=0
+capture-statistics	blocks=30	empty-open=0	empty-closed=0
+hollow-prompt-steps	count=0
+divergence-fingerprint	help say	886315f199a1f4a099849b72d89bd5655fb2ee3fcff61d4450f8e3481099d2ae
+Dark Pawns Tier-1 differential report
+scenario: switch-mob-observation-depth
+c-oracle: 127.0.0.1:28019 (DP_SEED=1)
+go-port: 127.0.0.1:25039 (DP_SEED=1)
+result: normalized divergence detected
+
+--- [switch clone] c-oracle
++++ [switch clone] go-port
+(no normalized divergence)
+
+--- [abilities] c-oracle
++++ [abilities] go-port
+(no normalized divergence)
+
+--- [gold] c-oracle
++++ [gold] go-port
+(no normalized divergence)
+
+--- [whoami] c-oracle
++++ [whoami] go-port
+(no normalized divergence)
+
+--- [version] c-oracle
++++ [version] go-port
+(no normalized divergence)
+
+--- [help advance] c-oracle
++++ [help advance] go-port
+(no normalized divergence)
+
+--- [? advance] c-oracle
++++ [? advance] go-port
+(no normalized divergence)
+
+--- [help say] c-oracle
++++ [help say] go-port
+@@ -1,3 +1,4 @@
++X
+ [ SAY ]
+  ---------------------------------------------------------------------------
+ 
+
+--- [weather] c-oracle
++++ [weather] go-port
+(no normalized divergence)
+
+--- [consider satan] c-oracle
++++ [consider satan] go-port
+(no normalized divergence)
+
+--- [commands] c-oracle
++++ [commands] go-port
+(no normalized divergence)
+
+--- [] c-oracle
++++ [] go-port
+(no normalized divergence)
+
+--- [socials] c-oracle
++++ [socials] go-port
+(no normalized divergence)
+
+--- [] c-oracle
++++ [] go-port
+(no normalized divergence)
+
+--- [map] c-oracle
++++ [map] go-port
+(no normalized divergence)
+
+--- [review] c-oracle
++++ [review] go-port
+(no normalized divergence)
+
+--- [who] c-oracle
++++ [who] go-port
+(no normalized divergence)
+
+--- [sleep] c-oracle
++++ [sleep] go-port
+(no normalized divergence)
+
+--- [look] c-oracle
++++ [look] go-port
+(no normalized divergence)
+
+--- [score] c-oracle
++++ [score] go-port
+(no normalized divergence)
+
+--- [north] c-oracle
++++ [north] go-port
+(no normalized divergence)
+
+--- [wake] c-oracle
++++ [wake] go-port
+(no normalized divergence)
+
+--- [look] c-oracle
++++ [look] go-port
+(no normalized divergence)
+
+--- [read pepper] c-oracle
++++ [read pepper] go-port
+(no normalized divergence)
+
+--- [examine pepper] c-oracle
++++ [examine pepper] go-port
+(no normalized divergence)
+
+--- [exits] c-oracle
++++ [exits] go-port
+(no normalized divergence)
+
+--- [diagnose satan] c-oracle
++++ [diagnose satan] go-port
+(no normalized divergence)
+
+--- [glance satan] c-oracle
++++ [glance satan] go-port
+(no normalized divergence)
+
+--- [inventory] c-oracle
++++ [inventory] go-port
+(no normalized divergence)
+
+--- [equipment] c-oracle
++++ [equipment] go-port
+(no normalized divergence)
+
+dp-oracle-diff: normalized divergence detected
+EXIT=3
