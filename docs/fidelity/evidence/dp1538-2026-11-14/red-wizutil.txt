@@ -1,0 +1,153 @@
+capture-statistics	blocks=33	empty-open=19	empty-closed=0
+capture-statistics	blocks=33	empty-open=19	empty-closed=0
+hollow-prompt-steps	count=0
+divergence-fingerprint	mute Highgod [actor]	ba1e9a214fd59bd64432d28fcdf975acda46cf5fb6e5c5aba8649986b7814b36
+divergence-fingerprint	mute Peon [actor]	cd6b336d2850cc78af6dbc8b7095bec4e69e937cf060798e8641aadaa32a1ac9
+divergence-fingerprint	mute Peon [actor]	af622a0c005b1352daf4cec7b391972c297b22d5214f5cadd456d7e9dee87fa7
+Dark Pawns Tier-1 differential report
+scenario: switched-body-wizutil-depth
+c-oracle: 127.0.0.1:27785 (DP_SEED=1)
+go-port: 127.0.0.1:21373 (DP_SEED=1)
+result: normalized divergence detected
+
+--- [mute [actor]] c-oracle
++++ [mute [actor]] go-port
+(no normalized divergence)
+
+--- [mute [high]] c-oracle
++++ [mute [high]] go-port
+(no normalized divergence)
+
+--- [mute [mortal]] c-oracle
++++ [mute [mortal]] go-port
+(no normalized divergence)
+
+--- [mute nobody [actor]] c-oracle
++++ [mute nobody [actor]] go-port
+(no normalized divergence)
+
+--- [mute nobody [high]] c-oracle
++++ [mute nobody [high]] go-port
+(no normalized divergence)
+
+--- [mute nobody [mortal]] c-oracle
++++ [mute nobody [mortal]] go-port
+(no normalized divergence)
+
+--- [mute satan [actor]] c-oracle
++++ [mute satan [actor]] go-port
+(no normalized divergence)
+
+--- [mute satan [high]] c-oracle
++++ [mute satan [high]] go-port
+(no normalized divergence)
+
+--- [mute satan [mortal]] c-oracle
++++ [mute satan [mortal]] go-port
+(no normalized divergence)
+
+--- [mute Highgod [actor]] c-oracle
++++ [mute Highgod [actor]] go-port
+@@ -1,1 +1,1 @@
+-Hmmm...you'd better not.
++(GC) Squelch ON for Highgod by Switchwiz.
+
+--- [mute Highgod [high]] c-oracle
++++ [mute Highgod [high]] go-port
+(no normalized divergence)
+
+--- [mute Highgod [mortal]] c-oracle
++++ [mute Highgod [mortal]] go-port
+(no normalized divergence)
+
+--- [mute Peon [actor]] c-oracle
++++ [mute Peon [actor]] go-port
+@@ -1,1 +1,1 @@
+-(GC) Squelch ON for Peon by Death Dealer.
++(GC) Squelch ON for Peon by Switchwiz.
+
+--- [mute Peon [high]] c-oracle
++++ [mute Peon [high]] go-port
+(no normalized divergence)
+
+--- [mute Peon [mortal]] c-oracle
++++ [mute Peon [mortal]] go-port
+(no normalized divergence)
+
+--- [mute Peon [actor]] c-oracle
++++ [mute Peon [actor]] go-port
+@@ -1,1 +1,1 @@
+-(GC) Squelch OFF for Peon by Death Dealer.
++(GC) Squelch OFF for Peon by Switchwiz.
+
+--- [mute Peon [high]] c-oracle
++++ [mute Peon [high]] go-port
+(no normalized divergence)
+
+--- [mute Peon [mortal]] c-oracle
++++ [mute Peon [mortal]] go-port
+(no normalized divergence)
+
+--- [pardon Peon [actor]] c-oracle
++++ [pardon Peon [actor]] go-port
+(no normalized divergence)
+
+--- [pardon Peon [high]] c-oracle
++++ [pardon Peon [high]] go-port
+(no normalized divergence)
+
+--- [pardon Peon [mortal]] c-oracle
++++ [pardon Peon [mortal]] go-port
+(no normalized divergence)
+
+--- [return [actor]] c-oracle
++++ [return [actor]] go-port
+(no normalized divergence)
+
+--- [return [high]] c-oracle
++++ [return [high]] go-port
+(no normalized divergence)
+
+--- [return [mortal]] c-oracle
++++ [return [mortal]] go-port
+(no normalized divergence)
+
+--- [goto 8162 [actor]] c-oracle
++++ [goto 8162 [actor]] go-port
+(no normalized divergence)
+
+--- [goto 8162 [high]] c-oracle
++++ [goto 8162 [high]] go-port
+(no normalized divergence)
+
+--- [goto 8162 [mortal]] c-oracle
++++ [goto 8162 [mortal]] go-port
+(no normalized divergence)
+
+--- [switch clone [actor]] c-oracle
++++ [switch clone [actor]] go-port
+(no normalized divergence)
+
+--- [switch clone [high]] c-oracle
++++ [switch clone [high]] go-port
+(no normalized divergence)
+
+--- [switch clone [mortal]] c-oracle
++++ [switch clone [mortal]] go-port
+(no normalized divergence)
+
+--- [mute [actor]] c-oracle
++++ [mute [actor]] go-port
+(no normalized divergence)
+
+--- [mute [high]] c-oracle
++++ [mute [high]] go-port
+(no normalized divergence)
+
+--- [mute [mortal]] c-oracle
++++ [mute [mortal]] go-port
+(no normalized divergence)
+
+draw-parity	MATCH	entries=4233	stream=4303
+dp-oracle-diff: normalized divergence detected
+exit status 3

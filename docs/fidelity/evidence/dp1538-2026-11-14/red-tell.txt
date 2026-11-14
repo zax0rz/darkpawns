@@ -1,0 +1,49 @@
+capture-statistics	blocks=6	empty-open=3	empty-closed=0
+capture-statistics	blocks=6	empty-open=1	empty-closed=0
+hollow-prompt-steps	count=0
+divergence-fingerprint	send:teller tell clone hi [teller]	5f47988bf104ef6291835456a702f6b26cb8336b606035efa7a0ab842b2231fe
+divergence-fingerprint	send:teller tell clone hi [primary]	2a9d3fe8746a4060f418123ebd70c7ec296d644a7012ee6d284df120df76c5a9
+divergence-fingerprint	reply back [actor]	f525fba68abc74f22130c5f8646167377737b4dd80437e263612d5be64a89157
+divergence-fingerprint	reply back [teller]	4f96f6ec2cb99455379b6a06a6c30505d4e40240d5ad8209f9074a46794252b7
+Dark Pawns Tier-1 differential report
+scenario: tell-switched-body-depth
+c-oracle: 127.0.0.1:27760 (DP_SEED=1)
+go-port: 127.0.0.1:28055 (DP_SEED=1)
+result: normalized divergence detected
+
+--- [send:teller tell clone hi [teller]] c-oracle
++++ [send:teller tell clone hi [teller]] go-port
+@@ -1,3 +1,3 @@
+-You tell a clone, 'hi'
++No-one by that name here.
+ 
+ <PROMPT>
+
+--- [send:teller tell clone hi [primary]] c-oracle
++++ [send:teller tell clone hi [primary]] go-port
+@@ -1,1 +1,0 @@
+-Tellpeer tells you, 'hi'
+
+--- [reply back [actor]] c-oracle
++++ [reply back [actor]] go-port
+@@ -1,1 +1,2 @@
+-You tell Tellpeer, 'back'
++A clone tells you, 'back'
++You tell a clone, 'back'
+
+--- [reply back [teller]] c-oracle
++++ [reply back [teller]] go-port
+@@ -1,1 +1,0 @@
+-A clone tells you, 'back'
+
+--- [send:teller tell 2.clone yo [teller]] c-oracle
++++ [send:teller tell 2.clone yo [teller]] go-port
+(no normalized divergence)
+
+--- [send:teller tell 2.clone yo [primary]] c-oracle
++++ [send:teller tell 2.clone yo [primary]] go-port
+(no normalized divergence)
+
+draw-parity	MATCH	entries=4103	stream=4142
+dp-oracle-diff: normalized divergence detected
+exit status 3
