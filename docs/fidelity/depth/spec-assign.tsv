@@ -1,0 +1,4 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+ASSIGNMOB	boot	assign-mob.missing-mob-log	D1	boot	excluded	-	spec_assign.c:50-54	Not player-facing: assigning a special to a nonexistent mobile vnum writes "SYSERR: Attempt to assign spec to non-existant mob #%d" through log() during boot (src/spec_assign.c:51-53); no descriptor exists and the registered assignment set boots clean (R5e).
+ASSIGNOBJ	boot	assign-obj.missing-obj-log	D1	boot	excluded	-	spec_assign.c:61-65	Not player-facing: the same boot-time log() SYSERR for a nonexistent object vnum (src/spec_assign.c:62-64) (R5e).
+ASSIGNROOM	boot	assign-room.missing-room-log	D1	boot	excluded	-	spec_assign.c:72-76	Not player-facing: the same boot-time log() SYSERR for a nonexistent room vnum (src/spec_assign.c:73-75) (R5e).
