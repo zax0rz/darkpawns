@@ -1,0 +1,34 @@
+# depth-case: shops.audit.broke-temper-smoke
+# C shopping_buy's unaffordable arm tells the buyer and, for SHOP_BROKE_TEMPER
+# 1, emotes "smokes on his joint." to the room (src/shop.c:501-515). SEDIT has
+# no temper field (src/sedit.c:764-784), so the disposable shop file's temper
+# line is rewritten for both engines before boot; the keeper (Byron, 8005) and
+# room (8038) are shipped. The buyer is demoted below LVL_GOD so C charges.
+
+[fixture]
+seed-player
+quiet-mobs
+quiet-zone 80
+fault-shop-temper 8038 1
+spawn-mob 8005 1 8038 80
+give-object 8005 8037 1 80
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8038
+set player Testor gold 0
+set player Testor level 30
+
+[probe]
+buy sword
