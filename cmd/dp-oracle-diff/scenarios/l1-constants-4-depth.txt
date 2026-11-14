@@ -1,0 +1,145 @@
+# L1 constants.c slice 4 (4 sites in month_name[]):
+# - month_name[1..4]: Month of the Winter Wolf (1379), Month of the Frost Giant (1380),
+#   Month of the Old Forces (1381), Month of the Grand Struggle (1382)
+
+# depth-case: constants.month-names-winter-wolf-to-grand-struggle
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Constfour
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Constfour
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+~dpclock pulse 81900
+~dpclock pulse 90720
+~dpclock pulse 90720
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+time
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+time
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+time
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+~dpclock pulse 66150
+time
