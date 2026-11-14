@@ -1,0 +1,43 @@
+# depth-case: show.keeper-coins-rnum-zero-collision
+# C-first witness for DP-1527, restored from flash's retained run
+# (~/Archives/darkpawns/oracle-runs/2026-11-13/flash-l1-shop-1). `show shops
+# 35` reports shop #12132 (lib/world/shp/121.shp, rnum 35), keeper Puff
+# (mobile 1, proto rnum 0). C resolves the keeper with get_char_num over
+# character_list (src/shop.c:1345-1350); a live player's nr is 0
+# (clear_char, src/db.c) and players prepend to the list, so C prints the
+# ACTOR's gold -- 0 here. On origin/main the port printed Puff's own 10
+# coins; red retained at kimi-dp1527-red, green at kimi-dp1527-green.
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Shopdiv
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopdiv
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+show shops 35

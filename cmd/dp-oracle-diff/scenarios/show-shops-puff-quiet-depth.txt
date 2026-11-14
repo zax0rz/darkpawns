@@ -1,0 +1,41 @@
+# depth-case: show.keeper-coins-quiet-mobs
+# Companion witness for DP-1527 under quiet-mobs: the fixture comments the
+# zone-0 `M 0 1 1 1` reset on both sides, so Puff is never loaded -- yet C
+# still prints the Coins line, because get_char_num's rnum-0 collision finds
+# the logged-in player (src/shop.c:1345-1350, src/db.c clear_char). The same
+# keeper-resolution fix covers this arm; green at kimi-dp1527-quiet.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Shopdiv
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopdiv
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+show shops 35

@@ -873,11 +873,19 @@ func detailedShopReport(w *game.World, index int, shop game.Shop) string {
 		}
 		// C's GET_NAME for an NPC resolves to player.short_descr (src/utils.h:275-276).
 		fmt.Fprintf(&report, "Shopkeeper: %s (#%d), Special Function: %s\n\r", keeperProto.ShortDesc, keeperProto.VNum, special)
-		if keeper := shopKeeperInCOrder(w, shop.KeeperVNum); keeper != nil {
-			liveShop, coins, ok := w.SnapshotShopAccount(shop.VNum, keeper)
+		// C resolves the keeper with get_char_num over character_list, where
+		// live players collide on rnum 0 (DP-1527); the Coins line reads that
+		// body's gold.
+		if keeperPlayer, keeperMob := w.ShowShopsKeeper(shop.KeeperVNum); keeperPlayer != nil || keeperMob != nil {
+			coins := 0
 			bank := shop.Bank
-			if ok {
-				bank = liveShop.Bank
+			if keeperPlayer != nil {
+				coins = keeperPlayer.GetGold()
+			} else if keeperMob != nil {
+				coins = keeperMob.GetGold()
+				if liveShop, _, ok := w.SnapshotShopAccount(shop.VNum, keeperMob); ok {
+					bank = liveShop.Bank
+				}
 			}
 			fmt.Fprintf(&report, "Coins:      [%9d], Bank: [%9d] (Total: %d)\n\r", coins, bank, coins+bank)
 		}
@@ -948,13 +956,3 @@ func detailedShopList(label string, entries []string, empty string) string {
 
 // get_char_num walks C's character_list newest-first (src/handler.c:887-895);
 // Go mob IDs rise in spawn order, so descending IDs preserve that lookup.
-func shopKeeperInCOrder(w *game.World, vnum int) *game.MobInstance {
-	mobs := w.GetAllMobs()
-	sort.SliceStable(mobs, func(i, j int) bool { return mobs[i].GetID() > mobs[j].GetID() })
-	for _, mob := range mobs {
-		if mob.GetVNum() == vnum {
-			return mob
-		}
-	}
-	return nil
-}
