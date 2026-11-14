@@ -1,0 +1,72 @@
+# L1 constants.c slice wearoff-psi (9 sites in spell_wear_off_msg[]):
+# - chameleon (1282), levitation (1283), lesser perception (1288),
+#   greater perception (1289), adrenaline (1291), psyshield (1292),
+#   change density (1293), mind bar (1301), dream travel (1318, the bare
+#   space entry)
+# Each cast is staggered by 630 pulses (1 MUD hour) so wear-off messages do not
+# collide on the same tick; expiry hours are 6, 16, 19, 23, 25, 26, 27, 41, 42.
+# mind bar is violent, so the PEACEFUL bit is dropped from the infirmary first
+# (the fixture patches both engines identically).
+
+# depth-case: constants.spell-wearoff-batch3
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+
+[setup:oracle]
+Constpsi
+Y
+oraclepass
+oraclepass
+N
+M
+H
+i
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Constpsi
+y
+oraclepass
+oraclepass
+N
+M
+H
+i
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+cast 'dream travel' Constpsi
+~dpclock pulse 630
+cast 'mind bar' Constpsi
+~dpclock pulse 630
+cast 'psychic shield' Constpsi
+~dpclock pulse 630
+cast 'change density' Constpsi
+~dpclock pulse 630
+cast 'adrenaline boost' Constpsi
+~dpclock pulse 630
+cast 'lesser perception' Constpsi
+~dpclock pulse 630
+cast 'greater perception' Constpsi
+~dpclock pulse 630
+cast 'chameleon' Constpsi
+~dpclock pulse 630
+cast 'levitate' Constpsi
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
