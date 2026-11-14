@@ -203,6 +203,10 @@ func (w *World) npcEcho(me *MobInstance, argument string) {
 	text := strings.TrimLeft(argument, " \t\r\n\v\f")
 	if text != "" {
 		Act(w, false, me, nil, nil, nil, text, "", ToRoom)
+		// C do_echo emits the same body to the actor after the room act. For an
+		// ordinary mobile this is silent; for a switched mobile it reaches the
+		// descriptor attached to that body (src/act.wizard.c:130-153).
+		Act(w, false, me, nil, nil, nil, text, "", ToChar)
 	}
 }
 

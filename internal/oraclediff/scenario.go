@@ -67,6 +67,7 @@ type Scenario struct {
 	RoomExitFixtures []RoomExitFixture
 	RoomFlagFixtures []RoomFlagFixture
 	RoomSectors      []RoomSectorFixture
+	RoomScripts      []RoomScriptFixture
 	HouseControls    []HouseControlFixture
 	ScriptTwin       *ScriptTwinFixture
 	// LuaScripts are files written into both servers' script trees, and
@@ -260,6 +261,14 @@ type RoomFlagFixture struct {
 type RoomSectorFixture struct {
 	RoomVNum int
 	Sector   int
+}
+
+// RoomScriptFixture replaces one room's R record with a temporary script and
+// trigger mask in both disposable worlds.
+type RoomScriptFixture struct {
+	RoomVNum int
+	Path     string
+	Flags    int
 }
 
 // HouseControlFixture adds one valid player-house record to both disposable
@@ -533,6 +542,15 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 					sc.RoomSectors = append(sc.RoomSectors, RoomSectorFixture{RoomVNum: roomVNum, Sector: sector})
 					continue
 				}
+			}
+			if len(fields) == 4 && strings.EqualFold(fields[0], "room-script") {
+				roomVNum, roomErr := strconv.Atoi(fields[1])
+				flags, flagsErr := strconv.Atoi(fields[3])
+				if roomErr != nil || flagsErr != nil || roomVNum <= 0 || flags <= 0 || !safeScriptPath(fields[2]) {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: invalid room-script %q", name, lineNo, line)
+				}
+				sc.RoomScripts = append(sc.RoomScripts, RoomScriptFixture{RoomVNum: roomVNum, Path: fields[2], Flags: flags})
+				continue
 			}
 			if (len(fields) == 6 || len(fields) == 7) && strings.EqualFold(fields[0], "house-control") {
 				vnum, vnumErr := strconv.Atoi(fields[1])

@@ -125,6 +125,40 @@ func (w *World) RunRoomObjTriggerScript(ch *Player, obj *ObjectInstance, bit int
 	w.runRoomScript(ch, obj, bit, trigger, "")
 }
 
+// RunRoomObjTriggerScriptForActor is the onget/ondrop room hook for either
+// body type. C passes the acting character as both ch and me, including for
+// NPCs (src/act.item.c:211-212, 283-284, 505-506). A mobile's character
+// reference must cross the Lua bridge as an NPC CharRef, as in combatant
+// script callbacks (DP-1319).
+func (w *World) RunRoomObjTriggerScriptForActor(ch combat.Combatant, obj *ObjectInstance, bit int, trigger string) {
+	if player, ok := ch.(*Player); ok {
+		w.RunRoomObjTriggerScript(player, obj, bit, trigger)
+		return
+	}
+	mob, ok := ch.(*MobInstance)
+	if !ok || mob == nil || ScriptEngine == nil {
+		return
+	}
+	room := w.GetRoomInWorld(mob.GetRoom())
+	if room == nil || room.ScriptFunctions&bit == 0 {
+		return
+	}
+	if room.ScriptName == "" {
+		scriptUnassignedProducer(mob.GetName(), mob.GetVNum())
+		return
+	}
+	ref := combatantScriptRef(mob)
+	ctx := mob.CreateScriptContext(nil, obj, "")
+	ctx.ChRef = ref
+	ctx.MeRef = ref
+	ctx.World = NewWorldScriptableAdapter(w)
+	ctx.RoomVNum = room.VNum
+	ctx.OwnerType = "room"
+	if _, err := ScriptEngine.RunScript(ctx, room.ScriptName, trigger); err != nil {
+		slog.Warn("room script error", "trigger", trigger, "room_vnum", room.VNum, "script", room.ScriptName, "error", err)
+	}
+}
+
 // runRoomScript runs one room-owner trigger with C's tables: me is the acting
 // player, as C passes it for every live room trigger.
 func (w *World) runRoomScript(ch *Player, obj *ObjectInstance, bit int, trigger, argument string) bool {

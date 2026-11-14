@@ -1,0 +1,81 @@
+# C-first switched-body witness for do_flee's descriptor-owned room look.
+# The immortal descriptor owner stays in 8105 while the switched mobile starts
+# in 8162 and flees through six exits to 8163. A peer starts combat with the
+# mobile before the switch. C's do_simple_move renders the destination room
+# because the mobile has a descriptor (src/act.movement.c:265-269).
+# C paths: do_flee (src/act.offensive.c:360-415), do_simple_move
+# (src/act.movement.c:95-305), command_interpreter (src/interpreter.c:1367-1481).
+# depth-case: switched.body-flee-destination-look
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+set-room-flag 8163 4 off
+replace-room-exits 8162 all 8163 0 path
+spawn-mob 70 1 8162 80
+
+[setup:oracle]
+Fleeowner
+Y
+fleeown1
+fleeown1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fleeowner
+y
+fleeown1
+fleeown1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Fleep
+Y
+fleepass
+fleepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Fleep
+y
+fleepass
+fleepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Fleep 8162
+send:peer hit satan
+switch satan
+
+[probe]
+flee

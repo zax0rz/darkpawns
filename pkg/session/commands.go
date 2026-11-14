@@ -77,7 +77,15 @@ func init() {
 		}(dir.idx))
 	}
 	registerCommand("enter", wrapArgs(cmdEnter), "Enter a nearby doorway or indoor area.")
+	registerActorCommand("enter", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterEnter(ctx)
+	})
 	registerCommand("leave", wrapNoArgs(cmdLeave), "Leave for the outdoors.")
+	registerActorCommand("leave", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterLeave(ctx)
+	})
 
 	// Look
 	registerCommand("look", wrapBodyArgs(cmdLookBody), "Look around the room.")
@@ -127,8 +135,16 @@ func init() {
 		return game.CharacterFlee(ctx)
 	})
 	registerCommand("escape", wrapNoArgs(cmdRetreat), "Attempt to escape from combat.")
+	registerActorCommand("escape", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterRetreat(ctx)
+	})
 	// C maps both "escape" and "retreat" to do_retreat (src/interpreter.c:434, 652).
 	registerCommand("retreat", wrapNoArgs(cmdRetreat), "Attempt to retreat from combat.")
+	registerActorCommand("retreat", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterRetreat(ctx)
+	})
 
 	// Position / Movement
 	registerCommand("stand", wrapNoArgs(cmdStand), "Stand up.")
@@ -182,6 +198,10 @@ func init() {
 		return game.CharacterGrab(ctx)
 	})
 	registerCommand("get", wrapArgs(cmdGet), "Pick up an item from the room, container, or corpse.", "take")
+	registerActorCommand("get", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterGet(ctx)
+	})
 	registerCommand("give", wrapArgs(cmdGive), "Give an item or gold to another character.")
 	registerActorCommand("give", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCGiveCommand(mob, arg) }))
 	registerCommand("put", wrapArgs(cmdPut), "Put an item into a container.")
@@ -190,12 +210,32 @@ func init() {
 		return game.CharacterPut(ctx)
 	})
 	registerCommand("drop", wrapArgs(cmdDrop), "Drop an item from your inventory.")
+	registerActorCommand("drop", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterDrop(ctx)
+	})
 	registerCommand("junk", wrapArgs(cmdJunk), "Destroy an item for a small experience reward.")
 	registerCommand("donate", wrapArgs(cmdDonate), "Donate an item to the donation room.")
 	registerCommand("eat", wrapBodyArgs(cmdEat), "Eat some food.")
+	registerActorCommand("eat", func(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterEat(ctx, commandName)
+	})
 	registerCommand("taste", wrapBodyArgs(cmdTaste), "Nibble a little bit of some food.")
+	registerActorCommand("taste", func(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterEat(ctx, commandName)
+	})
 	registerCommand("drink", wrapBodyArgs(cmdDrink), "Drink from a container.")
+	registerActorCommand("drink", func(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterDrink(ctx, commandName)
+	})
 	registerCommand("sip", wrapBodyArgs(cmdSip), "Sip from a container without drinking it.")
+	registerActorCommand("sip", func(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterDrink(ctx, commandName)
+	})
 	registerCommand("pour", wrapBodyArgs(cmdPour), "Pour liquid from one container to another.")
 	registerActorCommand("pour", func(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
 		ctx = withCharacterCommandArgs(ctx, args)
@@ -250,8 +290,16 @@ func init() {
 		return game.CharacterFollow(ctx)
 	})
 	registerCommand("shadow", wrapArgs(cmdShadow), "Follow another player quietly (shadow skill).")
+	registerActorCommand("shadow", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterShadow(ctx)
+	})
 	registerCommand("group", wrapArgs(cmdGroup), "Manage your group.")
 	registerCommand("ungroup", wrapArgs(cmdUngroup), "Disband or leave a group.")
+	registerActorCommand("ungroup", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterUngroup(ctx)
+	})
 
 	// Skills — Dark Pawns has exactly ONE skill command: `practice`
 	// (src/act.other.c do_practice; interpreter.c:618). `skills`/`spells`/`learn`/
@@ -521,6 +569,10 @@ func init() {
 	})
 	// do_track lives in graph.c; its class gate is in the handler (graph.go).
 	registerCommand("track", wrapArgs(cmdTrack), "Sense which way a target went.")
+	registerActorCommand("track", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterTrack(ctx)
+	})
 	registerCommand("inactive", wrapBodyArgs(cmdInactive), "Toggle inactive status.")
 	registerCommand("auto", wrapBodyArgs(cmdAuto), "Toggle automatic exits, looting, gold, and split.")
 	// Preference toggles (act.other.c do_gen_tog) — each is its own top-level

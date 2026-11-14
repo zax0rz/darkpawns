@@ -20,7 +20,7 @@ var fixtureDirectionNumber = map[string]int{
 	"down":  5,
 }
 
-func applyRoomFixtures(worldDir string, exits []oraclediff.RoomExitFixture, flags []oraclediff.RoomFlagFixture, sectors []oraclediff.RoomSectorFixture) error {
+func applyRoomFixtures(worldDir string, exits []oraclediff.RoomExitFixture, flags []oraclediff.RoomFlagFixture, sectors []oraclediff.RoomSectorFixture, scripts []oraclediff.RoomScriptFixture) error {
 	for _, fixture := range exits {
 		if err := rewriteRoomRecord(worldDir, fixture.RoomVNum, func(record string) (string, error) {
 			return replaceRoomExits(record, fixture)
@@ -42,7 +42,35 @@ func applyRoomFixtures(worldDir string, exits []oraclediff.RoomExitFixture, flag
 			return err
 		}
 	}
+	for _, fixture := range scripts {
+		if err := rewriteRoomRecord(worldDir, fixture.RoomVNum, func(record string) (string, error) {
+			return setRoomScript(record, fixture)
+		}); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func setRoomScript(record string, fixture oraclediff.RoomScriptFixture) (string, error) {
+	lines := strings.Split(strings.TrimSuffix(record, "\n"), "\n")
+	if _, err := roomHeaderLine(lines); err != nil {
+		return "", err
+	}
+	line := fmt.Sprintf("R %s %d", fixture.Path, fixture.Flags)
+	for i, current := range lines {
+		if strings.HasPrefix(strings.TrimSpace(current), "R ") {
+			lines[i] = line
+			return strings.Join(lines, "\n") + "\n", nil
+		}
+	}
+	for i, current := range lines {
+		if strings.TrimSpace(current) == "S" {
+			lines = append(lines[:i], append([]string{line}, lines[i:]...)...)
+			return strings.Join(lines, "\n") + "\n", nil
+		}
+	}
+	return "", fmt.Errorf("room %d has no S terminator", fixture.RoomVNum)
 }
 
 func rewriteRoomRecord(worldDir string, roomVNum int, rewrite func(string) (string, error)) error {
