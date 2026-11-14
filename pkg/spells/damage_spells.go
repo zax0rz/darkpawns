@@ -426,9 +426,9 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
 		// A zero amount (immortal victim, clamped protection, or a save halving
 		// 1 to 0) flows through the same tail as C's damage(): update_pos
-		// re-prints the stunned band for an already-down victim, the default
-		// arm runs, and the return value is TRUE so the caller's noise draws
-		// run (fight.c:1480-1700; DP-1331).
+		// re-prints the stunned band for an already-down victim and the
+		// default arm runs, while the return is FALSE (fight.c:1480-1718;
+		// DP-1331).
 		var wb func(roomVNum int, victim combat.Combatant, format string, hideInvisible bool)
 		if b, ok := world.(woundBroadcaster); ok {
 			wb = b.WoundAct
@@ -453,7 +453,12 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 				dp.HandleDeath(victCombat, chCombat, attackType)
 			}
 		}
-		return true
+		// damage() ends with `if (dam) return TRUE; else return FALSE;`
+		// (fight.c:1715-1718): a zero amount after the modifier clamps — an
+		// immortal victim, a save halving 1 to 0 — runs the message path and
+		// the survivor tail but returns FALSE, so mag_damage's noise and
+		// soul-leech draws do not run on it.
+		return dam != 0
 	}
 
 	// Fallback: if ch or victim doesn't implement Combatant, apply raw damage
