@@ -1,0 +1,77 @@
+# depth-case: page.target-visibility
+# C do_page resolves its target with get_char_vis (src/act.comm.c:1082-1083),
+# which is CAN_SEE-gated end to end (handler.c:1302-1325): an invisible target
+# answers "There is no such person in the game!". The wizard
+# target-resolution batch.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Pagegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pagegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Vispeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Vispeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Vispeer 8162
+set Pagegod class mage
+set Pagegod maxmana 5000
+set Pagegod mana 5000
+cast 'invisibility' Vispeer
+~dpclock pulse 20
+
+[probe]
+page Vispeer hello there
