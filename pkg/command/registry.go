@@ -49,8 +49,13 @@ func (ctx ExecutionContext) CharacterContext() game.CharacterCommandContext {
 	if privateOutput == nil && ctx.Session != nil {
 		privateOutput = ctx.Session.Send
 	}
+	var descriptorOwner *game.Player
+	if ctx.Session != nil {
+		descriptorOwner, _ = ctx.Session.GetPlayer().(*game.Player)
+	}
 	return game.CharacterCommandContext{
-		Actor: ctx.Body, World: ctx.World, PrivateOutput: privateOutput, RawArgs: ctx.RawArgs,
+		Actor: ctx.Body, DescriptorOwner: descriptorOwner, World: ctx.World,
+		PrivateOutput: privateOutput, RawArgs: ctx.RawArgs,
 	}
 }
 

@@ -13,10 +13,11 @@ import (
 // CharacterCommandContext keeps the command body separate from an optional
 // descriptor that controls it. Actor is always the real Player or Mob body.
 type CharacterCommandContext struct {
-	Actor         combat.Combatant
-	World         *World
-	PrivateOutput func(string)
-	RawArgs       string
+	Actor           combat.Combatant
+	DescriptorOwner *Player
+	World           *World
+	PrivateOutput   func(string)
+	RawArgs         string
 }
 
 // CharacterCommandResult distinguishes an implemented actor callback from a

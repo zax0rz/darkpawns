@@ -1,0 +1,82 @@
+# C-first DP-1521 door-handler witness. The descriptor owner is moved to 8105,
+# while the switched body (Satan Klaus, level 40) is in 8162 with its own
+# inventory and weapon. The
+# body opens, closes, locks, and unlocks its room exit, then fails a pick with
+# C's dummy_mob skill value of zero (src/db.c:104,1281; src/utils.h:343).
+# C call path: command lookup and body dispatch (src/interpreter.c:910-947),
+# do_gen_door and ok_pick (src/act.movement.c:597-642, 536-558).
+# depth-case: door.switched-body-commands
+# depth-case: appraise.switched-mobile
+# depth-case: peek.switched-mobile
+# depth-case: pour.switched-mobile
+# depth-case: fill.switched-mobile
+# depth-case: write.switched-mobile
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 1 gate
+spawn-mob 69 1 8162 80
+spawn-mob 70 1 8162 80
+give-object 70 8032 1 80
+give-object 70 8027 1 80
+give-object 70 8063 1 80
+give-object 70 1207 1 80
+give-object 70 1208 1 80
+equip-object 70 8022 999 16 80
+equip-object 70 8027 999 17 80
+spawn-obj 4845 1 8162 80
+
+[setup:oracle]
+Doorbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Doorbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+switch satan
+open
+open gate
+open gate
+close gate
+close gate
+lock gate
+unlock gate
+lock gate
+pick gate
+unlock gate
+appraise bag
+peek clone
+pour skin out
+fill skin fountain
+fill skin fountain
+write parchment quill
+Written by the switched hand.
+@
+look at parchment
+write parchment quill
