@@ -151,13 +151,13 @@ func (s *Session) actingOLCZone() int {
 	return zone
 }
 
-// mobSwitchedOriginal reports whether playerName addresses the original body
-// of a session currently switched into an NPC. C's do_switch detaches that
-// body's descriptor (act.wizard.c:1200, ch->desc = NULL), so a send_to_char
-// addressed to the switched-away original drops at the descriptor gate.
-func (m *Manager) mobSwitchedOriginal(s *Session, playerName string) bool {
-	return s != nil && s.isSwitched && s.switchedMob != nil &&
-		s.switchedOriginal != nil &&
+// switchedAwayOriginal reports whether playerName addresses the original
+// body of a session currently switched into another body. C's do_switch
+// detaches that body's descriptor for NPC and PC riders alike
+// (act.wizard.c:1199-1200, ch->desc = NULL), so a send_to_char addressed to
+// the switched-away original drops at the descriptor gate.
+func (m *Manager) switchedAwayOriginal(s *Session, playerName string) bool {
+	return s != nil && s.isSwitched && s.switchedOriginal != nil &&
 		strings.EqualFold(playerName, s.switchedOriginal.Name)
 }
 

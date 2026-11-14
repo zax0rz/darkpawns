@@ -404,7 +404,7 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		// rider is in an NPC (act.wizard.c:1200, ch->desc = NULL), so a
 		// send_to_char addressed to the switched-away original drops at the
 		// descriptor gate.
-		if m.mobSwitchedOriginal(s, playerName) {
+		if m.switchedAwayOriginal(s, playerName) {
 			return
 		}
 		// Wrap in JSON event envelope for WebSocket clients
@@ -457,7 +457,7 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		}
 		// Same descriptor gate as MessageSink: the mob-switched original has
 		// no descriptor (act.wizard.c:1200).
-		if m.mobSwitchedOriginal(s, playerName) {
+		if m.switchedAwayOriginal(s, playerName) {
 			return
 		}
 		s.sendLiteralText(string(msg))
