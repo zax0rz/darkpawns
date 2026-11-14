@@ -15,18 +15,23 @@ var Phases = []string{
 	"one-quarter full(waning)",
 }
 
-// Hometown names (hometowns[])
+// Hometown names (hometowns[], src/constants.c:51-59)
 var Hometowns = []string{
 	"!Bad Hometown - Tell a God!",
 	"Kir Drax'in",
 	"Kir-Oshi",
 	"Alaozar",
+	"Add a new hometown here!",
 }
 
 // HometownName returns the canonical Dark Pawns hometown for a stored
-// GET_HOME index. Invalid values use C's index-zero sentinel.
+// GET_HOME index. Index 5 returns C's "\n" table sentinel (src/constants.c:58);
+// out-of-bounds indices (< 0 or > 5, which are UB in C) fall back to index 0.
 func HometownName(hometown int) string {
-	if hometown < 0 || hometown >= len(Hometowns) {
+	if hometown == len(Hometowns) {
+		return "\n"
+	}
+	if hometown < 0 || hometown > len(Hometowns) {
 		return Hometowns[0]
 	}
 	return Hometowns[hometown]
