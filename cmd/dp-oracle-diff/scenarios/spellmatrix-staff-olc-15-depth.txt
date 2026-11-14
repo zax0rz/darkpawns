@@ -8,6 +8,15 @@
 # depth-case: spell.haste.matrix-staff-olc
 # depth-case: spell.slow.matrix-staff-olc
 
+# Staggered fan-out (DP-1456 follow-up): each use block keeps ONE designated
+# victim in the room so C's people-list iteration over world[].people
+# (src/spell_parser.c:790-809) cannot vary. ItemView and ItemBuilder wait
+# in room 3001; the builder teleports back only for its oedit+load (the
+# load lands the staff in the builder's room) and parks again before
+# `use`, so the fan-out set is exactly [ItemMage, ItemPeer]. Blocks whose
+# spell moves the victim or the actor end with a builder teleport recall.
+# The immortal builder issues every room move; the actor is level 30.
+
 [fixture]
 empty-players
 quiet-mobs
@@ -162,6 +171,7 @@ set player ItemMage level 30
 
 
 [probe]
+send:builder teleport ItemView 3001
 get staff1501
 hold staff1501
 use staff1501
@@ -172,6 +182,7 @@ score
 send:peer score
 send:observer score
 look
+send:builder goto 8162
 send:builder oedit 8054
 send:builder 1
 send:builder staff1502
@@ -182,7 +193,6 @@ send:builder 1
 send:builder 95
 send:builder q
 send:builder y
-load obj 8054
 get staff1502
 hold staff1502
 use staff1502
@@ -193,6 +203,7 @@ score
 send:peer score
 send:observer score
 look
+send:builder goto 8162
 send:builder oedit 8054
 send:builder 1
 send:builder staff1503
@@ -204,6 +215,7 @@ send:builder 96
 send:builder q
 send:builder y
 load obj 8054
+send:builder goto 3001
 get staff1503
 hold staff1503
 use staff1503
@@ -214,6 +226,7 @@ score
 send:peer score
 send:observer score
 look
+send:builder goto 8162
 send:builder oedit 8054
 send:builder 1
 send:builder staff1504
@@ -225,6 +238,7 @@ send:builder 97
 send:builder q
 send:builder y
 load obj 8054
+send:builder goto 3001
 get staff1504
 hold staff1504
 use staff1504
@@ -235,6 +249,7 @@ score
 send:peer score
 send:observer score
 look
+send:builder goto 8162
 send:builder oedit 8054
 send:builder 1
 send:builder staff1505
@@ -246,6 +261,7 @@ send:builder 98
 send:builder q
 send:builder y
 load obj 8054
+send:builder goto 3001
 get staff1505
 hold staff1505
 use staff1505
