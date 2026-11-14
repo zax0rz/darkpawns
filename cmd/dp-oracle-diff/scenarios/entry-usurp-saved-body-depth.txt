@@ -2,6 +2,7 @@
 # the playing body. C's perform_dupe_check takes over the body, closes the old
 # socket, and sends the takeover act to the room (src/interpreter.c:1528-1649).
 # depth-case: entry.reconnect-usurp
+# depth-case: entry.identity-persistent-id-duplicate-sessions
 
 [fixture]
 seed-player
