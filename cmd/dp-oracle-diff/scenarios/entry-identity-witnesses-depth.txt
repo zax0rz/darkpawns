@@ -1,0 +1,57 @@
+# depth-case: entry.identity-name-index-lookup
+# C folds player-table names for lookup (src/db.c:519-523,2340-2353,2651-2678;
+# src/interpreter.c:1492-1498; src/objsave.c:263-269).
+# Setup creates "Idfold"; after <RESTART>, [relogin] logs in with the
+# lowercase "idfold" and must resolve to the same saved character and score.
+
+[fixture]
+quiet-mobs
+empty-players
+
+[setup:oracle]
+Idfold
+Y
+foldpass
+foldpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Idfold
+y
+foldpass
+foldpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+idfold
+foldpass
+<ENTER>
+1
+
+[relogin:port]
+idfold
+foldpass
+<ENTER>
+1
+
+[warmup]
+save
+
+[probe]
+score
+<RESTART>
+score
