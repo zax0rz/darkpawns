@@ -806,7 +806,6 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	if attacker.IsNPC() && ce.MobSpecialFunc != nil {
 		ce.MobSpecialFunc(attacker)
 	}
-
 }
 
 // scrambleBroadcast emits the "$n scrambles to $s feet!" stand-up message
