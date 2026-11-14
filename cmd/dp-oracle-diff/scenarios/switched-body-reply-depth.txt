@@ -1,0 +1,54 @@
+# depth-case: switched-communication.reply-body-dummy-record
+# depth-case: switched-communication.reply-dot-alias-body
+# depth-case: communication-ordinary.reply-immortal-own-record
+# C do_reply reads GET_LAST_TELL(ch) from ch->player_specials (src/act.comm.c:932-
+# 975). Every mobile shares the zeroed dummy_mob record (src/db.c:104,1281), so
+# a switched NPC starts with last_tell 0: bare reply prints "What is your
+# reply?" (0 != NOBODY) and reply with text searches for idnum 0 and prints
+# "They are no longer playing.". The immortal's own record is NOBODY (-1), so
+# after return, bare reply prints "You have no-one to reply to!".
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8162 80
+
+[setup:oracle]
+Switchreply
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchreply
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+switch clone
+
+[probe]
+reply
+reply hello
+.
+. hello
+return
+reply

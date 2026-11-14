@@ -57,6 +57,11 @@ type World struct {
 	// every NPC reads and increments the same counter (src/db.c:104,1281).
 	mobKillCount atomic.Int64
 
+	// npcDummyLastTell mirrors the same shared dummy_mob.player_specials
+	// record's last_tell (src/db.c:104,1281; src/act.comm.c:894). Every mobile
+	// reads and writes this one zeroed value; a player keeps its own record.
+	npcDummyLastTell atomic.Int64
+
 	// zoneResetMu serializes boot, manual, admin and heartbeat resets.
 	// It precedes brief World/Spawner locks; no lifecycle lock is acquired.
 	zoneResetMu      sync.Mutex
