@@ -596,7 +596,9 @@ func canCarryStolenItem(ch *Player, item *ObjectInstance) (bool, string) {
 func applyStealFailure(ch *Player, target combat.Combatant, result *SkillResult) {
 	if target.IsNPC() {
 		if target.GetPosition() > combat.PosSleeping {
-			result.StartCombat = true
+			result.RetaliateHit = true
+			result.RetaliateHitAfterMessages = true
+			result.RetaliateHitUnenrolled = true
 		}
 		return
 	}

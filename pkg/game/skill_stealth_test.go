@@ -286,8 +286,9 @@ func TestDoStealFailureAggrosAwakeMob(t *testing.T) {
 	if result.Success || result.MessageToCh != "Oops.." {
 		t.Fatalf("failed coin steal result = %+v", result)
 	}
-	if !result.StartCombat {
-		t.Error("failed steal against awake NPC must initiate combat")
+	if !result.RetaliateHit || !result.RetaliateHitAfterMessages || !result.RetaliateHitUnenrolled || result.StartCombat {
+		t.Errorf("failed steal against awake NPC retaliation flags = (retaliate=%v, after=%v, unenrolled=%v, start=%v), want (true, true, true, false)",
+			result.RetaliateHit, result.RetaliateHitAfterMessages, result.RetaliateHitUnenrolled, result.StartCombat)
 	}
 	if result.MessageToVict != "You discover that Thief has his hands in your wallet." {
 		t.Errorf("victim message = %q", result.MessageToVict)
