@@ -8,6 +8,15 @@
 # depth-case: spell.meteor-swarm.matrix-staff-olc
 # depth-case: spell.word-of-recall.matrix-staff-olc
 
+# Staggered fan-out (DP-1456 follow-up): each use block keeps ONE designated
+# victim in the room so C's people-list iteration over world[].people
+# (src/spell_parser.c:790-809) cannot vary. ItemView and ItemBuilder wait
+# in room 3001; the builder teleports back only for its oedit+load (the
+# load lands the staff in the builder's room) and parks again before
+# `use`, so the fan-out set is exactly [ItemMage, ItemPeer]. Blocks whose
+# spell moves the victim or the actor end with a builder teleport recall.
+# The immortal builder issues every room move; the actor is level 30.
+
 [fixture]
 empty-players
 quiet-mobs
@@ -161,6 +170,7 @@ set player ItemMage level 30
 
 
 [probe]
+send:builder teleport ItemView 3001
 get staff0601
 hold staff0601
 use staff0601
@@ -171,6 +181,7 @@ score
 send:peer score
 send:observer score
 look
+send:builder goto 8162
 send:builder oedit 8054
 send:builder 1
 send:builder staff0602
@@ -181,7 +192,6 @@ send:builder 1
 send:builder 39
 send:builder q
 send:builder y
-load obj 8054
 get staff0602
 hold staff0602
 use staff0602
@@ -192,6 +202,7 @@ score
 send:peer score
 send:observer score
 look
+send:builder goto 8162
 send:builder oedit 8054
 send:builder 1
 send:builder staff0603
@@ -203,6 +214,7 @@ send:builder 40
 send:builder q
 send:builder y
 load obj 8054
+send:builder goto 3001
 get staff0603
 hold staff0603
 use staff0603
@@ -213,6 +225,7 @@ score
 send:peer score
 send:observer score
 look
+send:builder goto 8162
 send:builder oedit 8054
 send:builder 1
 send:builder staff0604
@@ -224,6 +237,7 @@ send:builder 41
 send:builder q
 send:builder y
 load obj 8054
+send:builder goto 3001
 get staff0604
 hold staff0604
 use staff0604
@@ -234,6 +248,7 @@ score
 send:peer score
 send:observer score
 look
+send:builder goto 8162
 send:builder oedit 8054
 send:builder 1
 send:builder staff0605
@@ -245,6 +260,7 @@ send:builder 42
 send:builder q
 send:builder y
 load obj 8054
+send:builder goto 3001
 get staff0605
 hold staff0605
 use staff0605
