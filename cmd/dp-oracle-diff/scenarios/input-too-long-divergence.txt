@@ -1,0 +1,43 @@
+# depth-case: input.line-too-long-notice
+# C-first witness for DP-1528, restored from flash's retained run
+# (~/Archives/darkpawns/oracle-runs/2026-11-13/flash-l1-comm-1). C's
+# process_input (src/comm.c:1969-1999) caps a processed line at 255 kept
+# bytes and answers an over-long line with "Line too long.  Truncated to:"
+# plus the kept prefix before running it; 300 x's print the notice, 255 x's,
+# then "Huh?!?". On origin/main the port truncated silently at 1024.
+# Red on origin/main: kimi-dp1528-red (2026-11-14); green: kimi-dp1528-green.
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Longline
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Longline
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+look
