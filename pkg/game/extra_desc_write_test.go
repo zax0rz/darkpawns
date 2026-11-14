@@ -171,10 +171,8 @@ func TestSetLiveObjExtraDescConcurrentReaders(t *testing.T) {
 
 	var wg sync.WaitGroup
 	stop := make(chan struct{})
-	for i := 0; i < 4; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 4 {
+		wg.Go(func() {
 			for {
 				select {
 				case <-stop:
@@ -190,9 +188,9 @@ func TestSetLiveObjExtraDescConcurrentReaders(t *testing.T) {
 					return
 				}
 			}
-		}()
+		})
 	}
-	for i := 0; i < 2000; i++ {
+	for i := range 2000 {
 		if !w.SetLiveObjExtraDesc(3001, "crust", fmt.Sprintf("crust %d", i)) {
 			t.Fatalf("write %d refused", i)
 		}
