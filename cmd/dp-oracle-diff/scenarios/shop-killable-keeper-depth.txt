@@ -1,0 +1,31 @@
+# depth-case: shops.audit.ok-damage-killable-keeper
+# C ok_damage_shopkeeper refuses only a keeper whose shop lacks the
+# WILL_START_FIGHT bit (SHOP_KILL_CHARS, src/shop.h:176; src/shop.c:1011-1023).
+# Indexed shipped shop 7001 sets that bit (lib/world/shp/70.shp), so its
+# keeper Padrisha (7035) takes the ordinary hit path in the Plated Ingot
+# (7010). The protected-keeper control is hit.shopkeeper-gate.
+
+[fixture]
+seed-player
+quiet-mobs
+quiet-zone 70
+spawn-mob 7035 1 7010 70
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 7010
+set player Testor level 30
+
+[probe]
+hit padrisha

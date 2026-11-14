@@ -6,6 +6,8 @@ package main
 // sides actually define.
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -19,6 +21,7 @@ func TestFaultPathsResolveOnBothSides(t *testing.T) {
 		{Verb: "fault-dir", Target: "object_idlist"},
 		{Verb: "fault-corrupt-mail", Target: "unaligned"},
 		{Verb: "fault-board", Target: "19652", Detail: "empty-message-huge-slot"},
+		{Verb: "fault-shop-temper", Target: "8038", Detail: "1"},
 	} {
 		cPath, goPath, err := faultPaths(trees, ff)
 		if err != nil {
@@ -71,5 +74,33 @@ func TestParseFaultStepRejectsUnknown(t *testing.T) {
 	}
 	if _, ok := parseFaultStep([]string{"fault-corrupt-mail", "bad-header"}); !ok {
 		t.Fatal("parseFaultStep rejected a valid corrupt-mail step")
+	}
+}
+
+// setShopTemper must rewrite exactly the target record's temper line and leave
+// every other byte alone, including a second record in the same file.
+func TestSetShopTemperRewritesOnlyTheTargetField(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "80.shp")
+	body := "CircleMUD v3.0 Shop File~\n" +
+		"#8037~\n" + // another shop: products, profits, a buy type, 7 messages
+		"8000\n-1\n1.00\n0.50\n1\n-1\n" +
+		"a~\nb~\nc~\nd~\ne~\nf~\ng~\n0\n0\n8004\n0\n8037\n-1\n0\n28\n0\n28\n" +
+		"#8038~\n" +
+		"8000\n-1\n1.20\n0.60\n2\n-1\n" +
+		"m1~\nm2~\nm3~\nm4~\nm5~\nm6~\nm7~\n0\n0\n8005\n0\n8038\n-1\n0\n28\n0\n28\n$~\n"
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := setShopTemper(path, 8038, 2); err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := strings.Replace(body, "m7~\n0\n0\n8005", "m7~\n2\n0\n8005", 1)
+	if string(got) != want {
+		t.Fatalf("setShopTemper changed more than the target temper line:\n%s", got)
 	}
 }

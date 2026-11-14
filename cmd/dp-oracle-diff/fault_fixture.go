@@ -73,6 +73,17 @@ func faultPaths(t faultTrees, ff oraclediff.FaultFixture) (cPath, goPath string,
 		// fault driven by DP_FAULT_OBJECT_SAVE in the session layer; there is
 		// no Go path to mutate.
 		return filepath.Join(t.oracleLib, "plrobjs", crashFileBucket(ff.Target), strings.ToLower(ff.Target)+".objs"), "", nil
+	case "fault-shop-temper":
+		// C reads shops from world/shp/<zone>.shp under the -d root
+		// (src/db.h:47 SHP_PREFIX); Go reads the same relative path under its
+		// -world directory. Both are text, so one rewrite produces the same
+		// record for each engine.
+		vnum, convErr := strconv.Atoi(ff.Target)
+		if convErr != nil || vnum <= 0 {
+			return "", "", fmt.Errorf("fault-shop-temper: invalid shop vnum %q", ff.Target)
+		}
+		name := fmt.Sprintf("%d.shp", vnum/100)
+		return filepath.Join(t.oracleLib, "world", "shp", name), filepath.Join(t.goWorld, "shp", name), nil
 	}
 	return "", "", fmt.Errorf("fault fixture %v: unknown target", ff)
 }
@@ -146,6 +157,23 @@ func applyFaultVerb(t faultTrees, ff oraclediff.FaultFixture) error {
 		return corruptMail(t, mode)
 	case "fault-board":
 		return corruptBoard(t, ff)
+	case "fault-shop-temper":
+		temper, convErr := strconv.Atoi(ff.Detail)
+		if convErr != nil || temper < 0 || temper > 10 {
+			return fmt.Errorf("fault-shop-temper: invalid temper %q", ff.Detail)
+		}
+		vnum, convErr := strconv.Atoi(ff.Target)
+		if convErr != nil || vnum <= 0 {
+			return fmt.Errorf("fault-shop-temper: invalid shop vnum %q", ff.Target)
+		}
+		cPath, goPath, err := faultPaths(t, ff)
+		if err != nil {
+			return err
+		}
+		if err := setShopTemper(cPath, vnum, temper); err != nil {
+			return err
+		}
+		return setShopTemper(goPath, vnum, temper)
 	case "fault-crash-file":
 		// The Go side of this fault is DP_FAULT_OBJECT_SAVE, set once in the
 		// engine environment before boot (main.go); here only C's file is
@@ -343,4 +371,83 @@ func checkedUint32(v int, field string) (uint32, error) {
 		return 0, fmt.Errorf("fault-board: %s %d out of 32-bit range", field, v)
 	}
 	return uint32(v), nil
+}
+
+// setShopTemper rewrites one shop record's temper line in a disposable shop
+// file. C's SEDIT exposes no temper field (src/sedit.c:764-784), but the file
+// format carries it and shop_db reads it at boot (src/shop.c:1189), so a
+// targeted rewrite is the only way to witness shopping_buy's authored
+// SHOP_BROKE_TEMPER arms (src/shop.c:505-518) with shipped keepers and rooms.
+func setShopTemper(path string, shopVNum, temper int) error {
+	data, err := os.ReadFile(path) // #nosec G304 -- disposable harness tree resolved from faultPaths, never request text
+	if err != nil {
+		return fmt.Errorf("fault-shop-temper: read %s: %w", path, err)
+	}
+	lines := strings.Split(string(data), "\n")
+	header := fmt.Sprintf("#%d~", shopVNum)
+	start := -1
+	for i, line := range lines {
+		if strings.TrimSpace(line) == header {
+			start = i
+			break
+		}
+	}
+	if start < 0 {
+		return fmt.Errorf("fault-shop-temper: shop %d not found in %s", shopVNum, path)
+	}
+	i := start + 1
+	skipIntList := func() error {
+		for i < len(lines) {
+			if strings.TrimSpace(lines[i]) == "-1" {
+				i++
+				return nil
+			}
+			i++
+		}
+		return fmt.Errorf("fault-shop-temper: shop %d: unterminated integer list", shopVNum)
+	}
+	nextLine := func(what string) error {
+		if i >= len(lines) {
+			return fmt.Errorf("fault-shop-temper: shop %d: missing %s", shopVNum, what)
+		}
+		i++
+		return nil
+	}
+	if err := skipIntList(); err != nil { // products
+		return err
+	}
+	if err := nextLine("buy profit"); err != nil {
+		return err
+	}
+	if err := nextLine("sell profit"); err != nil {
+		return err
+	}
+	if err := skipIntList(); err != nil { // buy types
+		return err
+	}
+	for msg := range 7 { // no_such_item1/2, do_not_buy, missing_cash1/2, buy, sell
+		closed := false
+		for i < len(lines) {
+			line := lines[i]
+			i++
+			if strings.HasSuffix(line, "~") {
+				closed = true
+				break
+			}
+		}
+		if !closed {
+			return fmt.Errorf("fault-shop-temper: shop %d: message %d is unterminated", shopVNum, msg+1)
+		}
+	}
+	if i >= len(lines) {
+		return fmt.Errorf("fault-shop-temper: shop %d: missing temper line", shopVNum)
+	}
+	if _, convErr := strconv.Atoi(strings.TrimSpace(lines[i])); convErr != nil {
+		return fmt.Errorf("fault-shop-temper: shop %d: temper line %q is not an integer", shopVNum, lines[i])
+	}
+	lines[i] = strconv.Itoa(temper)
+	if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o600); err != nil { // #nosec G304,G306 -- same disposable-tree path, fixed content
+		return fmt.Errorf("fault-shop-temper: write %s: %w", path, err)
+	}
+	return nil
 }

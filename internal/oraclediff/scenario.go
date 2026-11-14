@@ -133,9 +133,9 @@ type MiscFileFixture struct {
 // disposable harness trees so the C oracle and the Go port observe the same
 // unreadable or corrupt state.
 type FaultFixture struct {
-	Verb   string // fault-dir, fault-corrupt-mail, fault-board, fault-crash-file
-	Target string // logical path (dir), corruption mode (mail), player (crash)
-	Detail string // malformation (board)
+	Verb   string // fault-dir, fault-corrupt-mail, fault-board, fault-crash-file, fault-shop-temper
+	Target string // logical path (dir), corruption mode (mail), player (crash), shop vnum
+	Detail string // malformation (board), temper value (shop)
 }
 
 // ScriptTwinFixture describes a direct on-disk twin for a live editor save.
@@ -492,7 +492,8 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			} else if len(fields) > 0 && strings.EqualFold(fields[0], "fault-dir") ||
 				strings.EqualFold(fields[0], "fault-corrupt-mail") ||
 				strings.EqualFold(fields[0], "fault-board") ||
-				strings.EqualFold(fields[0], "fault-crash-file") {
+				strings.EqualFold(fields[0], "fault-crash-file") ||
+				strings.EqualFold(fields[0], "fault-shop-temper") {
 				return Scenario{}, fmt.Errorf("scenario %q line %d: invalid fault fixture", name, lineNo)
 			}
 			if len(fields) >= 4 && fields[0] == "misc-file" {
@@ -915,6 +916,14 @@ func parseFaultFixture(fields []string) (FaultFixture, bool) {
 	case "fault-crash-file":
 		if len(fields) == 2 {
 			return FaultFixture{Verb: "fault-crash-file", Target: fields[1]}, true
+		}
+	case "fault-shop-temper":
+		if len(fields) == 3 {
+			if vnum, err := strconv.Atoi(fields[1]); err == nil && vnum > 0 {
+				if temper, temperErr := strconv.Atoi(fields[2]); temperErr == nil && temper >= 0 && temper <= 10 {
+					return FaultFixture{Verb: "fault-shop-temper", Target: fields[1], Detail: fields[2]}, true
+				}
+			}
 		}
 	}
 	return FaultFixture{}, false

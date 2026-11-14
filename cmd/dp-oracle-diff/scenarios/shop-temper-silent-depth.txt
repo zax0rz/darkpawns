@@ -1,0 +1,33 @@
+# depth-case: shops.audit.other-temper-silent
+# The same unaffordable purchase with SHOP_BROKE_TEMPER 2 takes C's default
+# arm: the keeper tell only, no social and no emote (src/shop.c:506-517).
+# The shop file's temper line is rewritten in both disposable trees because
+# SEDIT does not expose it; keeper and room are shipped.
+
+[fixture]
+seed-player
+quiet-mobs
+quiet-zone 80
+fault-shop-temper 8038 2
+spawn-mob 8005 1 8038 80
+give-object 8005 8037 1 80
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8038
+set player Testor gold 0
+set player Testor level 30
+
+[probe]
+buy sword
