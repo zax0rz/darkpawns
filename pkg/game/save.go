@@ -17,6 +17,11 @@ const (
 	// Existing saves without a version field are treated as version 0.
 	// Version 2 moved PRF preferences to prfBase in Flags; see migrateFlagsV1.
 	CurrentSaveVersion = 2
+
+	// cMaxAffect is C's MAX_AFFECT (src/structs.h:655): char_to_store copies
+	// at most this many affect records into the store (db.c:2547) and the
+	// live re-add drops the rest (db.c:2627-2631).
+	cMaxAffect = 32
 )
 
 // savePlayerData is a JSON-serializable snapshot of a Player for save/load.
@@ -481,4 +486,30 @@ func migrateFlagsV1(old uint64) uint64 {
 		}
 	}
 	return out
+}
+
+// ApplyCharToStoreSideEffects runs the live-character transformation C's
+// char_to_store performs at every save_char: the affects are stripped and
+// re-added in stored-array order (src/db.c:2576-2577, 2627-2631), and
+// affect_to_char prepends (src/handler.c:415-416), so the live list comes
+// back reversed and truncated at MAX_AFFECT (structs.h:655; db.c:2547's copy
+// bound). tattoo_af (db.c:2625) calls only affect_modify and writes no
+// affect records. The stored bytes are unaffected: st->affected[] keeps the
+// pre-strip list order (db.c:2547-2558). Callers are the save_char-equivalent
+// writers (the session's savePlayer and the close/menu/creation paths); C's
+// object rent write (Crash_crashsave) does not run char_to_store and must not
+// call this.
+func (p *Player) ApplyCharToStoreSideEffects() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if n := len(p.ActiveAffects); n > 0 {
+		if n > cMaxAffect {
+			n = cMaxAffect
+		}
+		live := make([]*engine.Affect, 0, n)
+		for i := n - 1; i >= 0; i-- {
+			live = append(live, p.ActiveAffects[i])
+		}
+		p.ActiveAffects = live
+	}
 }
