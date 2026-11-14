@@ -21,6 +21,66 @@ func cInputLine(line string) string {
 	return line
 }
 
+// maxCInputLine is C's process_input budget: MAX_INPUT_LENGTH-1 kept bytes
+// per line (src/structs.h:644, src/comm.c:1971).
+const maxCInputLine = 255
+
+// cTruncateInputLine applies C's over-long line rule on top of the character
+// pass (src/comm.c:1969-1999): each kept character costs 1 against a 255-byte
+// budget and a kept '$' costs 2 (C doubles it into the command buffer); a
+// backspace pops the last kept character, restoring its cost. When the
+// budget runs out before the line ends, C keeps the processed prefix and
+// FIRST sends the player "Line too long.  Truncated to:\r\n<prefix>\r\n" --
+// with the '$' doubling visible, exactly as C's buffer holds it -- and then
+// runs the prefix as the command. Returns the line to run (never over
+// budget, '$' undoubled for Go's consumers) and the notice to send first
+// ("" when the line fits, matching C's (space_left <= 0 && ptr < nl_pos)
+// condition exactly: a line ending as the budget empties is not too long).
+func cTruncateInputLine(line string) (run string, notice string) {
+	kept := make([]byte, 0, len(line))
+	budget := maxCInputLine
+	tooLong := false
+	for i := 0; i < len(line); i++ {
+		if budget <= 0 {
+			// C's loop stops copying but still consumes to the newline;
+			// the notice fired when the copy stopped with input remaining.
+			tooLong = true
+			break
+		}
+		switch c := line[i]; {
+		case c == '\b':
+			if len(kept) > 0 {
+				last := kept[len(kept)-1]
+				kept = kept[:len(kept)-1]
+				if last == '$' {
+					budget += 2
+				} else {
+					budget++
+				}
+			}
+		case c >= 0x20 && c <= 0x7e:
+			kept = append(kept, c)
+			if c == '$' {
+				budget -= 2
+			} else {
+				budget--
+			}
+		}
+	}
+	run = string(kept)
+	if !tooLong {
+		return run, ""
+	}
+	var doubled bytes.Buffer
+	for _, c := range kept {
+		doubled.WriteByte(c)
+		if c == '$' {
+			doubled.WriteByte('$')
+		}
+	}
+	return run, "Line too long.  Truncated to:\r\n" + doubled.String() + "\r\n"
+}
+
 func cInputLineSlow(line string) string {
 	kept := make([]byte, 0, len(line))
 	for i := 0; i < len(line); i++ {

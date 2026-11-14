@@ -325,8 +325,14 @@ func (s *Session) TerminalNamed() bool {
 // false when the connection should close.
 func (s *Session) TerminalLine(rawLine string) bool {
 	// Telnet and the browser terminal both arrive here: apply C's
-	// process_input character pass before any consumer sees the line.
+	// process_input character pass before any consumer sees the line, then
+	// C's over-long line rule (src/comm.c:1969-1999): the truncation notice
+	// is written before the cut command runs (DP-1528).
 	rawLine = cInputLine(rawLine)
+	rawLine, notice := cTruncateInputLine(rawLine)
+	if notice != "" {
+		s.Send(notice)
+	}
 	// C's seam consumes a DP_CLOCK control before the history step; every
 	// other line runs it (src/comm.c:1999-2005).
 	if _, isControl := clockControlPulses(strings.TrimSpace(rawLine)); !isControl {
