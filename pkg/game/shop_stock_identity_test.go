@@ -16,31 +16,31 @@ func TestSameShopObjectComparesCRNUMCostExtraFlagsAndAffects(t *testing.T) {
 	proto := &parser.Obj{VNum: 5100, Cost: 10}
 	left := NewObjectInstance(proto, -1)
 	right := NewObjectInstance(proto, -1)
-	if !sameShopObject(left, right) {
+	if !SameShopObject(left, right) {
 		t.Fatal("identical objects must compare equal")
 	}
 
 	other := NewObjectInstance(&parser.Obj{VNum: 5101, Cost: 10}, -1)
-	if sameShopObject(left, other) {
+	if SameShopObject(left, other) {
 		t.Fatal("different prototype/vnum must not compare equal")
 	}
 
 	cost := 11
 	dearer := NewObjectInstance(proto, -1)
 	dearer.CostOverride = &cost
-	if sameShopObject(left, dearer) {
+	if SameShopObject(left, dearer) {
 		t.Fatal("different cost must not compare equal")
 	}
 
 	flagged := NewObjectInstance(proto, -1)
 	flagged.SetExtraFlags(1)
-	if sameShopObject(left, flagged) {
+	if SameShopObject(left, flagged) {
 		t.Fatal("different extra flags must not compare equal")
 	}
 
 	differentCount := NewObjectInstance(proto, -1)
 	differentCount.SetAffectsOverride([]parser.ObjAffect{{Location: 1, Modifier: 2}})
-	if sameShopObject(left, differentCount) {
+	if SameShopObject(left, differentCount) {
 		t.Fatal("different affect count must not compare equal")
 	}
 
@@ -48,19 +48,19 @@ func TestSameShopObjectComparesCRNUMCostExtraFlagsAndAffects(t *testing.T) {
 	sameLocation.SetAffectsOverride([]parser.ObjAffect{{Location: 1, Modifier: 2}})
 	differentModifier := NewObjectInstance(proto, -1)
 	differentModifier.SetAffectsOverride([]parser.ObjAffect{{Location: 1, Modifier: 3}})
-	if sameShopObject(sameLocation, differentModifier) {
+	if SameShopObject(sameLocation, differentModifier) {
 		t.Fatal("different affect modifier must not compare equal")
 	}
 
 	differentLocation := NewObjectInstance(proto, -1)
 	differentLocation.SetAffectsOverride([]parser.ObjAffect{{Location: 2, Modifier: 2}})
-	if sameShopObject(sameLocation, differentLocation) {
+	if SameShopObject(sameLocation, differentLocation) {
 		t.Fatal("different affect location must not compare equal")
 	}
 
 	equal := NewObjectInstance(proto, -1)
 	equal.SetAffectsOverride([]parser.ObjAffect{{Location: 1, Modifier: 2}})
-	if !sameShopObject(sameLocation, equal) {
+	if !SameShopObject(sameLocation, equal) {
 		t.Fatal("equal affects must compare equal")
 	}
 }

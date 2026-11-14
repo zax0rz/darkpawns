@@ -149,32 +149,13 @@ func shopListKeywordMatches(keyword, keywords string) bool {
 	return false
 }
 
-func shopObjectsSame(left, right *game.ObjectInstance) bool {
-	if left == nil || right == nil || left.GetVNum() != right.GetVNum() || left.GetCost() != right.GetCost() {
-		return false
-	}
-	if left.GetExtraFlags() != right.GetExtraFlags() {
-		return false
-	}
-	leftAffects, rightAffects := left.GetAffects(), right.GetAffects()
-	if len(leftAffects) != len(rightAffects) {
-		return false
-	}
-	for i := range leftAffects {
-		if leftAffects[i] != rightAffects[i] {
-			return false
-		}
-	}
-	return true
-}
-
 func shopObjectIsProduced(s *Session, shop *game.Shop, obj *game.ObjectInstance) bool {
 	for _, vnum := range shop.SellTypes {
 		proto, ok := s.manager.world.GetObjPrototype(vnum)
 		if !ok {
 			continue
 		}
-		if shopObjectsSame(obj, game.NewObjectInstance(proto, -1)) {
+		if game.SameShopObject(obj, game.NewObjectInstance(proto, -1)) {
 			return true
 		}
 	}
@@ -202,7 +183,7 @@ func findShopPurchaseObject(name string, inventory []*game.ObjectInstance, viewe
 			if obj == nil || obj.GetCost() <= 0 || !game.CanSeeObject(viewer, obj) {
 				continue
 			}
-			if last != nil && shopObjectsSame(last, obj) {
+			if last != nil && game.SameShopObject(last, obj) {
 				continue
 			}
 			group++
@@ -231,7 +212,7 @@ func findShopPurchaseObject(name string, inventory []*game.ObjectInstance, viewe
 		if obj == nil || !game.CanSeeObject(viewer, obj) || !shopListKeywordMatches(keyword, obj.GetKeywords()) {
 			continue
 		}
-		if last != nil && shopObjectsSame(last, obj) {
+		if last != nil && game.SameShopObject(last, obj) {
 			continue
 		}
 		group++
@@ -342,7 +323,7 @@ func cmdList(s *Session, args []string) error {
 		}
 		if last == nil {
 			last, count = obj, 1
-		} else if shopObjectsSame(last, obj) {
+		} else if game.SameShopObject(last, obj) {
 			count++
 		} else {
 			flush()
@@ -454,13 +435,13 @@ func cmdBuy(s *Session, args []string) error {
 		if err != nil {
 			return err
 		}
-		if !shopObjectsSame(lastBought, stock) {
+		if !game.SameShopObject(lastBought, stock) {
 			break
 		}
 	}
 	if bought < count {
 		switch {
-		case stock == nil || !shopObjectsSame(lastBought, stock):
+		case stock == nil || !game.SameShopObject(lastBought, stock):
 			sendShopKeeperTell(s, keeper, "%s I only have %d to sell you.", s.player.GetName(), bought)
 		case s.player.GetGold() < price(stock):
 			sendShopKeeperTell(s, keeper, "%s You can only afford %d.", s.player.GetName(), bought)

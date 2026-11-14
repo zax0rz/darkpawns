@@ -1,0 +1,6 @@
+--- FAIL: TestCmdBuyStopsOnSecondStockGroup (0.00s)
+    shop_second_group_test.go:62: buy 2 across two identity groups = "A merchant tells you, 'That'll be 30 coins, thanks.'\r\nYou now have a green apple (x 2).\n\r", want C's one-group stop
+FAIL
+FAIL	github.com/zax0rz/darkpawns/pkg/session	0.007s
+FAIL
+EXIT=1
