@@ -1,0 +1,54 @@
+# depth-case: entry.identity-name-index-lookup
+# depth-case: entry.identity-persistent-id-duplicate-sessions
+# L1/L3 settlement vehicle for the entry-identity rows. C folds player-table
+# names for lookup (src/db.c:519-523,2651-2678): the relogin below types the
+# lowercase form of the setup-time name and must resolve to the same
+# character. The probe then relogs the SAME character while its body is
+# playing, exercising perform_dupe_check (src/db.c:2313-2336;
+# src/interpreter.c:1528-1563) -- the second login takes the body over from
+# the live session and C prints its takeover bytes.
+
+[fixture]
+quiet-mobs
+seed-player
+
+[setup:oracle]
+Foldname
+foldpass
+foldpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+
+[setup:port]
+Foldname
+foldpass
+foldpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+
+[relogin:oracle]
+foldname
+~dpclock pulse 1
+foldpass
+
+[relogin:port]
+foldname
+~dpclock pulse 1
+foldpass
+
+[probe]
+1
+score
+<RELOGIN>
+1
+score
