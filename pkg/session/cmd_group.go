@@ -133,19 +133,26 @@ func cmdUngroup(s *Session, args []string) error {
 			return nil
 		}
 		disbandMsg := fmt.Sprintf("%s has disbanded the group.\r\n", s.player.Name)
-		for _, m := range s.manager.world.GetGroupMembers(s.player.Name) {
-			if m.Name == s.player.Name {
+		// C walks ch->followers — every follower, newest first, mobiles
+		// included (act.other.c:758, utils.c:472-476). Per grouped follower it
+		// clears AFF_GROUP, sends the disband line, and calls stop_follower
+		// only when the follower is not charmed (act.other.c:757-765;
+		// stop_follower's lines at utils.c:419-426).
+		for _, member := range s.manager.world.OrderedGroupFollowers(s.player.Name) {
+			if !game.GroupedActor(member) {
 				continue
 			}
-			// C clears AFF_GROUP and sends the disband line before it calls
-			// stop_follower, and calls stop_follower only for a non-charmed
-			// follower (src/act.other.c:757-765). Clearing the follow link
-			// silently dropped stop_follower's three player-facing lines
-			// (src/utils.c:419-426).
-			m.InGroup = false
-			m.SendMessage(disbandMsg)
-			if !m.IsAffected(game.AffCharm) {
-				game.StopFollower(s.manager.world, m)
+			game.SetGroupedActor(member, false)
+			member.SendMessage(disbandMsg)
+			switch body := member.(type) {
+			case *game.Player:
+				if !body.IsAffected(game.AffCharm) {
+					game.StopFollower(s.manager.world, body)
+				}
+			case *game.MobInstance:
+				if !body.IsAffected(game.AffCharm) {
+					game.StopFollowerMob(s.manager.world, body)
+				}
 			}
 		}
 		s.player.InGroup = false
@@ -182,10 +189,17 @@ func cmdUngroup(s *Session, args []string) error {
 		"You have been kicked out of $n's group!", "", game.ToVict)
 	game.Act(s.manager.world, false, s.player, victim, nil, nil,
 		"$N has been kicked out of $n's group!", "", game.ToNotVict)
-	if mob, ok := victim.(*game.MobInstance); ok {
-		game.StopFollowerMob(s.manager.world, mob)
-	} else if player, ok := victim.(*game.Player); ok {
-		game.StopFollower(s.manager.world, player)
+	// C calls stop_follower only when the kicked member is not charmed
+	// (act.other.c:792-793): a charmed follower stays following its master.
+	switch body := victim.(type) {
+	case *game.MobInstance:
+		if !body.IsAffected(game.AffCharm) {
+			game.StopFollowerMob(s.manager.world, body)
+		}
+	case *game.Player:
+		if !body.IsAffected(game.AffCharm) {
+			game.StopFollower(s.manager.world, body)
+		}
 	}
 	return nil
 }
