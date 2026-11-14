@@ -201,9 +201,8 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		}
 		curseDur := 1 + (getLevel(ch) >> 1)
 		// C applies exactly two AFF_CURSE records, for hitroll then damroll
-		// (src/magic.c:986-994). ActiveAffects is oldest-first while C's
-		// ch->affected list is newest-first, so keep the C insertion order
-		// here and reverse only when rendering that linked-list view.
+		// (src/magic.c:986-994). Both engines prepend, so inserting hitroll
+		// first leaves damroll at the head — C's exact list order.
 		pending = append(pending,
 			engine.NewAffectDirect(SpellCurse, engine.ApplyHitroll, curseDur, -3, engine.AFFCurse, "curse"),
 			engine.NewAffectDirect(SpellCurse, engine.ApplyDamroll, curseDur, -3, engine.AFFCurse, "curse"))
