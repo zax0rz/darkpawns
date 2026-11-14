@@ -1,4 +1,4 @@
-# depth-case: group.disband-newest-first-walk
+# depth-case: ungroup.disband-newest-first-walk
 # C-first vehicle for do_ungroup's follower walk (DP-1495). C's followers list
 # PREPENDS at add_follower (utils.c:472-476), so the disband walks followers
 # newest-first (act.other.c:758) — mobiles included — and its stop_follower
@@ -14,7 +14,6 @@
 [fixture]
 empty-players
 quiet-mobs
-spawn-mob 4500 1 10049 80
 replace-room-exits 10049 none
 
 [setup:oracle]
@@ -107,11 +106,15 @@ teleport Disbandalpha 10049
 teleport Disbandbeta 10049
 
 [probe]
+load mob 4500
+load mob 4501
+set mold hit 5000
+set mold maxhit 5000
 send:alpha follow Disbandgod
 send:beta follow Disbandgod
 group all
 cast 'charm person' rat
-group rat
+group all
 ungroup rat
 order rat smile
 ungroup
