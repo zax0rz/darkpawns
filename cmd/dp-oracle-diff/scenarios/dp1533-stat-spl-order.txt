@@ -51,6 +51,8 @@ cast 'globe of invulnerability' Splord
 ~dpclock pulse 630
 cast 'protection from good' Splord
 ~dpclock pulse 630
+cast 'word of intellect' Splord
+~dpclock pulse 630
 load obj 4819
 recite book
 ~dpclock pulse 630
