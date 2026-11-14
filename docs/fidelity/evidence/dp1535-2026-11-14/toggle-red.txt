@@ -1,0 +1,27 @@
+capture-statistics	blocks=1	empty-open=0	empty-closed=0
+capture-statistics	blocks=1	empty-open=0	empty-closed=0
+hollow-prompt-steps	count=0
+divergence-fingerprint	toggle	f01fccbf5cccfd4cdecba240939076b8836beec8f8890b1785f2f88c23544ccf
+Dark Pawns Tier-1 differential report
+scenario: switched-body-toggle-depth
+c-oracle: 127.0.0.1:26869 (DP_SEED=1)
+go-port: 127.0.0.1:29098 (DP_SEED=1)
+result: normalized divergence detected
+
+--- [toggle] c-oracle
++++ [toggle] go-port
+@@ -1,0 +1,8 @@
++Hit Pnt Display: OFF         Brief Mode: OFF     Summon Protect: ON
++   Move Display: OFF       Compact Mode: OFF           On Quest: NO
++   Mana Display: OFF             NoTell: OFF       Repeat Comm.: YES
++ Auto Show Exit: OFF          Auto Loot: OFF          Auto Gold: OFF
++     Auto Split: OFF               Deaf: NO          Wimp Level: OFF
++ Gossip Channel: ON     Auction Channel: ON       Grats Channel: ON
++  Dsp Tank Stat: OFF    Dsp Fightg Stat: OFF        Color Level: Off
++ Newbie Channel: ON     Clan tells: ON      Broadcasts: ON
+
+normalized C oracle blocks:
+--- [toggle]
+
+dp-oracle-diff: normalized divergence detected
+EXIT=3

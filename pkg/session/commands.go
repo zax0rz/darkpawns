@@ -515,6 +515,11 @@ func init() {
 	// "glance" is src/interpreter.c's other top-level name for do_diagnose — identical handler.
 	registerCommand("diagnose", wrapBodyArgs(cmdDiagnoseBody), "Diagnose health status of a target.", "glance")
 	registerCommand("toggle", wrapArgs(cmdToggle), "Toggle a player preference.")
+	// C do_toggle returns immediately for an NPC body (src/act.informative.c:2500-2505);
+	// the actor lane is handled with no output. Player bodies keep cmdToggle.
+	registerActorCommand("toggle", func(game.CharacterCommandContext, string, []string) game.CharacterCommandResult {
+		return game.CharacterCommandHandled
+	})
 	registerCommand("lines", wrapArgs(cmdLines), "Set your screen line count (7-50).")
 	registerCommand("infobar", wrapArgs(cmdInfoBar), "Toggle the bottom status infobar.")
 	registerCommand("users", wrapArgs(cmdUsers), "Show connected players.")
