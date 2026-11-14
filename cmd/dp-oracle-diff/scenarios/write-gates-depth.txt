@@ -1,0 +1,60 @@
+# C do_write's pre-argument and hold-visibility gates (src/act.comm.c:1037-1041,
+# src/act.comm.c:1071-1080). PLR_NOSHOUT is checked before any argument handling,
+# so a muted writer answers "You cannot write anything!" for bare and full
+# invocations. The one-argument path then borrows the held object as the pen:
+# when the held quill carries ITEM_INVISIBLE (cast 'invisibility' while the
+# god's PRF_HOLYLIGHT is on) and PRF_HOLYLIGHT is toggled off again, CAN_SEE_OBJ
+# fails and the write refuses with "The stuff in your hand is invisible!
+# Yeech!!". The cast's wait state must expire in warmup before the write probes.
+
+# depth-case: write.noshout-gate
+# depth-case: write.invisible-hold
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Writegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Writegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+mute Writegod
+write
+write anything at all
+mute Writegod
+load obj 19510
+load obj 1208
+holylight
+cast 'invisibility' quill
+~dpclock pulse 20
+hold quill
+holylight
+write tome
