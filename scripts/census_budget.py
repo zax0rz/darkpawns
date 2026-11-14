@@ -17,9 +17,14 @@ import time
 import uuid
 
 VERSION = 1
-LIMIT = 72
-FLOOR_KIB = 4 * 1024 * 1024
-RESUME_KIB = FLOOR_KIB + 512 * 1024
+# Host-wide scenario workers across every run, and the MemAvailable floor below
+# which no new worker starts. Lowered 2026-11-13 from 72 workers and a 4 GiB
+# floor after the workstation froze: census workers plus several agents' own
+# `go test ./...`, lint and builds exhausted 31 GiB with zram swap, and the
+# floor only governs census admission, not the agents' work beside it.
+LIMIT = 36
+FLOOR_KIB = 8 * 1024 * 1024
+RESUME_KIB = FLOOR_KIB + 1024 * 1024
 BUILD_RESERVE_KIB = 1024 * 1024
 TERMINAL = {"done", "died", "cancelled"}
 
@@ -138,9 +143,18 @@ def transaction():
         fcntl.flock(lock, fcntl.LOCK_EX)
         path = rt/'registry.json'
         state = json.loads(path.read_text()) if path.exists() else dict(version=VERSION, policy=dict(limit=LIMIT,floor=FLOOR_KIB), runs={}, leases={}, waiting=[], cursor='', memory_paused=False)
-        if state['version'] != VERSION or state.get('policy') != dict(limit=LIMIT,floor=FLOOR_KIB):
+        if state['version'] != VERSION:
             raise RuntimeError('incompatible census registry; drain before upgrading')
         reconcile(state)
+        policy = dict(limit=LIMIT, floor=FLOOR_KIB)
+        if state.get('policy') != policy:
+            # A different budget policy is adopted only once nothing holds a
+            # permit, so a run admitted under the old limits is never
+            # re-judged mid-flight. Worktrees on older code keep refusing,
+            # which is the signal to update them.
+            if active_runs(state) or state['leases']:
+                raise RuntimeError('census budget policy changed; wait for active runs to finish, then retry')
+            state['policy'] = policy
         try:
             yield state
         finally:

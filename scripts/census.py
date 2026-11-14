@@ -167,7 +167,7 @@ def start(args):
                 position = len(budget.active_runs(state))
             head = (run/'go-head.txt').read_text().strip()[:9]
             word = 'started' if immediate else 'queued'
-            print(f'census {word}: {run} @{head} position={position} active={active}/72 requested={jobs} eta=unknown')
+            print(f'census {word}: {run} @{head} position={position} active={active}/{budget.LIMIT} requested={jobs} eta=unknown')
             return 0
         except Exception:
             if child is not None:
@@ -204,7 +204,7 @@ def report(run):
             return label+f'died {run}', 4
         active = sum(l['kind']=='worker' and l['run']==str(run) for l in state['leases'].values())
         reason = 'memory' if state['memory_paused'] else 'release' if budget.release_owner(state) not in {None,str(run)} else 'capacity'
-        return label+f"{record['status']} active={active}/{record['jobs']} budget=72 waiting={reason} eta=unknown", 3
+        return label+f"{record['status']} active={active}/{record['jobs']} budget={budget.LIMIT} waiting={reason} eta=unknown", 3
 
 
 def main():
