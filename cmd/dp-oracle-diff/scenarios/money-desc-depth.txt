@@ -1,0 +1,105 @@
+# C money_desc's amount ladder (src/handler.c:1397-1437) is player-facing
+# through perform_drop_gold's room act "$n drops <money_desc>."
+# (src/act.item.c:459): every bucket boundary below is exercised by dropping
+# the bucket's ceiling (or 1, or the bucket-exceeding 1000001). The actor's
+# own copy is only "You drop some gold.", so the named peer carries the
+# differentiating bytes. `set Moneygod gold 3200000` funds all drops
+# (src/act.wizard.c:2825-2828 RANGE(0, 100000000)).
+
+# depth-case: drop.money-desc-coin
+# depth-case: drop.money-desc-big-pile
+# depth-case: drop.money-desc-large-heap
+# depth-case: drop.money-desc-huge-mound
+# depth-case: drop.money-desc-enormous-mound
+# depth-case: drop.money-desc-small-mountain
+# depth-case: drop.money-desc-mountain
+# depth-case: drop.money-desc-huge-mountain
+# depth-case: drop.money-desc-enormous-mountain
+# depth-case: drop.money-desc-colossal
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Moneygod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Moneygod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Moneypeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Moneypeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Moneypeer 8162
+set Moneygod gold 3200000
+
+[probe]
+drop 1 coins
+~dpclock pulse 24
+drop 5000 coins
+~dpclock pulse 24
+drop 10000 coins
+~dpclock pulse 24
+drop 20000 coins
+~dpclock pulse 24
+drop 75000 coins
+~dpclock pulse 24
+drop 150000 coins
+~dpclock pulse 24
+drop 250000 coins
+~dpclock pulse 24
+drop 500000 coins
+~dpclock pulse 24
+drop 1000000 coins
+~dpclock pulse 24
+drop 1000001 coins
+
+~dpclock pulse 24
