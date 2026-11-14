@@ -1,0 +1,104 @@
+# depth-case: mob.combined-guard-arms-one-tick
+# Combined-arms vehicle for the DP-1507 cityguard half. Mob 18215
+# (SPECIAL(cityguard), src/spec_procs.c:771-821) and mob 8001
+# (SPECIAL(take_to_jail), src/spec_procs2.c:1427-1468) both fire in the same
+# heartbeat while the player is fighting mob 21202 (align 700, no MOB_SPEC,
+# src/spec_assign.c:492). The two protection scans differ by one gate:
+# cityguard selects fighters with IS_NPC(tch) || IS_NPC(FIGHTING(tch))
+# (src/spec_procs.c:806-810) and selects 21202, while take_to_jail selects
+# with !IS_NPC(tch) || IS_NPC(FIGHTING(tch)) (src/spec_procs2.c:1445-1449)
+# and selects the player. The victim's alignment (800) sits above 21202's
+# (700) so 18215's arm hits the captain (act; hit(); return fighter()) and
+# 8001's arm hits the player (act; hit(); return fighter()) whose damage()
+# jail redirect (src/fight.c:1370-1400) stops the mutual fighter, subdues
+# and carts the player to room 8118 while 18215 keeps fighting 21202.
+# 18215 is spawned before 8001 so the autonomous pass scans the cityguard
+# first (src/mobact.c:68-93). The single-arm scenarios (spec-proc-cityguard,
+# spec-proc-take-to-jail) are green; this vehicle holds both arms in one
+# tick, where the deferred initial-attack enrolment point
+# (pkg/combat/engine.go performOneHitBody) is exercised against the jail
+# redirect of a second special in the same pass. ROOM_PEACEFUL
+# (src/structs.h:60) is cleared so the player-vs-21202 exchange is not
+# refused (src/fight.c:1336-1343).
+# C path: src/spec_procs.c:771-821; src/spec_procs2.c:1427-1468; src/fight.c
+# :1336-1343,1370-1400; src/spec_assign.c:408,289,492.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18215 1 8105 182
+spawn-mob 8001 1 8105 80
+spawn-mob 21202 1 8105 212
+set-room-flag 8105 4 off
+replace-room-exits 8105 none
+
+[setup:oracle]
+CombinedGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CombinedGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+CombinedVictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+CombinedVictim
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport CombinedVictim 8105
+set CombinedVictim level 34
+set CombinedVictim align 800
+set CombinedVictim maxhit 100000
+set CombinedVictim hit 100000
+
+[probe:victim]
+kill captain
+~dpclock pulse 40
+~dpclock pulse 40
+score
+look

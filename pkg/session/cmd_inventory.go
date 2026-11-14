@@ -162,6 +162,10 @@ func (s *Session) savePlayer(p *game.Player, why string, loadRoom int) game.Save
 		slog.Error("character save: build record", "player", p.Name, "why", why, "error", err)
 		return game.SaveFailed
 	}
+	// C char_to_store runs inside save_char (src/db.c:2366, 2547-2639): the
+	// stored array is built first, then the live affect list is stripped and
+	// re-add reversed. The record above holds the pre-strip order.
+	p.ApplyCharToStoreSideEffects()
 	if err := m.db.SavePlayer(rec); err != nil {
 		slog.Error("character save", "player", p.Name, "why", why, "error", err)
 		return game.SaveFailed
