@@ -805,8 +805,8 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	// C's gain_exp(ch, -loss) and the real_abils.con decrements are silent
 	// (fight.c:589-628, 600-608): no death-penalty line reaches the player.
 
-	// Check for SPELL_DISINTEGRATE (93) - use makeDust instead
-	if attackType == 93 { // SPELL_DISINTEGRATE
+	// Check for SPELL_DISINTEGRATE (93) or undead/vampire race - use makeDust instead (src/fight.c:575-578)
+	if attackType == 93 || rawKillRace(player) == combat.RACE_UNDEAD || rawKillRace(player) == combat.RACE_VAMPIRE {
 		w.makeDust(player, inventoryItems, equipmentItems, roomVNum, playerGold, attackType)
 	} else {
 		// C's make_corpse never calls obj_to_char/obj_from_char (fight.c:399,

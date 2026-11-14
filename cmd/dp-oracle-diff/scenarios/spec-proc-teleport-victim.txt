@@ -47,7 +47,7 @@ goto 8105
 
 [probe]
 hit gil-glash
-~dpclock pulse 20
+~dpclock pulse 25
 score
 
 # depth-case: mob.teleport-victim-entry-gates

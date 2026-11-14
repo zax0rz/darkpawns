@@ -426,14 +426,20 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 				// SendWeaponMessage performs that +TYPE_HIT itself.
 				return weapon.Prototype.Values[3], 0, 0, weapon.HasExtraFlag(0, itemExtraBless)
 			}
+			if p.IsAffected(affFleshAlter) {
+				return fleshAlteredType(p.GetLevel()), 0, 0, false
+			}
 			return 0, 0, 0, false // barehand → "hit"
 		}
 		if m, ok := body.(*MobInstance); ok && m != nil {
 			if weapon := m.Equipped(mobWearWield); weapon != nil && weapon.Prototype != nil && weapon.GetTypeFlag() == ITEM_WEAPON {
 				return weapon.GetValue(3), 0, 0, weapon.HasExtraFlag(0, itemExtraBless)
 			}
-			if m.Proto() != nil {
+			if m.Proto() != nil && m.Proto().BareHandAttack != 0 {
 				return m.Proto().BareHandAttack, 0, 0, false
+			}
+			if m.IsAffected(affFleshAlter) {
+				return fleshAlteredType(m.GetLevel()), 0, 0, false
 			}
 		}
 		return 0, 0, 0, false // mob / unknown → "hit"

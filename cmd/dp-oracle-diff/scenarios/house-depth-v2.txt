@@ -17,6 +17,7 @@
 # depth-case: house.transfer-success
 # depth-case: house.owner-gate-after-transfer
 # depth-case: house.unknown-subcommand
+# depth-case: entry.identity-persistent-id-house-access
 
 [fixture]
 quiet-mobs
