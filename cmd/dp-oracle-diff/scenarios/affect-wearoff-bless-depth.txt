@@ -1,0 +1,80 @@
+# depth-case: affect.wear-off-single-message
+# C-first vehicle for affect_update's last-record wear-off guard on the player
+# path (src/magic.c:439-444). A God casts bless on a mortal: the spell stores
+# TWO records (APPLY_HITROLL +2 and APPLY_SAVING_SPELL -2, both duration 6,
+# src/magic.c:917-928), which expire the same mud hour. C sends
+# "You feel less righteous." exactly once, from the oldest record whose
+# af->next is not the same spell; the unfixed Go player loop had no guard and
+# sent it once per record (DP-1478). The mid-window `stat` pins both records
+# and their durations on both engines.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wearoffgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wearoffgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:wearee]
+Wearee
+Y
+wearpass
+wearpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:wearee]
+Wearee
+y
+wearpass
+wearpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Wearee 8162
+
+[probe]
+cast 'bless' Wearee
+~dpclock pulse 630
+stat Wearee
+~dpclock pulse 3780
+stat Wearee

@@ -806,11 +806,6 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	if attacker.IsNPC() && ce.MobSpecialFunc != nil {
 		ce.MobSpecialFunc(attacker)
 	}
-
-	// Fire fight trigger on mob attacker after combat round
-	if attacker.IsNPC() && ce.ScriptFightFunc != nil && defender.GetPosition() != PosDead {
-		ce.ScriptFightFunc(attacker, defender, attacker.GetRoom())
-	}
 }
 
 // scrambleBroadcast emits the "$n scrambles to $s feet!" stand-up message
@@ -916,6 +911,29 @@ func (ce *CombatEngine) consumeParried(body Combatant) string {
 // first strike and each attack selected by perform_violence.
 // It returns true when death or a successful flee ends the exchange.
 func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
+	attacker := pair.Attacker
+	defender := pair.Defender
+	if (BodyRetired(attacker) && !pair.AllowRetiredAttacker) || (BodyRetired(defender) && !pair.AllowRetiredDefender) {
+		return true
+	}
+	// C's hit() ends with the MS_FIGHTING script trigger, on every path that
+	// got past the entry checks — miss, hit, refused damage and a dead victim
+	// alike (fight.c:1889-1892). It fires here so first swings (do_hit, an
+	// ordered pet's kill, cast-fumble retaliation) trigger it exactly like a
+	// violence-round swing; the round runner no longer fires it separately.
+	if attacker.IsNPC() && attacker.GetPosition() > PosStunned && ce.ScriptFightFunc != nil {
+		defer ce.scriptFight(attacker, defender)
+	}
+	return ce.performOneHitBody(pair)
+}
+
+// scriptFight runs the fight trigger after the hit resolves; split out so the
+// deferred tail stays readable.
+func (ce *CombatEngine) scriptFight(attacker, defender Combatant) {
+	ce.ScriptFightFunc(attacker, defender, attacker.GetRoom())
+}
+
+func (ce *CombatEngine) performOneHitBody(pair *CombatPair) bool {
 	attacker := pair.Attacker
 	defender := pair.Defender
 	if (BodyRetired(attacker) && !pair.AllowRetiredAttacker) || (BodyRetired(defender) && !pair.AllowRetiredDefender) {

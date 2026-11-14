@@ -329,12 +329,12 @@ func resolveSetTarget(s *Session, name string, playerOnly bool) (setTarget, bool
 		return setTarget{}, false
 	}
 	if playerOnly {
-		for _, p := range s.manager.world.GetAllPlayers() {
-			if strings.EqualFold(p.GetName(), name) {
-				return setTarget{player: p, session: findSessionForPlayer(s.manager, p)}, true
-			}
+		// C's PC-field branch resolves with get_player_vis (src/act.wizard.c:2633,
+		// handler.c:1263-1276): world-wide players only, exact full name, CAN_SEE.
+		if resolved, ok := s.manager.world.ResolvePlayerWorld(s.player, name); ok && resolved.Player != nil {
+			return setTarget{player: resolved.Player, session: findSessionForPlayer(s.manager, resolved.Player)}, true
 		}
-		if sess := findSessionByName(s.manager, name); sess != nil && sess.player != nil {
+		if sess := findSessionByName(s.manager, name); sess != nil && sess.player != nil && game.CanSee(s.player, sess.player) {
 			return setTarget{player: sess.player, session: sess}, true
 		}
 		return setTarget{}, false
@@ -350,9 +350,9 @@ func resolveSetTarget(s *Session, name string, playerOnly bool) (setTarget, bool
 		}
 	}
 	// Unit fixtures construct sessions without registering their players in the
-	// world. Keep this fallback exact-name only; live prefix/visibility behavior
-	// remains owned by ResolveCharWorld above.
-	if sess := findSessionByName(s.manager, name); sess != nil && sess.player != nil {
+	// world. Keep this fallback exact-name and visibility-gated; live
+	// prefix/visibility behavior remains owned by ResolveCharWorld above.
+	if sess := findSessionByName(s.manager, name); sess != nil && sess.player != nil && game.CanSee(s.player, sess.player) {
 		return setTarget{player: sess.player, session: sess}, true
 	}
 	return setTarget{}, false

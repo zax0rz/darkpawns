@@ -1584,6 +1584,40 @@ func (m *MobInstance) JoinAffect(aff *engine.Affect, addDuration, addMagnitude b
 	m.AddAffect(aff)
 }
 
+// RemoveAffectRecord unlinks exactly one affect record — af — the way C's
+// affect_remove removes the single expiring node (src/handler.c:428-438):
+// every other record of the same spell survives with its own modifier. This
+// is the expiry-path removal; RemoveAffectBySpell below is affect_from_char,
+// C's remove-all, and belongs on the dispel/die paths (DP-1478).
+func (m *MobInstance) RemoveAffectRecord(af *engine.Affect) {
+	m.mu.Lock()
+	removed := false
+	var remainingFlags uint64
+	for key, value := range m.CustomData {
+		candidate, ok := value.(*engine.Affect)
+		if !ok {
+			continue
+		}
+		if candidate == af {
+			delete(m.CustomData, key)
+			delete(m.affectOrder, key)
+			removed = true
+			continue
+		}
+		remainingFlags |= candidate.Flags
+	}
+	m.mu.Unlock()
+	if !removed {
+		return
+	}
+	for engFlag, cBit := range EngineFlagToAffBit {
+		if af.Flags&engFlag != 0 && remainingFlags&engFlag == 0 {
+			m.RemoveAffected(cBit)
+		}
+	}
+	m.AffectTotal()
+}
+
 // RemoveAffectBySpell removes every location for this spell, as affect_from_char
 // does in src/handler.c:449-456. A missing spell does not run affect_total.
 func (m *MobInstance) RemoveAffectBySpell(spellNum int) {
