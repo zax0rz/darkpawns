@@ -175,7 +175,7 @@ func TestExtendPulseFirstByteWaitScalesLongPulse(t *testing.T) {
 	conn := NewTCPConn(client)
 
 	// Zero firstByteWait preserves the legacy one-window reader.
-	restore := extendPulseFirstByteWait(conn, "~dpclock pulse 4600")
+	restore := extendPulseFirstByteWait(conn, "~dpclock pulse 4600", false)
 	if got := conn.FirstByteWait(); got != 0 {
 		t.Fatalf("zero firstByteWait changed to %s", got)
 	}
@@ -183,14 +183,22 @@ func TestExtendPulseFirstByteWaitScalesLongPulse(t *testing.T) {
 
 	conn.SetFirstByteWait(2 * time.Second)
 	for _, cmd := range []string{"look", "~dpclock pulse 630"} {
-		restore = extendPulseFirstByteWait(conn, cmd)
+		restore = extendPulseFirstByteWait(conn, cmd, false)
 		if got := conn.FirstByteWait(); got != 2*time.Second {
 			t.Fatalf("%q changed firstByteWait to %s", cmd, got)
 		}
 		restore()
 	}
 
-	restore = extendPulseFirstByteWait(conn, "~dpclock pulse 4600")
+	// quiet-mobs keeps PumpPulses(N) sub-second, so silent probe steps must
+	// not wait up to 60s each.
+	restore = extendPulseFirstByteWait(conn, "~dpclock pulse 66150", true)
+	if got := conn.FirstByteWait(); got != 2*time.Second {
+		t.Fatalf("quiet-mobs pulse changed firstByteWait to %s", got)
+	}
+	restore()
+
+	restore = extendPulseFirstByteWait(conn, "~dpclock pulse 4600", false)
 	want := 4600 * 12 * time.Millisecond
 	if got := conn.FirstByteWait(); got != want {
 		t.Fatalf("long pulse firstByteWait = %s, want %s", got, want)
@@ -200,7 +208,7 @@ func TestExtendPulseFirstByteWaitScalesLongPulse(t *testing.T) {
 		t.Fatalf("restored firstByteWait = %s, want 2s", got)
 	}
 
-	restore = extendPulseFirstByteWait(conn, "~dpclock pulse 15750")
+	restore = extendPulseFirstByteWait(conn, "~dpclock pulse 15750", false)
 	if got := conn.FirstByteWait(); got != 60*time.Second {
 		t.Fatalf("capped pulse firstByteWait = %s, want 60s", got)
 	}

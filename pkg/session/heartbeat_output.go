@@ -2,12 +2,15 @@ package session
 
 import (
 	"encoding/json"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/zax0rz/darkpawns/internal/dpclock"
 )
+
+var deliverRetryTimeout = 30 * time.Second
 
 // heartbeatOutput owns immutable frames only. Never hold mu while calling
 // world/session callbacks, acquiring sendMu, or doing transport/persistence work.
@@ -129,7 +132,9 @@ func (m *Manager) EndHeartbeatOutput() {
 			frame := b.frames[0]
 			b.frames[0] = heartbeatFrame{}
 			b.frames = b.frames[1:]
+			queuedFrames := 0
 			if !frame.close {
+				queuedFrames = b.pending[frame.session]
 				b.pending[frame.session]--
 			}
 			b.mu.Unlock()
@@ -137,7 +142,7 @@ func (m *Manager) EndHeartbeatOutput() {
 				flushSnoop(frame.session)
 				frame.session.closeSendNow()
 			} else {
-				if frame.deliver() && frame.text != "" {
+				if frame.deliver(queuedFrames) && frame.text != "" {
 					text := snooped[frame.session]
 					if text == nil {
 						text = &snoopText{}
@@ -197,8 +202,9 @@ func (m *Manager) EndHeartbeatOutput() {
 	}
 }
 
-func (f heartbeatFrame) deliver() bool {
+func (f heartbeatFrame) deliver(queuedFrames int) bool {
 	s := f.session
+	deadline := time.Now().Add(deliverRetryTimeout)
 	for {
 		delivered := false
 		retry := false
@@ -222,6 +228,10 @@ func (f heartbeatFrame) deliver() bool {
 		s.sendMu.RUnlock()
 		if !retry {
 			return delivered
+		}
+		if time.Now().After(deadline) {
+			slog.Error("DP_CLOCK heartbeat delivery timed out waiting for send buffer", "player", s.playerName, "frames", queuedFrames, "timeout", deliverRetryTimeout)
+			return false
 		}
 		time.Sleep(100 * time.Microsecond)
 	}

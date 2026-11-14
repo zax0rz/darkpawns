@@ -780,9 +780,13 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		}
 		actor, audience := probeClients(oraclePrimary, peers, scenario.ProbeActor)
 		markDraws(&res, cDrawLog, "warmup")
-		blocks, probeErr := oraclediff.RunAudienceProbeWithFault(actor, audience, scenario.Probe, quiescence, func(i int, step string) {
-			markDraws(&res, cDrawLog, fmt.Sprintf("probe step %d: %s", i+1, step))
-		}, func(step string) error { return applyFaultStep(faults, step) })
+		blocks, probeErr := oraclediff.RunAudienceProbeWithOptions(actor, audience, scenario.Probe, quiescence, oraclediff.ProbeOptions{
+			AfterStep: func(i int, step string) {
+				markDraws(&res, cDrawLog, fmt.Sprintf("probe step %d: %s", i+1, step))
+			},
+			Fault:     func(step string) error { return applyFaultStep(faults, step) },
+			QuietMobs: scenario.QuietAllMobs,
+		})
 		if probeErr != nil {
 			return res, fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", probeErr, oracleEngine.log())
 		}
@@ -843,9 +847,13 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		}
 		actor, audience := probeClients(goPrimary, peers, scenario.ProbeActor)
 		markDraws(&res, goDrawLog, "warmup")
-		blocks, probeErr := oraclediff.RunAudienceProbeWithFault(actor, audience, scenario.Probe, quiescence, func(i int, step string) {
-			markDraws(&res, goDrawLog, fmt.Sprintf("probe step %d: %s", i+1, step))
-		}, func(step string) error { return applyFaultStep(faults, step) })
+		blocks, probeErr := oraclediff.RunAudienceProbeWithOptions(actor, audience, scenario.Probe, quiescence, oraclediff.ProbeOptions{
+			AfterStep: func(i int, step string) {
+				markDraws(&res, goDrawLog, fmt.Sprintf("probe step %d: %s", i+1, step))
+			},
+			Fault:     func(step string) error { return applyFaultStep(faults, step) },
+			QuietMobs: scenario.QuietAllMobs,
+		})
 		if probeErr != nil {
 			return res, fmt.Errorf("run Go port probe: %w\nserver log:\n%s", probeErr, goEngine.log())
 		}

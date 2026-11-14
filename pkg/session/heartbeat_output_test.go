@@ -3,10 +3,12 @@ package session
 import (
 	"bytes"
 	"encoding/json"
+	"log/slog"
 	"strconv"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
@@ -418,5 +420,48 @@ func TestHeartbeatOutputDPClockDeliversPastSendCapacity(t *testing.T) {
 		if f != strconv.Itoa(i) {
 			t.Fatalf("frame %d = %q, want %d", i, f, i)
 		}
+	}
+}
+
+func TestHeartbeatOutputDPClockDeliverRetryTimeout(t *testing.T) {
+	t.Setenv("DP_CLOCK", "1")
+	prevTimeout := deliverRetryTimeout
+	deliverRetryTimeout = 20 * time.Millisecond
+	t.Cleanup(func() { deliverRetryTimeout = prevTimeout })
+
+	var logBuf bytes.Buffer
+	prevLogger := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&logBuf, nil)))
+	t.Cleanup(func() { slog.SetDefault(prevLogger) })
+
+	m := &Manager{}
+	s := m.NewSession()
+	s.playerName = "Constfour"
+	s.send = make(chan []byte, 1)
+	s.transportDone = make(chan struct{})
+
+	m.BeginHeartbeatOutput()
+	for i := range 3 {
+		s.stageHeartbeat([]byte(strconv.Itoa(i)), "", true)
+	}
+
+	done := make(chan struct{})
+	go func() {
+		m.EndHeartbeatOutput()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("EndHeartbeatOutput hung with blocked transport")
+	}
+
+	if len(s.send) != 1 {
+		t.Fatalf("send buffer len = %d, want 1", len(s.send))
+	}
+	logged := logBuf.String()
+	if !strings.Contains(logged, "Constfour") || !strings.Contains(logged, "frames=2") {
+		t.Fatalf("expected timeout error log with session name and frame count, got %q", logged)
 	}
 }
