@@ -126,7 +126,10 @@ func TestDoBerserk_FailureStillInstallsInertAffectsAndWait(t *testing.T) {
 	if len(p.ActiveAffects) != 3 {
 		t.Fatalf("active affects = %d, want three C affect records", len(p.ActiveAffects))
 	}
-	wantLocations := []int{ApplyHitroll, ApplyDamroll, ApplyAC}
+	// C adds hitroll, then damroll, then AC (new_cmds.c:2174-2184) and each
+	// affect_to_char PREPENDS (handler.c:391-392), so AC heads the list
+	// (DP-1530).
+	wantLocations := []int{ApplyAC, ApplyDamroll, ApplyHitroll}
 	for i, affect := range p.ActiveAffects {
 		if affect.SpellID != skillNumBerserk || affect.Location != wantLocations[i] {
 			t.Errorf("affect %d = (spell %d, location %d), want (%d, %d)", i, affect.SpellID, affect.Location, skillNumBerserk, wantLocations[i])

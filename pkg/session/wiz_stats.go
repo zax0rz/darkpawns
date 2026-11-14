@@ -418,12 +418,9 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 	s.Send(s.statFollowerListOutput(master, p.GetName(), connected))
 	s.Send("AFF: " + colorWrap(wizardAffectFlags(playerEffectiveAffectBits(p)), ansiYellow, normal) + "\r\n")
 	// C affect_to_char/affect_to_char2 prepends to ch->affected (src/handler.c:391,415),
-	// whereas Go appends to p.ActiveAffects (pkg/game/player_affects.go:405).
-	ordered := make([]*engine.Affect, 0, len(p.ActiveAffects))
-	for i := len(p.ActiveAffects) - 1; i >= 0; i-- {
-		ordered = append(ordered, p.ActiveAffects[i])
-	}
-	s.sendStatAffectLines(ordered)
+	// and Player.AddAffect prepends too (DP-1530), so the list walks newest-first
+	// exactly like C's stat loop over ch->affected.
+	s.sendStatAffectLines(p.ActiveAffects)
 }
 
 func (s *Session) statFollowerListOutput(master, characterName string, connected bool) string {

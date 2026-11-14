@@ -394,7 +394,10 @@ func (p *Player) GetInventoryItems() []scripting.ScriptableObject {
 // StopFighting clears the fighting target.
 
 // AddAffect adds an engine.Affect to the player's active affects list.
-// Called by the spell system (applyAffect) to apply spell effects.
+// Called by the spell system (applyAffect) to apply spell effects. C's
+// master_affect_to_char PREPENDS (src/handler.c:391-392), so the list is
+// newest-first and affect_update, stat and the save format all walk it in
+// that order (DP-1530).
 func (p *Player) AddAffect(aff *engine.Affect) {
 	p.mu.Lock()
 	defer func() {
@@ -403,12 +406,14 @@ func (p *Player) AddAffect(aff *engine.Affect) {
 		p.refreshAttributeCapacity()
 	}()
 
-	p.ActiveAffects = append(p.ActiveAffects, aff)
+	p.ActiveAffects = append([]*engine.Affect{aff}, p.ActiveAffects...)
 }
 
 // JoinAffect mirrors C affect_join for spell affects sharing a spell and
-// APPLY location. ActiveAffects appends newest records, so search backward to
-// select the same first match as C's newest-first affected list.
+// APPLY location (src/handler.c:473-497): the matching record is removed, its
+// duration/magnitude absorbed, and the merged record added at the HEAD of
+// the newest-first list. Index 0 is the newest, so the forward scan finds
+// C's first match (DP-1530).
 func (p *Player) JoinAffect(aff *engine.Affect, addDuration, addMagnitude bool) {
 	p.mu.Lock()
 	defer func() {
@@ -417,8 +422,7 @@ func (p *Player) JoinAffect(aff *engine.Affect, addDuration, addMagnitude bool) 
 		p.refreshAttributeCapacity()
 	}()
 
-	for i := len(p.ActiveAffects) - 1; i >= 0; i-- {
-		current := p.ActiveAffects[i]
+	for i, current := range p.ActiveAffects {
 		if current == nil || current.SpellID != aff.SpellID || current.Location != aff.Location {
 			continue
 		}
@@ -429,10 +433,13 @@ func (p *Player) JoinAffect(aff *engine.Affect, addDuration, addMagnitude bool) 
 			aff.Magnitude += current.Magnitude
 		}
 		aff.ExpiresAt = time.Now().Add(time.Duration(aff.Duration) * engine.TickDuration)
-		p.ActiveAffects[i] = aff
+		p.ActiveAffects = append(p.ActiveAffects[:i], p.ActiveAffects[i+1:]...)
+		p.ActiveAffects = append([]*engine.Affect{aff}, p.ActiveAffects...)
 		return
 	}
-	p.ActiveAffects = append(p.ActiveAffects, aff)
+	// No match: plain affect_to_char, prepended like AddAffect without
+	// re-taking p.mu (caller holds it).
+	p.ActiveAffects = append([]*engine.Affect{aff}, p.ActiveAffects...)
 }
 
 // RemoveAffectBySpell removes all affects matching the given spell number.

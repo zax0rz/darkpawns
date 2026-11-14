@@ -44,15 +44,11 @@ func (w *World) AffectUpdate() {
 			p.mu.RUnlock()
 
 			// C walks ch->affected newest-first (handler.c:391-392 prepends),
-			// so its wear-off guard reads af->next — the immediately OLDER
-			// record — before this pass reaches it. ActiveAffects is
-			// oldest-first, so the older neighbour sits at i-1 and its
-			// duration must be read from this pre-pass snapshot, not the
-			// already-decremented field (magic.c:439-444; DP-1478).
-			preDur := make([]int, len(affects))
-			for i, af := range affects {
-				preDur[i] = af.Duration
-			}
+			// and ActiveAffects is newest-first too (AddAffect prepends,
+			// DP-1530), so this loop is C's head-first walk and speaks
+			// newest-first on a same-tick expiry. The wear-off guard reads
+			// af->next — the immediately older record at i+1, not yet
+			// decremented by this pass (magic.c:439-444; DP-1478).
 
 			var remaining []*engine.Affect
 
@@ -71,8 +67,12 @@ func (w *World) AffectUpdate() {
 				// Duration == 0 (or unexpected negative) — expires this tick.
 				// C sends the wear-off only when the immediately older record
 				// is absent, a different spell, or still alive at its
-				// pre-pass duration (magic.c:439-444).
-				if i == 0 || affects[i-1].SpellID != af.SpellID || preDur[i-1] > 0 {
+				// not-yet-decremented duration (magic.c:439-444).
+				var next *engine.Affect
+				if i+1 < len(affects) {
+					next = affects[i+1]
+				}
+				if next == nil || next.SpellID != af.SpellID || next.Duration > 0 {
 					if msg := SpellWearOffMsg(af.SpellID); msg != "" {
 						p.SendMessage(msg + "\r\n")
 					}
