@@ -1,0 +1,68 @@
+# depth-case: string.extradesc-restart-reverts
+# The other half of DP-1292's window: a live extra-description edit is memory
+# only. C edits obj_proto[] through the shared node (src/modify.c:701-707,
+# src/db.c:1947-1951) and never writes the zone file, so boot_db re-reading the
+# area files (src/db.c:304-392) restores the original text. This vehicle pins
+# that the port reverts too — option C in the proposal (persisting the instance
+# snapshot in the player save) would keep the text here and be wrong.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 3117 1 8162 31
+
+[setup:oracle]
+Stringrestart
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stringrestart
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Stringrestart
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Stringrestart
+oraclepass
+<ENTER>
+1
+
+[warmup]
+goto 8162
+get shirt
+
+[probe]
+string obj shirt description shirt
+A crust of ash and salt.
+@
+look shirt
+inventory
+goto 1204
+quit
+<RESTART>
+look shirt
+inventory

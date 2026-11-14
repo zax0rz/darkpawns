@@ -46,4 +46,5 @@ goto 8162
 smile trainee
 skillset Visinfra 'infravision' 100
 cast 'infravision' Visinfra
+~dpclock pulse 25
 smile trainee

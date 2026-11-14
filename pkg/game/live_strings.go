@@ -77,23 +77,40 @@ func (o *ObjectInstance) SetLiveLongDesc(value string) {
 }
 
 // LiveExtraDescs returns the instance's current extra-description list: the
-// per-instance snapshot once do_string has touched it, otherwise the effective
-// list (prototype entries plus Lua-added runtime entries). The returned slice
-// is always a copy, so callers mutate and write it back with
-// SetLiveExtraDescs.
+// published snapshot once do_string or a prototype write-through has touched it,
+// otherwise the effective list (prototype entries plus Lua-added runtime
+// entries). The returned slice is always a copy, so callers mutate and write it
+// back with SetLiveExtraDescs.
 func (o *ObjectInstance) LiveExtraDescs() []parser.ExtraDesc {
-	if o.Runtime.ExtraDescsLive {
-		return append([]parser.ExtraDesc(nil), o.Runtime.ExtraDescs...)
-	}
 	return append([]parser.ExtraDesc(nil), o.GetExtraDescs()...)
 }
 
 // SetLiveExtraDescs replaces the instance's extra-description list. The first
-// call turns the instance-local snapshot on, after which GetExtraDescs serves
-// this list instead of the prototype's.
+// call turns the published snapshot on, after which GetExtraDescs serves this
+// list instead of the prototype's.
 func (o *ObjectInstance) SetLiveExtraDescs(descs []parser.ExtraDesc) {
-	o.Runtime.ExtraDescs = append([]parser.ExtraDesc(nil), descs...)
+	o.publishExtraDescs(descs)
+}
+
+// publishExtraDescs stores a fresh copy as the instance's published list and
+// keeps the Runtime fields in step with it. The atomic publication is what
+// readers load, so a writer in one player's goroutine never races a look in
+// another's.
+func (o *ObjectInstance) publishExtraDescs(descs []parser.ExtraDesc) {
+	stored := append([]parser.ExtraDesc(nil), descs...)
+	o.Runtime.ExtraDescs = stored
 	o.Runtime.ExtraDescsLive = true
+	o.liveExtraDescs.Store(&stored)
+}
+
+// clearLiveExtraDescs drops the published list so the instance reads its
+// prototype again. C's oedit_save_internally replaces each live instance with a
+// whole-struct copy of the prototype (*obj = obj_proto[nr]), which discards any
+// instance-local ex_description edits.
+func (o *ObjectInstance) clearLiveExtraDescs() {
+	o.Runtime.ExtraDescs = nil
+	o.Runtime.ExtraDescsLive = false
+	o.liveExtraDescs.Store(nil)
 }
 
 // FindExtraDescIndex mirrors find_exdesc's scan (src/act.informative.c:987-996):

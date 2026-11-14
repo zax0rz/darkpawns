@@ -2,6 +2,7 @@ package game
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -89,6 +90,92 @@ func (w *World) CommitEditedObj(obj parser.Obj) bool {
 	return true
 }
 
+// SetLiveObjExtraDesc applies do_string's field-4 write to an extra description
+// the prototype already carries (src/modify.c:701-707).
+//
+// C's read_object copies the obj_data struct shallowly (src/db.c:1947-1951), so
+// the instance's ex_description pointer IS the prototype's list: freeing the
+// node's description and pointing d->str at it edits the prototype, and every
+// instance sees the new text until the process restarts (the player object file
+// stores no extra descriptions; src/structs.h:770-786). The port keeps
+// prototypes immutable, so this publishes a clone and patches the live
+// instances' atomically published lists instead of writing the shared node.
+//
+// It returns false when the prototype has no such keyword, and the caller then
+// keeps C's instance-local new-node path (src/modify.c:690-700).
+func (w *World) SetLiveObjExtraDesc(vnum int, keyword, text string) bool {
+	return w.mutateLiveObjExtraDesc(vnum, keyword, func(desc *parser.ExtraDesc) {
+		desc.Description = text
+		desc.NullDescription = false
+	})
+}
+
+// ClearLiveObjExtraDesc is the editor-entry half of the same write: C frees the
+// node's description and leaves the pointer NULL (src/modify.c:702-704), so a
+// look during the edit misses the keyword, exactly as find_exdesc's NULL return
+// does (src/act.informative.c:987-996).
+func (w *World) ClearLiveObjExtraDesc(vnum int, keyword string) bool {
+	return w.mutateLiveObjExtraDesc(vnum, keyword, func(desc *parser.ExtraDesc) {
+		desc.Description = ""
+		desc.NullDescription = true
+	})
+}
+
+// mutateLiveObjExtraDesc publishes mutate applied to the prototype entry whose
+// keyword matches, then to every live instance of that prototype.
+//
+// Two things it deliberately does not do: rewrite inst.Prototype (readers hold
+// that pointer without a lock, so the instance's own published list carries the
+// change instead), and touch parsedData (C never writes the zone file here; a
+// later oedit save of the zone serialises World.objs and so keeps the edit as a
+// side effect, as C's oedit_save_to_disk does).
+func (w *World) mutateLiveObjExtraDesc(vnum int, keyword string, mutate func(*parser.ExtraDesc)) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	proto, ok := w.objs[vnum]
+	if !ok || proto == nil {
+		return false
+	}
+	// C compares the whole keyword string with str_cmp (src/utils.c:107), not
+	// token-wise like isname.
+	index := -1
+	for i := range proto.ExtraDescs {
+		if strings.EqualFold(proto.ExtraDescs[i].Keywords, keyword) {
+			index = i
+			break
+		}
+	}
+	if index < 0 {
+		return false
+	}
+
+	updated := CloneObj(*proto)
+	mutate(&updated.ExtraDescs[index])
+	stored := updated
+	w.objs[vnum] = &stored
+
+	for _, inst := range w.objectInstances {
+		if inst == nil || inst.VNum != vnum {
+			continue
+		}
+		// A copy: the published slice is what concurrent readers load.
+		descs := inst.LiveExtraDescs()
+		patched := false
+		for i := range descs {
+			if strings.EqualFold(descs[i].Keywords, keyword) {
+				mutate(&descs[i])
+				patched = true
+				break
+			}
+		}
+		if patched {
+			inst.publishExtraDescs(descs)
+		}
+	}
+	return true
+}
+
 // RefreshLiveObjInstances swaps every live instance of vnum onto the edited
 // prototype, mirroring oedit_save_internally's object_list sweep (src/oedit.c):
 // the full obj_data struct is replaced while the runtime placement fields
@@ -114,6 +201,10 @@ func (w *World) RefreshLiveObjInstances(vnum int, obj parser.Obj) {
 		}
 		clone := CloneObj(obj)
 		inst.Prototype = &clone
+		// C's *obj = obj_proto[nr] discards the instance's own ex_description
+		// edits (the struct assignment overwrites the pointer), so the
+		// published list goes with the other instance-level overrides below.
+		inst.clearLiveExtraDescs()
 		inst.ResetExtraFlags()
 		inst.AffectsOverride = nil
 		inst.ValuesOverride = nil

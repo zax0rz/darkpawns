@@ -46,4 +46,5 @@ load obj 8038
 
 [probe]
 cast 'detect poison' Dpself
+~dpclock pulse 25
 cast 'detect poison' backpack

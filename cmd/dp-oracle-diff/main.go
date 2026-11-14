@@ -886,6 +886,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	oracleBlocks, goBlocks := oracleResult.blocks, goResult.blocks
 
 	diffs := make([]oraclediff.BlockDiff, 0, len(oracleBlocks)+1)
+	var hollowSteps []hollowPromptStep
 	normalize := oraclediff.Normalize
 	if scenario.KeepANSI {
 		normalize = oraclediff.NormalizeKeepANSI
@@ -931,8 +932,15 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		// prompt frames between the two sides before diffing. Ordinary
 		// comparisons only — keep-ansi and keep-prompts modes certify their
 		// own raw framing and are outside the blank-line class.
+		oracleBefore, goBefore := oracleBlock, goBlock
 		if !scenario.KeepANSI && !scenario.KeepPrompts {
 			oracleBlock, goBlock = oraclediff.ReconcilePromptFrames(oracleBlock, goBlock)
+			if i < len(goBlocks) && isHollowPromptStep(oracleResult.Command, oracleResult.Audience, oracleRaw, goRaw, oracleBefore, goBefore, oracleBlock, goBlock) {
+				hollowSteps = append(hollowSteps, hollowPromptStep{
+					block:   i,
+					command: oracleResult.Command,
+				})
+			}
 		}
 		label := oracleResult.Command
 		if len(scenario.Peers) > 0 {
@@ -948,6 +956,11 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 
 	if err := retainEvidence(os.Getenv("DP_ORACLE_EVIDENCE_ROOT"), os.Getenv("DP_ORACLE_EVIDENCE"), cDrawLog, goDrawLog, diffs, oracleEngine.log(), goEngine.log()); err != nil {
 		return err
+	}
+
+	fmt.Printf("hollow-prompt-steps\tcount=%d\n", len(hollowSteps))
+	for _, hs := range hollowSteps {
+		fmt.Printf("hollow-prompt-step\tblock=%d\tcommand=%s\n", hs.block, hs.command)
 	}
 
 	// Per-block divergence fingerprints: the regression driver pins the SHAPE of
@@ -1032,6 +1045,51 @@ func withCloseMarker(raw string, closed bool) string {
 		raw += "\n"
 	}
 	return raw + oraclediff.CloseMarker + "\n"
+}
+
+type hollowPromptStep struct {
+	block   int
+	command string
+}
+
+func isActorProbeBlock(command, audience string) bool {
+	if !strings.HasPrefix(command, "send:") {
+		return audience == "actor"
+	}
+	directed := strings.TrimPrefix(command, "send:")
+	target, _, _ := strings.Cut(directed, " ")
+	return target != "" && audience == target
+}
+
+func isPulseControlStep(command string) bool {
+	line := command
+	if strings.HasPrefix(command, "send:") {
+		directed := strings.TrimPrefix(command, "send:")
+		_, after, ok := strings.Cut(directed, " ")
+		if !ok {
+			return false
+		}
+		line = after
+	}
+	return strings.HasPrefix(strings.TrimSpace(line), "~dpclock pulse")
+}
+
+func isEmptyNormalizedBlock(s string) bool {
+	return s == "" || s == "\n"
+}
+
+// isHollowPromptStep reports whether an actor probe step had one engine emit
+// nothing while the other emitted only framing/prompt bytes that Normalize or
+// ReconcilePromptFrames stripped, leaving both post-reconcile blocks empty.
+func isHollowPromptStep(command, audience, oracleRaw, goRaw, oracleBefore, goBefore, oracleAfter, goAfter string) bool {
+	if !isActorProbeBlock(command, audience) || isPulseControlStep(command) {
+		return false
+	}
+	if !isEmptyNormalizedBlock(oracleAfter) || !isEmptyNormalizedBlock(goAfter) {
+		return false
+	}
+	return isEmptyNormalizedBlock(oracleBefore) != isEmptyNormalizedBlock(goBefore) ||
+		(oracleRaw == "") != (goRaw == "")
 }
 
 // oracleBlocksText renders the normalized C blocks exactly as --show-oracle

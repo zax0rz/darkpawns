@@ -1,0 +1,32 @@
+# depth-case: mail.read-header
+# depth-case: entry.identity-persistent-id-mail
+# L1 settlement vehicle for mail.c:435: receiving a letter sets its text to
+# read_delete(GET_IDNUM(ch)) (src/mail.c:585), whose header is
+# " * * * * Dark Pawns Mail System * * * *" with the Date/To/From lines.
+# Looking at the received letter renders it; the Date is wall-clock and the
+# census normalizer folds it like the other run-derived fields.
+
+[fixture]
+seed-player
+quiet-mobs
+spawn-mob 3010 1 8162 27
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set player Testor gold 1000
+
+[probe]
+receive
+look letter

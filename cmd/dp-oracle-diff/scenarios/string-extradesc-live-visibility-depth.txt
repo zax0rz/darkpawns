@@ -1,0 +1,105 @@
+# depth-case: string.extradesc-live-visibility
+# DP-1292 option A. read_object copies the obj_data struct shallowly
+# (src/db.c:1947-1951), so an instance's ex_description pointer IS the
+# prototype's list; do_string field 4 with an existing keyword frees the node's
+# description and points the editor at it (src/modify.c:701-707), which edits the
+# prototype for the whole process. The player object file carries no extra
+# descriptions (src/structs.h:770-786), so a relog rebuilds the instance from the
+# live prototype and keeps the text; a reboot loses it.
+#
+# The witness is the second client and the relog, not the editor: the editing
+# actor sees its own instance either way (string-depth's string.extradesc-modify).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 3117 1 8162 31
+
+[setup:oracle]
+Stringlive
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stringlive
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Stringwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Stringwatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Stringlive
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Stringlive
+oraclepass
+<ENTER>
+1
+
+[warmup]
+goto 8162
+get shirt
+teleport Stringwatch 8162
+
+[probe]
+string obj shirt description shirt
+A crust of ash and salt.
+@
+look shirt
+drop shirt
+send:peer look shirt
+get shirt
+quit
+~dpclock pulse 1
+<RELOGIN>
+look shirt
+goto 8162
+drop shirt
+send:peer look shirt

@@ -75,5 +75,6 @@ skillset Retmort 'retreat' 100
 [probe:mortal]
 kill zookeeper
 retreat
+~dpclock pulse 27
 look
 score

@@ -51,6 +51,7 @@ goto 8105
 
 [probe]
 hit death
+~dpclock pulse 27
 score
 ~dpclock pulse 20
 score

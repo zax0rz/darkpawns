@@ -50,6 +50,7 @@ Y
 [warmup]
 goto 8105
 hit troll
+~dpclock pulse 27
 
 [probe]
 score
