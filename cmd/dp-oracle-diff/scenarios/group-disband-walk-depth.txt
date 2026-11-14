@@ -1,0 +1,120 @@
+# depth-case: ungroup.disband-newest-first-walk
+# C-first vehicle for do_ungroup's follower walk (DP-1495). C's followers list
+# PREPENDS at add_follower (utils.c:472-476), so the disband walks followers
+# newest-first (act.other.c:758) — mobiles included — and its stop_follower
+# room lines ("X stops following Y.") arrive in that order. The unfixed Go
+# ranged over the player map (random order, no mobiles) and its kick arm
+# called stop_follower on a charmed mobile, breaking the follow: after
+# "ungroup rat", C's ordered pet still obeys "order rat smile" while the
+# unfixed Go reported no follower. Sequence: alpha follows, beta follows, the
+# god charms the rat (newest follower) and groups everyone; kick the rat
+# (charm gate), prove the pet still obeys, then disband — beta's stop lines
+# precede alpha's.
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 10049 none
+
+[setup:oracle]
+Disbandgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Disbandgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:alpha]
+Disbandalpha
+Y
+alphapass
+alphapass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:alpha]
+Disbandalpha
+y
+alphapass
+alphapass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:beta]
+Disbandbeta
+Y
+betapass
+betapass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:beta]
+Disbandbeta
+y
+betapass
+betapass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 10049
+teleport Disbandalpha 10049
+teleport Disbandbeta 10049
+
+[probe]
+load mob 4500
+load mob 4501
+set mold hit 5000
+set mold maxhit 5000
+send:alpha follow Disbandgod
+send:beta follow Disbandgod
+group all
+cast 'charm person' rat
+group all
+ungroup rat
+order rat smile
+ungroup

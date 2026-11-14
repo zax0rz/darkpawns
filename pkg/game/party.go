@@ -135,33 +135,34 @@ func (w *World) GetFollowerActorsInRoom(leaderName string, roomVNum int) []Actor
 // GetGroupMembers returns all players in the same group as playerName (InGroup==true),
 // including the leader. Order is leader first, then followers.
 // Source: fight.c group_gain() lines 716–727 — k = ch->master ?? ch, then iterate k->followers
-func (w *World) GetGroupMembers(playerName string) []*Player {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-
-	p, ok := w.players[playerName]
-	if !ok {
-		return nil
+// OrderedGroupFollowers returns the leader's current followers — players and
+// mobiles — in C's follower-list order: add_follower PREPENDS each node, so
+// the newest follower walks first (src/utils.c:472-476; walked by do_ungroup
+// at act.other.c:758, do_group at :709 and do_gsay). The previous walk ranged
+// over the world's player map, which has no order and never saw a mobile
+// follower (DP-1495). GetFollowingSequence is stamped at every follow site.
+func (w *World) OrderedGroupFollowers(leaderName string) []Actor {
+	type follower struct {
+		body Actor
+		seq  uint64
 	}
-
-	// Find the leader (ch->master ?? ch)
-	leaderName := p.Name
-	if p.GetFollowing() != "" {
-		leaderName = p.GetFollowing()
-	}
-	leader, ok := w.players[leaderName]
-	if !ok {
-		return nil
-	}
-
-	var members []*Player
-	if leader.InGroup {
-		members = append(members, leader)
-	}
-	for _, follower := range w.players {
-		if follower.GetFollowing() == leaderName && follower.InGroup {
-			members = append(members, follower)
+	var followers []follower
+	for _, p := range w.players {
+		if p.GetFollowing() == leaderName && p.GetFollowingSequence() > 0 {
+			followers = append(followers, follower{p, p.GetFollowingSequence()})
 		}
+	}
+	w.mu.RLock()
+	for _, m := range w.activeMobs {
+		if m != nil && m.GetFollowing() == leaderName && m.GetFollowingSequence() > 0 {
+			followers = append(followers, follower{m, m.GetFollowingSequence()})
+		}
+	}
+	w.mu.RUnlock()
+	sort.SliceStable(followers, func(i, j int) bool { return followers[i].seq > followers[j].seq })
+	members := make([]Actor, len(followers))
+	for i, f := range followers {
+		members[i] = f.body
 	}
 	return members
 }
