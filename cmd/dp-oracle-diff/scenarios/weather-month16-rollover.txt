@@ -1,4 +1,5 @@
 # depth-case: weather.month16-to-newyear-rollover
+# depth-case: constants.month-names-winter-dragon-sun-evil
 # Boot pinned one hour before the year-incrementing month boundary:
 # fixed-time 651236292 is hour 23 of day 34, month 16. One pumped hour
 # crosses hours>23 -> day++ -> day>34 -> month=17 -> month>16 -> month=0,
