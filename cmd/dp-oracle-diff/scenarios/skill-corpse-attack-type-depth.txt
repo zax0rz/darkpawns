@@ -98,8 +98,5 @@ set trainee hit 1
 # combat remains for them to advance.
 [probe:attacker]
 headbutt trainee
-~dpclock pulse 20
-~dpclock pulse 20
-look
-~dpclock pulse 20
+~dpclock pulse 65
 look

@@ -798,6 +798,27 @@ func fleshAlterWeapon(level int) string {
 	}
 }
 
+// fleshAlteredType mirrors flesh_altered_type() in src/new_cmds.c:1783-1826.
+// Keep its level bands synchronized with fleshAlterWeapon (src/fight.c:82, new_cmds.c:1833).
+func fleshAlteredType(level int) int {
+	switch {
+	case level >= 1 && level <= 3:
+		return 7 // TYPE_POUND - TYPE_HIT
+	case level >= 4 && level <= 6:
+		return 11 // TYPE_PIERCE - TYPE_HIT
+	case level >= 7 && level <= 9:
+		return 3 // TYPE_SLASH - TYPE_HIT
+	case level >= 10 && level <= 15:
+		return 7 // TYPE_POUND - TYPE_HIT
+	case level >= 16 && level <= 21:
+		return 3 // TYPE_SLASH - TYPE_HIT
+	case level >= 22 && level <= 24:
+		return 7 // TYPE_POUND - TYPE_HIT
+	default:
+		return 3 // TYPE_SLASH - TYPE_HIT
+	}
+}
+
 // DoFleshAlter implements do_flesh_alter() — transform your hand into a weapon.
 func DoFleshAlter(ch *Player) SkillResult {
 	if ch.GetSkill(SkillFleshAlter) == 0 {
