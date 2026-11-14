@@ -24,7 +24,7 @@ func TestCombatBodyDefenseAudience(t *testing.T) {
 	old := GetCallbacks()
 	t.Cleanup(func() { SetCallbacks(old) })
 	SetCallbacks(&GameCallbacks{GetRoomCombatants: func(int) []Combatant { return []Combatant{fighter, opponent, peer, sleeper} }})
-	NewCombatEngine().sendDefenseObserverMessage(fighter, opponent, "defense")
+	NewCombatEngine().sendDefenseObserverMessage(fighter, opponent, func(Combatant) string { return "defense" })
 	if len(fighter.messages) != 0 || len(opponent.messages) != 0 || len(sleeper.messages) != 0 || len(peer.messages) != 1 {
 		t.Fatalf("audience=%v/%v/%v/%v", fighter.messages, opponent.messages, peer.messages, sleeper.messages)
 	}
