@@ -54,6 +54,39 @@ func (s *Session) combatBody() combat.Combatant {
 	return s.player
 }
 
+// commandBodyLocked returns the body attached to this session's descriptor.
+// Callers that share session lifecycle state must hold manager.mu; detached
+// test sessions have no concurrent lifecycle to synchronize.
+func (s *Session) commandBodyLocked() combat.Combatant {
+	if s.isSwitched {
+		if s.switchedMob != nil {
+			return s.switchedMob
+		}
+		if s.switchedPlayer != nil {
+			return s.switchedPlayer
+		}
+	}
+	if s.player != nil {
+		return s.player
+	}
+	return nil
+}
+
+func (s *Session) descriptorWaitState() int {
+	if s == nil {
+		return 0
+	}
+	if s.manager != nil {
+		s.manager.mu.RLock()
+		defer s.manager.mu.RUnlock()
+	}
+	waiter, ok := s.commandBodyLocked().(interface{ GetWaitState() int })
+	if !ok {
+		return 0
+	}
+	return waiter.GetWaitState()
+}
+
 func (m *Manager) combatAudience(room int, exclude []combat.Combatant) []*Session {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

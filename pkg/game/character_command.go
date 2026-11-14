@@ -327,10 +327,10 @@ func wakeSelfLine(w *World, actor Actor, message string, private func(string)) {
 // runs the same do_* for NPCs (R2e). The gates run in C's order: empty
 // argument, room-visible target, self, a charmed follower's master, then the
 // standing-and-not-already-fighting swing gate. WAIT_STATE(PULSE_VIOLENCE+2)
-// at the end writes ch->wait (utils.h:462-464) — the descriptor-command
-// field, not mob_specials.wait_state, which perform_violence reads
-// (fight.c:1977) — so it is inert for a forced, descriptorless mobile and is
-// not modeled here.
+// at the end writes ch->wait (utils.h:462-464) — the descriptor-command field,
+// not mob_specials.wait_state, which perform_violence reads (fight.c:1977).
+// The manager drains this field only while a descriptor is attached to the
+// mobile; a forced, descriptorless mobile therefore keeps an inert wait.
 func CharacterHit(ctx CharacterCommandContext) CharacterCommandResult {
 	mob, ok := ctx.Actor.(*MobInstance)
 	if !ok || ctx.World == nil {
@@ -374,6 +374,7 @@ func CharacterHit(ctx CharacterCommandContext) CharacterCommandResult {
 	if mob.IsMountedMob() {
 		ctx.World.doDismountActor(mob)
 	}
+	defer mob.SetWaitStatePulses(engine.PULSE_VIOLENCE + 2)
 	// hit(ch, vict, TYPE_UNDEFINED): the first swing consumes hit()'s to-hit
 	// and damage draws and damage()'s protection block decides, enrolling at
 	// the damage point. A body flagged for extraction but still standing —
