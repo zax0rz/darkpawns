@@ -1,0 +1,160 @@
+# L1 act.movement.c slice 1 (9 player-facing sites):
+# depth-case: movement.exhausted-follower
+#   174: do_simple_move  "You are too exhausted to follow."
+# depth-case: movement.arrive-fly-horizontal
+#   232: do_simple_move  "$n flies in from the %s."
+# depth-case: movement.arrive-swim-horizontal
+#   234: do_simple_move  "$n swims in from the %s."
+# depth-case: door.pick-no-keyhole
+#   545: ok_pick         "Odd - you can't seem to find a keyhole."
+# depth-case: door.pick-no-lockpicks
+#   547: ok_pick         "You'll need to hold a set of lockpicks before you can pick a lock!"
+# depth-case: door.pick-failed
+#   556: ok_pick         "You failed to pick the lock."
+# depth-case: door.no-key
+#   633: do_gen_door     "You don't seem to have the proper key."
+# depth-case: wake.target-bad-shape
+#   859: do_wake         "$E's in pretty bad shape!"
+# depth-case: follow.circle-rejection
+#   920: do_follow       "Sorry, but following in loops is not allowed."
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 8
+set-room-sector 8106 8
+set-room-flag 8105 4 off
+set-room-flag 8106 4 off
+replace-room-exits 8105 east 8106 0
+replace-room-exits 8106 west 8105 0
+replace-room-exits 8162 north 8161 1 gate
+
+[setup:oracle]
+MoveGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+MoveGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+MoveMortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+MoveMortal
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watch]
+MoveWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+MoveWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8040
+close gate
+goto 8162
+close gate
+lock gate
+teleport MoveMortal 8040
+teleport MoveWatch 8040
+
+[probe]
+send:mortal lock gate
+send:mortal unlock gate
+goto 8040
+lock gate
+send:mortal pick gate
+load obj 8027
+give lockpicks MoveMortal
+send:mortal hold lockpicks
+send:mortal pick gate
+teleport MoveMortal 8162
+send:mortal pick gate
+teleport MoveMortal 8105
+teleport MoveWatch 8105
+send:mortal follow MoveWatch
+send:watch follow MoveMortal
+set player MoveMortal move 0
+send:watch east
+set player MoveMortal move 50
+teleport MoveMortal 8105
+send:mortal follow MoveMortal
+send:mortal east
+goto 8106
+cast 'fly' MoveMortal
+~dpclock pulse 20
+send:watch west
+send:mortal west
+goto 8105
+set player MoveWatch level 15
+set player MoveWatch maxhit 100
+set player MoveWatch hit 40
+set player MoveWatch dex 5
+load obj 4406
+give robe MoveWatch
+send:watch wear robe
+send:mortal wake MoveWatch
