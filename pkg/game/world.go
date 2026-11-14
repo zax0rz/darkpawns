@@ -195,6 +195,11 @@ type World struct {
 	// to both bodies.
 	MobileDescriptorOwner func(*MobInstance) *Player
 
+	// SwitchedMobReturn runs extract_char's do_return arm when an extracted
+	// NPC body hosts a descriptor: the rider returns to the original body
+	// before the character is freed (src/handler.c:1158-1159).
+	SwitchedMobReturn func(*MobInstance)
+
 	// MovementLook is owned by the session layer because room rendering is a
 	// transport concern, but movement owns its ordering relative to arrivals,
 	// followers, and entry triggers.

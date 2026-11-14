@@ -327,6 +327,12 @@ func (w *World) ExtractPendingPlayers() []*Player {
 		m.Flags &^= 1 << uint(MobFlagExtract)
 		m.mu.Unlock()
 		w.DieFollowerMob(m)
+		// src/handler.c:1158-1159: a body hosting a descriptor (do_switch)
+		// returns its rider to the original body before the character is
+		// freed. die_follower already ran at :1116-1117, matching C's order.
+		if w.SwitchedMobReturn != nil {
+			w.SwitchedMobReturn(m)
+		}
 		w.mu.Lock()
 		_, queued := w.pendingMobileExtractions[m]
 		if w.activeMobs[m.ID] != m && !queued {

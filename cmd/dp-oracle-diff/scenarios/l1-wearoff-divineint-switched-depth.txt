@@ -1,0 +1,72 @@
+# L1 constants.c spell_wear_off_msg[] slot 81 (line 1300, "!KATANA!"): the
+# divine-intervention charm. spell_divine_int (src/spells.c:1170-1218) applies
+# af.type = SPELL_DIVINE_INT (AFF_CHARM, duration (GET_LEVEL/2)-2 = 18 for the
+# level-40 god) to the Dominion Angel it creates (mob 85 for a good caster),
+# and affect_update speaks spell_wear_off_msg[81] to the ANGEL at expiry -- a
+# descriptorless mobile is silent, so the wizard switches into the angel
+# (do_switch, interpreter.c:751) and reads the line through the body's
+# descriptor. Alignment 350 keeps the angel count at one; the caster save gate
+# (spells.c:1198) is deterministic at seed 1. The pulse 20 clears the cast's
+# PULSE_VIOLENCE wait so the switch executes in its own block.
+# depth-case: constants.spell-wearoff-divineint-switched
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Constdiv
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Constdiv
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Constdiv align 350
+
+[probe]
+cast 'divine intervention' Constdiv
+~dpclock pulse 20
+switch angel
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630

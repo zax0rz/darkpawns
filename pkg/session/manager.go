@@ -400,6 +400,13 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		if s == nil {
 			return
 		}
+		// C's do_switch detaches the original body's descriptor while the
+		// rider is in an NPC (act.wizard.c:1200, ch->desc = NULL), so a
+		// send_to_char addressed to the switched-away original drops at the
+		// descriptor gate.
+		if m.switchedAwayOriginal(s, playerName) {
+			return
+		}
 		// Wrap in JSON event envelope for WebSocket clients
 		wrapped, err := json.Marshal(ServerMessage{
 			Type: MsgEvent,
@@ -448,6 +455,11 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		if s == nil {
 			return
 		}
+		// Same descriptor gate as MessageSink: the mob-switched original has
+		// no descriptor (act.wizard.c:1200).
+		if m.switchedAwayOriginal(s, playerName) {
+			return
+		}
 		s.sendLiteralText(string(msg))
 	}
 
@@ -465,6 +477,9 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		}
 	}
 	world.MobileDescriptorOwner = m.mobileDescriptorOwner
+	// extract_char returns a switched rider to the original body when the
+	// borrowed NPC is freed (src/handler.c:1158-1159).
+	world.SwitchedMobReturn = m.returnSwitchedMob
 
 	// C's do_simple_move calls look_at_room before follower recursion. Keep the
 	// renderer in session while letting the game transaction own that ordering.
