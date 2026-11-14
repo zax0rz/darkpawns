@@ -108,9 +108,11 @@ set Dreamdest level 31
 
 [probe]
 cast 'dream travel'
+~dpclock pulse 25
 sleep
 ~dpclock pulse 630
 cast 'dream travel'
+~dpclock pulse 25
 sleep
 cast 'dream travel'
 sleep

@@ -109,6 +109,7 @@ set player Mooncaster maxmana 5000
 set player Mooncaster mana 5000
 skillset Mooncaster 'lycanthropy' 100
 cast 'lycanthropy' Moonwolf
+~dpclock pulse 25
 set player Moonhigh level 20
 
 [probe]

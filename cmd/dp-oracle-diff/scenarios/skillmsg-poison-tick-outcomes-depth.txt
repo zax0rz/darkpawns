@@ -178,6 +178,7 @@ set PoisonGod hit 100
 cast 'poison' PoisonVictim
 ~dpclock pulse 20
 cast 'poison' PoisonGod
+~dpclock pulse 25
 cast 'poison' PoisonGod
 cast 'poison' PoisonGod
 cast 'poison' PoisonGod

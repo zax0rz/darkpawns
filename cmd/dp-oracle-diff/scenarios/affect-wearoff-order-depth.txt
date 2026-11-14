@@ -43,6 +43,7 @@ Y
 
 [probe]
 cast 'detect alignment'
+~dpclock pulse 25
 cast 'detect invisibility'
 cast 'detect magic'
 ~dpclock pulse 630

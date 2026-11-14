@@ -53,6 +53,7 @@ Y
 [warmup]
 goto 8105
 hit raven
+~dpclock pulse 27
 
 [probe]
 score
