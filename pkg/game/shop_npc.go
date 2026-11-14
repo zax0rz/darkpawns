@@ -121,7 +121,7 @@ func shopNpcPurchaseByIndex(stock []*ObjectInstance, viewer *MobInstance, name s
 		if obj == nil || obj.GetCost() <= 0 || !canSeeObject(viewer, obj) {
 			continue
 		}
-		if last != nil && sameShopObject(last, obj) {
+		if last != nil && SameShopObject(last, obj) {
 			continue
 		}
 		index--
@@ -145,7 +145,7 @@ func shopNpcPurchaseByName(stock []*ObjectInstance, viewer *MobInstance, name st
 		if obj == nil || !canSeeObject(viewer, obj) || !isCName(keyword, obj.GetKeywords()) {
 			continue
 		}
-		if last != nil && sameShopObject(last, obj) {
+		if last != nil && SameShopObject(last, obj) {
 			continue
 		}
 		ordinal--
@@ -343,7 +343,7 @@ func (w *World) shopNpcBuy(shop *Shop, keeper, customer *MobInstance, arg string
 		}
 		lastBought = item
 		obj = w.shopNpcPurchaseObject(shop, keeper, customer, arg, false)
-		if obj == nil || !sameShopObject(lastBought, obj) {
+		if obj == nil || !SameShopObject(lastBought, obj) {
 			break
 		}
 	}
@@ -354,7 +354,7 @@ func (w *World) shopNpcBuy(shop *Shop, keeper, customer *MobInstance, arg string
 			cost = shop.BuyPrice(obj.GetCost(), cha)
 		}
 		switch {
-		case obj == nil || (lastBought != nil && !sameShopObject(lastBought, obj)):
+		case obj == nil || (lastBought != nil && !SameShopObject(lastBought, obj)):
 			w.shopNpcTell(keeper, fmt.Sprintf("%s I only have %d to sell you.", customer.GetName(), bought))
 		case customer.GetGold() < cost:
 			w.shopNpcTell(keeper, fmt.Sprintf("%s You can only afford %d.", customer.GetName(), bought))

@@ -166,7 +166,7 @@ func (w *World) slideShopObjectWithKeeperLocked(shop *Shop, keeper *MobInstance,
 	shop.LastSort++
 	obj.Location = LocInventoryMob(keeper.ID)
 	for i, existing := range keeper.Inventory {
-		if !sameShopObject(obj, existing) {
+		if !SameShopObject(obj, existing) {
 			continue
 		}
 		keeper.Inventory = append(keeper.Inventory, nil)
@@ -199,14 +199,14 @@ func shopProducesObject(prototypes map[int]*parser.Obj, shop *Shop, obj *ObjectI
 	}
 	for _, vnum := range shop.SellTypes {
 		proto := prototypes[vnum]
-		if proto != nil && sameShopObject(obj, NewObjectInstance(proto, -1)) {
+		if proto != nil && SameShopObject(obj, NewObjectInstance(proto, -1)) {
 			return true
 		}
 	}
 	return false
 }
 
-func sameShopObject(left, right *ObjectInstance) bool {
+func SameShopObject(left, right *ObjectInstance) bool {
 	if left == nil || right == nil || left.GetVNum() != right.GetVNum() || left.GetCost() != right.GetCost() {
 		return false
 	}
