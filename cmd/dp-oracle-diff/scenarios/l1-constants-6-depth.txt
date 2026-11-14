@@ -1,0 +1,69 @@
+# L1 constants.c slice 6 (7 sites in spell_wear_off_msg[]):
+# - holy ward (1220), detect alignment (1237), detect invisibility (1238),
+#   detect magic (1239), invisibility (1248), protection from evil (1253),
+#   sanctuary (1255)
+# Each cast is staggered by 630 pulses (1 MUD hour) so wear-off messages do not
+# collide on the same tick (avoiding the separate LIFO-vs-FIFO same-tick affect
+# list ordering divergence).
+
+# depth-case: constants.spell-wearoff-batch1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Constsix
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Constsix
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+cast 'holy ward' Constsix
+~dpclock pulse 630
+cast 'invisibility' Constsix
+~dpclock pulse 630
+cast 'protection from evil' Constsix
+~dpclock pulse 630
+cast 'detect alignment' Constsix
+~dpclock pulse 630
+cast 'detect invisibility' Constsix
+~dpclock pulse 630
+cast 'detect magic' Constsix
+~dpclock pulse 630
+cast 'sanctuary' Constsix
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
