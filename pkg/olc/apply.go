@@ -11,12 +11,17 @@ import (
 // The limits are the C OLC limits from src/olc.h. They are exported so every
 // frontend can present the same effective values as the telnet editor.
 const (
-	MaxRoomName  = 75
-	MaxMobName   = 50
-	MaxObjName   = 50
-	MaxRoomDesc  = 1024
-	MaxExitDesc  = 256
-	MaxExtraDesc = 1024
+	MaxRoomName = 75
+	MaxMobName  = 50
+	MaxObjName  = 50
+	MaxRoomDesc = 1024
+	MaxExitDesc = 256
+	// C bounds every extra description with MAX_MESSAGE_LENGTH (4096), the same
+	// bound the object action description uses: redit.c:967 and oedit.c:1518
+	// both pass it to string_write (src/boards.h:34). Room, exit and mob
+	// descriptions keep their own smaller limits (MAX_ROOM_DESC 1024,
+	// MAX_EXIT_DESC 256, MAX_MOB_DESC 1024; src/olc.h:276-279).
+	MaxExtraDesc = MaxMessage
 	MaxMobDesc   = 1024
 	MaxMessage   = 4096
 	maxOLCLine   = 255 // MAX_INPUT_LENGTH - 1 in src/structs.h
