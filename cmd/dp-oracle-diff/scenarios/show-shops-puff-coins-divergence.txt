@@ -1,0 +1,42 @@
+# Divergence evidence, not a manifest vehicle: `show shops 35` reports shop
+# #12132 (lib/world/shp/121.shp, rnum 35), whose keeper is Puff (mobile 1,
+# loaded by the zone-0 reset `M 0 1 1 1`). On origin/main the keeper Coins
+# line diverges: C prints "Coins:      [        0], Bank: [        0]
+# (Total: 0)" while the Go port prints "Coins:      [       10], Bank:
+# [        0] (Total: 10)" — see the retained census run cited in the PR.
+# This scenario carries no depth-case annotation on purpose; the census red
+# row is the retained divergence evidence.
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Shopdiv
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopdiv
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+show shops 35
