@@ -307,6 +307,10 @@ func (w *World) PlaceObjectInPlayerInventory(obj *ObjectInstance, p *Player) err
 	p.Inventory.mu.Unlock()
 	obj.RoomVNum = -1
 	obj.Location = LocInventoryPlayer(p.Name)
+	// C obj_to_char sets PLR_CRASH after the attach (handler.c:569-571), and
+	// this helper replaces that path rather than going through
+	// moveObjectLocked, which marks crash itself.
+	p.MarkCrashNeeded()
 	return nil
 }
 
