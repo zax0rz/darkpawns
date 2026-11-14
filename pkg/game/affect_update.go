@@ -54,35 +54,46 @@ func (w *World) AffectUpdate() {
 				preDur[i] = af.Duration
 			}
 
-			var remaining []*engine.Affect
+			// C walks ch->affected from the head — the NEWEST record first
+			// (affect_to_char prepends, src/handler.c:391-392) — so same-tick
+			// wear-off messages print newest-first (DP-1530). ActiveAffects is
+			// stored oldest-first, so the expiry walk runs over the snapshot in
+			// reverse. The stored order itself is untouched: remaining is
+			// rebuilt below in snapshot order.
+			expired := make(map[*engine.Affect]bool)
 
-			for i, af := range affects {
+			for i := len(affects) - 1; i >= 0; i-- {
+				af := affects[i]
 				if af.Duration == -1 {
 					// Permanent affect (immortal only). Matches C: duration == -1 → no action.
-					remaining = append(remaining, af)
 					continue
 				}
 				if af.Duration >= 1 {
 					// Active spell — decrement. Matches C: duration >= 1 → duration--.
 					af.Duration--
-					remaining = append(remaining, af)
 					continue
 				}
 				// Duration == 0 (or unexpected negative) — expires this tick.
-				// C sends the wear-off only when the immediately older record
-				// is absent, a different spell, or still alive at its
-				// pre-pass duration (magic.c:439-444).
+				// C sends the wear-off only when the next node in its head-first
+				// walk — the immediately OLDER record, affects[i-1] here — is
+				// absent, a different spell, or still alive at its pre-pass
+				// duration (magic.c:439-444).
 				if i == 0 || affects[i-1].SpellID != af.SpellID || preDur[i-1] > 0 {
 					if msg := SpellWearOffMsg(af.SpellID); msg != "" {
 						p.SendMessage(msg + "\r\n")
 					}
 				}
 				// affect_remove unlinks exactly this record (handler.c:428-
-				// 438): it is not appended to remaining, and every other
-				// record of the spell survives with its own modifier. The
-				// previous engine.AffectFromChar here was affect_from_char —
-				// C's remove-all — which killed the whole stack at the first
-				// expiry (DP-1478).
+				// 438): it is dropped from remaining, and every other record
+				// of the spell survives with its own modifier.
+				expired[af] = true
+			}
+
+			remaining := make([]*engine.Affect, 0, len(affects))
+			for _, af := range affects {
+				if !expired[af] {
+					remaining = append(remaining, af)
+				}
 			}
 
 			p.mu.Lock()

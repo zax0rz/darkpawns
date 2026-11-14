@@ -1,0 +1,59 @@
+# DP-1530 same-tick wear-off order (Hydrogen's witness, L1 constants slice 6
+# notes the LIFO-vs-FIFO divergence). The three detects are cast back to back
+# with no intervening pulses, so they share one duration and expire on the
+# same mud hour. C's affected list is newest-first (affect_to_char prepends,
+# src/handler.c:391-392) and affect_update walks from the head
+# (src/magic.c:437-456), so the wear-off messages must print newest-cast
+# first: detect magic, then detect invisibility, then detect alignment.
+
+# depth-case: constants.spell-wearoff-same-tick
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Tickwear
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tickwear
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+cast 'detect alignment' Tickwear
+cast 'detect invisibility' Tickwear
+cast 'detect magic' Tickwear
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
