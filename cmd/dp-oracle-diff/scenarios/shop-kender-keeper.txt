@@ -55,6 +55,7 @@ steal
 gold
 inventory
 hit Hansen
+~dpclock pulse 25
 gold
 inventory
 

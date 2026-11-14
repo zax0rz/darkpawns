@@ -101,5 +101,5 @@ set Mindactor level 1
 
 [probe]
 kill Alhazred
-~dpclock pulse 20
+~dpclock pulse 25
 score
