@@ -124,3 +124,18 @@ func TestWhodBuildWhoListAfkMarker(t *testing.T) {
 		t.Fatalf("name-only bytes = %q", got)
 	}
 }
+
+// TestWhodBuildWhoListUnknownSite pins the SHOW_SITE "[ ** Unknown ** ]" arm
+// (src/whod.c:404-410): a session whose host string is empty renders the
+// placeholder. The census transports always carry a peer address, so no
+// vehicle can produce this arm -- unit proof only, per the L3 blocked row
+// whod-daemon.unknown-site (R5h: fails if the arm is deleted).
+func TestWhodBuildWhoListUnknownSite(t *testing.T) {
+	w := NewWhod()
+	w.SetMode(WhodShowName | WhodShowSite)
+	got := w.BuildWhoList([]WhodEntry{{Name: "Hostless", Class: ClassWarrior, Level: 3}})
+	want := WhodHeader() + "Hostless [ ** Unknown ** ]\r\n" + "\n\rPlayers : 1     Gods : 0\n\r\n\r"
+	if got != want {
+		t.Fatalf("unknown-site bytes =\n%q\nwant\n%q", got, want)
+	}
+}
