@@ -176,13 +176,14 @@ func (m *Manager) sessionRidingMob(mob *game.MobInstance) *Session {
 // returnSwitchedMob is extract_char's do_return arm for a body hosting a
 // descriptor (src/handler.c:1158-1159): the rider returns to the original
 // body before the extracted character is freed. die_follower has already run
-// (src/handler.c:1116-1117), matching C's line order.
+// (src/handler.c:1116-1117), matching C's line order. The world extraction
+// pass runs under playerLifecycleMu (Manager.ExtractPendingChars and
+// drainPendingExtractions both hold it before draining), so this must not
+// re-lock it.
 func (m *Manager) returnSwitchedMob(mob *game.MobInstance) {
 	s := m.sessionRidingMob(mob)
 	if s == nil {
 		return
 	}
-	m.playerLifecycleMu.Lock()
-	defer m.playerLifecycleMu.Unlock()
 	_ = m.returnSwitch(s)
 }
