@@ -156,8 +156,15 @@ func (s *Session) actingOLCZone() int {
 // detaches that body's descriptor for NPC and PC riders alike
 // (act.wizard.c:1199-1200, ch->desc = NULL), so a send_to_char addressed to
 // the switched-away original drops at the descriptor gate.
+// Switch fields are written under m.mu (detachPCSwitch, cmdSwitch), so the
+// read takes it too. Callers must not hold m.mu.
 func (m *Manager) switchedAwayOriginal(s *Session, playerName string) bool {
-	return s != nil && s.isSwitched && s.switchedOriginal != nil &&
+	if s == nil {
+		return false
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return s.isSwitched && s.switchedOriginal != nil &&
 		strings.EqualFold(playerName, s.switchedOriginal.Name)
 }
 
