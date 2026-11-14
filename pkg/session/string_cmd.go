@@ -297,44 +297,68 @@ func (s *Session) stringObjExtraDescEditor(obj *game.ObjectInstance, keyword str
 		return nil
 	}
 
-	descs := obj.LiveExtraDescs()
+	// C edits the node its ex_description pointer reaches. read_object shares
+	// that list with the prototype (src/db.c:1947-1951), so a keyword the
+	// prototype defines is edited on the prototype itself (src/modify.c:701-707)
+	// and every instance sees it; only a keyword the object itself introduced is
+	// instance-local (src/modify.c:690-700). The entry clear is part of the same
+	// write: C frees the node's description and leaves it NULL (:702-704).
+	world := s.manager.world
+	prototypeOwned := world != nil && world.ClearLiveObjExtraDesc(obj.VNum, keyword)
 	index := -1
-	for i := range descs {
-		// C: str_cmp(ed->keyword, string) — case-insensitive exact equality
-		// (src/utils.c:107).
-		if strings.EqualFold(descs[i].Keywords, keyword) {
-			index = i
-			break
-		}
-	}
-
-	if index >= 0 {
-		// C frees the old description and nulls the pointer before the editor
-		// starts (src/modify.c:703-706), so the field is absent until the
-		// editor writes again.
-		descs[index].Description = ""
-		descs[index].NullDescription = true
-		obj.SetLiveExtraDescs(descs)
+	if prototypeOwned {
 		s.Send(stringModifyingDescription)
 	} else {
-		// C creates the node at the head of obj->ex_description with a NULL
-		// description (src/modify.c:693-698).
-		descs = append([]parser.ExtraDesc{{Keywords: keyword, NullDescription: true}}, descs...)
-		index = 0
-		obj.SetLiveExtraDescs(descs)
-		s.Send(stringNewField)
+		descs := obj.LiveExtraDescs()
+		for i := range descs {
+			// C: str_cmp(ed->keyword, string) — case-insensitive exact equality
+			// (src/utils.c:107).
+			if strings.EqualFold(descs[i].Keywords, keyword) {
+				index = i
+				break
+			}
+		}
+		if index >= 0 {
+			// C frees the old description and nulls the pointer before the
+			// editor starts (src/modify.c:703-706), so the field is absent until
+			// the editor writes again.
+			descs[index].Description = ""
+			descs[index].NullDescription = true
+			obj.SetLiveExtraDescs(descs)
+			s.Send(stringModifyingDescription)
+		} else {
+			// C creates the node at the head of obj->ex_description with a NULL
+			// description (src/modify.c:693-698).
+			descs = append([]parser.ExtraDesc{{Keywords: keyword, NullDescription: true}}, descs...)
+			index = 0
+			obj.SetLiveExtraDescs(descs)
+			s.Send(stringNewField)
+		}
 	}
 
 	apply := func(value string) {
-		current := obj.LiveExtraDescs()
-		if index < len(current) {
-			current[index].Description = value
-			// C's string editor allocates the buffer it writes, so the
-			// pointer is non-NULL even when the saved text is empty
-			// (src/improved-edit.c).
-			current[index].NullDescription = false
-			obj.SetLiveExtraDescs(current)
+		if prototypeOwned && world != nil && world.SetLiveObjExtraDesc(obj.VNum, keyword, value) {
+			return
 		}
+		current := obj.LiveExtraDescs()
+		at := index
+		if at < 0 || at >= len(current) || !strings.EqualFold(current[at].Keywords, keyword) {
+			at = -1
+			for i := range current {
+				if strings.EqualFold(current[i].Keywords, keyword) {
+					at = i
+					break
+				}
+			}
+		}
+		if at < 0 {
+			return
+		}
+		current[at].Description = value
+		// C's string editor allocates the buffer it writes, so the pointer is
+		// non-NULL even when the saved text is empty (src/improved-edit.c).
+		current[at].NullDescription = false
+		obj.SetLiveExtraDescs(current)
 	}
 	s.startLiveStringEditor(apply, stringMaxLength)
 	return nil
