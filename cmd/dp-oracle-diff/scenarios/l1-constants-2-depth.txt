@@ -1,0 +1,65 @@
+# L1 constants.c slice 2 (8 green sites + 1 reported divergence constants.c:57):
+# - hometowns[]: !Bad Hometown - Tell a God! (53)
+# - races[]: Minotauran (132), Rakshasan (133)
+# - phases[]: not in the sky (40), one-quarter full(waxing) (41), half full(waxing) (42)
+# - weekdays[]: the Day of the Deception (1369), the Day of Thunder (1370)
+
+# depth-case: constants.hometowns-bad
+# depth-case: constants.races-minotauran-rakshasan
+# depth-case: constants.weekdays-deception-thunder
+# depth-case: constants.moon-phases-waxing
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Consttwo
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Consttwo
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+set Consttwo home 0
+score
+set Consttwo race m
+score
+set Consttwo race r
+score
+~dpclock pulse 81900
+time
+~dpclock pulse 90720
+time
+~dpclock pulse 90720
+time
+~dpclock pulse 15120
+time
+~dpclock pulse 75600
+time
+~dpclock pulse 90720
+time
