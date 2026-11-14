@@ -1,0 +1,97 @@
+# Ordinary-player sample for the commands routed in DP-1521 PR4. The same
+# command bodies retain their existing Player behavior without a switch.
+# depth-case: communication-ordinary.dynamic-social
+# depth-case: communication-ordinary.insult
+# depth-case: communication-ordinary.ask
+# depth-case: communication-ordinary.whisper
+# depth-case: communication-ordinary.race-say
+# depth-case: communication-ordinary.group-say
+# depth-case: communication-ordinary.gtell-alias
+# depth-case: communication-ordinary.think
+# depth-case: communication-ordinary.grats
+# depth-case: communication-ordinary.holler
+# depth-case: communication-ordinary.newbie
+# depth-case: communication-ordinary.qsay
+# depth-case: communication-ordinary.ctell
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Commordinary
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Commordinary
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Commordinarypeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Commordinarypeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Commordinarypeer 8105
+set Commordinary level 5
+
+[probe]
+smile
+smile Commordinarypeer
+ask Commordinarypeer are you there?
+whisper Commordinarypeer listen closely
+insult Commordinarypeer
+rsay how are you?
+think
+think about this
+gsay hello group
+gtell hello through the alias
+grats well done
+holler hello world
+newbie hello newcomer
+qsay not on quest
+ctell not in a clan
