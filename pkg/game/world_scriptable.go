@@ -598,12 +598,17 @@ func (w *World) fireMobScript(trigger string, body, actorBody combat.Combatant, 
 	if mob == nil || !mob.HasScript(trigger) {
 		return
 	}
-	actor, _ := combatPlayer(actorBody)
 
 	ctx := mob.CreateScriptContext(nil, nil, "")
-	if actor != nil {
+	// C's run_script binds the opponent — player or mobile alike — as ch:
+	// fight.c:1891 passes the fight victim, :597 the killer, and
+	// scripts.c:1727-1729 builds its table through char_to_table for NPCs
+	// too. The player lane keeps the direct ctx.Ch; a mobile opponent rides
+	// ChRef through the bridge (DP-1319).
+	if actor, _ := combatPlayer(actorBody); actor != nil {
 		ctx.Ch = actor
 	}
+	ctx.ChRef = combatantScriptRef(actorBody)
 	ctx.World = NewWorldScriptableAdapter(w)
 	ctx.RoomVNum = roomVNum
 
