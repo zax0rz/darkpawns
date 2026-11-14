@@ -167,3 +167,53 @@ func TestCharacterRetreatChecksBodyPositionBeforeNpcSkill(t *testing.T) {
 		t.Fatalf("standing retreat output = %q, want %q", got, want)
 	}
 }
+
+func TestSwitchedMobileMovementLooksAtDestination(t *testing.T) {
+	w, err := NewWorld(&parser.World{Rooms: []parser.Room{
+		{VNum: 1000, Name: "Owner Room"},
+		{VNum: 1001, Name: "Body Origin", Exits: map[string]parser.Exit{
+			"north": {Direction: "north", ToRoom: 1002},
+		}},
+		{VNum: 1002, Name: "Body Destination", Description: "The switched body is here."},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.StopAITicker()
+	t.Cleanup(w.StopAITicker)
+
+	owner := NewPlayer(1, "Switchowner", 1000)
+	if err := w.AddPlayer(owner); err != nil {
+		t.Fatal(err)
+	}
+	mob := NewMob(&parser.Mob{VNum: 9001, Keywords: "watcher", ShortDesc: "a watcher"}, 1001)
+	w.activeMobs[mob.GetID()] = mob
+
+	var ownerOutput, bodyOutput strings.Builder
+	w.MessageSink = func(name string, message []byte) {
+		if name == owner.Name {
+			ownerOutput.Write(message)
+		}
+	}
+	w.MobileMessageSink = func(body *MobInstance, message []byte) {
+		if body == mob {
+			bodyOutput.Write(message)
+		}
+	}
+	w.MobileDescriptorOwner = func(body *MobInstance) *Player {
+		if body == mob {
+			return owner
+		}
+		return nil
+	}
+
+	if got := CharacterMove(CharacterCommandContext{Actor: mob, World: w}, 0); got != CharacterCommandHandled {
+		t.Fatalf("CharacterMove result = %v", got)
+	}
+	if got := bodyOutput.String(); !strings.Contains(got, "Body Destination") || !strings.Contains(got, "The switched body is here.") {
+		t.Fatalf("switched body output = %q, want destination room look", got)
+	}
+	if got := ownerOutput.String(); got != "" {
+		t.Fatalf("detached owner received body movement output %q", got)
+	}
+}

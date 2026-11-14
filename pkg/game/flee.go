@@ -197,7 +197,14 @@ func (w *World) doSimpleMoveMob(ch *MobInstance, dir int, needSpecialsCheck bool
 
 	sendMobMovementArrival(w, ch, dir, toRoom)
 
-	w.EntryProg(ch, ch.GetRoom())
+	if w.MobileDescriptorOwner != nil && w.MobileDescriptorOwner(ch) != nil {
+		// C do_simple_move() sends a room look to a switched mobile's
+		// descriptor; only descriptorless NPCs take the entry_prog path
+		// (src/act.movement.c:265-268).
+		w.lookAtRoom(ch, false)
+	} else {
+		w.EntryProg(ch, ch.GetRoom())
+	}
 	if ch.GetRoom() < 0 {
 		return false
 	}
