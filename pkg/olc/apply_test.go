@@ -147,6 +147,85 @@ func TestApplyStringCaps(t *testing.T) {
 	}
 }
 
+// TestExtraDescriptionUsesCsMaxMessageLength pins the C bound itself, not
+// whatever MaxExtraDesc happens to hold. C passes MAX_MESSAGE_LENGTH (4096,
+// src/boards.h:34) to string_write for every extra description — src/redit.c:967
+// for rooms and src/oedit.c:1518 for objects — while MAX_EXTRA_DESC (1024,
+// src/olc.h:278) has no call site in src/. A 3000-byte value is the exact
+// regression DP-1294 names: 1024 cuts it, 4096 keeps it whole.
+func TestExtraDescriptionUsesCsMaxMessageLength(t *testing.T) {
+	if MaxMessage != 4096 || MaxExtraDesc != MaxMessage {
+		t.Fatalf("extra description bound = %d (MaxMessage %d), want C's MAX_MESSAGE_LENGTH 4096",
+			MaxExtraDesc, MaxMessage)
+	}
+	// Ending in \n keeps normalizeDescriptionText a no-op, so the stored value
+	// is the input byte for byte.
+	value := strings.Repeat("E", 2999) + "\n"
+	if len(value) != 3000 {
+		t.Fatalf("fixture length = %d, want 3000", len(value))
+	}
+
+	tests := []struct {
+		name  string
+		apply func(t *testing.T) string
+	}{
+		{
+			name: "set room extra description",
+			apply: func(t *testing.T) string {
+				extra := parser.ExtraDesc{}
+				if err := Apply(Operation{Kind: OpSetExtraDescription, Extra: &extra, Text: value}); err != nil {
+					t.Fatal(err)
+				}
+				return extra.Description
+			},
+		},
+		{
+			name: "add room extra description",
+			apply: func(t *testing.T) string {
+				room := parser.Room{}
+				if err := Apply(Operation{Kind: OpAddExtraDescription, Room: &room, Index: -1, Extra: &parser.ExtraDesc{Description: value}}); err != nil {
+					t.Fatal(err)
+				}
+				if len(room.ExtraDescs) != 1 {
+					t.Fatalf("extra descriptions = %d, want 1", len(room.ExtraDescs))
+				}
+				return room.ExtraDescs[0].Description
+			},
+		},
+		{
+			name: "set object extra description",
+			apply: func(t *testing.T) string {
+				obj := parser.Obj{ExtraDescs: []parser.ExtraDesc{{}}}
+				if err := Apply(Operation{Kind: OpSetObjExtraDescription, Extra: &obj.ExtraDescs[0], Text: value}); err != nil {
+					t.Fatal(err)
+				}
+				return obj.ExtraDescs[0].Description
+			},
+		},
+		{
+			name: "add object extra description",
+			apply: func(t *testing.T) string {
+				obj := parser.Obj{}
+				if err := Apply(Operation{Kind: OpAddObjExtraDescription, Obj: &obj, Index: -1, Extra: &parser.ExtraDesc{Description: value}}); err != nil {
+					t.Fatal(err)
+				}
+				if len(obj.ExtraDescs) != 1 {
+					t.Fatalf("extra descriptions = %d, want 1", len(obj.ExtraDescs))
+				}
+				return obj.ExtraDescs[0].Description
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := test.apply(t)
+			if got != value {
+				t.Fatalf("stored %d bytes, want the whole %d-byte description C keeps under 4096", len(got), len(value))
+			}
+		})
+	}
+}
+
 func TestApplyDescriptionTextNormalizesNaturalInput(t *testing.T) {
 	tests := []struct {
 		name  string
