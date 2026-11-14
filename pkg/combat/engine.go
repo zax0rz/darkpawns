@@ -788,7 +788,14 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 				next := ce.combatPairs[key]
 				ce.mu.RUnlock()
 				if next == nil {
-					break
+					// C's loop hits whoever FIGHTING names (fight.c:2017-2024)
+					// without consulting bookkeeping. A death retarget
+					// (stop_fighting's dead-opponent scan, src/fight.c:236-245)
+					// re-points FIGHTING without creating a combat pair, so
+					// synthesize the plain round pair for the new target;
+					// breaking here dropped the round's remaining swings where
+					// C spends them on the retargeted opponent (DP-1507).
+					next = &CombatPair{Attacker: attacker, Defender: fighting}
 				}
 				current, def = next, fighting
 			}
@@ -1233,8 +1240,24 @@ func (ce *CombatEngine) applyMobCombatRedirectsAfterJail(attacker, defender Comb
 		attacker.GetHP() > attacker.GetMaxHP()/2 &&
 		!cbHasAffectStr(defender, AFF_STR_VAMPIRE) &&
 		!cbHasAffectStr(defender, AFF_STR_WEREWOLF) {
+		// Capture the victim's mutual fighter before cbJailGuardSubdue: the
+		// callback clears the fighting pointers on both bodies, and C stops
+		// that fighter while the victim is still in the room so no
+		// dead-or-fled retarget can fire (src/fight.c:1379-1384).
+		opponent := defender.GetFightingBody()
+		mutual := opponent != nil && opponent.GetFightingBody() == defender
 		if cbJailGuardSubdue(attacker, defender) {
 			ce.StopCombat(defender)
+			// C's stop_fighting(FIGHTING(victim)) removes the mutual fighter
+			// from combat_list outright. The body-level StopFighting inside
+			// the callback cannot reach this engine's combatOrder, and leaving
+			// the entry behind re-enrols the fighter MID-PASS when a later
+			// set_fighting re-points its body: the same violence pass then
+			// revisits the stale entry where C's removed-and-prepended fighter
+			// waits for the next pass (DP-1507).
+			if mutual {
+				ce.StopCombat(opponent)
+			}
 			ce.StopCombat(attacker)
 			return true
 		}
@@ -1390,13 +1413,17 @@ func (ce *CombatEngine) handleDeath(victim, killer Combatant) bool {
 	return true
 }
 
-// retireDeathVictim is die_with_killer's two stop_fighting calls
-// (src/fight.c:612-616): the dead body and its killer leave combat; nobody
-// else does. Survivors still fighting the body keep their FIGHTING pointer at
-// the flagged corpse — extract_char only queues the body (src/handler.c:1194-
-// 1209) — and their swings land on it until extract_char_final stops them at
-// the next heartbeat (src/handler.c:1147-1151), mirrored by RetireCombatant
-// through the extraction pass.
+// retireDeathVictim is die()'s HP<0 tail (src/fight.c:612-617): the dead body
+// leaves combat, and the killer's stop_fighting (src/fight.c:615-616) runs
+// when the killer's pointer still names the victim. The game die_with_killer
+// port's stopKillerAfterDie stops the killer first; when it did, the pointer
+// already names that stop's dead-target retarget, and stopping a second time
+// would see a live opponent, skip the retarget and strip the killer from
+// combat where C keeps it (DP-1507). Survivors still fighting the body keep
+// their FIGHTING pointer at the flagged corpse — extract_char only queues the
+// body (src/handler.c:1194-1209) — and their swings land on it until
+// extract_char_final stops them at the next heartbeat (src/handler.c:1147-
+// 1151), mirrored by RetireCombatant through the extraction pass.
 func (ce *CombatEngine) retireDeathVictim(victim, killer Combatant) {
 	if !ValidBody(victim) {
 		return
@@ -1407,7 +1434,7 @@ func (ce *CombatEngine) retireDeathVictim(victim, killer Combatant) {
 		marker.SetCombatRetired(true)
 	}
 	ce.stopCombatLocked(victim, true)
-	if killer != nil && killer != victim && ValidBody(killer) && killer.GetFightingBody() != nil {
+	if killer != nil && killer != victim && ValidBody(killer) && killer.GetFightingBody() == victim {
 		ce.stopCombatLocked(killer, false)
 	}
 }
