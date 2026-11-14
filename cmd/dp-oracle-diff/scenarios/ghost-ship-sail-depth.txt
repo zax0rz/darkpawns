@@ -1,0 +1,50 @@
+# ghost_ship_disappear's ship-side broadcasts (src/new_cmds.c:2733-2739).
+# The ghost ship appears at hour 21 (src/weather.c:68-72) linking dock
+# 19173/19174 to ship room 19100, and sets sail at hour 5 (src/weather.c:56-60)
+# freeing the exits with "Suddenly the dock to the south disappears!" and
+# "The ghost ship has set sail!" broadcast to the ship room. A player sleeping
+# aboard through the dawn tick witnesses both lines.
+
+# depth-case: new-cmds.ghost-ship-dock-vanishes
+# depth-case: new-cmds.ghost-ship-sets-sail
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Shipwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shipwatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 19100
+
+[probe]
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300
+~dpclock pulse 6300

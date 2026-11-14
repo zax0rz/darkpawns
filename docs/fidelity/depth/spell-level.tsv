@@ -1,0 +1,4 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+spell_level	boot	spell-level.illegal-spellnum-log	D1	boot	excluded	-	spell_parser.c:1122-1126	Not player-facing: "SYSERR: attempting assign to illegal spellnum %d" goes through log() during boot, when spell_level validates the class-table assignments (src/class.c:772+, all in-bounds); no descriptor exists (R5e).
+spell_level	boot	spell-level.illegal-class-log	D1	boot	excluded	-	spell_parser.c:1128-1133	Not player-facing: the illegal-class SYSERR goes through log() during boot table validation; the registered assignments use valid classes (R5e).
+spell_level	boot	spell-level.illegal-level-log	D1	boot	excluded	-	spell_parser.c:1135-1140	Not player-facing: the illegal-level SYSERR goes through log() during boot table validation (R5e).
