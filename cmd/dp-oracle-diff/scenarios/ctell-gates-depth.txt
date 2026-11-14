@@ -1,0 +1,115 @@
+# C do_ctell's member gates and rank-prefixed empty message
+# (src/act.comm.c:1482-1492, src/act.comm.c:1501-1524). A mortal clan member
+# with PRF_NOCTELL is refused with "You aren't currently on your clan channel."
+# and a PLR_NOSHOUT member with "You cannot clan-tell anything!" — both before
+# any argument handling. An immortal `ctell <clan> #<rank>` with no message
+# passes the rank-count lookup (src/clan.c:209 default two ranks) and reaches
+# "What do you want to tell them?". The second clan exists so C's clan[1]
+# rank lookup for clan number 1 stays in bounds (R5e call path).
+
+# depth-case: ctell.member-noctell-gate
+# depth-case: ctell.member-noshout-gate
+# depth-case: ctell.rank-empty-message
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Ctegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ctegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:member]
+Ctemate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:member]
+Ctemate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:other]
+Cteother
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:other]
+Cteother
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Ctemate 8162
+teleport Cteother 8162
+clan create Ctemate Wolves
+clan create Cteother Tigers
+
+[probe]
+force Ctemate noctell
+force Ctemate ctell hello the pack
+force Ctemate noctell
+mute Ctemate
+force Ctemate ctell hello the muted pack
+ctell 1 #2

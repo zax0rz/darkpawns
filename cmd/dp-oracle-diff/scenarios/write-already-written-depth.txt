@@ -1,0 +1,51 @@
+# C do_write's pre-existing-text gate (src/act.comm.c:1094-1095): a NOTE whose
+# action_description is already set refuses a second write with "There's
+# something written on it already." instead of opening the editor. The blank
+# tome (19510, ITEM_NOTE) is written once with the held quill (1208), '@'
+# commits, and the second write must hit the gate.
+
+# depth-case: write.already-written
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Writegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Writegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+load obj 19510
+load obj 1208
+hold quill
+
+[probe]
+write tome
+A line about the sun.
+@
+write tome
