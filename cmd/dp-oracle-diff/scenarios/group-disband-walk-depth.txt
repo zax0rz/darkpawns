@@ -114,6 +114,7 @@ send:alpha follow Disbandgod
 send:beta follow Disbandgod
 group all
 cast 'charm person' rat
+~dpclock pulse 20
 group all
 ungroup rat
 order rat smile
