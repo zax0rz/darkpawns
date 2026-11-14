@@ -11,3 +11,4 @@ perform_remove	remove	remove.carry-full	D2	command	oracle-green	carry-take-gates
 do_remove	remove	remove.fill-word-parse	D2	command	oracle-green	equipment-fillword	interpreter.c:1265	C do_remove parses with one_argument; Go doRemove used strings.Fields. Remove-local routing fix.
 get_object_in_equip_vis	remove	remove.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_object_in_equip_vis	Prefix keyword match shared with get.
 find_all_dots	remove	remove.alldot-semantics	D2	shared	delegated	get.all-of-what	handler.c:1567	"all." -> FIND_ALLDOT shared with get.
+do_remove	remove	remove.carry-limit-refusal	D2	command	oracle-green	remove-carry-limit-depth	act.item.c:1721-1722	A level-1 mortal filled to exactly CAN_CARRY_N (5 + DEX/2 + level/2, src/utils.h:449; get's own capacity gate bounds the fill) who removes a held item gets C's act "$p: you can't carry that many items!" instead of an unequip (R1/R2/R5e).
