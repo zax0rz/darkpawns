@@ -1,9 +1,12 @@
 # DP-1533: stat's SPL affect listing. C's do_stat_character walks ch->affected
 # raw (src/act.wizard.c:971-976) and affect_to_char2 prepends
-# (src/handler.c:415-416). The batch4 development runs and this vehicle's
-# predecessors saw C's listing flip to the opposite order when a pooled affect
-# expired between stats, so the vehicle stats every MUD hour across the
-# metalskin expiry to catch the flip.
+# (src/handler.c:415-416). Back-to-back casts and single-record expiries
+# render identically in both engines (this file's earlier revisions were
+# green); the divergence needs a MULTI-RECORD affect (globe's ARMOR+SAVING
+# pair) expiring between stats, after which C's listing flips to the opposite
+# order while the port keeps the prepend order. The vehicle stacks staggered
+# casts plus the scroll-recited know align and stats every MUD hour across
+# the globe expiry.
 # depth-case: dp-1533.stat-spl-order
 
 [fixture]
@@ -44,7 +47,14 @@ goto 8105
 [probe]
 cast 'metalskin' Splord
 ~dpclock pulse 630
+cast 'globe of invulnerability' Splord
+~dpclock pulse 630
 cast 'protection from good' Splord
+~dpclock pulse 630
+load obj 4819
+recite book
+~dpclock pulse 630
+stat Splord
 ~dpclock pulse 630
 stat Splord
 ~dpclock pulse 630
