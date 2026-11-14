@@ -1,0 +1,42 @@
+# Probe for the DP-1527 root-cause theory: if C's show-shops keeper lookup
+# (get_char_num, src/handler.c) collides on rnum 0 with PLAYERS (clear_char
+# zeroes ch->nr; players prepend to character_list at login), then an actor
+# with 500 gold should print "Coins: [500]" for shop 35 (keeper Puff, proto
+# rnum 0) instead of any gold on Puff herself.
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Puffprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Puffprobe
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Puffprobe gold 500
+
+[probe]
+show shops 35

@@ -44,6 +44,12 @@ func TestShowShopDetailedReportAndLiveBankThroughDispatch(t *testing.T) {
 	world, err := game.NewWorld(&parser.World{
 		Rooms: []parser.Room{{VNum: 1001, Name: "Market"}, {VNum: 1002, Name: "Back room"}},
 		Mobs: []parser.Mob{{
+			// rnum 0, like Puff in the real database: show shops resolves the
+			// keeper through get_char_num, where a live player's zeroed nr
+			// collides with rnum 0 (DP-1527). The keeper under test sits at
+			// rnum 1 so the collision does not eat it.
+			VNum: 1, Keywords: "puff dragon", ShortDesc: "Puff",
+		}, {
 			VNum: 5001, Keywords: "keeper merchant", ShortDesc: "a merchant",
 			Level: 10, HP: parser.DiceRoll{Num: 1, Sides: 10, Plus: 90},
 		}},
@@ -205,6 +211,12 @@ func TestShopBuyCreditsKeeperBankThroughDispatch(t *testing.T) {
 	w, err := game.NewWorld(&parser.World{
 		Rooms: []parser.Room{{VNum: 1001, Name: "Market"}},
 		Mobs: []parser.Mob{{
+			// rnum 0, like Puff in the real database: show shops resolves the
+			// keeper through get_char_num, where a live player's zeroed nr
+			// collides with rnum 0 (DP-1527). The keeper under test sits at
+			// rnum 1 so the collision does not eat it.
+			VNum: 1, Keywords: "puff dragon", ShortDesc: "Puff",
+		}, {
 			VNum: 5001, Keywords: "keeper merchant", ShortDesc: "a merchant",
 			Level: 10, HP: parser.DiceRoll{Num: 1, Sides: 10, Plus: 90},
 		}},

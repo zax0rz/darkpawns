@@ -11,6 +11,48 @@ type orderedCharacter struct {
 	sequence uint64
 }
 
+// mobRNumForVNum mirrors real_mobile (src/db.c): the prototype's index in the
+// mob table. Keeper rnum 0 is Puff (the first mobile in the database), which
+// is the only index a player's zeroed nr can collide with.
+func (w *World) mobRNumForVNum(vnum int) int {
+	parsed := w.GetParsedWorld()
+	if parsed == nil {
+		return -1
+	}
+	for i := range parsed.Mobs {
+		if parsed.Mobs[i].VNum == vnum {
+			return i
+		}
+	}
+	return -1
+}
+
+// ShowShopsKeeper mirrors C's show_shops keeper resolution
+// (src/shop.c:1345-1350): get_char_num(SHOP_KEEPER(shop_nr)) scans
+// character_list newest-first for the first body whose nr equals the keeper's
+// prototype rnum. Players never set nr -- clear_char zeroes it (src/db.c),
+// and create_char prepends players to the same list -- so any live player
+// collides with keeper rnum 0, and the logged-in actor's gold is what C
+// prints as the keeper's Coins. Exactly one return is non-nil on a match.
+func (w *World) ShowShopsKeeper(keeperVNum int) (player *Player, mob *MobInstance) {
+	keeperRNum := w.mobRNumForVNum(keeperVNum)
+	if keeperRNum < 0 {
+		return nil, nil
+	}
+	for _, oc := range w.cOrderedCharacters() {
+		if oc.player != nil {
+			if keeperRNum == 0 {
+				return oc.player, nil
+			}
+			continue
+		}
+		if oc.mob != nil && w.mobRNumForVNum(oc.mob.GetVNum()) == keeperRNum {
+			return nil, oc.mob
+		}
+	}
+	return nil, nil
+}
+
 // cOrderedCharacters snapshots the live bodies in C's newest-first
 // character_list order. create_char() and read_mobile() both prepend their
 // bodies to that list (src/db.c:1716-1717,1745-1746), so newer sequence values
