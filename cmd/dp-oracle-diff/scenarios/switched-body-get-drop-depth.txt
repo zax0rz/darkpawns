@@ -64,8 +64,8 @@ Y
 [setup:oracle:peer]
 Itemobserver
 Y
-observerpass
-observerpass
+observe1
+observe1
 N
 F
 H
@@ -78,8 +78,8 @@ Y
 [setup:port:peer]
 Itemobserver
 y
-observerpass
-observerpass
+observe1
+observe1
 N
 F
 H

@@ -115,7 +115,7 @@ goto 8105
 teleport Movegrouppeer 8162
 teleport Shadowtarget 8162
 switch satan
-send:Movegrouppeer follow satan
+send:member follow satan
 
 [probe]
 north
