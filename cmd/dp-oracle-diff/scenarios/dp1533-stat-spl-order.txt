@@ -1,0 +1,61 @@
+# DP-1533: stat's SPL affect listing. C's do_stat_character walks ch->affected
+# raw (src/act.wizard.c:971-976) and affect_to_char2 prepends
+# (src/handler.c:415-416). The batch4 development runs and this vehicle's
+# predecessors saw C's listing flip to the opposite order when a pooled affect
+# expired between stats, so the vehicle stats every MUD hour across the
+# metalskin expiry to catch the flip.
+# depth-case: dp-1533.stat-spl-order
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Splord
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Splord
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+cast 'metalskin' Splord
+~dpclock pulse 630
+cast 'protection from good' Splord
+~dpclock pulse 630
+stat Splord
+~dpclock pulse 630
+stat Splord
+~dpclock pulse 630
+stat Splord
+~dpclock pulse 630
+stat Splord
+~dpclock pulse 630
+stat Splord
+~dpclock pulse 630
+stat Splord
+~dpclock pulse 630
+stat Splord
