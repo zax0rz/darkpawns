@@ -1,5 +1,6 @@
 # depth-case: weather.month-rollover-day-34
 # depth-case: weather.moon-set-day-34
+# depth-case: constants.month-names-winter-dragon-sun-evil
 # Boot pinned one hour before the month boundary: fixed-time 650812932 is
 # hour 23 of day 34, month 8 (the month's last hour, computed from
 # beginning_of_time src/db.c:417). One pumped hour crosses hours>23 ->

@@ -1,0 +1,10 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+attitude_loot	kill	attitude-loot.quip-case2	D4	output	unit-green	TestPickBragMessageQuipStrings	fight.c:1182-1184	Long-shot 1-in-12 brag quip pinned by the scripted-roller unit proof: "%s was tough, but had good eq..." (R1/R5e/R5h).
+attitude_loot	kill	attitude-loot.quip-case3	D4	output	unit-green	TestPickBragMessageQuipStrings	fight.c:1186-1188	Long-shot brag quip: "%s was easy xp." (R1/R5e/R5h).
+attitude_loot	kill	attitude-loot.quip-case4	D4	output	unit-green	TestPickBragMessageQuipStrings	fight.c:1190-1192	Long-shot brag quip: "Muhahahaha... %s is dead!" (R1/R5e/R5h).
+attitude_loot	kill	attitude-loot.quip-case5-evil	D4	output	unit-green	TestPickBragMessageQuipStrings	fight.c:1194-1200	Case 5's evil-killer arm: "Now you will see that evil will always triumph, because good is dumb." (IS_EVIL(ch) && !IS_EVIL(victim), src/utils.h alignment) (R1/R5e/R5h).
+attitude_loot	kill	attitude-loot.quip-case7	D4	output	unit-green	TestPickBragMessageQuipStrings	fight.c:1207-1212	Player-victim-only quip: "Oh, did that hurt, %s? *innocent stare*" (R1/R5e/R5h).
+attitude_loot	kill	attitude-loot.quip-case8	D4	output	unit-green	TestPickBragMessageQuipStrings	fight.c:1214-1219	Player-victim-only quip: "What the hell was %s doing out of newbie training?" (R1/R5e/R5h).
+attitude_loot	kill	attitude-loot.quip-case9	D4	output	unit-green	TestPickBragMessageQuipStrings	fight.c:1221-1226	Player-victim-only quip: "I think I finally found a use for that punk %s: fertilizer!" (R1/R5e/R5h).
+attitude_loot	kill	attitude-loot.quip-case10	D4	output	unit-green	TestPickBragMessageQuipStrings	fight.c:1228-1233	Player-victim-only quip: "Hrmm.. Is this your head, %s? *cackle*" (R1/R5e/R5h).
+attitude_loot	kill	attitude-loot.quip-case11	D4	output	unit-green	TestPickBragMessageQuipStrings	fight.c:1235-1241	Player-victim-only quip: "Hey %s, was that suicide or did you try to fight back?" (R1/R5e/R5h).

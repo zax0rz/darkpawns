@@ -1,3 +1,4 @@
+# depth-case: mob.list-skills-header
 # depth-case: skills.practice-mapped-ninja
 # C list_skills uses GET_SKILL by number (src/spec_procs.c:192).
 # At level 28 a ninja lists only skills, avoiding the separate spell-mana

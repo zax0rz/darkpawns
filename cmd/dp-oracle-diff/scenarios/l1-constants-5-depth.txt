@@ -1,0 +1,68 @@
+# L1 constants.c slice 5 (8 rows in month_name[], phases[], weekdays[]):
+# - phases[3]: three-quarters full(waxing) (43), phases[4]: full (44)
+# - weekdays[4..6]: Day of Freedom (1371), day of the Great Gods (1372), Day of the Sun (1373)
+# - month_name[5..7]: Month of the Spring (1383), Month of Nature (1384), Month of Futility (1385)
+
+# depth-case: constants.month-names-spring-nature-futility-and-moon
+
+[fixture]
+empty-players
+quiet-mobs
+fixed-time 650625507
+
+[setup:oracle]
+Constfive
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Constfive
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+time
+~dpclock pulse 15120
+time
+~dpclock pulse 15120
+time
+~dpclock pulse 15120
+time
+~dpclock pulse 15120
+time
+~dpclock pulse 15120
+time
+~dpclock pulse 15120
+time
+~dpclock pulse 75600
+~dpclock pulse 75600
+~dpclock pulse 45360
+time
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+time

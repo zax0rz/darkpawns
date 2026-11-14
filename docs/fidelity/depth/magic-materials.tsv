@@ -1,0 +1,3 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+mag_materials	boot	magic-materials.puff-pack-char	D2	command	excluded	-	magic.c:586-591	Unreachable in C: the verbose "A puff of smoke rises from your pack." block runs only when the caller passes verbose=TRUE, and the sole mag_materials call site (src/magic.c:486-491, has_reagents for the eleven-reagent table) passes TRUE, FALSE — extract=TRUE, verbose=FALSE — so every live path consumes the reagent silently (R5e).
+mag_materials	boot	magic-materials.puff-pack-room	D2	command	excluded	-	magic.c:589-590	Unreachable in C: the room act "A puff of smoke rises from $n's pack." shares the same verbose block, dead at the only call site for the same reason (src/magic.c:486-491) (R5e).
