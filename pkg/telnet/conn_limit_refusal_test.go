@@ -24,6 +24,7 @@ func TestTotalConnectionLimitRefusalBytes(t *testing.T) {
 	maxTotalConns.Store(1)
 	maxConnsPerIP.Store(10)
 
+	waitForNoConnections(t)
 	manager, world := newTestManager(t)
 	defer world.StopAITicker()
 
@@ -39,17 +40,7 @@ func TestTotalConnectionLimitRefusalBytes(t *testing.T) {
 	}
 	defer func() { _ = first.Close() }()
 
-	// Wait until the accept loop has registered the first connection.
-	deadline := time.Now().Add(2 * time.Second)
-	for time.Now().Before(deadline) {
-		connMu.Lock()
-		n := connCount
-		connMu.Unlock()
-		if n == 1 {
-			break
-		}
-		time.Sleep(5 * time.Millisecond)
-	}
+	waitUntilAccepted(t, first)
 
 	second, err := net.Dial("tcp", addr)
 	if err != nil {
@@ -80,6 +71,7 @@ func TestPerIPConnectionLimitClosesSilently(t *testing.T) {
 	maxTotalConns.Store(10)
 	maxConnsPerIP.Store(1)
 
+	waitForNoConnections(t)
 	manager, world := newTestManager(t)
 	defer world.StopAITicker()
 
@@ -95,16 +87,7 @@ func TestPerIPConnectionLimitClosesSilently(t *testing.T) {
 	}
 	defer func() { _ = first.Close() }()
 
-	deadline := time.Now().Add(2 * time.Second)
-	for time.Now().Before(deadline) {
-		connMu.Lock()
-		n := connCount
-		connMu.Unlock()
-		if n == 1 {
-			break
-		}
-		time.Sleep(5 * time.Millisecond)
-	}
+	waitUntilAccepted(t, first)
 
 	second, err := net.Dial("tcp", addr)
 	if err != nil {
@@ -134,6 +117,7 @@ func TestTLSTotalConnectionLimitClosesWithoutPlaintext(t *testing.T) {
 	maxTotalConns.Store(1)
 	maxConnsPerIP.Store(10)
 
+	waitForNoConnections(t)
 	manager, world := newTestManager(t)
 	defer world.StopAITicker()
 
@@ -158,5 +142,42 @@ func TestTLSTotalConnectionLimitClosesWithoutPlaintext(t *testing.T) {
 		if bytes.Contains(buf, []byte("Sorry, Dark Pawns is full right now")) {
 			t.Fatalf("TLS client received plaintext refusal: %q", buf)
 		}
+	}
+}
+
+// waitUntilAccepted blocks until the server has sent the connection its first
+// byte. The accept loop counts a connection (connCount, connPerIP) before its
+// handler starts writing, so any received byte proves the count happened.
+// Without it, a slow accept loop (race detector, loaded host) could take the
+// second dial first, refuse the first instead, and leave the test reading a
+// live session until its deadline.
+func waitUntilAccepted(t *testing.T, conn net.Conn) {
+	t.Helper()
+	_ = conn.SetReadDeadline(time.Now().Add(15 * time.Second))
+	buf := make([]byte, 1)
+	if _, err := io.ReadFull(conn, buf); err != nil {
+		t.Fatalf("first connection was not accepted: %v", err)
+	}
+	_ = conn.SetReadDeadline(time.Time{})
+}
+
+// waitForNoConnections blocks until connections left by an earlier test have
+// been released. The handler decrements connCount and connPerIP only after its
+// connection closes, asynchronously, so a following test could otherwise start
+// with the loopback address already at its per-IP limit.
+func waitForNoConnections(t *testing.T) {
+	t.Helper()
+	deadline := time.Now().Add(15 * time.Second)
+	for {
+		connMu.Lock()
+		n := connCount
+		connMu.Unlock()
+		if n == 0 {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("%d connections from an earlier test were never released", n)
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }
