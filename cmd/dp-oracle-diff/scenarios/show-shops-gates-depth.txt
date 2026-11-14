@@ -1,0 +1,50 @@
+# C show_shops' selector behaviour (src/shop.c:1417-1444) as the registered
+# world presents it. The `.` room selector always resolves: ok_shop_room
+# (src/shop.c:930-939) matches when the shop's room-list entry equals
+# real_room(1), and shop #2508 (lib/world/shp/25.shp, first in
+# lib/world/shp/index) lists room 1, so every room answers with #2508's full
+# report and C's "This isn't a shop!" refusal is unreachable from the
+# registered surface. Out-of-range and zero numbers answer "Illegal shop
+# number.". Shop rnum 53 (#21226, lib/world/shp/212.shp) boots with an empty
+# produce list, so its report prints "Produces:   Nothing!".
+
+# depth-case: show.shops-dot-selects-quirk
+# depth-case: show.shops-illegal-number
+# depth-case: show.shops-produces-nothing
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Shopgate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopgate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+show shops .
+show shops 99999
+show shops 0
+show shops 53
