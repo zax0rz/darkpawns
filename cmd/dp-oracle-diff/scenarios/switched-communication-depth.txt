@@ -1,0 +1,114 @@
+# C-first communication witness for DP-1521 PR4. The descriptor owner stays
+# in room 8162 while the switched dwarf is in 8161 with its own inventory and
+# equipment. C command bodies use the mobile as ch and the descriptor for
+# private output (src/interpreter.c:1367-1481).
+# The mobile is vnum 8003, a level-34 dwarf, so do_race_say exercises the
+# dwarf translation and the level-gated communication channels reach its body.
+# depth-case: switched-communication.dynamic-social-body
+# depth-case: switched-communication.insult-body
+# depth-case: switched-communication.ask-body
+# depth-case: switched-communication.whisper-body
+# depth-case: switched-communication.race-say-body
+# depth-case: switched-communication.group-say-body
+# depth-case: switched-communication.think-body
+# depth-case: switched-communication.grats-body
+# depth-case: switched-communication.holler-body
+# depth-case: switched-communication.newbie-body
+# depth-case: switched-communication.qsay-dummy-preference-refusal
+# depth-case: switched-communication.ctell-immortal-clan-fanout
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8003 1 8162 80
+give-object 8003 8032 1 80
+give-object 8003 8037 1 80
+give-object 8003 8045 1 80
+equip-object 8003 8022 999 16 80
+
+[setup:oracle]
+Switchedcomm
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchedcomm
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Commpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Commpeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Commpeer 8161
+clan create Commpeer Wolves
+switch Darek
+north
+
+[probe]
+smile
+smile Commpeer
+ask Commpeer are you there?
+ask Commpeer are  you still there?
+whisper Commpeer listen closely
+whisper Commpeer listen   closely
+insult Commpeer
+rsay how are you?
+rsay how  are you?
+think
+think about this
+think about  this
+group all
+gsay hello group
+grats well done
+holler hello world
+holler hello  world
+newbie hello newcomer
+newbie hello  newcomer
+qsay not on quest
+ctell not in a clan
+ctell 1 message from the switched body

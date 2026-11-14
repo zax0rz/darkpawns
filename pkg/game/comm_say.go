@@ -80,4 +80,61 @@ func (w *World) doRaceSay(ch *Player, me *MobInstance, cmd string, arg string) b
 	return true
 }
 
+// NPCDoRaceSay is do_race_say for a switched mobile. C's GET_RACE reads the
+// mobile prototype, while its PLR_NOSHOUT and PRF_NOREPEAT checks read the
+// shared zeroed dummy_mob player-specials record.
+func (w *World) NPCDoRaceSay(ch *MobInstance, arg string) {
+	if ch == nil {
+		return
+	}
+	arg = skipSpaces(arg)
+	if ch.GetWis() == 0 || ch.GetInt() == 0 {
+		ch.SendMessage("You are too stupid to communicate with language!\r\n")
+		return
+	}
+	if arg == "" {
+		ch.SendMessage("Yes, but WHAT do you want to say?\n\r")
+		return
+	}
+	prototype := ch.Proto()
+	if prototype == nil {
+		return
+	}
+	var translate func(string) string
+	var raceName string
+	switch prototype.Race {
+	case RaceHuman:
+		translate, raceName = speakHuman, "Human"
+	case RaceElf:
+		translate, raceName = speakElven, "Elven"
+	case RaceDwarf:
+		translate, raceName = speakDwarven, "Dwarven"
+	case RaceKender:
+		translate, raceName = speakKender, "Kenderkin"
+	case RaceMinotaur:
+		translate, raceName = speakMinotaur, "Minotauran"
+	case RaceRakshasa:
+		translate, raceName = speakRakshasan, "Rakshasan"
+	case RaceSsaur:
+		translate, raceName = speakSsaur, "Ssauran"
+	default:
+		return
+	}
+	translated := translate(arg)
+	verb := determineVerb(arg)
+	verbMsg := fmt.Sprintf(" %s, ", verb)
+	for _, player := range w.GetPlayersInRoom(ch.GetRoomVNum()) {
+		if player.GetPosition() <= posSleeping {
+			continue
+		}
+		if player.GetRace() == prototype.Race || player.GetLevel() >= lvlImmort {
+			player.SendMessage(fmt.Sprintf("%s%s'(In %s) %s'\r\n", ch.GetName(), verbMsg, raceName, arg))
+		} else {
+			player.SendMessage(fmt.Sprintf("%s%s'%s'\r\n", ch.GetName(), verbMsg, translated))
+		}
+	}
+	actorVerb := verb[:len(verb)-1]
+	ch.SendMessage(fmt.Sprintf("You %s, '(In %s) %s'\r\n", actorVerb, raceName, arg))
+}
+
 // performTell — port of perform_tell().

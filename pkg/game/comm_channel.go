@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -232,6 +233,10 @@ func (w *World) doGenComm(ch *Player, me *MobInstance, cmd string, arg string) b
 // that listener and the color sandwich is the listener's own COLOR_LEV
 // (:1291-1295).
 func (w *World) mobGenComm(me *MobInstance, argument, channel string) {
+	w.mobGenCommBody(me, argument, channel, false)
+}
+
+func (w *World) mobGenCommBody(me *MobInstance, argument, channel string, switchedBody bool) {
 	if me == nil {
 		return
 	}
@@ -240,10 +245,20 @@ func (w *World) mobGenComm(me *MobInstance, argument, channel string) {
 		return
 	}
 	if w.communicationRoomSoundproof(me.GetRoom()) {
+		if switchedBody {
+			me.SendMessage("The walls seem to absorb your words.\r\n")
+		}
 		return
 	}
 	// C: if (GET_LEVEL(ch) < level_can_shout && subcmd != SCMD_NEWBIE) (:1215)
 	if channel != "newbie" && me.GetLevel() < spec.minimumLevel {
+		if switchedBody {
+			me.SendMessage(fmt.Sprintf("You must be at least level %d before you can %s.\r\n", spec.minimumLevel, spec.verb))
+		}
+		return
+	}
+	if switchedBody && (me.GetWis() == 0 || me.GetInt() == 0) {
+		me.SendMessage("You are too stupid to communicate with language!\r\n")
 		return
 	}
 	argument = strings.TrimLeft(argument, " \t\r\n\v\f")
@@ -254,6 +269,10 @@ func (w *World) mobGenComm(me *MobInstance, argument, channel string) {
 		return
 	}
 	argument = deleteANSIControls(argument)
+	if switchedBody && spec.moveCost > 0 && !me.SpendMove(spec.moveCost) {
+		me.SendMessage("You're too exhausted to holler.\r\n")
+		return
+	}
 	// C: if (subcmd == SCMD_GOSSIP) update_review(ch, argument); (:1275-1276)
 	if channel == "gossip" {
 		w.recordGossip(me, mobName(me), argument)
@@ -291,6 +310,12 @@ func (w *World) mobGenComm(me *MobInstance, argument, channel string) {
 		w.channelActWrapped(channel, false, me, player, format, ToVict|ToSleep,
 			channelColorWrap(colorNormal, spec.color, false))
 	}
+}
+
+// NPCGenCommCommand dispatches a body-side do_gen_comm call. MobInstance's
+// descriptor bridge handles private output for a switched actor.
+func (w *World) NPCGenCommCommand(me *MobInstance, argument, channel string) {
+	w.mobGenCommBody(me, argument, channel, true)
 }
 
 // mobGlobalGossip implements the NPC-authored do_gen_comm(SCMD_GOSSIP) call used by
@@ -393,6 +418,79 @@ func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) boo
 		w.mirrorChannelLine(p, "clan", senderName, line)
 	}
 	return true
+}
+
+// NPCDoCTell is do_ctell when the switched body is a mobile. NPCs below the
+// immortal threshold read clan ID/rank from C's zeroed dummy_mob specials and
+// refuse; higher-level bodies use the immortal clan-number syntax.
+func (w *World) NPCDoCTell(me *MobInstance, arg string) {
+	if me == nil {
+		return
+	}
+	arg = skipSpaces(arg)
+	minLevel := 1
+	clanNumber := 0
+	levelString := ""
+	if me.GetLevel() >= LVLImmort {
+		first, remainder := halfChop(arg)
+		clanNumber, _ = strconv.Atoi(first)
+		if clanNumber <= 0 || w.Clans == nil || clanNumber > w.Clans.ClanCount() {
+			me.SendMessage("There is no clan with that number.\r\n")
+			return
+		}
+		arg = remainder
+	} else {
+		me.SendMessage("You're not part of a clan.\r\n")
+		return
+	}
+	arg = skipSpaces(arg)
+	if arg == "" {
+		me.SendMessage("What do you want to tell your clan?\r\n")
+		return
+	}
+	if strings.HasPrefix(arg, "#") {
+		rankText, remainder := halfChop(arg[1:])
+		if !isClanNumber(rankText) {
+			me.SendMessage("Try entering in a number.\r\n")
+			return
+		}
+		minLevel, _ = strconv.Atoi(rankText)
+		clanForRank := w.Clans.GetClanByIndex(clanNumber)
+		if clanForRank == nil || minLevel > clanForRank.Ranks {
+			me.SendMessage("No one has a clan rank high enough to hear you!\r\n")
+			return
+		}
+		arg = skipSpaces(remainder)
+		if arg == "" {
+			me.SendMessage("What do you want to tell them?\r\n")
+			return
+		}
+		levelString = fmt.Sprintf(" (%d) ", minLevel)
+	}
+	arg = deleteANSIControls(arg)
+	echo := fmt.Sprintf("You tell your clan%s, '%s'\r\n", levelString, arg)
+	me.SendMessage(echo)
+	for _, player := range w.playingPlayers() {
+		if player.ClanID != clanNumber || player.ClanRank < minLevel ||
+			player.GetFlags()&(1<<uint(PrfNoCTell)) != 0 {
+			continue
+		}
+		// C ctell formats ch->player.name directly here (src/act.comm.c:1550),
+		// unlike act()'s short-description rendering for most channels.
+		senderName := me.GetAlias()
+		if !canSeeForPers(player, me) {
+			senderName = "Someone"
+		}
+		line := fmt.Sprintf("%s tells your clan%s, '%s'\r\n", senderName, levelString, arg)
+		line = channelColorWrap(colorComplete, ansiCyan, false)(player, line)
+		player.SendMessage(line)
+		w.mirrorChannelLine(player, "clan", senderName, line)
+	}
+}
+
+// NPCCTellCommand is the switched-body adapter for C do_ctell.
+func (w *World) NPCCTellCommand(me *MobInstance, argument string) {
+	w.NPCDoCTell(me, argument)
 }
 
 // updateGossipHistory adds a gossip entry to the ring buffer.

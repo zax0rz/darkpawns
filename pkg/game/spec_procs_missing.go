@@ -150,6 +150,17 @@ var beholderNumber = dprng.Number
 // The previous Go body invented a five-way randN(5) spell table and an HP
 // gate that C does not have, so it drew nothing in the peaceful arm and the
 // wrong draws in the fighting arm (R4, R3).
+// beholderCast routes the spec's cast_spell() calls through the shared mob
+// cast path: C's beholder enters cast_spell directly (new_cmds2.c:370-393),
+// so the verbal component is said and call_magic runs on the real world —
+// the nil world the previous sites passed skipped the peaceful-room gate, the
+// wound acts and the death pipeline (spell_parser.c:827-905; DP-1331).
+func beholderCast(w *World, me *MobInstance, target Actor, spellNum int) {
+	if c, ok := target.(combat.Combatant); ok {
+		castMobSpell(w, me, c, spellNum)
+	}
+}
+
 func specBeholder(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if me == nil {
 		return false
@@ -180,11 +191,11 @@ func specBeholder(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		}
 		switch beholderNumber(0, 2) {
 		case 0:
-			spells.Cast(me, vict, spells.SpellSleep, me.GetLevel(), nil)
+			beholderCast(w, me, vict, spells.SpellSleep)
 		case 1:
-			spells.Cast(me, vict, spells.SpellCharm, me.GetLevel(), nil)
+			beholderCast(w, me, vict, spells.SpellCharm)
 		case 2:
-			spells.Cast(me, vict, spells.SpellCurse, me.GetLevel(), nil)
+			beholderCast(w, me, vict, spells.SpellCurse)
 		}
 		return false
 	}
@@ -214,9 +225,9 @@ func specBeholder(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		return false
 	}
 	if beholderNumber(0, 10) == 0 {
-		spells.Cast(me, target, spells.SpellDisrupt, me.GetLevel(), nil)
+		beholderCast(w, me, target, spells.SpellDisrupt)
 	} else if beholderNumber(0, 5) == 0 {
-		spells.Cast(me, target, spells.SpellDisintegrate, me.GetLevel(), nil)
+		beholderCast(w, me, target, spells.SpellDisintegrate)
 	} else {
 		return false
 	}
