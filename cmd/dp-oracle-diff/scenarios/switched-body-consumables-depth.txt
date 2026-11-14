@@ -1,0 +1,54 @@
+# C-first witness for switched-body eat/taste/drink/sip. Satan Klaus and his
+# food and drink container are in 8162, separate from the descriptor owner's
+# room and inventory. C's dummy_mob player-specials conditions are shared and
+# initialized to -1 (src/db.c:104, 1101, 1281); gain_condition leaves that
+# sentinel unchanged (src/limits.c:366-378).
+# depth-case: eat.switched-body-shared-dummy-condition
+# depth-case: drink.switched-body-shared-dummy-condition
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-mob 70 1 8162 80
+give-object 70 4815 1 48
+give-object 70 8003 1 80
+equip-object 70 8022 999 16 80
+
+[setup:oracle]
+Switchfoodowner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchfoodowner
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+switch satan
+
+[probe]
+eat gyoza
+taste firebreather
+sip firebreather
+drink firebreather

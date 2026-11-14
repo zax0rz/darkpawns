@@ -1,0 +1,102 @@
+# C-first witness for DP-1521 get/take/drop. The immortal descriptor owner
+# remains in 8105 while the switched body has its own room and carrying list
+# in 8162. A passive peer sees the room acts. The temporary room script checks
+# that both C's ch and me are the NPC on successful onget/ondrop (src/act.item.c:
+# 211-212, 269-283, 495-506; R1/R2/R5e/R5h).
+# depth-case: get.switched-body-room-and-inventory
+# depth-case: drop.switched-body-room-and-inventory
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-mob 70 1 8162 80
+give-object 70 8032 1 80
+equip-object 70 8022 999 16 80
+spawn-obj 8036 1 8162 80
+room-script 8162 oracle/item_transfer.lua 24
+
+[lua-script room/oracle/item_transfer.lua]
+function onget()
+  if isnpc(ch) and isnpc(me) then
+    echo(ch, "local", "Room onget received the switched NPC body.\r\n")
+  else
+    echo(ch, "local", "Room onget did not receive the NPC body.\r\n")
+  end
+end
+
+function ondrop()
+  if isnpc(ch) and isnpc(me) then
+    echo(ch, "local", "Room ondrop received the switched NPC body.\r\n")
+  else
+    echo(ch, "local", "Room ondrop did not receive the NPC body.\r\n")
+  end
+end
+
+[setup:oracle]
+Switchitemowner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchitemowner
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Itemobserver
+Y
+observerpass
+observerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Itemobserver
+y
+observerpass
+observerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Itemobserver 8162
+switch satan
+
+[probe]
+get dagger
+drop dagger
+take dagger
+drop bag
+look

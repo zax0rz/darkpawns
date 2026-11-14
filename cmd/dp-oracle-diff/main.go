@@ -335,7 +335,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	if err := os.CopyFS(filepath.Join(tmp, "text"), os.DirFS(filepath.Join(repoRoot, "lib", "text"))); err != nil {
 		return fmt.Errorf("copy lib/text to throwaway directory: %w", err)
 	}
-	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.MobObjectFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.MobFlagFixtures) > 0 || len(scenario.ObjIndexFixtures) > 0 || len(scenario.WldIndexFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.ForceLoadVNums) > 0 || len(scenario.HouseControls) > 0 {
+	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.MobObjectFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.MobFlagFixtures) > 0 || len(scenario.ObjIndexFixtures) > 0 || len(scenario.WldIndexFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.RoomScripts) > 0 || len(scenario.ForceLoadVNums) > 0 || len(scenario.HouseControls) > 0 {
 		if err := applyObjIndexFixtures(filepath.Join(oracleData, "world"), scenario.ObjIndexFixtures); err != nil {
 			return fmt.Errorf("apply C oracle obj index fixtures: %w", err)
 		}
@@ -410,10 +410,10 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		if err := applyScriptlessMobFixtures(goWorld, scenario.ScriptlessMobIDs); err != nil {
 			return fmt.Errorf("apply Go port mob script fixtures: %w", err)
 		}
-		if err := applyRoomFixtures(filepath.Join(oracleData, "world"), scenario.RoomExitFixtures, scenario.RoomFlagFixtures, scenario.RoomSectors); err != nil {
+		if err := applyRoomFixtures(filepath.Join(oracleData, "world"), scenario.RoomExitFixtures, scenario.RoomFlagFixtures, scenario.RoomSectors, scenario.RoomScripts); err != nil {
 			return fmt.Errorf("apply C oracle room fixtures: %w", err)
 		}
-		if err := applyRoomFixtures(goWorld, scenario.RoomExitFixtures, scenario.RoomFlagFixtures, scenario.RoomSectors); err != nil {
+		if err := applyRoomFixtures(goWorld, scenario.RoomExitFixtures, scenario.RoomFlagFixtures, scenario.RoomSectors, scenario.RoomScripts); err != nil {
 			return fmt.Errorf("apply Go port room fixtures: %w", err)
 		}
 	}

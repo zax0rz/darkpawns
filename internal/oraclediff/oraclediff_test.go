@@ -149,6 +149,7 @@ replace-room-exits 8162 west 8161 1 secret
 replace-room-exits 8161 none
 set-room-flag 8161 1 on
 set-room-sector 8161 7
+room-script 8162 oracle/item_transfer.lua 24
 [probe:victim]
 recite scroll
 `
@@ -186,6 +187,9 @@ recite scroll
 	}
 	if len(sc.RoomSectors) != 1 || sc.RoomSectors[0] != (RoomSectorFixture{RoomVNum: 8161, Sector: 7}) {
 		t.Fatalf("RoomSectors = %#v", sc.RoomSectors)
+	}
+	if len(sc.RoomScripts) != 1 || sc.RoomScripts[0] != (RoomScriptFixture{RoomVNum: 8162, Path: "oracle/item_transfer.lua", Flags: 24}) {
+		t.Fatalf("RoomScripts = %#v", sc.RoomScripts)
 	}
 }
 

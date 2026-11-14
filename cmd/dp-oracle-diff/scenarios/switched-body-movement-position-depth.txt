@@ -1,0 +1,143 @@
+# C-first witness for the remaining movement-position actor lanes. The body
+# starts in 8162 while its descriptor owner stays in 8105. Disposable topology
+# forces all six directions and named/automatic enter/leave through the same
+# body room, while two peers prove shadow/group recipient output.
+# C call sites: do_move/perform_move (src/act.movement.c:311-366), do_enter /
+# do_leave (:642-689), do_follow/SCMD_SHADOW (:883-951), do_track
+# (src/graph.c:187), do_ungroup (src/act.other.c:744-794), do_retreat
+# (src/act.offensive.c:1001-1075).
+# depth-case: movement-position.switched-body-six-directions
+# depth-case: movement-position.switched-body-enter-leave
+# depth-case: movement-position.switched-body-position-gates
+# depth-case: movement-position.switched-body-shadow-track-ungroup
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8161 3 on
+set-room-flag 8161 4 off
+set-room-flag 8162 4 off
+set-room-flag 8163 3 off
+set-room-flag 8163 4 off
+replace-room-exits 8162 all 8161 0 gate
+replace-room-exits 8161 all 8163 0 path
+replace-room-exits 8163 all 8162 0 path
+spawn-mob 70 1 8162 80
+give-object 70 8032 1 80
+equip-object 70 8022 999 16 80
+
+[setup:oracle]
+Switchmoveowner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchmoveowner
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:member]
+Movegrouppeer
+Y
+memberpass
+memberpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:member]
+Movegrouppeer
+y
+memberpass
+memberpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:shadow]
+Shadowtarget
+Y
+shadowpass
+shadowpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:shadow]
+Shadowtarget
+y
+shadowpass
+shadowpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Movegrouppeer 8162
+teleport Shadowtarget 8162
+switch satan
+send:Movegrouppeer follow satan
+
+[probe]
+north
+east
+south
+west
+up
+down
+enter gate
+enter
+leave
+leave
+retreat
+escape
+sleep
+north
+escape
+wake
+stand
+north
+track Shadowtarget
+shadow Shadowtarget
+follow self
+group all
+ungroup

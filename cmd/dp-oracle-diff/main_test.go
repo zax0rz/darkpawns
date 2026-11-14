@@ -81,6 +81,7 @@ func TestApplyRoomFixturesReplacesExitsAndSetsFlags(t *testing.T) {
 		[]oraclediff.RoomExitFixture{{RoomVNum: 8162, Direction: "all", ToRoom: 8161, DoorState: 1, Keyword: "gate"}},
 		[]oraclediff.RoomFlagFixture{{RoomVNum: 8161, Bit: 1, Enabled: true}},
 		[]oraclediff.RoomSectorFixture{{RoomVNum: 8161, Sector: 7}},
+		[]oraclediff.RoomScriptFixture{{RoomVNum: 8162, Path: "oracle/item_transfer.lua", Flags: 24}},
 	); err != nil {
 		t.Fatalf("applyRoomFixtures: %v", err)
 	}
@@ -101,6 +102,9 @@ func TestApplyRoomFixturesReplacesExitsAndSetsFlags(t *testing.T) {
 	}
 	if deathRoom.Sector != 7 {
 		t.Fatalf("room 8161 sector = %d, want 7", deathRoom.Sector)
+	}
+	if got := rooms[8162]; got.ScriptName != "oracle/item_transfer.lua" || got.ScriptFunctions != 24 {
+		t.Fatalf("room 8162 script = %q/%d, want oracle/item_transfer.lua/24", got.ScriptName, got.ScriptFunctions)
 	}
 }
 
