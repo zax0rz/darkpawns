@@ -234,6 +234,12 @@ func (w *World) EquipItem(ch *Player, obj *ObjectInstance, slot int) error {
 	}
 
 	removed := ch.Inventory != nil && ch.Inventory.RemoveItem(obj)
+	// C obj_from_char sets PLR_CRASH when an object leaves a player's carrying
+	// (src/handler.c:592-595), which is exactly what wearing does; do_stat
+	// then reports it as CSH and do_save clears it again (src/objsave.c:823).
+	if removed {
+		ch.MarkCrashNeeded()
+	}
 	if err := ch.Equipment.SetSlot(goSlot, obj); err != nil {
 		if removed {
 			if rbErr := ch.Inventory.AddItem(obj); rbErr != nil {
