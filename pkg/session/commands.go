@@ -197,7 +197,15 @@ func init() {
 	registerCommand("drink", wrapBodyArgs(cmdDrink), "Drink from a container.")
 	registerCommand("sip", wrapBodyArgs(cmdSip), "Sip from a container without drinking it.")
 	registerCommand("pour", wrapBodyArgs(cmdPour), "Pour liquid from one container to another.")
+	registerActorCommand("pour", func(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterPour(ctx, commandName)
+	})
 	registerCommand("fill", wrapBodyArgs(cmdFill), "Fill a container from a fountain.")
+	registerActorCommand("fill", func(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterPour(ctx, commandName)
+	})
 	registerCommand("quaff", wrapArgs(cmdQuaff), "Quaff a potion.")
 
 	// Info
@@ -306,9 +314,29 @@ func init() {
 
 	// Doors
 	registerCommand("open", wrapArgs(cmdOpen), "Open a container or exit.")
+	registerActorCommand("open", func(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterDoor(ctx, commandName)
+	})
 	registerCommand("close", wrapArgs(cmdClose), "Close a container or exit.")
+	registerActorCommand("close", func(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterDoor(ctx, commandName)
+	})
 	registerCommand("lock", wrapArgs(cmdLock), "Lock a container or exit with its key.")
+	registerActorCommand("lock", func(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterDoor(ctx, commandName)
+	})
 	registerCommand("unlock", wrapArgs(cmdUnlock), "Unlock a container or exit with its key.")
+	registerActorCommand("unlock", func(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterDoor(ctx, commandName)
+	})
+	registerActorCommand("pick", func(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterDoor(ctx, commandName)
+	})
 
 	// Wizard commands
 	registerCommand("goto", wrapArgs(cmdGoto), "Teleport to a room by VNum.")
@@ -471,9 +499,17 @@ func init() {
 	})
 	registerCommand("yank", wrapBodyArgs(cmdYank), "Yank someone from a mount or chair.")
 	registerCommand("peek", wrapBodyArgs(cmdPeek), "Peek at another player's inventory.")
+	registerActorCommand("peek", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterPeek(ctx)
+	})
 	registerCommand("recall", wrapBodyArgs(cmdRecall), "Recall to your home city.")
 	registerCommand("stealth", wrapSkill(command.CmdStealth), "Enter stealth mode.")
 	registerCommand("appraise", wrapBodyArgs(cmdAppraise), "Appraise an item's value.")
+	registerActorCommand("appraise", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterAppraise(ctx)
+	})
 	registerCommand("scout", wrapBodyArgs(cmdScout), "Scout ahead for danger.")
 	registerCommand("roll", wrapBodyArgs(cmdRoll), "Roll a random number.")
 	registerActorCommand("roll", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
@@ -539,6 +575,10 @@ func init() {
 	registerCommand("reply", wrapArgs(cmdReply), "Reply to the last tell.")
 	registerCommand(".", wrapArgs(cmdReply), "Reply to the last tell.")
 	registerCommand("write", wrapArgs(cmdWrite), "Write on an object.")
+	registerActorCommand("write", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterWrite(ctx)
+	})
 	registerCommand("page", wrapArgs(cmdPage), "Page a player.")
 	registerCommand("whisper", wrapBodyArgs(cmdWhisperBody), "Whisper to someone in your room.")
 	registerCommand("ask", wrapBodyArgs(cmdAskBody), "Ask someone a question.")

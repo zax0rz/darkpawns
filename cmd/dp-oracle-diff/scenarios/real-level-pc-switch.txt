@@ -2,6 +2,8 @@
 # God A (Goda) sets wizinvis 35, above a mortal's level. God B (Switchgod,
 # LVL_IMPL) switches into a linkless mortal (Mortal) in the same room.
 # God A says something; God B must see God A's name, not "Someone".
+# The pulse drains the peer-drop room act into its own block before switch;
+# without it, that asynchronous link-loss act can share a prompt with Okay.
 
 [fixture]
 empty-players
@@ -101,6 +103,7 @@ teleport Mortal 8162
 mortal
 
 [probe]
+~dpclock pulse 1
 switch Mortal
 send:goda invis 35
 send:goda say hello

@@ -773,7 +773,11 @@ func appendPeekInventory(result *ObservationResult, ch combat.Combatant, target 
 	if ch == nil || target == nil || ch == target {
 		return
 	}
-	if ch.GetClass() != ClassThief && ch.GetClass() != ClassAssassin && ch.GetLevel() < LVL_IMMORT {
+	class := ch.GetClass()
+	if ch.IsNPC() {
+		class = ClassMageUser // C GET_CLASS reads dummy_mob's zero-valued player_specials.
+	}
+	if class != ClassThief && class != ClassAssassin && ch.GetLevel() < LVL_IMMORT {
 		return
 	}
 

@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_write	write	write.switched-mobile	D5	state	oracle-green	switched-body-door-depth@1	src/act.comm.c:1023-1100; src/modify.c:218-236; src/db.c:104,1281	The mobile body selects its own note and pen; the immortal descriptor owns editor input while the note's ActionDescription receives the text (R1/R2/R5e/R5h). Census dp1521-pr5-object-class-final3 @c5132d66e (CLEAN, 45/45; draw_divergent=0); draw parity matches where enabled (R1/R2/R3/R5e/R5h).
