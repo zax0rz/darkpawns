@@ -1,0 +1,109 @@
+# L1 constants.c spell_wear_off_msg[] slot 82 (line 1301, "Your mental capasity
+# returns to normal."): the mind-bar affect. spell_parser.c:1054-1061 refuses a
+# violent self-cast, so the spell needs a victim: the level-40 god casts it on
+# a durable mortal peer (outlaw + peace). mag_affects' SPELL_MIND_BAR case
+# (src/magic.c:1369-1378) stores APPLY_INT -18 with duration (level/2)-2 = 18
+# for the level-40 caster; affect_update speaks the wear-off to the victim at
+# expiry, read through the victim client's probes.
+# depth-case: constants.spell-wearoff-mindbar-peer
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Constmb
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Constmb
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Targetmb
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Targetmb
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Targetmb 8105
+set Constmb outlaw on
+set Targetmb maxhit 5000
+set Targetmb hit 5000
+
+[probe]
+cast 'mind bar' Targetmb
+~dpclock pulse 20
+peace
+~dpclock pulse 610
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time
+~dpclock pulse 630
+~dpclock pulse 630
+send:victim time

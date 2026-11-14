@@ -78,5 +78,5 @@ skillset Scroungeforest 'scrounge' 100
 
 [probe]
 scrounge
-~dpclock pulse 20
+~dpclock pulse 45
 roll 100

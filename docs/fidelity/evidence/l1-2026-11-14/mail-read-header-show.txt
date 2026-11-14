@@ -1,0 +1,14 @@
+capture-statistics	blocks=2	empty-open=0	empty-closed=0
+capture-statistics	blocks=2	empty-open=0	empty-closed=0
+hollow-prompt-steps	count=0
+Dark Pawns Tier-1 differential report
+scenario: mail-read-header-depth
+c-oracle: 127.0.0.1:32744 (DP_SEED=1)
+go-port: 127.0.0.1:15937 (DP_SEED=1)
+result: no normalized divergence
+normalized C oracle blocks:
+--- [receive]
+The postman tells you, 'Sorry, you don't have any mail waiting.'
+--- [look letter]
+You do not see that here.
+EXIT=0

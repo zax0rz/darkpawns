@@ -1,0 +1,127 @@
+# Live PointUpdate AFF_CUTTHROAT tick witness (src/limits.c:505-506).
+# Attacker (level 32) applies AFF_CUTTHROAT deterministically via cutthroat,
+# God stops the fight with peace, and one pumped mud hour runs point_update's
+# 13-damage SKILL_CUTTHROAT tick against Victim.
+# depth-case: regen.cutthroat-tick
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+CutTickGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CutTickGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+CutTickAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:port:attacker]
+CutTickAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:oracle:victim]
+CutTickVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+CutTickVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player CutTickAttacker level 32
+skillset CutTickAttacker 'cutthroat' 100
+set player CutTickVictim level 15
+set player CutTickVictim ac 50
+set player CutTickVictim maxhit 1000
+set player CutTickVictim hit 1000
+set player CutTickGod room 8105
+
+[probe]
+send:attacker cutthroat CutTickVictim
+~dpclock pulse 25
+peace
+~dpclock hour 1
+send:victim score

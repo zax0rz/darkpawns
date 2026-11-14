@@ -45,6 +45,7 @@ goto 8004
 redit
 2
 /c
+/c
 /f
 /i
 /l

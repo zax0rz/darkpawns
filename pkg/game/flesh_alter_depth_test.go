@@ -145,3 +145,53 @@ func TestDoFleshAlterFailureWaitAndImprovement(t *testing.T) {
 		t.Error("failed flesh alter must not apply the affect")
 	}
 }
+
+func TestFleshAlteredTypeBands(t *testing.T) {
+	for _, tc := range []struct {
+		level int
+		want  int
+	}{
+		{1, 7},
+		{3, 7},
+		{4, 11},
+		{6, 11},
+		{7, 3},
+		{9, 3},
+		{10, 7},
+		{15, 7},
+		{16, 3},
+		{21, 3},
+		{22, 7},
+		{24, 7},
+		{25, 3},
+		{40, 3},
+	} {
+		if got := fleshAlteredType(tc.level); got != tc.want {
+			t.Errorf("fleshAlteredType(%d) = %d, want %d", tc.level, got, tc.want)
+		}
+	}
+}
+
+func TestGetWeaponInfoFleshAlter(t *testing.T) {
+	w, err := NewWorld(&parser.World{})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	cb := w.WireCombatCallbacks()
+
+	ch := NewPlayer(1, "Flesh", 1001)
+	ch.Level = 1
+	w.AddPlayer(ch)
+
+	if wType, _, _, _ := cb.GetWeaponInfo(ch); wType != 0 {
+		t.Fatalf("barehanded without affect: wType = %d, want 0", wType)
+	}
+	ch.SetAffect(affFleshAlter, true)
+	if wType, _, _, _ := cb.GetWeaponInfo(ch); wType != 7 {
+		t.Fatalf("barehanded with AFF_FLESH_ALTER at level 1: wType = %d, want 7 (pound)", wType)
+	}
+	ch.Level = 5
+	if wType, _, _, _ := cb.GetWeaponInfo(ch); wType != 11 {
+		t.Fatalf("barehanded with AFF_FLESH_ALTER at level 5: wType = %d, want 11 (pierce)", wType)
+	}
+}
