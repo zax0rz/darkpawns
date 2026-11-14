@@ -111,7 +111,7 @@ func (w *World) performMobileWear(m *MobInstance, obj *ObjectInstance, where int
 		}
 		// constants.c str_app[].wield_w, indexed by live STRENGTH_APPLY_INDEX.
 		weights := [...]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 40, 40, 40, 40, 40, 40, 40, 22, 24, 26, 28, 30}
-		if obj.GetWeight() > weights[combat.StrengthIndex(m.GetStr(), m.GetStrAdd())] {
+		if obj.GetTotalWeight() > weights[combat.StrengthIndex(m.GetStr(), m.GetStrAdd())] {
 			actorText("It is too heavy for you to use.\r\n")
 			return
 		}

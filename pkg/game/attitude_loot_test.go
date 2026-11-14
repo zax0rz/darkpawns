@@ -49,7 +49,7 @@ func TestAttitudeLootCorpseOrder(t *testing.T) {
 		}
 		objects = append(objects, obj)
 	}
-	corpse := w.makeCorpse(victim.Name, victim.GetSex(), victim.Inventory.FindItems(""), nil, 1001, combat.TYPE_UNDEFINED, 0, false)
+	corpse := w.makeCorpse(victim.Name, victim.GetSex(), victim.Inventory.FindItems(""), nil, 1001, combat.TYPE_UNDEFINED, 0, false, 175)
 	if err := w.MoveObjectToRoomFront(corpse, 1001); err != nil {
 		t.Fatal(err)
 	}
@@ -103,11 +103,11 @@ func TestAttitudeLootGetUsesTheDirectCorpseArgument(t *testing.T) {
 		return item
 	}
 	victimLoot, earlierLoot := makeToken(), makeToken()
-	victimCorpse := w.makeCorpse(victim.Name, victim.GetSex(), []*ObjectInstance{victimLoot}, nil, 1001, combat.TYPE_UNDEFINED, 0, false)
+	victimCorpse := w.makeCorpse(victim.Name, victim.GetSex(), []*ObjectInstance{victimLoot}, nil, 1001, combat.TYPE_UNDEFINED, 0, false, 175)
 	if err := w.MoveObjectToRoomFront(victimCorpse, 1001); err != nil {
 		t.Fatal(err)
 	}
-	earlierCorpse := w.makeCorpse("Earlier", SexMale, []*ObjectInstance{earlierLoot}, nil, 1001, combat.TYPE_UNDEFINED, 0, false)
+	earlierCorpse := w.makeCorpse("Earlier", SexMale, []*ObjectInstance{earlierLoot}, nil, 1001, combat.TYPE_UNDEFINED, 0, false, 175)
 	if err := w.MoveObjectToRoomFront(earlierCorpse, 1001); err != nil {
 		t.Fatal(err)
 	}

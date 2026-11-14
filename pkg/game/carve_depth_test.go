@@ -205,7 +205,7 @@ func TestDoCarveFoodMappings(t *testing.T) {
 
 func TestMakeCorpseUsesMobKeywordList(t *testing.T) {
 	w, _ := newCarveDepthWorld(t)
-	corpse := w.makeCorpse("fish", 0, nil, nil, 1001, -1, 0, true, "fish carve_meat")
+	corpse := w.makeCorpse("fish", 0, nil, nil, 1001, -1, 0, true, 50, "fish carve_meat")
 	if got := corpse.GetKeywords(); got != "fish carve_meat corpse" {
 		t.Fatalf("corpse keywords = %q, want %q", got, "fish carve_meat corpse")
 	}

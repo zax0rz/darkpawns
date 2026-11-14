@@ -153,7 +153,7 @@ func (w *World) performWear(ch *Player, obj *ObjectInstance, where int) {
 			ch.SendMessage("Your flesh is altered, you can't wield anything!\r\n")
 			return
 		}
-		if obj.GetWeight() > ch.MaxWieldWeight() {
+		if obj.GetTotalWeight() > ch.MaxWieldWeight() {
 			ch.SendMessage("It is too heavy for you to use.\r\n")
 			return
 		}

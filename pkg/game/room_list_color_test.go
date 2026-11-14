@@ -19,7 +19,7 @@ import (
 // colour per line and never emitted the trailing reset.
 func TestRoomLookBracketsTheContentListsOnce(t *testing.T) {
 	w, ch, _ := newDonateTestWorld(t)
-	corpse := w.makeCorpse("a goblin", 1, nil, nil, 1001, 0, 0, true)
+	corpse := w.makeCorpse("a goblin", 1, nil, nil, 1001, 0, 0, true, 50)
 	w.AddItemToRoom(corpse, 1001)
 
 	// The list escapes are gated on C_NRM, which both colour bits satisfy.

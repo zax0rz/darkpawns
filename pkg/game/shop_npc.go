@@ -320,7 +320,7 @@ func (w *World) shopNpcBuy(shop *Shop, keeper, customer *MobInstance, arg string
 		// items.\n\r", ch) — a descriptor-less body receives nothing.
 		return
 	}
-	if mobCarriedWeight(customer)+obj.GetWeight() > mobMaxCarryWeight(customer) {
+	if mobCarriedWeight(customer)+obj.GetTotalWeight() > mobMaxCarryWeight(customer) {
 		return
 	}
 
@@ -328,7 +328,7 @@ func (w *World) shopNpcBuy(shop *Shop, keeper, customer *MobInstance, arg string
 	var lastBought *ObjectInstance
 	for obj != nil && (customer.GetGold() >= shop.BuyPrice(obj.GetCost(), cha) || !pays) &&
 		len(customer.Inventory) < mobMaxCarryCount(customer) && bought < buynum &&
-		mobCarriedWeight(customer)+obj.GetWeight() <= mobMaxCarryWeight(customer) {
+		mobCarriedWeight(customer)+obj.GetTotalWeight() <= mobMaxCarryWeight(customer) {
 		bought++
 		item, err := w.shopNpcBuyObject(shop, keeper, customer, obj)
 		if err != nil {
@@ -360,7 +360,7 @@ func (w *World) shopNpcBuy(shop *Shop, keeper, customer *MobInstance, arg string
 			w.shopNpcTell(keeper, fmt.Sprintf("%s You can only afford %d.", customer.GetName(), bought))
 		case len(customer.Inventory) >= mobMaxCarryCount(customer):
 			w.shopNpcTell(keeper, fmt.Sprintf("%s You can only hold %d.", customer.GetName(), bought))
-		case mobCarriedWeight(customer)+obj.GetWeight() > mobMaxCarryWeight(customer):
+		case mobCarriedWeight(customer)+obj.GetTotalWeight() > mobMaxCarryWeight(customer):
 			w.shopNpcTell(keeper, fmt.Sprintf("%s You can only carry %d.", customer.GetName(), bought))
 		default:
 			w.shopNpcTell(keeper, fmt.Sprintf("%s Something screwy only gave you %d.", customer.GetName(), bought))

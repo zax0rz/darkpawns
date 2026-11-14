@@ -130,7 +130,7 @@ func (w *World) makeRawKillBody(p *Player, attackType int, dust bool) {
 	if dust || attackType == 93 {
 		w.makeDust(p, inventory, equipment, p.GetRoom(), gold, attackType)
 	} else {
-		corpse := w.makeCorpse(p.GetName(), p.GetSex(), inventory, equipment, p.GetRoom(), attackType, gold, false)
+		corpse := w.makeCorpse(p.GetName(), p.GetSex(), inventory, equipment, p.GetRoom(), attackType, gold, false, p.GetWeight())
 		if err := w.MoveObjectToRoomFront(corpse, p.GetRoom()); err != nil {
 			slog.Error("place RawKill corpse", "player", p.GetName(), "error", err)
 		}

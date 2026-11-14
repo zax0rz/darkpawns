@@ -449,7 +449,7 @@ func (w *World) npcPerformGive(me *MobInstance, vict any, obj *ObjectInstance) {
 		if v.Inventory.IsFull() {
 			return
 		}
-		if obj.GetWeight()+v.Inventory.GetWeight() > v.Inventory.GetCapacity()*10 {
+		if obj.GetTotalWeight()+v.Inventory.GetWeight() > v.Inventory.GetCapacity()*10 {
 			return
 		}
 		if err := w.MoveObjectToPlayerInventory(obj, v); err != nil {
@@ -464,7 +464,7 @@ func (w *World) npcPerformGive(me *MobInstance, vict any, obj *ObjectInstance) {
 		if !v.HasFlag("OKGIVE") && me.GetLevel() < lvlImmort {
 			return
 		}
-		if obj.GetWeight()+mobCarriedWeight(v) > mobMaxCarryWeight(v) {
+		if obj.GetTotalWeight()+mobCarriedWeight(v) > mobMaxCarryWeight(v) {
 			return
 		}
 		if err := w.MoveObjectToMobInventoryFront(obj, v); err != nil {

@@ -20,6 +20,7 @@ func (o *alterObjFixture) GetObjType() int          { return o.typ }
 func (o *alterObjFixture) GetObjVal(idx int) int    { return o.values[idx] }
 func (o *alterObjFixture) SetObjVal(idx, value int) { o.values[idx] = value }
 func (o *alterObjFixture) GetWeight() int           { return o.weight }
+func (o *alterObjFixture) GetTotalWeight() int      { return o.weight }
 func (o *alterObjFixture) GetShortDesc() string     { return "a test object" }
 
 // src/magic.c:1900-1949 uses the ITEM_* indices in src/structs.h:472-476.

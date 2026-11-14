@@ -1310,7 +1310,7 @@ func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{
 	type objTypeGetter interface{ GetObjType() int }
 	type objValGetter interface{ GetObjVal(idx int) int }
 	type objValSetter interface{ SetObjVal(idx, val int) }
-	type objWeightGetter interface{ GetWeight() int }
+	type objWeightGetter interface{ GetTotalWeight() int }
 
 	getExtraFlags := func(o interface{}) int {
 		if f, ok := o.(extraFlagGetter); ok {
@@ -1330,7 +1330,7 @@ func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{
 		flags := getExtraFlags(obj)
 		// src/structs.h: ITEM_MAGIC=6 and ITEM_BLESS=8.
 		cl := getLevel(ch)
-		if wg, ok := obj.(objWeightGetter); ok && flags&(1<<8) == 0 && flags&(1<<6) == 0 && wg.GetWeight() <= 5*cl {
+		if wg, ok := obj.(objWeightGetter); ok && flags&(1<<8) == 0 && flags&(1<<6) == 0 && wg.GetTotalWeight() <= 5*cl {
 			setExtraFlags(obj, flags|(1<<8)) // ITEM_BLESS
 			effect = "$p glows briefly with a ethereal light."
 		}
@@ -2517,7 +2517,7 @@ func castIdentifyObject(level int, ch, ovict interface{}) {
 	type affecter interface{ GetAffects() []parser.ObjAffect }
 	type namer interface{ GetName() string }
 	type shortDescer interface{ GetShortDesc() string }
-	type weighter interface{ GetWeight() int }
+	type weighter interface{ GetTotalWeight() int }
 	type coster interface{ GetCost() int }
 	type extraFlagger interface{ GetExtraFlags() [4]int }
 
@@ -2557,7 +2557,7 @@ func castIdentifyObject(level int, ch, ovict interface{}) {
 
 	weight := 0
 	if w, ok := ovict.(weighter); ok {
-		weight = w.GetWeight()
+		weight = w.GetTotalWeight()
 	}
 	cost := 0
 	if c, ok := ovict.(coster); ok {

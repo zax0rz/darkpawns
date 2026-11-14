@@ -405,7 +405,7 @@ func newDonateTestWorldWithoutDonationRooms(t *testing.T) (*World, *Player, func
 // TestMakeCorpseNoDonate verifies corpses get ITEM_NODONATE — src/fight.c:388.
 func TestMakeCorpseNoDonate(t *testing.T) {
 	w, _, _ := newDonateTestWorld(t)
-	corpse := w.makeCorpse("a goblin", 1, nil, nil, 1001, 0, 0, true)
+	corpse := w.makeCorpse("a goblin", 1, nil, nil, 1001, 0, 0, true, 50)
 	if !corpse.HasExtraFlag(0, extraFlagNoDonate) {
 		t.Errorf("corpse should be flagged NODONATE")
 	}

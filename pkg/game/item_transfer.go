@@ -13,7 +13,9 @@ func (w *World) canTakeObj(ch *Player, obj *ObjectInstance) bool {
 		w.actToChar(ch, "$p: you can't carry that many items.", obj, nil)
 		return false
 	}
-	if ch.CarriedWeight()+obj.GetWeight() > ch.MaxCarryWeight() {
+	// C can_take_obj (src/act.item.c:162-166) reads GET_OBJ_WEIGHT(obj), which
+	// includes the object's contents (handler.c:951-955 folds them).
+	if ch.CarriedWeight()+obj.GetTotalWeight() > ch.MaxCarryWeight() {
 		w.actToChar(ch, "$p: you can't carry that much weight.", obj, nil)
 		return false
 	}
@@ -463,7 +465,7 @@ func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {
 	// capacity gave a weak recipient ~50 instead of C's 10, so a heavy give
 	// slipped past this gate and failed later with the wrong message
 	// (DP-1516 item 1).
-	if obj.GetWeight()+vict.CarriedWeight() > vict.MaxCarryWeight() {
+	if obj.GetTotalWeight()+vict.CarriedWeight() > vict.MaxCarryWeight() {
 		w.actToChar(ch, "$E can't carry that much weight.", vict, nil)
 		return
 	}
@@ -489,7 +491,7 @@ func (w *World) performGiveToMob(ch *Player, vict *MobInstance, obj *ObjectInsta
 		Act(nil, false, ch, nil, obj, nil, "You can't let go of $p!!  Yeech!", "", ToChar)
 		return
 	}
-	if obj.GetWeight()+mobCarriedWeight(vict) > mobMaxCarryWeight(vict) {
+	if obj.GetTotalWeight()+mobCarriedWeight(vict) > mobMaxCarryWeight(vict) {
 		Act(nil, false, ch, vict, nil, nil, "$E can't carry that much weight.", "", ToChar)
 		return
 	}

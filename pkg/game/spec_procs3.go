@@ -400,7 +400,7 @@ func butlerVisibleRoomObject(w *World, me *MobInstance, name string, items []*Ob
 // butlerPerformPut mirrors perform_put's base-weight capacity check. C uses
 // GET_OBJ_WEIGHT(cont), not the container's recursive contents weight.
 func (w *World) butlerPerformPut(me *MobInstance, obj, container *ObjectInstance) bool {
-	if container.GetWeight()+obj.GetWeight() > container.GetValue(contCapacity) {
+	if container.GetTotalWeight()+obj.GetTotalWeight() > container.GetValue(contCapacity) {
 		return false
 	}
 	if err := w.MoveObjectToContainer(obj, container); err != nil {

@@ -1,0 +1,41 @@
+# DP-1524 audit — every non-test ObjectInstance.GetWeight() call under pkg/, checked
+# against the C weight model: obj_to_obj folds contents into GET_OBJ_WEIGHT
+# (src/handler.c:951-955) and IS_CARRYING_W folds the top container's full
+# weight (utils.h:322). Go never folds; GetTotalWeight (pkg/game/object.go)
+# is the C-equivalent read. Enumerated 2026-11-13 on origin/main (74f539c16).
+# Columns: go_site, c_site, c_read, verdict, why.
+go_site	c_site	c_read	verdict	why
+pkg/game/item_transfer.go:16	src/act.item.c:162-166 (can_take_obj)	GET_OBJ_WEIGHT(obj) incl. contents	switch-to-total	The get/give weight gate; the witnessed get-corpse case.
+pkg/game/item_transfer.go:466	src/act.item.c:692-695 (perform_give_gold-adjacent give gate)	GET_OBJ_WEIGHT(obj)	switch-to-total	Giving a container gives its contents' weight.
+pkg/game/item_transfer.go:492	src/act.item.c:730-731 (perform_give to char)	GET_OBJ_WEIGHT(obj)	switch-to-total	Mob recipient weight gate.
+pkg/game/world.go:1504	src/utils.h:544 (CAN_WEAR/CAN_TAKE macro)	GET_OBJ_WEIGHT(obj)	switch-to-total	The shared CAN_TAKE port used by command paths.
+pkg/session/shop_cmds.go:426	src/shop.c:shopping_buy (can_take_obj)	GET_OBJ_WEIGHT(obj)	switch-to-total	Buying a stocked container carries its contents.
+pkg/session/shop_cmds.go:434	src/shop.c:shopping_buy	switch-to-total	Second branch of the same buy gate.
+pkg/session/shop_cmds.go:469	src/shop.c:shopping_buy	switch-to-total	Third branch (sell-back weight guard).
+pkg/game/shop_npc.go:323	src/shop.c:shopping_buy (mob customer)	GET_OBJ_WEIGHT(obj)	switch-to-total	Mob customer buy gate.
+pkg/game/shop_npc.go:331	src/shop.c:shopping_buy	switch-to-total	Second branch.
+pkg/game/shop_npc.go:363	src/shop.c:shopping_buy	switch-to-total	Third branch.
+pkg/game/npc_command_items.go:308	src/mobact/command get logic (can_take_obj)	GET_OBJ_WEIGHT(item)	switch-to-total	Mob get-item gate.
+pkg/game/npc_command_items.go:416	src/handler.c:887-895 (CAN_TAKE_W)	GET_OBJ_WEIGHT(headObj)	switch-to-total	Mob all-get head gate.
+pkg/game/npc_command.go:452	src/act.item.c give-to-player path	GET_OBJ_WEIGHT(obj)	switch-to-total	NPC give-to-player capacity gate (capacity*10 port).
+pkg/game/npc_command.go:467	src/act.item.c give-to-mob path	GET_OBJ_WEIGHT(obj)	switch-to-total	NPC give-to-mob gate.
+pkg/game/mobact.go:47	src/utils.h:322 (IS_CARRYING_W)	IS_CARRYING_W incl. contents	switch-to-total	mobCarriedWeight per-item sum; base Runtime.CarriedWeight kept (legacy seed).
+pkg/game/attitude_loot.go:114	src/act.item.c:1493-1497 (do_wield weight gate)	GET_OBJ_WEIGHT(obj)	switch-to-total	Mob wearing looted gear: wield_w check.
+pkg/game/item_equipment.go:156	src/act.item.c:1493-1497 (do_wield weight gate)	GET_OBJ_WEIGHT(obj)	switch-to-total	Wield gate, same C site.
+pkg/game/spec_procs3.go:403	src/spec_procs.c container-capacity check	GET_OBJ_WEIGHT(cont)+GET_OBJ_WEIGHT(obj)	switch-to-total	Both sides fold contents in C.
+pkg/game/item_container.go:11	src/act.item.c:56,77 (do_put won't-fit)	GET_OBJ_WEIGHT(obj) incl. contents	switch-to-total	Put gate: container side was already total (#2538); the moved object's contents were not.
+pkg/game/death.go:1207	makeCorpse	src/fight.c:391	GET_OBJ_WEIGHT(corpse)=GET_WEIGHT(ch)+IS_CARRYING_W(ch)	switch-to-total	Corpse stored weight = body alone; GetTotalWeight then equals C's field (body + inventory + equipment in Contains). Callers pass the body weight (raw_kill.go:133, death.go:227/563/816).
+pkg/spells/affect_spells.go:1333	src/magic.c:1903 (mag_blessments weight arm)	GET_OBJ_WEIGHT(obj)	switch-to-total	Bless refuses heavy items; a loaded container is heavier in C.
+pkg/spells/affect_spells.go:2560	src/spells.c:512-513 (identify Encumbrance)	GET_OBJ_WEIGHT(obj)	switch-to-total	Identify's Encumbrance line shows full weight in C.
+pkg/session/cmd_info.go:557	src/act.wizard.c do_users/do_who carried display	IS_CARRYING_W-style sum	switch-to-total	Mob carried-weight display sums per item; now totals.
+pkg/game/inventory.go:151	src/utils.h:322 (IS_CARRYING_W)	—	already-matches	Inventory.GetWeight sums GetTotalWeight per item, as C's IS_CARRYING_W would.
+pkg/game/player.go:534	src/utils.h:322	—	already-matches	Player.CarriedWeight is Inventory.GetWeight (worn excluded, as C's carry list).
+pkg/game/object.go:306	—	—	leave-internal	GetTotalWeight's own recursion base.
+pkg/game/item_consumable.go:110,112	src/act.item.c drink paths (weight_change_object)	GET_OBJ_WEIGHT on drinkcon	switch-to-total-not	Liquid weight is stored in the weight field; drinkcons hold no objects. C does the same field arithmetic.
+pkg/game/item_consumable.go:443,444,452	src/act.item.c:431+ (pour liquid)	GET_OBJ_WEIGHT field arithmetic	leave	Liquid transfer arithmetic on the field, matching C.
+pkg/game/room_obj_scripts.go:293	—	—	leave	Bare-weight-vs-prototype comparison; folding would break the intent.
+pkg/game/look.go:415	src/act.informative.c list_obj_to_char grouping	compares short_description, not weight	leave	Room-contents grouping key; C groups by description/flags, weight was a port addition — separate grouping-fidelity row, not this class.
+pkg/game/world_bridge.go:165	—	—	leave	Snapshot carries Contents separately; consumers compute totals when needed.
+pkg/spells/affect_spells.go:2466	src/spells.c create water	GET_OBJ_WEIGHT += water	leave	Drinkcon field arithmetic, matching C.
+pkg/spells/affect_spells.go:2740	—	—	leave	Character height/weight report, not an object.
+pkg/game/cmd_inventory callers via Inventory.GetWeight	—	—	already-matches	Covered by inventory.go row.
