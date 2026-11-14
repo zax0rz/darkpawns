@@ -1,0 +1,44 @@
+# C-first proof of do_ctell's below-LVL_IMMORT NPC path: GET_CLAN and
+# GET_CLAN_RANK read the shared zeroed dummy_mob player-specials record, so
+# the switched mobile receives the exact clanless refusal.
+# depth-case: switched-communication.ctell-lowlevel-dummy-clan-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8001 1 8161 80
+
+[setup:oracle]
+Lowctell
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lowctell
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+switch Hans
+
+[probe]
+ctell message from a low-level mobile

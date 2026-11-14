@@ -1,6 +1,10 @@
 package game
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
+)
 
 // OutOfBandObserver receives structured copies of game moments that already
 // produce player-facing text, so a transport can mirror them out of band
@@ -93,6 +97,50 @@ func (w *World) GroupSay(ch *Player, message string) {
 	}
 	echo := DeleteANSIControls("You tell the group, '" + message + "'")
 	w.channelActWrapped("group", false, ch, nil, echo, ToChar|ToSleep,
+		wrapGroupColor(1, 2))
+}
+
+// GroupSayBody is do_gsay for a switched mobile body. C reads AFF_GROUP,
+// master, followers, and the body descriptor from ch; player preference
+// fields on a mobile resolve through the shared zeroed dummy_mob record.
+func (w *World) GroupSayBody(ch combat.Combatant, message string) {
+	if player, ok := ch.(*Player); ok {
+		w.GroupSay(player, message)
+		return
+	}
+	mob, ok := ch.(*MobInstance)
+	if !ok || mob == nil {
+		return
+	}
+	if !mob.IsAffected(affGroup) {
+		mob.SendMessage("But you are not the member of a group!\r\n")
+		return
+	}
+	message = strings.TrimLeft(message, " \t\r\n\v\f")
+	if message == "" {
+		mob.SendMessage("Yes, but WHAT do you want to group-say?\r\n")
+		return
+	}
+	leader := Actor(mob)
+	if master := w.FollowingActor(mob); master != nil {
+		leader = master
+	}
+	format := DeleteANSIControls("$n tells the group, '" + message + "'")
+	if leader != mob && actorInGroup(leader) {
+		w.channelActWrapped("group", false, mob, leader, format, ToVict|ToSleep,
+			wrapGroupColor(3, 3))
+	}
+	for _, follower := range w.FollowersOf(leader) {
+		if follower == mob || !actorInGroup(follower) {
+			continue
+		}
+		w.channelActWrapped("group", false, mob, follower, format, ToVict|ToSleep,
+			wrapGroupColor(3, 3))
+	}
+	// dummy_mob's PRF_NOREPEAT is zero. A switched mob's send_to_char reaches
+	// its owning descriptor through MobInstance.SendMessage.
+	echo := DeleteANSIControls("You tell the group, '" + message + "'")
+	w.channelActWrapped("group", false, mob, nil, echo, ToChar|ToSleep,
 		wrapGroupColor(1, 2))
 }
 

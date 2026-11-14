@@ -1,0 +1,47 @@
+# C-first hometowns[4] ("Add a new hometown here!", src/constants.c:57) and
+# hometowns[5] ("\n" sentinel, src/constants.c:58) vehicle.
+# set <player> home N sets GET_HOME(vict) = N without clamping (act.wizard.c:3024),
+# and score prints hometowns[GET_HOME(ch)] (act.informative.c:1285).
+
+# depth-case: constants.hometowns-placeholder
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Constthree
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Constthree
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+set Constthree home 4
+score
+set Constthree home 5
+score

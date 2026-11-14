@@ -1,0 +1,83 @@
+# depth-case: mob.con-seller-healthy-list
+# depth-case: mob.con-seller-buy-cannot-afford
+# L1 settlement vehicle for SPECIAL(con_seller) arms at src/spec_procs3.c:271
+# and :294: the healthy-actor list tell ("You seem perfectly healthy!") and
+# the buy arm's gold gate ("You can't afford it!", level*400 per point).
+# The existing spec-proc-con-seller vehicle covers the drained-con list tell
+# (:286) and the successful buy; these two refusal arms were claimed in its
+# header but never reached by its probes. The level demotion must be the last
+# warmup step: C's do_set applies it, and a level-1 actor cannot set anything
+# afterwards.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 21246 1 21234 212
+replace-room-exits 21234 none
+
+[setup:oracle]
+ConGateActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ConGateActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ConGatePeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ConGatePeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport ConGatePeer 21234
+goto 21234
+set ConGateActor con 1
+set ConGateActor gold 0
+set ConGateActor level 1
+
+[probe]
+buy con
+send:peer list

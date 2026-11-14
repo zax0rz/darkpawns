@@ -292,19 +292,6 @@ func splitPageArguments(argument string) (target, message string) {
 // Source: act.comm.c do_gen_comm() SCMD_AUCTION
 func cmdAuction(s *Session, args []string) error { return cmdChannel(s, args, "auction") }
 
-// cmdHoller sends a message on the global holler channel.
-// Source: act.comm.c do_gen_comm() SCMD_HOLLER
-func cmdHoller(s *Session, args []string) error { return cmdChannel(s, args, "holler") }
-
-// cmdGratz sends a message on the gratz channel.
-// Source: act.comm.c do_gen_comm() SCMD_GRATZ
-func cmdGratz(s *Session, args []string) error { return cmdChannel(s, args, "grats") }
-
-// cmdNewbieChannel sends a message on the newbie channel.
-// Source: act.comm.c do_gen_comm() SCMD_NEWBIE
-// Named cmdNewbieChannel to avoid conflict with cmdNewbie (wizard command).
-func cmdNewbieChannel(s *Session, args []string) error { return cmdChannel(s, args, "newbie") }
-
 // cmdCTell sends a message on the clan tell channel.
 // Source: act.comm.c do_ctell()
 func cmdCTell(s *Session, args []string) error {

@@ -1,0 +1,82 @@
+# depth-case: mob.beholder-cast-damage-pipeline
+# C-first vehicle for SPECIAL(beholder)'s casting arms (src/new_cmds2.c:343-394;
+# spec_assign.c:332). A fresh mortal attacks the spawned beholder (11011) and
+# the clock advances: the spec picks the mortal with number(0,4) and casts
+# disrupt/disintegrate through cast_spell on the global world (new_cmds2.c:390).
+# When the cast lands the killing blow, C runs damage()'s full death pipeline
+# (fight.c:1698-1705: "You are dead!", the room act, die_with_killer). The
+# unfixed Go spec passed a nil world to spells.Cast, so the wound act, the
+# death pipeline and the corpse never ran (DP-1331).
+# mag_damage's unconditional saving throw and dam >>= 1 halving ride the same
+# cast (magic.c:822-824).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 11011 1 8162 80
+set-mob-flag 11011 SPEC
+replace-room-exits 8162 none
+
+[setup:oracle]
+Beholderwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Beholderwatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Beholdervictim
+Y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Beholdervictim
+y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Beholdervictim 8162
+
+[probe]
+send:victim kill beholder
+~dpclock pulse 400

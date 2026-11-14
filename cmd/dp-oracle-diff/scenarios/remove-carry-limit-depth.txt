@@ -1,0 +1,100 @@
+# C perform_remove's carry-count gate (src/act.item.c:1721-1722): removing an
+# equipped item while IS_CARRYING_N >= CAN_CARRY_N refuses with
+# "$p: you can't carry that many items!" instead of unequipping. A level-1
+# mortal first holds a quill, then gets quills from the room until get's own
+# capacity gate leaves them at exactly CAN_CARRY_N (5 + DEX/2 + level/2,
+# src/utils.h:449 — DEX-dependent, so the probe fills to refusal rather than
+# hardcoding a count), then tries to remove the held quill.
+
+# depth-case: remove.carry-limit-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Removegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Removegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:carrier]
+Flashcarrier
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:carrier]
+Flashcarrier
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Flashcarrier 8162
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+load obj 1208
+give quill Flashcarrier
+force Flashcarrier hold quill
+drop all
+
+[probe]
+force Flashcarrier get all
+force Flashcarrier remove quill

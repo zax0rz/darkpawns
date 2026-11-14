@@ -44,7 +44,7 @@ var _ socialTarget = (*MobInstance)(nil)
 // cmd is the command name (e.g. "grin", "hug").
 // argument is whatever the user typed after the command.
 // Returns true if the social was found and handled, false if no social matches cmd.
-func DoAction(w *World, ch *Player, cmd string, argument string) bool {
+func DoAction(w *World, ch combat.Combatant, cmd string, argument string) bool {
 	social, ok := Socials[cmd]
 	if !ok {
 		ch.SendMessage("That action is not supported.\r\n")
@@ -52,7 +52,7 @@ func DoAction(w *World, ch *Player, cmd string, argument string) bool {
 	}
 
 	// C: PLR_FLAGGED(ch, PLR_NOSHOUT) — mute check blocks socials
-	if ch.GetFlags()&(1<<PlrNoshout) != 0 {
+	if player, ok := ch.(*Player); ok && player.GetFlags()&(1<<PlrNoshout) != 0 {
 		ch.SendMessage("You cannot perform emotes!\r\n")
 		return true
 	}
@@ -141,7 +141,7 @@ func socialMessage(social *Social, index int) (string, bool) {
 }
 
 // DoInsult implements do_insult() from act.social.c.
-func DoInsult(w *World, ch *Player, argument string) {
+func DoInsult(w *World, ch combat.Combatant, argument string) {
 	targetName := extractArg(argument)
 
 	if targetName == "" {
@@ -225,8 +225,22 @@ func extractArg(argument string) string {
 // do_insult both call get_char_room_vis (src/act.social.c:132, :160 →
 // src/handler.c:1277-1300), so "me"/"self", N.<name> ordinals, 0.<name>
 // player-only matches, CAN_SEE and the combined room order all apply.
-func (w *World) findSocialTarget(observer *Player, name string) socialTarget {
-	t, ok := w.resolveCharInRoomAt(observer, observer.GetRoomVNum(), name)
+func (w *World) findSocialTarget(observer combat.Combatant, name string) socialTarget {
+	if mob, ok := observer.(*MobInstance); ok {
+		t, found := w.ResolveCharInRoom(mob, name)
+		if !found {
+			return nil
+		}
+		if t.Player != nil {
+			return t.Player
+		}
+		return t.Mob
+	}
+	player, ok := observer.(*Player)
+	if !ok || player == nil {
+		return nil
+	}
+	t, ok := w.resolveCharInRoomAt(player, player.GetRoomVNum(), name)
 	if !ok {
 		return nil
 	}
@@ -239,9 +253,15 @@ func (w *World) findSocialTarget(observer *Player, name string) socialTarget {
 // isSocialSelf mirrors C's vict == ch identity test (src/act.social.c:134,
 // :166): the self branch triggers when the resolver answered with the actor,
 // not when a target merely shares the actor's name.
-func isSocialSelf(target socialTarget, ch *Player) bool {
-	p, ok := target.(*Player)
-	return ok && p == ch
+func isSocialSelf(target socialTarget, ch combat.Combatant) bool {
+	switch actor := target.(type) {
+	case *Player:
+		return actor == ch
+	case *MobInstance:
+		return actor == ch
+	default:
+		return false
+	}
 }
 
 // roomMessageExcludeTwo sends a message to all players in a room except two named ones.

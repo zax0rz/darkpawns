@@ -88,7 +88,7 @@ func init() {
 	registerActorCommand("say", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCSayCommand(mob, arg) }))
 	registerCommand("'", wrapArgs(cmdSay), "Say something to the room.")
 	registerActorCommand("'", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCSayCommand(mob, arg) }))
-	registerCommand("rsay", wrapArgs(cmdRaceSay), "Say something in your racial tongue.")
+	registerCommand("rsay", wrapBodyArgs(cmdRaceSayBody), "Say something in your racial tongue.")
 	registerCommand("tell", wrapArgs(cmdTell), "Send a private message to a player.")
 	registerActorCommand("tell", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCTellCommand(mob, arg) }))
 	registerCommand("emote", wrapArgs(cmdEmote), "Perform a roleplay action.")
@@ -97,10 +97,10 @@ func init() {
 	registerActorCommand(":", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCEmoteCommand(mob, arg) }))
 	registerCommand("shout", wrapArgs(cmdShout), "Shout to everyone in your zone.")
 	registerActorCommand("shout", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCShoutCommand(mob, arg) }))
-	registerCommand("holler", wrapArgs(cmdHoller), "Holler to everyone in the world.")
-	registerCommand("gtell", wrapArgs(cmdGtell), "Send a message to your group.", "gsay")
-	registerCommand("think", wrapArgs(cmdThink), "Think a thought, optionally aloud.")
-	registerCommand("insult", wrapArgs(cmdInsult), "Insult a target in the room.")
+	registerCommand("holler", wrapBodyArgs(cmdHollerBody), "Holler to everyone in the world.")
+	registerCommand("gtell", wrapBodyArgs(cmdGtellBody), "Send a message to your group.", "gsay")
+	registerCommand("think", wrapBodyArgs(cmdThinkBody), "Think a thought, optionally aloud.")
+	registerCommand("insult", wrapBodyArgs(cmdInsultBody), "Insult a target in the room.")
 	registerCommand("dream", wrapArgs(cmdDream), "Dream — only does anything while asleep.")
 	registerActorCommand("dream", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
 		return game.CharacterDream(ctx)
@@ -532,17 +532,17 @@ func init() {
 	registerActorCommand("gossip", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCGossipCommand(mob, arg) }))
 	registerCommand("auction", wrapArgs(cmdAuction), "Auction an item to the channel.")
 	registerActorCommand("auction", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCAuctionCommand(mob, arg) }))
-	registerCommand("grats", wrapArgs(cmdGratz), "Congratulate someone on the channel.")
-	registerCommand("newbie", wrapArgs(cmdNewbieChannel), "Ask a question on the newbie channel.")
-	registerCommand("ctell", wrapArgs(cmdCTell), "Send a message to your clan.")
+	registerCommand("grats", wrapBodyArgs(cmdGratsBody), "Congratulate someone on the channel.")
+	registerCommand("newbie", wrapBodyArgs(cmdNewbieChannelBody), "Ask a question on the newbie channel.")
+	registerCommand("ctell", wrapBodyArgs(cmdCTellBody), "Send a message to your clan.")
 	registerCommand("prompt", wrapBodyArgs(cmdPrompt), "Set your prompt.")
 	registerCommand("reply", wrapArgs(cmdReply), "Reply to the last tell.")
 	registerCommand(".", wrapArgs(cmdReply), "Reply to the last tell.")
 	registerCommand("write", wrapArgs(cmdWrite), "Write on an object.")
 	registerCommand("page", wrapArgs(cmdPage), "Page a player.")
-	registerCommand("whisper", wrapArgs(cmdWhisper), "Whisper to someone in your room.")
-	registerCommand("ask", wrapArgs(cmdAsk), "Ask someone a question.")
-	registerCommand("qsay", wrapArgs(cmdQsay), "Say something to quest participants.")
+	registerCommand("whisper", wrapBodyArgs(cmdWhisperBody), "Whisper to someone in your room.")
+	registerCommand("ask", wrapBodyArgs(cmdAskBody), "Ask someone a question.")
+	registerCommand("qsay", wrapBodyArgs(cmdQsayBody), "Say something to quest participants.")
 	registerCommand("qecho", wrapArgs(cmdQecho), "Echo text to quest participants (immortal).")
 	// Social (act_social.go)
 
@@ -942,7 +942,11 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 			if runSpecials(ctx, cmd, args, rawArgs) {
 				return nil
 			}
-			game.DoAction(s.manager.world, s.player, cmd, strings.Join(args, " "))
+			argument := strings.Join(args, " ")
+			if _, isMobile := ctx.Body.(*game.MobInstance); isMobile {
+				argument = rawArgs
+			}
+			game.DoAction(s.manager.world, ctx.Body, cmd, argument)
 			return nil
 		}
 		// C: interpreter.c:916 send_to_char("Huh?!?\r\n", ch) for any unmatched command.
@@ -987,16 +991,16 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 		return cmdHelpText(s, rawArgs)
 	}
 	if (cmd == "gtell" || cmd == "gsay") && rawArgs != "" {
-		return cmdGtellText(s, rawArgs)
+		return cmdGtellBody(ctx, args)
 	}
 	if cmd == "gecho" && rawArgs != "" {
 		return cmdGechoText(s, rawArgs)
 	}
 	if cmd == "rsay" && rawArgs != "" {
-		return cmdRaceSayText(s, rawArgs)
+		return cmdRaceSayBody(ctx, args)
 	}
 	if cmd == "qsay" && rawArgs != "" {
-		return cmdQsayText(s, rawArgs)
+		return cmdQsayBody(ctx, args)
 	}
 	if cmd == "qecho" && rawArgs != "" {
 		return cmdQechoText(s, rawArgs)
