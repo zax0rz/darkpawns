@@ -125,6 +125,7 @@ skillset Fleshpeer 'flesh alter' 100
 
 [probe:fleshpeer]
 alter
+~dpclock pulse 45
 alter
 
 [probe:fleshpeer]
