@@ -150,3 +150,39 @@ func (s *Session) actingOLCZone() int {
 	}
 	return zone
 }
+
+// mobSwitchedOriginal reports whether playerName addresses the original body
+// of a session currently switched into an NPC. C's do_switch detaches that
+// body's descriptor (act.wizard.c:1200, ch->desc = NULL), so a send_to_char
+// addressed to the switched-away original drops at the descriptor gate.
+func (m *Manager) mobSwitchedOriginal(s *Session, playerName string) bool {
+	return s != nil && s.isSwitched && s.switchedMob != nil &&
+		s.switchedOriginal != nil &&
+		strings.EqualFold(playerName, s.switchedOriginal.Name)
+}
+
+// sessionRidingMob finds the session whose descriptor rides this NPC body.
+func (m *Manager) sessionRidingMob(mob *game.MobInstance) *Session {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for _, s := range m.sessions {
+		if s.isSwitched && s.switchedMob == mob {
+			return s
+		}
+	}
+	return nil
+}
+
+// returnSwitchedMob is extract_char's do_return arm for a body hosting a
+// descriptor (src/handler.c:1158-1159): the rider returns to the original
+// body before the extracted character is freed. die_follower has already run
+// (src/handler.c:1116-1117), matching C's line order.
+func (m *Manager) returnSwitchedMob(mob *game.MobInstance) {
+	s := m.sessionRidingMob(mob)
+	if s == nil {
+		return
+	}
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
+	_ = m.returnSwitch(s)
+}
