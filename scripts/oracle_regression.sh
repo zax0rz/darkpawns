@@ -183,9 +183,20 @@ failed=0
 infra=0
 timed_out=0
 draws=0
+hollow_scenarios=0
+hollow_steps=0
 for scenario_file in "${scenarios[@]}"; do
 	scenario=${scenario_file%.txt}
 	result_file="$result_dir/$scenario"
+	hollow_file="$result_dir/$scenario.hollow"
+	if [[ -s "$hollow_file" ]]; then
+		h_count=$(cat "$hollow_file")
+		if (( h_count > 0 )); then
+			hollow_scenarios=$((hollow_scenarios + 1))
+			hollow_steps=$((hollow_steps + h_count))
+			printf 'HOLLOW %s steps=%d\n' "$scenario" "$h_count"
+		fi
+	fi
 	if [[ ! -s "$result_file" ]]; then
 		failed=$((failed + 1))
 		printf 'FAIL %s (no result; worker scheduling failure)\n' "$scenario" >&2
@@ -237,8 +248,8 @@ elapsed_ns=$((run_finished_ns - run_started_ns))
 elapsed_seconds=$((elapsed_ns / 1000000000))
 elapsed_remainder=$(( (elapsed_ns % 1000000000) / 1000000 ))
 
-printf 'oracle-regression: scenarios=%d passed=%d expected=%d unpinnable=%d stale=%d failed=%d infra=%d timed_out=%d unstable=%d elapsed=%d.%03ds started=%s finished=%s\n' \
-	"${#scenarios[@]}" "$passed" "$expected" "$unpinnable" "$stale" "$failed" "$infra" "$timed_out" "$unstable" "$elapsed_seconds" "$elapsed_remainder" \
+printf 'oracle-regression: scenarios=%d passed=%d expected=%d unpinnable=%d stale=%d failed=%d infra=%d timed_out=%d unstable=%d hollow_scenarios=%d hollow_steps=%d elapsed=%d.%03ds started=%s finished=%s\n' \
+	"${#scenarios[@]}" "$passed" "$expected" "$unpinnable" "$stale" "$failed" "$infra" "$timed_out" "$unstable" "$hollow_scenarios" "$hollow_steps" "$elapsed_seconds" "$elapsed_remainder" \
 	"$(date -d "@$run_started" '+%Y-%m-%dT%H:%M:%S%z')" \
 	"$(date -d "@$run_finished" '+%Y-%m-%dT%H:%M:%S%z')"
 
