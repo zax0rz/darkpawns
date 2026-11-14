@@ -554,7 +554,7 @@ func cmdScoreMob(s *Session, mob *game.MobInstance) error {
 	carriedWeight := mob.Runtime.CarriedWeight
 	for _, item := range mob.InventorySnapshot() {
 		if item != nil {
-			carriedWeight += item.GetWeight()
+			carriedWeight += item.GetTotalWeight()
 		}
 	}
 	weight := -1

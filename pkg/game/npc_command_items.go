@@ -305,7 +305,7 @@ func (w *World) npcGetDirect(me *MobInstance, argument string) CharacterCommandR
 		}
 		found = true
 		if mobCarriedItemCount(me) >= mobMaxCarryCount(me) ||
-			(!inInventory && (!item.IsTakeable() || mobCarriedWeight(me)+item.GetWeight() > mobMaxCarryWeight(me))) {
+			(!inInventory && (!item.IsTakeable() || mobCarriedWeight(me)+item.GetTotalWeight() > mobMaxCarryWeight(me))) {
 			continue
 		}
 		if err := w.MoveObjectToMobInventoryFront(item, me); err != nil {
@@ -413,7 +413,7 @@ func (w *World) npcBeheadDirect(me *MobInstance, argument string) CharacterComma
 	slashWeapon := wielded != nil && wielded.GetValue(3) == 3
 	result := performBehead(w, me, target, wielded != nil, slashWeapon,
 		func(headObj *ObjectInstance) bool {
-			return headObj.IsTakeable() && mobCarriedWeight(me)+headObj.GetWeight() <= mobMaxCarryWeight(me) && mobCarriedItemCount(me)+1 <= mobMaxCarryCount(me)
+			return headObj.IsTakeable() && mobCarriedWeight(me)+headObj.GetTotalWeight() <= mobMaxCarryWeight(me) && mobCarriedItemCount(me)+1 <= mobMaxCarryCount(me)
 		},
 		func(headObj *ObjectInstance) error { return w.MoveObjectToMobInventoryFront(headObj, me) },
 	)

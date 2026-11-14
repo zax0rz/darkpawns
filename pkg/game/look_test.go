@@ -14,7 +14,7 @@ import (
 func TestListObjToCharCorpse(t *testing.T) {
 	w, ch, lastMsg := newDonateTestWorld(t)
 
-	corpse := w.makeCorpse("a goblin", 1, nil, nil, 1001, 0, 0, true)
+	corpse := w.makeCorpse("a goblin", 1, nil, nil, 1001, 0, 0, true, 50)
 	w.AddItemToRoom(corpse, 1001)
 
 	room := w.GetRoomInWorld(1001)

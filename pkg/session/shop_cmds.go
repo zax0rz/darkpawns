@@ -423,7 +423,7 @@ func cmdBuy(s *Session, args []string) error {
 		s.Send(fmt.Sprintf("%s: You can't carry any more items.\n\r", game.CFName(stock.GetKeywords())))
 		return nil
 	}
-	if s.player.CarriedWeight()+stock.GetWeight() > s.player.MaxCarryWeight() {
+	if s.player.CarriedWeight()+stock.GetTotalWeight() > s.player.MaxCarryWeight() {
 		s.Send(fmt.Sprintf("%s: You can't carry that much weight.\n\r", game.CFName(stock.GetKeywords())))
 		return nil
 	}
@@ -431,7 +431,7 @@ func cmdBuy(s *Session, args []string) error {
 	var lastBought *game.ObjectInstance
 	for stock != nil && (!pays || s.player.GetGold() >= price(stock)) &&
 		s.player.Inventory.GetItemCount() < s.player.MaxCarryItems() && bought < count &&
-		s.player.CarriedWeight()+stock.GetWeight() <= s.player.MaxCarryWeight() {
+		s.player.CarriedWeight()+stock.GetTotalWeight() <= s.player.MaxCarryWeight() {
 		cost := price(stock)
 		if pays && !s.player.SpendGold(cost) {
 			break
@@ -466,7 +466,7 @@ func cmdBuy(s *Session, args []string) error {
 			sendShopKeeperTell(s, keeper, "%s You can only afford %d.", s.player.GetName(), bought)
 		case s.player.Inventory.GetItemCount() >= s.player.MaxCarryItems():
 			sendShopKeeperTell(s, keeper, "%s You can only hold %d.", s.player.GetName(), bought)
-		case s.player.CarriedWeight()+stock.GetWeight() > s.player.MaxCarryWeight():
+		case s.player.CarriedWeight()+stock.GetTotalWeight() > s.player.MaxCarryWeight():
 			sendShopKeeperTell(s, keeper, "%s You can only carry %d.", s.player.GetName(), bought)
 		}
 	}

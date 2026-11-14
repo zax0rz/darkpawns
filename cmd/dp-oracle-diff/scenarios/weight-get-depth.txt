@@ -1,0 +1,85 @@
+# depth-case: get.container-weight
+# C's can_take_obj reads GET_OBJ_WEIGHT(obj) with contents folded in
+# (src/handler.c:951-955, src/act.item.c:162-166), so a container holding
+# 15 pounds answers "$p: you can't carry that much weight." for a str-3
+# carrier (CAN_CARRY_W 10). The port read the bare weight, so the same
+# container passed the gate and was picked up. DP-1524.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Weightgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Weightgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:getter]
+Weightpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:getter]
+Weightpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Weightpeer 8105
+set player Weightpeer str 3
+set player Weightpeer dex 1
+load obj 15103
+load obj 8037
+put sword satchel
+load obj 8037
+put sword satchel
+load obj 8037
+put sword satchel
+drop satchel
+
+[probe]
+send:getter drop all
+send:getter get satchel

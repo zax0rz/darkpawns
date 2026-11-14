@@ -64,7 +64,7 @@ func TestMobGetsCorpseGoldFromAttitudeLoot(t *testing.T) {
 	// C make_corpse moves GET_GOLD(ch) into a create_money pile inside the
 	// corpse (src/fight.c:406-413); 5 coins renders as "a tiny pile of gold
 	// coins" (src/handler.c:1397-1425).
-	corpse := w.makeCorpse(victim.Name, victim.GetSex(), nil, nil, 1001, combat.TYPE_UNDEFINED, 5, false)
+	corpse := w.makeCorpse(victim.Name, victim.GetSex(), nil, nil, 1001, combat.TYPE_UNDEFINED, 5, false, 175)
 	if err := w.MoveObjectToRoomFront(corpse, 1001); err != nil {
 		t.Fatal(err)
 	}

@@ -227,7 +227,7 @@ func TestCorpsesMoneyAndAshDoNotSurviveRestart(t *testing.T) {
 	if err := before.MoveObjectToRoom(money, 5001); err != nil {
 		t.Fatalf("move money: %v", err)
 	}
-	corpse := before.makeCorpse("Ghost", 0, nil, nil, 5001, 0, 0, false, "ghost")
+	corpse := before.makeCorpse("Ghost", 0, nil, nil, 5001, 0, 0, false, 175, "ghost")
 	if err := before.MoveObjectToRoom(corpse, 5001); err != nil {
 		t.Fatalf("move corpse: %v", err)
 	}

@@ -224,7 +224,7 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 		// 406-407), so PLR_CRASH keeps its pre-death state across the corpse
 		// transfer; the port's container moves would set it.
 		wasCrash := player.NeedsCrashSave()
-		corpse := w.makeCorpse(player.GetName(), player.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, playerGold, false)
+		corpse := w.makeCorpse(player.GetName(), player.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, playerGold, false, player.GetWeight())
 		// C make_corpse ends with obj_to_room(corpse, ...) (fight.c:423-427).
 		if err := w.MoveObjectToRoomFront(corpse, roomVNum); err != nil {
 			slog.Warn("MoveObjectToRoomFront failed in instakill", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
@@ -560,7 +560,7 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 		if deadMob.Proto() != nil && deadMob.Proto().Keywords != "" {
 			corpseKeywords = deadMob.Proto().Keywords
 		}
-		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, corpseGold, true, corpseKeywords)
+		corpse := w.makeCorpse(deadMob.GetName(), deadMob.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, corpseGold, true, deadMob.Weight, corpseKeywords)
 		// C make_corpse ends with obj_to_room(corpse, ...) (fight.c:423-427).
 		if err := w.MoveObjectToRoomFront(corpse, roomVNum); err != nil {
 			slog.Warn("MoveObjectToRoomFront failed in mob death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
@@ -813,7 +813,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		// 406-407), so PLR_CRASH keeps its pre-death state across the corpse
 		// transfer; the port's container moves would set it.
 		wasCrash := player.NeedsCrashSave()
-		corpse := w.makeCorpse(player.GetName(), player.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, playerGold, false)
+		corpse := w.makeCorpse(player.GetName(), player.GetSex(), inventoryItems, equipmentItems, roomVNum, attackType, playerGold, false, player.GetWeight())
 		// C make_corpse ends with obj_to_room(corpse, ...) (fight.c:423-427).
 		if err := w.MoveObjectToRoomFront(corpse, roomVNum); err != nil {
 			slog.Warn("MoveObjectToRoomFront failed in player death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
@@ -1204,7 +1204,7 @@ func genderPronoun(sex int) string {
 	}
 }
 
-func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, attackType int, gold int, isNPC bool, keywordLists ...string) *ObjectInstance {
+func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, attackType int, gold int, isNPC bool, bodyWeight int, keywordLists ...string) *ObjectInstance {
 	// src/fight.c make_corpse(): GET_OBJ_TYPE(corpse) = ITEM_CONTAINER
 	containerType := ITEM_CONTAINER
 	// src/utils.h IS_CORPSE(): GET_OBJ_TYPE == ITEM_CONTAINER && GET_OBJ_VAL(obj,3) == 1
@@ -1225,6 +1225,16 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 	}
 	// src/fight.c:388 — SET_BIT_AR(GET_OBJ_EXTRA(corpse), ITEM_NODONATE)
 	corpse.SetExtraFlag(0, extraFlagNoDonate)
+
+	// src/fight.c:391: GET_OBJ_WEIGHT(corpse) = GET_WEIGHT(ch) + IS_CARRYING_W(ch).
+	// C folds the victim's carried weight (and later the equipment, via
+	// obj_to_obj) into the corpse's stored weight, which every GET_OBJ_WEIGHT
+	// reader then sees. The port never folds weights into containers (contents
+	// are summed by GetTotalWeight), so the corpse's stored weight is the body
+	// alone; GetTotalWeight then reproduces C's value exactly: body + the
+	// inventory and equipment that makeCorpse places in Contains.
+	corpse.WeightOverride = new(int)
+	*corpse.WeightOverride = bodyWeight
 
 	// src/fight.c: if (IS_NPC(ch)) timer = max_npc_corpse_time else max_pc_corpse_time
 	if isNPC {

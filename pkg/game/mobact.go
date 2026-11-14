@@ -44,7 +44,7 @@ func mobCarriedWeight(m *MobInstance) int {
 	m.mu.RUnlock()
 	for _, obj := range inventory {
 		if obj != nil {
-			weight += obj.GetWeight()
+			weight += obj.GetTotalWeight()
 		}
 	}
 	return weight

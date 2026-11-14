@@ -1,0 +1,61 @@
+# depth-case: put.container-weight
+# C's do_put won't-fit arm reads GET_OBJ_WEIGHT on BOTH the moved object and
+# the destination container, contents folded in (src/act.item.c:56,77;
+# src/handler.c:951-955). A pouch holding 12 pounds into a satchel holding 30
+# (capacity 40) answers "$p won't fit in $P." in C (42 > 40); the port weighed
+# the moved pouch bare and accepted it. DP-1524.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Putgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Putgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load obj 15103
+load obj 8037
+put sword satchel
+load obj 8037
+put sword satchel
+load obj 8037
+put sword satchel
+load obj 8037
+put sword satchel
+load obj 8037
+put sword satchel
+load obj 15102
+load obj 8037
+put sword pouch
+load obj 8037
+put sword pouch
+
+[probe]
+put pouch satchel

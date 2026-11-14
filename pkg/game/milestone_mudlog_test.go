@@ -187,7 +187,7 @@ func testMilestoneMudlog(t *testing.T, kind string, invis ...int) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		corpse := w.makeCorpse(a.GetName(), a.GetSex(), []*ObjectInstance{obj}, nil, 1001, combat.TYPE_UNDEFINED, 0, false)
+		corpse := w.makeCorpse(a.GetName(), a.GetSex(), []*ObjectInstance{obj}, nil, 1001, combat.TYPE_UNDEFINED, 0, false, 175)
 		if err := w.MoveObjectToRoomFront(corpse, 1001); err != nil {
 			t.Fatal(err)
 		}

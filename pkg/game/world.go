@@ -1501,7 +1501,7 @@ func (w *World) canGetObject(ch Actor, obj *ObjectInstance) bool {
 			count = ch.Inventory.GetItemCount()
 		}
 		return count+1 <= ch.MaxCarryItems() &&
-			ch.CarriedWeight()+obj.GetWeight() <= ch.MaxCarryWeight()
+			ch.CarriedWeight()+obj.GetTotalWeight() <= ch.MaxCarryWeight()
 	default:
 		return false
 	}
