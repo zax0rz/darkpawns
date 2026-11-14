@@ -78,6 +78,7 @@ buy citizenship
 buy citizenship
 gold
 
+# depth-case: mob.clerk-citizenship-afford
 # depth-case: mob.clerk-entry-gates
 # depth-case: mob.clerk-list-direct-tell
 # depth-case: mob.clerk-buy-argument-gate
