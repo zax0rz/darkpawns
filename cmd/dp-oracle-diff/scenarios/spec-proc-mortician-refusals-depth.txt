@@ -1,0 +1,52 @@
+# depth-case: mob.mortician-cannot-afford
+# depth-case: mob.mortician-no-corpse
+# L1 settlement vehicle for SPECIAL(mortician) arms at src/spec_procs3.c:832
+# and :849: retrieve with gold below the level*116 cost ("I'm sorry, you
+# can't afford the cost.") and retrieve with affordable gold but no corpse
+# object anywhere ("I'm sorry, I can't find your corpse anywhere!"). The
+# existing spec-proc-mortician vehicle covers list-cost and the successful
+# global-scan retrieval; these refusal arms were claimed in its header but
+# never reached by its probes.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8095 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+MortRefActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+MortRefActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set MortRefActor gold 10000
+
+[probe]
+retrieve
+set MortRefActor gold 0
+retrieve

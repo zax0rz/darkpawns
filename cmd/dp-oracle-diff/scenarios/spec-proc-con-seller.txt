@@ -80,6 +80,7 @@ buy con
 buy con
 gold
 
+# depth-case: mob.con-seller-buy-up-to-tell
 # depth-case: mob.con-seller-entry-gates
 # depth-case: mob.con-seller-list-direct-tell
 # depth-case: mob.con-seller-buy-argument-gate
