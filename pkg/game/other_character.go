@@ -2,6 +2,8 @@ package game
 
 import (
 	"fmt"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // ---------------------------------------------------------------------------
@@ -98,11 +100,17 @@ func (w *World) doReport(ch *Player, me *MobInstance, cmd string, arg string) bo
 
 	// for (tch = world[ch->in_room].people; tch; tch = tch->next_in_room)
 	//   act(buf, FALSE, tch, 0, 0, TO_CHAR);
-	// tch supplies only the color wrappers; the numbers are ch's.
-	for _, p := range w.GetPlayersInRoom(roomVNum) {
-		green := observationColors(p, ansiGreen)
-		red := observationColors(p, ansiRed)
-		normal := observationColors(p, ansiReset)
+	// tch supplies only the color wrappers; the numbers are ch's. The walk is
+	// every occupant, mobiles included: a switched body has a descriptor and
+	// receives its own line, while act() drops it for a descriptorless mobile.
+	for _, p := range cRoomPeople(w, roomVNum) {
+		viewer, ok := p.(combat.Combatant)
+		if !ok {
+			continue
+		}
+		green := observationColors(viewer, ansiGreen)
+		red := observationColors(viewer, ansiRed)
+		normal := observationColors(viewer, ansiReset)
 		line := fmt.Sprintf(
 			"    [%s%d%s/%s%d%s]H [%s%d%s/%s%d%s]M [%s%d%s/%s%d%s]V"+
 				" [%s%d%s]Kills [%s%d%s]PKs [%s%d%s]Deaths",
