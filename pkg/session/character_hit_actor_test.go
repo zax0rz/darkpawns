@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -63,6 +64,9 @@ func TestForcedMobileHitEnrollsBothSides(t *testing.T) {
 	}
 	if gil.GetFightingBody() != stalker {
 		t.Fatalf("victim not enrolled against the forced attacker: %v", gil.GetFightingBody())
+	}
+	if got, want := stalker.GetWaitState(), engine.PULSE_VIOLENCE+2; got != want {
+		t.Fatalf("do_hit body wait = %d, want %d pulses", got, want)
 	}
 
 	// The "murder" alias and do_kill's IS_NPC delegation run the same body

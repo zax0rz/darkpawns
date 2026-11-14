@@ -1189,12 +1189,28 @@ func (s *Session) queueLen() int {
 // wait==0 — C must still go behind B). The fast path is taken only when BOTH
 // wait==0 AND the queue is empty.
 func (s *Session) tryExecuteNow(cmd string, args []string, rawArgText ...string) bool {
+	// The descriptor body is published under manager.mu during switch/return.
+	// Keep the manager -> inputMu order used by DrainInputQueues so wait lookup
+	// and queue admission see one descriptor body without racing a lifecycle
+	// transition.
+	managerLocked := s.manager != nil
+	if managerLocked {
+		s.manager.mu.RLock()
+	}
+	body := s.commandBodyLocked()
 	s.inputMu.Lock()
 	if s.inputOverflow {
 		s.inputMu.Unlock()
+		if managerLocked {
+			s.manager.mu.RUnlock()
+		}
 		return true
 	}
-	if (s.player != nil && s.player.GetWaitState() > 0) || len(s.inputQueue) > 0 {
+	waitState := 0
+	if waiter, ok := body.(interface{ GetWaitState() int }); ok {
+		waitState = waiter.GetWaitState()
+	}
+	if waitState > 0 || len(s.inputQueue) > 0 {
 		rawArgs := ""
 		if len(rawArgText) > 0 {
 			rawArgs = rawArgText[0]
@@ -1204,12 +1220,18 @@ func (s *Session) tryExecuteNow(cmd string, args []string, rawArgText ...string)
 			s.inputQueue = append(s.inputQueue, queuedInput{cmd: cmd, args: args, rawArgs: rawArgs})
 		}
 		s.inputMu.Unlock()
+		if managerLocked {
+			s.manager.mu.RUnlock()
+		}
 		if !accepted {
 			s.Close()
 		}
 		return true
 	}
 	s.inputMu.Unlock()
+	if managerLocked {
+		s.manager.mu.RUnlock()
+	}
 	return false
 }
 
@@ -1279,8 +1301,8 @@ func (s *Session) dequeueInput() (queuedInput, bool) {
 // reentrant, and command handlers reach GetSession/broadcasts that re-acquire
 // m.mu — so mirroring the DamageFunc pattern (manager.go SetDamageFunc), we
 // collect the drainable (session, cmd, args) tuples under m.mu.RLock, release
-// the lock, then ExecuteCommand each outside it. DecrementWaitState is safe
-// under the lock (it touches only Player.WaitState under p.mu, never m.mu).
+// the lock, then ExecuteCommand each outside it. Player and mob wait accessors
+// touch only body state and never reacquire m.mu.
 func (m *Manager) DrainInputQueues() {
 	type drainJob struct {
 		s       *Session
@@ -1299,10 +1321,20 @@ func (m *Manager) DrainInputQueues() {
 		if attached, involved := m.switchDescriptorLocked(s.player); involved && attached != s {
 			continue
 		}
+		// C decrements d->character->wait, which is the switched body when this
+		// descriptor controls a mobile or borrowed player.
+		body := s.commandBodyLocked()
+		waiter, ok := body.(interface {
+			GetWaitState() int
+			DecrementWaitState()
+		})
+		if !ok {
+			continue
+		}
 		// Fact 2: wait decrements once per pulse.
-		s.player.DecrementWaitState()
+		waiter.DecrementWaitState()
 		// Fact 3: one command drains per pulse (if, not while).
-		if s.player.GetWaitState() <= 0 {
+		if waiter.GetWaitState() <= 0 {
 			if input, ok := s.dequeueInput(); ok {
 				jobs = append(jobs, drainJob{s: s, cmd: input.cmd, args: input.args, rawArgs: input.rawArgs, aliased: input.aliased})
 			}

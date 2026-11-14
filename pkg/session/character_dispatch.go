@@ -33,19 +33,7 @@ func characterCommandContextForSession(s *Session) command.ExecutionContext {
 	if s.manager != nil {
 		ctx.World = s.manager.world
 	}
-	if s.isSwitched {
-		if s.switchedMob != nil {
-			ctx.Body = s.switchedMob
-			return ctx
-		}
-		if s.switchedPlayer != nil {
-			ctx.Body = s.switchedPlayer
-			return ctx
-		}
-	}
-	if s.player != nil {
-		ctx.Body = s.player
-	}
+	ctx.Body = s.commandBodyLocked()
 	return ctx
 }
 

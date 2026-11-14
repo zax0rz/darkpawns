@@ -100,6 +100,51 @@ func TestInputTiming_QueueAndDelay(t *testing.T) {
 	}
 }
 
+func TestInputTiming_SwitchedMobWaitGatesAndDrainsDescriptorQueue(t *testing.T) {
+	m := makeTestManagerWithMobs(t)
+	s := makeCommandTestSession(t, m, "Wizard", LVL_IMPL, 1001)
+	mob := registerMob(t, m, 2001, 1001)
+	s.isSwitched = true
+	s.switchedMob = mob
+	registerForDrain(t, m, s)
+
+	mob.SetWaitStatePulses(2)
+	if !s.tryExecuteNow("unregistered-command", nil) {
+		t.Fatal("switched-body wait should queue the command")
+	}
+	if got := s.queueLen(); got != 1 {
+		t.Fatalf("queue depth = %d, want 1", got)
+	}
+	if got := s.player.GetWaitState(); got != 0 {
+		t.Fatalf("descriptor owner wait = %d, want 0", got)
+	}
+	if got := drainSendChannel(t, s); got != "" {
+		t.Fatalf("queued command produced bytes early: %q", got)
+	}
+
+	m.DrainInputQueues()
+	if got := mob.GetWaitState(); got != 1 {
+		t.Fatalf("switched-body wait after pulse 1 = %d, want 1", got)
+	}
+	if got := s.queueLen(); got != 1 {
+		t.Fatalf("queue depth after pulse 1 = %d, want 1", got)
+	}
+	if got := drainSendChannel(t, s); got != "" {
+		t.Fatalf("queued command produced bytes before wait expiry: %q", got)
+	}
+
+	m.DrainInputQueues()
+	if got := mob.GetWaitState(); got != 0 {
+		t.Fatalf("switched-body wait after pulse 2 = %d, want 0", got)
+	}
+	if got := s.queueLen(); got != 0 {
+		t.Fatalf("queue depth after pulse 2 = %d, want 0", got)
+	}
+	if got := drainSendChannel(t, s); !strings.Contains(got, "Huh?!?") {
+		t.Fatalf("drained command bytes = %q, want body-dispatch refusal", got)
+	}
+}
+
 // TestInputTiming_OnePerPulse — two commands queued while wait>0 drain on
 // CONSECUTIVE eligible pulses, never both at once (comm.c:603 is an `if`, not
 // a `while`).

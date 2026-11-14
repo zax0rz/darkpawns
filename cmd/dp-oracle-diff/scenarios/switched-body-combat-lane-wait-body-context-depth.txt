@@ -1,0 +1,85 @@
+# C-first wait witness with a switched body whose room, inventory, and
+# equipment differ from the descriptor owner. The mob moves north after the
+# switch; hit must find the peer in the body's room, then its WAIT_STATE(ch)
+# must queue the next descriptor line (src/act.offensive.c:101-129; src/utils.h:
+# 462-464; src/comm.c:597-612).
+# depth-case: switched.body-combat-lane-wait
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+replace-room-exits 8105 north 8162 0 north
+replace-room-exits 8162 south 8105 0 south
+spawn-mob 8021 1 8105 80
+give-object 8021 8032 1 80
+equip-object 8021 8022 999 16 80
+
+[setup:oracle]
+Waitbodyowner
+Y
+waitbody1
+waitbody1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Waitbodyowner
+y
+waitbody1
+waitbody1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Waitbodypeer
+Y
+waitbody2
+waitbody2
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Waitbodypeer
+y
+waitbody2
+waitbody2
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Waitbodypeer 8162
+switch horse
+north
+
+[probe]
+look
+inventory
+equipment
+hit Waitbodypeer
+hit Nobody
