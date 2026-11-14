@@ -385,3 +385,38 @@ func TestHeartbeatOutputConcurrentEnqueueCommitClose(t *testing.T) {
 		}
 	}
 }
+
+func TestHeartbeatOutputDPClockDeliversPastSendCapacity(t *testing.T) {
+	t.Setenv("DP_CLOCK", "1")
+	m := &Manager{}
+	s := m.NewSession()
+	s.send = make(chan []byte, 4)
+	s.transportDone = make(chan struct{})
+
+	const total = 300
+	got := make(chan []string, 1)
+	go func() {
+		var out []string
+		for msg := range s.send {
+			out = append(out, string(msg))
+		}
+		got <- out
+	}()
+
+	m.BeginHeartbeatOutput()
+	for i := range total {
+		s.stageHeartbeat([]byte(strconv.Itoa(i)), "", true)
+	}
+	m.EndHeartbeatOutput()
+	s.CloseSend()
+
+	frames := <-got
+	if len(frames) != total {
+		t.Fatalf("DP_CLOCK delivered %d frames, want %d", len(frames), total)
+	}
+	for i, f := range frames {
+		if f != strconv.Itoa(i) {
+			t.Fatalf("frame %d = %q, want %d", i, f, i)
+		}
+	}
+}

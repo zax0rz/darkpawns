@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"strings"
 	"sync"
+	"time"
+
+	"github.com/zax0rz/darkpawns/internal/dpclock"
 )
 
 // heartbeatOutput owns immutable frames only. Never hold mu while calling
@@ -58,7 +61,7 @@ func (s *Session) stageHeartbeatText(message []byte, text string, note, literal 
 	if !b.active {
 		return s.outputDiscarded.Load()
 	}
-	if b.closing[s] || s.outputDiscarded.Load() || len(s.send)+b.pending[s] >= cap(s.send) {
+	if b.closing[s] || s.outputDiscarded.Load() || (!dpclock.Frozen() && len(s.send)+b.pending[s] >= cap(s.send)) {
 		return true
 	}
 	// Preserve transport envelopes; recognize player text only for commit
@@ -196,20 +199,32 @@ func (m *Manager) EndHeartbeatOutput() {
 
 func (f heartbeatFrame) deliver() bool {
 	s := f.session
-	delivered := false
-	s.sendMu.RLock()
-	if !s.sendClosed && !s.outputDiscarded.Load() {
-		select {
-		case s.send <- f.message:
-			delivered = true
-			if f.note {
-				s.notePlayerOutput()
+	for {
+		delivered := false
+		retry := false
+		s.sendMu.RLock()
+		if !s.sendClosed && !s.outputDiscarded.Load() {
+			select {
+			case s.send <- f.message:
+				delivered = true
+				if f.note {
+					s.notePlayerOutput()
+				}
+			default:
+				// Under DP_CLOCK, PumpPulses batches thousands of pulses into
+				// one turn; let the live transport writer drain s.send instead
+				// of dropping frames after 256 messages (DP-1515).
+				if dpclock.Frozen() && s.transportDone != nil && s.hasTransport() {
+					retry = true
+				}
 			}
-		default:
 		}
+		s.sendMu.RUnlock()
+		if !retry {
+			return delivered
+		}
+		time.Sleep(100 * time.Microsecond)
 	}
-	s.sendMu.RUnlock()
-	return delivered
 }
 
 // queueHeartbeatClose is a FIFO barrier, distinct from immediate discard.

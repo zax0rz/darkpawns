@@ -1025,7 +1025,9 @@ func runAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 			if err := target.Send(sendLine); err != nil {
 				return blocks, fmt.Errorf("probe step %d send %q: %w", i+1, step, err)
 			}
+			restoreWait := extendPulseFirstByteWait(target, sendLine)
 			output, err = target.ReadUntilQuiescent(quiescence)
+			restoreWait()
 			if err != nil && (!mayClose || !errors.Is(err, io.EOF)) {
 				return blocks, fmt.Errorf("probe step %d read actor after %q: %w\noutput so far:\n%s", i+1, step, err, output)
 			}
@@ -1042,6 +1044,36 @@ func runAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 		}
 	}
 	return blocks, nil
+}
+
+func extendPulseFirstByteWait(target Conn, line string) func() {
+	waiter, ok := target.(FirstByteWaiter)
+	if !ok {
+		return func() {}
+	}
+	prev := waiter.FirstByteWait()
+	if prev <= 0 {
+		return func() {}
+	}
+	trimmed := strings.TrimSpace(line)
+	if !strings.HasPrefix(trimmed, pulseControl) {
+		return func() {}
+	}
+	n, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(trimmed, pulseControl)))
+	if err != nil || n <= 2000 {
+		return func() {}
+	}
+	// Long ~dpclock pulse bursts (>2000 pulses, e.g. populated-world soaks)
+	// hold output until the end of PumpPulses(N) and can take >15s in Go (DP-1439).
+	// Shorter bursts (e.g. 630-pulse idle loops) keep the caller's firstByteWait
+	// so silent steps do not stack multi-second waits across 30+ probes.
+	const maxPulseFirstByteWait = 60 * time.Second
+	pulseWait := min(time.Duration(n)*12*time.Millisecond, maxPulseFirstByteWait)
+	if pulseWait <= prev {
+		return func() {}
+	}
+	waiter.SetFirstByteWait(pulseWait)
+	return func() { waiter.SetFirstByteWait(prev) }
 }
 
 // readAudiencePeers drains every audience connection after one probe step,

@@ -167,3 +167,42 @@ func TestPassivePeerUsesShortQuiescence(t *testing.T) {
 		t.Fatalf("passive peer used actor allowance: %s", elapsed)
 	}
 }
+
+func TestExtendPulseFirstByteWaitScalesLongPulse(t *testing.T) {
+	client, server := net.Pipe()
+	defer func() { _ = client.Close() }()
+	defer func() { _ = server.Close() }()
+	conn := NewTCPConn(client)
+
+	// Zero firstByteWait preserves the legacy one-window reader.
+	restore := extendPulseFirstByteWait(conn, "~dpclock pulse 4600")
+	if got := conn.FirstByteWait(); got != 0 {
+		t.Fatalf("zero firstByteWait changed to %s", got)
+	}
+	restore()
+
+	conn.SetFirstByteWait(2 * time.Second)
+	for _, cmd := range []string{"look", "~dpclock pulse 630"} {
+		restore = extendPulseFirstByteWait(conn, cmd)
+		if got := conn.FirstByteWait(); got != 2*time.Second {
+			t.Fatalf("%q changed firstByteWait to %s", cmd, got)
+		}
+		restore()
+	}
+
+	restore = extendPulseFirstByteWait(conn, "~dpclock pulse 4600")
+	want := 4600 * 12 * time.Millisecond
+	if got := conn.FirstByteWait(); got != want {
+		t.Fatalf("long pulse firstByteWait = %s, want %s", got, want)
+	}
+	restore()
+	if got := conn.FirstByteWait(); got != 2*time.Second {
+		t.Fatalf("restored firstByteWait = %s, want 2s", got)
+	}
+
+	restore = extendPulseFirstByteWait(conn, "~dpclock pulse 15750")
+	if got := conn.FirstByteWait(); got != 60*time.Second {
+		t.Fatalf("capped pulse firstByteWait = %s, want 60s", got)
+	}
+	restore()
+}
