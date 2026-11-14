@@ -60,5 +60,6 @@ set mold maxhit 5000
 set mold hitroll -20
 set mold damroll -50
 cast 'charm person' rat
+~dpclock pulse 25
 order rat kill mold
 ~dpclock pulse 100

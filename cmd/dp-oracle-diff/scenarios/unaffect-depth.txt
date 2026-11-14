@@ -103,5 +103,6 @@ tag Unaffectpeer
 tag Tagwitness
 unaffect Unaffectpeer
 cast 'bless' Unaffectpeer
+~dpclock pulse 25
 unaffect Unaffectpeer
 unaffect Unaffectpeer

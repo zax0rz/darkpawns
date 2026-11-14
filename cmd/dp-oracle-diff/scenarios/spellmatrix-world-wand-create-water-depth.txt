@@ -119,4 +119,5 @@ hold driftwood
 [probe]
 equipment
 use driftwood chalice
+~dpclock pulse 25
 inventory

@@ -76,4 +76,5 @@ set player Recallca level 34
 
 [probe]
 cast 'word of recall' Recallca
+~dpclock pulse 25
 look

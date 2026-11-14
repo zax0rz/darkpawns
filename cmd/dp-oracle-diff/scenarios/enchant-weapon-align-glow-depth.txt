@@ -44,4 +44,5 @@ set Enchantalign align 100
 
 [probe]
 cast 'enchant weapon' dagger
+~dpclock pulse 25
 cast 'identify' dagger

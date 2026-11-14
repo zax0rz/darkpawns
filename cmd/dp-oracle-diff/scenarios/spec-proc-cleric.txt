@@ -43,6 +43,7 @@ Y
 [warmup]
 goto 8105
 hit rajah
+~dpclock pulse 27
 
 [probe]
 score
