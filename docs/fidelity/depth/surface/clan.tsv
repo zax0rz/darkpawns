@@ -101,7 +101,7 @@ src/clan.c:768	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-de
 src/clan.c:773	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
 src/clan.c:775	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
 src/clan.c:777	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
-src/clan.c:779	do_clan_info	gap-blocked		Shipped lib/etc/clans is a 4-byte zero-count header; no boot-loaded record has nonzero at_war (src/clan.c:836-861). Remains blocked on clan-state fixture decision (R1/R5e/R5g).
+src/clan.c:779	do_clan_info	excluded	-	L1 clan.c:779 is unreachable through play: no C statement ever writes a nonzero clan[].at_war (the only write is the create-time zero at src/clan.c:227; src/clan.h:74 declares the array), and the shipped lib/etc/clans is a 4-byte zero-count header, so no boot-loaded record can carry one. The at-peace arm (line 777) is the live branch. A legacy file could in principle carry the flag; that is persistence data, not a play-reachable surface. R1/R2/R4/R5e/R5g.
 src/clan.c:781	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
 src/clan.c:783	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
 src/clan.c:900	do_clan_bank	proven	clan.mortal-bank-output-gates	The rank-zero applicant is sent through the live bank command before any bank argument parsing (R1/R2/R5e/R5h).

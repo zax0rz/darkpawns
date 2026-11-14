@@ -1,0 +1,51 @@
+# depth-case: olist.zone-listing
+# depth-case: olist.empty-zone
+# depth-case: olist.atoi-negative-selector
+# C do_olist (src/act.wizard.c:3304-3334) takes a ZONE NUMBER, not a keyword:
+# start = atoi(arg) * 100, end = start + 99, every object prototype in the
+# range is appended as "%3d. [%5d] %s", and the buffer is paged. An empty
+# range prints "Sorry, there are no objs in that zone."; a populated one
+# prints the rows followed by " N Objects found in Zone Z". Zone 51 holds the
+# single prototype 5100, so the listing fits one page; zone 124 holds none.
+# The pre-fix port instead searched short descriptions for a keyword.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Olistgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Olistgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+
+[probe]
+olist 51
+olist 124
+olist 124junk
+olist -1

@@ -158,7 +158,11 @@ func cmdRlist(s *Session, args []string) error {
 	return nil
 }
 
-// cmdOlist — list objects matching keyword (LVL_IMMORT)
+// cmdOlist mirrors C do_olist (src/act.wizard.c:3304-3334): the argument is a
+// numeric zone selector, not a keyword. C atoi's the first token, computes
+// start = zone * 100 and end = start + 99, appends every object prototype in
+// that range in index order, and pages the buffer. An empty range prints only
+// C's "Sorry, there are no objs in that zone." line.
 func cmdOlist(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.Send("Huh?!?")
@@ -166,32 +170,33 @@ func cmdOlist(s *Session, args []string) error {
 	}
 	pw := s.GetWorld().GetParsedWorld()
 	if pw == nil {
-		s.Send("No parsed world available.")
+		s.Send("Sorry, there are no objs in that zone.\r\n")
 		return nil
 	}
-	if len(args) < 1 {
-		s.Send("Usage: olist <keyword>")
-		return nil
-	}
-	keyword := strings.ToLower(args[0])
+	argument, _ := game.OneArgument(strings.Join(args, " "))
+	zoneNumber := mlistAtoi(argument)
+	start := zoneNumber * 100
+	end := start + 99
 	var result strings.Builder
 	count := 0
 	for i := range pw.Objs {
-		if strings.Contains(strings.ToLower(pw.Objs[i].ShortDesc), keyword) ||
-			strings.Contains(strings.ToLower(pw.Objs[i].Keywords), keyword) {
+		if pw.Objs[i].VNum >= start && pw.Objs[i].VNum <= end {
 			count++
-			fmt.Fprintf(&result, "  [%5d] %s\r\n", pw.Objs[i].VNum, pw.Objs[i].ShortDesc)
-			if count >= 50 {
-				result.WriteString("... (truncated at 50)")
-				break
-			}
 		}
 	}
 	if count == 0 {
-		s.Send("No objects found.")
-		return nil
+		result.WriteString("Sorry, there are no objs in that zone.\r\n")
+	} else {
+		item := 0
+		for i := range pw.Objs {
+			if pw.Objs[i].VNum >= start && pw.Objs[i].VNum <= end {
+				item++
+				fmt.Fprintf(&result, "%3d. [%5d] %s\r\n", item, pw.Objs[i].VNum, pw.Objs[i].ShortDesc)
+			}
+		}
+		fmt.Fprintf(&result, " %d Objects found in Zone %d\r\n", count, zoneNumber)
 	}
-	s.Send(result.String())
+	PageString(s, result.String())
 	return nil
 }
 

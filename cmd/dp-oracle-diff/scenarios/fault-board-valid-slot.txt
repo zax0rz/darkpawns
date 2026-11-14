@@ -1,3 +1,4 @@
+# depth-case: boards.read-empty-storage-guard
 # Fault fixture: one empty-message row with a VALID persisted slot. C's
 # loader keeps the slot (src/boards.c:502) but never assigns its storage,
 # so read 1 hits the null-storage guard (src/boards.c:357-359) and remove 1

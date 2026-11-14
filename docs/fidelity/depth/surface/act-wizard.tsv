@@ -348,7 +348,7 @@ src/act.wizard.c:3528	do_newbie	proven	wnewbie.target-not-found	The cited manife
 src/act.wizard.c:3536	do_newbie	proven	wnewbie.local-player;wnewbie.global-player	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3537	do_newbie	proven	wnewbie.mob-target	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3571	do_zlist	proven	zlist.missing-file	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:3588	do_idlist	gap-blocked		Fault-only object_idlist fopen failure; remains blocked pending a fault-injection fixture that GLM will design (R1/R5g).
+src/act.wizard.c:3588	do_idlist	proven	idlist.open-refusal	fault-idlist@1 replaces object_idlist with a directory in both runtimes and the implementor receives only this refusal (R1/R2/R5e/R5h).
 src/act.wizard.c:3670	do_idlist	proven	idlist.success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3813	check_load	proven	checkload.object-no-load	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3816	check_load	proven	checkload.object-no-load	The cited manifest proof executes this C callsite (R1/R5e).

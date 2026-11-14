@@ -1,0 +1,247 @@
+capture-statistics	blocks=66	empty-open=0	empty-closed=0
+capture-statistics	blocks=66	empty-open=0	empty-closed=0
+hollow-prompt-steps	count=0
+Dark Pawns Tier-1 differential report
+scenario: improved-editor-edit-overflow-depth
+c-oracle: 127.0.0.1:24702 (DP_SEED=1)
+go-port: 127.0.0.1:16063 (DP_SEED=1)
+result: no normalized divergence
+normalized C oracle blocks:
+--- [redit]
+-- Room number : [8004]      Room zone: [80]
+1) Name        : At the Temple Altar
+2) Description :
+   You stand before the temple altar. Carved from a solid block of black
+marble, it is an exquisite example of dwarven craftsmanship. Black pillars
+of the same marble hold up the ceiling of this open-aired pavilion, and to
+the south a narrow aisle runs its way between hard oaken pews. There is a
+small hand painted sign posted as well.
+3) Room flags  : !MOB INDOORS PEACEFUL !TRACK BFR REGENROOM
+4) Sector type : Inside
+5) Exit north  : -1
+6) Exit east   : 8160
+7) Exit south  : 8008
+8) Exit west   : 8161
+9) Exit up     : -1
+A) Exit down   : -1
+B) Extra descriptions menu
+C) Copy another room description
+S) Script menu
+Q) Quit
+Enter choice :
+--- [2]
+Instructions: /s or @ to save, /h for more options.
+Enter room description:
+
+   You stand before the temple altar. Carved from a solid block of black
+marble, it is an exquisite example of dwarven craftsmanship. Black pillars
+of the same marble hold up the ceiling of this open-aired pavilion, and to
+the south a narrow aisle runs its way between hard oaken pews. There is a
+small hand painted sign posted as well.
+]
+--- [/c]
+Current buffer cleared.
+]
+--- [/c]
+Current buffer empty.
+]
+--- [/i1 x]
+Current buffer empty.
+]
+--- [/e1 x]
+Buffer is empty, nothing to change.
+]
+--- [line one]
+]
+--- [line two]
+]
+--- [/i9 x]
+Line number out of range; insert aborted.
+]
+--- [/l 2-1]
+That range is invalid.
+]
+--- [/l 5]
+Line(s) out of range; no buffer listing.
+]
+--- [/n 2-1]
+That range is invalid.
+]
+--- [/n 5]
+Line(s) out of range; no buffer listing.
+]
+--- [/c]
+Current buffer cleared.
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [/l]
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+
+20 lines shown.
+]
+--- [/ra 'token' 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB']
+String 'token' not found.
+]
+--- [/ra 'token' 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB']
+Replaced 10 occurances of 'token' with 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'.
+]
+--- [/c]
+Current buffer cleared.
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [token]
+]
+--- [AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA]
+]
+--- [BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB]
+]
+--- [CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC]
+]
+--- [DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD]
+String too long.  Last line skipped.
+]
+--- [/r 'token' 'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD']
+Not enough space left in buffer.
+]
+--- [/i2 EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE]
+Insert text pushes buffer over maximum size, insert aborted.
+]
+--- [/e1 FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF]
+Change causes new length to exceed buffer maximum size, aborted.
+]
+--- [@]
+-- Room number : [8004]      Room zone: [80]
+1) Name        : At the Temple Altar
+2) Description :
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+token
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+3) Room flags  : !MOB INDOORS PEACEFUL !TRACK BFR REGENROOM
+4) Sector type : Inside
+5) Exit north  : -1
+6) Exit east   : 8160
+7) Exit south  : 8008
+8) Exit west   : 8161
+9) Exit up     : -1
+A) Exit down   : -1
+B) Extra descriptions menu
+C) Copy another room description
+S) Script menu
+Q) Quit
+Enter choice :
+EXIT=0

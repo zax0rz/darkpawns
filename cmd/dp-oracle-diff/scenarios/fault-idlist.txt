@@ -1,3 +1,4 @@
+# depth-case: idlist.open-refusal
 # Fault fixture: object_idlist is a directory in both engines' working
 # directories, so the wizard idlist command cannot open its report file and
 # prints the refusal line (src/act.wizard.c:3582-3589). The first character
