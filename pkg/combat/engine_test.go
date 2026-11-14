@@ -987,17 +987,6 @@ func TestProcessCombatPair_ParryDefersReductionToOpponentsTurn(t *testing.T) {
 	ce := NewCombatEngine()
 	var observerMessages []string
 	ce.BroadcastFunc = func(_ int, message string, _ []Combatant) { observerMessages = append(observerMessages, message) }
-	// act(..., TO_ROOM) walks world[].people (src/comm.c:2541-2550); the test
-	// room list is [player, mob] so the room act reaches the mob and the
-	// BroadcastFunc fallback stays unused.
-	oldCallbacks := GetCallbacks()
-	merged := GameCallbacks{}
-	if oldCallbacks != nil {
-		merged = *oldCallbacks
-	}
-	merged.GetRoomCombatants = func(int) []Combatant { return []Combatant{player, mob} }
-	SetCallbacks(&merged)
-	defer SetCallbacks(oldCallbacks)
 	hits := 0
 	// DamageFunc runs once for every landed hit, on the same path that
 	// applies the damage.
@@ -1029,16 +1018,13 @@ func TestProcessCombatPair_ParryDefersReductionToOpponentsTurn(t *testing.T) {
 		t.Fatalf("parry actor output = %q, want %q", got, want)
 	}
 	// C sends the TO_ROOM line to the opponent too, before its TO_VICT line
-	// (src/fight.c:1959-1962); both acts admit the sighted opponent, so its
-	// transcript carries the room rendering and then the your-form.
+	// (src/fight.c:1959-1962).
 	if got, want := strings.Join(mob.messages, ""), "Parry_warrior displays a dazzling show of swordplay, fending off orc's every blow!\r\n"+
 		"Parry_warrior displays a dazzling show of swordplay, fending off your every blow!\r\n"; got != want {
 		t.Fatalf("parry victim output = %q, want %q", got, want)
 	}
-	// The TO_ROOM act walked the wired room list, so the BroadcastFunc
-	// fallback (no game-layer roster) stays unused.
-	if len(observerMessages) != 0 {
-		t.Fatalf("parry room fallback output = %q, want none", strings.Join(observerMessages, ""))
+	if got, want := strings.Join(observerMessages, ""), "Parry_warrior displays a dazzling show of swordplay, fending off orc's every blow!\r\n"; got != want {
+		t.Fatalf("parry room output = %q, want %q", got, want)
 	}
 	if hits != 2 {
 		t.Fatalf("preparing parry performed an immediate attack: hits = %d, want 2", hits)
