@@ -8,15 +8,19 @@ func TestCanonicalHometownNames(t *testing.T) {
 		"Kir Drax'in",
 		"Kir-Oshi",
 		"Alaozar",
+		"Add a new hometown here!",
 	}
 	for hometown, name := range want {
 		if got := HometownName(hometown); got != name {
 			t.Errorf("HometownName(%d) = %q, want %q", hometown, got, name)
 		}
 	}
-	for _, hometown := range []int{-1, len(want)} {
+	if got := HometownName(len(want)); got != "\n" {
+		t.Errorf("HometownName(%d) = %q, want sentinel %q", len(want), got, "\n")
+	}
+	for _, hometown := range []int{-1, len(want) + 1} {
 		if got := HometownName(hometown); got != want[0] {
-			t.Errorf("HometownName(%d) = %q, want sentinel %q", hometown, got, want[0])
+			t.Errorf("HometownName(%d) = %q, want fallback %q", hometown, got, want[0])
 		}
 	}
 }

@@ -1,0 +1,88 @@
+# L1 constants.c slice 3 (6 sites in month_name[]):
+# - month_name[10..15]: Month of the Heat (1388), Month of the Battle (1389),
+#   Month of the Dark Shades (1390), Month of the Shadows (1391),
+#   Month of the Long Shadows (1392), Month of the Ancient Darkness (1393)
+
+# depth-case: constants.month-names-heat-to-ancient-darkness
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Constthree
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Constthree
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+~dpclock pulse 81900
+~dpclock pulse 90720
+~dpclock pulse 90720
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+time
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+time
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+time
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+time
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+time
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+~dpclock pulse 88200
+time
