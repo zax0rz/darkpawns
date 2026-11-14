@@ -841,7 +841,12 @@ func (w *World) DoLookDirection(ch combat.Combatant, direction int) ObservationR
 		result.literal(ch, fmt.Sprintf("The %s is open.", CFName(exit.Keywords)))
 	}
 	if secret && !revealSecret {
-		result.literal(ch, "You see nothing special.")
+		// C sends this one with an explicit \n\r, not the module's usual
+		// \r\n (src/act.informative.c:885), so it goes out through the bare
+		// literal path. The nowhere branch at :908 sends the same text with no
+		// terminator; it is dead, because an exit to vnum 0 resolves to index 0
+		// and C's `EXIT(ch,dir)->to_room` test skips it.
+		result.bare(ch, "You see nothing special.\n\r")
 	}
 	if exit.ToRoom <= 0 || exit.ExitInfo&parser.ExitClosed != 0 {
 		return result
