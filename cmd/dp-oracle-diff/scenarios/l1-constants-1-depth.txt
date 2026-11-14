@@ -1,0 +1,70 @@
+# L1 constants.c slice 1 (10 sites):
+# - preference_bits[]: AUTOLOOT (549), AUTOGOLD (550), AUTOSPLIT (551), D_TARGET (553)
+# - color_liquid[]: light green (999), crystal clear (1005)
+# - fullness[]: less than half (1012), about half (1013), more than half (1014)
+# - tat[]: bless (1434)
+
+# depth-case: constants.preference-bits-stat
+# depth-case: constants.color-liquid-slime-clearwater
+# depth-case: constants.fullness-levels
+# depth-case: constants.tat-bless-show
+
+[fixture]
+empty-players
+quiet-mobs
+force-load 19724
+force-load 4804
+force-load 19725
+
+[setup:oracle]
+Constone
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Constone
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+auto loot
+auto gold
+auto split
+display f
+load obj 19724
+load obj 4804
+load obj 19725
+save
+
+[probe]
+stat Constone
+look in water
+look in 2.water
+drink wine
+look in wine
+drink wine
+look in wine
+drink wine
+look in wine
+drink wine
+look in wine
+show tattoos
