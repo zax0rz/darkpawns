@@ -477,6 +477,12 @@ func openBrowser(ctx context.Context, url string) error {
 	default:
 		name, args = "xdg-open", []string{url}
 	}
+	return launchBrowser(ctx, name, args...)
+}
+
+// launchBrowser runs the platform's URL opener. Tests replace it so a test
+// run never opens a real browser window on the developer's desktop.
+var launchBrowser = func(ctx context.Context, name string, args ...string) error {
 	return exec.CommandContext(ctx, name, args...).Run()
 }
 
