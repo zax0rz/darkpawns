@@ -189,3 +189,36 @@ func TestResolveCharInRoomConsidersKickParity(t *testing.T) {
 		t.Fatal("postman must resolve for both consider and kick")
 	}
 }
+
+func TestGetCharVisRoomThenCharacterList(t *testing.T) {
+	w, viewer := newResolverTestWorld(t)
+
+	// get_char_vis checks the actor's room first (src/handler.c:1310-1312).
+	tgt, ok := w.GetCharVis(viewer, "postman")
+	if !ok || tgt.Mob == nil || tgt.Mob.GetVNum() != 202 {
+		t.Fatalf("GetCharVis(postman) = %+v ok=%v, want the room's postman", tgt, ok)
+	}
+
+	// A player outside the room is still found by the character_list pass
+	// (src/handler.c:1317-1322).
+	far := NewPlayer(3, "Dragon", 200)
+	far.RoomVNum = 200
+	w.AddPlayer(far)
+	tgt, ok = w.GetCharVis(viewer, "Dragon")
+	if !ok || tgt.Player != far {
+		t.Fatalf("GetCharVis(Dragon) = %+v ok=%v, want the world player", tgt, ok)
+	}
+
+	// A 0. prefix is get_player_vis: world players only, never a mobile.
+	tgt, ok = w.GetCharVis(viewer, "0.Dragon")
+	if !ok || tgt.Player != far {
+		t.Fatalf("GetCharVis(0.Dragon) = %+v ok=%v, want the world player", tgt, ok)
+	}
+	if _, ok := w.GetCharVis(viewer, "0.postman"); ok {
+		t.Error("GetCharVis(0.postman) found a mobile, want none")
+	}
+
+	if _, ok := w.GetCharVis(viewer, "dragonfly"); ok {
+		t.Error("GetCharVis(dragonfly) found a body, want none")
+	}
+}

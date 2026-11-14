@@ -416,7 +416,7 @@ var wizutilNames = map[wizutilSubcmd]string{
 // (act.wizard.c:2121,2127,2135,2154,2168).
 func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error {
 	targetName, _ = game.OneArgument(targetName)
-	resolved, ok := s.manager.world.ResolveCharWorld(s.player, targetName)
+	resolved, ok := s.manager.world.GetCharVis(s.player, targetName)
 	if ok && resolved.Mob != nil {
 		// do_wizutil resolves visible NPCs before the sub-command switch and
 		// rejects them with this shared branch (act.wizard.c:2101-2103).
@@ -439,7 +439,7 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 		s.Send("There is no such player.\r\n")
 		return nil
 	}
-	if target.player.Level > s.player.Level && target.player.Level >= LVL_IMMORT {
+	if target.player.Level > s.player.Level && target.player.Level > LVL_IMMORT {
 		s.Send("Hmmm...you'd better not.\r\n")
 		return nil
 	}

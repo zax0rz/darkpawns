@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 )
 
@@ -76,17 +75,6 @@ func splitDirectedSpeech(argument string) (string, string) {
 		return argument[:split], strings.TrimSpace(argument[split:])
 	}
 	return argument, ""
-}
-
-func (w *World) visibleTellTarget(ch *Player, name string) *Player {
-	players := w.GetAllPlayers()
-	sort.Slice(players, func(i, j int) bool { return players[i].GetName() < players[j].GetName() })
-	for _, player := range players {
-		if isnameWithAbbrevs(name, player.GetName()) && (player == ch || canSee(ch, player)) {
-			return player
-		}
-	}
-	return nil
 }
 
 // DoSay implements C do_say, including mute, drunken speech, punctuation,
@@ -205,13 +193,48 @@ func speakDrunk(message string) string {
 }
 
 // DoTell implements C do_tell and records the reply target on the recipient.
+// The target comes from get_char_vis (src/handler.c:1303-1324), so a switched
+// mobile in the room is a legal target, and a descriptorless mobile shadows a
+// same-named player elsewhere (C NOPERSON).
 func (w *World) DoTell(ch *Player, argument string) {
 	targetName, message := splitDirectedSpeech(argument)
 	if targetName == "" || message == "" {
 		communicationSend(ch, "Who do you wish to tell what??")
 		return
 	}
-	target := w.visibleTellTarget(ch, targetName)
+	resolved, ok := w.GetCharVis(ch, targetName)
+	if !ok {
+		communicationSend(ch, "No-one by that name here.")
+		return
+	}
+	if resolved.Mob != nil {
+		mob := resolved.Mob
+		if w.MobileDescriptorOwner == nil || w.MobileDescriptorOwner(mob) == nil {
+			communicationSend(ch, "No-one by that name here.")
+			return
+		}
+		if ch.GetFlags()&(1<<PrfNotell) != 0 && ch.GetLevel() < lvlImmort {
+			communicationSend(ch, "You can't tell other people while you have notell on.")
+			return
+		}
+		if ch.GetFlags()&(1<<PlrNoshout) != 0 {
+			communicationSend(ch, "You cannot tell anyone anything!")
+			return
+		}
+		if w.RoomHasFlag(ch.GetRoom(), "soundproof") {
+			communicationSend(ch, "The walls seem to absorb your words.")
+			return
+		}
+		// PLR_FLAGGED(mob) is NPC-guarded and the shared dummy PRF_NOTELL is
+		// zero; only the target room's soundproof applies.
+		if ch.GetLevel() < lvlImmort && w.RoomHasFlag(mob.GetRoom(), "soundproof") {
+			Act(nil, false, ch, mob, nil, nil, "$E can't hear you.", "", ToChar|ToSleep)
+			return
+		}
+		w.playerTellMob(ch, mob, message)
+		return
+	}
+	target := resolved.Player
 	if target == nil {
 		communicationSend(ch, "No-one by that name here.")
 		return

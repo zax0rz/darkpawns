@@ -1,0 +1,119 @@
+# depth-case: wizutil.switched-body-squelch-pardon
+# C do_wizutil (src/act.wizard.c:2077-2219) gates a body below LVL_IMMORT that
+# is not PLR_CHOSEN with "Huh?!?", resolves the target with get_char_vis
+# (src/handler.c:1303-1324), rejects mobiles, refuses a higher immortal, and
+# toggles PLR_NOSHOUT / clears PLR_OUTLAW on the player target. The switched
+# level-32 Death Dealer exercises every arm; the level-9 clone proves the body
+# level gate.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8162 80
+spawn-mob 70 1 8162 80
+spawn-mob 71 1 8162 80
+
+[setup:oracle]
+Switchwiz
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchwiz
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Peon
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Peon
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:high]
+Highgod
+Y
+highpass
+highpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:high]
+Highgod
+y
+highpass
+highpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Peon 8162
+teleport Highgod 8162
+advance Highgod 40
+set player Peon outlaw on
+switch dealer
+
+[probe]
+mute
+mute nobody
+mute satan
+mute Highgod
+mute Peon
+mute Peon
+pardon Peon
+return
+goto 8162
+switch clone
+mute
