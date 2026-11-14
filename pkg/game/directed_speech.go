@@ -208,6 +208,10 @@ func (w *World) DoTell(ch *Player, argument string) {
 		return
 	}
 	if resolved.Mob != nil {
+		communicationSend(ch, "No-one by that name here.")
+		return
+	}
+	if resolved.Mob != nil {
 		mob := resolved.Mob
 		if w.MobileDescriptorOwner == nil || w.MobileDescriptorOwner(mob) == nil {
 			communicationSend(ch, "No-one by that name here.")
