@@ -1,0 +1,79 @@
+# depth-case: stat.target-visibility
+# C do_stat's player branch resolves with get_player_vis (src/act.wizard.c:1022,
+# handler.c:1263-1276) and its default chain's room/world passes are
+# CAN_SEE-gated (src/act.wizard.c:1064); an invisible target answers "No such
+# player around." / "Nothing around by that name.". The wizard
+# target-resolution batch (DP-1523 follow-up class).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Statgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Statgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Vispeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Vispeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Vispeer 8162
+set Statgod class mage
+set Statgod maxmana 5000
+set Statgod mana 5000
+cast 'invisibility' Vispeer
+~dpclock pulse 20
+
+[probe]
+stat player Vispeer
+stat Vispeer

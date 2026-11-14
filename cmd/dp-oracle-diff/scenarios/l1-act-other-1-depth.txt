@@ -1,0 +1,172 @@
+# L1 act.other.c slice 1: do_steal (9 player-facing sites):
+# depth-case: steal.pc-not-outlaw
+#   354,357: do_steal "You can not steal from %s because you are not an Outlaw!" / "%s failed to steal..."
+# depth-case: steal.eq-awake
+#   409: do_steal "Steal the equipment now?  Impossible!"
+# depth-case: steal.eq-fail-sleeping
+#   415,417: do_steal "You try to unequip $p, but fail!" / "$n tries to steal $p from $N, but fails!"
+# depth-case: steal.eq-carry-limit
+#   445: do_steal "You cannot carry that much." (equipped steal item-count gate)
+# depth-case: steal.inv-carry-limit
+#   489: do_steal "You cannot carry that much." (inventory steal item-count gate)
+# depth-case: steal.coins-multiple
+#   515: do_steal "Bingo!  You got %d gold coins."
+# depth-case: steal.coins-solitary
+#   520: do_steal "You manage to swipe a solitary gold coin."
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+set-room-flag 8161 4 on
+replace-room-exits 8162 north 8161 0
+force-load 8007
+force-load 8008
+force-load 8010
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Stealimm
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stealimm
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Stealactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Stealactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Stealpc
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Stealpc
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+trans Stealactor
+trans Stealpc
+skillset Stealactor 'steal' 100
+set Stealactor dex 18
+load obj 8007
+give ring trainee
+force trainee wear ring
+load obj 8010
+give bread Stealpc
+load obj 8008
+give necklace Stealpc
+send:target wear necklace
+set mob trainee gold 1000
+
+[probe]
+send:actor steal bread Stealpc
+~dpclock pulse 20
+send:actor steal ring trainee
+~dpclock pulse 20
+send:actor steal coins trainee
+~dpclock pulse 20
+set mob trainee gold 19
+send:actor steal coins trainee
+~dpclock pulse 20
+set mob trainee gold 19
+send:actor steal coins trainee
+~dpclock pulse 20
+set mob trainee gold 19
+send:actor steal coins trainee
+~dpclock pulse 20
+set mob trainee gold 19
+send:actor steal coins trainee
+~dpclock pulse 20
+set mob trainee gold 19
+send:actor steal coins trainee
+~dpclock pulse 20
+send:target sleep
+set Stealactor dex 3
+load obj 8010
+give bread Stealactor
+load obj 8010
+give bread Stealactor
+load obj 8010
+give bread Stealactor
+load obj 8010
+give bread Stealactor
+load obj 8010
+give bread Stealactor
+load obj 8010
+give bread Stealactor
+set Stealactor outlaw on
+send:actor steal necklace Stealpc
+~dpclock pulse 20
+send:actor steal bread Stealpc
+~dpclock pulse 20
+advance Stealpc 31
+send:target sleep
+send:actor steal necklace Stealpc
+~dpclock pulse 20

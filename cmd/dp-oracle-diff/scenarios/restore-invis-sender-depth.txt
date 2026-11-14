@@ -1,0 +1,73 @@
+# depth-case: restore.invisible-sender
+# C do_restore tells the victim act("The hand of $N touches you...", TRUE, vict,
+# 0, ch, TO_CHAR) (src/act.wizard.c:1615-1616): $N renders "someone" when the
+# victim cannot see the restoring god, so a god who is invisible to the victim
+# leaves an anonymous hand. The wizard target-resolution batch.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Resgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Resgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Respeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Respeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Respeer 8162
+invis
+
+[probe]
+restore Respeer
