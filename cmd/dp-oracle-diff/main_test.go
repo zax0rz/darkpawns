@@ -350,6 +350,8 @@ func TestIsHollowPromptStep(t *testing.T) {
 		name         string
 		command      string
 		audience     string
+		oracleRaw    string
+		goRaw        string
 		oracleBefore string
 		goBefore     string
 		want         bool
@@ -358,6 +360,8 @@ func TestIsHollowPromptStep(t *testing.T) {
 			name:         "c_empty_go_prompt_only_actor",
 			command:      "look",
 			audience:     "actor",
+			oracleRaw:    "",
+			goRaw:        "< 100H 100M 100V > ",
 			oracleBefore: "\n",
 			goBefore:     "<PROMPT>\n",
 			want:         true,
@@ -366,7 +370,9 @@ func TestIsHollowPromptStep(t *testing.T) {
 			name:         "go_empty_c_prompt_only_actor_dp1526",
 			command:      "score",
 			audience:     "actor",
-			oracleBefore: "<PROMPT>\n",
+			oracleRaw:    "\r\n",
+			goRaw:        "",
+			oracleBefore: "\n",
 			goBefore:     "\n",
 			want:         true,
 		},
@@ -374,6 +380,8 @@ func TestIsHollowPromptStep(t *testing.T) {
 			name:         "directed_peer_actor_hollow",
 			command:      "send:mortal look",
 			audience:     "mortal",
+			oracleRaw:    "",
+			goRaw:        "< 100H 100M 100V > ",
 			oracleBefore: "\n",
 			goBefore:     "<PROMPT>\n",
 			want:         true,
@@ -382,6 +390,8 @@ func TestIsHollowPromptStep(t *testing.T) {
 			name:         "non_actor_observer_ignored",
 			command:      "look",
 			audience:     "observer",
+			oracleRaw:    "",
+			goRaw:        "< 100H 100M 100V > ",
 			oracleBefore: "\n",
 			goBefore:     "<PROMPT>\n",
 			want:         false,
@@ -390,6 +400,8 @@ func TestIsHollowPromptStep(t *testing.T) {
 			name:         "dpclock_pulse_ignored",
 			command:      "~dpclock pulse 20",
 			audience:     "actor",
+			oracleRaw:    "",
+			goRaw:        "< 100H 100M 100V > ",
 			oracleBefore: "\n",
 			goBefore:     "<PROMPT>\n",
 			want:         false,
@@ -398,6 +410,8 @@ func TestIsHollowPromptStep(t *testing.T) {
 			name:         "real_output_with_reconciled_prompt_not_hollow",
 			command:      "look",
 			audience:     "actor",
+			oracleRaw:    "Temple Square\r\n",
+			goRaw:        "Temple Square\r\n< 100H 100M 100V > ",
 			oracleBefore: "Temple Square\n",
 			goBefore:     "Temple Square\n<PROMPT>\n",
 			want:         false,
@@ -406,6 +420,8 @@ func TestIsHollowPromptStep(t *testing.T) {
 			name:         "both_empty_not_prompt_reconciled",
 			command:      "look",
 			audience:     "actor",
+			oracleRaw:    "",
+			goRaw:        "",
 			oracleBefore: "\n",
 			goBefore:     "\n",
 			want:         false,
@@ -414,7 +430,7 @@ func TestIsHollowPromptStep(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			oracleAfter, goAfter := oraclediff.ReconcilePromptFrames(tc.oracleBefore, tc.goBefore)
-			got := isHollowPromptStep(tc.command, tc.audience, tc.oracleBefore, tc.goBefore, oracleAfter, goAfter)
+			got := isHollowPromptStep(tc.command, tc.audience, tc.oracleRaw, tc.goRaw, tc.oracleBefore, tc.goBefore, oracleAfter, goAfter)
 			if got != tc.want {
 				t.Fatalf("isHollowPromptStep(%q, %q, %q, %q) = %v, want %v (after: %q, %q)",
 					tc.command, tc.audience, tc.oracleBefore, tc.goBefore, got, tc.want, oracleAfter, goAfter)

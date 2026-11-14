@@ -935,7 +935,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		oracleBefore, goBefore := oracleBlock, goBlock
 		if !scenario.KeepANSI && !scenario.KeepPrompts {
 			oracleBlock, goBlock = oraclediff.ReconcilePromptFrames(oracleBlock, goBlock)
-			if i < len(goBlocks) && isHollowPromptStep(oracleResult.Command, oracleResult.Audience, oracleBefore, goBefore, oracleBlock, goBlock) {
+			if i < len(goBlocks) && isHollowPromptStep(oracleResult.Command, oracleResult.Audience, oracleRaw, goRaw, oracleBefore, goBefore, oracleBlock, goBlock) {
 				hollowSteps = append(hollowSteps, hollowPromptStep{
 					block:   i,
 					command: oracleResult.Command,
@@ -1079,16 +1079,17 @@ func isEmptyNormalizedBlock(s string) bool {
 }
 
 // isHollowPromptStep reports whether an actor probe step had one engine emit
-// nothing while the other emitted only a prompt frame that ReconcilePromptFrames
-// stripped, leaving both post-reconcile blocks empty.
-func isHollowPromptStep(command, audience, oracleBefore, goBefore, oracleAfter, goAfter string) bool {
+// nothing while the other emitted only framing/prompt bytes that Normalize or
+// ReconcilePromptFrames stripped, leaving both post-reconcile blocks empty.
+func isHollowPromptStep(command, audience, oracleRaw, goRaw, oracleBefore, goBefore, oracleAfter, goAfter string) bool {
 	if !isActorProbeBlock(command, audience) || isPulseControlStep(command) {
 		return false
 	}
-	if isEmptyNormalizedBlock(oracleBefore) == isEmptyNormalizedBlock(goBefore) {
+	if !isEmptyNormalizedBlock(oracleAfter) || !isEmptyNormalizedBlock(goAfter) {
 		return false
 	}
-	return isEmptyNormalizedBlock(oracleAfter) && isEmptyNormalizedBlock(goAfter)
+	return isEmptyNormalizedBlock(oracleBefore) != isEmptyNormalizedBlock(goBefore) ||
+		(oracleRaw == "") != (goRaw == "")
 }
 
 // oracleBlocksText renders the normalized C blocks exactly as --show-oracle
