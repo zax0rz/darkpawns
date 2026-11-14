@@ -520,3 +520,80 @@ func TestRoomActivityFlowRoom(t *testing.T) {
 		}
 	})
 }
+
+func TestRoomActivityEarlyReturnTopology(t *testing.T) {
+	t.Run("room spec returning true returns from RoomActivity", func(t *testing.T) {
+		w, out := croakTestWorld(t)
+		const specName = "test_room_activity_early_return"
+		RegisterSpec(specName, func(_ *World, _ *Player, _ *MobInstance, cmd, _ string) bool {
+			return cmd == ""
+		})
+		oldSpec, hadSpec := RoomSpecAssign[1001]
+		RoomSpecAssign[1001] = specName
+		t.Cleanup(func() {
+			if hadSpec {
+				RoomSpecAssign[1001] = oldSpec
+			} else {
+				delete(RoomSpecAssign, 1001)
+			}
+			delete(SpecRegistry, specName)
+		})
+
+		// earlier is visited second in C newest-first order; a whole-function
+		// return skips its flow draw as well as specActor's CON<=0 croak.
+		w.rooms[1002].Flags = []string{"2097152", "0", "0", "0"}
+		earlier := croakPlayer(t, w, "Earlier", 1002)
+		specActor := croakPlayer(t, w, "SpecActor", 1001)
+		specActor.Stats.Con = 0
+		specActor.CopyBaseAttributes()
+
+		r := installDrawRecorder(t, 0)
+		w.RoomActivity()
+		if r.count() != 0 {
+			t.Fatalf("draws = %v, want 0 (RoomActivity should return before Earlier)", r.calls)
+		}
+		if earlier.GetRoom() != 1002 {
+			t.Fatalf("Earlier moved to %d, want 1002", earlier.GetRoom())
+		}
+		if strings.Contains(out["SpecActor"], "croaks") || strings.Contains(out["SpecActor"], "unhealthy") {
+			t.Fatalf("SpecActor croaked despite room spec early return: %q", out["SpecActor"])
+		}
+	})
+
+	t.Run("SECT_FLYING without down exit sends to DT and returns from RoomActivity", func(t *testing.T) {
+		w, err := NewWorld(&parser.World{Rooms: []parser.Room{
+			{VNum: fallFromSkyDTRoom, Name: "The sky DT"},
+			{VNum: 1001, Name: "High sky", Sector: SECT_FLYING},
+			{VNum: 1002, Name: "Flowing room", Flags: []string{"2097152", "0", "0", "0"}, Exits: map[string]parser.Exit{
+				"north": {Direction: "north", ToRoom: 1001},
+			}},
+		}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		w.StopAITicker()
+		t.Cleanup(w.StopAITicker)
+		out := map[string]string{}
+		w.MessageSink = func(name string, msg []byte) { out[name] += string(msg) }
+
+		earlier := croakPlayer(t, w, "Earlier", 1002)
+		flier := croakPlayer(t, w, "Flier", 1001)
+		flier.Stats.Con = 0
+		flier.CopyBaseAttributes()
+
+		r := installDrawRecorder(t, 0)
+		w.RoomActivity()
+		if flier.GetRoom() != fallFromSkyDTRoom {
+			t.Fatalf("Flier room = %d, want %d", flier.GetRoom(), fallFromSkyDTRoom)
+		}
+		if !strings.Contains(out["Flier"], "You fall from the sky...") {
+			t.Fatalf("Flier missing fall message: %q", out["Flier"])
+		}
+		if strings.Contains(out["Flier"], "unhealthy") {
+			t.Fatalf("Flier croaked after DT early return: %q", out["Flier"])
+		}
+		if r.count() != 0 || earlier.GetRoom() != 1002 {
+			t.Fatalf("Earlier not skipped on DT early return: draws=%v room=%d", r.calls, earlier.GetRoom())
+		}
+	})
+}
