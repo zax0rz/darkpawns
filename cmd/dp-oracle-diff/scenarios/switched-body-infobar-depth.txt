@@ -1,0 +1,63 @@
+# depth-case: infobar.switched-body-on-off
+# depth-case: infobar.switched-body-pulse-update
+# depth-case: infobar.shared-dummy-record
+# C do_infobar reads GET_INFOBAR/GET_SCREENSIZE from the shared dummy_mob
+# player_specials record (src/utils.h:588-589; src/db.c:104,1281) and
+# InfoBarOn/Off/Update draw from the body's vitals (src/act.display.c:112-285;
+# src/comm.c:1158-1193). Holler spends 20 moves (src/act.comm.c:1254), so the
+# next prompt's update repaints the move line from the same shared fields; the
+# level-32 body skips the level/needed block that the level-9 clone draws.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8162 80
+spawn-mob 71 1 8162 80
+
+[setup:oracle]
+Switchbar
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchbar
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+goto 8162
+switch clone
+
+[probe]
+infobar
+infobar on
+infobar
+infobar off
+infobar off
+return
+goto 8162
+switch dealer
+infobar
+infobar on
+north
+look
+infobar off

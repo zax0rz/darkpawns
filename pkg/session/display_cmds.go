@@ -418,6 +418,14 @@ func cmdInfoBarOn(s *Session) {
 	}
 
 	is := newInfobarState(s)
+	s.sendRawEvent(infobarOnOutput(is))
+	s.rememberInfobarValues()
+}
+
+// infobarOnOutput renders C's whole InfoBarOn block (src/act.display.c:158-216)
+// for a state whose values are the current vitals: labels, then values, then
+// the cursor home sequence.
+func infobarOnOutput(is *infobarState) string {
 	var output strings.Builder
 
 	// Clear screen
@@ -452,21 +460,23 @@ func cmdInfoBarOn(s *Session) {
 	}
 
 	output.WriteString(infobarGold(is))
-	s.rememberInfobarValues()
 
 	// Cursor to top-left
 	fmt.Fprintf(&output, vtCurSp, 0, 0)
-
-	s.sendRawEvent(output.String())
+	return output.String()
 }
 
 // cmdInfoBarOff — InfoBarOff from act.display.c
 func cmdInfoBarOff(s *Session) {
+	s.sendRawEvent(infobarOffOutput(s.screenSize))
+}
+
+// infobarOffOutput renders C's InfoBarOff (src/act.display.c:218-224).
+func infobarOffOutput(size int) string {
 	var output strings.Builder
 	// Reset margin to full screen
-	fmt.Fprintf(&output, vtMarSet, 0, s.screenSize-1)
+	fmt.Fprintf(&output, vtMarSet, 0, size-1)
 	// Clear screen
 	output.WriteString(vtHomeClr)
-
-	s.sendRawEvent(output.String())
+	return output.String()
 }
