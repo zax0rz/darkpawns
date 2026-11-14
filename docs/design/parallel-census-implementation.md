@@ -1,5 +1,7 @@
 # Shared census admission implementation
 
+> **Policy change, 2026-11-13.** After the workstation froze from memory exhaustion, the host budget was lowered from 72 to **36 scenario workers**, and the admission floor raised from 4 GiB to **8 GiB MemAvailable**, resuming at **9 GiB** (`scripts/census_budget.py`). The floor only governs census admission; agents' own `go test`, lint and build runs share the same memory. The numbers below are the original design values.
+
 Implements [the approved design](parallel-census.md). Zach approved the 72-worker
 host/user budget, 36 per run, a 4 GiB memory floor, exclusive release admission
 after draining, and queued registration by default. These decisions do not

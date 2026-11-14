@@ -47,22 +47,42 @@ class BudgetTests(unittest.TestCase):
         return dict(run=run,kind=kind,pid=os.getpid(),birth=budget.identity(os.getpid()),pgid=0,granted=time.time()-3)
 
     def test_host_and_per_run_caps_and_fairness(self):
-        a,b,c = [self.register(x) for x in ('a','b','c')]
+        half = budget.LIMIT // 2
+        a,b = [self.register(x, jobs=half) for x in ('a','b')]
+        c = self.register('c')
         with budget.transaction() as state:
-            state['leases'] = {str(i):self.lease(a if i<36 else b) for i in range(72)}
+            state['leases'] = {str(i):self.lease(a if i<half else b) for i in range(budget.LIMIT)}
             self.assertFalse(budget.eligible(state,dict(run=c,kind='worker')))
-            state['leases'].pop('71')
+            state['leases'].pop(str(budget.LIMIT-1))
             self.assertFalse(budget.eligible(state,dict(run=a,kind='worker')))
             self.assertTrue(budget.eligible(state,dict(run=c,kind='worker')))
             state['waiting'] = [dict(run=b,kind='worker',token='b'),dict(run=c,kind='worker',token='c')]
             state['cursor'] = b
             self.assertEqual(budget.selected(state),'c')
 
+    def test_policy_change_adopted_only_when_idle(self):
+        with budget.transaction():
+            pass
+        path = budget.runtime()/'registry.json'
+        old = json.loads(path.read_text())
+        old['policy'] = dict(limit=72, floor=4*1024*1024)
+        path.write_text(json.dumps(old))
+        with budget.transaction() as state:
+            self.assertEqual(state['policy'], dict(limit=budget.LIMIT, floor=budget.FLOOR_KIB))
+        self.register('active')
+        old = json.loads(path.read_text())
+        old['policy'] = dict(limit=72, floor=4*1024*1024)
+        path.write_text(json.dumps(old))
+        with self.assertRaises(RuntimeError):
+            with budget.transaction():
+                pass
+
     def test_memory_hysteresis_and_build_reserve(self):
         a = self.register('a')
         with budget.transaction() as state:
             req = dict(run=a,kind='worker')
-            self.assertEqual(budget.FLOOR_KIB,4*1024*1024)
+            self.assertEqual(budget.FLOOR_KIB,8*1024*1024)
+            self.assertEqual(budget.LIMIT,36)
             self.memory.write_text(str(3*1024*1024))
             self.assertFalse(budget.eligible(state,req))
             self.memory.write_text(str(budget.FLOOR_KIB+1))
