@@ -1,0 +1,125 @@
+# L1 constants.c spell_wear_off_msg[] slice 1 (10 real messages in 1219-1270):
+# - blindness (1223), charm person (1226), chill touch (1227), curse (1236),
+#   poison (1252), sleep (1257), strength (1258), sense life (1263),
+#   infravision (1269), waterwalk (1270)
+
+# depth-case: constants.spell-wearoff-batch2
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Constwo
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Constwo
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Targetwo
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Targetwo
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Targetwo 8105
+set Constwo outlaw on
+set Targetwo maxhit 5000
+set Targetwo hit 5000
+
+[probe]
+cast 'strength' Constwo
+~dpclock pulse 630
+cast 'sense life' Constwo
+~dpclock pulse 630
+cast 'infravision' Constwo
+~dpclock pulse 630
+cast 'waterwalk' Constwo
+~dpclock pulse 630
+cast 'charm person' Targetwo
+~dpclock pulse 630
+cast 'blindness' Targetwo
+~dpclock pulse 20
+peace
+~dpclock pulse 630
+cast 'curse' Targetwo
+~dpclock pulse 20
+peace
+~dpclock pulse 630
+cast 'poison' Targetwo
+~dpclock pulse 20
+peace
+~dpclock pulse 630
+cast 'chill touch' Targetwo
+~dpclock pulse 20
+peace
+~dpclock pulse 630
+send:victim time
+cast 'sleep' Targetwo
+~dpclock pulse 6300
+~dpclock pulse 6300
+send:victim time
+~dpclock pulse 6300
+~dpclock pulse 6300
+send:victim time
+~dpclock pulse 6300
+~dpclock pulse 6300
+send:victim time
+~dpclock pulse 6300
+~dpclock pulse 6300
+send:victim time
+~dpclock pulse 6300
+~dpclock pulse 6300
+send:victim time
+~dpclock pulse 6300
+~dpclock pulse 6300
+send:victim time
+~dpclock pulse 6300
+~dpclock pulse 6300
+send:victim time
+~dpclock pulse 6300
