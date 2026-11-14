@@ -3,7 +3,7 @@
 # switch; hit must find the peer in the body's room, then its WAIT_STATE(ch)
 # must queue the next descriptor line (src/act.offensive.c:101-129; src/utils.h:
 # 462-464; src/comm.c:597-612).
-# depth-case: switched.body-combat-lane-wait-body-context
+# depth-case: switched.body-combat-lane-wait
 
 [fixture]
 empty-players
