@@ -1,0 +1,70 @@
+capture-statistics	blocks=13	empty-open=0	empty-closed=0
+capture-statistics	blocks=13	empty-open=0	empty-closed=0
+hollow-prompt-steps	count=0
+divergence-fingerprint	infobar on	59154df8430cce564d7d4d24cb5edeb9cfe9c27af12a1218c4f786d52cdc5b26
+divergence-fingerprint	infobar on	077ecbb8e3effbcff391dae8d15c50f8000eb3979dd5a0a7de3b641b79a764dc
+Dark Pawns Tier-1 differential report
+scenario: switched-body-infobar-depth
+c-oracle: 127.0.0.1:32191 (DP_SEED=1)
+go-port: 127.0.0.1:10433 (DP_SEED=1)
+result: normalized divergence detected
+
+--- [infobar] c-oracle
++++ [infobar] go-port
+(no normalized divergence)
+
+--- [infobar on] c-oracle
++++ [infobar on] go-port
+@@ -1,1 +1,1 @@
+-+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+Hit Pts: Mana Pts: Move Pts: Exp: : Needed for Level Gold: 15(15)50(50)10(10)100-99 10Your infobar is now set to on.
+++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+Hit Pts: Mana Pts: Move Pts: Exp: Gold: 500(500)82(82)100(100)70000000Your infobar is now set to on.
+
+--- [infobar] c-oracle
++++ [infobar] go-port
+(no normalized divergence)
+
+--- [infobar off] c-oracle
++++ [infobar off] go-port
+(no normalized divergence)
+
+--- [infobar off] c-oracle
++++ [infobar off] go-port
+(no normalized divergence)
+
+--- [return] c-oracle
++++ [return] go-port
+(no normalized divergence)
+
+--- [goto 8162] c-oracle
++++ [goto 8162] go-port
+(no normalized divergence)
+
+--- [switch dealer] c-oracle
++++ [switch dealer] go-port
+(no normalized divergence)
+
+--- [infobar] c-oracle
++++ [infobar] go-port
+(no normalized divergence)
+
+--- [infobar on] c-oracle
++++ [infobar on] go-port
+@@ -1,1 +1,1 @@
+-+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+Hit Pts: Mana Pts: Move Pts: Exp: Gold: 1684(1684)50(50)10(10)1200002970Your infobar is now set to on.
+++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+Hit Pts: Mana Pts: Move Pts: Exp: Gold: 500(500)82(82)100(100)70000000Your infobar is now set to on.
+
+--- [north] c-oracle
++++ [north] go-port
+(no normalized divergence)
+
+--- [look] c-oracle
++++ [look] go-port
+(no normalized divergence)
+
+--- [infobar off] c-oracle
++++ [infobar off] go-port
+(no normalized divergence)
+
+draw-parity	MATCH	entries=4083	stream=4114
+dp-oracle-diff: normalized divergence detected
+exit status 3
