@@ -54,7 +54,7 @@ func groupWalkFixture(t *testing.T) (*World, *Player, *Player, *Player, *MobInst
 
 	drain := func() []string {
 		var lines []string
-		for _, l := range strings.Split(strings.TrimRight(out.String(), "\r\n"), "\r\n") {
+		for l := range strings.SplitSeq(strings.TrimRight(out.String(), "\r\n"), "\r\n") {
 			if l != "" {
 				lines = append(lines, l)
 			}
