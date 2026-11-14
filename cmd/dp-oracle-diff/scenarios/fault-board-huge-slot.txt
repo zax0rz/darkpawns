@@ -1,3 +1,5 @@
+# depth-case: boards.read-slot-guard
+# depth-case: boards.remove-slot-guard
 # Fault fixture: the trinity board's save file holds one empty-message row
 # whose persisted slot_num is 99999. C's loader keeps the file's slot for
 # message-less rows (src/boards.c:502, :516 gates the overwrite), so read 1
