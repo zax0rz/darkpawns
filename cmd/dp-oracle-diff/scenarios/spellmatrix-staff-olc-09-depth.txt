@@ -8,6 +8,15 @@
 # depth-case: spell.identify.matrix-staff-olc
 # depth-case: spell.mind-poke.matrix-staff-olc
 
+# Staggered fan-out (DP-1456 follow-up): each use block keeps ONE designated
+# victim in the room so C's people-list iteration over world[].people
+# (src/spell_parser.c:790-809) cannot vary. ItemView and ItemBuilder wait
+# in room 3001; the builder teleports back only for its oedit+load (the
+# load lands the staff in the builder's room) and parks again before
+# `use`, so the fan-out set is exactly [ItemMage, ItemPeer]. Blocks whose
+# spell moves the victim or the actor end with a builder teleport recall.
+# The immortal builder issues every room move; the actor is level 30.
+
 [fixture]
 empty-players
 quiet-mobs
@@ -163,6 +172,7 @@ group all
 
 
 [probe]
+send:builder teleport ItemView 3001
 send:builder give staff0901 ItemMage
 hold staff0901
 use staff0901
@@ -173,6 +183,7 @@ score
 send:peer score
 send:observer score
 look
+send:builder goto 8162
 send:builder oedit 8054
 send:builder 1
 send:builder staff0902
@@ -194,6 +205,7 @@ score
 send:peer score
 send:observer score
 look
+send:builder goto 8162
 send:builder oedit 8054
 send:builder 1
 send:builder staff0903
@@ -215,6 +227,7 @@ score
 send:peer score
 send:observer score
 look
+send:builder goto 8162
 send:builder oedit 8054
 send:builder 1
 send:builder staff0904

@@ -841,24 +841,30 @@ func (ce *CombatEngine) prepareRoundDefense(fighter, opponent Combatant) {
 	case CheckParry(fighter, opponent) == ParrySuccess:
 		defenseAction = "parry"
 		sendCombatMessage(fighter, "With a dazzling show of swordplay, you move into defensive position...\r\n")
-		// C act() → CAP uppercases the first byte (comm.c:2477). The fighter's
-		// name may be lowercase (e.g. "a guard trainee"). The room line is
-		// TO_ROOM, not TO_NOTVICT, so the opponent reads it before its own
-		// TO_VICT line (src/fight.c:1959-1962).
+		// C act() → CAP uppercases the first byte (comm.c:2477) and PERS
+		// renders $n as "someone" for any receiver that cannot see the actor
+		// (src/comm.c PERS; src/utils.h:515-530): a blinded opponent and blind
+		// observers each get their own rendering. The room line is TO_ROOM,
+		// not TO_NOTVICT, so the opponent reads it before its own TO_VICT
+		// line (src/fight.c:1959-1962).
 		ce.sendDefenseRoomMessage(
 			fighter,
 			opponent,
-			capitalizeFightMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off %s's every blow!\r\n", fighter.GetName(), opponent.GetName())),
+			func(to Combatant) string {
+				return capitalizeFightMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off %s's every blow!\r\n", persName(fighter, to), persName(opponent, to)))
+			},
 		)
-		sendCombatMessage(opponent, capitalizeFightMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off your every blow!\r\n", fighter.GetName())))
+		sendCombatMessage(opponent, capitalizeFightMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off your every blow!\r\n", persName(fighter, opponent))))
 	case CheckDodge(fighter, opponent) == DodgeSuccess:
 		defenseAction = "dodge"
 		sendCombatMessage(fighter, "You dodge!\r\n")
-		sendCombatMessage(opponent, capitalizeFightMessage(fmt.Sprintf("%s dodges your attack!\r\n", fighter.GetName())))
+		sendCombatMessage(opponent, capitalizeFightMessage(fmt.Sprintf("%s dodges your attack!\r\n", persName(fighter, opponent))))
 		ce.sendDefenseObserverMessage(
 			fighter,
 			opponent,
-			capitalizeFightMessage(fmt.Sprintf("%s dodges %s's attack!\r\n", fighter.GetName(), opponent.GetName())),
+			func(to Combatant) string {
+				return capitalizeFightMessage(fmt.Sprintf("%s dodges %s's attack!\r\n", persName(fighter, to), persName(opponent, to)))
+			},
 		)
 	}
 	if defenseAction != "" {
@@ -866,28 +872,43 @@ func (ce *CombatEngine) prepareRoundDefense(fighter, opponent Combatant) {
 	}
 }
 
-func (ce *CombatEngine) sendDefenseObserverMessage(fighter, opponent Combatant, message string) {
+func (ce *CombatEngine) sendDefenseObserverMessage(fighter, opponent Combatant, render func(to Combatant) string) {
 	observed := false
 	for _, observer := range cbGetRoomCombatants(fighter.GetRoom()) {
 		if observer == nil || observer == fighter || observer == opponent || observer.GetPosition() <= PosSleeping {
 			continue
 		}
-		sendCombatMessage(observer, message)
+		sendCombatMessage(observer, render(observer))
 		observed = true
 	}
 	if !observed && ce.BroadcastFunc != nil {
 		// Test and embedding fallback when the game-layer room lookup is absent.
-		ce.BroadcastFunc(fighter.GetRoom(), message, []Combatant{fighter, opponent})
+		ce.BroadcastFunc(fighter.GetRoom(), render(nil), []Combatant{fighter, opponent})
 	}
 }
 
-// sendDefenseRoomMessage is act(..., TO_ROOM) with the opponent as $N: every
-// awake character but the fighter, the opponent included.
-func (ce *CombatEngine) sendDefenseRoomMessage(fighter, opponent Combatant, message string) {
-	if opponent != nil && opponent.GetPosition() > PosSleeping {
-		sendCombatMessage(opponent, message)
+// sendDefenseRoomMessage is act(..., TRUE, ch, 0, victim, TO_ROOM) with the
+// opponent as $N: every awake character but the fighter whom the fighter's
+// visibility gate admits. act()'s hide_invisible flag SKIPS any receiver that
+// cannot see ch (src/comm.c:2547), so a blinded opponent and blind observers
+// receive nothing from this act; the opponent's own TO_VICT line returns
+// before that gate (src/comm.c:2500-2504) and is delivered separately.
+func (ce *CombatEngine) sendDefenseRoomMessage(fighter, opponent Combatant, render func(to Combatant) string) {
+	observed := false
+	for _, receiver := range cbGetRoomCombatants(fighter.GetRoom()) {
+		if receiver == nil || receiver == fighter || receiver.GetPosition() <= PosSleeping {
+			continue
+		}
+		if !cbCanSee(receiver, fighter) {
+			continue
+		}
+		sendCombatMessage(receiver, render(receiver))
+		observed = true
 	}
-	ce.sendDefenseObserverMessage(fighter, opponent, message)
+	if !observed && ce.BroadcastFunc != nil {
+		// Test and embedding fallback when the game-layer room lookup is absent.
+		ce.BroadcastFunc(fighter.GetRoom(), render(nil), []Combatant{fighter})
+	}
 }
 
 func (ce *CombatEngine) setParried(body Combatant, defenseAction string) {
@@ -1191,7 +1212,11 @@ func (ce *CombatEngine) handleSurvivingVictimState(attacker, defender Combatant,
 			ce.sendDefenseObserverMessage(
 				defender,
 				attacker,
-				fmt.Sprintf("%s screams in pain!\r\n", defender.GetName()),
+				func(to Combatant) string {
+					// C act(..., FALSE, ch, 0, victim, TO_NOTVICT): $N renders
+					// per receiver, uncapitalised (src/fight.c:1591).
+					return fmt.Sprintf("%s screams in pain!\r\n", persName(defender, to))
+				},
 			)
 		}
 	}
