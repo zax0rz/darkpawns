@@ -357,12 +357,16 @@ func (s *Session) confirmDelete(choice string) error {
 		}
 		s.player.AccountCharacterSave() // src/interpreter.c:2338 save_char.
 		record.LastLogon = s.player.GetLastLogon()
+		// C interpreter.c:2338's save_char runs char_to_store
+		// (src/db.c:2547-2639): the stored array is built first, then the
+		// live affect list is stripped and re-add reversed.
 		data, err := game.EncodeCharacterData(s.player)
 		if err != nil {
 			s.player.ClanID, s.player.ClanRank = clanID, clanRank
 			s.player.SetPlrFlag(game.PlrDeleted, deleted)
 			return fmt.Errorf("encode deleted character: %w", err)
 		}
+		s.player.ApplyCharToStoreSideEffects()
 		record.CharacterData = data
 		record.Inventory, record.Equipment = []byte("[]"), []byte("{}")
 		if err := db.SavePlayerIfCurrent(s.manager.db, record, &original); err != nil {

@@ -321,7 +321,19 @@ func (w *World) npcFighterCommand(me *MobInstance, commandName, argument string)
 	}
 	target, found := w.resolveCharInRoomAt(me, me.GetRoomVNum(), targetName)
 	if !found || target.Combatant == nil {
-		return CharacterCommandHandled
+		// fighter() passes GET_NAME(vict) verbatim, and one_argument leaves
+		// the trailing punctuation ("Kharzed,") on it — both engines' matchers
+		// then fail on the exact word (C: is_abbrev, src/interpreter.c:1356).
+		// C's target ACMDs fall back to FIGHTING(ch) at that point:
+		// do_bash src/act.offensive.c:442, do_headbutt src/new_cmds.c:396,
+		// do_charge, do_disarm src/new_cmds2.c:205. Mirror the same-room
+		// fallback so the branch fires on the fighter's actual opponent
+		// (DP-1507) instead of dropping the draw and the bytes.
+		if melee := me.GetFightingBody(); melee != nil && melee.GetRoom() == me.GetRoomVNum() {
+			target = newCharTarget(melee)
+		} else {
+			return CharacterCommandHandled
+		}
 	}
 	switch commandName {
 	case "headbutt":

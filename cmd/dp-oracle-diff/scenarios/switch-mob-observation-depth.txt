@@ -28,6 +28,7 @@
 # depth-case: who.switched-body-viewer
 # depth-case: help.switched-body-wizonly-gate
 # depth-case: help.short-alias-switched-body-wizonly-gate
+# depth-case: help.switched-body-topic-page
 # depth-case: command_interpreter.position-gate-switched-body
 # C: cmd_info north is POS_STANDING (src/interpreter.c:314); the position
 # refusal is emitted at src/interpreter.c:936. Oracle transcript [north]:
@@ -87,6 +88,7 @@ whoami
 version
 help advance
 ? advance
+help say
 weather
 consider satan
 commands
