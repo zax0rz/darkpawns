@@ -39,6 +39,13 @@ type Obj struct {
 	ExtraDescs   []ExtraDesc
 	ScriptName   string
 	LuaFunctions int
+
+	// Timer mirrors C's obj_flags.timer (db.c:1431's "%d %d %f" reader
+	// never loads one and oedit's writer never emits one, so it is always 0
+	// for file-loaded prototypes — in-memory only, like C). oedit's
+	// OEDIT_TIMER sets it on the live prototype and read_object's shallow
+	// copy carries it into instances (oedit.c:1260-1263, db.c:1951).
+	Timer int
 }
 
 // ObjAffect represents an object affect (stat modifier).

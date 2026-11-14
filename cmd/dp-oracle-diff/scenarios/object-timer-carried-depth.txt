@@ -1,0 +1,57 @@
+# depth-case: object.carried-timer-decrement
+# C-first vehicle for update_char_objects' timer walk (src/handler.c:1046-
+# 1082). A God sets the water skin prototype's timer to 5 through oedit (the
+# in-memory save applies it to the live prototype, src/oedit.c:1054-1061,
+# 1260-1263) and loads one: read_object's shallow copy carries the timer into
+# the instance (db.c:1951), and point_update then decrements a carried item's
+# timer by 1 every mud hour (handler.c:1081, update_object(ch->carrying, 1)).
+# The global object walk touches only the special vnums (limits.c:529-580),
+# so the character walk is the only tick a carried object gets. The unfixed
+# Go returned before the walk whenever no held light was burning, so the
+# timer never moved (DP-1447). No shipped object is both takeable and timed,
+# which is why the witness drives the timer through oedit.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Decaygod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Decaygod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+oedit 8063
+b
+5
+Q
+y
+load obj 8063
+stat skin
+~dpclock pulse 630
+stat skin
+~dpclock pulse 630
+stat skin
