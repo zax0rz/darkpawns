@@ -1,0 +1,49 @@
+# depth-case: switched-communication.reply-newest-mobile-no-descriptor
+# C do_reply walks character_list for the first body whose GET_IDNUM equals
+# GET_LAST_TELL (src/act.comm.c:952-957). The switched mobile reads the shared
+# zeroed dummy_mob record, so the value is 0 and every mobile matches; the
+# newest mobile heads the list (read_mobile prepends, src/db.c:1745-1746).
+# This clone is spawned first and an ordinary mob second, so the ordinary mob
+# heads the list; it has no descriptor and C prints "They are no longer
+# playing." The earlier witness (clone newest) keeps the self-tell branch.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8162 80
+spawn-mob 70 1 8162 80
+
+[setup:oracle]
+Switchnewest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchnewest
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+switch clone
+
+[probe]
+reply hello

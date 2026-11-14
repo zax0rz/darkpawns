@@ -1,0 +1,22 @@
+capture-statistics	blocks=1	empty-open=0	empty-closed=0
+capture-statistics	blocks=1	empty-open=0	empty-closed=0
+hollow-prompt-steps	count=0
+divergence-fingerprint	reply hello	f311fdda43093f5d86e0bfecf1517401e769a5c66ac2c701add17c3713b692f1
+Dark Pawns Tier-1 differential report
+scenario: switched-body-reply-newest-mob-depth
+c-oracle: 127.0.0.1:30332 (DP_SEED=1)
+go-port: 127.0.0.1:28457 (DP_SEED=1)
+result: normalized divergence detected
+
+--- [reply hello] c-oracle
++++ [reply hello] go-port
+@@ -1,1 +1,2 @@
+-They are no longer playing.
++A clone tells you, 'hello'
++You tell a clone, 'hello'
+
+normalized C oracle blocks:
+--- [reply hello]
+They are no longer playing.
+dp-oracle-diff: normalized divergence detected
+EXIT=3

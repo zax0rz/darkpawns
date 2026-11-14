@@ -1,0 +1,42 @@
+capture-statistics	blocks=4	empty-open=0	empty-closed=0
+capture-statistics	blocks=4	empty-open=0	empty-closed=0
+hollow-prompt-steps	count=0
+divergence-fingerprint	reply	ab10f0b1aa61e133488dda3bf70a2d361f0b462ef241d5078f4d4369c9d74e51
+divergence-fingerprint	reply hello	51952d240a402f2401e18de59f75ca7cd8f6567f4c78eafd66565961da521e27
+Dark Pawns Tier-1 differential report
+scenario: switched-body-reply-depth
+c-oracle: 127.0.0.1:14155 (DP_SEED=1)
+go-port: 127.0.0.1:16768 (DP_SEED=1)
+result: normalized divergence detected
+
+--- [reply] c-oracle
++++ [reply] go-port
+@@ -1,1 +1,0 @@
+-What is your reply?
+
+--- [reply hello] c-oracle
++++ [reply hello] go-port
+@@ -1,2 +1,0 @@
+-A clone tells you, 'hello'
+-You tell a clone, 'hello'
+
+--- [return] c-oracle
++++ [return] go-port
+(no normalized divergence)
+
+--- [reply] c-oracle
++++ [reply] go-port
+(no normalized divergence)
+
+normalized C oracle blocks:
+--- [reply]
+What is your reply?
+--- [reply hello]
+A clone tells you, 'hello'
+You tell a clone, 'hello'
+--- [return]
+You return to your original body.
+--- [reply]
+You have no-one to reply to!
+dp-oracle-diff: normalized divergence detected
+EXIT=3
