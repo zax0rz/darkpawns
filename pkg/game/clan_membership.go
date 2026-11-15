@@ -310,7 +310,7 @@ func (w *World) doClanMembers(ch *Player) {
 			if p.ClanRank-1 >= 0 && p.ClanRank-1 < len(c.RankName) {
 				rankName = c.RankName[p.ClanRank-1]
 			}
-			ch.SendMessage(fmt.Sprintf("%s %s\r\n", rankName, p.Name))
+			ch.SendMessage(fmt.Sprintf("%s %s \r\n", rankName, p.Name))
 		}
 	}
 	players, err := w.StoredPlayers()
