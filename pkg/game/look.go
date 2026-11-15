@@ -1154,8 +1154,9 @@ func appendObjectLook(result *ObservationResult, ch combat.Combatant, object *Ob
 	if mode == 6 {
 		flags := coloredObjectVisibleFlags(ch, object)
 		if flags == "" {
-			// C show_obj_to_char(mode 6) emits an otherwise empty line.
-			result.literal(ch, " ")
+			// C show_obj_to_char(mode 6) emits an empty line ("\r\n") with no space
+			// when no flags match (src/act.informative.c:99,177).
+			result.bare(ch, "\r\n")
 		} else {
 			result.literal(ch, flags)
 		}

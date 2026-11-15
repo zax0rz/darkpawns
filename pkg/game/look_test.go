@@ -159,8 +159,8 @@ func TestDoLookTargetSyntheticExtraDescHasNoExtraBlankLine(t *testing.T) {
 	if !res.Messages[0].Bare || res.Messages[0].Format != "It's just one miserable little gold coin." {
 		t.Fatalf("Messages[0] = %+v, want bare money extra desc", res.Messages[0])
 	}
-	if res.Messages[1].Bare || res.Messages[1].Format != " " {
-		t.Fatalf("Messages[1] = %+v, want mode-6 space line", res.Messages[1])
+	if !res.Messages[1].Bare || res.Messages[1].Format != "\r\n" {
+		t.Fatalf("Messages[1] = %+v, want bare mode-6 empty line %q", res.Messages[1], "\r\n")
 	}
 }
 
