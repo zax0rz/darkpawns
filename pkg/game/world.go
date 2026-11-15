@@ -67,7 +67,7 @@ type World struct {
 
 	// npcDummyInfoBar is the same shared record's saved.infobar/saved.size and
 	// last-known vitals (src/utils.h:588-589; src/act.display.c:158-224).
-	npcDummyMu      sync.RWMutex
+	// It shares npcDummyMu with npcDummyLastTell: one record, one lock.
 	npcDummyInfoBar NPCInfoBarState
 
 	// npcDummySkillState mirrors dummy_mob.saved.skills (src/db.c:104,1281;

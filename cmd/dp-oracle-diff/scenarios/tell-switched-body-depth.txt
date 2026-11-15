@@ -1,6 +1,6 @@
 # depth-case: tell.switched-body-target
-# depth-case: tell.room-mob-shadows-player
-# depth-case: reply.player-record-shared-dummy
+# depth-case: tell.numbered-room-order
+# depth-case: reply.player-teller-from-shared-record
 # C do_tell resolves with get_char_vis (src/handler.c:1303-1324): the room
 # first, mobs included, then a numbered character_list walk. A switched mobile
 # receives the tell and perform_tell writes the teller's idnum into the shared
