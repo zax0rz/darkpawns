@@ -84,6 +84,14 @@ is NOT_CLEAN: 148/150 pass. The only failures are
 pass. The census reports zero run-level draw-divergent scenarios; attempt
 logs retain the expected command-level revert differences.
 
+## Frozen-list disposition
+
+This batch removes no frozen-list entries. Its zero-skill witness does not
+execute the remaining L1 output branches for backstab
+(`src/act.offensive.c:207,214`), disembowel (`:254,270`), bash (`:457,469`),
+dragon kick (`:672`), or disarm (`src/new_cmds2.c:225`). Those rows remain in
+`docs/research/frozen-lists-2026-11-11/L1-uncovered-sites.tsv` for later proof.
+
 The targeted set contains every scenario that types one of the ten commands
 plus every scenario that uses `switch` (150 total):
 
