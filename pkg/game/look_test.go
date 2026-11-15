@@ -146,6 +146,24 @@ func TestDoLookTargetObjectExtraDescColorizesObjectFlags(t *testing.T) {
 	}
 }
 
+func TestDoLookTargetSyntheticExtraDescHasNoExtraBlankLine(t *testing.T) {
+	w, p, _ := newViewTestWorld(t)
+	money := w.createMoneyObject(1)
+	if err := p.Inventory.AddItem(money); err != nil {
+		t.Fatalf("AddItem: %v", err)
+	}
+	res := w.DoLookTarget(p, "coin")
+	if len(res.Messages) != 2 {
+		t.Fatalf("len(Messages) = %d, want 2 (%+v)", len(res.Messages), res.Messages)
+	}
+	if !res.Messages[0].Bare || res.Messages[0].Format != "It's just one miserable little gold coin." {
+		t.Fatalf("Messages[0] = %+v, want bare money extra desc", res.Messages[0])
+	}
+	if res.Messages[1].Bare || res.Messages[1].Format != " " {
+		t.Fatalf("Messages[1] = %+v, want mode-6 space line", res.Messages[1])
+	}
+}
+
 // DP-1133: equipment shown by look <character> is C show_obj_to_char mode 1
 // and colorizes at complete color level.
 func TestDoLookTargetPlayerEquipmentColorizesObjectFlags(t *testing.T) {

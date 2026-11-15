@@ -588,8 +588,7 @@ func (w *World) DoLookTarget(ch combat.Combatant, arg string) ObservationResult 
 			continue
 		}
 		if desc, found := findExtraDescription(arg, item.GetExtraDescs()); found {
-			result.literal(ch, desc)
-			appendObjectLook(&result, ch, item, 6)
+			appendObjectExtraDescLook(&result, ch, item, desc)
 			return result
 		}
 	}
@@ -598,8 +597,7 @@ func (w *World) DoLookTarget(ch combat.Combatant, arg string) ObservationResult 
 			continue
 		}
 		if desc, found := findExtraDescription(arg, item.GetExtraDescs()); found {
-			result.literal(ch, desc)
-			appendObjectLook(&result, ch, item, 6)
+			appendObjectExtraDescLook(&result, ch, item, desc)
 			return result
 		}
 	}
@@ -608,8 +606,7 @@ func (w *World) DoLookTarget(ch combat.Combatant, arg string) ObservationResult 
 			continue
 		}
 		if desc, found := findExtraDescription(arg, item.GetExtraDescs()); found {
-			result.literal(ch, desc)
-			appendObjectLook(&result, ch, item, 6)
+			appendObjectExtraDescLook(&result, ch, item, desc)
 			return result
 		}
 	}
@@ -1135,6 +1132,19 @@ func diagCondition(hp, maxHP int) string {
 	default:
 		return "is bleeding awfully from big wounds."
 	}
+}
+
+func appendObjectExtraDescLook(result *ObservationResult, ch combat.Combatant, object *ObjectInstance, desc string) {
+	// C's look_at_target writes the extra description via send_to_char(desc, ch)
+	// without appending a newline (src/act.informative.c:1043,1052,1063). Disk
+	// prototypes already end in \r\n, while synthetic descriptions (create_money)
+	// do not, so only emit a trailing newline when desc already carries one.
+	if strings.HasSuffix(desc, "\n") {
+		result.literal(ch, desc)
+	} else {
+		result.bare(ch, desc)
+	}
+	appendObjectLook(result, ch, object, 6)
 }
 
 func appendObjectLook(result *ObservationResult, ch combat.Combatant, object *ObjectInstance, mode int) {
