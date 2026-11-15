@@ -55,19 +55,34 @@ func (w *World) doMobReply(ch *MobInstance, argument string) {
 		w.mobReplyToTeller(ch, last, argument)
 		return
 	}
-	if target := w.firstDescriptorMob(); target != nil {
-		w.mobPerformTell(ch, target, argument)
+	// A zero record matches the first idnum-0 body in C's newest-first
+	// character_list, which is the newest mobile; if it has no descriptor C
+	// prints the no-longer-playing line without looking further
+	// (src/act.comm.c:952-958).
+	mob := w.newestMobile()
+	if mob == nil || w.MobileDescriptorOwner == nil || w.MobileDescriptorOwner(mob) == nil {
+		ch.SendMessage("They are no longer playing.\r\n")
 		return
 	}
-	ch.SendMessage("They are no longer playing.\r\n")
+	// PLR_FLAGGED(tch, PLR_WRITING) and PLR_FLAGGED(ch, PLR_NOSHOUT) are
+	// NPC-guarded (src/utils.h:234), so both are false for a mobile.
+	// PRF_FLAGGED(tch, PRF_NOTELL) is not guarded (src/utils.h:236) and
+	// reads the shared zeroed dummy_mob preferences, so it is false too.
+	if w.RoomHasFlag(ch.GetRoom(), "soundproof") {
+		ch.SendMessage("The walls seem to absorb your words.\r\n")
+		return
+	}
+	if w.RoomHasFlag(mob.GetRoom(), "soundproof") {
+		Act(w, false, ch, mob, nil, nil, "$E can't hear you.", "", ToChar|ToSleep)
+		return
+	}
+	w.mobPerformTell(ch, mob, argument)
 }
 
-// firstDescriptorMob returns the first switched mobile in descriptor order.
-func (w *World) firstDescriptorMob() *MobInstance {
-	if w.PlayingDescriptorBodies == nil {
-		return nil
-	}
-	for _, body := range w.PlayingDescriptorBodies() {
+// newestMobile returns the first mobile in C's newest-first character_list.
+// Every mobile carries idnum 0 and every player a nonzero one.
+func (w *World) newestMobile() *MobInstance {
+	for _, body := range w.GetAllCharsInCharacterListOrder() {
 		if mob, ok := body.(*MobInstance); ok {
 			return mob
 		}
