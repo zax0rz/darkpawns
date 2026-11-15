@@ -61,7 +61,7 @@ func TestNotificationsFollowWorldEntryAndExit(t *testing.T) {
 	}
 }
 
-func TestNotificationMilestoneObserversAndGuestPrivacy(t *testing.T) {
+func TestNotificationMilestoneObserversAndInvisPrivacy(t *testing.T) {
 	database := entryDatabase(t)
 	entrySeed(t, database, "Returner")
 	m := entryWorldManager(t, database)
@@ -88,13 +88,10 @@ func TestNotificationMilestoneObserversAndGuestPrivacy(t *testing.T) {
 	if service.View().Status[notify.Pushover].Queued != before+2 {
 		t.Fatal("missing level/death observers")
 	}
-	s.isGuest = true
-	publish()
-	s.isGuest = false
 	s.player.InvisLevel = 32
 	publish()
 	if service.View().Status[notify.Pushover].Queued != before+2 {
-		t.Fatal("guest or invisible staff leaked")
+		t.Fatal("invisible staff leaked")
 	}
 }
 

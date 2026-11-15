@@ -1622,7 +1622,7 @@ func (m *Manager) enterWorld(name string, s *Session) error {
 		m.unregister(name)
 		return err
 	}
-	if s.authenticated && !s.isGuest && !s.notificationInWorld.Swap(true) && notificationVisible(s) {
+	if s.authenticated && !s.notificationInWorld.Swap(true) && notificationVisible(s) {
 		m.notifications.Publish(notify.Event{ID: notify.Login, Player: name})
 	}
 	return nil
@@ -1718,7 +1718,7 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	// 4. Save player to DB. A descriptor at the menu has no character in
 	// the game: C's close_socket saves only CON_PLAYING characters, and an
 	// extracted one was already saved by extract_char.
-	if m.hasDB && s.player != nil && s.player.ID > 0 && !s.isGuest && !s.menuActive {
+	if m.hasDB && s.player != nil && s.player.ID > 0 && !s.menuActive {
 		// C's close_socket saves a playing character with load_room NOWHERE
 		// (comm.c:2130).
 		if rec, err := s.playerRecordForSave(s.player, game.LoadRoomNowhere); err == nil {
@@ -1784,7 +1784,7 @@ func (m *Manager) handleTransportDisconnect(s *Session) bool {
 
 	if s.activePCSwitch() {
 		s.saveCharacter("switched lost link", game.LoadRoomNowhere)
-	} else if m.hasDB && p.ID > 0 && !s.isGuest {
+	} else if m.hasDB && p.ID > 0 {
 		// Lost-link save: load_room NOWHERE (comm.c:2130).
 		if rec, err := s.playerRecordForSave(p, game.LoadRoomNowhere); err == nil {
 			if err := m.db.SavePlayer(rec); err != nil {
@@ -2037,7 +2037,7 @@ func (m *Manager) CrashSaveAll(why string) {
 	}
 	m.mu.RUnlock()
 	for _, s := range sessions {
-		if s == nil || s.player == nil || !s.authenticated || s.isGuest {
+		if s == nil || s.player == nil || !s.authenticated {
 			continue
 		}
 		if s.charCreating || s.creationSaved || s.menuActive || s.conEditorActive.Load() || s.inOLCEditorState() {
@@ -2267,7 +2267,6 @@ type Session struct {
 	player               *game.Player
 	playerName           string
 	authenticated        bool
-	isGuest              bool
 	connCountDecremented bool     // C5: prevents double-decrement of IP connection count
 	banHosts             []string // C's d->host string(s); checked again at entry (interpreter.c:1822,1896)
 	banLevel             int      // ban level from IsBanned (BanNew or BanSelect); 0 = no ban
@@ -2621,5 +2620,5 @@ func (m *Manager) notifyLeftWorld(s *Session, name string) {
 
 // Public-safe templates also respect invisible staff presence.
 func notificationVisible(s *Session) bool {
-	return !s.isGuest && s.player != nil && s.player.GetInvisLevel() == 0
+	return s.player != nil && s.player.GetInvisLevel() == 0
 }

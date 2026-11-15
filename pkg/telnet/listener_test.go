@@ -26,8 +26,7 @@ func newTestManager(t *testing.T) (*session.Manager, *game.World) {
 	if err != nil {
 		t.Fatalf("NewWorld: %v", err)
 	}
-	manager := session.NewManager(world, nil)
-	t.Cleanup(manager.Stop)
+	manager := newTelnetManagerWithPlayers(t, world, "Quithero")
 	return manager, world
 }
 
@@ -116,8 +115,7 @@ func TestHandleConnQuitFlushesGoodbyeBeforeDisconnect(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	manager := session.NewManager(world, nil)
-	t.Cleanup(manager.Stop)
+	manager := newTelnetManagerWithPlayers(t, world, "Quithero")
 
 	client, server := net.Pipe()
 	done := make(chan struct{})
@@ -132,23 +130,29 @@ func TestHandleConnQuitFlushesGoodbyeBeforeDisconnect(t *testing.T) {
 		transcript <- output
 	}()
 
-	playerName := "guest"
-	if _, err := client.Write([]byte(playerName + "\r\n")); err != nil {
-		t.Fatal(err)
+	playerName := "Quithero"
+	for _, line := range []string{playerName, "oraclepass", "", "1"} {
+		if _, err := client.Write([]byte(line + "\r\n")); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	deadline := time.Now().Add(2 * time.Second)
 	for {
-		if _, ok := registeredGuest(manager); ok {
+		if _, ok := registeredPlayer(manager, playerName); ok {
 			break
 		}
 		if time.Now().After(deadline) {
-			t.Fatal("guest session was not registered")
+			t.Fatal("player session was not registered")
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
 
 	if _, err := client.Write([]byte("quit\r\n")); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(80 * time.Millisecond)
+	if _, err := client.Write([]byte("0\r\n")); err != nil {
 		t.Fatal(err)
 	}
 	select {
@@ -175,8 +179,7 @@ func TestNewCharacterTelnetTranscriptMatchesC(t *testing.T) {
 	}
 	world.WorldPath = "../../lib/world"
 	world.LibTextDir = "../../lib/text"
-	manager := session.NewManager(world, nil)
-	t.Cleanup(manager.Stop)
+	manager := newTelnetManagerWithPlayers(t, world, "Quithero")
 
 	client, server := net.Pipe()
 	done := make(chan struct{})
@@ -959,8 +962,7 @@ func TestPromptAfterCommandOutput(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	manager := session.NewManager(world, nil)
-	t.Cleanup(manager.Stop)
+	manager := newTelnetManagerWithPlayers(t, world, "Quithero")
 
 	client, server := net.Pipe()
 	done := make(chan struct{})
@@ -975,18 +977,20 @@ func TestPromptAfterCommandOutput(t *testing.T) {
 		transcript <- output
 	}()
 
-	playerName := "guest"
-	if _, err := client.Write([]byte(playerName + "\r\n")); err != nil {
-		t.Fatal(err)
+	playerName := "Quithero"
+	for _, line := range []string{playerName, "oraclepass", "", "1"} {
+		if _, err := client.Write([]byte(line + "\r\n")); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	deadline := time.Now().Add(2 * time.Second)
 	for {
-		if _, ok := registeredGuest(manager); ok {
+		if _, ok := registeredPlayer(manager, playerName); ok {
 			break
 		}
 		if time.Now().After(deadline) {
-			t.Fatal("guest session was not registered")
+			t.Fatal("player session was not registered")
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
@@ -995,6 +999,10 @@ func TestPromptAfterCommandOutput(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := client.Write([]byte("quit\r\n")); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(80 * time.Millisecond)
+	if _, err := client.Write([]byte("0\r\n")); err != nil {
 		t.Fatal(err)
 	}
 	select {
@@ -1185,11 +1193,10 @@ func TestConnectionHostIsPaddedQuad(t *testing.T) {
 	}
 }
 
-// registeredGuest returns the generated name of the single registered guest.
-// Guests never keep a typed name, so tests find them by the Guest_ prefix.
-func registeredGuest(manager *session.Manager) (string, bool) {
+// registeredPlayer returns the name of the registered playing session matching name.
+func registeredPlayer(manager *session.Manager, name string) (string, bool) {
 	for _, cs := range manager.Sessions() {
-		if p, ok := cs.GetPlayer().(*game.Player); ok && p != nil && strings.HasPrefix(p.Name, "Guest_") {
+		if p, ok := cs.GetPlayer().(*game.Player); ok && p != nil && strings.EqualFold(p.Name, name) {
 			return p.Name, true
 		}
 	}

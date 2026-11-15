@@ -79,8 +79,8 @@ func TestAutosaveFiresAtMinuteTenNotNine(t *testing.T) {
 	}
 }
 
-// TestAutosaveEligibility: only connected, playing, PLR_CRASH-flagged,
-// non-guest characters are saved. Menu, creation-pending, link-dead and
+// TestAutosaveEligibility: only connected, playing, PLR_CRASH-flagged
+// characters are saved. Menu, creation-pending, link-dead and
 // unflagged sessions are not (C's descriptor_list walk skips them all).
 func TestAutosaveEligibility(t *testing.T) {
 	h := newAutosaveHarness(t, game.SaveSucceeded)
@@ -89,10 +89,6 @@ func TestAutosaveEligibility(t *testing.T) {
 	flagged.player.MarkCrashNeeded()
 
 	unflagged := h.addSession(t, "Cleanhands") // case 3: no flag, no write
-
-	guest := h.addSession(t, "Guestling")
-	guest.isGuest = true
-	guest.player.MarkCrashNeeded()
 
 	menu := h.addSession(t, "Menulurker")
 	menu.menuActive = true
@@ -122,7 +118,7 @@ func TestAutosaveEligibility(t *testing.T) {
 	}
 	// Skipped-but-flagged characters keep PLR_CRASH (the retry policy):
 	// the calls list above proves none of them was written.
-	for name, s := range map[string]*Session{"guest": guest, "menu": menu, "creating": creating, "linkdead": linkdead, "editor": editor} {
+	for name, s := range map[string]*Session{"menu": menu, "creating": creating, "linkdead": linkdead, "editor": editor} {
 		if !s.player.NeedsCrashSave() {
 			t.Fatalf("%s character lost its flag without a save", name)
 		}

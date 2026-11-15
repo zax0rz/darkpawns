@@ -37,11 +37,16 @@ func waitForPlayingSession(t *testing.T, m *Manager) {
 func TestWebSocket_AuthenticatedIdlePlayerSurvivesLivenessClock(t *testing.T) {
 	t.Setenv("JWT_SECRET", "ws-auth-idle-test-secret-at-least-32-bytes")
 	setAuthReadDeadline(t, 250*time.Millisecond)
-	// The guest path enters the world directly and needs MortalStartRoom.
-	m := entryTransportManager(t, nil)
+	// Enter the world with a seeded character (MortalStartRoom).
+	database := entryDatabase(t)
+	entrySeed(t, database, "Idlehero")
+	m := entryTransportManager(t, database)
 	c := dialTestWebSocket(t, m)
 
-	wsWrite(t, c, MsgLogin, map[string]any{"player_name": "guest"})
+	wsWrite(t, c, MsgLogin, map[string]any{"player_name": "Idlehero"})
+	wsWrite(t, c, MsgCharInput, map[string]any{"choice": "oraclepass"})
+	wsWrite(t, c, MsgCharInput, map[string]any{"choice": ""})
+	wsWrite(t, c, MsgCharInput, map[string]any{"choice": "1"})
 	waitForPlayingSession(t, m)
 
 	// One blocking reader: any error on it is the server closing the socket,

@@ -1,8 +1,8 @@
 // Package e2e contains end-to-end tests that exercise the fully assembled
 // Dark Pawns server binary over the wire — not just individual packages.
 //
-// The first test here, TestTelnetSmoke_GuestEntersWorld, exists because the
-// server once shipped two bugs that every unit test passed straight through:
+// TestTelnetSmoke_CharacterCreation exists because the server once shipped two
+// bugs that every unit test passed straight through:
 //
 //   - main.go wired a nil *db.DB into the store interface, so the
 //     advertised "run without a database" path panicked on boot (DP-589).
@@ -11,8 +11,6 @@
 //
 // Both were invisible to in-process unit tests. The only thing that catches
 // them is launching the real binary and connecting to it like a player would.
-// That is what this test does: build ./cmd/server, run it with NO database,
-// telnet in as a guest, and assert we actually land in the world.
 package e2e
 
 import (
@@ -36,60 +34,6 @@ import (
 // the store used to be, and is deliberately per-process so no earlier run can
 // have created it.
 var deadSQLitePath = filepath.Join(os.TempDir(), fmt.Sprintf("dp-e2e-absent-%d", os.Getpid()), "darkpawns.db")
-
-func TestTelnetSmoke_GuestEntersWorld(t *testing.T) {
-	if testing.Short() {
-		t.Skip("e2e: builds and launches the server binary; skipped in -short")
-	}
-
-	conn, r := launchAndDial(t)
-	defer conn.Close()
-
-	// Handshake: the server greets and asks for a name.
-	if got := readUntil(t, conn, r, "By what name", 10*time.Second); got == "" {
-		t.Fatal("never received the name prompt")
-	}
-
-	// A name beginning with "guest" bypasses passwords and character creation
-	// and drops straight into the world as a level-1 Warrior.
-	mustWrite(t, conn, "guest\r\n")
-
-	// Read through to the welcome text, then keep reading into the entry
-	// room block that follows it (welcome precedes the entry look, matching
-	// C's welcome-before-look order). The room renders exactly once.
-	entered := readUntil(t, conn, r, "Welcome to Dark Pawns", 10*time.Second)
-	if entered == "" {
-		t.Fatal("guest never entered the world (no MOTD received after login)")
-	}
-	entered += readUntil(t, conn, r, "Exits:", 10*time.Second)
-	for _, want := range []string{"Temple Altar", "Exits:"} {
-		if !strings.Contains(entered, want) {
-			t.Errorf("entry output missing %q\n---\n%s", want, entered)
-		}
-	}
-	if got := strings.Count(entered, "Temple Altar"); got > 1 {
-		t.Errorf("entry room rendered %d times, want 1\n---\n%s", got, entered)
-	}
-	if strings.Contains(entered, "[8004]") || strings.Contains(entered, "[ 8004]") {
-		t.Errorf("mortal entry output leaked room vnum\n---\n%s", entered)
-	}
-
-	// Move east into the adjacent room, then back west. This exercises the
-	// full command pipeline end to end. Under the mob-AI deadlock (DP-590)
-	// these commands hung forever; readUntil's timeout converts that into a
-	// failing test instead of a hang. Temple Altar (8004) connects to the
-	// Eastern Vestibule (8160).
-	mustWrite(t, conn, "east\r\n")
-	if moved := readUntil(t, conn, r, "Eastern Vestibule", 10*time.Second); moved == "" {
-		t.Fatal("`east` did not move guest to room 8160 — command pipeline stalled (deadlock regression?)")
-	}
-	mustWrite(t, conn, "west\r\n")
-	if back := readUntil(t, conn, r, "At the Temple Altar", 10*time.Second); back == "" {
-		t.Error("`west` did not return guest to room 8004")
-	}
-
-	mustWrite(t, conn, "quit\r\n")
-}
 
 // TestTelnetSmoke_CharacterCreation drives the full new-character creation
 // state machine over telnet with no database, then enters the world. It guards

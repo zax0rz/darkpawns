@@ -229,7 +229,7 @@ func (s *Session) reconnectSwitched(owner, descriptor *Session, unswitch bool) b
 		// Preserve original's world lifecycle after its descriptor is stolen.
 		retained = m.NewSession()
 		retained.player, retained.playerName = original, descriptor.playerName
-		retained.authenticated, retained.isGuest = true, descriptor.isGuest
+		retained.authenticated = true
 		retained.olcZone = descriptor.olcZone
 		retained.DetachTransport()
 	}

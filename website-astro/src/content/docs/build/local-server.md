@@ -62,7 +62,7 @@ telnet localhost 7777
 
 The browser client runs at `http://localhost:4350/` and connects over `ws://localhost:4350/ws`.
 
-![A new Guest at the Temple Altar in the web client, with the connection status and vitals below the game text.](/media/docs/web-client-first-steps.png)
+![A new character at the Temple Altar in the web client, with the connection status and vitals below the game text.](/media/docs/web-client-first-steps.png)
 
 The capture above comes from a disposable world on a test port; your local checkout uses `localhost:4350`.
 

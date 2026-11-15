@@ -2,19 +2,23 @@ package telnet
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/session"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // telnetEvent is one unit of a parsed server byte stream: visible text, a
@@ -153,9 +157,58 @@ func gmcpTestWorld(t *testing.T) *game.World {
 // a dark room, leaves it, and speaks.
 var gmcpWalkScript = []string{"north", "north", "east", "south", "west", "east", "say hello", "quit"}
 
+// newTelnetManagerWithPlayers seeds returning MortalStartRoom players and
+// drives ExtractPendingChars on a short test ticker so `quit` returns sessions
+// to the menu cleanly.
+func newTelnetManagerWithPlayers(t *testing.T, world *game.World, names ...string) *session.Manager {
+	t.Helper()
+	database, err := db.New(filepath.Join(t.TempDir(), "test.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = database.Close() })
+	hash, err := bcrypt.GenerateFromPassword([]byte("oraclepass"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range names {
+		if err := database.CreatePlayer(&db.PlayerRecord{
+			Name: name, Password: string(hash), RoomVNum: game.MortalStartRoom,
+			Level: 1, Health: 20, MaxHealth: 20, Mana: 20, MaxMana: 20,
+			Move: 100, MaxMove: 100, Class: game.ClassThief, Race: game.RaceKender,
+			StatStr: 10, StatInt: 10, StatWis: 10, StatDex: 10, StatCon: 10, StatCha: 10,
+			Inventory: []byte("[]"), Equipment: []byte("{}"),
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	manager := session.NewManager(world, database)
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		ticker := time.NewTicker(10 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				manager.ExtractPendingChars()
+			}
+		}
+	}()
+	t.Cleanup(func() {
+		cancel()
+		<-done
+		manager.Stop()
+	})
+	return manager
+}
+
 // runTelnetScript connects to a real TCP listener, sends preamble then a
-// guest name and the script, and returns everything the server wrote until
-// it closed the connection.
+// returning player's login, the script, and menu exit `0` after `quit`, and
+// returns everything the server wrote until it closed the connection.
 func runTelnetScript(t *testing.T, port int, preamble []byte, name string, script []string) []byte {
 	t.Helper()
 	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", port))
@@ -179,10 +232,18 @@ func runTelnetScriptOn(t *testing.T, conn net.Conn, preamble []byte, name string
 
 	input := append([]byte(nil), preamble...)
 	input = append(input, name+"\r\n"...)
+	for _, choice := range []string{"oraclepass", "", "1"} {
+		input = append(input, choice+"\r\n"...)
+	}
 	for _, command := range script {
 		input = append(input, command+"\r\n"...)
 	}
 	if _, err := conn.Write(input); err != nil {
+		t.Fatal(err)
+	}
+	// Let ExtractPendingChars process `quit` into the menu before sending `0`.
+	time.Sleep(80 * time.Millisecond)
+	if _, err := conn.Write([]byte("0\r\n")); err != nil {
 		t.Fatal(err)
 	}
 	select {
@@ -210,15 +271,14 @@ func mudletPreamble() []byte {
 // a Mudlet-shaped client negotiates over a real socket, walks the keep, and
 // the exact frames, their JSON, and their positions in the text are checked.
 func TestGMCPHarnessWalk(t *testing.T) {
-	manager := session.NewManager(gmcpTestWorld(t), nil)
-	t.Cleanup(manager.Stop)
+	manager := newTelnetManagerWithPlayers(t, gmcpTestWorld(t), "Gmcpwalker")
 	t.Cleanup(Stop)
 	port := listenerEntryPort(t)
 	if err := Listen(port, manager); err != nil {
 		t.Fatal(err)
 	}
 
-	events := parseTelnetStream(t, runTelnetScript(t, port, mudletPreamble(), "guest_gmcp_walker", gmcpWalkScript))
+	events := parseTelnetStream(t, runTelnetScript(t, port, mudletPreamble(), "Gmcpwalker", gmcpWalkScript))
 
 	// Room.Info fires once per rendered room, in walk order: entry look, the
 	// stair, back to the hall, and out of the dark cellar. The failed moves
@@ -269,7 +329,7 @@ func TestGMCPHarnessWalk(t *testing.T) {
 				first[event.pkg] = i
 			}
 		}
-		if event.kind == "eor" && firstEOR < 0 {
+		if event.kind == "eor" && firstEOR < 0 && i > 0 && events[i-1].kind == "text" && strings.HasSuffix(events[i-1].text, "> ") {
 			firstEOR = i
 		}
 	}
@@ -318,7 +378,7 @@ func TestGMCPHarnessWalk(t *testing.T) {
 	if err := json.Unmarshal([]byte(chat[0].payload), &line); err != nil {
 		t.Fatal(err)
 	}
-	if line.Channel != "say" || line.Text != "You say 'hello'" || !strings.HasPrefix(line.Talker, "Guest_") {
+	if line.Channel != "say" || line.Text != "You say 'hello'" || line.Talker != "Gmcpwalker" {
 		t.Fatalf("Comm.Channel.Text = %+v", line)
 	}
 	if !strings.HasPrefix(chat[0].payload, `{"channel":`) {
@@ -326,14 +386,19 @@ func TestGMCPHarnessWalk(t *testing.T) {
 	}
 
 	// Every command prompt is marked with IAC EOR, and every mark follows a
-	// prompt.
+	// prompt (command prompts end with "> "; login/menu prompts end with "? " or ": ").
 	var eors int
 	for i, event := range events {
 		if event.kind != "eor" {
 			continue
 		}
-		eors++
-		if i == 0 || events[i-1].kind != "text" || !strings.HasSuffix(events[i-1].text, "> ") {
+		if i == 0 || events[i-1].kind != "text" {
+			t.Fatalf("IAC EOR did not follow text (event %d)", i)
+		}
+		prev := events[i-1].text
+		if strings.HasSuffix(prev, "> ") {
+			eors++
+		} else if !strings.HasSuffix(prev, "? ") && !strings.HasSuffix(prev, ": ") && !strings.HasSuffix(prev, "Goodbye.\r\n") {
 			t.Fatalf("IAC EOR did not follow a prompt (event %d, previous %+v)", i, events[i-1])
 		}
 	}
@@ -360,19 +425,17 @@ func TestGMCPPlainClientSeesIdenticalText(t *testing.T) {
 		fmt.Fprintf(&screen, "Help screen line %d\r\n", i)
 	}
 	world.HelpScreen = screen.String()
-	manager := session.NewManager(world, nil)
-	t.Cleanup(manager.Stop)
+	manager := newTelnetManagerWithPlayers(t, world, "Gmcptwina", "Gmcptwinb")
 	t.Cleanup(Stop)
 	port := listenerEntryPort(t)
 	if err := Listen(port, manager); err != nil {
 		t.Fatal(err)
 	}
 
-	const name = "guest_gmcp_twin"
 	script := append([]string{"help", "q"}, gmcpWalkScript...)
-	rich := parseTelnetStream(t, runTelnetScript(t, port, mudletPreamble(), name, script))
-	waitSessionGone(t, manager, name)
-	plain := parseTelnetStream(t, runTelnetScript(t, port, nil, name, script))
+	rich := parseTelnetStream(t, runTelnetScript(t, port, mudletPreamble(), "Gmcptwina", script))
+	waitSessionGone(t, manager, "Gmcptwina")
+	plain := parseTelnetStream(t, runTelnetScript(t, port, nil, "Gmcptwinb", script))
 
 	for _, event := range plain {
 		if event.kind != "text" {
@@ -410,8 +473,7 @@ func TestGMCPClientGUIReachesPlayerAtNamePrompt(t *testing.T) {
 	session.SetGMCPClientGUI("http://localhost:8088/darkpawns.xml", "1.0.0")
 	t.Cleanup(func() { session.SetGMCPClientGUI("", "") })
 
-	manager := session.NewManager(gmcpTestWorld(t), nil)
-	t.Cleanup(manager.Stop)
+	manager := newTelnetManagerWithPlayers(t, gmcpTestWorld(t), "Gmcpwalker")
 	t.Cleanup(Stop)
 	port := listenerEntryPort(t)
 	if err := Listen(port, manager); err != nil {
@@ -450,8 +512,7 @@ func TestGMCPClientGUIReachesPlayerAtNamePrompt(t *testing.T) {
 // (blank name, idle timeout, hang-up) ends cleanly, with its writer stopped,
 // so the listener's connection count goes back to zero.
 func TestPreAuthExitsStopTheWriter(t *testing.T) {
-	manager := session.NewManager(gmcpTestWorld(t), nil)
-	t.Cleanup(manager.Stop)
+	manager := newTelnetManagerWithPlayers(t, gmcpTestWorld(t), "Gmcpwalker")
 	t.Cleanup(Stop)
 	port := listenerEntryPort(t)
 	if err := Listen(port, manager); err != nil {
