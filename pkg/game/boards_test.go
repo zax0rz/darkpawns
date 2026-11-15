@@ -2,6 +2,7 @@ package game
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/boards"
@@ -112,7 +113,13 @@ func TestGenBoardFullBoardWriteRefusalOutput(t *testing.T) {
 	}
 }
 
-func TestGenBoardGlobalSlotExhaustionRefusalOutput(t *testing.T) {
+// TestGenBoardEmptyHeadlinesDoNotExhaustSlots pins the DP-1388 approved
+// divergence. C's Board_write_message takes a storage slot (src/boards.c:228)
+// before refusing an empty headline (:241), so repeated empty headlines
+// exhaust storage and every board then says "The board is malfunctioning -
+// sorry.". Zach approved releasing the slot on 2026-11-15, so a real post
+// still gets a slot after more empty headlines than there are slots.
+func TestGenBoardEmptyHeadlinesDoNotExhaustSlots(t *testing.T) {
 	world, player, output := newBoardSpecialOutputTest(t)
 	capacity := boards.NumBoards*boards.MaxBoardMessages + 5
 	for i := range capacity {
@@ -124,10 +131,10 @@ func TestGenBoardGlobalSlotExhaustionRefusalOutput(t *testing.T) {
 		}
 		output.Reset()
 	}
-	if !genBoard(world, player, nil, "write", "") {
-		t.Fatal("slot-exhausted write was not handled by gen_board")
+	if magic := world.Boards.WriteMessage(0, player, "after the empty headlines"); magic <= 0 {
+		t.Fatalf("a real post after %d empty headlines got no slot (magic %d); output %q", capacity, magic, output.String())
 	}
-	if got, want := output.String(), "The board is malfunctioning - sorry.\r\n"; got != want {
-		t.Fatalf("global-slot refusal = %q, want %q", got, want)
+	if got := output.String(); strings.Contains(got, "malfunctioning") {
+		t.Fatalf("empty headlines exhausted storage: %q", got)
 	}
 }
