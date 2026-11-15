@@ -96,3 +96,71 @@ func mobInfoBarBody(ctx game.CharacterCommandContext, _ string, args []string) g
 	}
 	return game.CharacterCommandHandled
 }
+
+// bodyInfoBarUpdateOutput is C's shared dummy_mob repaint for a switched
+// descriptor (src/comm.c:1158-1193; src/act.display.c:226-285). It compares
+// the body's vitals with the shared last-known values, records the new
+// baseline, and returns the changed-field bytes for the deferred flush.
+func (s *Session) bodyInfoBarUpdateOutput() (string, bool) {
+	if s.switchedMob == nil || s.manager == nil || s.manager.world == nil {
+		return "", false
+	}
+	mob := s.switchedMob
+	state := s.manager.world.NPCInfoBar()
+	if state.Mode != game.InfobarOn || state.ScreenSize <= 0 {
+		return "", false
+	}
+	update := 0
+	if mob.GetMove() != state.LastMove || mob.GetMaxMove() != state.LastMaxMove {
+		update |= InfoMove
+	}
+	if mob.GetMana() != state.LastMana || mob.GetMaxMana() != state.LastMaxMana {
+		update |= InfoMana
+	}
+	if mob.GetHealth() != state.LastHit || mob.GetMaxHealth() != state.LastMaxHit {
+		update |= InfoHit
+	}
+	if mob.GetGold() != state.LastGold {
+		update |= InfoGold
+	}
+	if mob.GetExp() != state.LastExp {
+		update |= InfoExp
+	}
+	if update == 0 {
+		return "", false
+	}
+
+	is := newBodyInfobarState(mob, state)
+	var output strings.Builder
+	if update&InfoMana != 0 {
+		output.WriteString(vtCurSave + infobarClearManaPoints(is) + infobarManaPoints(is) + vtCurRest)
+	}
+	if update&InfoMove != 0 {
+		output.WriteString(vtCurSave + infobarClearMovePoints(is) + infobarMovePoints(is) + vtCurRest)
+	}
+	if update&InfoHit != 0 {
+		output.WriteString(vtCurSave + infobarClearHitPoints(is) + infobarHitPoints(is) + vtCurRest)
+	}
+	if update&InfoExp != 0 {
+		output.WriteString(vtCurSave + infobarClearExpPoints(is) + infobarExpPoints(is))
+		if is.level < game.LVL_IMMORT {
+			output.WriteString(infobarClearLevel(is) + infobarLevel(is))
+			output.WriteString(infobarClearNeededExpPoints(is) + infobarNeededExpPoints(is))
+		}
+		output.WriteString(vtCurRest)
+	}
+	if update&InfoGold != 0 {
+		output.WriteString(vtCurSave + infobarClearGold(is) + infobarGold(is) + vtCurRest)
+	}
+
+	state.LastHit = mob.GetHealth()
+	state.LastMaxHit = mob.GetMaxHealth()
+	state.LastMana = mob.GetMana()
+	state.LastMaxMana = mob.GetMaxMana()
+	state.LastMove = mob.GetMove()
+	state.LastMaxMove = mob.GetMaxMove()
+	state.LastExp = mob.GetExp()
+	state.LastGold = mob.GetGold()
+	s.manager.world.SetNPCInfoBar(state)
+	return output.String(), true
+}

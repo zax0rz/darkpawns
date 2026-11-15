@@ -1,0 +1,81 @@
+# depth-case: infobar.switched-body-empty-input-repaint
+# depth-case: infobar.switched-body-no-repaint-on-holler
+# C make_prompt only puts InfoBarUpdate bytes on the wire when process_output
+# was skipped, i.e. the input printed nothing (src/comm.c:644-649,1613-1640;
+# DP-1539). The switched Death Dealer turns the shared dummy infobar on and
+# hollers (moves change; the holler's own prompt pass consumes the value, so
+# nothing is drawn), then a peer lowers the body's mana so the next bare Enter
+# finds a pending change and queues the repaint for the following pass.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 71 1 8162 80
+
+[setup:oracle]
+Switchbar
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchbar
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:setter]
+Setpeer
+Y
+setpass
+setpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:setter]
+Setpeer
+y
+setpass
+setpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+advance Setpeer 40
+switch dealer
+
+[probe]
+infobar on
+holler pulse
+send:setter set dealer mana 2
+<ENTER>
+<ENTER>

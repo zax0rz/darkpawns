@@ -408,9 +408,13 @@ func (s *Session) TerminalLine(rawLine string) bool {
 		// other dequeued line (comm.c:628). It draws its leading number(0,3)
 		// and clears AFF_HIDE, then returns on the empty argument without
 		// output (interpreter.c:889-895). The prompt is refreshed after,
-		// queued behind the output flush (C: comm.c:633-648).
+		// queued behind the output flush (C: comm.c:633-648). Because the
+		// input printed nothing, process_output is skipped and make_prompt
+		// queues the infobar repaint into d->output, which the next pass
+		// flushes (comm.c:644-649, 1613-1640; DP-1539).
 		s.terminalError(s.terminalCommand("", nil, rawLine))
 		if !s.SendClosed() {
+			s.infoBarRepaintPending.Store(true)
 			s.SendPrompt()
 		}
 	default:

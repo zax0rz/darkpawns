@@ -360,6 +360,7 @@ func (s *Session) SendPrompt() {
 }
 
 func (s *Session) sendPromptNow() {
+	deferredRepaint := s.infoBarRepaintPending.Swap(false)
 	if s.IsPaging() {
 		flags := s.player.GetFlags()
 		color := hasCompleteColor(flags)
@@ -387,7 +388,12 @@ func (s *Session) sendPromptNow() {
 		}
 		return
 	}
-	cmdInfoBarUpdate(s)
+	// C's repaint is only observable on the bare-prompt path (DP-1539): a
+	// normal prompt pass consumes changed values without emitting them, and
+	// the empty-input pass defers them to the flush after this prompt.
+	if !deferredRepaint {
+		s.noteInfoBarPrompt()
+	}
 	// GMCP state rides ahead of the prompt it describes.
 	s.gmcpSync()
 	editing, playing := s.editorPromptState()
@@ -409,6 +415,38 @@ func (s *Session) sendPromptNow() {
 		text = "\r\n" + text
 	}
 	s.sendPromptText(text)
+	if deferredRepaint {
+		cmdInfoBarUpdate(s)
+	}
+}
+
+// noteInfoBarPrompt records the current vitals as the infobar comparison
+// baseline, as make_prompt does on every ordinary pass even when the repaint
+// bytes are discarded (src/comm.c:1158-1193).
+func (s *Session) noteInfoBarPrompt() {
+	if s.isSwitched && s.switchedMob != nil {
+		if s.manager == nil || s.manager.world == nil {
+			return
+		}
+		state := s.manager.world.NPCInfoBar()
+		if state.Mode != game.InfobarOn {
+			return
+		}
+		mob := s.switchedMob
+		state.LastHit = mob.GetHealth()
+		state.LastMaxHit = mob.GetMaxHealth()
+		state.LastMana = mob.GetMana()
+		state.LastMaxMana = mob.GetMaxMana()
+		state.LastMove = mob.GetMove()
+		state.LastMaxMove = mob.GetMaxMove()
+		state.LastExp = mob.GetExp()
+		state.LastGold = mob.GetGold()
+		s.manager.world.SetNPCInfoBar(state)
+		return
+	}
+	if s.player != nil && s.infobarMode == InfobarOn {
+		s.rememberInfobarValues()
+	}
 }
 
 // editorPromptState reports the descriptor string-editor state in one locked

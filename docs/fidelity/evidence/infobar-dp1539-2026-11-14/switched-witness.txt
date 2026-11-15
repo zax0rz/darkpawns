@@ -1,0 +1,34 @@
+capture-statistics	blocks=10	empty-open=4	empty-closed=0
+capture-statistics	blocks=10	empty-open=4	empty-closed=0
+hollow-prompt-steps	count=0
+Dark Pawns Tier-1 differential report
+scenario: infobar-pulse-empty-switched-depth
+c-oracle: 127.0.0.1:24749 (DP_SEED=1)
+go-port: 127.0.0.1:24785 (DP_SEED=1)
+result: no normalized divergence
+normalized C oracle blocks:
+--- [infobar on [actor]]
++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+Hit Pts: Mana Pts: Move Pts: Exp: Gold: 1686(1686)50(50)10(10)1200002739Your infobar is now set to on.
+--- [infobar on [setter]]
+
+--- [holler pulse [actor]]
+You holler, 'pulse'
+--- [holler pulse [setter]]
+Death Dealer hollers, 'pulse'
+
+<PROMPT>
+--- [send:setter set dealer mana 2 [setter]]
+Death Dealer's mana set to 2.
+
+<PROMPT>
+--- [send:setter set dealer mana 2 [primary]]
+
+--- [ [actor]]
+7          2(10)8
+--- [ [setter]]
+
+--- [ [actor]]
+
+--- [ [setter]]
+
+draw-parity	MATCH	entries=4177	stream=4208

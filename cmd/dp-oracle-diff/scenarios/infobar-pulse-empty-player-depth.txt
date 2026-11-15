@@ -1,0 +1,49 @@
+# depth-case: infobar.player-empty-input-repaint
+# depth-case: infobar.player-no-repaint-on-holler
+# C's InfoBarUpdate runs inside make_prompt (src/comm.c:1191-1193). On a normal
+# command the repaint is written after process_output copied the buffer and is
+# thrown away (comm.c:1630-1635,1664-1665), so `holler` changes the moves and
+# draws nothing. On the bare-prompt path (comm.c:644-649) make_prompt queues
+# the repaint into d->output and the next pass flushes it. The one-hour pulse
+# regenerates the moves after the holler's prompt pass; the bare Enter then
+# queues the repaint. DP-1539.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Pulsewiz
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pulsewiz
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+infobar on
+holler test
+~dpclock pulse 630
+<ENTER>
+<ENTER>
+look

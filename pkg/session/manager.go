@@ -2418,7 +2418,10 @@ type Session struct {
 	infobarLastHit, infobarLastMaxHit   int
 	infobarLastMana, infobarLastMaxMana int
 	infobarLastMove, infobarLastMaxMove int
-	infobarLastExp, infobarLastGold     int
+	// infoBarRepaintPending marks C's bare-prompt path (DP-1539): the next
+	// prompt pass queues the changed-field repaint instead of consuming it.
+	infoBarRepaintPending           atomic.Bool
+	infobarLastExp, infobarLastGold int
 	// leaveBroadcastHandled is set by an orderly quit after it applies C's
 	// invisibility gate, preventing generic disconnect cleanup from announcing
 	// the same departure a second time.

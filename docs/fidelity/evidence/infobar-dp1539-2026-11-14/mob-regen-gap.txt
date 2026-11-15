@@ -1,0 +1,52 @@
+capture-statistics	blocks=6	empty-open=1	empty-closed=0
+capture-statistics	blocks=6	empty-open=1	empty-closed=0
+hollow-prompt-steps	count=0
+divergence-fingerprint	infobar on	d45677042bb0e1a5eaca1d29a3a1dcefda16d314028a235b35f4f32d36c6bb4e
+Dark Pawns Tier-1 differential report
+scenario: tmp-infobar-body-diag
+c-oracle: 127.0.0.1:26492 (DP_SEED=1)
+go-port: 127.0.0.1:31684 (DP_SEED=1)
+result: normalized divergence detected
+
+--- [infobar on] c-oracle
++++ [infobar on] go-port
+(no normalized divergence)
+
+--- [~dpclock pulse 630] c-oracle
++++ [~dpclock pulse 630] go-port
+(no normalized divergence)
+
+--- [infobar off] c-oracle
++++ [infobar off] go-port
+(no normalized divergence)
+
+--- [infobar on] c-oracle
++++ [infobar on] go-port
+@@ -1,1 +1,1 @@
+-+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+Hit Pts: Mana Pts: Move Pts: Exp: Gold: 1686(1686)50(50)10(10)1200002739Your infobar is now set to on.
+++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+Hit Pts: Mana Pts: Move Pts: Exp: Gold: 1686(1686)50(50)2(10)1200002739Your infobar is now set to on.
+
+--- [] c-oracle
++++ [] go-port
+(no normalized divergence)
+
+--- [] c-oracle
++++ [] go-port
+(no normalized divergence)
+
+normalized C oracle blocks:
+--- [infobar on]
++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+Hit Pts: Mana Pts: Move Pts: Exp: Gold: 1686(1686)50(50)2(10)1200002739Your infobar is now set to on.
+--- [~dpclock pulse 630]
+
+--- [infobar off]
+Your infobar is now set to off.
+--- [infobar on]
++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+Hit Pts: Mana Pts: Move Pts: Exp: Gold: 1686(1686)50(50)10(10)1200002739Your infobar is now set to on.
+--- []
+
+--- []
+
+draw-parity	MATCH	entries=4102	stream=4135
+dp-oracle-diff: normalized divergence detected
+exit status 3

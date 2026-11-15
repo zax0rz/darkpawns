@@ -1,46 +1,58 @@
-# InfoBarUpdate pulse output is not observable — 2026-11-14
+# InfoBarUpdate pulse output — ruling and DP-1539 fix (2026-11-14)
 
-Finding from the DP-1535 switched-body infobar work. The C source has
+Finding from the DP-1535 switched-body infobar work: the C source has
 `InfoBarUpdate` (`src/act.display.c:226-285`) called from `make_prompt`
 (`src/comm.c:1158-1193`) when a body's mana, move, hit, gold or exp changed
 since `InfoBarOn` recorded the last-known values. The oracle does not emit
-those bytes.
+those bytes on a normal command.
 
-## Player witness
+## Player observation
 
 `infobar on` then `holler test` (holler spends 20 moves, `src/act.comm.c:1254`):
 
-- C oracle: `You holler, 'test'` and the room look; **no** `VT_CURSAVE` /
-  `VT_CURREST` move repaint anywhere in the following blocks.
-- Go port: the same line plus `\e7          80(100)\e8` (the move repaint).
+- C oracle: `You holler, 'test'`; **no** `VT_CURSAVE` / `VT_CURREST` move
+  repaint anywhere in the following blocks.
+- Go before DP-1539: the same line plus `\e7          62(82)\e8`.
 
-Run: `tmp-infobar-player-pulse` (temporary scenario, log at
-`docs/fidelity/evidence/infobar-pulse-2026-11-14/player-holler.txt`);
-`--draw-parity` MATCH, normalized divergence on the holler block.
+Retained log: `docs/fidelity/evidence/infobar-pulse-2026-11-14/player-holler.txt`.
 
-## Switched-body witness
+## Why
 
-`switched-body-infobar-depth` with `holler infobar pulse` after `infobar on`
-as the level-32 Death Dealer: C emits the holler line only; Go emitted the
-body repaint. Log: `switched-holler.txt`. The scenario shipped in the infobar
-PR uses `north`/`look` instead, so it stays clean.
+On the normal path, `process_output` has already copied `t->output`
+(`src/comm.c:1630-1635`) before it calls `make_prompt`; `InfoBarUpdate`
+appends to that buffer and the clear at `src/comm.c:1664-1665` throws the
+bytes away.
 
-## Reading
+## The exception (bare-prompt path)
 
-`InfoBarUpdate` writes with `write_to_output(ch->desc, ...)` while
-`process_output` is already copying `t->output` into its send buffer
-(`src/comm.c:1613-1640`); the queued bytes are not part of that flush and the
-next prompt produces none, so the oracle never puts them on the wire. The
-source wins only after the call path is verified (R5e); the bytes are the law
-(R1).
+`src/comm.c:644-649`: when an input printed nothing, `process_output` does not
+run. The prompt loop calls `make_prompt`, whose `InfoBarUpdate` writes the
+repaint into `d->output`; the **next** pass flushes it inside
+`process_output`'s CRLF frame. So the bar only reaches the wire after an input
+that printed nothing — a bare Enter, for example.
 
-## Needed ruling
+## Ruling
 
-The port's **player** `cmdInfoBarUpdate` predates this work and emits bytes C
-does not; the switched-body variant was removed before shipping this PR. Zach
-should choose:
+Zach ruled (2026-11-14): **Go matches C; no approved divergence.** This is
+DP-1539.
 
-1. remove the player prompt repaint output (R1: match the oracle), or
-2. approve the repaint as a divergence and record it with `divergent-approved`.
+## Fix
 
-Until then no `infobar.pulse-update` row claims oracle-green.
+- Removed the per-pulse `cmdInfoBarUpdate` call from the prompt path.
+- Every prompt pass now records the current vitals as the comparison baseline
+  (C updates the last-known values in `make_prompt` even when the bytes are
+  discarded), for players and for a switched body's shared dummy record.
+- The empty-input branch defers the repaint: the prompt pass skips the
+  baseline update, and the repaint is emitted after the prompt with C's
+  CRLF frame.
+- Witnesses: `infobar-pulse-empty-player-depth` (holler → no repaint; one-hour
+  pulse; bare Enter → repaint on the next pass) and
+  `infobar-pulse-empty-switched-depth` (shared dummy record; holler → no
+  repaint; a peer lowers the body's mana; bare Enter → repaint).
+
+## Separate finding
+
+While building the switched-body witness, `set <mob> mana` plus a pumped hour
+showed C regenerating a mob's mana (2 → 10) and Go leaving it at 2. The port's
+mob `point_update` regeneration is missing; that is not an infobar bug and is
+reported separately.

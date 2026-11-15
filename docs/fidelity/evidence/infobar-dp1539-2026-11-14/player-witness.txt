@@ -1,0 +1,31 @@
+capture-statistics	blocks=6	empty-open=1	empty-closed=0
+capture-statistics	blocks=6	empty-open=1	empty-closed=0
+hollow-prompt-steps	count=0
+Dark Pawns Tier-1 differential report
+scenario: infobar-pulse-empty-player-depth
+c-oracle: 127.0.0.1:18213 (DP_SEED=1)
+go-port: 127.0.0.1:22624 (DP_SEED=1)
+result: no normalized divergence
+normalized C oracle blocks:
+--- [infobar on]
++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+Hit Pts: Mana Pts: Move Pts: Exp: Gold: 500(500)82(82)100(100)70000000Your infobar is now set to on.
+--- [holler test]
+You holler, 'test'
+--- [~dpclock pulse 630]
+
+--- []
+7          82(82)8
+--- []
+
+--- [look]
+The Board Room Of The Immortals
+   This large room is well-decorated, and lit from above by a soft
+magical glow of no particular origin.  Scattered around the room are
+comforable chairs and piles of furs of various dimension, and in the
+very middle there is a huge oaken table that shimmers in an odd manner.
+A large picture window looks down over the whole world, showing the
+exploits of the many intrepid mortals.  A spiral staircase leads down
+to another part of this room.  There is a sign hovering in the
+awesomeness of this room.
+ A large bulletin board is mounted on a wall here.  It glows with a faint aura.
+draw-parity	MATCH	entries=4064	stream=4066
