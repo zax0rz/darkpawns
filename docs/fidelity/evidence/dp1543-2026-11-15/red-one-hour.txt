@@ -1,0 +1,35 @@
+capture-statistics	blocks=2	empty-open=1	empty-closed=0
+capture-statistics	blocks=2	empty-open=1	empty-closed=0
+hollow-prompt-steps	count=0
+Dark Pawns Tier-1 differential report
+scenario: dream-sleeping-npc-depth
+c-oracle: 127.0.0.1:31992 (DP_SEED=1)
+go-port: 127.0.0.1:23491 (DP_SEED=1)
+result: no normalized divergence
+normalized C oracle blocks:
+--- [~dpclock pulse 630]
+
+--- [look]
+Temple Infirmary
+   This is a large room where the sick and the dying are cared for by the
+nuns and priestesses of the Church.  There are about fifty straw beds arranged
+in four rows here, and almost all of them are full.  Most of the patients are
+either common citizens or foreigners; the military has their own infirmary
+as do the large temples.  The wealthier citizens can afford an in-home visit
+by a Church healer.  The entire room smells of medicinal soap.  There is
+a single exit through a marble archway to the north.
+One of the orc workers sleeps nearby.
+draw-parity	MISMATCH	stream=4079	c=Number(0,15) = 12	go=Number(0,3) = 3	c-step=probe step 1: ~dpclock pulse 630	go-step=probe step 2: look
+draw-context	c	  4059	Number(0,3) = 0
+draw-context	c	  4060	Dice(1,4) = 4
+draw-context	c	  4061	Dice(2,6) = 5
+draw-context	c	  4062	Dice(2,6) = 8
+draw-context	c	> 4063	Number(0,15) = 12
+draw-context	c	  4064	Number(0,3) = 1
+draw-context	go	  4059	Number(0,3) = 0
+draw-context	go	  4060	Dice(1,4) = 4
+draw-context	go	  4061	Dice(2,6) = 5
+draw-context	go	  4062	Dice(2,6) = 8
+draw-context	go	> 4063	Number(0,3) = 3
+dp-oracle-diff: rng draw streams diverge
+exit status 5

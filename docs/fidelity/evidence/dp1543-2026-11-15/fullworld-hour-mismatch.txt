@@ -1,0 +1,42 @@
+capture-statistics	blocks=2	empty-open=1	empty-closed=0
+capture-statistics	blocks=2	empty-open=1	empty-closed=0
+hollow-prompt-steps	count=0
+Dark Pawns Tier-1 differential report
+scenario: tmp-sleep-mob-hour
+c-oracle: 127.0.0.1:13127 (DP_SEED=1)
+go-port: 127.0.0.1:11410 (DP_SEED=1)
+result: no normalized divergence
+normalized C oracle blocks:
+--- [~dpclock pulse 630]
+
+--- [look]
+The Board Room Of The Immortals
+   This large room is well-decorated, and lit from above by a soft
+magical glow of no particular origin.  Scattered around the room are
+comforable chairs and piles of furs of various dimension, and in the
+very middle there is a huge oaken table that shimmers in an odd manner.
+A large picture window looks down over the whole world, showing the
+exploits of the many intrepid mortals.  A spiral staircase leads down
+to another part of this room.  There is a sign hovering in the
+awesomeness of this room.
+ A large bulletin board is mounted on a wall here.  It glows with a faint aura.
+The postman is here, shuffling through his mail.
+draw-parity	MISMATCH	stream=144677	c=Number(0,15) = 8	go=Number(0,18) = 10	c-step=probe step 1: ~dpclock pulse 630	go-step=probe step 2: look
+draw-context	c	  110891	Dice(1,4) = 4
+draw-context	c	  110892	Dice(2,6) = 9
+draw-context	c	  110893	Dice(2,6) = 4
+draw-context	c	  110894	Dice(1,2) = 1
+draw-context	c	> 110895	Number(0,15) = 8
+draw-context	c	  110896	Number(0,15) = 3
+draw-context	c	  110897	Number(0,15) = 10
+draw-context	c	  110898	Number(0,15) = 6
+draw-context	go	  110891	Dice(1,4) = 4
+draw-context	go	  110892	Dice(2,6) = 9
+draw-context	go	  110893	Dice(2,6) = 4
+draw-context	go	  110894	Dice(1,2) = 1
+draw-context	go	> 110895	Number(0,18) = 10
+draw-context	go	  110896	Number(0,15) = 3
+draw-context	go	  110897	Number(0,18) = 12
+draw-context	go	  110898	Number(0,15) = 6
+dp-oracle-diff: rng draw streams diverge
+exit status 5

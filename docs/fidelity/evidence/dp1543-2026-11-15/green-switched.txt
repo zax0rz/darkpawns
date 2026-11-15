@@ -1,0 +1,16 @@
+capture-statistics	blocks=2	empty-open=0	empty-closed=0
+capture-statistics	blocks=2	empty-open=0	empty-closed=0
+hollow-prompt-steps	count=0
+Dark Pawns Tier-1 differential report
+scenario: tmp-dream-switched-sleep
+c-oracle: 127.0.0.1:16914 (DP_SEED=1)
+go-port: 127.0.0.1:13874 (DP_SEED=1)
+result: no normalized divergence
+normalized C oracle blocks:
+--- [~dpclock pulse 40320]
+You dream of your conquest of the world.
+You dream of your conquest of the world.
+You dream of your conquest of the world.
+--- [look]
+In your dreams, or what?
+draw-parity	MATCH	entries=4450	stream=4592

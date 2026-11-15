@@ -1,0 +1,48 @@
+# depth-case: dream.switched-sleeping-body
+# C point_update calls dream() for every POS_SLEEPING character, including a
+# switched mobile whose descriptor is the wizard's connection
+# (src/limits.c:489-491; src/dream.c:109-186). The orc worker's level-11..20
+# arm draws number(0,15) each hour; on a 0 roll send_to_char reaches the
+# switcher ("You dream of your conquest of the world.") while the act goes to
+# the room. Sixty-four pumped hours make the 1/16 arms observable. DP-1543.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 2109 1 8162 80
+
+[setup:oracle]
+Sleepwiz
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sleepwiz
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+switch orc
+
+[probe]
+~dpclock pulse 40320
+look
