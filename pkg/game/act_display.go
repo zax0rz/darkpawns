@@ -70,3 +70,35 @@ const (
 	InfoExp
 	InfoGold
 )
+
+// NPCInfoBarState mirrors the shared dummy_mob player_specials record fields
+// that drive a mobile's infobar: saved.infobar and saved.size
+// (src/utils.h:588-589), plus the last-known values InfoBarOn records and the
+// prompt cycle compares (src/comm.c:1158-1193). Every mobile shares one
+// record, so a toggle on any body changes every body's mode and size.
+type NPCInfoBarState struct {
+	Mode        int
+	ScreenSize  int
+	LastHit     int
+	LastMaxHit  int
+	LastMana    int
+	LastMaxMana int
+	LastMove    int
+	LastMaxMove int
+	LastExp     int
+	LastGold    int
+}
+
+// NPCInfoBar returns the shared dummy_mob infobar record.
+func (w *World) NPCInfoBar() NPCInfoBarState {
+	w.npcDummyMu.RLock()
+	defer w.npcDummyMu.RUnlock()
+	return w.npcDummyInfoBar
+}
+
+// SetNPCInfoBar stores the shared dummy_mob infobar record.
+func (w *World) SetNPCInfoBar(state NPCInfoBarState) {
+	w.npcDummyMu.Lock()
+	w.npcDummyInfoBar = state
+	w.npcDummyMu.Unlock()
+}

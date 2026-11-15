@@ -635,6 +635,7 @@ func init() {
 	registerActorCommand(".", game.CharacterReply)
 	registerActorCommand("mute", mobWizutilBody("mute"))
 	registerActorCommand("pardon", mobWizutilBody("pardon"))
+	registerActorCommand("infobar", mobInfoBarBody)
 	registerCommand("write", wrapArgs(cmdWrite), "Write on an object.")
 	registerActorCommand("write", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
 		ctx = withCharacterCommandArgs(ctx, args)

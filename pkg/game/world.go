@@ -65,6 +65,11 @@ type World struct {
 	npcDummyMu       sync.RWMutex
 	npcDummyLastTell string
 
+	// npcDummyInfoBar is the same shared record's saved.infobar/saved.size and
+	// last-known vitals (src/utils.h:588-589; src/act.display.c:158-224).
+	npcDummyMu      sync.RWMutex
+	npcDummyInfoBar NPCInfoBarState
+
 	// zoneResetMu serializes boot, manual, admin and heartbeat resets.
 	// It precedes brief World/Spawner locks; no lifecycle lock is acquired.
 	zoneResetMu      sync.Mutex
@@ -196,6 +201,7 @@ type World struct {
 	// MobileMessageSink delivers to the descriptor of this concrete NPC body.
 	// Ordinary descriptorless mobiles receive no actor output.
 	MobileMessageSink func(*MobInstance, []byte)
+	MobileRawSink     func(*MobInstance, []byte)
 
 	// MobileDescriptorOwner identifies the player body whose descriptor is
 	// temporarily attached to a switched NPC. C removes that descriptor from
