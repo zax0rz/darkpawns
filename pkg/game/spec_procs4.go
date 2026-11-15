@@ -536,7 +536,7 @@ func startRoomBirthMessage(name string) string {
 	msg += "before you.\n\r"
 	msg += fmt.Sprintf("   '%s, now is not your time to die,' speaks the figure.\r\n", name)
 	msg += "   'Prove your worth and I may well grant you eternal life.'\r\n"
-	msg += "   'Trust no one, for all here are but dark pawns above which you must\r\nstruggle to prove yourself.  All here strive to be a king... at any cost.'\r\n"
+	msg += "   'Trust no one, for all here are but dark pawns above which you must \r\nstruggle to prove yourself.  All here strive to be a king... at any cost.'\r\n"
 	msg += "   The figure glows a moment, then disappears, but his voice remains.\r\n"
 	msg += "   'Your life begins now...' it says, then fades -- just as the world around\r\nyou does the same.\r\n\r\n"
 	// The CR LF the oracle shows before the speech is not part of this buffer:
