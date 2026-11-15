@@ -1,0 +1,89 @@
+# Witness for DP_CLOCK multi-pass post-pump queued input drain (comm.c:520-532,
+# 669-701): when bash's 40-pulse wait expires on pulse 40 with three queued
+# commands behind it, pulse 40 drains "say one", and two commands ("say two",
+# "say three") remain ready after the pump across consecutive game_loop passes.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19650 1 8105 196
+replace-room-exits 8105 none
+
+[setup:oracle]
+Waiter
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Waiter
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+bash watcher
+say one
+say two
+say three
+
+[probe]
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1

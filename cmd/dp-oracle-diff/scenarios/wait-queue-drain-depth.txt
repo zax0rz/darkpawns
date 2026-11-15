@@ -1,0 +1,89 @@
+# Witness for DP_CLOCK post-pump queued input drain (comm.c:489, 670, 737-740):
+# when a wait-stated command (bash) expires and two non-waiting commands sit
+# queued behind it, C drains the first in dp_command_phase(1) on pulse 40 and
+# the second in dp_command_phase(0) right after dp_seam_take() without waiting
+# for pulse 41.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19650 1 8105 196
+replace-room-exits 8105 none
+
+[setup:oracle]
+Waiter
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Waiter
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+bash watcher
+say one
+say two
+
+[probe]
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1
+~dpclock pulse 1

@@ -16,12 +16,14 @@ var deliverRetryTimeout = 30 * time.Second
 // world/session callbacks, acquiring sendMu, or doing transport/persistence work.
 // Active remains true through commit so concurrent output cannot overtake it.
 type heartbeatOutput struct {
-	mu      sync.Mutex
-	active  bool
-	frames  []heartbeatFrame
-	pending map[*Session]int
-	closing map[*Session]bool
-	prompts map[*Session]bool
+	mu         sync.Mutex
+	active     bool
+	pumpActive bool
+	depth      int
+	frames     []heartbeatFrame
+	pending    map[*Session]int
+	closing    map[*Session]bool
+	prompts    map[*Session]bool
 }
 
 type heartbeatFrame struct {
@@ -39,9 +41,29 @@ func (m *Manager) BeginHeartbeatOutput() {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.active {
+		if !b.pumpActive {
+			panic("overlapping heartbeat output transactions")
+		}
+		b.depth++
+		return
+	}
+	b.active = true
+	b.depth = 1
+	b.pending = make(map[*Session]int)
+	b.closing = make(map[*Session]bool)
+	b.prompts = make(map[*Session]bool)
+}
+
+func (m *Manager) beginPumpHeartbeatOutput() {
+	b := &m.outputBatch
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.active {
 		panic("overlapping heartbeat output transactions")
 	}
 	b.active = true
+	b.pumpActive = true
+	b.depth = 1
 	b.pending = make(map[*Session]int)
 	b.closing = make(map[*Session]bool)
 	b.prompts = make(map[*Session]bool)
@@ -108,6 +130,13 @@ func (s *Session) deferHeartbeatPrompt() bool {
 // SendPrompt (which reads player/editor/GMCP state).
 func (m *Manager) EndHeartbeatOutput() {
 	b := &m.outputBatch
+	b.mu.Lock()
+	if b.depth > 1 {
+		b.depth--
+		b.mu.Unlock()
+		return
+	}
+	b.mu.Unlock()
 	type snoopText struct {
 		strings.Builder
 		actual  strings.Builder
@@ -194,6 +223,8 @@ func (m *Manager) EndHeartbeatOutput() {
 			continue
 		}
 		b.active = false
+		b.pumpActive = false
+		b.depth = 0
 		b.pending = nil
 		b.closing = nil
 		b.prompts = nil

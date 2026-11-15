@@ -290,3 +290,56 @@ func TestInputTiming_UnitConversion(t *testing.T) {
 		t.Fatalf("SetWaitState(2) = %d, want %d pulses", got, want)
 	}
 }
+
+// TestInputTiming_PumpPulsesDrainsRemainingReadyQueue proves that after a
+// DP_CLOCK pulse burst expires a wait and drains one non-waiting command,
+// PumpPulsesFrom drains the first post-pump ready command inside the pump's
+// output turn, then runs each subsequent post-pump ready command in its own
+// output turn with its own prompt (comm.c:489, 520-532, 669-701, 737-740).
+func TestInputTiming_PumpPulsesDrainsRemainingReadyQueue(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Hero", 1001, true)
+	registerForDrain(t, m, s)
+	s.transportDone = make(chan struct{})
+	m.SetPulsePump(func(n int) error {
+		m.BeginHeartbeatOutput()
+		defer m.EndHeartbeatOutput()
+		for range n {
+			m.DrainInputQueues()
+		}
+		return nil
+	})
+
+	s.player.SetWaitStatePulses(2)
+	s.enqueueInput("whoami", nil)
+	s.enqueueInput("whoami", nil)
+	s.enqueueInput("whoami", nil)
+
+	if err := m.PumpPulsesFrom(s, 2); err != nil {
+		t.Fatalf("PumpPulsesFrom: %v", err)
+	}
+	if got := s.queueLen(); got != 0 {
+		t.Fatalf("remaining queue depth = %d, want 0", got)
+	}
+	got := drainSendChannel(t, s)
+	if count := strings.Count(got, "Hero"); count != 3 {
+		t.Fatalf("expected all 3 queued commands to execute in PumpPulsesFrom, got %d in %q", count, got)
+	}
+	// First post-pump command shares the pump turn's trailing prompt; the third
+	// runs in its own pass and emits a second prompt.
+	if prompts := strings.Count(got, `"type":"prompt"`); prompts != 2 {
+		t.Fatalf("expected 2 prompts (one after first post-pump pass, one after second), got %d in %q", prompts, got)
+	}
+}
+
+func TestBeginHeartbeatOutputRejectsUnexpectedOverlap(t *testing.T) {
+	m := makeTestManager(t)
+	m.BeginHeartbeatOutput()
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("expected overlapping BeginHeartbeatOutput to panic")
+		}
+		m.EndHeartbeatOutput()
+	}()
+	m.BeginHeartbeatOutput()
+}
