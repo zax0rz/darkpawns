@@ -208,3 +208,44 @@ func TestLuaEditRejectsTraversalAndCFileReadCap(t *testing.T) {
 		}
 	}
 }
+
+// TestLuaEditListAcceptsDottedAbsoluteScriptsRoot pins DP-1376: C's
+// valid_directory (src/file-edit.c:78-81) saw the relative SCRIPT_DIR
+// ("scripts", src/db.h:79; src/luaedit.c:37-42), never the absolute deploy
+// path. A Go root containing a dot (a home or deploy directory) must list
+// exactly as C would, while traversal spellings still hit the C regex.
+func TestLuaEditListAcceptsDottedAbsoluteScriptsRoot(t *testing.T) {
+	m := makeTestManager(t)
+	root := filepath.Join(t.TempDir(), "deploy.dir", "scripts")
+	if err := os.MkdirAll(filepath.Join(root, "mob"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "a.lua"), []byte("x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	m.world.ScriptsDir = root
+
+	s := makeCommandTestSession(t, m, "Luaeditdots", game.LVL_IMMORT, 1001)
+	if err := cmdLuaEdit(s, nil); err != nil {
+		t.Fatal(err)
+	}
+	got := readMsgText(t, s)
+	if got == luaEditError || !strings.Contains(got, "a.lua") {
+		t.Fatalf("dotted-root listing = %q, want the a.lua entry", got)
+	}
+
+	if err := cmdLuaEdit(s, []string{"mob"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := readMsgText(t, s); got != "None.\r\n" {
+		t.Fatalf("dotted-root subdir listing = %q, want None", got)
+	}
+
+	// The same relative check still rejects a traversal spelling.
+	if err := cmdLuaEdit(s, []string{"mob/../../etc"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := readMsgText(t, s); got != luaEditError {
+		t.Fatalf("traversal listing = %q, want the C error", got)
+	}
+}
