@@ -755,46 +755,33 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	} else {
 		current, def := pair, defender
 		for i := 0; i < numAttacks; i++ {
-			if def.GetPosition() == PosDead {
-				break
-			}
-			// C's per-swing gate (fight.c:2017-2024) re-reads FIGHTING(ch) every
-			// swing and swings at whoever it names: damage()'s mercy stop
-			// (fight.c:1491-1494) or the !AWAKE victim stop (:1630-1632) can
-			// clear it MID-LOOP, and C's hit() then never runs — no draw, no
-			// stale-pair swing. PL-005: without this the second swing of a
-			// multi-attack round kept hitting an already-stopped victim (prone
-			// multiplier fight.c:1854-1855), killing characters C leaves
-			// incapacitated, and diverging the shared RNG stream.
+			// C's per-swing gate (fight.c:2017-2024) re-reads FIGHTING(ch)
+			// every swing FIRST — before any consideration of the pair under
+			// iteration — and swings at whoever it names: damage()'s mercy
+			// stop (fight.c:1491-1494) or the !AWAKE victim stop (:1630-1632)
+			// can clear it MID-LOOP, a switcheroo can re-point it
+			// (fight.c:1413-1440), and a mid-round death retarget moves it to
+			// a survivor (stop_fighting's dead-opponent scan, src/fight.c:236-
+			// 245). PL-005: without the re-read the second swing of a
+			// multi-attack round kept hitting an already-stopped victim, and
+			// DP-1507: without resolving onto the retargeted survivor the
+			// round's remaining swings vanished where C spends them there.
 			fighting := attacker.GetFightingBody()
 			if fighting == nil || fighting == attacker {
 				break // stopped (or self-fighting, which C's loop also stops)
 			}
 			if fighting != def {
-				if i == 0 {
-					// The round began aimed elsewhere (a prior redirect or a
-					// concurrent retarget); C's loop still swings at the
-					// CURRENT FIGHTING, but the pair under iteration was
-					// built for this defender, so keep the historical gate.
-					break
-				}
-				// A switcheroo redirected MID-ROUND (fight.c:1413-1440): the
-				// scan picked a different room fighter. C keeps the round's
-				// remaining attacks at the NEW FIGHTING (fight.c:2017-2024);
-				// re-resolve the pair around it. The switcheroo's own
-				// enrollment created the (attacker, newTarget) pair.
+				// Resolve the pair around the CURRENT FIGHTING. A switcheroo's
+				// redirect enrolled its pair; a death retarget re-points
+				// FIGHTING with no pair, so synthesize the plain round pair
+				// the way PerformRound builds one. A stale pair whose defender
+				// is dead or retired never gates this: the swing consumes
+				// hit()'s draws and the new pair names a live body.
 				key := CombatPairKey{Attacker: attacker, Target: fighting}
 				ce.mu.RLock()
 				next := ce.combatPairs[key]
 				ce.mu.RUnlock()
 				if next == nil {
-					// C's loop hits whoever FIGHTING names (fight.c:2017-2024)
-					// without consulting bookkeeping. A death retarget
-					// (stop_fighting's dead-opponent scan, src/fight.c:236-245)
-					// re-points FIGHTING without creating a combat pair, so
-					// synthesize the plain round pair for the new target;
-					// breaking here dropped the round's remaining swings where
-					// C spends them on the retargeted opponent (DP-1507).
 					next = &CombatPair{Attacker: attacker, Defender: fighting}
 				}
 				current, def = next, fighting
