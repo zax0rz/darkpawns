@@ -1,0 +1,45 @@
+# C-first class-gate audit witness for do_peek. A low-level clone has class
+# zero until do_set changes its body class to thief. The switched no-argument
+# peek then passes C's class/immortal gate and reaches argument handling.
+# depth-case: peek.switched-mobile-thief-class-gate
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8162 80
+
+[setup:oracle]
+PeekClass
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+PeekClass
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set clone class thief
+
+[probe]
+switch clone
+peek

@@ -206,10 +206,9 @@ func (w *World) characterMobPourOut(mob *MobInstance, fromObj *ObjectInstance) {
 	fromObj.SetValue(3, 0)
 }
 
-// CharacterPeek ports do_peek for a mobile body. NPC class and skill reads go
-// through C's shared dummy_mob player_specials, whose zero values make a
-// below-immortal mobile fail the class gate before argument parsing; an
-// immortal-level mobile succeeds after the normal percent draw.
+// CharacterPeek ports do_peek for a mobile body. C reads GET_CLASS(ch) from
+// the active mobile, and do_set can change an NPC's class, so this path uses
+// the body's current class instead of assuming its prototype default.
 func CharacterPeek(ctx CharacterCommandContext) CharacterCommandResult {
 	if ctx.World == nil || ctx.Actor == nil {
 		return CharacterCommandUnsupported
@@ -227,8 +226,7 @@ func CharacterPeek(ctx CharacterCommandContext) CharacterCommandResult {
 }
 
 func (w *World) characterMobPeek(mob *MobInstance, argument string) {
-	const npcSpecialClass = ClassMageUser // dummy_mob is zero-initialized.
-	if npcSpecialClass != ClassThief && npcSpecialClass != ClassAssassin && mob.GetLevel() < LVL_IMMORT {
+	if mob.GetClass() != ClassThief && mob.GetClass() != ClassAssassin && mob.GetLevel() < LVL_IMMORT {
 		mob.SendMessage("You're not a thief!\r\n")
 		return
 	}
