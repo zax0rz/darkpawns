@@ -210,6 +210,10 @@ func (s *Session) hasTransport() bool {
 // transport idle timeout to these — a silent player is check_idling's business
 // (src/limits.c:419-454), not the transport's (DP-1385).
 func (s *Session) IsPlaying() bool {
+	if s.manager != nil {
+		s.manager.mu.RLock()
+		defer s.manager.mu.RUnlock()
+	}
 	return s.authenticated && !s.menuActive && !s.charCreating
 }
 
