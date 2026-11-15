@@ -1,4 +1,6 @@
-# depth-case: target-walk.world-ordinal-order
+# depth-case: at.world-ordinal-character-list
+# depth-case: goto.world-ordinal-character-list
+# depth-case: teleport.world-ordinal-victim
 # find_target_room resolves a non-numeric goto/at target with get_char_vis
 # (src/act.wizard.c:184-239). A numbered name that misses the room walks C's
 # newest-first character_list (src/handler.c:1303-1324): the later-loaded clone
