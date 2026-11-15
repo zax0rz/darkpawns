@@ -116,7 +116,7 @@ func TestLuaSetSkillDepthInvalid(t *testing.T) {
 }
 
 func TestLuaSetSkillDepthModifiers(t *testing.T) {
-	_, p, m, e, ctx, dir := luaSetSkillFixture(t)
+	w, p, m, e, ctx, dir := luaSetSkillFixture(t)
 	// The direct tattoo boundary leaves DEX unbounded until set_skill totals.
 	p.Stats.Dex = 18
 	p.CopyBaseAttributes()
@@ -142,6 +142,9 @@ func TestLuaSetSkillDepthModifiers(t *testing.T) {
 	}
 	// NPCs use 25, not the PC's 18, and return their own handle.
 	runSetSkillScript(t, e, ctx, dir, "local r=set_skill(me,134,37)\nassert(type(r)=='userdata' and r==me.struct, 'NPC return')")
+	if got := w.DummyMobSkill(134); got != 37 {
+		t.Fatalf("shared NPC skill = %d, want C's set_skill value 37", got)
+	}
 	if m.GetDex() != 25 || m.GetStr() != 25 || m.GetCha() != 30 || m.Dex != 26 {
 		t.Fatalf("NPC total dex=%d str=%d cha=%d", m.GetDex(), m.GetStr(), m.GetCha())
 	}
