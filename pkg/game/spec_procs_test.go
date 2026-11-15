@@ -1154,13 +1154,14 @@ func TestSpecFighter_NativeSkills(t *testing.T) {
 	}
 
 	// do_berserk: even a failed subcmd attempt installs the three inert C
-	// affects and sets AFF_BERSERK; the NPC has no descriptor for the text.
+	// affects, sets AFF_BERSERK, and writes ch->wait for two violence pulses
+	// (src/new_cmds.c:2193); a descriptorless NPC simply never drains it.
 	mob.SetAffectFlags(0)
 	mob.CustomData = nil
 	dprng.ResetStream(1)
 	mobBerserk(mob)
-	if got := mob.GetWaitState(); got != 0 {
-		t.Errorf("berserk changed GET_MOB_WAIT to %d", got)
+	if got, want := mob.GetWaitState(), 2*engine.PULSE_VIOLENCE; got != want {
+		t.Errorf("berserk ch->wait = %d, want %d pulses", got, want)
 	}
 	if !mob.HasAffect(affBerserk) {
 		t.Error("berserk did not set AFF_BERSERK")

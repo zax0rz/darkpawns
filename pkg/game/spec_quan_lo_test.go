@@ -58,7 +58,7 @@ func TestSpecQuanLo_FleeAliasesUseGlobalMobGossip(t *testing.T) {
 		t.Run(command, func(t *testing.T) {
 			w, mob, actor, peer, messages := newQuanLoTestWorld(t)
 			var directName, directArg string
-			w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, name, argument string) CharacterCommandResult {
+			w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, name, argument string, _ int) CharacterCommandResult {
 				directName, directArg = name, argument
 				return CharacterCommandUnsupported
 			}

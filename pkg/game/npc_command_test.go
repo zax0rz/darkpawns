@@ -109,7 +109,7 @@ func TestNPCCommandDirectRunsBodyWithoutInterpreterPreamble(t *testing.T) {
 func TestNPCCommandDirectPassesExactKnownBodyAndArgument(t *testing.T) {
 	w, _, mob, _ := newNPCCommandWorld(t)
 	var gotCommand, gotArgument string
-	w.CharacterCommandDirectExecFunc = func(body combat.Combatant, commandName, argument string) CharacterCommandResult {
+	w.CharacterCommandDirectExecFunc = func(body combat.Combatant, commandName, argument string, _ int) CharacterCommandResult {
 		if body != mob {
 			t.Fatalf("direct command body = %p, want mobile %p", body, mob)
 		}
@@ -140,7 +140,7 @@ func TestTellFromMobUsesDirectTellArgument(t *testing.T) {
 	w, player, transcript := newSpecProcTestWorld(t)
 	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
 	var commandName, commandArg string
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
 		commandName, commandArg = command, argument
 		return CharacterCommandUnsupported
 	}

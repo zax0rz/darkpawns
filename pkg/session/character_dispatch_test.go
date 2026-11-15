@@ -1,10 +1,13 @@
 package session
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/command"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -69,6 +72,39 @@ func TestDispatchCharacterCommandDirectUsesExactCommandBody(t *testing.T) {
 	}
 	if got := f.roomOut.String(); got != "" {
 		t.Fatalf("abbreviated direct dispatch produced output %q", got)
+	}
+}
+
+func TestDispatchCharacterCommandDirectPreservesBerserkSubcmd(t *testing.T) {
+	f := newActorPositionFixture(t, combat.PosFighting)
+	const seed = 2317
+	wantRNG := dprng.New(seed)
+	percent := wantRNG.Number(1, 101)
+	prob := wantRNG.Number(50, 100)
+	wantNext := wantRNG.Number(0, 100)
+	wantResult := "You fail to summon up your battle rage.\r\n"
+	if percent <= prob {
+		wantResult = "Your vision turns sanguine as you summon up your battle rage!\r\n"
+	}
+	dprng.ResetStream(seed)
+	t.Cleanup(func() { dprng.ResetStream(1) })
+
+	var private strings.Builder
+	ctx := command.ExecutionContext{
+		Body: f.actor, World: f.world,
+		PrivateOutput: func(line string) { private.WriteString(line) },
+	}
+	if got := dispatchCharacterCommandDirect(ctx, "berserk", "", 1); got != game.CharacterCommandHandled {
+		t.Fatalf("direct berserk result = %v, want handled", got)
+	}
+	if got, want := private.String(), "You're about as berserk as you're gonna get.\r\n"+wantResult; got != want {
+		t.Fatalf("direct berserk bytes = %q, want %q", got, want)
+	}
+	if got, want := f.actor.GetWaitState(), 2*engine.PULSE_VIOLENCE; got != want {
+		t.Fatalf("direct berserk wait state = %d, want %d pulses", got, want)
+	}
+	if got := dprng.Number(0, 100); got != wantNext {
+		t.Fatalf("next draw after direct berserk = %d, want %d after exactly two command draws", got, wantNext)
 	}
 }
 

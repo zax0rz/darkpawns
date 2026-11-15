@@ -21,7 +21,7 @@ type mobDirectCommandCall struct {
 func assertMobDirectCommandCalls(t *testing.T, w *World, cSite string, invoke func() bool, want ...mobDirectCommandCall) {
 	t.Helper()
 	var got []mobDirectCommandCall
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
 		got = append(got, mobDirectCommandCall{command: command, argument: argument})
 		return CharacterCommandUnsupported
 	}

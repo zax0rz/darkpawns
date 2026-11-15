@@ -14,17 +14,19 @@ func TestWorldBridgeMobileActionsDispatchTheCCommandAndArgument(t *testing.T) {
 	mobRef := scripting.CharRef{NPC: true, ID: mob.GetID()}
 	playerRef := scripting.CharRef{ID: player.ID}
 	var got []struct {
-		name string
-		arg  string
+		name   string
+		arg    string
+		subcmd int
 	}
-	w.CharacterCommandDirectExecFunc = func(actor combat.Combatant, name, arg string) CharacterCommandResult {
+	w.CharacterCommandDirectExecFunc = func(actor combat.Combatant, name, arg string, subcmd int) CharacterCommandResult {
 		if actor != mob {
 			t.Fatalf("direct command actor = %v, want mobile %v", actor, mob)
 		}
 		got = append(got, struct {
-			name string
-			arg  string
-		}{name, arg})
+			name   string
+			arg    string
+			subcmd int
+		}{name, arg, subcmd})
 		return CharacterCommandHandled
 	}
 
@@ -52,19 +54,20 @@ func TestWorldBridgeMobileActionsDispatchTheCCommandAndArgument(t *testing.T) {
 	adapter.Mount(mobRef, nil, "dismount")
 
 	want := []struct {
-		name string
-		arg  string
+		name   string
+		arg    string
+		subcmd int
 	}{
-		{"say", "  hello"},
-		{"emote", " smiles."},
-		{"tell", "Zach hello "},
-		{"gossip", "world message"},
-		{"echo", "local message"},
-		{"gecho", "global message"},
-		{social, player.GetName()},
-		{"follow", charKeywords(player)},
-		{"ride", player.GetName()},
-		{"dismount", ""},
+		{"say", "  hello", 0},
+		{"emote", " smiles.", npcACMDSubcmdEmote},
+		{"tell", "Zach hello ", 0},
+		{"gossip", "world message", npcACMDSubcmdGossip},
+		{"echo", "local message", 0},
+		{"gecho", "global message", 0},
+		{social, player.GetName(), 0},
+		{"follow", charKeywords(player), 0},
+		{"ride", player.GetName(), 0},
+		{"dismount", "", 0},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("direct mobile calls = %#v, want %#v", got, want)

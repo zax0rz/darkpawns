@@ -109,7 +109,7 @@ func TestSpecStartRoomMovesMobilesUpToTheImmortalStop(t *testing.T) {
 	horse := newSpecProcTestMob(t, w, NewbieStartRoom, 1)
 	horse.SetLiveShortDesc("a horse")
 	var commandName, commandArg string
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
 		commandName, commandArg = command, argument
 		return CharacterCommandUnsupported
 	}

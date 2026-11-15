@@ -516,7 +516,7 @@ func specRescuer(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 		// SPECIAL(rescuer) unconditionally returns TRUE after calling
 		// do_rescue(), including when do_rescue rejects its short-description
 		// argument or its 1-in-101 success roll.
-		w.NPCCommandDirect(me, "rescue", ally.GetName())
+		w.NPCCommandDirect(me, "rescue", ally.GetName(), 1)
 		return true
 	}
 	return false
@@ -2133,7 +2133,7 @@ func specBackstabber(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 		// player who is already fighting; do_backstab() owns that later gate
 		// and returns TRUE without consuming the skill rolls.
 		if pl.GetFlags()&(1<<uint(PrfNohassle)) == 0 && canSee(me, pl) {
-			w.NPCCommandDirect(me, "backstab", pl.GetName())
+			w.NPCCommandDirect(me, "backstab", pl.GetName(), 1)
 			return true
 		}
 	}

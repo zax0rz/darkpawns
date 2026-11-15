@@ -10,7 +10,7 @@ func TestWorldCombatWimpyFleeUsesMobileDirectCommand(t *testing.T) {
 	w, _, mob, _ := newNPCCommandWorld(t)
 	var gotActor combat.Combatant
 	var gotCommand, gotArgument string
-	w.CharacterCommandDirectExecFunc = func(actor combat.Combatant, command, argument string) CharacterCommandResult {
+	w.CharacterCommandDirectExecFunc = func(actor combat.Combatant, command, argument string, _ int) CharacterCommandResult {
 		gotActor, gotCommand, gotArgument = actor, command, argument
 		return CharacterCommandHandled
 	}

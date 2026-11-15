@@ -18,6 +18,8 @@ type CharacterCommandContext struct {
 	World           *World
 	PrivateOutput   func(string)
 	RawArgs         string
+	DirectCall      bool
+	Subcmd          int
 }
 
 // CharacterCommandResult distinguishes an implemented actor callback from a

@@ -42,9 +42,10 @@ type CommandExecFunc func(ch *Player, command string) bool
 type CharacterCommandExecFunc func(ch combat.Combatant, command string) CharacterCommandResult
 
 // CharacterCommandDirectExecFunc dispatches a direct C-style ACMD call for an
-// actor. Command is the known command body and argument is the exact C argument
-// string; the callback must not run command_interpreter gates or specials.
-type CharacterCommandDirectExecFunc func(ch combat.Combatant, command, argument string) CharacterCommandResult
+// actor. Command is the known command body, argument is the exact C argument
+// string, and subcmd is the exact C call-site value. The callback must not run
+// command_interpreter gates or specials.
+type CharacterCommandDirectExecFunc func(ch combat.Combatant, command, argument string, subcmd int) CharacterCommandResult
 
 // World represents the active game world with runtime state.
 //

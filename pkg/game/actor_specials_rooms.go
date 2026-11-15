@@ -231,7 +231,7 @@ func specQuanLoBody(w *World, actor cBody, me *MobInstance, cmd, arg string) boo
 	if cmd != "" && me.GetPosition() > combat.PosSleeping {
 		if cmd == "flee" || cmd == "retreat" || cmd == "escape" {
 			w.NPCCommandDirect(me, "gossip", "What was that, "+actor.GetName()+
-				"? This is not a shawade. Try it again. This time with fewing.")
+				"? This is not a shawade. Try it again. This time with fewing.", npcACMDSubcmdGossip)
 		}
 		arg = strings.TrimSpace(arg)
 		if (cmd == "look" || cmd == "examine") && arg != "" && isCName(arg, charKeywords(me)) {

@@ -82,7 +82,7 @@ func TestSpecCleric_EntryGatesAndStand(t *testing.T) {
 
 	mob.SetPosition(combat.PosSitting)
 	var commandName, commandArg string
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
 		commandName, commandArg = command, argument
 		return CharacterCommandUnsupported
 	}

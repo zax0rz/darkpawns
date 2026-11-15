@@ -23,7 +23,7 @@ func TestSpecPuff_CommandAndDeathGates(t *testing.T) {
 
 	mob.CurrentHP = -1
 	var commandName, commandArg string
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
 		commandName, commandArg = command, argument
 		return CharacterCommandUnsupported
 	}
@@ -143,7 +143,7 @@ func TestSpecPuff_CompleteCOutcomePartition(t *testing.T) {
 		seed := seedForPuffRoll(t, roll)
 		dprng.ResetStream(seed)
 		var commandCalls []mobDirectCommandCall
-		w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+		w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
 			commandCalls = append(commandCalls, mobDirectCommandCall{command: command, argument: argument})
 			return CharacterCommandUnsupported
 		}

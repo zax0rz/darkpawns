@@ -28,6 +28,10 @@ type ExecutionContext struct {
 	Session common.CommandSession
 	World   *game.World
 	RawArgs string
+	// DirectCall and Subcmd preserve a C ACMD call made directly by a mobile
+	// special. Typed interpreter commands leave DirectCall false and Subcmd zero.
+	DirectCall bool
+	Subcmd     int
 	// PrivateOutput is used by direct actor calls that have no descriptor. A
 	// live session context leaves it nil and writes through Session.
 	PrivateOutput func(string)
@@ -56,6 +60,7 @@ func (ctx ExecutionContext) CharacterContext() game.CharacterCommandContext {
 	return game.CharacterCommandContext{
 		Actor: ctx.Body, DescriptorOwner: descriptorOwner, World: ctx.World,
 		PrivateOutput: privateOutput, RawArgs: ctx.RawArgs,
+		DirectCall: ctx.DirectCall, Subcmd: ctx.Subcmd,
 	}
 }
 

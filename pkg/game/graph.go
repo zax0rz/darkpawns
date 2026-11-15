@@ -376,7 +376,7 @@ func (w *World) huntTrashTalk(m *MobInstance, victim Actor) {
 		w.NPCCommandDirect(m, "tell", victimName+" Let's have an ass-kicking contest")
 	case 1:
 		// #nosec G404 — game RNG, not cryptographic
-		w.NPCCommandDirect(m, "auction", fmt.Sprintf("Corpse of %s for sale in a minute.. %d coins.", victimName, huntNumber(1000, 2000)))
+		w.NPCCommandDirect(m, "auction", fmt.Sprintf("Corpse of %s for sale in a minute.. %d coins.", victimName, huntNumber(1000, 2000)), npcACMDSubcmdAuction)
 	case 2:
 		w.NPCCommandDirect(m, "tell", victimName+" Run to your momma, pansy!")
 	case 3:
@@ -384,26 +384,26 @@ func (w *World) huntTrashTalk(m *MobInstance, victim Actor) {
 	case 4:
 		// C: sprintf(msg, "I hear %s thinks %s's bad.", GET_NAME(HUNTING(ch)),
 		// HSSH(HUNTING(ch))) (src/graph.c:367-368).
-		w.NPCCommandDirect(m, "gossip", fmt.Sprintf("I hear %s thinks %s's bad.", victimName, hssh(victim)))
+		w.NPCCommandDirect(m, "gossip", fmt.Sprintf("I hear %s thinks %s's bad.", victimName, hssh(victim)), npcACMDSubcmdGossip)
 	case 5:
-		w.NPCCommandDirect(m, "gossip", fmt.Sprintf("Your momma ain't gonna save you this time, %s.", victimName))
+		w.NPCCommandDirect(m, "gossip", fmt.Sprintf("Your momma ain't gonna save you this time, %s.", victimName), npcACMDSubcmdGossip)
 	case 6:
 		// #nosec G404 — game RNG, not cryptographic
 		if huntNumber(0, 20) == 0 {
-			w.NPCCommandDirect(m, "gossip", fmt.Sprintf("%s flees like a rabbit...", victimName))
+			w.NPCCommandDirect(m, "gossip", fmt.Sprintf("%s flees like a rabbit...", victimName), npcACMDSubcmdGossip)
 		}
 	case 7:
 		w.NPCCommandDirect(m, "tell", victimName+" Come out and fight!")
 	case 8:
 		w.NPCCommandDirect(m, "tell", victimName+" Watch out! Here I come to get you!")
 	case 9:
-		w.NPCCommandDirect(m, "auction", fmt.Sprintf("How much will I get for the head of %s?", victimName))
+		w.NPCCommandDirect(m, "auction", fmt.Sprintf("How much will I get for the head of %s?", victimName), npcACMDSubcmdAuction)
 	case 10:
-		w.NPCCommandDirect(m, "gossip", fmt.Sprintf("Where is that little wimp, %s?", victimName))
+		w.NPCCommandDirect(m, "gossip", fmt.Sprintf("Where is that little wimp, %s?", victimName), npcACMDSubcmdGossip)
 	case 11:
-		w.NPCCommandDirect(m, "gossip", fmt.Sprintf("%s, you jerk!", victimName))
+		w.NPCCommandDirect(m, "gossip", fmt.Sprintf("%s, you jerk!", victimName), npcACMDSubcmdGossip)
 	case 12:
-		w.NPCCommandDirect(m, "shout", "Damn it!")
+		w.NPCCommandDirect(m, "shout", "Damn it!", npcACMDSubcmdShout)
 	}
 }
 

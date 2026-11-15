@@ -225,7 +225,7 @@ func TestSpecRescuer_UsesCanonicalAllyHitAndWaitState(t *testing.T) {
 
 	var hit [2]string
 	var commandName, commandArg string
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
 		commandName, commandArg = command, argument
 		return CharacterCommandUnsupported
 	}

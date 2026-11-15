@@ -1099,7 +1099,7 @@ func TestMobileActivityCharmedHelperAssistsMaster(t *testing.T) {
 	foe.SetFightingBody(master)
 
 	var commandName, commandArg string
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
 		commandName, commandArg = command, argument
 		return CharacterCommandUnsupported
 	}

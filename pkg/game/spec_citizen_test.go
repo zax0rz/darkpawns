@@ -65,7 +65,7 @@ func TestSpecCitizen_StandingRecovery(t *testing.T) {
 			mob.SetFightingBody(NewPlayer(99999, "Tester", 1001))
 			lastMsg()
 			var commandName, commandArg string
-			w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+			w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
 				commandName, commandArg = command, argument
 				return CharacterCommandUnsupported
 			}
