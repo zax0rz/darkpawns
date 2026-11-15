@@ -200,7 +200,7 @@ func TestCmdAbils(t *testing.T) {
 	for range 7 {
 		got.WriteString(readSessionText(t, s))
 	}
-	want := "Your current ability scores:\r\n" +
+	want := "Your current ability scores: \r\n" +
 		"Strength:      (decent)\r\n" +
 		"Dexterity:     (average)\r\n" +
 		"Intelligence:  (decent)\r\n" +
@@ -232,7 +232,7 @@ func TestCmdAbilsClampsCEffectiveStatCeilings(t *testing.T) {
 	for range 7 {
 		got.WriteString(readSessionText(t, s))
 	}
-	want := "Your current ability scores:\r\n" +
+	want := "Your current ability scores: \r\n" +
 		"Strength:      (excellent)\r\n" +
 		"Dexterity:     (excellent)\r\n" +
 		"Intelligence:  (excellent)\r\n" +
@@ -241,6 +241,19 @@ func TestCmdAbilsClampsCEffectiveStatCeilings(t *testing.T) {
 		"Charisma:      (godlike)\r\n"
 	if got.String() != want {
 		t.Errorf("unexpected capped abils output:\n got %q\nwant %q", got.String(), want)
+	}
+}
+
+func TestCmdAbilsHeaderTrailingSpace(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Alice", 1001, true)
+	if err := cmdAbils(s); err != nil {
+		t.Fatalf("cmdAbils failed: %v", err)
+	}
+	header := readSessionText(t, s)
+	const wantHeader = "Your current ability scores: \r\n"
+	if header != wantHeader {
+		t.Fatalf("abilities header mismatch: got %q (%x), want %q (%x)", header, []byte(header), wantHeader, []byte(wantHeader))
 	}
 }
 

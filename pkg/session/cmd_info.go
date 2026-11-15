@@ -61,7 +61,7 @@ func cmdAbilsForBody(s *Session, body combat.Combatant) error {
 	if s == nil || body == nil || !ok {
 		return nil
 	}
-	s.Send("Your current ability scores:\r\n")
+	s.Send("Your current ability scores: \r\n")
 	s.Send(fmt.Sprintf("Strength:      (%s)\r\n", getAbilName(cDisplayAbility(body.GetStr()))))
 	s.Send(fmt.Sprintf("Dexterity:     (%s)\r\n", getAbilName(cDisplayAbility(body.GetDex()))))
 	s.Send(fmt.Sprintf("Intelligence:  (%s)\r\n", getAbilName(cDisplayAbility(body.GetInt()))))
