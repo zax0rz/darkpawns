@@ -81,3 +81,39 @@ func TestClanIsPlayingGates(t *testing.T) {
 		t.Fatalf("leader after destroy = (%d,%d), want (0,0)", leader.ClanID, leader.ClanRank)
 	}
 }
+
+func TestClanMembersTrailingSpace(t *testing.T) {
+	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001, Name: "Hall"}}})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+	w.Clans = NewClanManager()
+	clan := &Clan{Name: "Wolves", Ranks: 2}
+	clan.RankName[0] = "Member"
+	clan.RankName[1] = "Leader"
+	w.Clans.AddClan(clan)
+
+	var actorOut strings.Builder
+	w.MessageSink = func(name string, msg []byte) {
+		if name == "Leader" {
+			actorOut.Write(msg)
+		}
+	}
+
+	leader := &Player{Name: "Leader", Level: 10, RoomVNum: 1001, ClanID: clan.ID, ClanRank: 2}
+	offline := &Player{Name: "Offline", Level: 10, ClanID: clan.ID, ClanRank: 1}
+	w.AddPlayer(leader)
+	w.PlayerStoreList = func() ([]*Player, error) {
+		return []*Player{leader, offline}, nil
+	}
+
+	w.doClanMembers(leader)
+	want := "\r\nList of your clan members\r\n" +
+		"-------------------------\r\n" +
+		"Leader Leader \r\n" +
+		"Member Offline \r\n"
+	if got := actorOut.String(); got != want {
+		t.Fatalf("doClanMembers = %q, want %q", got, want)
+	}
+}
