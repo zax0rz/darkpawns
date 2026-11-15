@@ -1,0 +1,86 @@
+# Witness for create_money extra descriptions (src/handler.c:1454-1485)
+# across all six amount buckets (1, <10, <100, <1000, <100000 with RNG draw,
+# and >=100000), plus corpse coins (src/fight.c:413) and dust coins (:460).
+
+# depth-case: drop.money-exdesc-coin
+# depth-case: drop.money-exdesc-under-10
+# depth-case: drop.money-exdesc-under-100
+# depth-case: drop.money-exdesc-under-1000
+# depth-case: drop.money-exdesc-under-100000
+# depth-case: drop.money-exdesc-100000-plus
+# depth-case: death.corpse-money-exdesc
+# depth-case: death.dust-money-exdesc
+
+[fixture]
+quiet-mobs
+seed-player
+spawn-mob 16309 1 16301 163
+spawn-mob 4504 1 16301 45
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 16301
+set Testor gold 200000
+set initiate gold 5000
+set revenant gold 5000
+
+[probe]
+drop 1 coin
+~dpclock pulse 1
+look coin
+~dpclock pulse 1
+get coin
+~dpclock pulse 1
+drop 5 coins
+~dpclock pulse 1
+look coins
+~dpclock pulse 1
+get coins
+~dpclock pulse 1
+drop 50 coins
+~dpclock pulse 1
+look coins
+~dpclock pulse 1
+get coins
+~dpclock pulse 1
+drop 500 coins
+~dpclock pulse 1
+look coins
+~dpclock pulse 1
+get coins
+~dpclock pulse 1
+drop 5000 coins
+~dpclock pulse 1
+look coins
+~dpclock pulse 1
+get coins
+~dpclock pulse 1
+drop 100000 coins
+~dpclock pulse 1
+look coins
+~dpclock pulse 1
+get coins
+~dpclock pulse 1
+kill initiate
+~dpclock pulse 40
+~dpclock pulse 40
+get coins corpse
+~dpclock pulse 1
+kill revenant
+~dpclock pulse 40
+~dpclock pulse 40
+look coins
+~dpclock pulse 1
+get coins
+~dpclock pulse 1
