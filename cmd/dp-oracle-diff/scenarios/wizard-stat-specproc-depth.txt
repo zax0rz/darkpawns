@@ -1,0 +1,49 @@
+# depth-case: wizard-stat.specproc-exists
+# C do_stat_room prints "SpecProc: Exists" when rm->func is set
+# (src/act.wizard.c:431-434); do_stat_object does the same from
+# obj_index[rnum].func (src/act.wizard.c:527-531). ASSIGNROOM(8008,
+# pray_for_items) (src/spec_assign.c:605) makes the Temple room Exists, and
+# object 8099 carries gen_board. The port hardcoded None in both stat lines.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Statspec
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Statspec
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8008
+
+[probe]
+stat room
+stat obj board
+load obj 2
+stat obj 2
+goto 8004
+stat room

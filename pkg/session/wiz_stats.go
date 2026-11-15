@@ -682,7 +682,13 @@ func (s *Session) sendStatRoom() {
 	s.Send(fmt.Sprintf("Room name: %s\r\n", colorWrap(room.Name, ansiCyan, normal)))
 	s.Send(fmt.Sprintf("Zone: [%3d], VNum: [%s], RNum: [%5d], Type: %s\r\n",
 		zoneIndex, colorWrap(fmt.Sprintf("%5d", room.VNum), ansiGreen, normal), rnum, wizardSectorName(room.Sector)))
-	s.Send(fmt.Sprintf("SpecProc: None, Flags: %s\r\n", wizardRoomFlags(room.Flags)))
+	// C act.wizard.c:431-434 prints Exists when the room has a special
+	// procedure; the assignment table is the Go equivalent of rm->func.
+	roomSpec := "None"
+	if _, assigned := game.GetRoomSpecName(room.VNum); assigned {
+		roomSpec = "Exists"
+	}
+	s.Send(fmt.Sprintf("SpecProc: %s, Flags: %s\r\n", roomSpec, wizardRoomFlags(room.Flags)))
 	s.Send("Description:\r\n")
 	if room.Description != "" {
 		s.Send(strings.ReplaceAll(room.Description, "\n", "\r\n"))
@@ -850,8 +856,13 @@ func (s *Session) sendStatObjectInstance(object *game.ObjectInstance) {
 	// the VNum; the aliases and RNum stay plain.
 	s.Send(fmt.Sprintf("Name: '%s', Aliases: %s\r\n",
 		colorWrap(object.GetShortDesc(), ansiYellow, normal), object.GetKeywords()))
-	s.Send(fmt.Sprintf("VNum: [%s], RNum: [%5d], Type: %s, SpecProc: None\r\n",
-		colorWrap(fmt.Sprintf("%5d", object.GetVNum()), ansiGreen, normal), rnum, wizardItemTypeName(object.GetTypeFlag())))
+	// C act.wizard.c:527-531: obj_index[rnum].func decides Exists/None.
+	objSpec := "None"
+	if _, assigned := game.GetObjSpecName(object.GetVNum()); assigned {
+		objSpec = "Exists"
+	}
+	s.Send(fmt.Sprintf("VNum: [%s], RNum: [%5d], Type: %s, SpecProc: %s\r\n",
+		colorWrap(fmt.Sprintf("%5d", object.GetVNum()), ansiGreen, normal), rnum, wizardItemTypeName(object.GetTypeFlag()), objSpec))
 	s.Send(fmt.Sprintf("L-Des: %s\r\n", object.GetLongDesc()))
 	if extra := object.GetExtraDescs(); len(extra) > 0 {
 		var names []string
