@@ -64,9 +64,9 @@ peaceful room and refuses before C's damage draw.
 
 ## Census and retained revert
 
-Candidate commit `3294fba3d` is based on current `origin/main`
-`b969d86ef`. Run
-`/home/zach/Archives/darkpawns/oracle-runs/2026-11-15/luna-dp1535-offensive-candidate-final`
+Candidate snapshot `ade8d36cd` (code commit `4181b8534`) is based on current
+`origin/main` `2b0dba6938cbc4a5069f728facfabf62a75a3903`. Run
+`/home/zach/Archives/darkpawns/oracle-runs/2026-11-15/luna-dp1535-offensive-rebased`
 is CLEAN: 150/150 passed, with zero failed, infra, timeout, stale, unpinnable,
 or unstable rows. `--draw-parity` reports zero divergent scenarios. Its two
 hollow steps are the known `hit Nobody` probes in
@@ -75,12 +75,14 @@ hollow steps are the known `hit Nobody` probes in
 hollow.
 
 Retained revert branch
-`/home/zach/wt/luna-dp1535-batch2-revert-v2` is at `76930b38b`. Its run
-`/home/zach/Archives/darkpawns/oracle-runs/2026-11-15/luna-dp1535-offensive-revert-final`
-is NOT_CLEAN: 148/150 pass and exactly the two new switched-body witnesses
-fail. All other scenarios pass. The census reports zero run-level
-draw-divergent scenarios; attempt logs retain the expected command-level
-revert differences.
+`/home/zach/wt/luna-dp1535-batch2-revert-v2` is at `baac2e43e`, rebased onto
+the same `origin/main`. Its run
+`/home/zach/Archives/darkpawns/oracle-runs/2026-11-15/luna-dp1535-offensive-revert-rebased`
+is NOT_CLEAN: 148/150 pass. The only failures are
+`switched-body-combat-skills-offensive-depth` and
+`switched-body-combat-skills-offensive-restored-depth`; all other scenarios
+pass. The census reports zero run-level draw-divergent scenarios; attempt
+logs retain the expected command-level revert differences.
 
 The targeted set contains every scenario that types one of the ten commands
 plus every scenario that uses `switch` (150 total):
@@ -158,7 +160,7 @@ wizard-switch-player, wizard-switch-player-level
 
 ## Verification
 
-The implementation passed:
+The implementation passed on the rebased snapshot:
 
 - `make fmt`
 - `go build ./...`
@@ -167,7 +169,7 @@ The implementation passed:
 - `golangci-lint run --concurrency 4 ./...` (0 issues)
 - `make deadcode-ratchet` (52 baselined, 0 new)
 - `make db-migrate-test`
-- `GOEXPERIMENT=nojsonv2 make fidelity-depth` (7,557 proven/delegated; 1
+- `GOEXPERIMENT=nojsonv2 make fidelity-depth` (7,558 proven/delegated; 1
   pre-existing blocked case)
 
 No rulebook amendment is proposed. This batch does not complete the combat
