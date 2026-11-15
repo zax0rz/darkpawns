@@ -262,12 +262,12 @@ func infobarClearGold(ch *infobarState) string {
 	return fmt.Sprintf(vtCurSp+"        ", ch.screenSize-1, 7)
 }
 
-// cmdInfoBarUpdate mirrors comm.c:1158-1193 and act.display.c:226-285.
-// The prompt cycle detects changed values, repaints each changed field in C's
-// bit order, then records the current values for the next cycle.
-func cmdInfoBarUpdate(s *Session) {
+// infobarUpdateOutput builds C's changed-field repaint bytes and records the
+// current values as the next comparison baseline (comm.c:1158-1193;
+// act.display.c:226-285).
+func (s *Session) infobarUpdateOutput() (string, bool) {
 	if s.player == nil || s.screenSize <= 0 || s.infobarMode != InfobarOn {
-		return
+		return "", false
 	}
 
 	p := s.player
@@ -289,7 +289,7 @@ func cmdInfoBarUpdate(s *Session) {
 		update |= InfoExp
 	}
 	if update == 0 {
-		return
+		return "", false
 	}
 
 	is := newInfobarState(s)
@@ -315,8 +315,27 @@ func cmdInfoBarUpdate(s *Session) {
 		output.WriteString(vtCurSave + infobarClearGold(is) + infobarGold(is) + vtCurRest)
 	}
 
-	s.sendRawEvent(output.String())
 	s.rememberInfobarValues()
+	return output.String(), true
+}
+
+// cmdInfoBarUpdate is C's deferred repaint (DP-1539). The prompt cycle only
+// carries these bytes to the wire when process_output did not run, i.e. the
+// input printed nothing: make_prompt queues the repaint into d->output and the
+// next pass flushes it inside process_output's CRLF frame (comm.c:644-649,
+// 1613-1640, 1664-1665).
+func cmdInfoBarUpdate(s *Session) {
+	var out string
+	var ok bool
+	if s.isSwitched && s.switchedMob != nil {
+		out, ok = s.bodyInfoBarUpdateOutput()
+	} else {
+		out, ok = s.infobarUpdateOutput()
+	}
+	if !ok {
+		return
+	}
+	s.sendRawEvent("\r\n" + out + "\r\n")
 }
 
 // ---------------------------------------------------------------------------
