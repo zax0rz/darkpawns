@@ -1,5 +1,4 @@
 # depth-case: infobar.switched-body-empty-input-repaint
-# depth-case: infobar.switched-body-no-repaint-on-holler
 # C make_prompt only puts InfoBarUpdate bytes on the wire when process_output
 # was skipped, i.e. the input printed nothing (src/comm.c:644-649,1613-1640;
 # DP-1539). The switched Death Dealer turns the shared dummy infobar on and

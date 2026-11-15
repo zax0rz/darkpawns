@@ -1,5 +1,4 @@
 # depth-case: infobar.player-empty-input-repaint
-# depth-case: infobar.player-no-repaint-on-holler
 # C's InfoBarUpdate runs inside make_prompt (src/comm.c:1191-1193). On a normal
 # command the repaint is written after process_output copied the buffer and is
 # thrown away (comm.c:1630-1635,1664-1665), so `holler` changes the moves and
