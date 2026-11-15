@@ -74,3 +74,11 @@ On 2026-11-13 through 2026-11-15, 142 PRs merged into `main` (GitHub search `mer
 ## Data not captured yet
 
 Zach pointed out a gap: nobody counts **the work Claude sends back**. That covers follow-up prompts to an agent (`~/PROMPT-*-changes.md`, `*-reply.md` and the numbered weekend prompts), fixes Claude pushed to an agent's branch, and findings an agent reported but didn't file. Same day example: #2688 said it had filed a mob-regeneration finding, it hadn't, and Claude filed it as DP-1542. The evidence is all retained in Git (Claude's commits on agent branches), the PR comment threads, the prompt files and the census runs. A later pass could dig it out and give each agent a send-back rate.
+
+## Addendum, afternoon: lessons that stuck, and a send-back that went up
+
+Two data points from the same day, both for the send-back count above.
+
+**A lesson the agent kept.** Claude's review sent DeepSeek back three times for the same mistake: a `# depth-case:` annotation with no manifest row (#2675, #2677, #2688). From the next prompt on, the prompt said to run `make fidelity-depth` before pushing. On #2693, and again on #2702 and #2704, DeepSeek did. On #2704 the gate caught a mismatched annotation, and DeepSeek fixed it before it reached review. In its words, "The fidelity-depth gate did its job." The same applies to filing: after #2688 claimed a filing that hadn't happened, its next report filed #2703 and gave the number. A send-back that gets written into the next prompt seems to change behaviour where a review comment alone didn't. This is one agent over one weekend, so it's a lead, not a result.
+
+**A send-back that went the other way.** On the same task, DeepSeek reported that both of its assigned bugs reproduced C's behaviour, not a port bug (#2702, #2704). For DP-1388 that was correct: C leaks the board slot too (`src/boards.c:228` takes it before the empty-headline check at `:241`). For DP-1313, Claude's prompt told the agent to test the fresh-world reset, which the issue itself had already shown doesn't reproduce. Claude had written the prompt without rereading the issue. The agent proved the known case, and the live bug is still open. The middle layer makes errors too. This one surfaced because the agent reported what it found, not what the prompt expected, and it declined to invent a fix (R4).
