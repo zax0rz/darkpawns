@@ -982,26 +982,31 @@ func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 // runs after each probe step's output (actor and audience) has been read. The
 // draw-parity mode uses it to record how many RNG draws each step consumed.
 func RunAudienceProbeHooked(primary Conn, peers map[string]Conn, probe []string, quiescence time.Duration, afterStep func(index int, step string)) ([]AudienceProbeBlock, error) {
-	return runAudienceProbe(primary, peers, probe, quiescence, afterStep, nil)
+	return runAudienceProbe(primary, peers, probe, quiescence, ProbeOptions{AfterStep: afterStep})
 }
 
-// RunAudienceProbeWithFault is RunAudienceProbeHooked whose probe may carry
-// "~fault ..." control steps: the handler applies the fault to both engines'
-// trees; the step is never sent to an engine and produces an empty block.
-func RunAudienceProbeWithFault(primary Conn, peers map[string]Conn, probe []string, quiescence time.Duration, afterStep func(index int, step string), fault func(step string) error) ([]AudienceProbeBlock, error) {
-	return runAudienceProbe(primary, peers, probe, quiescence, afterStep, fault)
+// ProbeOptions configures RunAudienceProbeWithOptions.
+type ProbeOptions struct {
+	AfterStep func(index int, step string)
+	Fault     func(step string) error
+	QuietMobs bool
 }
 
-func runAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quiescence time.Duration, afterStep func(index int, step string), fault func(step string) error) ([]AudienceProbeBlock, error) {
+// RunAudienceProbeWithOptions runs a probe with explicit ProbeOptions.
+func RunAudienceProbeWithOptions(primary Conn, peers map[string]Conn, probe []string, quiescence time.Duration, opts ProbeOptions) ([]AudienceProbeBlock, error) {
+	return runAudienceProbe(primary, peers, probe, quiescence, opts)
+}
+
+func runAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quiescence time.Duration, opts ProbeOptions) ([]AudienceProbeBlock, error) {
 	blocks := make([]AudienceProbeBlock, 0, len(probe)*(len(peers)+1))
 	for i, step := range probe {
-		if fault != nil && strings.HasPrefix(step, FaultControlPrefix+" ") {
-			if err := fault(step); err != nil {
+		if opts.Fault != nil && strings.HasPrefix(step, FaultControlPrefix+" ") {
+			if err := opts.Fault(step); err != nil {
 				return blocks, fmt.Errorf("probe step %d %q: %w", i+1, step, err)
 			}
 			blocks = append(blocks, AudienceProbeBlock{Command: step})
-			if afterStep != nil {
-				afterStep(i, step)
+			if opts.AfterStep != nil {
+				opts.AfterStep(i, step)
 			}
 			continue
 		}
@@ -1052,7 +1057,9 @@ func runAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 			if err := target.Send(sendLine); err != nil {
 				return blocks, fmt.Errorf("probe step %d send %q: %w", i+1, step, err)
 			}
+			restoreWait := extendPulseFirstByteWait(target, sendLine, opts.QuietMobs)
 			output, err = target.ReadUntilQuiescent(quiescence)
+			restoreWait()
 			if err != nil && (!mayClose || !errors.Is(err, io.EOF)) {
 				return blocks, fmt.Errorf("probe step %d read actor after %q: %w\noutput so far:\n%s", i+1, step, err, output)
 			}
@@ -1064,11 +1071,44 @@ func runAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 		if peerErr != nil {
 			return blocks, peerErr
 		}
-		if afterStep != nil {
-			afterStep(i, step)
+		if opts.AfterStep != nil {
+			opts.AfterStep(i, step)
 		}
 	}
 	return blocks, nil
+}
+
+func extendPulseFirstByteWait(target Conn, line string, quietMobs bool) func() {
+	if quietMobs {
+		return func() {}
+	}
+	waiter, ok := target.(FirstByteWaiter)
+	if !ok {
+		return func() {}
+	}
+	prev := waiter.FirstByteWait()
+	if prev <= 0 {
+		return func() {}
+	}
+	trimmed := strings.TrimSpace(line)
+	if !strings.HasPrefix(trimmed, pulseControl) {
+		return func() {}
+	}
+	n, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(trimmed, pulseControl)))
+	if err != nil || n <= 2000 {
+		return func() {}
+	}
+	// Long ~dpclock pulse bursts (>2000 pulses, e.g. populated-world soaks)
+	// hold output until the end of PumpPulses(N) and can take >15s in Go (DP-1439).
+	// Shorter bursts (e.g. 630-pulse idle loops) keep the caller's firstByteWait
+	// so silent steps do not stack multi-second waits across 30+ probes.
+	const maxPulseFirstByteWait = 60 * time.Second
+	pulseWait := min(time.Duration(n)*12*time.Millisecond, maxPulseFirstByteWait)
+	if pulseWait <= prev {
+		return func() {}
+	}
+	waiter.SetFirstByteWait(pulseWait)
+	return func() { waiter.SetFirstByteWait(prev) }
 }
 
 // readAudiencePeers drains every audience connection after one probe step,

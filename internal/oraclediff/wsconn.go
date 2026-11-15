@@ -97,6 +97,9 @@ func (c *WSConn) Send(line string) error {
 // Reads without a preceding Send (passive peers and drains) keep plain quiescence.
 func (c *WSConn) SetFirstByteWait(d time.Duration) { c.firstByteWait = d }
 
+// FirstByteWait returns the configured first-response wait duration.
+func (c *WSConn) FirstByteWait() time.Duration { return c.firstByteWait }
+
 // hasGameOutput ignores local echo and transport chrome when deciding whether
 // the first response arrived; neither is server game output.
 func (c *WSConn) hasGameOutput() bool {

@@ -54,10 +54,20 @@ func NewTCPConn(conn net.Conn) *TCPConn {
 	return &TCPConn{conn: conn, reader: bufio.NewReader(conn)}
 }
 
+// FirstByteWaiter is implemented by transports that separate first-response
+// latency from trailing quiescence.
+type FirstByteWaiter interface {
+	FirstByteWait() time.Duration
+	SetFirstByteWait(d time.Duration)
+}
+
 // SetFirstByteWait separates response latency after Send from trailing silence.
 // Reads without a preceding Send (passive peers and drains) keep plain quiescence. A zero
 // value preserves the legacy one-window reader for explicit timing controls.
 func (c *TCPConn) SetFirstByteWait(d time.Duration) { c.firstByteWait = d }
+
+// FirstByteWait returns the configured first-response wait duration.
+func (c *TCPConn) FirstByteWait() time.Duration { return c.firstByteWait }
 
 // ObservedClose reports whether the server closed this transport.
 func (c *TCPConn) ObservedClose() bool { return c.closed }
