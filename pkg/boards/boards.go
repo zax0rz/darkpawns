@@ -634,6 +634,11 @@ func (bs *BoardSystem) WriteMessage(boardType int, ch BoardPlayer, arg string) i
 	}
 	if arg == "" {
 		ch.SendMessage("We must have a headline!\r\n")
+		// C takes the slot with find_slot before this check (src/boards.c:228)
+		// and returns on the empty headline (src/boards.c:237-241), leaking it.
+		// DP-1388 is an approved divergence: release the slot so a later post
+		// reuses it. Every message stays C's.
+		bs.msgStorageTaken[slot] = false
 		return -1
 	}
 
