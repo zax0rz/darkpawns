@@ -1,0 +1,82 @@
+# depth-case: tell.switched-body-target
+# depth-case: tell.numbered-room-order
+# depth-case: reply.player-teller-from-shared-record
+# C do_tell resolves with get_char_vis (src/handler.c:1303-1324): the room
+# first, mobs included, then a numbered character_list walk. A switched mobile
+# receives the tell and perform_tell writes the teller's idnum into the shared
+# dummy_mob last_tell (src/act.comm.c:894), so a reply from that body reaches
+# the teller. A descriptorless room mobile shadows a same-keyword player
+# elsewhere (NOPERSON).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 2 8162 80
+spawn-mob 70 1 8162 80
+
+[setup:oracle]
+Switchsay
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchsay
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:teller]
+Tellpeer
+y
+tellpass
+tellpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:teller]
+Tellpeer
+y
+tellpass
+tellpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Tellpeer 8162
+goto 8162
+switch clone
+
+[probe]
+send:teller tell clone hi
+reply back
+send:teller tell 2.clone yo

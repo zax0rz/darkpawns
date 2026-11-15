@@ -427,6 +427,7 @@ func (a *WorldScriptableAdapter) SetSkill(ref scripting.CharRef, skill, level in
 		}
 		p.AffectTotal()
 	} else if m != nil {
+		a.world.SetDummyMobSkill(skill, level)
 		m.AffectTotal()
 	}
 }

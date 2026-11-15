@@ -1027,6 +1027,18 @@ func (m *MobInstance) SendMessage(msg string) {
 	}
 }
 
+// SendRaw writes bytes to a switched mobile's descriptor owner without text
+// framing (C send_to_char into the same output buffer). Used by the VT infobar
+// frame, which must concatenate with the following line exactly as C does.
+func (m *MobInstance) SendRaw(msg string) {
+	if m.world == nil || m.world.MobileRawSink == nil || m.world.MobileDescriptorOwner == nil {
+		return
+	}
+	if m.world.MobileDescriptorOwner(m) != nil {
+		m.world.MobileRawSink(m, []byte(msg))
+	}
+}
+
 // GetWaitState returns the mob's remaining ch->wait in pulses. Nothing gates
 // on it for a descriptorless mob (C reads ch->wait only through descriptors).
 func (m *MobInstance) GetWaitState() int {

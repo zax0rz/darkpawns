@@ -1,0 +1,44 @@
+# depth-case: toggle.switched-body-silent
+# C do_toggle returns immediately when the body is an NPC
+# (src/act.informative.c:2500-2505). The switched level-9 clone must produce no
+# bytes at all; the immortal descriptor owner's grid must not appear.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8162 80
+
+[setup:oracle]
+Switchtoggle
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchtoggle
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+switch clone
+
+[probe]
+toggle

@@ -476,6 +476,12 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 			attached.sendGuarded(wrapped)
 		}
 	}
+	world.MobileRawSink = func(body *game.MobInstance, msg []byte) {
+		attached := m.combatSession(body)
+		if attached != nil {
+			attached.sendRawEvent(string(msg))
+		}
+	}
 	world.MobileDescriptorOwner = m.mobileDescriptorOwner
 	// extract_char returns a switched rider to the original body when the
 	// borrowed NPC is freed (src/handler.c:1158-1159).

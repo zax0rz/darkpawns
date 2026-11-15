@@ -60,7 +60,22 @@ type World struct {
 	// npcDummyLastTell mirrors the same shared dummy_mob.player_specials
 	// record's last_tell (src/db.c:104,1281; src/act.comm.c:894). Every mobile
 	// reads and writes this one zeroed value; a player keeps its own record.
-	npcDummyLastTell atomic.Int64
+	// The port keys reply on the teller's name (C stores an idnum and looks it
+	// up in character_list); outside an in-game rename the two are equivalent.
+	npcDummyMu       sync.RWMutex
+	npcDummyLastTell string
+
+	// npcDummyInfoBar is the same shared record's saved.infobar/saved.size and
+	// last-known vitals (src/utils.h:588-589; src/act.display.c:158-224).
+	// It shares npcDummyMu with npcDummyLastTell: one record, one lock.
+	npcDummyInfoBar NPCInfoBarState
+
+	// npcDummySkillState mirrors dummy_mob.saved.skills (src/db.c:104,1281;
+	// src/utils.h:343). NPCs share this array; restore and Lua set_skill can
+	// mutate it, so its initial zero values are not immutable constants.
+	npcDummySkillMu        sync.RWMutex
+	npcDummySkillDefault   int
+	npcDummySkillOverrides map[int]int
 
 	// zoneResetMu serializes boot, manual, admin and heartbeat resets.
 	// It precedes brief World/Spawner locks; no lifecycle lock is acquired.
@@ -193,6 +208,7 @@ type World struct {
 	// MobileMessageSink delivers to the descriptor of this concrete NPC body.
 	// Ordinary descriptorless mobiles receive no actor output.
 	MobileMessageSink func(*MobInstance, []byte)
+	MobileRawSink     func(*MobInstance, []byte)
 
 	// MobileDescriptorOwner identifies the player body whose descriptor is
 	// temporarily attached to a switched NPC. C removes that descriptor from

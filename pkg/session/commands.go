@@ -358,6 +358,15 @@ func init() {
 	registerCommand("zai", wrapSkill(command.CmdKujiKiri(game.SkillKkZai)), "Kuji-kiri seal: fade from view.")
 	registerCommand("zhen", wrapSkill(command.CmdKujiKiri(game.SkillKkZhen)), "Kuji-kiri seal: focus on endurance for faster movement regen.")
 	registerCommand("sha", wrapSkill(command.CmdKujiKiri(game.SkillKkSha)), "Kuji-kiri seal: heal your wounds.")
+	registerActorCommand("rin", kujiKiriActorHandler(game.SkillKkRin))
+	registerActorCommand("kyo", kujiKiriActorHandler(game.SkillKkKyo))
+	registerActorCommand("toh", kujiKiriActorHandler(game.SkillKkToh))
+	registerActorCommand("kai", kujiKiriActorHandler(game.SkillKkKai))
+	registerActorCommand("jin", kujiKiriActorHandler(game.SkillKkJin))
+	registerActorCommand("retsu", kujiKiriActorHandler(game.SkillKkRetsu))
+	registerActorCommand("zai", kujiKiriActorHandler(game.SkillKkZai))
+	registerActorCommand("zhen", kujiKiriActorHandler(game.SkillKkZhen))
+	registerActorCommand("sha", kujiKiriActorHandler(game.SkillKkSha))
 	registerCommand("pick", wrapArgs(cmdPick), "Pick a lock on a container or exit.")
 
 	// Doors
@@ -515,6 +524,11 @@ func init() {
 	// "glance" is src/interpreter.c's other top-level name for do_diagnose — identical handler.
 	registerCommand("diagnose", wrapBodyArgs(cmdDiagnoseBody), "Diagnose health status of a target.", "glance")
 	registerCommand("toggle", wrapArgs(cmdToggle), "Toggle a player preference.")
+	// C do_toggle returns immediately for an NPC body (src/act.informative.c:2500-2505);
+	// the actor lane is handled with no output. Player bodies keep cmdToggle.
+	registerActorCommand("toggle", func(game.CharacterCommandContext, string, []string) game.CharacterCommandResult {
+		return game.CharacterCommandHandled
+	})
 	registerCommand("lines", wrapArgs(cmdLines), "Set your screen line count (7-50).")
 	registerCommand("infobar", wrapArgs(cmdInfoBar), "Toggle the bottom status infobar.")
 	registerCommand("users", wrapArgs(cmdUsers), "Show connected players.")
@@ -628,6 +642,9 @@ func init() {
 	registerCommand(".", wrapArgs(cmdReply), "Reply to the last tell.")
 	registerActorCommand("reply", game.CharacterReply)
 	registerActorCommand(".", game.CharacterReply)
+	registerActorCommand("mute", mobWizutilBody("mute"))
+	registerActorCommand("pardon", mobWizutilBody("pardon"))
+	registerActorCommand("infobar", mobInfoBarBody)
 	registerCommand("write", wrapArgs(cmdWrite), "Write on an object.")
 	registerActorCommand("write", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
 		ctx = withCharacterCommandArgs(ctx, args)
@@ -656,6 +673,12 @@ func npcActorHandler(run func(*game.World, *game.MobInstance, string)) character
 		}
 		run(ctx.World, mob, ctx.RawArgs)
 		return game.CharacterCommandHandled
+	}
+}
+
+func kujiKiriActorHandler(seal string) characterActorHandler {
+	return func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterKujiKiri(ctx, seal)
 	}
 }
 

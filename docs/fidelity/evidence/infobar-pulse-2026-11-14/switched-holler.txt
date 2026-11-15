@@ -1,0 +1,98 @@
+capture-statistics	blocks=12	empty-open=0	empty-closed=0
+capture-statistics	blocks=12	empty-open=0	empty-closed=0
+hollow-prompt-steps	count=0
+divergence-fingerprint	holler infobar pulse	2829d256132b8f82f974f2fcdb8316020bb36b79e45ca90b7d0034f8b05bc542
+Dark Pawns Tier-1 differential report
+scenario: switched-body-infobar-depth
+c-oracle: 127.0.0.1:23164 (DP_SEED=1)
+go-port: 127.0.0.1:13860 (DP_SEED=1)
+result: normalized divergence detected
+
+--- [infobar] c-oracle
++++ [infobar] go-port
+(no normalized divergence)
+
+--- [infobar on] c-oracle
++++ [infobar on] go-port
+(no normalized divergence)
+
+--- [infobar] c-oracle
++++ [infobar] go-port
+(no normalized divergence)
+
+--- [infobar off] c-oracle
++++ [infobar off] go-port
+(no normalized divergence)
+
+--- [infobar off] c-oracle
++++ [infobar off] go-port
+(no normalized divergence)
+
+--- [return] c-oracle
++++ [return] go-port
+(no normalized divergence)
+
+--- [goto 8162] c-oracle
++++ [goto 8162] go-port
+(no normalized divergence)
+
+--- [switch dealer] c-oracle
++++ [switch dealer] go-port
+(no normalized divergence)
+
+--- [infobar] c-oracle
++++ [infobar] go-port
+(no normalized divergence)
+
+--- [infobar on] c-oracle
++++ [infobar on] go-port
+(no normalized divergence)
+
+--- [holler infobar pulse] c-oracle
++++ [holler infobar pulse] go-port
+@@ -1,1 +1,2 @@
+ You holler, 'infobar pulse'
++7          30(50)8
+
+--- [infobar off] c-oracle
++++ [infobar off] go-port
+(no normalized divergence)
+
+normalized C oracle blocks:
+--- [infobar]
+Your infobar is off.
+--- [infobar on]
++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+Hit Pts: Mana Pts: Move Pts: Exp: : Needed for Level Gold: 15(15)50(50)10(10)100-99 10Your infobar is now set to on.
+--- [infobar]
+Your infobar is on.
+--- [infobar off]
+Your infobar is now set to off.
+--- [infobar off]
+Your infobar is already off.
+--- [return]
+You return to your original body.
+--- [goto 8162]
+Temple Infirmary
+   This is a large room where the sick and the dying are cared for by the
+nuns and priestesses of the Church.  There are about fifty straw beds arranged
+in four rows here, and almost all of them are full.  Most of the patients are
+either common citizens or foreigners; the military has their own infirmary
+as do the large temples.  The wealthier citizens can afford an in-home visit
+by a Church healer.  The entire room smells of medicinal soap.  There is
+a single exit through a marble archway to the north.
+Death Dealer looks you over coldly.
+...he is surrounded by a black aura!
+A clone is standing here.
+--- [switch dealer]
+Okay.
+--- [infobar]
+Your infobar is off.
+--- [infobar on]
++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+Hit Pts: Mana Pts: Move Pts: Exp: Gold: 1684(1684)50(50)10(10)1200002970Your infobar is now set to on.
+--- [holler infobar pulse]
+You holler, 'infobar pulse'
+--- [infobar off]
+Your infobar is now set to off.
+draw-parity	MATCH	entries=4082	stream=4113
+dp-oracle-diff: normalized divergence detected
+exit status 3
