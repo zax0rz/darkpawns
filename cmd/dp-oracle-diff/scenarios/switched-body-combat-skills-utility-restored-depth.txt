@@ -46,6 +46,3 @@ switch satan
 [probe]
 alter
 berserk
-equipment
-score
-return
