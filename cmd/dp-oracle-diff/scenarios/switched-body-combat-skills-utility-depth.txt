@@ -1,0 +1,79 @@
+# C-first DP-1535 witness for aid, alter/flesh, bearhug, berserk, behead and bite.
+# The owner has learned aid/alter/berserk, while the level-40 clone reads the
+# fresh world's zeroed shared dummy_mob skills. The clone's room, equipment,
+# and target differ from the owner. C sends the mobile skill refusals, finds
+# bread in the mobile's room, and runs do_bite's explicit IS_NPC branch.
+# src/new_cmds2.c:139-188; src/new_cmds.c:216-300, 471-547, 1199-1268,
+# 1893-1938, 2134-2185.
+
+# depth-case: aid.switched-mobile-zero-skill
+# depth-case: alter.switched-mobile-zero-skill
+# depth-case: flesh.switched-mobile-zero-skill
+# depth-case: bearhug.switched-mobile-zero-skill
+# depth-case: berserk.switched-mobile-zero-skill
+# depth-case: behead.switched-mobile-corpse-output
+# depth-case: bite.switched-mobile-npc-branch
+
+# depth-case: switched.utility.mobile-zero-skill-and-npc-branches
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4350 1 8162 40
+spawn-mob 4500 1 8162 40
+spawn-mob 69 1 8162 40
+spawn-obj 8010 1 8162 40
+give-object 69 12132 1 40
+equip-object 69 8022 999 16 40
+
+[setup:oracle]
+SwitchedSkill
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchedSkill
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset SwitchedSkill 'aid' 100
+skillset SwitchedSkill 'flesh alter' 100
+skillset SwitchedSkill 'bearhug' 100
+skillset SwitchedSkill 'berserk' 100
+goto 8162
+kill fish
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+goto 8105
+switch clone
+
+[probe]
+aid
+alter
+flesh
+bearhug
+berserk
+behead bread
+behead corpse
+bite rat
+return
