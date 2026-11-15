@@ -115,6 +115,12 @@ func DoBehead(ch *Player, targetName string, world *World) SkillResult {
 // players and mobiles; keeping the mutation path shared prevents the NPC
 // special from silently skipping the head/corpse/content lifecycle.
 func performBehead(world *World, ch Actor, obj *ObjectInstance, wielded, slashWeapon bool, canTake func(*ObjectInstance) bool, moveHead func(*ObjectInstance) error) SkillResult {
+	return performBeheadWithPreOutput(world, ch, obj, wielded, slashWeapon, canTake, moveHead, nil)
+}
+
+// performBeheadWithPreOutput preserves do_behead's act-before-object-mutation
+// order for switched mobiles, whose private output is owned by the session.
+func performBeheadWithPreOutput(world *World, ch Actor, obj *ObjectInstance, wielded, slashWeapon bool, canTake func(*ObjectInstance) bool, moveHead func(*ObjectInstance) error, emit func()) SkillResult {
 	if world == nil || ch == nil || obj == nil {
 		return SkillResult{Success: false}
 	}
@@ -130,6 +136,9 @@ func performBehead(world *World, ch Actor, obj *ObjectInstance, wielded, slashWe
 		} else {
 			msgToRoom = fmt.Sprintf("%s rips the head off %s with %s bare hands!", ch.GetName(), obj.GetShortDesc(), genderPronoun(ch.GetSex()))
 		}
+	}
+	if emit != nil {
+		emit()
 	}
 
 	originalName := obj.GetKeywords()

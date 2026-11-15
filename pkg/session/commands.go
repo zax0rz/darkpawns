@@ -349,6 +349,9 @@ func init() {
 	registerCommand("dig", wrapArgs(cmdDig), "Create a room exit.")
 	registerCommand("steal", wrapSkill(command.CmdSteal), "Steal from a target.")
 	registerCommand("berserk", wrapSkill(command.CmdBerserk), "Summon your battle rage for a hitroll/damroll boost.")
+	registerActorCommand("berserk", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		return game.CharacterBerserk(ctx, args)
+	})
 	registerCommand("rin", wrapSkill(command.CmdKujiKiri(game.SkillKkRin)), "Kuji-kiri seal: harden body for an AC bonus and metalskin.")
 	registerCommand("kyo", wrapSkill(command.CmdKujiKiri(game.SkillKkKyo)), "Kuji-kiri seal: focus battle rage for a hitroll bonus.")
 	registerCommand("toh", wrapSkill(command.CmdKujiKiri(game.SkillKkToh)), "Kuji-kiri seal: focus inner strength for a damroll/AC bonus.")
@@ -490,8 +493,17 @@ func init() {
 	// never registered, leaving them unreachable by players. Positions/levels
 	// mirror src/interpreter.c. See docs/port-reachability-map.md (Bucket A).
 	registerCommand("bearhug", wrapSkill(command.CmdBearhug), "Crush a target in a bear hug.")
+	registerActorCommand("bearhug", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		return game.CharacterBearhug(ctx, args)
+	})
 	registerCommand("behead", wrapSkill(command.CmdBehead), "Attempt to behead a target with a slashing weapon.")
 	registerCommand("bite", wrapSkill(command.CmdBite), "Bite a target.")
+	registerActorCommand("behead", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		return game.CharacterBehead(ctx, args)
+	})
+	registerActorCommand("bite", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		return game.CharacterBite(ctx, args)
+	})
 	registerCommand("carve", wrapSkill(command.CmdCarve), "Carve a corpse.")
 	registerCommand("compare", wrapSkill(command.CmdCompare), "Compare two items.")
 	registerCommand("cutthroat", wrapSkill(command.CmdCutthroat), "Slit a target's throat.")
@@ -511,6 +523,12 @@ func init() {
 	registerCommand("turn", wrapSkill(command.CmdTurn), "Turn undead.")
 	registerCommand("aid", wrapSkill(command.CmdFirstAid), "Administer first aid to a target.")
 	registerCommand("alter", wrapSkill(command.CmdFleshAlter), "Alter flesh.", "flesh")
+	registerActorCommand("aid", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		return game.CharacterFirstAid(ctx, args)
+	})
+	registerActorCommand("alter", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		return game.CharacterFleshAlter(ctx, args)
+	})
 	registerCommand("serpent", wrapSkill(command.CmdSerpentKick), "Serpent-style kick attack.")
 
 	registerCommand("order", wrapArgs(cmdOrder), "Order a pet or follower.")

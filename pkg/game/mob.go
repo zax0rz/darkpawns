@@ -764,6 +764,31 @@ func (m *MobInstance) SetDamroll(damroll int) {
 	m.Runtime.DamrollOverride = &damroll
 }
 
+// adjustHitroll mirrors a direct mutation of char_data.points.hitroll while
+// keeping the change on this mobile instance rather than its shared prototype.
+func (m *MobInstance) adjustHitroll(delta int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	hitroll := 0
+	if m.Runtime.HitrollOverride != nil {
+		hitroll = *m.Runtime.HitrollOverride
+	} else if proto := m.Proto(); proto != nil {
+		hitroll = 20 - proto.THAC0
+	}
+	hitroll = mobileSignedPoint(hitroll+delta, 8)
+	m.Runtime.HitrollOverride = &hitroll
+}
+
+// adjustDamroll mirrors a direct mutation of char_data.points.damroll while
+// keeping the change on this mobile instance rather than its shared prototype.
+func (m *MobInstance) adjustDamroll(delta int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	damroll := mobileSignedPoint(m.damrollPointLocked()+delta, 8)
+	m.Runtime.DamrollOverride = &damroll
+	m.Runtime.DamrollBonus = 0
+}
+
 // SetDamageDice overrides the instance-local mob_specials damage dice.
 // Native specials can mutate these without changing the shared prototype.
 func (m *MobInstance) SetDamageDice(num, sides int) {

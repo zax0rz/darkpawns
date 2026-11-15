@@ -1,0 +1,51 @@
+# C-first DP-1535 witness for restored shared mobile skills in alter and
+# berserk. do_restore sets dummy_mob skills to 100; the live mobile carries a
+# long sword while the descriptor owner is elsewhere. Alter removes the
+# mobile's own weapon, and berserk mutates the mobile's combat affects.
+# src/act.wizard.c:1599-1601; src/new_cmds.c:1893-1938, 2134-2185.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 70 1 8162 40
+equip-object 70 8022 999 16 40
+
+[setup:oracle]
+SwitchedRestore
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchedRestore
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+restore satan
+switch satan
+
+[probe]
+alter
+berserk
+equipment
+score
+return
