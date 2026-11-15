@@ -1,0 +1,55 @@
+# depth-case: at.world-ordinal-character-list
+# depth-case: goto.world-ordinal-character-list
+# depth-case: teleport.world-ordinal-victim
+# find_target_room resolves a non-numeric goto/at target with get_char_vis
+# (src/act.wizard.c:184-239). A numbered name that misses the room walks C's
+# newest-first character_list (src/handler.c:1303-1324): the later-loaded clone
+# at 8163 heads the list, so 1.clone is 8163 and 2.clone is 8162. Go's
+# ResolveCharWorld orders the global fallback by vnum/instance id, the reverse.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8162 80
+spawn-mob 69 2 8163 80
+
+[setup:oracle]
+Walkwiz
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Walkwiz
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+goto 1.clone
+goto 8105
+goto 2.clone
+goto 8105
+at 1.clone look
+at 2.clone look
+teleport 2.clone 8105
+goto 1.clone
