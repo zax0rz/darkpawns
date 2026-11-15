@@ -235,14 +235,6 @@ func (w *World) PointUpdate() {
 		// --- NPCs ---
 		pos := m.GetPosition()
 
-		// Dream — limits.c:489-491 calls dream(i) for every sleeping body
-		// before the regen arm. A mobile reads the shared dummy last-death 0,
-		// so the level switch runs and draws number(0,15) once per hour.
-		if pos == PosSleeping {
-			Dream(&MobDreamAdapter{m: m, w: w})
-			pos = m.GetPosition()
-		}
-
 		if pos >= PosStunned {
 			// HP regen — limits.c:498-501
 			if m.GetHP() < m.GetMaxHP() {

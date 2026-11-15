@@ -1,0 +1,40 @@
+capture-statistics	blocks=2	empty-open=0	empty-closed=0
+capture-statistics	blocks=2	empty-open=1	empty-closed=0
+hollow-prompt-steps	count=0
+divergence-fingerprint	~dpclock pulse 40320	7c1d5d3c4da3d000e7aed9fc2085086dc2fc023ac945b7750760afed0311c929
+Dark Pawns Tier-1 differential report
+scenario: dream-switched-sleeping-depth
+c-oracle: 127.0.0.1:19126 (DP_SEED=1)
+go-port: 127.0.0.1:29299 (DP_SEED=1)
+result: normalized divergence detected
+
+--- [~dpclock pulse 40320] c-oracle
++++ [~dpclock pulse 40320] go-port
+@@ -1,3 +1,0 @@
+-You dream of your conquest of the world.
+-You dream of your conquest of the world.
+-You dream of your conquest of the world.
+
+--- [look] c-oracle
++++ [look] go-port
+(no normalized divergence)
+
+draw-parity	MISMATCH	stream=4080	c=Number(0,15) = 5	go=Dice(1,4) = 2	c-step=probe step 1: ~dpclock pulse 40320	go-step=probe step 1: ~dpclock pulse 40320
+draw-context	c	  4060	Number(0,3) = 3
+draw-context	c	  4061	Dice(1,4) = 1
+draw-context	c	  4062	Dice(2,6) = 9
+draw-context	c	  4063	Dice(2,6) = 8
+draw-context	c	> 4064	Number(0,15) = 5
+draw-context	c	  4065	Dice(1,4) = 1
+draw-context	c	  4066	Dice(2,6) = 6
+draw-context	c	  4067	Dice(2,6) = 9
+draw-context	go	  4060	Number(0,3) = 3
+draw-context	go	  4061	Dice(1,4) = 1
+draw-context	go	  4062	Dice(2,6) = 9
+draw-context	go	  4063	Dice(2,6) = 8
+draw-context	go	> 4064	Dice(1,4) = 2
+draw-context	go	  4065	Dice(2,6) = 2
+draw-context	go	  4066	Dice(2,6) = 9
+draw-context	go	  4067	Dice(1,4) = 3
+dp-oracle-diff: normalized divergence detected
+exit status 3
