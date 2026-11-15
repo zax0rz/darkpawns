@@ -1,0 +1,151 @@
+capture-statistics	blocks=6	empty-open=0	empty-closed=0
+capture-statistics	blocks=6	empty-open=0	empty-closed=0
+hollow-prompt-steps	count=0
+divergence-fingerprint	goto 1.clone	10aab8adb6f6889efd46749a9baa81da8c56b640d07884bbbae3f44882e75d91
+divergence-fingerprint	goto 2.clone	e809a3a709d60dea105714ba59ac0dbef6658c66d39564e1f11a85ea25d9b029
+divergence-fingerprint	at 1.clone look	10aab8adb6f6889efd46749a9baa81da8c56b640d07884bbbae3f44882e75d91
+divergence-fingerprint	at 2.clone look	e809a3a709d60dea105714ba59ac0dbef6658c66d39564e1f11a85ea25d9b029
+Dark Pawns Tier-1 differential report
+scenario: target-walk-ordinal-depth
+c-oracle: 127.0.0.1:23116 (DP_SEED=1)
+go-port: 127.0.0.1:23514 (DP_SEED=1)
+result: normalized divergence detected
+
+--- [goto 1.clone] c-oracle
++++ [goto 1.clone] go-port
+@@ -1,7 +1,9 @@
+-Quiet Room
+-   This is a quiet room, used by the priests and priestesses of the Cross
+-for prayer and meditation.  There is a large window in the northern wall
+-that looks out over the beautiful temple garden, but you can't see any way
+-to get to it from here.  A marble archway leads south from this room to
+-the eastern vestibule.
++Temple Infirmary
++   This is a large room where the sick and the dying are cared for by the
++nuns and priestesses of the Church.  There are about fifty straw beds arranged
++in four rows here, and almost all of them are full.  Most of the patients are
++either common citizens or foreigners; the military has their own infirmary
++as do the large temples.  The wealthier citizens can afford an in-home visit
++by a Church healer.  The entire room smells of medicinal soap.  There is
++a single exit through a marble archway to the north.
+ A clone is standing here.
+
+--- [goto 8105] c-oracle
++++ [goto 8105] go-port
+(no normalized divergence)
+
+--- [goto 2.clone] c-oracle
++++ [goto 2.clone] go-port
+@@ -1,9 +1,7 @@
+-Temple Infirmary
+-   This is a large room where the sick and the dying are cared for by the
+-nuns and priestesses of the Church.  There are about fifty straw beds arranged
+-in four rows here, and almost all of them are full.  Most of the patients are
+-either common citizens or foreigners; the military has their own infirmary
+-as do the large temples.  The wealthier citizens can afford an in-home visit
+-by a Church healer.  The entire room smells of medicinal soap.  There is
+-a single exit through a marble archway to the north.
++Quiet Room
++   This is a quiet room, used by the priests and priestesses of the Cross
++for prayer and meditation.  There is a large window in the northern wall
++that looks out over the beautiful temple garden, but you can't see any way
++to get to it from here.  A marble archway leads south from this room to
++the eastern vestibule.
+ A clone is standing here.
+
+--- [goto 8105] c-oracle
++++ [goto 8105] go-port
+(no normalized divergence)
+
+--- [at 1.clone look] c-oracle
++++ [at 1.clone look] go-port
+@@ -1,7 +1,9 @@
+-Quiet Room
+-   This is a quiet room, used by the priests and priestesses of the Cross
+-for prayer and meditation.  There is a large window in the northern wall
+-that looks out over the beautiful temple garden, but you can't see any way
+-to get to it from here.  A marble archway leads south from this room to
+-the eastern vestibule.
++Temple Infirmary
++   This is a large room where the sick and the dying are cared for by the
++nuns and priestesses of the Church.  There are about fifty straw beds arranged
++in four rows here, and almost all of them are full.  Most of the patients are
++either common citizens or foreigners; the military has their own infirmary
++as do the large temples.  The wealthier citizens can afford an in-home visit
++by a Church healer.  The entire room smells of medicinal soap.  There is
++a single exit through a marble archway to the north.
+ A clone is standing here.
+
+--- [at 2.clone look] c-oracle
++++ [at 2.clone look] go-port
+@@ -1,9 +1,7 @@
+-Temple Infirmary
+-   This is a large room where the sick and the dying are cared for by the
+-nuns and priestesses of the Church.  There are about fifty straw beds arranged
+-in four rows here, and almost all of them are full.  Most of the patients are
+-either common citizens or foreigners; the military has their own infirmary
+-as do the large temples.  The wealthier citizens can afford an in-home visit
+-by a Church healer.  The entire room smells of medicinal soap.  There is
+-a single exit through a marble archway to the north.
++Quiet Room
++   This is a quiet room, used by the priests and priestesses of the Cross
++for prayer and meditation.  There is a large window in the northern wall
++that looks out over the beautiful temple garden, but you can't see any way
++to get to it from here.  A marble archway leads south from this room to
++the eastern vestibule.
+ A clone is standing here.
+
+normalized C oracle blocks:
+--- [goto 1.clone]
+Quiet Room
+   This is a quiet room, used by the priests and priestesses of the Cross
+for prayer and meditation.  There is a large window in the northern wall
+that looks out over the beautiful temple garden, but you can't see any way
+to get to it from here.  A marble archway leads south from this room to
+the eastern vestibule.
+A clone is standing here.
+--- [goto 8105]
+The Street of Wizardry
+   You are in the section of Kir Drax'in dedicated to the magical practioners
+who live in the city.  This narrow road is lined on both sides with various
+shops and other buildings housing establishments of mystical nature.  South
+of here, the street merges with the Avenue of the Gods.  To the west, wide
+steps lead up to the Temple of the Cross.
+--- [goto 2.clone]
+Temple Infirmary
+   This is a large room where the sick and the dying are cared for by the
+nuns and priestesses of the Church.  There are about fifty straw beds arranged
+in four rows here, and almost all of them are full.  Most of the patients are
+either common citizens or foreigners; the military has their own infirmary
+as do the large temples.  The wealthier citizens can afford an in-home visit
+by a Church healer.  The entire room smells of medicinal soap.  There is
+a single exit through a marble archway to the north.
+A clone is standing here.
+--- [goto 8105]
+The Street of Wizardry
+   You are in the section of Kir Drax'in dedicated to the magical practioners
+who live in the city.  This narrow road is lined on both sides with various
+shops and other buildings housing establishments of mystical nature.  South
+of here, the street merges with the Avenue of the Gods.  To the west, wide
+steps lead up to the Temple of the Cross.
+--- [at 1.clone look]
+Quiet Room
+   This is a quiet room, used by the priests and priestesses of the Cross
+for prayer and meditation.  There is a large window in the northern wall
+that looks out over the beautiful temple garden, but you can't see any way
+to get to it from here.  A marble archway leads south from this room to
+the eastern vestibule.
+A clone is standing here.
+--- [at 2.clone look]
+Temple Infirmary
+   This is a large room where the sick and the dying are cared for by the
+nuns and priestesses of the Church.  There are about fifty straw beds arranged
+in four rows here, and almost all of them are full.  Most of the patients are
+either common citizens or foreigners; the military has their own infirmary
+as do the large temples.  The wealthier citizens can afford an in-home visit
+by a Church healer.  The entire room smells of medicinal soap.  There is
+a single exit through a marble archway to the north.
+A clone is standing here.
+draw-parity	MATCH	entries=4075	stream=4075
+dp-oracle-diff: normalized divergence detected
+exit status 3

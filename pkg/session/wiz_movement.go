@@ -63,7 +63,7 @@ func findGotoRoom(s *Session, raw string) (int, bool) {
 		return gotoRoomAllowed(s, vnum)
 	}
 
-	if target, ok := s.manager.world.ResolveCharWorld(s.player, roomName); ok {
+	if target, ok := s.manager.world.GetCharVis(s.player, roomName); ok {
 		if target.Player != nil {
 			return gotoRoomAllowed(s, target.Player.GetRoom())
 		}
@@ -245,7 +245,7 @@ func findAtRoom(s *Session, raw string) (int, bool) {
 		return vnum, true
 	}
 
-	if target, ok := s.manager.world.ResolveCharWorld(s.player, raw); ok {
+	if target, ok := s.manager.world.GetCharVis(s.player, raw); ok {
 		if target.Player != nil {
 			return target.Player.GetRoom(), true
 		}
@@ -298,7 +298,7 @@ func cmdTeleport(s *Session, args []string) error {
 		s.Send("Whom do you wish to teleport?\r\n")
 		return nil
 	}
-	target, ok := s.manager.world.ResolveCharWorld(s.player, targetName)
+	target, ok := s.manager.world.GetCharVis(s.player, targetName)
 	if !ok || target.Combatant == nil {
 		s.Send("No-one by that name here.\r\n")
 		return nil
@@ -423,7 +423,7 @@ func cmdTransfer(s *Session, args []string) error {
 		return nil
 	}
 
-	target, ok := s.manager.world.ResolveCharWorld(s.player, targetName)
+	target, ok := s.manager.world.GetCharVis(s.player, targetName)
 	if !ok || target.Combatant == nil {
 		s.Send("No-one by that name here.\r\n")
 		return nil
