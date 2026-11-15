@@ -342,7 +342,7 @@ func (a *WorldScriptableAdapter) Say(me scripting.CharRef, text string) {
 // Emote is lua_emote's do_echo(me, text, SCMD_EMOTE).
 func (a *WorldScriptableAdapter) Emote(me scripting.CharRef, text string) {
 	if m := a.mobFor(me); m != nil {
-		a.world.NPCCommandDirect(m, "emote", text)
+		a.world.NPCCommandDirect(m, "emote", text, npcACMDSubcmdEmote)
 	}
 }
 
@@ -1048,7 +1048,7 @@ func (a *WorldScriptableAdapter) Echo(kind string, room *scripting.RoomRef, ch *
 // Gossip is lua_gossip's do_gen_comm(me, text, SCMD_GOSSIP).
 func (a *WorldScriptableAdapter) Gossip(me scripting.CharRef, text string) {
 	if m := a.mobFor(me); m != nil {
-		a.world.NPCCommandDirect(m, "gossip", text)
+		a.world.NPCCommandDirect(m, "gossip", text, npcACMDSubcmdGossip)
 	}
 }
 

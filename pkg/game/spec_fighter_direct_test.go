@@ -16,8 +16,9 @@ func TestSpecFighterHeadbuttRefusesImmortalDirectTarget(t *testing.T) {
 	mob.SetFightingBody(player)
 
 	var commandName, commandArgument string
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, name, argument string) CharacterCommandResult {
-		commandName, commandArgument = name, argument
+	var commandSubcmd int
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, name, argument string, subcmd int) CharacterCommandResult {
+		commandName, commandArgument, commandSubcmd = name, argument, subcmd
 		return CharacterCommandUnsupported
 	}
 
@@ -41,8 +42,8 @@ func TestSpecFighterHeadbuttRefusesImmortalDirectTarget(t *testing.T) {
 	if !specFighter(w, nil, mob, "", "") {
 		t.Fatal("fighter did not handle its headbutt case")
 	}
-	if commandName != "headbutt" || commandArgument != player.GetName() {
-		t.Fatalf("direct command = %q %q, want headbutt %q", commandName, commandArgument, player.GetName())
+	if commandName != "headbutt" || commandArgument != player.GetName() || commandSubcmd != 1 {
+		t.Fatalf("direct command = %q %q subcmd=%d, want headbutt %q subcmd=1", commandName, commandArgument, commandSubcmd, player.GetName())
 	}
 	if got := transcript(); got != "" {
 		// Revert control: restoring the Go victim line must fail this assertion.

@@ -35,16 +35,17 @@ func TestSpecBrainEater_BeheadsCorpseAndLevelsInstance(t *testing.T) {
 		t.Fatalf("MoveObjectToContainer: %v", err)
 	}
 	var commandName, commandArg string
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
-		commandName, commandArg = command, argument
+	var commandSubcmd int
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, subcmd int) CharacterCommandResult {
+		commandName, commandArg, commandSubcmd = command, argument, subcmd
 		return CharacterCommandUnsupported
 	}
 
 	if !specBrainEater(w, nil, mob, "", "") {
 		t.Fatal("expected brain_eater to handle a qualifying corpse")
 	}
-	if commandName != "behead" || commandArg != "corpse" {
-		t.Fatalf("direct command = %q %q, want behead %q", commandName, commandArg, "corpse")
+	if commandName != "behead" || commandArg != "corpse" || commandSubcmd != 0 {
+		t.Fatalf("direct command = %q %q subcmd=%d, want behead %q subcmd=0", commandName, commandArg, commandSubcmd, "corpse")
 	}
 
 	if got, want := transcript(), "A test mob rips the head off the corpse of a guard trainee!\r\nA test mob pulls the brain out of the head and eats it with a noisy\r\nslurp, blood and drool flying everywhere.\r\n"; got != want {

@@ -473,13 +473,13 @@ func specFighter(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	}
 	switch number(0, 10) {
 	case 1:
-		w.NPCCommandDirect(me, "headbutt", melee.GetName())
+		w.NPCCommandDirect(me, "headbutt", melee.GetName(), 1)
 	case 2:
-		w.NPCCommandDirect(me, "parry", melee.GetName())
+		w.NPCCommandDirect(me, "parry", melee.GetName(), 1)
 	case 3:
-		w.NPCCommandDirect(me, "bash", melee.GetName())
+		w.NPCCommandDirect(me, "bash", melee.GetName(), 1)
 	case 4:
-		w.NPCCommandDirect(me, "berserk", "")
+		w.NPCCommandDirect(me, "berserk", "", 1)
 	default:
 		return false
 	}
@@ -494,15 +494,15 @@ func specPaladin(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	}
 	switch number(0, 8) {
 	case 0:
-		w.NPCCommandDirect(me, "parry", melee.GetName())
+		w.NPCCommandDirect(me, "parry", melee.GetName(), 1)
 	case 1:
-		w.NPCCommandDirect(me, "bash", melee.GetName())
+		w.NPCCommandDirect(me, "bash", melee.GetName(), 1)
 	case 2:
-		w.NPCCommandDirect(me, "charge", melee.GetName())
+		w.NPCCommandDirect(me, "charge", melee.GetName(), 1)
 	case 3:
 		castMobSpell(w, me, melee, paladinDispelSpell(me))
 	case 5:
-		w.NPCCommandDirect(me, "disarm", melee.GetName())
+		w.NPCCommandDirect(me, "disarm", melee.GetName(), 1)
 	}
 	return true
 }

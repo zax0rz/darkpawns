@@ -301,6 +301,7 @@ func mobBerserk(me *MobInstance) {
 	me.AddAffect(engine.NewAffectDirect(skillNumBerserk, ApplyHitroll, 1, hitDamMod, engine.AFFBerserk, "berserk"))
 	me.AddAffect(engine.NewAffectDirect(skillNumBerserk, ApplyDamroll, 1, hitDamMod, engine.AFFBerserk, "berserk"))
 	me.AddAffect(engine.NewAffectDirect(skillNumBerserk, ApplyAC, 1, acMod, engine.AFFBerserk, "berserk"))
+	me.SetWaitState(2) // WAIT_STATE(ch, PULSE_VIOLENCE * 2), even after a failed roll.
 }
 
 // npcFighterCommand is the actor-side ACMD body path for direct mobile calls

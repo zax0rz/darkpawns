@@ -80,8 +80,8 @@ func (m *Manager) executeCharacterCommand(actor combat.Combatant, sess *Session,
 // executeCharacterCommandDirect dispatches a direct C ACMD call. The C caller
 // already selected the command body and passed its argument pointer, so this
 // path skips command_interpreter's draw, name resolution, gates, and specials.
-func (m *Manager) executeCharacterCommandDirect(actor combat.Combatant, sess *Session, commandName, rawArgs string) game.CharacterCommandResult {
-	return dispatchCharacterCommandDirect(command.ExecutionContext{Body: actor, Session: commandSessionForCharacter(sess), World: m.world, RawArgs: rawArgs}, commandName, rawArgs)
+func (m *Manager) executeCharacterCommandDirect(actor combat.Combatant, sess *Session, commandName, rawArgs string, subcmd int) game.CharacterCommandResult {
+	return dispatchCharacterCommandDirect(command.ExecutionContext{Body: actor, Session: commandSessionForCharacter(sess), World: m.world, RawArgs: rawArgs, DirectCall: true, Subcmd: subcmd}, commandName, rawArgs)
 }
 
 func commandSessionForCharacter(sess *Session) common.CommandSession {
@@ -91,8 +91,13 @@ func commandSessionForCharacter(sess *Session) common.CommandSession {
 	return &commandSession{Session: sess}
 }
 
-func dispatchCharacterCommandDirect(ctx command.ExecutionContext, commandName, rawArgs string) game.CharacterCommandResult {
+func dispatchCharacterCommandDirect(ctx command.ExecutionContext, commandName, rawArgs string, subcmd ...int) game.CharacterCommandResult {
 	ctx.RawArgs = rawArgs
+	ctx.DirectCall = true
+	ctx.Subcmd = 0
+	if len(subcmd) > 0 {
+		ctx.Subcmd = subcmd[0]
+	}
 	if ctx.Body == nil {
 		return game.CharacterCommandUnsupported
 	}

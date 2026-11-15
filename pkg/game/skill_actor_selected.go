@@ -132,7 +132,9 @@ func CharacterBerserk(ctx CharacterCommandContext, _ []string) CharacterCommandR
 	prob := ctx.World.DummyMobSkill(skillNumBerserk)
 	if prob == 0 {
 		mobileSend(ctx, mob, "You're about as berserk as you're gonna get.\r\n")
-		return CharacterCommandHandled
+		if !ctx.DirectCall || ctx.Subcmd == 0 {
+			return CharacterCommandHandled
+		}
 	}
 	percent := dprng.Number(1, 101)
 	if mob.IsAffected(affBerserk) {
@@ -141,6 +143,9 @@ func CharacterBerserk(ctx CharacterCommandContext, _ []string) CharacterCommandR
 	}
 	if mob.GetLevel() > LVL_IMMORT {
 		percent = 0
+	}
+	if ctx.DirectCall && ctx.Subcmd != 0 {
+		prob = dprng.Number(50, 100)
 	}
 	failed := percent > prob
 	message, hitDamMod, acMod := "Your vision turns sanguine as you summon up your battle rage!\r\n", 2, 25

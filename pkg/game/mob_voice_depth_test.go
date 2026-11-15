@@ -91,7 +91,7 @@ func TestMobKillBragReachesGossipAndReview(t *testing.T) {
 	victim.SetHP(-1)
 	installBragRoller(t, 0, 3) // case 3: "<name> was easy xp."
 	var commandName, commandArg string
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
 		commandName, commandArg = command, argument
 		return CharacterCommandUnsupported
 	}

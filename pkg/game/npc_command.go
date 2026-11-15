@@ -92,19 +92,31 @@ func (w *World) NPCCommand(me *MobInstance, line string) {
 }
 
 // NPCCommandDirect ports a direct C ACMD call such as
-// do_tell(mobile, argument, find_command("tell"), 0). The caller supplies the
+// do_tell(mobile, argument, find_command("tell"), 0). The optional subcmd is
+// the C call site's ACMD argument and defaults to zero. The caller supplies the
 // known command body separately from its argument, so the argument reaches the
 // command parser unchanged. This skips command_interpreter's hide draw,
 // position/level/wait gates, and special() pass, all of which C skips for a
 // direct ACMD call. Callers in C commonly ignore the ACMD result, so they may
 // ignore the returned status too.
-func (w *World) NPCCommandDirect(me *MobInstance, commandName, argument string) CharacterCommandResult {
+const (
+	npcACMDSubcmdEmote   = 1 // src/interpreter.h:221
+	npcACMDSubcmdShout   = 1 // src/interpreter.h:153
+	npcACMDSubcmdGossip  = 2 // src/interpreter.h:154
+	npcACMDSubcmdAuction = 3 // src/interpreter.h:155
+)
+
+func (w *World) NPCCommandDirect(me *MobInstance, commandName, argument string, subcmd ...int) CharacterCommandResult {
 	if w == nil || me == nil {
 		return CharacterCommandUnsupported
 	}
 	commandName = strings.ToLower(strings.TrimSpace(commandName))
+	commandSubcmd := 0
+	if len(subcmd) > 0 {
+		commandSubcmd = subcmd[0]
+	}
 	if w.CharacterCommandDirectExecFunc != nil {
-		if result := w.CharacterCommandDirectExecFunc(me, commandName, argument); result == CharacterCommandHandled {
+		if result := w.CharacterCommandDirectExecFunc(me, commandName, argument, commandSubcmd); result == CharacterCommandHandled {
 			return result
 		}
 	}

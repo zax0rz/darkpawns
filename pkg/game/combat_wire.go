@@ -268,7 +268,7 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// no descriptor, so its TO_CHAR echo remains absent.
 	cb.BroadChat = func(chName combat.Combatant, msg string) {
 		if mob := combatMob(chName); mob != nil {
-			w.NPCCommandDirect(mob, "gossip", msg)
+			w.NPCCommandDirect(mob, "gossip", msg, npcACMDSubcmdGossip)
 		}
 	}
 
