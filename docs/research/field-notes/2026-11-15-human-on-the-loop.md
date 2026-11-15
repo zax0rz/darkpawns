@@ -70,3 +70,7 @@ On 2026-11-13 through 2026-11-15, 142 PRs merged into `main` (GitHub search `mer
 - How much of the review catch rate comes from the C oracle, and how much from a second model reading the diff? The table suggests both: the reply regression came from a census, and the ninja gate came from reading C.
 - Would agents reviewing each other's PRs catch the same things? This weekend they didn't, by rule.
 - What does the overnight idle time cost in throughput? The prompt files' timestamps and the PRs' open times could measure it.
+
+## Data not captured yet
+
+Zach pointed out a gap: nobody counts **the work Claude sends back**. That covers follow-up prompts to an agent (`~/PROMPT-*-changes.md`, `*-reply.md` and the numbered weekend prompts), fixes Claude pushed to an agent's branch, and findings an agent reported but didn't file. Same day example: #2688 said it had filed a mob-regeneration finding, it hadn't, and Claude filed it as DP-1542. The evidence is all retained in Git (Claude's commits on agent branches), the PR comment threads, the prompt files and the census runs. A later pass could dig it out and give each agent a send-back rate.
