@@ -1,0 +1,46 @@
+# C-first class-gate witness for do_kuji_kiri. A level-9 clone normally has
+# class zero and is refused before the success draw. do_set can change the
+# mobile class (src/act.wizard.c:2582,2935-2940); after setting it to ninja,
+# C passes the class gate, draws number(1,101), then reaches shared zero skill.
+# depth-case: kuji-kiri.switched-ninja-mobile-class-gate
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8162 80
+
+[setup:oracle]
+KujiClass
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+KujiClass
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set clone class ninja
+
+[probe]
+switch clone
+rin

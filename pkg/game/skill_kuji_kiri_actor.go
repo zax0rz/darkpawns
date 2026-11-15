@@ -17,7 +17,7 @@ func CharacterKujiKiri(ctx CharacterCommandContext, seal string) CharacterComman
 		return CharacterCommandUnsupported
 	}
 
-	if mob.GetLevel() < LVL_IMMORT {
+	if mob.GetClass() != ClassNinja && mob.GetLevel() < LVL_IMMORT {
 		mobileSend(ctx, mob, "You know nothing of kuji-kiri!\r\n")
 		return CharacterCommandHandled
 	}

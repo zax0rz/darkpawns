@@ -21,6 +21,16 @@ func TestCharacterKujiKiriMobileGatesAndDrawParity(t *testing.T) {
 			want:  "You know nothing of kuji-kiri!\r\n",
 		},
 		{
+			name:  "ninja class bypasses class gate",
+			level: 9,
+			setup: func(mob *MobInstance) {
+				class := ClassNinja
+				mob.Runtime.ClassOverride = &class
+			},
+			want:      "You have not mastered this art yet!\r\n",
+			wantDraws: 1,
+		},
+		{
 			name:  "fighting gate",
 			level: LVL_IMMORT,
 			setup: func(mob *MobInstance) {
