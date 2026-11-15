@@ -4,6 +4,11 @@
 # mobile's own weapon, and berserk mutates the mobile's combat affects.
 # src/act.wizard.c:1599-1601; src/new_cmds.c:1893-1938, 2134-2185.
 
+# depth-case: alter.switched-mobile-restored-skill-wield
+# depth-case: berserk.switched-mobile-restored-skill
+
+# depth-case: switched.utility.restored-mobile-skill-and-equipment
+
 [fixture]
 empty-players
 quiet-mobs

@@ -6,6 +6,16 @@
 # src/new_cmds2.c:139-188; src/new_cmds.c:216-300, 471-547, 1199-1268,
 # 1893-1938, 2134-2185.
 
+# depth-case: aid.switched-mobile-zero-skill
+# depth-case: alter.switched-mobile-zero-skill
+# depth-case: flesh.switched-mobile-zero-skill
+# depth-case: bearhug.switched-mobile-zero-skill
+# depth-case: berserk.switched-mobile-zero-skill
+# depth-case: behead.switched-mobile-corpse-output
+# depth-case: bite.switched-mobile-npc-branch
+
+# depth-case: switched.utility.mobile-zero-skill-and-npc-branches
+
 [fixture]
 empty-players
 quiet-mobs
