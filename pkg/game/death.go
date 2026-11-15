@@ -22,6 +22,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/events"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 
@@ -1085,16 +1086,32 @@ func (w *World) createMoneyObject(amount int) *ObjectInstance {
 	if amount <= 0 {
 		return nil
 	}
-	// Build description based on amount (matching handler.c create_money())
-	var shortDesc, longDesc, name string
+	// Build description and extra description based on amount (src/handler.c:1454-1485).
+	var shortDesc, longDesc, name, exKeyword, exDesc string
 	if amount == 1 {
 		name = "coin gold"
 		shortDesc = "a gold coin"
 		longDesc = "One miserable gold coin is lying here."
+		exKeyword = "coin gold"
+		exDesc = "It's just one miserable little gold coin."
 	} else {
 		name = "coins gold"
 		shortDesc = createMoneyDesc(amount)
 		longDesc = fmt.Sprintf("%s is lying here.", capitalize(createMoneyDesc(amount)))
+		exKeyword = "coins gold"
+		switch {
+		case amount < 10:
+			exDesc = fmt.Sprintf("There are %d coins.", amount)
+		case amount < 100:
+			exDesc = fmt.Sprintf("There are about %d coins.", 10*(amount/10))
+		case amount < 1000:
+			exDesc = fmt.Sprintf("It looks to be about %d coins.", 100*(amount/100))
+		case amount < 100000:
+			exDesc = fmt.Sprintf("You guess there are, maybe, %d coins.",
+				1000*((amount/1000)+dprng.Number(0, amount/1000)))
+		default:
+			exDesc = "There are a LOT of coins."
+		}
 	}
 
 	typeFlag := ITEM_MONEY
@@ -1120,6 +1137,7 @@ func (w *World) createMoneyObject(amount int) *ObjectInstance {
 	money.Runtime.Keywords = name
 	money.Runtime.ShortDesc = shortDesc
 	money.Runtime.LongDesc = longDesc
+	money.SetLiveExtraDescs([]parser.ExtraDesc{{Keywords: exKeyword, Description: exDesc}})
 	// C's create_money never assigns a weight: create_obj zeroes the object
 	// and every money pile weighs 0 (handler.c:1440-1488). The
 	// prototype-less fallback in GetWeight would otherwise report 1.

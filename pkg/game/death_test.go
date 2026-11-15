@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
@@ -178,6 +179,52 @@ func TestCreateMoneyDesc(t *testing.T) {
 			got := createMoneyDesc(tt.amount)
 			if got != tt.want {
 				t.Errorf("createMoneyDesc(%d) = %q, want %q", tt.amount, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCreateMoneyObjectExtraDescs(t *testing.T) {
+	w, err := NewWorld(&parser.World{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.StopAITicker()
+	t.Cleanup(w.StopAITicker)
+	tests := []struct {
+		name     string
+		amount   int
+		wantKeys string
+		wantDesc string
+		prefix   bool
+	}{
+		{name: "single coin", amount: 1, wantKeys: "coin gold", wantDesc: "It's just one miserable little gold coin."},
+		{name: "under 10", amount: 7, wantKeys: "coins gold", wantDesc: "There are 7 coins."},
+		{name: "under 100", amount: 57, wantKeys: "coins gold", wantDesc: "There are about 50 coins."},
+		{name: "under 1000", amount: 789, wantKeys: "coins gold", wantDesc: "It looks to be about 700 coins."},
+		{name: "1000 to 99999 draws", amount: 5000, wantKeys: "coins gold", wantDesc: "You guess there are, maybe, ", prefix: true},
+		{name: "100000 or more", amount: 100000, wantKeys: "coins gold", wantDesc: "There are a LOT of coins."},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dprng.Seed(1)
+			obj := w.createMoneyObject(tt.amount)
+			if obj == nil {
+				t.Fatalf("createMoneyObject(%d) = nil", tt.amount)
+			}
+			descs := obj.GetExtraDescs()
+			if len(descs) != 1 {
+				t.Fatalf("len(GetExtraDescs()) = %d, want 1", len(descs))
+			}
+			if descs[0].Keywords != tt.wantKeys {
+				t.Errorf("Keywords = %q, want %q", descs[0].Keywords, tt.wantKeys)
+			}
+			if tt.prefix {
+				if !strings.HasPrefix(descs[0].Description, tt.wantDesc) {
+					t.Errorf("Description = %q, want prefix %q", descs[0].Description, tt.wantDesc)
+				}
+			} else if descs[0].Description != tt.wantDesc {
+				t.Errorf("Description = %q, want %q", descs[0].Description, tt.wantDesc)
 			}
 		})
 	}
