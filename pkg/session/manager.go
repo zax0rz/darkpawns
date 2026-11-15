@@ -908,9 +908,17 @@ func (m *Manager) PumpPulsesFrom(_ *Session, n int) error {
 	if pump == nil {
 		return fmt.Errorf("pulse pump is not configured")
 	}
+	m.BeginHeartbeatOutput()
 	if err := pump(n); err != nil {
+		m.EndHeartbeatOutput()
 		return err
 	}
+	// C's DP_CLOCK game_loop runs dp_command_phase(0) after while(dp_seam_take())
+	// without setting wait=1 on executed commands (comm.c:489, 670, 737-740),
+	// so any remaining queued commands whose wait is now <= 0 drain before the
+	// post-pump output flush.
+	m.drainReadyInputsAfterPump()
+	m.EndHeartbeatOutput()
 	m.flushAsyncPrompts()
 	return nil
 }
@@ -1310,6 +1318,15 @@ func (s *Session) dequeueInput() (queuedInput, bool) {
 // the lock, then ExecuteCommand each outside it. Player and mob wait accessors
 // touch only body state and never reacquire m.mu.
 func (m *Manager) DrainInputQueues() {
+	m.drainInputPass(true)
+}
+
+func (m *Manager) drainReadyInputsAfterPump() {
+	for m.drainInputPass(false) {
+	}
+}
+
+func (m *Manager) drainInputPass(decrement bool) bool {
 	type drainJob struct {
 		s       *Session
 		cmd     string
@@ -1337,9 +1354,11 @@ func (m *Manager) DrainInputQueues() {
 		if !ok {
 			continue
 		}
-		// Fact 2: wait decrements once per pulse.
-		waiter.DecrementWaitState()
-		// Fact 3: one command drains per pulse (if, not while).
+		if decrement {
+			// Fact 2: wait decrements once per pulse.
+			waiter.DecrementWaitState()
+		}
+		// Fact 3: one command drains per pass (if, not while).
 		if waiter.GetWaitState() <= 0 {
 			if input, ok := s.dequeueInput(); ok {
 				jobs = append(jobs, drainJob{s: s, cmd: input.cmd, args: input.args, rawArgs: input.rawArgs, aliased: input.aliased})
@@ -1373,6 +1392,7 @@ func (m *Manager) DrainInputQueues() {
 				"player", job.s.playerName, "command", job.cmd, "error", err)
 		}
 	}
+	return len(jobs) > 0
 }
 
 // SetFleeHooks wires wimpy auto-flee into the combat engine (DP-389).

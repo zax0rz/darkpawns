@@ -290,3 +290,38 @@ func TestInputTiming_UnitConversion(t *testing.T) {
 		t.Fatalf("SetWaitState(2) = %d, want %d pulses", got, want)
 	}
 }
+
+// TestInputTiming_PumpPulsesDrainsRemainingReadyQueue proves that after a
+// DP_CLOCK pulse burst expires a wait and drains one non-waiting command,
+// PumpPulsesFrom drains any remaining ready queued commands in the same output
+// turn (matching C's dp_command_phase(0) after dp_seam_take() when
+// !dp_clock skips wait=1 in comm.c:489, 670, 737-740) and stops if one sets
+// a new wait.
+func TestInputTiming_PumpPulsesDrainsRemainingReadyQueue(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Hero", 1001, true)
+	registerForDrain(t, m, s)
+	m.SetPulsePump(func(n int) error {
+		m.BeginHeartbeatOutput()
+		defer m.EndHeartbeatOutput()
+		for range n {
+			m.DrainInputQueues()
+		}
+		return nil
+	})
+
+	s.player.SetWaitStatePulses(2)
+	s.enqueueInput("whoami", nil)
+	s.enqueueInput("whoami", nil)
+
+	if err := m.PumpPulsesFrom(s, 2); err != nil {
+		t.Fatalf("PumpPulsesFrom: %v", err)
+	}
+	if got := s.queueLen(); got != 0 {
+		t.Fatalf("remaining queue depth = %d, want 0", got)
+	}
+	got := drainSendChannel(t, s)
+	if count := strings.Count(got, "Hero"); count != 2 {
+		t.Fatalf("expected both queued commands to execute in PumpPulsesFrom, got %d in %q", count, got)
+	}
+}
