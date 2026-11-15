@@ -18,7 +18,7 @@ func TestNormalizeTier1Rules(t *testing.T) {
 		"  Wis: decent        Con: good          Cha: bad\r\n" +
 		"22H 100M 83V >   \r\nPlayer HP: 22/22\r\nPlayers online: 7\r\n" +
 		"As of 10-17-2008 there has been a pwipe.\r\n**** Dark Pawns 3.0 beta\r\nDescription  \r\n"
-	want := "Room\n<ROLLED_STATS>\n<PROMPT>\nPlayer <VITALS>\nDescription\n"
+	want := "Room\n<ROLLED_STATS>\n<PROMPT>\nPlayer <VITALS>\nDescription  \n"
 	if got := Normalize(raw); got != want {
 		t.Fatalf("Normalize() = %q, want %q", got, want)
 	}
@@ -645,12 +645,20 @@ func TestReportBlockDivergence(t *testing.T) {
 
 func TestNormalizeKeepANSIPreservesEscapeBytes(t *testing.T) {
 	raw := "\r\n\x1b[32m1\x1b[0m) Name        : \x1b[33mAt the Temple Altar\r\nEnter choice : "
-	want := "\x1b[32m1\x1b[0m) Name        : \x1b[33mAt the Temple Altar\nEnter choice :\n"
+	want := "\x1b[32m1\x1b[0m) Name        : \x1b[33mAt the Temple Altar\nEnter choice : \n"
 	if got := NormalizeKeepANSI(raw); got != want {
 		t.Fatalf("NormalizeKeepANSI() = %q, want %q", got, want)
 	}
 	if got := Normalize(raw); strings.Contains(got, "\x1b") {
 		t.Fatalf("Normalize() kept ANSI bytes: %q", got)
+	}
+}
+
+func TestNormalizePreservesTrailingSpaces(t *testing.T) {
+	raw := "Your current ability scores: \r\n   [ Exits: north ]\r\n"
+	want := "Your current ability scores: \n[ Exits: north ]\n"
+	if got := Normalize(raw); got != want {
+		t.Fatalf("Normalize() = %q, want %q", got, want)
 	}
 }
 

@@ -107,7 +107,6 @@ func normalize(raw string, keepANSI bool) string {
 	raw = strings.ReplaceAll(raw, "\r", "\n")
 	lines := strings.Split(raw, "\n")
 	for i := range lines {
-		lines[i] = strings.TrimRight(lines[i], " \t")
 		if autoExitLine.MatchString(lines[i]) {
 			lines[i] = strings.TrimLeft(lines[i], " \t")
 		}
