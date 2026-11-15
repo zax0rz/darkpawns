@@ -1,0 +1,33 @@
+capture-statistics	blocks=3	empty-open=1	empty-closed=0
+capture-statistics	blocks=3	empty-open=1	empty-closed=0
+hollow-prompt-steps	count=0
+divergence-fingerprint	stat dealer	50786bcd48bdb45151e4c37edbb981e564a0bf03c60f78c65b749f1a11454ae5
+Dark Pawns Tier-1 differential report
+scenario: regen-npc-mana-depth
+c-oracle: 127.0.0.1:23833 (DP_SEED=1)
+go-port: 127.0.0.1:23744 (DP_SEED=1)
+result: normalized divergence detected
+
+--- [stat dealer] c-oracle
++++ [stat dealer] go-port
+(no normalized divergence)
+
+--- [~dpclock pulse 630] c-oracle
++++ [~dpclock pulse 630] go-port
+(no normalized divergence)
+
+--- [stat dealer] c-oracle
++++ [stat dealer] go-port
+@@ -5,7 +5,7 @@
+ Race: [25] Magical Construct
+ *************-------------*************-------------*************
+ Str: [18/0]	Int: [12]	*	Hit p.:  [1686/1686+128]
+-Dex: [18]	Wis: [18]	*	Mana p.: [10/10+32]
++Dex: [18]	Wis: [18]	*	Mana p.: [2/10+32]
+ Con: [16/16]	Cha: [18]	*	Move p.: [50/50+32]
+ *************-------------*************-------------*************
+ Coins: [     2739], Bank: [        0] (Total: 2739)
+
+draw-parity	MATCH	entries=4098	stream=4131
+dp-oracle-diff: normalized divergence detected
+exit status 3

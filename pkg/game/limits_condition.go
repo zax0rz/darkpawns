@@ -244,16 +244,6 @@ func (w *World) PointUpdate() {
 					m.SetHealth(m.GetMaxHP())
 				}
 			}
-			// Mana regen — limits.c:493-494. C's order is hit, mana, move, with
-			// the same < max guard and MIN cap as the hit arm. mana_gain's NPC
-			// branch returns GET_LEVEL plus the shared affect/room tail.
-			if m.GetMana() < m.GetMaxMana() {
-				gain := w.ManaGainNPC(m)
-				m.SetMana(m.GetMana() + gain)
-				if m.GetMana() > m.GetMaxMana() {
-					m.SetMana(m.GetMaxMana())
-				}
-			}
 			// C point_update restores NPC movement by level every tick, capped
 			// at the fixed max_move=50 initialized in read_mobile.
 			m.GainMove(MoveGainNPC(m))
