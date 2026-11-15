@@ -414,7 +414,6 @@ func (s *Session) TerminalLine(rawLine string) bool {
 		// flushes (comm.c:644-649, 1613-1640; DP-1539).
 		s.terminalError(s.terminalCommand("", nil, rawLine))
 		if !s.SendClosed() {
-			s.infoBarRepaintPending.Store(true)
 			s.SendPrompt()
 		}
 	default:

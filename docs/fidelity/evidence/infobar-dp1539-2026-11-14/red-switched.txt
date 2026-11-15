@@ -1,0 +1,56 @@
+capture-statistics	blocks=10	empty-open=4	empty-closed=0
+capture-statistics	blocks=10	empty-open=4	empty-closed=0
+hollow-prompt-steps	count=0
+divergence-fingerprint	holler pulse [actor]	e598ea90a666a547f0bbf262f8b7509791775f4ce1f66395212576b00b75d31f
+Dark Pawns Tier-1 differential report
+scenario: infobar-pulse-empty-switched-depth
+c-oracle: 127.0.0.1:15390 (DP_SEED=1)
+go-port: 127.0.0.1:32510 (DP_SEED=1)
+result: normalized divergence detected
+
+--- [infobar on [actor]] c-oracle
++++ [infobar on [actor]] go-port
+(no normalized divergence)
+
+--- [infobar on [setter]] c-oracle
++++ [infobar on [setter]] go-port
+(no normalized divergence)
+
+--- [holler pulse [actor]] c-oracle
++++ [holler pulse [actor]] go-port
+@@ -1,1 +1,3 @@
+ You holler, 'pulse'
++
++7          30(50)8
+
+--- [holler pulse [setter]] c-oracle
++++ [holler pulse [setter]] go-port
+(no normalized divergence)
+
+--- [send:setter set dealer mana 2 [setter]] c-oracle
++++ [send:setter set dealer mana 2 [setter]] go-port
+(no normalized divergence)
+
+--- [send:setter set dealer mana 2 [primary]] c-oracle
++++ [send:setter set dealer mana 2 [primary]] go-port
+(no normalized divergence)
+
+--- [ [actor]] c-oracle
++++ [ [actor]] go-port
+(no normalized divergence)
+
+--- [ [setter]] c-oracle
++++ [ [setter]] go-port
+(no normalized divergence)
+
+--- [ [actor]] c-oracle
++++ [ [actor]] go-port
+(no normalized divergence)
+
+--- [ [setter]] c-oracle
++++ [ [setter]] go-port
+(no normalized divergence)
+
+draw-parity	MATCH	entries=4177	stream=4208
+dp-oracle-diff: normalized divergence detected
+exit status 3

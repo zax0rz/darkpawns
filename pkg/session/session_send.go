@@ -360,7 +360,6 @@ func (s *Session) SendPrompt() {
 }
 
 func (s *Session) sendPromptNow() {
-	deferredRepaint := s.infoBarRepaintPending.Swap(false)
 	if s.IsPaging() {
 		flags := s.player.GetFlags()
 		color := hasCompleteColor(flags)
@@ -388,12 +387,7 @@ func (s *Session) sendPromptNow() {
 		}
 		return
 	}
-	// C's repaint is only observable on the bare-prompt path (DP-1539): a
-	// normal prompt pass consumes changed values without emitting them, and
-	// the empty-input pass defers them to the flush after this prompt.
-	if !deferredRepaint {
-		s.noteInfoBarPrompt()
-	}
+	cmdInfoBarUpdate(s)
 	// GMCP state rides ahead of the prompt it describes.
 	s.gmcpSync()
 	editing, playing := s.editorPromptState()
@@ -415,9 +409,6 @@ func (s *Session) sendPromptNow() {
 		text = "\r\n" + text
 	}
 	s.sendPromptText(text)
-	if deferredRepaint {
-		cmdInfoBarUpdate(s)
-	}
 }
 
 // noteInfoBarPrompt records the current vitals as the infobar comparison

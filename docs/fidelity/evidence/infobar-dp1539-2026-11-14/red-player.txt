@@ -1,0 +1,40 @@
+capture-statistics	blocks=6	empty-open=1	empty-closed=0
+capture-statistics	blocks=6	empty-open=1	empty-closed=0
+hollow-prompt-steps	count=0
+divergence-fingerprint	holler test	1df8588052e3b7f5d365267507b7ac7371a3abc37c2f22e0b51cac5745a44796
+Dark Pawns Tier-1 differential report
+scenario: infobar-pulse-empty-player-depth
+c-oracle: 127.0.0.1:27764 (DP_SEED=1)
+go-port: 127.0.0.1:21462 (DP_SEED=1)
+result: normalized divergence detected
+
+--- [infobar on] c-oracle
++++ [infobar on] go-port
+(no normalized divergence)
+
+--- [holler test] c-oracle
++++ [holler test] go-port
+@@ -1,1 +1,3 @@
+ You holler, 'test'
++
++7          62(82)8
+
+--- [~dpclock pulse 630] c-oracle
++++ [~dpclock pulse 630] go-port
+(no normalized divergence)
+
+--- [] c-oracle
++++ [] go-port
+(no normalized divergence)
+
+--- [] c-oracle
++++ [] go-port
+(no normalized divergence)
+
+--- [look] c-oracle
++++ [look] go-port
+(no normalized divergence)
+
+draw-parity	MATCH	entries=4064	stream=4066
+dp-oracle-diff: normalized divergence detected
+exit status 3
