@@ -375,15 +375,6 @@ func (m *Manager) CheckMessage(playerName, message string) (string, FilterAction
 	return filteredMsg, actionTaken, false
 }
 
-// RecordMessage records a message for spam detection.
-func (m *Manager) RecordMessage(playerName string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	now := time.Now()
-	m.messageHistory[playerName] = append(m.messageHistory[playerName], now)
-}
-
 // hasPenalty checks if a player has an active penalty of a given type.
 // It acquires the read lock and is safe for public callers.
 func (m *Manager) hasPenalty(playerName string, penaltyType AdminAction) bool {
@@ -756,31 +747,6 @@ func (m *Manager) RemoveWordFilter(filterID int) {
 			break
 		}
 	}
-}
-
-// GetSpamConfig returns the current spam detection config.
-func (m *Manager) GetSpamConfig() SpamDetectionConfig {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.spamConfig
-}
-
-// SetSpamConfig updates the spam detection config.
-func (m *Manager) SetSpamConfig(messagesPerMin int, actionStr string) {
-	action := FilterActionWarn
-	switch strings.ToLower(actionStr) {
-	case "log":
-		action = FilterActionLog
-	case "warn":
-		action = FilterActionWarn
-	case "block":
-		action = FilterActionBlock
-	}
-
-	m.mu.Lock()
-	m.spamConfig.MessagesPerMinute = messagesPerMin
-	m.spamConfig.Action = action
-	m.mu.Unlock()
 }
 
 // IsMuted checks if a player is currently muted.

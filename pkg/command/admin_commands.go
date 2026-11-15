@@ -103,7 +103,6 @@ func (ac *AdminCommands) RegisterCommands() {
 	ac.manager.RegisterCommand("reports", ac.cmdListReports, game.LVL_IMMORT)
 	ac.manager.RegisterCommand("penalties", ac.cmdListPenalties, game.LVL_IMMORT)
 	ac.manager.RegisterCommand("filter", ac.cmdWordFilter, game.LVL_IMMORT)
-	ac.manager.RegisterCommand("spamconfig", ac.cmdSpamConfig, game.LVL_IMMORT)
 }
 
 // cmdReport allows players to report abusive behavior.
@@ -691,59 +690,6 @@ func (ac *AdminCommands) cmdWordFilter(s common.CommandSession, args []string) e
 	return nil
 }
 
-// cmdSpamConfig configures spam detection.
-func (ac *AdminCommands) cmdSpamConfig(s common.CommandSession, args []string) error {
-	if !ac.isAdmin(s) {
-		return fmt.Errorf("you must be an admin to use this command")
-	}
-
-	if len(args) == 0 {
-		config := ac.getSpamConfig()
-		s.Send(fmt.Sprintf("Spam detection configuration:\n"+
-			"  Messages per minute: %d\n"+
-			"  Action: %s\n\n"+
-			"Usage: spamconfig <messages_per_min> [action]\n"+
-			"  Example: spamconfig 15 block\n"+
-			"  Actions: log, warn, block",
-			config.MessagesPerMinute, config.Action))
-		return nil
-	}
-
-	threshold := 10
-	actionStr := "warn"
-
-	if _, err := fmt.Sscanf(args[0], "%d", &threshold); err == nil {
-		if len(args) > 1 {
-			switch strings.ToLower(args[1]) {
-			case "log":
-				actionStr = "log"
-			case "warn":
-				actionStr = "warn"
-			case "block":
-				actionStr = "block"
-			}
-		}
-	} else {
-		// Just action provided, parse it
-		switch strings.ToLower(args[0]) {
-		case "log":
-			actionStr = "log"
-		case "warn":
-			actionStr = "warn"
-		case "block":
-			actionStr = "block"
-		}
-	}
-
-	// Store spam config
-	if ac.mod != nil {
-		ac.mod.SetSpamConfig(threshold, actionStr)
-	}
-
-	s.Send(fmt.Sprintf("Spam configuration updated: %d msgs/min, action=%s", threshold, actionStr))
-	return nil
-}
-
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
@@ -814,17 +760,6 @@ func (ac *AdminCommands) getAllActivePenalties() []moderation.PlayerPenalty {
 		return nil
 	}
 	return ac.mod.GetAllActivePenalties()
-}
-
-// getSpamConfig returns the current spam detection config.
-func (ac *AdminCommands) getSpamConfig() moderation.SpamDetectionConfig {
-	if ac.mod == nil {
-		return moderation.SpamDetectionConfig{
-			MessagesPerMinute: 10,
-			Action:            moderation.FilterActionWarn,
-		}
-	}
-	return ac.mod.GetSpamConfig()
 }
 
 // parseDuration parses a duration string, supporting 'd' suffix for days.

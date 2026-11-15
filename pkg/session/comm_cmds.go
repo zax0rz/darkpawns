@@ -15,31 +15,12 @@ import (
 // Tell / Reply
 // ---------------------------------------------------------------------------
 
-// filterCommMessage checks a message against word filters and records it for spam.
-// Returns the (potentially filtered) message and whether it should be blocked.
-func filterCommMessage(s *Session, message string) (string, bool) {
-	if s.manager.modChecker != nil && s.player != nil {
-		s.manager.modChecker.RecordMessage(s.player.Name)
-		return s.manager.modChecker.CheckMessage(s.player.Name, message)
-	}
-	return message, false
-}
-
-func filteredCommMessage(s *Session, message string) (string, bool) {
-	return filterCommMessage(s, sanitizeMessage(message))
-}
-
 // cmdTell sends a private message to another player.
 // Source: act.comm.c do_tell() lines 901-931, perform_tell()
 func cmdTell(s *Session, args []string) error {
 	argument := strings.Join(args, " ")
 	if len(args) >= 2 {
-		filtered, block := filteredCommMessage(s, strings.Join(args[1:], " "))
-		if block {
-			s.sendText("Your message was blocked.")
-			return nil
-		}
-		argument = args[0] + " " + filtered
+		argument = args[0] + " " + sanitizeMessage(strings.Join(args[1:], " "))
 	}
 	s.manager.world.DoTell(s.player, argument)
 	return nil
@@ -49,12 +30,7 @@ func cmdTell(s *Session, args []string) error {
 // Source: act.comm.c do_reply() lines 934-975
 func cmdReply(s *Session, args []string) error {
 	if len(args) > 0 {
-		message, block := filteredCommMessage(s, strings.Join(args, " "))
-		if block {
-			s.sendText("Your message was blocked.")
-			return nil
-		}
-		s.manager.world.DoReply(s.player, message)
+		s.manager.world.DoReply(s.player, sanitizeMessage(strings.Join(args, " ")))
 		return nil
 	}
 	s.manager.world.DoReply(s.player, "")
@@ -67,17 +43,9 @@ func cmdReply(s *Session, args []string) error {
 
 // cmdChannel sends a message through one of the generic communication
 // channels. The world layer owns each channel's C-specific gates and fanout;
-// this command seam only preserves the shared sanitize/filter path.
+// this command seam only preserves the shared sanitize path.
 func cmdChannel(s *Session, args []string, channel string) error {
 	message := sanitizeMessage(strings.Join(args, " "))
-	if len(args) > 0 {
-		filtered, block := filterCommMessage(s, message)
-		if block {
-			s.sendText("Your message was blocked.")
-			return nil
-		}
-		message = filtered
-	}
 	s.manager.world.DoChannel(s.player, message, channel)
 	return nil
 }
@@ -111,14 +79,6 @@ func cmdEmote(s *Session, args []string) error {
 	}
 	action := sanitizeMessage(strings.Join(args, " "))
 
-	// Word filter + spam check
-	filtered, block := filterCommMessage(s, action)
-	if block {
-		s.sendText("Your message was blocked.")
-		return nil
-	}
-	action = filtered
-
 	// src/act.wizard.c:144-151: room act first (including arena broadcast),
 	// then the actor's repeat preference. Shared Act renders for each recipient.
 	format := "$n " + action
@@ -135,14 +95,6 @@ func cmdEmote(s *Session, args []string) error {
 // Source: act.comm.c do_say() lines 824-870
 func cmdSay(s *Session, args []string) error {
 	text := sanitizeMessage(strings.Join(args, " "))
-	if len(args) > 0 {
-		filtered, block := filterCommMessage(s, text)
-		if block {
-			s.sendText("Your message was blocked.")
-			return nil
-		}
-		text = filtered
-	}
 	s.manager.world.DoSay(s.player, text)
 	return nil
 }
@@ -296,14 +248,6 @@ func cmdAuction(s *Session, args []string) error { return cmdChannel(s, args, "a
 // Source: act.comm.c do_ctell()
 func cmdCTell(s *Session, args []string) error {
 	message := sanitizeMessage(strings.Join(args, " "))
-	if len(args) > 0 {
-		filtered, block := filterCommMessage(s, message)
-		if block {
-			s.sendText("Your message was blocked.")
-			return nil
-		}
-		message = filtered
-	}
 	// C do_ctell handles the immortal clan-number syntax and all sender/channel
 	// gates inside the command path (act.comm.c:1451-1565). Keep those gates in
 	// the game layer so direct ExecCTell callers and player dispatch agree.

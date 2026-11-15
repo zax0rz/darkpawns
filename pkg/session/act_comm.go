@@ -143,13 +143,7 @@ func broadcastQuest(s *Session, selfMsg, otherMsg string) {
 func cmdWhisper(s *Session, args []string) error {
 	argument := strings.Join(args, " ")
 	if len(args) >= 2 {
-		message := sanitizeMessage(strings.Join(args[1:], " "))
-		filtered, block := filterCommMessage(s, message)
-		if block {
-			game.SendToChar(s.player, "Your message was blocked.\r\n")
-			return nil
-		}
-		argument = args[0] + " " + filtered
+		argument = args[0] + " " + sanitizeMessage(strings.Join(args[1:], " "))
 	}
 	s.manager.world.DoSpecComm(s.player, argument, false)
 	return nil
@@ -163,13 +157,7 @@ func cmdWhisper(s *Session, args []string) error {
 func cmdAsk(s *Session, args []string) error {
 	argument := strings.Join(args, " ")
 	if len(args) >= 2 {
-		message := sanitizeMessage(strings.Join(args[1:], " "))
-		filtered, block := filterCommMessage(s, message)
-		if block {
-			game.SendToChar(s.player, "Your message was blocked.\r\n")
-			return nil
-		}
-		argument = args[0] + " " + filtered
+		argument = args[0] + " " + sanitizeMessage(strings.Join(args[1:], " "))
 	}
 	s.manager.world.DoSpecComm(s.player, argument, true)
 	return nil

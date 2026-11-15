@@ -927,14 +927,6 @@ func executeCommand(s *Session, cmdStr string, args []string, allowAlias bool) e
 // only for command handlers whose C implementation consumes the original
 // argument remainder instead of tokenized words.
 func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool, rawArgs string) error {
-	// Moderation pre-check: mute, ban
-	if s.manager.modChecker != nil && s.player != nil {
-		errMsg, reject := s.manager.modChecker.CheckPreCommand(s.player.Name, cmdStr)
-		if reject {
-			s.Send(errMsg)
-			return nil
-		}
-	}
 	// Split command from arguments if args were not provided separately.
 	if len(args) == 0 {
 		cmdStr, args = splitCommandInput(cmdStr)

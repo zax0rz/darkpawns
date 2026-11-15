@@ -16,12 +16,10 @@ pkg/command/admin_commands.go: unreachable func: AdminCommands.cmdKick
 pkg/command/admin_commands.go: unreachable func: AdminCommands.cmdListPenalties
 pkg/command/admin_commands.go: unreachable func: AdminCommands.cmdListReports
 pkg/command/admin_commands.go: unreachable func: AdminCommands.cmdMute
-pkg/command/admin_commands.go: unreachable func: AdminCommands.cmdSpamConfig
 pkg/command/admin_commands.go: unreachable func: AdminCommands.cmdWarn
 pkg/command/admin_commands.go: unreachable func: AdminCommands.cmdWordFilter
 pkg/command/admin_commands.go: unreachable func: AdminCommands.getAllActivePenalties
 pkg/command/admin_commands.go: unreachable func: AdminCommands.getPenalties
-pkg/command/admin_commands.go: unreachable func: AdminCommands.getSpamConfig
 pkg/command/admin_commands.go: unreachable func: AdminCommands.logAdminAction
 pkg/command/admin_commands.go: unreachable func: AdminCommands.notifyPlayer
 pkg/command/skill_commands.go: unreachable func: CmdScan

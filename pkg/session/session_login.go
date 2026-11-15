@@ -300,16 +300,6 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		return nil
 	}
 
-	// Check if player is banned before entering the game
-	if s.authenticated && s.player != nil && s.manager.modChecker != nil {
-		if errMsg, banned := s.manager.modChecker.CheckPreCommand(s.player.Name, ""); banned {
-			s.sendError(errMsg)
-			s.CloseSend()
-			slog.WarnContext(s.sessionCtx, "banned player denied entry", s.logAttrs(slog.String("ip", ip))...)
-			return nil
-		}
-	}
-
 	// Returning characters stop at the post-MOTD menu. World registration and
 	// room entry happen only after option 1 is selected.
 	if s.authenticated && s.player != nil {

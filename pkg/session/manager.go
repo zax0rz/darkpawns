@@ -23,7 +23,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/events"
 	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/moderation"
 	"github.com/zax0rz/darkpawns/pkg/mudletmap"
 	"github.com/zax0rz/darkpawns/pkg/notify"
 	"github.com/zax0rz/darkpawns/pkg/olc"
@@ -153,9 +152,6 @@ type Manager struct {
 
 	// Account-level login lockout tracker (DP-592)
 
-	// Moderation manager for mute/filter/spam checks
-	modChecker ModerationChecker
-
 	// olcRegistry is the typed admission registry shared by every OLC
 	// frontend. The registry owns claims; the session owns descriptor state.
 	olcRegistry *olc.Registry
@@ -270,29 +266,7 @@ func isLocalHostHeader(host string) bool {
 	return host == "localhost" || host == "127.0.0.1" || host == "::1"
 }
 
-// ModerationChecker defines the moderation interface the session layer needs.
-type ModerationChecker interface {
-	// CheckPreCommand is called before every command.
-	// Returns (error_message, should_reject). If should_reject, the command is blocked.
-	CheckPreCommand(playerName string, command string) (string, bool)
-
-	// CheckMessage filters a communication message for word filters.
-	// Returns (filtered_message, should_block).
-	CheckMessage(playerName string, message string) (string, bool)
-
-	// RecordMessage records a message for spam detection.
-	RecordMessage(playerName string)
-
-	// IsMuted checks if a player is muted.
-	IsMuted(playerName string) bool
-}
-
-// SetModerationChecker sets the moderation checker on the manager.
-func (m *Manager) SetModerationChecker(mc ModerationChecker) {
-	m.modChecker = mc
-}
-
-// PlayerRenamed moves ephemeral account throttles and moderation caches after
+// PlayerRenamed moves ephemeral account throttles after
 // the admin editor commits the durable character rename.
 func (m *Manager) PlayerRenamed(oldName, newName string) {
 	if m == nil || strings.EqualFold(oldName, newName) {
@@ -300,9 +274,6 @@ func (m *Manager) PlayerRenamed(oldName, newName string) {
 	}
 	if m.accountBudget != nil {
 		m.accountBudget.Rename(oldName, newName)
-	}
-	if renamed, ok := m.modChecker.(interface{ RenamePlayerName(string, string) }); ok {
-		renamed.RenamePlayerName(oldName, newName)
 	}
 }
 
@@ -376,14 +347,6 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin:     m.checkOrigin,
-	}
-
-	// Wire moderation checker (in-memory when no DB, DB-backed when available).
-	if concreteDB, ok := database.(*db.DB); ok {
-		m.modChecker = NewModerationAdapter(moderation.NewManager(concreteDB.SQLDB()))
-	} else {
-		// No connection at all: the memory-only manager issues no statement.
-		m.modChecker = NewModerationAdapter(moderation.NewManager(nil))
 	}
 
 	world.IdleCloseDescriptor = m.closeIdleDescriptor
