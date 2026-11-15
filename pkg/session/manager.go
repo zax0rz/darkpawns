@@ -908,18 +908,23 @@ func (m *Manager) PumpPulsesFrom(_ *Session, n int) error {
 	if pump == nil {
 		return fmt.Errorf("pulse pump is not configured")
 	}
-	m.BeginHeartbeatOutput()
+	m.beginPumpHeartbeatOutput()
 	if err := pump(n); err != nil {
 		m.EndHeartbeatOutput()
 		return err
 	}
 	// C's DP_CLOCK game_loop runs dp_command_phase(0) after while(dp_seam_take())
-	// without setting wait=1 on executed commands (comm.c:489, 670, 737-740),
-	// so any remaining queued commands whose wait is now <= 0 drain before the
-	// post-pump output flush.
-	m.drainReadyInputsAfterPump()
+	// without setting wait=1 on executed commands (comm.c:489, 520-532, 669-701,
+	// 737-740): pass 1 drains one ready command per descriptor inside the pump's
+	// output flush + prompt, and each subsequent pass is its own output turn with
+	// its own prompt.
+	drained := m.drainInputPass(false)
 	m.EndHeartbeatOutput()
 	m.flushAsyncPrompts()
+	if drained {
+		for m.runPostPumpDrainTurn() {
+		}
+	}
 	return nil
 }
 
@@ -1321,9 +1326,14 @@ func (m *Manager) DrainInputQueues() {
 	m.drainInputPass(true)
 }
 
-func (m *Manager) drainReadyInputsAfterPump() {
-	for m.drainInputPass(false) {
+func (m *Manager) runPostPumpDrainTurn() bool {
+	m.BeginHeartbeatOutput()
+	drained := m.drainInputPass(false)
+	m.EndHeartbeatOutput()
+	if drained {
+		m.flushAsyncPrompts()
 	}
+	return drained
 }
 
 func (m *Manager) drainInputPass(decrement bool) bool {
