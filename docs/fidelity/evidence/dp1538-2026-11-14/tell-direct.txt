@@ -1,0 +1,9 @@
+capture-statistics	blocks=6	empty-open=1	empty-closed=0
+capture-statistics	blocks=6	empty-open=1	empty-closed=0
+hollow-prompt-steps	count=0
+Dark Pawns Tier-1 differential report
+scenario: tell-switched-body-depth
+c-oracle: 127.0.0.1:10001 (DP_SEED=1)
+go-port: 127.0.0.1:30497 (DP_SEED=1)
+result: no normalized divergence
+draw-parity	MATCH	entries=4103	stream=4142

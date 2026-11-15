@@ -31,6 +31,8 @@ func isnameWithAbbrevs(str, namelist string) bool {
 //   - mobs:  the prototype's Keywords (space-separated), falling back to the
 //     name parsed out of the ShortDesc if Keywords is empty.
 //   - players: the player's Name.
+//
+
 func charKeywords(c combat.Combatant) string {
 	if c == nil {
 		return ""
@@ -205,6 +207,39 @@ func (w *World) ResolveCharWorld(ch combat.Combatant, name string) (CharTarget, 
 	matched := 0
 	for _, candidate := range candidates {
 		if !canSee(asActor(ch), asActor(candidate)) || !isCompleteName(name, charKeywords(candidate)) {
+			continue
+		}
+		matched++
+		if matched == n {
+			return newCharTarget(candidate), true
+		}
+	}
+	return CharTarget{}, false
+}
+
+// GetCharVis ports get_char_vis (src/handler.c:1303-1324): the actor's room
+// first (players and mobs, abbreviated names), then a numbered walk of C's
+// newest-first character_list. A numeric prefix of 0 or a non-numeric dot
+// prefix selects get_player_vis (world players only, exact full name).
+func (w *World) GetCharVis(ch combat.Combatant, name string) (CharTarget, bool) {
+	if target, ok := w.ResolveCharInRoom(ch, name); ok {
+		return target, true
+	}
+	if ch == nil {
+		return CharTarget{}, false
+	}
+	tmp := name
+	n := GetNumber(&tmp)
+	if n == 0 {
+		return w.ResolvePlayerWorld(ch, tmp)
+	}
+	matched := 0
+	for _, body := range w.GetAllCharsInCharacterListOrder() {
+		candidate, ok := body.(combat.Combatant)
+		if !ok || candidate == nil {
+			continue
+		}
+		if !canSee(asActor(ch), asActor(candidate)) || !isCompleteName(tmp, charKeywords(candidate)) {
 			continue
 		}
 		matched++

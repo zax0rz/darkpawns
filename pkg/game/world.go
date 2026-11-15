@@ -60,7 +60,10 @@ type World struct {
 	// npcDummyLastTell mirrors the same shared dummy_mob.player_specials
 	// record's last_tell (src/db.c:104,1281; src/act.comm.c:894). Every mobile
 	// reads and writes this one zeroed value; a player keeps its own record.
-	npcDummyLastTell atomic.Int64
+	// The port keys reply on the teller's name (C stores an idnum and looks it
+	// up in character_list); outside an in-game rename the two are equivalent.
+	npcDummyMu       sync.RWMutex
+	npcDummyLastTell string
 
 	// zoneResetMu serializes boot, manual, admin and heartbeat resets.
 	// It precedes brief World/Spawner locks; no lifecycle lock is acquired.
