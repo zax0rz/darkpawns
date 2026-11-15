@@ -1,8 +1,10 @@
 # C-first DP-1535 witness for the next ten switched combat-skill bodies.
-# The descriptor owner knows these skills; the level-40 switched clone reads
-# the fresh world's shared zero dummy_mob skills. Its dagger and trainee target
-# live in room 8162 while the immortal remains in 8105. Circle reaches its
-# skill check only after target, weapon, mount, and awareness gates.
+# The descriptor owner knows these skills; the switched clone reads the fresh
+# world's shared zero dummy_mob skills. Its dagger and trainee target live in
+# room 8162 while the immortal remains in 8105. The clone prototype is level 0,
+# so set it to level 1 to pass six command lookup gates whose C minimum is 1.
+# Circle reaches its skill check only after target, weapon, mount, and awareness
+# gates.
 # src/act.offensive.c:165-234,419-501,636-692;
 # src/new_cmds.c:368-470,552-665,878-965,2391-2505,2565-2662;
 # src/new_cmds2.c:191-258.
@@ -69,6 +71,7 @@ skillset SwitchedSkill 'dragon kick' 100
 skillset SwitchedSkill 'groinrip' 100
 skillset SwitchedSkill 'headbutt' 100
 goto 8162
+set clone level 1
 goto 8105
 switch clone
 
