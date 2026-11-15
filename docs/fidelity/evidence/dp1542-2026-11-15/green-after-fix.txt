@@ -1,0 +1,52 @@
+capture-statistics	blocks=3	empty-open=1	empty-closed=0
+capture-statistics	blocks=3	empty-open=1	empty-closed=0
+hollow-prompt-steps	count=0
+Dark Pawns Tier-1 differential report
+scenario: regen-npc-mana-depth
+c-oracle: 127.0.0.1:21572 (DP_SEED=1)
+go-port: 127.0.0.1:11876 (DP_SEED=1)
+result: no normalized divergence
+normalized C oracle blocks:
+--- [stat dealer]
+MALE MOB 'Death Dealer'  IDNum: [    0], In room [ 8162]
+Alias: death dealer, VNum: [   71], RNum: [   20]
+L-Des: Death Dealer looks you over coldly.
+Monster Class: Normal, Lev: [32], XP: [ 120000], Align: [-1000]
+Race: [25] Magical Construct
+*************-------------*************-------------*************
+Str: [18/0]	Int: [12]	*	Hit p.:  [1686/1686+128]
+Dex: [18]	Wis: [18]	*	Mana p.: [2/10+32]
+Con: [16/16]	Cha: [18]	*	Move p.: [50/50+32]
+*************-------------*************-------------*************
+Coins: [     2739], Bank: [        0] (Total: 2739)
+AC: [-220/10], Hitroll: [32], Damroll: [21], Saving throws: [0/0/0/0/0]
+Pos: Standing, Fighting: Nobody, Attack type: hit
+Default position: Standing, Idle Timer (in tics) [0]
+NPC flags: ISNPC MEMORY !CHARM !SUMMN !SLEEP HUNTER AGGR24
+Mob Spec-Proc: Exists, NPC Bare Hand Dam: 21d4
+Carried: weight: 0, items: 0; Items in: inventory: 0, eq: 0
+Master is: <none>, Followers are:
+AFF: DET-INVIS SENSE-LIFE WATERWALK SANCT INFRA
+--- [~dpclock pulse 630]
+
+--- [stat dealer]
+MALE MOB 'Death Dealer'  IDNum: [    0], In room [ 8162]
+Alias: death dealer, VNum: [   71], RNum: [   20]
+L-Des: Death Dealer looks you over coldly.
+Monster Class: Normal, Lev: [32], XP: [ 120000], Align: [-1000]
+Race: [25] Magical Construct
+*************-------------*************-------------*************
+Str: [18/0]	Int: [12]	*	Hit p.:  [1686/1686+128]
+Dex: [18]	Wis: [18]	*	Mana p.: [10/10+32]
+Con: [16/16]	Cha: [18]	*	Move p.: [50/50+32]
+*************-------------*************-------------*************
+Coins: [     2739], Bank: [        0] (Total: 2739)
+AC: [-220/10], Hitroll: [32], Damroll: [21], Saving throws: [0/0/0/0/0]
+Pos: Standing, Fighting: Nobody, Attack type: hit
+Default position: Standing, Idle Timer (in tics) [0]
+NPC flags: ISNPC MEMORY !CHARM !SUMMN !SLEEP HUNTER AGGR24
+Mob Spec-Proc: Exists, NPC Bare Hand Dam: 21d4
+Carried: weight: 0, items: 0; Items in: inventory: 0, eq: 0
+Master is: <none>, Followers are:
+AFF: DET-INVIS SENSE-LIFE WATERWALK SANCT INFRA
+draw-parity	MATCH	entries=4098	stream=4131

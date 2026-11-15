@@ -1,0 +1,49 @@
+# depth-case: regen.npc-mana-hourly
+# C point_update regenerates mana for every character, NPCs included:
+#   if (GET_MANA(i) < GET_MAX_MANA(i))
+#     GET_MANA(i) = MIN(GET_MANA(i) + mana_gain(i), GET_MAX_MANA(i));
+# (src/limits.c:493-494). mana_gain's NPC branch returns GET_LEVEL
+# (src/limits.c:63-64), so a level-32 Death Dealer set to 2 mana reaches its
+# 10 cap after one MUD hour. The Go NPC branch restored hit and move only.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 71 1 8162 80
+
+[setup:oracle]
+Regenwiz
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Regenwiz
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set dealer mana 2
+
+[probe]
+stat dealer
+~dpclock pulse 630
+stat dealer
