@@ -102,3 +102,19 @@ func (w *World) SetNPCInfoBar(state NPCInfoBarState) {
 	w.npcDummyInfoBar = state
 	w.npcDummyMu.Unlock()
 }
+
+// NPCDummyLastDeath reads the shared dummy_mob saved.last_death. A mobile
+// never records a death there, so dream() sees 0 and falls to its level
+// switch (src/utils.h GET_LAST_DEATH; src/dream.c).
+func (w *World) NPCDummyLastDeath() int64 {
+	w.npcDummyMu.RLock()
+	defer w.npcDummyMu.RUnlock()
+	return w.npcDummyLastDeath
+}
+
+// SetNPCDummyLastDeath stores the shared dummy_mob saved.last_death.
+func (w *World) SetNPCDummyLastDeath(v int64) {
+	w.npcDummyMu.Lock()
+	w.npcDummyLastDeath = v
+	w.npcDummyMu.Unlock()
+}

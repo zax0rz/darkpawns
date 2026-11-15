@@ -1,0 +1,48 @@
+# depth-case: dream.sleeping-npc-hourly
+# C point_update calls dream(i) for every POS_SLEEPING character, mobs included
+# (src/limits.c:469-470,489-491). A mobile's GET_LAST_DEATH reads the shared
+# dummy record, so it is 0 and dream() falls to the level switch; each tick
+# draws number(0,15) once (src/dream.c:109-186). The sleeping orc worker
+# (vnum 2109, position 4 in lib/world/mob/21.mob) is spawned in the wizard's
+# room: on a 0 roll the room sees the level-11..20 arm's act, while the
+# send_to_char line is dropped because the mob has no descriptor. DP-1543.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 2109 1 8162 80
+
+[setup:oracle]
+Sleepwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sleepwatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+~dpclock pulse 630
+look
