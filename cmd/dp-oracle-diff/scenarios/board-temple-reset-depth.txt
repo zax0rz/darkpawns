@@ -1,0 +1,57 @@
+# depth-case: zone-reset.temple-board-max
+# Zone 80 loads the Temple of the Cross board with "O 0 8099 5 8008".
+# C's reset_zone O arm loads only while the world-wide instance count is below
+# the max (src/db.c:2149-2150), so repeated resets never add a sixth board.
+# The room's look lists one line per board; several zreset cycles must keep the
+# same count. DP-1313.
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Boardwiz
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Boardwiz
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8008
+
+[probe]
+look
+zreset 80
+look
+zreset 80
+look
+zreset 80
+look
+zreset 80
+look
+zreset 80
+look
+zreset 80
+look
+zreset 80
+look
