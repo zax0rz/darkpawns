@@ -100,6 +100,23 @@ func valid_directory(pathname string) bool {
 	return validDirectoryPattern.MatchString(pathname)
 }
 
+// cDirectoryPath maps the absolute scripts directory back to the relative form
+// C's SCRIPT_DIR gave valid_directory: "scripts" at the root, "scripts/<sub>"
+// below it (src/db.h:79; src/luaedit.c:37-42; src/file-edit.c:78-81). The Go
+// root is absolute and may contain dots (a home or deploy path), which C never
+// saw; validating the absolute path would reject those roots though every C
+// check would pass.
+func cDirectoryPath(root, dir string) (string, bool) {
+	rel, err := filepath.Rel(filepath.Clean(root), filepath.Clean(dir))
+	if err != nil || filepath.IsAbs(rel) {
+		return "", false
+	}
+	if rel == "." {
+		return "scripts", true
+	}
+	return "scripts/" + filepath.ToSlash(rel), true
+}
+
 // valid_filename ports file-edit.c:118-121, including its unescaped optional
 // wildcard character between the basename and suffix.
 func valid_filename(filename string) bool {
@@ -179,7 +196,8 @@ func pathWithinResolvedRoot(root, target string) bool {
 // names admitted by luafilter.
 func list_directory(s *Session, dir string) error {
 	root := luaScriptsDir(s.manager.world)
-	if !valid_directory(dir) || !pathWithinLuaRoot(root, dir) {
+	cDir, ok := cDirectoryPath(root, dir)
+	if !ok || !valid_directory(cDir) || !pathWithinLuaRoot(root, dir) {
 		return fmt.Errorf("invalid script directory")
 	}
 	entries, err := os.ReadDir(dir)
