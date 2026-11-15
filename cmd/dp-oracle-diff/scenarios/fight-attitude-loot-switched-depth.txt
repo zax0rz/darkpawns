@@ -1,0 +1,82 @@
+# DP fight.c closeout: the four mob-directed fight.c sites a player can only
+# read through the switch seam (the #2631 SwitchedMobReturn/MobileMessageSink
+# routing). The vnum-19650 watcher always runs attitude_loot after a kill
+# (src/fight.c:1693-1697), the set-mob-aff fixture gives it AFF_DODGE (bit 17)
+# for the perform_violence dodge arm (src/fight.c:1965-1973), and the god's
+# bash drops the charmed watcher below POS_FIGHTING before the ordered kill,
+# so perform_violence runs its scramble arm (src/fight.c:1982-1987) on the
+# first combat pulse. The friar's two Sun Blades (cost 1) become the corpse
+# loot the junk pass junks (src/fight.c:1129). The god switches into the
+# watcher and reads the mob's own lines; the room acts reach the god's parked
+# original body.
+# depth-case: fight.attitude-loot-switched
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19650 1 8105 196
+spawn-mob 19641 1 8105 196
+set-mob-aff 19650 1073873024
+replace-room-exits 8105 none
+
+[setup:oracle]
+Constft
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Constft
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load obj 14128
+give blade friar
+load obj 14128
+give blade friar
+cast 'charm person' watcher
+bash watcher
+order watcher kill friar
+switch watcher
+~dpclock pulse 20
+
+[probe]
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
