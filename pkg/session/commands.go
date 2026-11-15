@@ -331,14 +331,19 @@ func init() {
 
 	// Combat skills (delegated to pkg/command)
 	registerCommand("backstab", wrapSkill(command.CmdBackstab), "Backstab a target with a piercing weapon.")
+	registerActorCommand("backstab", combatSkillActorHandler)
 	registerCommand("spike", wrapSkill(command.CmdSpike), "Spike a werewolf with a spiked weapon.")
 	registerCommand("stake", wrapSkill(command.CmdStake), "Stake a vampire with a wooden stake.")
 	registerCommand("bash", wrapSkill(command.CmdBash), "Bash a target, potentially stunning them.")
+	registerActorCommand("bash", combatSkillActorHandler)
 	registerCommand("circle", wrapSkill(command.CmdCircle), "Circle behind a target for a piercing attack.")
+	registerActorCommand("circle", combatSkillActorHandler)
 	registerCommand("charge", wrapSkill(command.CmdCharge), "Charge a target with a sword or lance.")
+	registerActorCommand("charge", combatSkillActorHandler)
 	registerCommand("kick", wrapSkill(command.CmdKick), "Kick a target for damage.")
 	registerCommand("trip", wrapSkill(command.CmdTrip), "Trip a target, knocking them down.")
 	registerCommand("headbutt", wrapSkill(command.CmdHeadbutt), "Headbutt a target for high damage.")
+	registerActorCommand("headbutt", combatSkillActorHandler)
 	registerCommand("rescue", wrapSkill(command.CmdRescue), "Rescue someone from combat.")
 	registerCommand("sneak", wrapSkill(command.CmdSneak), "Attempt to move silently.")
 	registerCommand("hide", wrapSkill(command.CmdHide), "Attempt to hide in the shadows.")
@@ -481,7 +486,9 @@ func init() {
 	// Offensive commands — delegated to pkg/command (C-10: real damage formulas)
 	registerCommand("assist", wrapArgs(cmdAssist), "Assist a target in combat.")
 	registerCommand("disembowel", wrapSkill(command.CmdDisembowel), "Disembowel a target with a piercing weapon.")
+	registerActorCommand("disembowel", combatSkillActorHandler)
 	registerCommand("dragon", wrapSkill(command.CmdDragonKick), "Dragon-style kick attack.")
+	registerActorCommand("dragon", combatSkillActorHandler)
 	registerCommand("tiger", wrapSkill(command.CmdTigerPunch), "Tiger-style punch attack (bare hands).")
 	registerCommand("shoot", wrapSkill(command.CmdShoot), "Shoot a target with a ranged weapon.")
 	registerCommand("subdue", wrapSkill(command.CmdSubdue), "Subdue a target (non-lethal).")
@@ -507,9 +514,12 @@ func init() {
 	registerCommand("carve", wrapSkill(command.CmdCarve), "Carve a corpse.")
 	registerCommand("compare", wrapSkill(command.CmdCompare), "Compare two items.")
 	registerCommand("cutthroat", wrapSkill(command.CmdCutthroat), "Slit a target's throat.")
+	registerActorCommand("cutthroat", combatSkillActorHandler)
 	registerCommand("search", wrapSkill(command.CmdDetect), "Search for hidden exits.")
 	registerCommand("disarm", wrapSkill(command.CmdDisarm), "Disarm a target's weapon.")
+	registerActorCommand("disarm", combatSkillActorHandler)
 	registerCommand("groinrip", wrapSkill(command.CmdGroinrip), "Rip a target's groin.")
+	registerActorCommand("groinrip", combatSkillActorHandler)
 	registerCommand("mindlink", wrapSkill(command.CmdMindlink), "Form a psychic mind link.")
 	registerCommand("mold", wrapSkill(command.CmdMold), "Mold a clay item.")
 	registerCommand("palm", wrapSkill(command.CmdPalm), "Palm an item discreetly.")
@@ -692,6 +702,10 @@ func npcActorHandler(run func(*game.World, *game.MobInstance, string)) character
 		run(ctx.World, mob, ctx.RawArgs)
 		return game.CharacterCommandHandled
 	}
+}
+
+func combatSkillActorHandler(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+	return game.CharacterCombatSkill(ctx, commandName, args)
 }
 
 func kujiKiriActorHandler(seal string) characterActorHandler {
