@@ -214,18 +214,7 @@ func cmdGtell(s *Session, args []string) error {
 // internal and trailing whitespace, and delete_ansi_controls runs over the
 // complete formatted message before it is sent to any audience.
 func cmdGtellText(s *Session, text string) error {
-	if !s.player.IsAffected(game.AffGroup) || text == "" {
-		s.manager.world.GroupSay(s.player, text)
-		return nil
-	}
-
-	// Word filter + spam check
-	filtered, block := filterCommMessage(s, text)
-	if block {
-		s.sendText("Your message was blocked.")
-		return nil
-	}
-	s.manager.world.GroupSay(s.player, filtered)
+	s.manager.world.GroupSay(s.player, text)
 	return nil
 }
 

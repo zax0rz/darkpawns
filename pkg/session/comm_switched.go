@@ -43,14 +43,6 @@ func cmdGtellBody(ctx command.ExecutionContext, args []string) error {
 	argument := contextArgument(ctx, args)
 	if mob, ok := ctx.Body.(*game.MobInstance); ok {
 		argument = sanitizeMessage(argument)
-		if len(args) > 0 {
-			filtered, block := filterCommMessage(s, argument)
-			if block {
-				s.Send("Your message was blocked.")
-				return nil
-			}
-			argument = filtered
-		}
 		ctx.World.GroupSayBody(mob, argument)
 		return nil
 	}
@@ -64,14 +56,6 @@ func cmdChannelBody(ctx command.ExecutionContext, args []string, channel string)
 	s := commandSessionFromContext(ctx)
 	if mob, ok := ctx.Body.(*game.MobInstance); ok {
 		message := sanitizeMessage(contextArgument(ctx, args))
-		if len(args) > 0 {
-			filtered, block := filterCommMessage(s, message)
-			if block {
-				s.Send("Your message was blocked.")
-				return nil
-			}
-			message = filtered
-		}
 		ctx.World.NPCGenCommCommand(mob, message, channel)
 		return nil
 	}
@@ -99,13 +83,7 @@ func cmdAskBody(ctx command.ExecutionContext, args []string) error {
 	argument := contextArgument(ctx, args)
 	targetName, message := splitCommunicationTarget(argument)
 	if message != "" {
-		message = sanitizeMessage(message)
-		filtered, block := filterCommMessage(s, message)
-		if block {
-			mob.SendMessage("Your message was blocked.\r\n")
-			return nil
-		}
-		argument = targetName + " " + filtered
+		argument = targetName + " " + sanitizeMessage(message)
 	}
 	ctx.World.DoSpecCommMobile(mob, argument, true)
 	return nil
@@ -120,13 +98,7 @@ func cmdWhisperBody(ctx command.ExecutionContext, args []string) error {
 	argument := contextArgument(ctx, args)
 	targetName, message := splitCommunicationTarget(argument)
 	if message != "" {
-		message = sanitizeMessage(message)
-		filtered, block := filterCommMessage(s, message)
-		if block {
-			mob.SendMessage("Your message was blocked.\r\n")
-			return nil
-		}
-		argument = targetName + " " + filtered
+		argument = targetName + " " + sanitizeMessage(message)
 	}
 	ctx.World.DoSpecCommMobile(mob, argument, false)
 	return nil
@@ -150,14 +122,6 @@ func cmdCTellBody(ctx command.ExecutionContext, args []string) error {
 	s := commandSessionFromContext(ctx)
 	if mob, ok := ctx.Body.(*game.MobInstance); ok {
 		message := sanitizeMessage(contextArgument(ctx, args))
-		if len(args) > 0 {
-			filtered, block := filterCommMessage(s, message)
-			if block {
-				mob.SendMessage("Your message was blocked.\r\n")
-				return nil
-			}
-			message = filtered
-		}
 		ctx.World.NPCCTellCommand(mob, message)
 		return nil
 	}

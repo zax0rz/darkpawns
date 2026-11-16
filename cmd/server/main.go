@@ -69,7 +69,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
-	"github.com/zax0rz/darkpawns/pkg/moderation"
 	"github.com/zax0rz/darkpawns/pkg/mudlog"
 	"github.com/zax0rz/darkpawns/pkg/notify"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -705,16 +704,6 @@ func main() {
 	// survive. A missing session reports a skipped save, never a successful
 	// one.
 	manager.WirePlayerSaver(gameWorld)
-
-	// Wire moderation: mute, ban, word filter, spam detection
-	if database != nil {
-		modManager := moderation.NewManager(database.SQLDB())
-		modAdapter := session.NewModerationAdapter(modManager)
-		manager.SetModerationChecker(modAdapter)
-		slog.Info("Moderation manager wired with database backend")
-	} else {
-		slog.Warn("No database — moderation disabled (mute/ban/spam filters unavailable)")
-	}
 
 	// Initialize board system (DP-422)
 	gameWorld.GetOrInitBoards(*worldDir)

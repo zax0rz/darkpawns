@@ -362,3 +362,21 @@ func TestPenaltyHelpersConcurrentAccess(t *testing.T) {
 
 	<-done
 }
+
+func TestGetAllActivePenalties(t *testing.T) {
+	m := NewManager(nil)
+	defer m.Close()
+
+	now := time.Now()
+	if err := m.AddPenalty(PlayerPenalty{
+		PlayerName:  "alice",
+		PenaltyType: ActionMute,
+		IssuedAt:    now,
+		IssuedBy:    "admin",
+	}); err != nil {
+		t.Fatalf("AddPenalty: %v", err)
+	}
+	if got := m.GetAllActivePenalties(); len(got) != 1 || got[0].PlayerName != "alice" {
+		t.Fatalf("GetAllActivePenalties() = %+v, want 1 active penalty for alice", got)
+	}
+}
