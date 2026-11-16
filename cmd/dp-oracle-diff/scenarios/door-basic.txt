@@ -6,8 +6,11 @@
 # depth-case: door.close-success
 # depth-case: door.close-already-closed
 # depth-case: door.open-direction
+# depth-case: door.mob-no-arg
 [fixture]
+empty-players
 quiet-mobs
+spawn-mob 16303 1 8162 163
 replace-room-exits 8162 north 8161 1 gate
 [setup:oracle]
 Mordecai
@@ -44,3 +47,6 @@ open gate
 close gate
 close gate
 open north
+switch trainee
+lock
+return

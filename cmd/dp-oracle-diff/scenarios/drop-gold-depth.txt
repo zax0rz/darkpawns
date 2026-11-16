@@ -1,5 +1,6 @@
 # depth-case: drop.gold-success
 # depth-case: drop.junk-gold-message
+# depth-case: drop.mob-gold-room-act
 # C-first vehicle for perform_drop_gold's plain-drop and junk arms
 # (src/act.item.c:456-469). A mortal peer with gold drops 100 coins (plain drop
 # prints "You drop some gold." and the room act) and junks 100 coins (junk
@@ -10,6 +11,7 @@
 [fixture]
 empty-players
 quiet-mobs
+spawn-mob 16303 1 8105 163
 set-room-flag 8105 4 off
 
 [setup:oracle]
@@ -101,8 +103,12 @@ goto 8105
 teleport Dropper 8105
 teleport Dropwitness 8105
 set player Dropper gold 1000
+set mob trainee gold 100
 
 [probe]
 send:dropper drop 100 coins
 ~dpclock pulse 20
 send:dropper junk 100 coins
+switch trainee
+drop 10 coins
+return
