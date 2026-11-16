@@ -449,3 +449,35 @@ func TestReallyQuitIsNotABareAlias(t *testing.T) {
 		t.Fatalf("reallyquit resolved to primary %q, want 'reallyquit'", reallyEntry.Name)
 	}
 }
+
+// DP-1491: C's do_quit queues extraction via extract_char (PLR_EXTRACT), which
+// keeps ch->desc attached until extract_pending_chars() at the end of the
+// pulse. A wizard switching into the quitting player in the same pulse sees
+// "body is already in use", and after pulse extraction sees "No such character."
+func TestQuitThenSwitchSamePulseMatchesCOrdering(t *testing.T) {
+	m := makeQuitTestManager(t, nil)
+	peer := makeQuitSession(t, m, 1, "Switchpeer", 10, 8004)
+	wizard := makeQuitSession(t, m, 2, "Switchwizard", 51, 8162)
+
+	if err := ExecuteCommand(peer, "quit", nil); err != nil {
+		t.Fatalf("ExecuteCommand quit: %v", err)
+	}
+	if err := ExecuteCommand(wizard, "switch", []string{"Switchpeer"}); err != nil {
+		t.Fatalf("ExecuteCommand switch same pulse: %v", err)
+	}
+	if got := readMsgText(t, wizard); got != "You can't do that, the body is already in use!\r\n" {
+		t.Fatalf("same-pulse switch = %q, want body-in-use", got)
+	}
+
+	m.ExtractPendingChars()
+	if !peer.IsMenuActive() {
+		t.Fatal("peer session did not return to menu after pulse extraction")
+	}
+
+	if err := ExecuteCommand(wizard, "switch", []string{"Switchpeer"}); err != nil {
+		t.Fatalf("ExecuteCommand switch after pulse: %v", err)
+	}
+	if got := readMsgText(t, wizard); got != "No such character.\r\n" {
+		t.Fatalf("post-pulse switch = %q, want No such character", got)
+	}
+}
