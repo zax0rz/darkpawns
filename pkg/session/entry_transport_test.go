@@ -108,7 +108,7 @@ type entryReconnectState struct {
 func entryWebSocketReconnectJourney(t *testing.T, serverURL, name, password string) entryReconnectState {
 	t.Helper()
 	conn := entryWebSocketDial(t, serverURL)
-	defer func() { _ = conn.Close() }()
+	t.Cleanup(func() { _ = conn.Close() })
 
 	wsWrite(t, conn, MsgLogin, map[string]any{"player_name": name})
 	var prompt CharCreateData
@@ -297,6 +297,7 @@ func entryWebSocketNewCharacterToMenu(t *testing.T, serverURL, name string) (*we
 // rather than creating a second one.
 func TestEntryWebSocketSavedIdentityAndMenuResume(t *testing.T) {
 	t.Setenv("JWT_SECRET", "entry-transport-test-jwt-secret-at-least-32")
+	t.Cleanup(game.SetCharacterNowForTest(func() time.Time { return time.Unix(1700000000, 0) }))
 	database := entryDatabase(t)
 	want := entrySeed(t, database, "Aiko")
 	manager := entryTransportManager(t, database)
