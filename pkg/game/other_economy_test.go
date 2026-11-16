@@ -291,3 +291,24 @@ func TestDoUseEquipdQuirkWholeRemainder(t *testing.T) {
 		}
 	})
 }
+
+// DP-1549: C's do_use (src/act.other.c:907-937) initializes mag_item to
+// WEAR_HOLD and never clears it when the equipped scan misses, so `use <word>`
+// while holding a wand falls back to the held wand.
+func TestDoUseHeldFallbackWhenArgDoesNotMatch(t *testing.T) {
+	w, a, _, out := tattooDepthWorld(t)
+	wand := NewObjectInstance(&parser.Obj{
+		VNum: 5504, Keywords: "wand lightning ironwood", ShortDesc: "an ironwood wand",
+		TypeFlag: ITEM_WAND, Values: [4]int{10, 3, 3, spells.SpellLightningBolt},
+	}, -1)
+	if err := w.EquipItem(a, wand, eqWearHold); err != nil {
+		t.Fatalf("EquipItem wand: %v", err)
+	}
+	if !w.DoUse(a, "Wandself") {
+		t.Fatal("DoUse returned false")
+	}
+	want := "You can't use an ironwood wand like that.\r\n"
+	if out["Actor"] != want {
+		t.Fatalf("actor output = %q, want %q", out["Actor"], want)
+	}
+}
