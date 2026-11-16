@@ -71,7 +71,7 @@ func (p *Player) GetWornObjects() []scripting.ScriptableObject {
 		return nil
 	}
 	var out []scripting.ScriptableObject
-	for slot := SlotLight; slot < SlotMax; slot++ {
+	for slot := range SlotMax {
 		if item, ok := p.Equipment.GetItemInSlot(slot); ok && item != nil {
 			out = append(out, &scriptableObjInstanceWrapper{item: item})
 		}
