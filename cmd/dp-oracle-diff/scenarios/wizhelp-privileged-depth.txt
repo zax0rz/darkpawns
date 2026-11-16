@@ -1,0 +1,39 @@
+# C-first `wizhelp` exercises do_commands' SCMD_WIZHELP format in the live
+# command table (src/interpreter.c:832; src/act.informative.c:2633-2678).
+
+# depth-case: commands.wizhelp-privileged-header
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wizhelp
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizhelp
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+wizhelp
