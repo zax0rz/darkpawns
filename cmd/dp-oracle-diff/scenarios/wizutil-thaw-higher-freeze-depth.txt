@@ -3,6 +3,7 @@
 # command and receives C's freeze-level refusal without changing victim state.
 
 # depth-case: wizutil.thaw-higher-freeze-level
+# depth-case: wizutil.thaw-no-argument
 
 [fixture]
 empty-players
@@ -100,4 +101,5 @@ transfer Thawvictim
 freeze Thawvictim
 
 [probe:thawer]
+thaw
 thaw Thawvictim

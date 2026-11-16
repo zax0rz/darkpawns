@@ -1,0 +1,77 @@
+# C-first vehicle for moon_gate object timer decay in point_update
+# (src/limits.c:543). Casting 'gate' on a peer spawns a moon_gate portal
+# with val[2]=3; advancing 3 MUD hours (~dpclock pulse 2250) decrements val[2]
+# to 0 and prints "%s fades out of existence.\r\n" to the room.
+#
+# depth-case: limits.moon-gate-decay
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Moongod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Moongod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Moontarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Moontarget
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Moontarget 8004
+set Moontarget level 10
+cast 'gate' Moontarget
+~dpclock pulse 20
+
+[probe]
+~dpclock pulse 3000
+look

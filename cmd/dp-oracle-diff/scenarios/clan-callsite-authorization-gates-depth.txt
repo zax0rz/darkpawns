@@ -5,6 +5,7 @@
 # depth-case: clan.private-authorization-gates
 # depth-case: clan.applev-authorization-gates
 # depth-case: clan.plan-authorization-gates
+# depth-case: clan.enroll-influence-gate
 
 [fixture]
 empty-players
@@ -153,6 +154,7 @@ clan set plan Missing
 
 # Rank-zero membership reaches the influence gates.
 force Clanapply clan apply Wolves
+force Clanapply clan enroll Clanmate
 force Clanapply clan set title 1 Chief
 force Clanapply clan private
 force Clanapply clan set applev 2

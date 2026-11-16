@@ -33,6 +33,7 @@ do_wake	wake	wake.self-awaken	D2	command	oracle-green	position-basic	act.movemen
 do_wake	wake	wake.already-awake	D2	command	oracle-green	position-basic	act.movement.c:873-874	"You are already awake..."
 do_wake	wake	wake.room-audience	D3	command	oracle-green	position-room	act.movement.c:877	"$n awakens."
 do_wake	wake	wake.self-by-name-while-sleeping	D2	command	oracle-green	position-wake-target	act.movement.c:847-849	"Maybe you should wake yourself up first."
+do_wake	wake	wake.aff-sleep-refusal	D2	audience	oracle-green	position-wake-target	act.movement.c:871	Waking an AFF_SLEEP victim prints "$n tosses and turns uncomfortably." to the room (R1/R2/R5e).
 do_wake	wake	wake.target-success	D3	command	oracle-green	position-wake-target	act.movement.c:860-864	"You wake $M up." + "$n wakes up $N." (TO_NOTVICT) + victim to POS_SITTING.
 do_wake	wake	wake.target-vict-audience	D3	command	oracle-green	position-wake-target	act.movement.c:863	TO_VICT|TO_SLEEP delivery: the sleeping victim receives "You are awakened by $n." with the waker's name resolved.
 do_wake	wake	wake.target-already-awake	D2	command	oracle-green	position-wake-target	act.movement.c:854-855	"$E is already awake." ($E subjective pronoun).

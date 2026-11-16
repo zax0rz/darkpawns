@@ -10,6 +10,7 @@
 # depth-case: zedit.command-type-and-if-flag
 # depth-case: zedit.door-direction-terminator
 # depth-case: zedit.confirm-save
+# depth-case: zedit.exit-room-act
 
 [fixture]
 empty-players
@@ -43,8 +44,37 @@ Y
 <ENTER>
 1
 
+[setup:oracle:peer]
+Zeditpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Zeditpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 goto 8004
+teleport Zeditpeer 8004
 
 [probe]
 zedit
