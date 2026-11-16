@@ -3,6 +3,7 @@
 # depth-case: wake.target-already-awake
 # depth-case: wake.target-noperson
 # depth-case: wake.self-by-name-while-sleeping
+# depth-case: wake.aff-sleep-refusal
 # Targeted do_wake (act.movement.c:841-880). The peer's setup ends with
 # a "sleep" command so the probe starts with a male sleeper in the room:
 # the waker gets "You wake him up." ($M), the sleeper receives the
@@ -10,6 +11,7 @@
 # POS_SITTING. Also proves NOPERSON and the sleeping-waker gate.
 
 [fixture]
+empty-players
 quiet-mobs
 
 [setup:oracle]
@@ -70,10 +72,20 @@ Y
 1
 sleep
 
+[warmup]
+goto 8162
+set Mordecai class mage
+skillset Mordecai 'sleep' 100
+set Sleepero level 1
+
 [probe]
 wake Sleepero
 wake Sleepero
 wake Zzznotreal
+~dpclock pulse 20
+cast 'sleep' Sleepero
+~dpclock pulse 20
+wake Sleepero
 sleep
 wake Mordecai
 wake

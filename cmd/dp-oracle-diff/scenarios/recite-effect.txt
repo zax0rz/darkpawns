@@ -1,7 +1,12 @@
 # depth-case: recite.effect
+# depth-case: recite.concentrate-fail
 [fixture]
+empty-players
 quiet-mobs
 spawn-obj 11701 1 8162 80
+spawn-obj 8052 1 8162 80
+spawn-mob 16303 1 8162 163
+
 [setup:oracle]
 Mordecai
 Y
@@ -15,6 +20,7 @@ K
 Y
 <ENTER>
 1
+
 [setup:port]
 Mordecai
 y
@@ -28,6 +34,15 @@ K
 Y
 <ENTER>
 1
+
+[warmup]
+goto 8162
+
 [probe]
+get recall
+hit trainee
+recite recall
+flee
+goto 8162
 get scroll
 recite scroll
