@@ -8,6 +8,14 @@ var characterNow = time.Now
 
 func RealNow() time.Time { return characterNow() }
 
+// SetCharacterNowForTest overrides the character-save clock for deterministic
+// tests and returns a function that restores the previous clock.
+func SetCharacterNowForTest(fn func() time.Time) func() {
+	prev := characterNow
+	characterNow = fn
+	return func() { characterNow = prev }
+}
+
 // AccountCharacterSave ports src/db.c:2589-2595. Connection age stays separate.
 func (p *Player) AccountCharacterSave() {
 	p.mu.Lock()
