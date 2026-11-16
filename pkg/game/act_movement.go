@@ -175,11 +175,8 @@ func hasBoat(w *World, ch *Player) bool {
 	return false
 }
 
-// hasKey checks if a player has a key object by vnum.
+// hasKey checks if a player has a key object by vnum (src/act.movement.c:428-441).
 func hasKey(ch *Player, key int) bool {
-	if key < 0 {
-		return false
-	}
 	if ch.Inventory != nil {
 		for _, obj := range ch.Inventory.Snapshot() {
 			if obj != nil && obj.VNum == key {
@@ -1219,12 +1216,9 @@ func verbIs(s string) string {
 	return "is"
 }
 
-// hasMobKey is has_key (src/act.movement.c:571-585) for a mobile: the key
+// hasMobKey is has_key (src/act.movement.c:428-441) for a mobile: the key
 // object anywhere in carrying, or in the hold slot only.
 func hasMobKey(m *MobInstance, key int) bool {
-	if key < 0 {
-		return false
-	}
 	for _, obj := range m.InventorySnapshot() {
 		if obj != nil && obj.VNum == key {
 			return true
