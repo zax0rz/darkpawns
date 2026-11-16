@@ -115,7 +115,16 @@ func TestSendMSSP(t *testing.T) {
 			}
 		}()
 		tc.sendMSSP()
-		time.Sleep(200 * time.Millisecond)
+		deadline := time.Now().Add(5 * time.Second)
+		for time.Now().Before(deadline) {
+			mu.Lock()
+			ready := bytes.Contains(buf.Bytes(), []byte{IAC, SE})
+			mu.Unlock()
+			if ready {
+				break
+			}
+			time.Sleep(5 * time.Millisecond)
+		}
 		mu.Lock()
 		defer mu.Unlock()
 		return parseMSSP(t, buf.Bytes())
