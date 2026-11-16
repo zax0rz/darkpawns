@@ -9,6 +9,7 @@
 
 # depth-case: write.noshout-gate
 # depth-case: write.invisible-hold
+# depth-case: write.non-note-target
 
 [fixture]
 empty-players
@@ -58,3 +59,5 @@ cast 'invisibility' quill
 hold quill
 holylight
 write tome
+load obj 1208
+write quill quill

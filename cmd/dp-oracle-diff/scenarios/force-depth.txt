@@ -6,6 +6,7 @@
 # depth-case: force.single-target-order
 # depth-case: force.player-only-ordinal
 # depth-case: force.player-name-abbreviation
+# depth-case: force.room-notify-victim
 
 [fixture]
 empty-players
@@ -74,3 +75,4 @@ goto 8162
 force Forcevictim say forced-depth
 force 0.Forcevictim whoami
 force Forcev whoami
+force room say forced-room
