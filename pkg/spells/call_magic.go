@@ -268,18 +268,6 @@ func magSavingThrow(ch interface{}, saveType int) bool {
 	return CheckSavingThrow(ch, SavingThrowType(saveType))
 }
 
-// magAttackModifier returns the attack type name for a given attack type index.
-// Ported from src/magic.c mag_attack_modifier().
-func MagAttackModifier(attackType int) (singular, plural string) {
-	if attackType > 0 && attackType < len(AttackTypes) {
-		at := AttackTypes[attackType]
-		if at.Singular != "" {
-			return at.Singular, at.Plural
-		}
-	}
-	return "hit", "hits"
-}
-
 // dice rolls N dice of S sides (NdS).
 func dice(num, sides int) int {
 	return dprng.Dice(num, sides)
