@@ -8,7 +8,7 @@ package game
 //   Used for: standard melee attacks (auto-attack each combat round)
 //   parry/dodge: CHECKED (via CheckParry/CheckDodge in formulas.go)
 //
-// Path 2 — doDamage / DoSpellDamage (this file, pkg/game/damage_stubs.go)
+// Path 2 — ApplySkillDamage / DoSpellDamage (this file, pkg/game/damage_stubs.go)
 //   Called directly by skills, spells, and special attacks.
 //   Flow: hit roll (skill-specific) → damage → death
 //   Used for: bash, kick, backstab, spell damage, etc.
@@ -26,7 +26,6 @@ package game
 //   and are handled correctly. Only manually-invoked skills use path 2.
 
 import (
-	"fmt"
 	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
@@ -364,63 +363,6 @@ func (w *World) DoCutthroatDamage(attacker, victim combat.Combatant, dam int) bo
 	})
 }
 
-// doDamage applies skill/offensive damage to a player or mob and handles death.
-// Used by bash, kick, backstab, disembowel, ambush, neckbreak, tiger/dragon
-// kick, spec_proc hits, etc. — every skill that goes through the "path 2"
-// damage pipeline documented at the top of this file.
-//
-// DP-901: previously type-asserted vict.(*Player) and silently returned false
-// for mobs, so every offensive skill against a mob no-op'd. Now mirrors
-// DoSpellDamage: damages both types, sets fighting state, and routes death
-// through HandleDeath so XP, kill counters, events, and autoloot fire.
-func (w *World) doDamage(ch, vict any, dam int, skill string) bool {
-	attackerName := getAttackerName(ch)
-	killer := combatantFromInterface(ch)
-	attackType := skillToAttackType(skill)
-
-	// Route skill/offensive damage through the shared damage() modifier block
-	// (sanctuary, protect evil/good, race-hate, immortal immunity, 3000 cap)
-	// before applying — the same funnel melee and spells use (DP-1025).
-	if victimC := combatantFromInterface(vict); victimC != nil {
-		dam = combat.ApplyDamageModifiers(killer, victimC, dam)
-	}
-
-	if dam <= 0 {
-		// C: damage(ch, vict, 0, ...) prints the no-damage message and still
-		// counts as a hit (used by skills that connect for zero damage).
-		switch v := vict.(type) {
-		case *Player:
-			v.SendMessage(fmt.Sprintf("%s hits you, but it doesn't hurt!\r\n", attackerName))
-		case *MobInstance:
-			// Mobs don't get a player-style message; the call site reports.
-		}
-		return false
-	}
-
-	switch v := vict.(type) {
-	case *Player:
-		v.TakeDamage(dam)
-		v.SetFightingBody(killer)
-		// Enter the wounded band or POS_DEAD from the new HP; only run the
-		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		if combat.UpdatePositionAfterDamage(v, w.WoundAct, w.StopFightingBody) == combat.PosDead {
-			w.HandleDeath(v, killer, attackType)
-		}
-		return true
-	case *MobInstance:
-		v.TakeDamage(dam)
-		v.SetFightingBody(killer)
-		// Enter the wounded band or POS_DEAD from the new HP; only run the
-		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		if combat.UpdatePositionAfterDamage(v, w.WoundAct, w.StopFightingBody) == combat.PosDead {
-			w.HandleDeath(v, killer, attackType)
-		}
-		return true
-	default:
-		return false
-	}
-}
-
 // WoundAct delivers one C act(..., victim, 0, 0, TO_ROOM) wounded-band or
 // death message with its hide_invisible flag (src/fight.c:1566-1584):
 // hide=TRUE withholds the line from anyone who cannot see the victim at all
@@ -433,17 +375,6 @@ func (w *World) WoundAct(roomVNum int, victim combat.Combatant, format string, h
 		return
 	}
 	Act(w, hideInvisible, actor, nil, nil, nil, format, "", ToRoom)
-}
-
-// getAttackerName returns the name of the attacker for messages.
-func getAttackerName(ch any) string {
-	if p, ok := ch.(*Player); ok {
-		return p.GetName()
-	}
-	if m, ok := ch.(*MobInstance); ok {
-		return m.GetName()
-	}
-	return "someone"
 }
 
 // randRange returns a random integer in [min, max].

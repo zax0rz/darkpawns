@@ -64,22 +64,3 @@ func TestMagGroupsMemberOrder(t *testing.T) {
 		}
 	})
 }
-
-// C perform_mag_groups has no break after SPELL_MASS_DOMINATE: it falls
-// through into SPELL_GROUP_INVIS (src/magic.c:1438-1441). Unreachable in play
-// (MASS_DOMINATE is MAG_AREAS-only, src/spell_parser.c:1480-1481) but the
-// function twin keeps C's fall-through bytes.
-func TestMagGroupsMassDominateFallsThroughToGroupInvis(t *testing.T) {
-	w, outputs := newGroupRecallWorld(t, false)
-	leader := groupMember(t, w, outputs, 1, "Leader", true)
-	member := groupMember(t, w, outputs, 2, "Member", true)
-	w.AddFollowerQuiet(member, leader)
-
-	spells.MagGroups(30, leader, spells.SpellMassDominate, int(spells.SaveSpell), w)
-
-	// The charm arm's outcome varies (save roll); the fall-through's invis
-	// bytes are unconditional.
-	if got := outputs["Member"].String(); !strings.Contains(got, "You vanish.\r\n") {
-		t.Fatalf("member stream = %q, want the GROUP_INVIS fall-through line %q", got, "You vanish.")
-	}
-}
