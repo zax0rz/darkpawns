@@ -1,0 +1,80 @@
+# C-first coverage of connected_types[] entries exposed through do_users.
+# The pending peers stop before entering the game. C's do_users enumerates each descriptor, including descriptors that have not registered a player session.
+
+# depth-case: users.connection.get-name
+# depth-case: users.connection.confirm-name
+# depth-case: users.connection.get-password
+# depth-case: users.connection.get-new-password
+# depth-case: users.connection.confirm-new-password
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+Userstates
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Userstates
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:getname]
+
+
+[setup:port:getname]
+
+
+[setup:oracle:confirmname]
+CsConfirm
+
+[setup:port:confirmname]
+CsConfirm
+
+[setup:oracle:getpassword]
+Userstates
+
+[setup:port:getpassword]
+Userstates
+
+[setup:oracle:newpassword]
+CsNewpw
+Y
+
+[setup:port:newpassword]
+CsNewpw
+Y
+
+[setup:oracle:confirmpassword]
+CsConfpw
+Y
+testpass1
+
+[setup:port:confirmpassword]
+CsConfpw
+Y
+testpass1
+
+[probe]
+users
