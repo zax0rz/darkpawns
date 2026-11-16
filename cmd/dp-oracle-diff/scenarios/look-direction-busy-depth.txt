@@ -1,0 +1,109 @@
+# depth-case: look.direction.busy
+# C-first reachable through the immortal force path: do_force invokes
+# command_interpreter for the selected body (src/act.wizard.c:1856-1881),
+# allowing a fighting mortal's registered look command to reach
+# look_in_direction's live FIGHTING(ch) guard (src/act.informative.c:841-849).
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+
+[setup:oracle]
+Lookboss
+Y
+bossPass
+bossPass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lookboss
+y
+bossPass
+bossPass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Lookbusy
+Y
+busyPass
+busyPass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker]
+Lookbusy
+y
+busyPass
+busyPass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Lookpeer
+Y
+peerPass
+peerPass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Lookpeer
+y
+peerPass
+peerPass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Lookbusy 8162
+teleport Lookpeer 8162
+set player Lookbusy level 20
+set player Lookpeer level 19
+set player Lookbusy maxhit 5000
+set player Lookbusy hit 5000
+set player Lookpeer maxhit 5000
+set player Lookpeer hit 5000
+
+[probe]
+force Lookbusy hit Lookpeer
+force Lookbusy look north

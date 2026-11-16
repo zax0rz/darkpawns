@@ -7,6 +7,7 @@
 # depth-case: look.lookin-closed
 # depth-case: look.lookin-not-container
 # depth-case: look.at-target
+# depth-case: look.at-no-argument
 # depth-case: look.look-target
 # depth-case: look.read-target
 [fixture]
@@ -47,5 +48,6 @@ look in xyzzy
 look in pack
 look in sword
 look at pack
+look at
 look pack
 read pack

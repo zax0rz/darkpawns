@@ -10,8 +10,11 @@
 # depth-case: look.sector.desert
 # depth-case: look.sector.fire
 # depth-case: look.sector.earth
-# C-first matrix for the twelve sector suffixes in look_at_room's
-# PRF_ROOMFLAGS block (src/act.informative.c:775-797). Each room is assigned
+# depth-case: look.sector.wind
+# depth-case: look.sector.water
+# depth-case: look.sector.unknown
+# C-first matrix for the fifteen sector suffixes in look_at_room's
+# PRF_ROOMFLAGS block (src/act.informative.c:772-803). Each room is assigned
 # one sector through the scenario fixture and observed through the live room
 # look; the God turns roomflags on before the first observation.
 
@@ -30,6 +33,9 @@ set-room-flag 8113 0 off
 set-room-flag 8114 0 off
 set-room-flag 8115 0 off
 set-room-flag 8116 0 off
+set-room-flag 8117 0 off
+set-room-flag 8120 0 off
+set-room-flag 8121 0 off
 set-room-sector 8105 1
 set-room-sector 8106 2
 set-room-sector 8107 3
@@ -42,6 +48,9 @@ set-room-sector 8113 9
 set-room-sector 8114 10
 set-room-sector 8115 11
 set-room-sector 8116 12
+set-room-sector 8117 13
+set-room-sector 8121 14
+set-room-sector 8120 15
 
 [setup:oracle]
 Sectorlook
@@ -76,6 +85,12 @@ roomflags
 
 [probe]
 goto 8105
+look
+goto 8117
+look
+goto 8121
+look
+goto 8120
 look
 goto 8106
 look
