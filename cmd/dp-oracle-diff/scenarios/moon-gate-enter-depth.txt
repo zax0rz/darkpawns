@@ -1,0 +1,76 @@
+# C-first vehicle for SPECIAL(moon_gate) enter-portal transfer
+# (src/gate.c:278). Moongod casts 'gate' on Moontarget in 8105 and enters the
+# spawned blue portal.
+#
+# depth-case: gate.moon-gate-enter
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Moongod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Moongod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Moontarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Moontarget
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Moontarget 8106
+set Moontarget level 10
+cast 'gate' Moontarget
+~dpclock pulse 20
+
+[probe]
+enter portal
+look

@@ -1,0 +1,82 @@
+# C-first vehicle for switched-mob whisper/ask (DoSpecCommMobile,
+# src/act.comm.c:1007) and mob reply after target logout (doMobReply,
+# src/act.comm.c:957).
+#
+# depth-case: comm.mob-whisper-to-vict
+# depth-case: comm.mob-reply-no-longer-playing
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Commgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Commgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Commpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Commpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Commpeer 8162
+
+[probe]
+switch trainee
+whisper Commpeer hi
+send:peer tell trainee hi
+return
+send:peer quit
+~dpclock pulse 1
+switch trainee
+reply hi
+return

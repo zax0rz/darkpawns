@@ -11,6 +11,7 @@ do_spec_comm	whisper	whisper.no-arg	D1	command	oracle-green	comm-depth	act.comm.
 do_spec_comm	whisper	whisper.success	D3	command	oracle-green	comm-depth	act.comm.c:1006-1016	Vict "$n whispers to you, 'x'" / self "You whisper to Barnaby, 'x'".
 do_spec_comm	whisper	whisper.not-found	D1	command	oracle-green	comm-depth	act.comm.c:1002-1003	NOPERSON "No-one by that name here."
 do_spec_comm	whisper	whisper.self	D1	command	oracle-green	comm-depth	act.comm.c:1004-1005	"You can't get your mouth close enough to your ear..."
+do_spec_comm	whisper	comm.mob-whisper-to-vict	D2	audience	oracle-green	comm-mob-depth	act.comm.c:1007	Switched mob whispering to an in-room player delivers "$n whispers to you, 'hi'" (R1/R2/R5e).
 do_spec_comm	ask	ask.no-arg	D1	command	oracle-green	comm-depth	act.comm.c:999-1001	"Whom do you want to ask.. and what??" (shared arm, ask wording).
 do_spec_comm	ask	ask.success	D3	command	oracle-green	comm-depth	act.comm.c:992-1016	Vict "$n asks you, 'x'" / self "You ask Barnaby, 'x'".
 do_spec_comm	ask	ask.not-found	D1	command	delegated	whisper.not-found	act.comm.c:1002-1003	Shared do_spec_comm resolution gate; proven under whisper.
@@ -31,6 +32,7 @@ do_tell	tell	tell.switched-body-target	D2	command	oracle-green	tell-switched-bod
 do_tell	tell	tell.numbered-room-order	D2	command	oracle-green	tell-switched-body-depth@1	src/handler.c:1290-1298,1303-1324	`tell 2.clone` counts visible room matches in char_to_room order and selects the second, descriptorless clone, so C answers NOPERSON. The first clone is the switched body and receives the tell. Draw parity MATCH (R1/R2/R3/R5e/R5h).
 do_reply	reply	reply.no-target	D1	command	oracle-green	comm-depth	act.comm.c:940-941	"You have no-one to reply to!"
 do_reply	reply	reply.success	D3	command	oracle-green	comm-depth	act.comm.c:944-971	After a successful tell, `reply hi` routes back through perform_tell.
+do_reply	reply	comm.mob-reply-no-longer-playing	D2	command	oracle-green	comm-mob-depth	act.comm.c:957	Switched mob replying after the teller quits prints "They are no longer playing." (R1/R2/R5e).
 do_reply	reply	reply.no-arg	D1	command	oracle-green	reply-noarg	act.comm.c:942-943	Primary tells the peer in warmup, then the peer's bare reply reaches the valid-LAST_TELL empty-argument gate and matches "What is your reply?".
 do_reply	reply	reply.player-teller-from-shared-record	D3	command	oracle-green	tell-switched-body-depth@1	src/act.comm.c:944-971;src/db.c:104,1281	After a player tells a switched mobile, the shared dummy last_tell holds that player, so the body's reply reaches the teller (victim line "$n tells you", actor echo "You tell $N"). C then writes GET_IDNUM(mob)=0 into the player's own record; the port clears it. Draw parity MATCH (R1/R2/R3/R5e/R5h).
 do_echo	emote	emote.no-arg	D1	command	oracle-green	comm-depth	act.wizard.c:133-134	"Yes.. but what?"
