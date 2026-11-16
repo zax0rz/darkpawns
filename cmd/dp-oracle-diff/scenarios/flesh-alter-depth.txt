@@ -1,6 +1,7 @@
 # depth-case: alter.success-unequips-wielded
 # depth-case: alter.toggle-off
 # depth-case: flesh.success-bare-handed
+# depth-case: score.state-variants.flesh-alter-live
 # depth-case: look.character-flesh-alter-hand
 # depth-case: look.character-metalskin
 # C-first vehicle for do_flesh_alter (src/new_cmds.c:1886-1938). The God
@@ -131,6 +132,7 @@ cast 'metalskin' Fleshpeer
 [probe]
 send:fleshpeer alter
 ~dpclock pulse 45
+send:fleshpeer score
 look at Fleshpeer
 send:fleshpeer alter
 send:fleshpeer flesh

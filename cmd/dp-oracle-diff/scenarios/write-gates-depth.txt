@@ -10,6 +10,7 @@
 # depth-case: write.noshout-gate
 # depth-case: write.invisible-hold
 # depth-case: write.non-note-target
+# depth-case: equipment.invisible-object-placeholder
 
 [fixture]
 empty-players
@@ -58,6 +59,7 @@ cast 'invisibility' quill
 ~dpclock pulse 20
 hold quill
 holylight
+equipment
 write tome
 load obj 1208
 write quill quill
