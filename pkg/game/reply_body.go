@@ -155,7 +155,7 @@ func (w *World) mobTellPlayer(ch *MobInstance, player *Player, message string) {
 // playerTellMob is perform_tell from a player to a mobile (src/act.comm.c:873-
 // 895). The mobile's descriptor owner sees the victim line; the player sees the
 // echo; the shared dummy_mob record receives the teller's name (C idnum).
-func (w *World) playerTellMob(ch *Player, mob *MobInstance, message string) {
+func (w *World) playerTellMob(ch Actor, mob *MobInstance, message string) {
 	message = deleteANSIControls(message)
 	Act(w, false, ch, mob, nil, nil, fmt.Sprintf("$n tells you, '%s'", message), "", ToVict|ToSleep)
 	Act(w, false, ch, mob, nil, nil, fmt.Sprintf("You tell $N, '%s'", message), "", ToChar|ToSleep)

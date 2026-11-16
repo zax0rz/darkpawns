@@ -323,9 +323,36 @@ func (w *World) npcTell(me *MobInstance, argument string) {
 		Act(w, false, me, nil, nil, nil, "Who do you wish to tell what??", "", ToChar)
 		return
 	}
-	target := w.npcVisiblePlayer(me, targetName)
+	resolved, ok := w.GetCharVis(me, targetName)
+	if !ok {
+		// C NOPERSON (src/act.comm.c:910).
+		Act(w, false, me, nil, nil, nil, "No-one by that name here.", "", ToChar)
+		return
+	}
+	if resolved.Mob != nil {
+		mob := resolved.Mob
+		if w.MobileDescriptorOwner == nil || w.MobileDescriptorOwner(mob) == nil {
+			// C src/act.comm.c:911: IS_NPC(vict) && !vict->desc -> NOPERSON.
+			Act(w, false, me, nil, nil, nil, "No-one by that name here.", "", ToChar)
+			return
+		}
+		if mob == me {
+			Act(w, false, me, nil, nil, nil, "You try to tell yourself something.", "", ToChar)
+			return
+		}
+		if w.communicationRoomSoundproof(me.GetRoom()) {
+			Act(w, false, me, nil, nil, nil, "The walls seem to absorb your words.", "", ToChar)
+			return
+		}
+		if w.communicationRoomSoundproof(mob.GetRoom()) && me.GetLevel() < lvlImmort {
+			Act(w, false, me, mob, nil, nil, "$E can't hear you.", "", ToChar|ToSleep)
+			return
+		}
+		w.playerTellMob(me, mob, message)
+		return
+	}
+	target := resolved.Player
 	if target == nil {
-		// C NOPERSON (src/act.comm.c:910); a mobile target has no descriptor.
 		Act(w, false, me, nil, nil, nil, "No-one by that name here.", "", ToChar)
 		return
 	}
