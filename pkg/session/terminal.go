@@ -438,10 +438,6 @@ func (s *Session) terminalName(name string) bool {
 	// even checks for an empty line (src/interpreter.c:1743-1752): from here a
 	// close_socket sees a character, whether or not it has a name.
 	s.markDescriptorBound()
-	// Preserve the approved guest-prefix transport routing (DP-1379).
-	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(name)), "guest") {
-		name = strings.TrimSpace(name)
-	}
 	s.terminalNamed = true
 	data, err := json.Marshal(LoginData{PlayerName: name})
 	if err == nil {

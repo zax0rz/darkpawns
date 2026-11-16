@@ -18,8 +18,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/zax0rz/darkpawns/pkg/session"
 )
 
 // writeTestCert writes a self-signed certificate for names to dir and
@@ -84,8 +82,7 @@ func tlsListenerAddr(t *testing.T) string {
 // session over TLS and over plain telnet produces byte-identical text, and a
 // client that verifies the certificate by name connects.
 func TestTLSTelnetServesTheSameGame(t *testing.T) {
-	manager := session.NewManager(gmcpTestWorld(t), nil)
-	t.Cleanup(manager.Stop)
+	manager := newTelnetManagerWithPlayers(t, gmcpTestWorld(t), "Tlstwina", "Tlstwinb")
 	t.Cleanup(Stop)
 	certFile, keyFile, pool := writeTestCert(t, t.TempDir(), "", "darkpawns.test")
 
@@ -97,16 +94,15 @@ func TestTLSTelnetServesTheSameGame(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	const name = "guest_tls_twin"
 	script := []string{"north", "say over the wire", "south", "quit"} // quit away from the start room asks for REALLYQUIT
-	plain := visibleText(parseTelnetStream(t, runTelnetScript(t, plainPort, nil, name, script)))
-	waitSessionGone(t, manager, name)
+	plain := visibleText(parseTelnetStream(t, runTelnetScript(t, plainPort, nil, "Tlstwina", script)))
+	waitSessionGone(t, manager, "Tlstwina")
 
 	conn, err := tls.Dial("tcp", tlsListenerAddr(t), &tls.Config{RootCAs: pool, ServerName: "darkpawns.test", MinVersion: tls.VersionTLS12})
 	if err != nil {
 		t.Fatalf("verified TLS dial: %v", err)
 	}
-	secure := visibleText(parseTelnetStream(t, runTelnetScriptOn(t, conn, nil, name, script)))
+	secure := visibleText(parseTelnetStream(t, runTelnetScriptOn(t, conn, nil, "Tlstwinb", script)))
 
 	if !strings.Contains(plain, "You say 'over the wire'") {
 		t.Fatalf("plain session did not run the script: %q", plain)
@@ -117,8 +113,7 @@ func TestTLSTelnetServesTheSameGame(t *testing.T) {
 }
 
 func TestTLSRejectsOldProtocolVersions(t *testing.T) {
-	manager := session.NewManager(gmcpTestWorld(t), nil)
-	t.Cleanup(manager.Stop)
+	manager := newTelnetManagerWithPlayers(t, gmcpTestWorld(t), "Tlstwin")
 	t.Cleanup(Stop)
 	certFile, keyFile, pool := writeTestCert(t, t.TempDir(), "", "darkpawns.test")
 	if err := ListenTLS(0, manager, certFile, keyFile); err != nil {
@@ -141,8 +136,7 @@ func TestTLSStalledHandshakeIsDropped(t *testing.T) {
 	tlsHandshakeTimeout = 200 * time.Millisecond
 	t.Cleanup(func() { tlsHandshakeTimeout = origTimeout })
 
-	manager := session.NewManager(gmcpTestWorld(t), nil)
-	t.Cleanup(manager.Stop)
+	manager := newTelnetManagerWithPlayers(t, gmcpTestWorld(t), "Tlstwin")
 	t.Cleanup(Stop)
 	certFile, keyFile, _ := writeTestCert(t, t.TempDir(), "", "darkpawns.test")
 	if err := ListenTLS(0, manager, certFile, keyFile); err != nil {
@@ -209,8 +203,7 @@ func msspFields(t *testing.T, port int) map[string]string {
 // certificate's hostname, which is what Mudlet reads to offer a plaintext
 // player the encrypted port. With TLS off, neither field is sent.
 func TestMSSPAdvertisesTLSPort(t *testing.T) {
-	manager := session.NewManager(gmcpTestWorld(t), nil)
-	t.Cleanup(manager.Stop)
+	manager := newTelnetManagerWithPlayers(t, gmcpTestWorld(t), "Tlstwin")
 	t.Cleanup(Stop)
 	plainPort := listenerEntryPort(t)
 	if err := Listen(plainPort, manager); err != nil {
@@ -295,8 +288,7 @@ func TestCertReloaderFollowsRenewals(t *testing.T) {
 }
 
 func TestListenTLSRefusesMissingCertificate(t *testing.T) {
-	manager := session.NewManager(gmcpTestWorld(t), nil)
-	t.Cleanup(manager.Stop)
+	manager := newTelnetManagerWithPlayers(t, gmcpTestWorld(t), "Tlstwin")
 	t.Cleanup(Stop)
 	dir := t.TempDir()
 	if err := ListenTLS(0, manager, filepath.Join(dir, "missing.pem"), filepath.Join(dir, "missing-key.pem")); err == nil {

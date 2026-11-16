@@ -1013,39 +1013,6 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	cmdStart := time.Now()
 	defer func() { metrics.CommandProcessed(classifyCommand(cmd), time.Since(cmdStart)) }()
 
-	if s.isGuest {
-		guestAllowedCmds := map[string]bool{
-			"north": true, "n": true,
-			"east": true, "e": true,
-			"south": true, "s": true,
-			"west": true, "w": true,
-			"up": true, "u": true,
-			"down": true, "d": true,
-			"look": true, "l": true,
-			"examine": true, "exa": true,
-			"score": true, "sc": true,
-			"who": true, "where": true,
-			"affects": true,
-			"help":    true,
-			"say":     true,
-			"gossip":  true,
-			"tell":    true,
-			"reply":   true, "r": true,
-			"newbie": true,
-			"shout":  true,
-			"gtell":  true, "gsay": true,
-			"emote": true, "me": true,
-			"stand": true, "sit": true,
-			"rest": true, "sleep": true,
-			"wake": true,
-			"quit": true, "reallyquit": true,
-		}
-		if !guestAllowedCmds[cmd] {
-			s.sendText("Guest accounts are restricted from using this command.")
-			return nil
-		}
-	}
-
 	// R2d: C prefix/abbreviation resolution. Scan the ordered C table (law 2:
 	// table order wins), level-filter DURING the scan (law 3 — load-bearing: a
 	// mortal typing `go` must resolve to gossip, not the earlier goto which is

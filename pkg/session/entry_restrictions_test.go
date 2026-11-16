@@ -142,17 +142,6 @@ func TestEntryWizlockWebSocket(t *testing.T) {
 	}
 }
 
-func TestEntryWizlockGuestOverlayUnchanged(t *testing.T) {
-	s := entrySession(t, entryDatabase(t))
-	s.manager.wizlockLevel = game.LVL_IMPL
-	if err := s.handleLogin(loginMsg("guest_wizlock", "")); err != nil {
-		t.Fatal(err)
-	}
-	if !s.isGuest || !s.authenticated || s.SendClosed() {
-		t.Fatal("DP-1379 guest overlay changed")
-	}
-}
-
 func TestEntrySiteBanNewBoundary(t *testing.T) {
 	for _, ban := range []int{game.BanNot, game.BanNew, game.BanSelect, game.BanAll} {
 		for _, terminal := range []bool{false, true} {

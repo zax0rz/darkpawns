@@ -7,26 +7,15 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/audit"
-	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/telemetry"
 	"golang.org/x/crypto/bcrypt"
 )
-
-// guestSeq is a monotonic counter for generated guest names so two guests
-// never share a "Guest_NNNN" name (DP-912). The previous scheme derived the
-// suffix from time.Now().UnixNano()%10000, which collided for sequential
-// logins (a name freed by disconnect could be reassigned) and raced under
-// concurrency. A counter is unique across both sequential and concurrent
-// logins. Note: C has no "guest" login — this is a Go-only affordance, so
-// uniqueness (not fidelity to any C scheme) is the goal.
-var guestSeq atomic.Int64
 
 func (s *Session) handleLogin(data json.RawMessage) error {
 	if s.authenticated || s.SendClosed() {
@@ -65,92 +54,6 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	if login.PlayerName == "" {
 		s.CloseSend()
 		return ErrInvalidPlayerName
-	}
-
-	if strings.HasPrefix(strings.ToLower(login.PlayerName), "guest") {
-		// DP-1379 guest entry replaces any character being named on this descriptor.
-		s.releaseEntryName()
-		// Bypasses DB password authentication & character creation completely!
-		// Every guest gets a generated name; the typed suffix is never used.
-		// It bypassed the C name gate, so it could carry path separators
-		// (alias files are keyed by name), control bytes or a lookalike
-		// identity. Generate a unique name from a monotonic counter (DP-912).
-		guestName := fmt.Sprintf("Guest_%d", guestSeq.Add(1))
-		// Belt-and-suspenders: if the (extremely unlikely, counter-wrap) name
-		// is already live, keep incrementing until free. The counter makes the
-		// common sequential case collision-free without this loop.
-		for {
-			if _, ok := s.manager.GetSession(guestName); ok {
-				guestName = fmt.Sprintf("Guest_%d", guestSeq.Add(1))
-			} else {
-				break
-			}
-		}
-
-		s.manager.mu.Lock()
-
-		s.player = game.NewCharacter(0, guestName, game.ClassWarrior, game.RaceHuman)
-
-		s.manager.mu.Unlock()
-		s.player.Stats = game.RollRealAbils(game.ClassWarrior, game.RaceHuman)
-		s.player.CopyBaseAttributes()
-		s.player.Sex = 0 // Male
-		s.player.Hometown = 1
-		s.player.RoomVNum = game.MortalStartRoom // 8004
-		s.player.MaxHealth = 100
-		s.player.Health = 100
-		s.player.MaxMana = 20
-		s.player.Mana = 20
-		s.player.MaxMove = 100
-		s.player.Move = 100
-		game.GiveStartingSkills(s.player)
-		grantClassSpells(s.player)
-
-		// Publish the guest's identity together, under the manager lock that
-		// session lookups and broadcasts synchronize on (VULN-010).
-		s.manager.mu.Lock()
-		s.authenticated = true
-		s.isGuest = true
-		s.playerName = guestName
-		s.manager.mu.Unlock()
-
-		// A guest login proves no credential, so it must not clear this IP's
-		// failed-password count (H-15). Recording success here let one free
-		// guest entry after every few wrong passwords keep the lockout from
-		// ever engaging (VULN-006).
-		if err := s.manager.enterWorld(guestName, s); err != nil {
-			return err
-		}
-
-		s.manager.world.GiveStartingItems(s.player)
-
-		// Guest entry renders the room exactly once, via sendWelcome's shared
-		// observation below (welcome text first, then the room — matching C's
-		// welcome-before-entry-look order). A prior explicit cmdLook here
-		// rendered the room a second time on both transports.
-
-		// Generate a dummy JWT token for WebSocket client auth checks
-		token, err := auth.GenerateJWT(guestName, "")
-		if err != nil {
-			slog.ErrorContext(s.sessionCtx, "failed to generate JWT token for guest", s.logAttrs(slog.Any("error", err))...)
-		}
-		s.tokenIssuedAt = time.Now()
-
-		s.sendWelcome(token)
-
-		// Broadcast to room
-		enterMsg, err := json.Marshal(ServerMessage{
-			Type: MsgEvent,
-			Data: EventData{
-				Type: "enter",
-				Text: s.player.Name + " has arrived.",
-			},
-		})
-		if err == nil {
-			s.manager.BroadcastToRoom(s.player.GetRoom(), enterMsg, s.player.Name)
-		}
-
-		return nil
 	}
 
 	// CON_PASSWORD already has a descriptor name; only CON_GET_NAME parses it.

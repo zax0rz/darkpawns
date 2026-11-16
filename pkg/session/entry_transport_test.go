@@ -346,9 +346,9 @@ func TestEntryWebSocketSavedIdentityAndMenuResume(t *testing.T) {
 	// The drop runs C's lost-link save (comm.c:2130): load_room NOWHERE, the same
 	// value entry already stored, which is why no field may move. The save is on this
 	// path because the session holds a real stored character (manager.go:1263-1273).
-	if !manager.hasDB || linkdead.player.ID != want.ID || linkdead.isGuest {
-		t.Errorf("the retained session does not run the lost-link save: hasDB=%v id=%d guest=%v",
-			manager.hasDB, linkdead.player.ID, linkdead.isGuest)
+	if !manager.hasDB || linkdead.player.ID != want.ID {
+		t.Errorf("the retained session does not run the lost-link save: hasDB=%v id=%d",
+			manager.hasDB, linkdead.player.ID)
 	}
 	afterDrop, err := database.GetPlayer("aiko")
 	if err != nil || afterDrop == nil {

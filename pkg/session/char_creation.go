@@ -630,9 +630,7 @@ func (s *Session) persistAcceptedCharacter() error {
 	} else {
 		p.ID = s.manager.allocateEphemeralPlayerID()
 	}
-	if !s.isGuest {
-		s.manager.notifications.Publish(notify.Event{ID: notify.Created, Player: s.charName})
-	}
+	s.manager.notifications.Publish(notify.Event{ID: notify.Created, Player: s.charName})
 	s.manager.mu.Lock()
 	s.player = p
 	s.manager.mu.Unlock()
@@ -640,9 +638,7 @@ func (s *Session) persistAcceptedCharacter() error {
 	s.authenticated = true
 	s.manager.mu.Unlock()
 	s.manager.mu.Lock()
-	if !s.isGuest {
-		telemetry.RecordCharacter(game.ActivityForPlayer(p))
-	}
+	telemetry.RecordCharacter(game.ActivityForPlayer(p))
 	s.creationSaved = true
 	s.manager.mu.Unlock()
 	s.playerName = s.charName

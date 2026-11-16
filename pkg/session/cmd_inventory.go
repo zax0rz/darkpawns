@@ -79,12 +79,6 @@ func execQuit(s *Session, reallyQuit bool) error {
 	// with the equipment fork applied — is the final state.
 	s.manager.closeDuplicateSessions(s)
 
-	// Guests are a port-only convenience with no stored character and no
-	// menu of their own, so their quit still ends the connection.
-	if s.isGuest {
-		s.manager.Unregister(s.player.Name)
-		return nil
-	}
 	s.leaveGameToMenu(outcome == game.QuitLogoutKeepEQ)
 	return nil
 }
@@ -154,7 +148,7 @@ func (s *Session) saveCharacter(why string, loadRoom int) game.SaveResult {
 
 func (s *Session) savePlayer(p *game.Player, why string, loadRoom int) game.SaveResult {
 	m := s.manager
-	if !m.hasDB || p == nil || p.ID <= 0 || s.isGuest {
+	if !m.hasDB || p == nil || p.ID <= 0 {
 		return game.SaveSkipped
 	}
 	rec, err := s.playerRecordForSave(p, loadRoom)

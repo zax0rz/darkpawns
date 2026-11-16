@@ -238,39 +238,6 @@ func TestEntryNameBannedSubstringAndPlayingOverride(t *testing.T) {
 	}
 }
 
-// DP-1379 approves guest-prefix entry; command scope is deliberately unchanged.
-func TestEntryGuestPrefixApproved(t *testing.T) {
-	database := entryDatabase(t)
-	manager := entryTransportManager(t, database)
-	t.Setenv("JWT_SECRET", "entry-guest-approved-secret-at-least-32-characters")
-	// Typed suffixes are never used: they bypass the C name gate, and alias
-	// files are keyed by name, so a suffix could carry path separators,
-	// control bytes or a lookalike identity.
-	for _, name := range []string{"guest", "GuEsT", "guest_test_user", "Guest123!", "guest/../../../tmp/x", "guest\x1b[31mAiko", "GuestAiko"} {
-		s := makeCharSession(t, manager)
-		if err := s.handleLogin(loginMsg(name, "")); err != nil {
-			t.Fatal(err)
-		}
-		if !s.isGuest || !s.authenticated || s.player == nil || s.player.GetRoom() != game.MortalStartRoom || s.charCreating {
-			t.Fatalf("guest path lost for %q", name)
-		}
-		if !strings.HasPrefix(s.playerName, "Guest_") || s.player.Name != s.playerName {
-			t.Fatalf("guest %q kept a typed name: session=%q player=%q", name, s.playerName, s.player.Name)
-		}
-		for i := len("Guest_"); i < len(s.playerName); i++ {
-			if c := s.playerName[i]; c < '0' || c > '9' {
-				t.Fatalf("guest %q name has a non-generated suffix: %q", name, s.playerName)
-			}
-		}
-		if s.player.Class != game.ClassWarrior || s.player.Health != 100 || s.player.MaxMana != 20 || s.player.MaxMove != 100 {
-			t.Fatal("guest initial state changed")
-		}
-	}
-	if n, err := database.CountPlayers(); err != nil || n != 0 {
-		t.Fatalf("guest persisted: n=%d err=%v", n, err)
-	}
-}
-
 func TestEntryNameWorldHandoffReleasesClaim(t *testing.T) {
 	database := entryDatabase(t)
 	entrySeed(t, database, "Aiko")
@@ -340,31 +307,5 @@ func TestEntryNamePasswordKeepsDescriptorIdentity(t *testing.T) {
 	}
 	if len(d.names) != 2 || d.names[1] != "Aiko" || !s.authenticated || s.player == nil || s.player.Name != "Aiko" {
 		t.Fatalf("password changed descriptor identity: lookups=%v player=%v", d.names, s.player)
-	}
-}
-
-func TestEntryGuestHandoffReleasesName(t *testing.T) {
-	database := entryDatabase(t)
-	m := entryTransportManager(t, database)
-	t.Setenv("JWT_SECRET", "entry-guest-handoff-secret-at-least-32-characters")
-	s := makeCharSession(t, m)
-	if err := s.handleLogin(loginMsg("Freedname", "")); err != nil {
-		t.Fatal(err)
-	}
-	if s.charStage != "confirm_name" {
-		t.Fatal("C entry name was not held")
-	}
-	if err := s.handleLogin(loginMsg("guest", "")); err != nil {
-		t.Fatal(err)
-	}
-	if !s.authenticated || !s.isGuest {
-		t.Fatal("approved guest path did not enter")
-	}
-	next := makeCharSession(t, m)
-	if err := next.handleLogin(loginMsg("Freedname", "")); err != nil {
-		t.Fatal(err)
-	}
-	if next.charStage != "confirm_name" {
-		t.Fatal("guest world entry left the former C name held")
 	}
 }

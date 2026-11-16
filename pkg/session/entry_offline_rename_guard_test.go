@@ -9,7 +9,7 @@ import (
 
 // DP-1381: offline name edits cannot disturb online/entering identities.
 func TestEntryOfflineRenameGuard(t *testing.T) {
-	for _, state := range []string{"source-online", "source-linkdead", "source-case-only", "source-live-renamed", "destination-online", "destination-case-only", "destination-entering", "source-entering", "offline-success", "offline-with-guests"} {
+	for _, state := range []string{"source-online", "source-linkdead", "source-case-only", "source-live-renamed", "destination-online", "destination-case-only", "destination-entering", "source-entering", "offline-success"} {
 		t.Run(state, func(t *testing.T) {
 			database := entryDatabase(t)
 			source := entrySeed(t, database, "Returner")
@@ -61,25 +61,6 @@ func TestEntryOfflineRenameGuard(t *testing.T) {
 					t.Fatal(err)
 				}
 				renderedOutput(held)
-			case "offline-with-guests":
-				for _, guestName := range []string{"GuestOne", "GuestTwo"} {
-					guest := makeCharSession(t, m)
-					if err := guest.handleLogin(loginMsg(guestName, "")); err != nil {
-						t.Fatal(err)
-					}
-					if !guest.isGuest {
-						t.Fatal("actual guest entry did not occur")
-					}
-				}
-				collision := false
-				for _, p := range m.world.GetAllPlayers() {
-					if p.GetID() == source.ID {
-						collision = true
-					}
-				}
-				if !collision {
-					t.Fatal("fixture did not produce guest/store numeric overlap")
-				}
 			case "source-entering":
 				held = makeCharSession(t, m)
 				if err := held.handleLogin(loginMsg("Returner", "")); err != nil {
@@ -95,7 +76,7 @@ func TestEntryOfflineRenameGuard(t *testing.T) {
 				t.Fatal(err)
 			}
 			got := renderedOutput(wizard)
-			if state == "offline-success" || state == "offline-with-guests" {
+			if state == "offline-success" {
 				if got != "Okay.\r\nSaved in file.\r\n" {
 					t.Fatal("allowed offline rename", got)
 				}

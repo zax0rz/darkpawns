@@ -13,8 +13,13 @@ func TestWriteLoopRecipientColors(t *testing.T) {
 	manager, world := newTestManager(t)
 	defer world.StopAITicker()
 	s := manager.NewSession()
-	if !s.TerminalLine("guest") || s.GetPlayer() == nil {
-		t.Fatal("guest fixture login failed")
+	for _, line := range []string{"Colorhero", "Y", "oraclepass", "oraclepass", "N", "M", "K", "T", "K", "Y", "", "1"} {
+		if !s.TerminalLine(line) {
+			t.Fatalf("fixture login step %q failed", line)
+		}
+	}
+	if s.GetPlayer() == nil {
+		t.Fatal("fixture login failed")
 	}
 	for {
 		select {
