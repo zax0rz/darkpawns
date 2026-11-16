@@ -1,5 +1,6 @@
 # depth-case: move.npc-follower-follows-leader
 # depth-case: order.npc-follower-obeys-beside-special
+# depth-case: follow.stop-follower-mob
 # A bought horse is a charmed NPC follower (src/spec_procs2.c:348-354). When
 # its leader walks, perform_move's follower loop moves it too: C walks
 # ch->followers, players and mobiles alike (src/act.movement.c:342-351). The
@@ -13,6 +14,7 @@
 empty-players
 quiet-mobs
 spawn-mob 8022 1 8105 80
+spawn-mob 16303 1 8105 163
 
 [setup:oracle]
 StableSuccess
@@ -83,3 +85,8 @@ south
 look
 order followers say hello
 order horse emote neighs
+order horse follow horse
+switch trainee
+follow StableWitness
+follow self
+return
