@@ -14,7 +14,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/session"
 	"github.com/zax0rz/darkpawns/pkg/testutil"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // listenerEntryDatabase is a private SQLite store per test: the database the
@@ -34,12 +33,9 @@ func listenerEntryDatabase(t *testing.T) *db.DB {
 
 func listenerEntrySeed(t *testing.T, database *db.DB) {
 	t.Helper()
-	hash, err := bcrypt.GenerateFromPassword([]byte("oraclepass"), bcrypt.MinCost)
-	if err != nil {
-		t.Fatal(err)
-	}
+	hash := cachedOraclePassHash(t)
 	if err := database.CreatePlayer(&db.PlayerRecord{
-		Name: "Aiko", Password: string(hash), RoomVNum: game.MortalStartRoom, Level: 1,
+		Name: "Aiko", Password: hash, RoomVNum: game.MortalStartRoom, Level: 1,
 		Health: 20, MaxHealth: 20, Mana: 20, MaxMana: 20, Move: 100, MaxMove: 100,
 		Class: game.ClassThief, Race: game.RaceKender,
 		StatStr: 10, StatInt: 10, StatWis: 10, StatDex: 10, StatCon: 10, StatCha: 10,
