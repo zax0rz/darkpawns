@@ -1,0 +1,127 @@
+# C-first do_consider confidence and physical-shape branches. The God controls
+# both live player levels, then the lower-level actor issues registered
+# consider for the exact leveldiff thresholds in src/act.informative.c:2407-2427.
+
+# depth-case: consider.health-worse-shape-text
+# depth-case: consider.level-knows-prefix
+# depth-case: consider.level-knows-opponent
+# depth-case: consider.level-less-confident-prefix
+# depth-case: consider.level-less-confident-suffix
+# depth-case: consider.level-much-less-confident-prefix
+# depth-case: consider.level-much-less-confident-suffix
+# depth-case: consider.level-ready-to-run
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Considergod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Considergod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Consideractor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Consideractor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Considerpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Considerpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Consideractor 8162
+teleport Considerpeer 8162
+set player Consideractor maxhit 1000
+set player Consideractor hit 1000
+set player Considerpeer maxhit 1000
+set player Considerpeer hit 975
+
+[probe]
+# leveldiff 3, with actor level 4: diff > level/2 and <= level.
+set player Consideractor level 4
+set player Considerpeer level 7
+send:actor consider Considerpeer
+# leveldiff -2 selects the less-confident pair.
+set player Consideractor level 4
+set player Considerpeer level 2
+send:actor consider Considerpeer
+# leveldiff -4 selects the much-less-confident pair.
+set player Consideractor level 5
+set player Considerpeer level 1
+send:actor consider Considerpeer
+# leveldiff -6 selects the ready-to-run line.
+set player Consideractor level 7
+set player Considerpeer level 1
+send:actor consider Considerpeer

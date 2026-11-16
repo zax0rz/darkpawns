@@ -1,0 +1,42 @@
+# A fixed clock one MUD hour before calendar day 30; the C weather pulse sets
+# MOON_HALF_EMPTY on the boundary before time renders phases[6].
+
+# depth-case: constants.moon-phase-half-waning
+
+[fixture]
+empty-players
+quiet-mobs
+fixed-time 650382012
+
+[setup:oracle]
+Moonphase
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Moonphase
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+time
+~dpclock pulse 630
+time
