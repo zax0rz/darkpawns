@@ -1,0 +1,80 @@
+# depth-case: comm.object-activity-empty-container-weight-floor
+# An indexed zero-weight basket gains the carried item's weight on put, then C's
+# obj_from_obj clamps its empty weight back to 1. object_activity sees that
+# mismatch on the next mobile pulse and sends the BRF diagnostic to this
+# complete-syslog immortal.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 4306 99 8105 80
+spawn-obj 3100 99 8105 80
+force-load 4306
+force-load 3100
+
+[setup:oracle]
+Ironadmin
+Y
+ironpass
+ironpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ironadmin
+y
+ironpass
+ironpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:owner]
+Ironwatch
+Y
+ironpass
+ironpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:owner]
+Ironwatch
+y
+ironpass
+ironpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+syslog complete
+advance Ironwatch 31
+teleport Ironwatch 8105
+
+[probe:owner]
+get helm
+put helm basket
+get helm basket
+~dpclock pulse 40
