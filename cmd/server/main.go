@@ -1047,13 +1047,23 @@ func main() {
 		slog.Info("Mudlet world map offered over GMCP", "url", mapURL)
 	}
 
+	exitOnStartupFailure := func() {
+		gameWorld.StopAITicker()
+		loopCancel()
+		gameLoop.Stop()
+		telnet.Stop()
+		manager.StopWhodListener()
+		wg.Wait()
+	}
+
 	// Start telnet listener
 	if *telnetPort > 0 {
 		if err := telnet.ListenOn(*telnetBind, *telnetPort, manager); err != nil {
 			slog.Error("Telnet listener failed", "error", err)
-		} else {
-			slog.Info("Telnet listening", "port", *telnetPort)
+			exitOnStartupFailure()
+			os.Exit(1) //nolint:gocritic // exitAfterDefer: resources stopped explicitly above
 		}
+		slog.Info("Telnet listening", "port", *telnetPort)
 	}
 
 	// WHOD is C's separate who-daemon port (src/whod.c; init_whod is called
@@ -1075,9 +1085,10 @@ func main() {
 	case whodListenPort > 0:
 		if err := manager.StartWhodListenerOn(*whodBind, whodListenPort); err != nil {
 			slog.Error("WHOD listener failed", "port", whodListenPort, "error", err)
-		} else {
-			slog.Info("WHOD listening", "port", whodListenPort)
+			exitOnStartupFailure()
+			os.Exit(1) //nolint:gocritic // exitAfterDefer: resources stopped explicitly above
 		}
+		slog.Info("WHOD listening", "port", whodListenPort)
 	}
 
 	// TLS telnet is opt-in, with its own certificate variables: TLS_CERT_FILE
@@ -1088,13 +1099,13 @@ func main() {
 		certFile, keyFile := os.Getenv("TELNET_TLS_CERT_FILE"), os.Getenv("TELNET_TLS_KEY_FILE")
 		if certFile == "" || keyFile == "" {
 			slog.Error("-telnet-tls-port needs TELNET_TLS_CERT_FILE and TELNET_TLS_KEY_FILE")
-			gameLoop.Stop()
-			os.Exit(1) //nolint:gocritic // exitAfterDefer: gameLoop.Stop() called explicitly above
+			exitOnStartupFailure()
+			os.Exit(1) //nolint:gocritic // exitAfterDefer: resources stopped explicitly above
 		}
 		if err := telnet.ListenTLSOn(*telnetTLSBind, *telnetTLS, manager, certFile, keyFile); err != nil {
 			slog.Error("Telnet TLS listener failed", "error", err)
-			gameLoop.Stop()
-			os.Exit(1)
+			exitOnStartupFailure()
+			os.Exit(1) //nolint:gocritic // exitAfterDefer: resources stopped explicitly above
 		}
 	}
 
@@ -1145,6 +1156,7 @@ func main() {
 	}()
 
 	shutdownFromCommand := false
+	serverErr := false
 	select {
 	case <-sigChan:
 		slog.Info("Received shutdown signal")
@@ -1163,6 +1175,7 @@ func main() {
 		shutdownFromCommand = true
 	case err := <-errChan:
 		slog.Error("Server error, shutting down gracefully", "error", err)
+		serverErr = true
 	}
 	slog.Info("Shutting down gracefully...")
 
@@ -1209,6 +1222,9 @@ func main() {
 	// drained above; transient world state is rebuilt from the area files on
 	// the next boot. Do not reintroduce a world snapshot (RULEBOOK R4).
 	slog.Info("Shutdown complete. Farewell.")
+	if serverErr {
+		os.Exit(1) //nolint:gocritic // exitAfterDefer: graceful shutdown completed above
+	}
 }
 
 // generateEphemeralJWTSecret returns a random hex-encoded 32-byte secret for
