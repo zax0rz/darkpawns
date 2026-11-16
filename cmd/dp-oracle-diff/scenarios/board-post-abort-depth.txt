@@ -1,0 +1,42 @@
+# C-first witness for playing_string_cleanup board abort notice (src/modify.c:236#1).
+# depth-case: boards.post-abort-output
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 19652 2 8004 196
+
+[setup:oracle]
+Boardabort
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Boardabort
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+
+[probe]
+write test
+/a

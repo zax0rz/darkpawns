@@ -1,0 +1,72 @@
+# C-first witness for playing_string_cleanup Mail aborted. (src/modify.c:225#1).
+# depth-case: mail.abort-output
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 21225 1 8105 212
+
+[setup:oracle]
+Mailabort
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mailabort
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:recipient]
+Mailrecip
+Y
+recippass
+recippass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:recipient]
+Mailrecip
+y
+recippass
+recippass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set player Mailabort gold 200
+set player Mailabort level 10
+
+[probe]
+mail Mailrecip
+@
