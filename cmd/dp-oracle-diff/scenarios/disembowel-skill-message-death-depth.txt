@@ -4,6 +4,7 @@
 # a piercing dagger; sleeping targets force hit/death/God dispatch.
 # depth-case: disembowel.skill-message-death
 # depth-case: fightmsg.184.record-1
+# depth-case: corpse.guts-spilled
 
 [fixture]
 empty-players
@@ -119,5 +120,7 @@ set player DisMsgVictim maxhit 1
 set player DisMsgVictim hit -10
 goto 8105
 force DisMsgVictim sleep
-[probe:attacker]
-disembowel DisMsgVictim
+[probe]
+send:attacker disembowel DisMsgVictim
+~dpclock pulse 20
+look

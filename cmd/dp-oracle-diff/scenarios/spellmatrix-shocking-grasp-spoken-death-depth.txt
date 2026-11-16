@@ -1,6 +1,7 @@
 # A registered spoken Shocking Grasp cast reaches damage() and C death output; SPELL_SHOCKING_GRASP has no dedicated lib/misc/messages record.
 # The connected caster, PC victim, and room observer expose all three recipient lines.
 # depth-case: spell.shocking-grasp.matrix-spoken-death
+# depth-case: corpse.shocked
 
 [fixture]
 empty-players
@@ -109,3 +110,5 @@ set player ShockingActor level 31
 
 [probe]
 cast 'shocking grasp' ShockingVictim
+~dpclock pulse 20
+look

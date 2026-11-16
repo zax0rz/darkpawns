@@ -3,6 +3,7 @@
 # sessions receive C's exact lines after the command.
 # depth-case: neckbreak.skill-message-death
 # depth-case: fightmsg.190.record-1
+# depth-case: corpse.neck-snapped
 
 [fixture]
 empty-players
@@ -116,5 +117,7 @@ set player NbMsgVictim ac 70
 set player NbMsgVictim maxhit 1
 set player NbMsgVictim hit -10
 goto 8105
-[probe:attacker]
-neckbreak NbMsgVictim
+[probe]
+send:attacker neckbreak NbMsgVictim
+~dpclock pulse 20
+look

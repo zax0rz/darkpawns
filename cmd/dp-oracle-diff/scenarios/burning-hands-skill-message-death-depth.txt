@@ -2,6 +2,7 @@
 # mag_damage -> damage -> SkillMessage. The still-living PC starts at -10 HP;
 # the minimum 4d5+20 damage remains lethal even when C's save halves it.
 # depth-case: spell.burning-hands.message-death
+# depth-case: corpse.charred
 
 [fixture]
 empty-players
@@ -109,3 +110,5 @@ set player BurnDeathActor level 20
 
 [probe]
 cast 'burning hands' BurnDeathVictim
+~dpclock pulse 20
+look
