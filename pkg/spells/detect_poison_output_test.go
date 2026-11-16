@@ -45,7 +45,7 @@ func TestCastDetectPoisonOutputBranches(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				caster := &mockSpellsChar{name: "Poisoncheck"}
 				victim := &mockSpellsChar{name: "Target", sex: tc.sex, aff: tc.aff}
-				ExecuteManualSpell(SpellDetectPoison, 30, caster, victim, nil, "", nil)
+				ExecuteManualSpell(SpellDetectPoison, 30, caster, victim, nil, "", testActWorld{})
 				if got := strings.Join(caster.messages, ""); got != tc.want {
 					t.Fatalf("other-character detect-poison output = %q, want %q", got, tc.want)
 				}
@@ -69,7 +69,7 @@ func TestCastDetectPoisonOutputBranches(t *testing.T) {
 				caster := &mockSpellsChar{name: "Poisoncheck"}
 				obj := &identifyOutputObject{typeFlag: 19, values: [4]int{0, 0, 0, tc.poison}, short: "a loaf of bread"}
 				originalValues := obj.values
-				ExecuteManualSpell(SpellDetectPoison, 30, caster, nil, obj, "", nil)
+				ExecuteManualSpell(SpellDetectPoison, 30, caster, nil, obj, "", testActWorld{})
 				if got := strings.Join(caster.messages, ""); got != tc.want {
 					t.Fatalf("food detect-poison output = %q, want %q", got, tc.want)
 				}

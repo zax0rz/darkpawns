@@ -23,6 +23,10 @@ func (w *mockSayWorld) ForEachMobInRoomInterface(roomVNum int, fn func(any)) {
 	}
 }
 
+func (w *mockSayWorld) SaySpellDeliver(ch, tch, tobj any, sameClass, otherClass, vict string) bool {
+	return testActWorld{roomChars: func(int) []any { return w.players }}.SaySpellDeliver(ch, tch, tobj, sameClass, otherClass, vict)
+}
+
 func newSayChar(name string, class int, room int) *mockSpellsChar {
 	return &mockSpellsChar{
 		name:     name,

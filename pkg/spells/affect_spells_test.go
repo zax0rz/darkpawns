@@ -122,7 +122,7 @@ func (silkenMissileTestObject) GetShortDesc() string { return "a test object" }
 // (src/spells.c:890-895).
 func TestSilkenMissileUnusableObjectUsesCActTerminator(t *testing.T) {
 	caster := &mockSpellsChar{name: "Caster"}
-	castSilkenMissile(10, caster, silkenMissileTestObject{typ: 17}, nil)
+	castSilkenMissile(10, caster, silkenMissileTestObject{typ: 17}, testActWorld{})
 
 	const want = "You can't make anything useful from a test object.\r\n\r\n"
 	if got := strings.Join(caster.messages, ""); got != want {
@@ -146,6 +146,9 @@ type summonTestWorld struct {
 
 func (w *summonTestWorld) GetItemsInRoomI(int) []interface{}    { return w.items }
 func (w *summonTestWorld) GetRoomInWorld(vnum int) *parser.Room { return w.rooms[vnum] }
+func (w *summonTestWorld) SpellActToVictim(caster, victim any, format string) bool {
+	return testActWorld{}.SpellActToVictim(caster, victim, format)
+}
 
 func TestSummonManualDispatchRequiresGlyphBeforeOtherGates(t *testing.T) {
 	caster := &mockSpellsChar{name: "Mage", roomVNum: 1001}
@@ -967,6 +970,10 @@ func (w *mockAnimateWorld) SpawnMobWithLevelI(vnum, roomVNum, level int) (interf
 func (w *mockAnimateWorld) CanRaiseUndeadI(ch interface{}) (bool, string) {
 	w.canRaiseCalled = true
 	return w.canRaise, w.canRaiseMsg
+}
+
+func (w *mockAnimateWorld) SpellActToRoom(actor, target any, format string, hideInvisible bool) bool {
+	return testActWorld{roomChars: func(int) []any { return w.players }}.SpellActToRoom(actor, target, format, hideInvisible)
 }
 
 func (w *mockAnimateWorld) ForEachPlayerInRoomInterface(room int, fn func(interface{})) {
