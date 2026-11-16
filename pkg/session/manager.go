@@ -103,8 +103,10 @@ var allowedWebSocketOrigins = []string{
 
 // Manager handles all active sessions.
 type Manager struct {
-	outputBatch   heartbeatOutput
-	notifications *notify.Service // installed before listeners start
+	outputBatch     heartbeatOutput
+	deferAsyncMu    sync.Mutex
+	deferAsyncDepth int
+	notifications   *notify.Service // installed before listeners start
 
 	// mudletMap is the generated Mudlet world map (GMCP Client.Map and the
 	// /darkpawns-map.xml endpoint).
@@ -908,6 +910,7 @@ func (m *Manager) flushAsyncPrompts() {
 		if s.inputBusy.Load() || !s.hasTransport() || s.SendClosed() {
 			continue
 		}
+		s.flushPendingAsync()
 		if s.outputSincePrompt.Load() > 0 && !s.IsCharCreating() && !s.IsMenuActive() {
 			s.SendPrompt()
 		}
@@ -1742,7 +1745,16 @@ func (m *Manager) handleTransportDisconnect(s *Session) bool {
 
 	p := s.player
 	p.SetLinkless(true)
+	// C's close_socket writes "$n has lost $s link." to observers' output
+	// buffers and lets the game-loop pass or observer's next command flush it.
+	deferAsync := !m.heartbeatOutputActive()
+	if deferAsync {
+		m.beginDeferAsyncOutput()
+	}
 	game.Act(m.world, true, p, nil, nil, nil, "$n has lost $s link.", "", game.ToRoom)
+	if deferAsync {
+		m.endDeferAsyncOutput()
+	}
 	game.MudLog(fmt.Sprintf("Closing link to: %s.", p.GetName()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true) // comm.c:2132-2133
 
 	if s.activePCSwitch() {
@@ -1761,9 +1773,10 @@ func (m *Manager) handleTransportDisconnect(s *Session) bool {
 		// close_socket leaves both characters descriptor-less; no do_return byte.
 		m.detachPCSwitch(s, false)
 	}
-	// C notices the dead socket in a game-loop pass, and that pass flushes the
-	// room's "has lost his link." with each listener's prompt (DP-1307).
-	m.flushAsyncPrompts()
+	// Do not flush async prompts eagerly inside HandleDisconnect: in C,
+	// close_socket queues "$n has lost $s link." into observers' d->output
+	// and lets the game-loop pass (OnFlushOutput / PumpPulsesFrom) or the
+	// observer's next command flush once at pass end (comm.c:613, 634-649).
 	return true
 }
 
@@ -2253,6 +2266,9 @@ type Session struct {
 	// trailing framing and lets the post-pulse sweep find sessions that owe an
 	// async prompt after pumped heartbeat output.
 	outputSincePrompt atomic.Int64
+
+	pendingAsyncMu sync.Mutex
+	pendingAsync   [][]byte
 
 	connectedAt      time.Time // set on session creation, used for sessionID()
 	connectionNumber int       // C descriptor number, used by do_dc
