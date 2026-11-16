@@ -1,0 +1,118 @@
+# depth-case: mob.attitude-loot-gold-line
+# depth-case: death.money-wear-take
+# depth-case: attitude-loot.quip-case1
+# depth-case: attitude-loot.quip-case2
+# depth-case: attitude-loot.quip-case3
+# depth-case: attitude-loot.quip-case4
+# depth-case: attitude-loot.quip-case5-evil
+# depth-case: attitude-loot.quip-case6
+# depth-case: attitude-loot.quip-case7
+# attitude_loot runs do_get(ch, "all corpse") (src/fight.c:1120). The corpse
+# carries the victim's gold as a create_money pile (src/fight.c:406-413), and
+# create_money sets ITEM_WEAR_TAKE on it (src/handler.c:1484-1486), so
+# can_take_obj passes and the room sees "$n gets $p from $P."
+# (src/act.item.c:197-212) before get_check_money converts the pile to gold.
+# The vnum-19650 watcher is evil and speaks; the player victim is good, so
+# case 5 can reach its evil-killer arm. Each run seed witnesses one switch case.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19650 1 8105 196
+set-mob-flag 19650 AGGRESSIVE
+set-mob-flag 19650 AGGR24
+
+[setup:oracle]
+Lootgold
+Y
+goldpass
+goldpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lootgold
+y
+goldpass
+goldpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Goldvictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Goldvictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Goldwatch
+Y
+obsrpass
+obsrpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Goldwatch
+y
+obsrpass
+obsrpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Goldvictim 8105
+set player Goldvictim align 500
+set player Goldvictim outlaw on
+set player Goldvictim maxhit 1
+set player Goldvictim hit 1
+set player Goldvictim gold 5
+
+[probe:observer]
+~dpclock pulse 40

@@ -1,4 +1,5 @@
 # depth-case: room-activity.drowning-matrix-outcomes
+# depth-case: corpse.drowned
 # room_activity applies SPELL_DROWNING to every PC in underwater sector 8.
 # The three connected actors expose its hit, death, and God SkillMessage
 # triplets through the real pulse path (src/comm.c:713-720).
@@ -142,3 +143,4 @@ set player DrownHit level 1
 
 [probe]
 ~dpclock pulse 40
+send:observer look
