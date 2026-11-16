@@ -78,7 +78,7 @@ func buildReport(goSrc, cSrc, dataSrc []sourceFile, goCands, cCands []candidate,
 
 	// Direction 2: a C segment no Go segment contains is c-missing, a port gap.
 	for _, s := range cSegs {
-		if goSet.hasPatternInside(s.Text) {
+		if goSet.containsSubstring(s.Text) {
 			continue
 		}
 		r.CMissingSegments = append(r.CMissingSegments, s)
