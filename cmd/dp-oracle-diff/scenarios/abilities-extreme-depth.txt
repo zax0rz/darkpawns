@@ -1,0 +1,112 @@
+# C-first abilities vehicle for two otherwise unobserved abil_names[] entries.
+# The God sets a connected peer's strength to array slot 8, then a level-18
+# caster uses Strength on base 18 to reach effective slot 19 in abilities.
+
+# depth-case: abilities.str-below-average
+# depth-case: abilities.str-superior
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Abilsgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Abilsgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:caster]
+Abilscaster
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:caster]
+Abilscaster
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Abilspeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Abilspeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Abilspeer str 8
+goto 8162
+teleport Abilspeer 8162
+teleport Abilscaster 8162
+set player Abilscaster class mage
+set player Abilscaster level 18
+set player Abilscaster maxmana 5000
+set player Abilscaster mana 5000
+skillset Abilscaster 'strength' 100
+
+[probe]
+send:peer abilities
+set player Abilspeer str 18
+send:caster cast 'strength' Abilspeer
+~dpclock pulse 20
+send:peer abilities

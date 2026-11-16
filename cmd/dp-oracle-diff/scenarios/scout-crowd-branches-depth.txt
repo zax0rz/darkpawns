@@ -1,0 +1,115 @@
+# C-first do_scout crowd_size[4..9] witnesses. Each origin has one east exit;
+# each destination receives exactly its indexed number of generic mobs.
+
+# depth-case: scout.crowd-size-4
+# depth-case: scout.crowd-size-5
+# depth-case: scout.crowd-size-6
+# depth-case: scout.crowd-size-7
+# depth-case: scout.crowd-size-8
+# depth-case: scout.crowd-size-9
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8162 1
+set-room-flag 8162 3 off
+replace-room-exits 8162 east 8161 0
+set-room-sector 8001 1
+set-room-flag 8001 3 off
+replace-room-exits 8001 east 8163 0
+set-room-sector 8004 1
+set-room-flag 8004 3 off
+replace-room-exits 8004 east 8105 0
+set-room-sector 8005 1
+set-room-flag 8005 3 off
+replace-room-exits 8005 east 8106 0
+set-room-sector 8006 1
+set-room-flag 8006 3 off
+replace-room-exits 8006 east 8107 0
+set-room-sector 8007 1
+set-room-flag 8007 3 off
+replace-room-exits 8007 east 8108 0
+spawn-mob 5 999 8161 80
+spawn-mob 5 999 8161 80
+spawn-mob 5 999 8161 80
+spawn-mob 5 999 8161 80
+spawn-mob 5 999 8163 80
+spawn-mob 5 999 8163 80
+spawn-mob 5 999 8163 80
+spawn-mob 5 999 8163 80
+spawn-mob 5 999 8163 80
+spawn-mob 5 999 8105 80
+spawn-mob 5 999 8105 80
+spawn-mob 5 999 8105 80
+spawn-mob 5 999 8105 80
+spawn-mob 5 999 8105 80
+spawn-mob 5 999 8105 80
+spawn-mob 5 999 8106 80
+spawn-mob 5 999 8106 80
+spawn-mob 5 999 8106 80
+spawn-mob 5 999 8106 80
+spawn-mob 5 999 8106 80
+spawn-mob 5 999 8106 80
+spawn-mob 5 999 8106 80
+spawn-mob 5 999 8107 80
+spawn-mob 5 999 8107 80
+spawn-mob 5 999 8107 80
+spawn-mob 5 999 8107 80
+spawn-mob 5 999 8107 80
+spawn-mob 5 999 8107 80
+spawn-mob 5 999 8107 80
+spawn-mob 5 999 8107 80
+spawn-mob 5 999 8108 80
+spawn-mob 5 999 8108 80
+spawn-mob 5 999 8108 80
+spawn-mob 5 999 8108 80
+spawn-mob 5 999 8108 80
+spawn-mob 5 999 8108 80
+spawn-mob 5 999 8108 80
+spawn-mob 5 999 8108 80
+spawn-mob 5 999 8108 80
+
+[setup:oracle]
+Crowdproof
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Crowdproof
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+skillset Crowdproof 'scout' 100
+
+[probe]
+scout east
+goto 8001
+scout east
+goto 8004
+scout east
+goto 8005
+scout east
+goto 8006
+scout east
+goto 8007
+scout east
