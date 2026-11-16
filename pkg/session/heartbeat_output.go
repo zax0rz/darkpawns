@@ -84,7 +84,10 @@ func (s *Session) stageHeartbeatText(message []byte, text string, note, literal 
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if !b.active {
-		return s.outputDiscarded.Load()
+		if s.outputDiscarded.Load() {
+			return true
+		}
+		return s.stagePendingAsync(message)
 	}
 	if b.closing[s] || s.outputDiscarded.Load() || (!dpclock.Frozen() && len(s.send)+b.pending[s] >= cap(s.send)) {
 		return true
@@ -204,6 +207,9 @@ func (m *Manager) EndHeartbeatOutput() {
 			}
 			m.mu.RUnlock()
 			for _, s := range sessions {
+				if !s.inputBusy.Load() {
+					s.flushPendingAsync()
+				}
 				if !s.inputBusy.Load() && s.hasTransport() && !s.SendClosed() && s.outputSincePrompt.Load() > 0 && !s.IsCharCreating() && !s.IsMenuActive() && !s.IsPaging() {
 					requested[s] = true
 				}
@@ -313,4 +319,60 @@ func (m *Manager) heartbeatOutputActive() bool {
 	m.outputBatch.mu.Lock()
 	defer m.outputBatch.mu.Unlock()
 	return m.outputBatch.active
+}
+
+func (m *Manager) beginDeferAsyncOutput() {
+	m.deferAsyncMu.Lock()
+	m.deferAsyncDepth++
+	m.deferAsyncMu.Unlock()
+}
+
+func (m *Manager) endDeferAsyncOutput() {
+	m.deferAsyncMu.Lock()
+	if m.deferAsyncDepth > 0 {
+		m.deferAsyncDepth--
+	}
+	m.deferAsyncMu.Unlock()
+}
+
+func (m *Manager) deferringAsyncOutput() bool {
+	m.deferAsyncMu.Lock()
+	defer m.deferAsyncMu.Unlock()
+	return m.deferAsyncDepth > 0
+}
+
+func (s *Session) stagePendingAsync(message []byte) bool {
+	if s.manager == nil || !s.manager.deferringAsyncOutput() {
+		return false
+	}
+	s.pendingAsyncMu.Lock()
+	s.pendingAsync = append(s.pendingAsync, append([]byte(nil), message...))
+	s.pendingAsyncMu.Unlock()
+	return true
+}
+
+func (s *Session) flushPendingAsync() {
+	s.pendingAsyncMu.Lock()
+	if len(s.pendingAsync) == 0 {
+		s.pendingAsyncMu.Unlock()
+		return
+	}
+	msgs := s.pendingAsync
+	s.pendingAsync = nil
+	s.pendingAsyncMu.Unlock()
+
+	for _, msg := range msgs {
+		s.sendMu.RLock()
+		if !s.sendClosed && !s.outputDiscarded.Load() {
+			select {
+			case s.send <- msg:
+				if text, ok := promptableMessageText(msg); ok && text != "" {
+					s.notePlayerOutput()
+				}
+			default:
+				slog.Warn("session send channel full — dropping async message", "player", s.playerName)
+			}
+		}
+		s.sendMu.RUnlock()
+	}
 }

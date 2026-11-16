@@ -365,6 +365,7 @@ func (s *Session) TerminalLine(rawLine string) bool {
 	// prompt is queued below; the others its command reached (a say, an
 	// attack, a death) get theirs when it is done (DP-1307).
 	s.ClearPromptShown()
+	s.flushPendingAsync()
 	s.inputBusy.Store(true)
 	defer func() {
 		s.inputBusy.Store(false)

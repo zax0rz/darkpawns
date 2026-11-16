@@ -166,3 +166,38 @@ func TestGuardedControlDoesNotRequestAsyncPrompt(t *testing.T) {
 		}
 	}
 }
+
+// TestHandleDisconnectDefersLinkLossUntilTurnOrCommand verifies DP-1560 part 1:
+// HandleDisconnect buffers "$n has lost $s link." instead of eagerly flushing a
+// prompt, so a same-pass TerminalLine coalesces both into one flush with one
+// trailing prompt, while FlushAsyncPrompts flushes it on a quiet pass.
+func TestHandleDisconnectDefersLinkLossUntilTurnOrCommand(t *testing.T) {
+	m := makeTestManagerWithVoidRooms(t)
+	watcher := makeTestSession(t, m, "Watcher", 1001, true)
+	watcher.terminalNamed = true
+	watcher.limiter = rate.NewLimiter(rate.Inf, 1000)
+	registerTestSession(t, m, watcher, "Watcher")
+
+	victim := makeTestSession(t, m, "Victim", 1001, true)
+	victim.player.ID = 2
+	victim.terminalNamed = true
+	victim.transportDone = make(chan struct{})
+	registerTestSession(t, m, victim, "Victim")
+	drainFrames(watcher)
+
+	if !m.HandleTransportDisconnect(victim) {
+		t.Fatal("HandleTransportDisconnect(victim) = false, want true")
+	}
+	if got := drainFrames(watcher); got != "" {
+		t.Fatalf("HandleDisconnect flushed eagerly: %q", got)
+	}
+
+	m.FlushAsyncPrompts()
+	got := drainFrames(watcher)
+	if !strings.Contains(got, "Victim has lost his link.\r\n") {
+		t.Fatalf("FlushAsyncPrompts output = %q, want link-loss act", got)
+	}
+	if !strings.HasSuffix(got, "> ") {
+		t.Fatalf("FlushAsyncPrompts output = %q, want trailing prompt", got)
+	}
+}
