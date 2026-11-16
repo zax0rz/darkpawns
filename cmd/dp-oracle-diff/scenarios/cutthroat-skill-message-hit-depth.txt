@@ -3,6 +3,7 @@
 # the primary God session is the connected room observer. The thief starts with a piercing dagger. Cutthroat has no shifted expression; the fixture forces the selected C outcome through its documented skill and victim-level gates.
 # depth-case: cutthroat.skill-message-hit
 # depth-case: fightmsg.143.record-1
+# depth-case: look.character-cutthroat
 
 [fixture]
 empty-players
@@ -121,3 +122,5 @@ set player CutMsgHitGod room 8105
 
 [probe:attacker]
 cutthroat CutMsgHitVictim
+~dpclock pulse 60
+look at CutMsgHitVictim

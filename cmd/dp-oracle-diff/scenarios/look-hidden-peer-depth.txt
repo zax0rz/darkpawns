@@ -1,4 +1,5 @@
 # depth-case: look.hidden-peer
+# depth-case: look.hidden-presence-sense-life
 # C list_one_char's general path (src/act.informative.c:553-558) appends
 # " (hidden)" to a character carrying AFF_HIDE, and list_char_to_char lists such
 # a character when the looker has PRF_HOLYLIGHT and its real level covers the
@@ -70,8 +71,13 @@ Y
 goto 8162
 teleport Hidepeer 8162
 skillset Hidepeer 'hide' 100
+skillset Hidegod 'sense life' 100
+cast 'sense life' Hidegod
+~dpclock pulse 20
 
 [probe]
 holylight
 send:peer hide
+look
+holylight
 look

@@ -1,0 +1,101 @@
+# depth-case: look.sector.city
+# depth-case: look.sector.field
+# depth-case: look.sector.forest
+# depth-case: look.sector.hills
+# depth-case: look.sector.mountain
+# depth-case: look.sector.water-swim
+# depth-case: look.sector.water-noswim
+# depth-case: look.sector.underwater
+# depth-case: look.sector.flying
+# depth-case: look.sector.desert
+# depth-case: look.sector.fire
+# depth-case: look.sector.earth
+# C-first matrix for the twelve sector suffixes in look_at_room's
+# PRF_ROOMFLAGS block (src/act.informative.c:775-797). Each room is assigned
+# one sector through the scenario fixture and observed through the live room
+# look; the God turns roomflags on before the first observation.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 0 off
+set-room-flag 8106 0 off
+set-room-flag 8107 0 off
+set-room-flag 8108 0 off
+set-room-flag 8109 0 off
+set-room-flag 8110 0 off
+set-room-flag 8119 0 off
+set-room-flag 8112 0 off
+set-room-flag 8113 0 off
+set-room-flag 8114 0 off
+set-room-flag 8115 0 off
+set-room-flag 8116 0 off
+set-room-sector 8105 1
+set-room-sector 8106 2
+set-room-sector 8107 3
+set-room-sector 8108 4
+set-room-sector 8109 5
+set-room-sector 8110 6
+set-room-sector 8119 7
+set-room-sector 8112 8
+set-room-sector 8113 9
+set-room-sector 8114 10
+set-room-sector 8115 11
+set-room-sector 8116 12
+
+[setup:oracle]
+Sectorlook
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sectorlook
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+roomflags
+
+[probe]
+goto 8105
+look
+goto 8106
+look
+goto 8107
+look
+goto 8108
+look
+goto 8109
+look
+goto 8110
+look
+goto 8119
+look
+goto 8112
+look
+goto 8113
+look
+goto 8114
+look
+goto 8115
+look
+goto 8116
+look
