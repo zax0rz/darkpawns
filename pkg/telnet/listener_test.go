@@ -56,17 +56,18 @@ func TestHandleConnDisconnectDuringPasswordPrompt(t *testing.T) {
 		handleConn(server, manager, session.ConnectionIdentity{})
 	}()
 
-	go drain(client)
+	transcript := readTelnetTranscript(t, client)
 
-	// Provide a name, then close the connection while the server is waiting
-	// for a password/confirmation response.
-	_, _ = client.Write([]byte("testplayer\r\n"))
-	time.Sleep(50 * time.Millisecond)
+	// Provide a name, then wait for the confirmation prompt before closing.
+	if _, err := client.Write([]byte("testplayer\r\n")); err != nil {
+		t.Fatal(err)
+	}
+	transcript.waitFor(t, "Did I get that right", 10*time.Second)
 	_ = client.Close()
 
 	select {
 	case <-done:
-	case <-time.After(2 * time.Second):
+	case <-time.After(10 * time.Second):
 		t.Fatal("handleConn did not return after disconnect")
 	}
 }
@@ -86,11 +87,22 @@ func TestHandleConnRepromptsEmptyPassword(t *testing.T) {
 		handleConn(server, manager, session.ConnectionIdentity{})
 	}()
 
-	go drain(client)
+	transcript := readTelnetTranscript(t, client)
 
 	// No DB path: name -> confirm yes -> empty password.
-	_, _ = client.Write([]byte("newplayer\r\ny\r\n\r\n"))
-	time.Sleep(100 * time.Millisecond)
+	transcript.waitFor(t, "By what name", 10*time.Second)
+	if _, err := client.Write([]byte("newplayer\r\n")); err != nil {
+		t.Fatal(err)
+	}
+	transcript.waitFor(t, "Did I get that right", 10*time.Second)
+	if _, err := client.Write([]byte("y\r\n")); err != nil {
+		t.Fatal(err)
+	}
+	transcript.waitFor(t, "password", 10*time.Second)
+	if _, err := client.Write([]byte("\r\n")); err != nil {
+		t.Fatal(err)
+	}
+	transcript.waitFor(t, "Illegal password.", 10*time.Second)
 
 	select {
 	case <-done:
@@ -101,7 +113,7 @@ func TestHandleConnRepromptsEmptyPassword(t *testing.T) {
 	_ = client.Close()
 	select {
 	case <-done:
-	case <-time.After(2 * time.Second):
+	case <-time.After(10 * time.Second):
 		t.Fatal("handleConn did not return after client disconnect")
 	}
 }
@@ -124,44 +136,25 @@ func TestHandleConnQuitFlushesGoodbyeBeforeDisconnect(t *testing.T) {
 		handleConn(server, manager, session.ConnectionIdentity{})
 	}()
 
-	transcript := make(chan []byte, 1)
-	go func() {
-		output, _ := io.ReadAll(client)
-		transcript <- output
-	}()
+	transcript := readTelnetTranscript(t, client)
 
 	playerName := "Quithero"
-	for _, line := range []string{playerName, "oraclepass", "", "1"} {
-		if _, err := client.Write([]byte(line + "\r\n")); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	deadline := time.Now().Add(2 * time.Second)
-	for {
-		if _, ok := registeredPlayer(manager, playerName); ok {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("player session was not registered")
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
+	stepLoginToGame(t, client, transcript, playerName, "oraclepass", 10*time.Second)
 
 	if _, err := client.Write([]byte("quit\r\n")); err != nil {
 		t.Fatal(err)
 	}
-	time.Sleep(80 * time.Millisecond)
+	transcript.waitFor(t, "0) Exit from Dark Pawns.", 10*time.Second)
 	if _, err := client.Write([]byte("0\r\n")); err != nil {
 		t.Fatal(err)
 	}
 	select {
 	case <-done:
-	case <-time.After(2 * time.Second):
+	case <-time.After(10 * time.Second):
 		t.Fatal("handleConn did not return after quit")
 	}
 
-	visible := string(stripTelnetCommands(<-transcript))
+	visible := transcript.visible()
 	if !strings.Contains(visible, "Goodbye, friend.. Come back soon!\r\n") {
 		t.Fatalf("quit transcript dropped goodbye: %q", visible)
 	}
@@ -839,30 +832,20 @@ func TestMCCP2DONTKeepsPlaintext(t *testing.T) {
 	}()
 
 	// Continuously drain server output so its writes do not block.
-	readCh := make(chan []byte, 1)
-	go func() {
-		var buf bytes.Buffer
-		b := make([]byte, 1024)
-		for {
-			n, err := client.Read(b)
-			if err != nil {
-				break
-			}
-			buf.Write(b[:n])
-		}
-		readCh <- buf.Bytes()
-	}()
+	transcript := readTelnetTranscript(t, client)
 
 	// Decline compression.
 	_, _ = client.Write([]byte{IAC, DONT, OPT_COMPRESS2})
-	// Provide a name so the server sends the greeting prompt.
+	// Provide a name so the server sends the greeting and confirmation prompt.
 	_, _ = client.Write([]byte("testplayer\r\n"))
 
-	// Give the server time to respond, then close and collect output.
-	time.Sleep(200 * time.Millisecond)
+	// Wait for the server's confirmation prompt, then close and collect output.
+	transcript.waitFor(t, "Did I get that right", 10*time.Second)
 	_ = client.Close()
-	readBuf := <-readCh
 	<-done
+	transcript.mu.Lock()
+	readBuf := append([]byte(nil), transcript.raw...)
+	transcript.mu.Unlock()
 
 	if bytes.Contains(readBuf, []byte{IAC, SB, OPT_COMPRESS2, IAC, SE}) {
 		t.Error("server sent COMPRESS_START after DONT COMPRESS2")
@@ -906,8 +889,6 @@ func TestConfigurableConnectionLimits(t *testing.T) {
 		t.Fatalf("Listen: %v", err)
 	}
 	defer Stop()
-
-	time.Sleep(50 * time.Millisecond)
 
 	addr := ln.Addr().String()
 	conns := make([]net.Conn, 0, 5)
@@ -971,48 +952,30 @@ func TestPromptAfterCommandOutput(t *testing.T) {
 		handleConn(server, manager, session.ConnectionIdentity{})
 	}()
 
-	transcript := make(chan []byte, 1)
-	go func() {
-		output, _ := io.ReadAll(client)
-		transcript <- output
-	}()
+	transcript := readTelnetTranscript(t, client)
 
 	playerName := "Quithero"
-	for _, line := range []string{playerName, "oraclepass", "", "1"} {
-		if _, err := client.Write([]byte(line + "\r\n")); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	deadline := time.Now().Add(2 * time.Second)
-	for {
-		if _, ok := registeredPlayer(manager, playerName); ok {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("player session was not registered")
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
+	stepLoginToGame(t, client, transcript, playerName, "oraclepass", 10*time.Second)
 
 	if _, err := client.Write([]byte("say hello\r\n")); err != nil {
 		t.Fatal(err)
 	}
+	const response = "You say 'hello'\r\n"
+	transcript.waitFor(t, response, 10*time.Second)
 	if _, err := client.Write([]byte("quit\r\n")); err != nil {
 		t.Fatal(err)
 	}
-	time.Sleep(80 * time.Millisecond)
+	transcript.waitFor(t, "0) Exit from Dark Pawns.", 10*time.Second)
 	if _, err := client.Write([]byte("0\r\n")); err != nil {
 		t.Fatal(err)
 	}
 	select {
 	case <-done:
-	case <-time.After(2 * time.Second):
+	case <-time.After(10 * time.Second):
 		t.Fatal("handleConn did not return after quit")
 	}
 
-	visible := string(stripTelnetCommands(<-transcript))
-	const response = "You say 'hello'\r\n"
+	visible := transcript.visible()
 	respIdx := strings.LastIndex(visible, response)
 	if respIdx < 0 {
 		t.Fatalf("transcript missing command response: %q", visible)
@@ -1193,12 +1156,98 @@ func TestConnectionHostIsPaddedQuad(t *testing.T) {
 	}
 }
 
-// registeredPlayer returns the name of the registered playing session matching name.
-func registeredPlayer(manager *session.Manager, name string) (string, bool) {
-	for _, cs := range manager.Sessions() {
-		if p, ok := cs.GetPlayer().(*game.Player); ok && p != nil && strings.EqualFold(p.Name, name) {
-			return p.Name, true
+type telnetTranscript struct {
+	mu      sync.Mutex
+	notify  chan struct{}
+	raw     []byte
+	cursor  int
+	closed  bool
+	readErr error
+}
+
+func readTelnetTranscript(t *testing.T, r io.Reader) *telnetTranscript {
+	t.Helper()
+	tr := &telnetTranscript{notify: make(chan struct{}, 1)}
+	go func() {
+		buf := make([]byte, 4096)
+		for {
+			n, err := r.Read(buf)
+			tr.mu.Lock()
+			if n > 0 {
+				tr.raw = append(tr.raw, buf[:n]...)
+			}
+			if err != nil {
+				tr.closed = true
+				tr.readErr = err
+				tr.mu.Unlock()
+				select {
+				case tr.notify <- struct{}{}:
+				default:
+				}
+				return
+			}
+			tr.mu.Unlock()
+			select {
+			case tr.notify <- struct{}{}:
+			default:
+			}
+		}
+	}()
+	return tr
+}
+
+func (tr *telnetTranscript) visible() string {
+	tr.mu.Lock()
+	defer tr.mu.Unlock()
+	return string(stripTelnetCommands(tr.raw))
+}
+
+func (tr *telnetTranscript) waitFor(t *testing.T, want string, timeout time.Duration) {
+	t.Helper()
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	for {
+		tr.mu.Lock()
+		vis := string(stripTelnetCommands(tr.raw))
+		cursor := tr.cursor
+		if cursor > len(vis) {
+			cursor = len(vis)
+		}
+		if idx := strings.Index(vis[cursor:], want); idx >= 0 {
+			tr.cursor = cursor + idx + len(want)
+			tr.mu.Unlock()
+			return
+		}
+		closed := tr.closed
+		readErr := tr.readErr
+		tr.mu.Unlock()
+		if closed {
+			t.Fatalf("connection closed (%v) before %q appeared after offset %d; transcript: %q", readErr, want, cursor, vis)
+		}
+		select {
+		case <-tr.notify:
+		case <-timer.C:
+			t.Fatalf("timed out after %v waiting for %q after offset %d; transcript: %q", timeout, want, cursor, tr.visible())
 		}
 	}
-	return "", false
+}
+
+func stepLoginToGame(t *testing.T, w io.Writer, tr *telnetTranscript, name, password string, timeout time.Duration) {
+	t.Helper()
+	steps := []struct {
+		prompt string
+		reply  string
+	}{
+		{"By what name", name},
+		{"Password:", password},
+		{"PRESS RETURN", ""},
+		{"Make your choice:", "1"},
+	}
+	for _, s := range steps {
+		tr.waitFor(t, s.prompt, timeout)
+		if _, err := w.Write([]byte(s.reply + "\r\n")); err != nil {
+			t.Fatal(err)
+		}
+	}
+	tr.waitFor(t, "> ", timeout)
 }
