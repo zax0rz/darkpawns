@@ -16,9 +16,10 @@ direct `do_spike` call, switched waits, and the closed-door retreat branch.
 The targeted candidate census covers every registered scenario that types a
 touched command, every scenario that types `switch`, and every `spec-proc-*`
 scenario. It ran 500 scenarios in the primary set and an 11-scenario
-non-overlapping supplement (511 selected scenarios total; the only omitted
-registered scenario was unrelated `switcheroo-retarget-keeps-round-depth`).
-Both runs used `--draw-parity`:
+non-overlapping supplement (511 selected scenarios total). The selector audit
+found one eligible scenario it did not capture,
+`switcheroo-retarget-keeps-round-depth`; it contains switcheroo retargeting,
+not the command routing changed here. Both runs used `--draw-parity`:
 
 - `luna-dp1535-phase-a-targeted-candidate-500`: CLEAN, 499 pass, one existing
   expected-unstable `spellmatrix-staff-olc-09-depth`, no failed/infra/timeout/
