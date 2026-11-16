@@ -1,0 +1,73 @@
+# C-first witness for tedit_string_cleanup delete mudlog (src/file-edit.c:43#1).
+# depth-case: mudlog.file-editor-delete
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Teditactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Teditactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watcher]
+Teditlog
+Y
+logpass
+logpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watcher]
+Teditlog
+y
+logpass
+logpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+advance Teditlog 40
+send:watcher syslog complete
+
+[probe]
+luaedit mob dog
+/c
+/s
+send:watcher whoami

@@ -1,0 +1,73 @@
+# C-first witness for Board_remove_msg active-author refusal (src/boards.c:419#1).
+# depth-case: boards.remove-active
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 19652 2 8004 196
+
+[setup:oracle]
+Boardwriter
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Boardwriter
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Boardremover
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Boardremover
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Boardremover 8004
+advance Boardremover 40
+
+[probe]
+write active
+send:peer remove 1
+/a

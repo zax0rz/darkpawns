@@ -1,0 +1,112 @@
+# C-first witness for stop_follower AFF_CHARM jerk act (src/utils.c:412#1, 412#2).
+# depth-case: follow.charm-stop-jerk-act
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Charmadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Charmadmin
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:master]
+Charmmaster
+Y
+masterpass
+masterpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:master]
+Charmmaster
+y
+masterpass
+masterpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:follower]
+Charmpet
+Y
+petpass
+petpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:follower]
+Charmpet
+y
+petpass
+petpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Charmmaster 8105
+teleport Charmpet 8105
+set player Charmmaster class mage
+set player Charmmaster maxmana 5000
+set player Charmmaster mana 5000
+skillset Charmmaster 'charm person' 100
+set player Charmmaster outlaw on
+set player Charmmaster level 34
+
+[probe]
+send:master cast 'charm person' Charmpet
+~dpclock pulse 40
+send:master cast 'charm person' Charmpet
+~dpclock pulse 40
+send:master cast 'charm person' Charmpet
+~dpclock pulse 40
+force Charmmaster quit
+~dpclock pulse 2
+send:follower look
