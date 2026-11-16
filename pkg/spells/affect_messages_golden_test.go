@@ -76,6 +76,18 @@ func (w *affectMsgWorld) ForEachMobInRoomInterface(room int, fn func(any)) {}
 
 func (w *affectMsgWorld) GetAllCharsInRoom(room int) []any { return w.rooms[room] }
 
+func (w *affectMsgWorld) SpellActToRoom(actor, target any, format string, hideInvisible bool) bool {
+	return testActWorld{roomChars: w.GetAllCharsInRoom}.SpellActToRoom(actor, target, format, hideInvisible)
+}
+
+func (w *affectMsgWorld) SpellActNotVict(actor, target any, format string, hideInvisible bool) bool {
+	return testActWorld{roomChars: w.GetAllCharsInRoom}.SpellActNotVict(actor, target, format, hideInvisible)
+}
+
+func (w *affectMsgWorld) SpellActToVictim(caster, victim any, format string) bool {
+	return testActWorld{}.SpellActToVictim(caster, victim, format)
+}
+
 func newAffectMsgWorld(chars ...*affectMsgChar) *affectMsgWorld {
 	w := &affectMsgWorld{rooms: map[int][]any{}}
 	for _, c := range chars {

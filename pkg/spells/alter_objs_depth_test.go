@@ -48,7 +48,7 @@ func TestMagAlterObjsUsesCObjectFlagIndices(t *testing.T) {
 			obj := &alterObjFixture{flags: tc.flags, typ: tc.typ, weight: 1}
 			obj.values[2], obj.values[3] = tc.value2, tc.value3
 			caster := &mockSpellsChar{level: 20}
-			MagAlterObjs(20, caster, obj, tc.spell, nil)
+			MagAlterObjs(20, caster, obj, tc.spell, testActWorld{})
 			if obj.flags != tc.wantFlags {
 				t.Errorf("extra flags=%#x want %#x", obj.flags, tc.wantFlags)
 			}
@@ -81,7 +81,7 @@ func TestMagAlterObjsUsesCNoEffectGates(t *testing.T) {
 			obj := &alterObjFixture{flags: tc.flags, typ: tc.typ, weight: 1}
 			obj.values[3] = tc.value3
 			caster := &mockSpellsChar{level: 20}
-			MagAlterObjs(20, caster, obj, tc.spell, nil)
+			MagAlterObjs(20, caster, obj, tc.spell, testActWorld{})
 			if obj.flags != tc.flags || obj.values[2] != 0 || obj.values[3] != tc.value3 {
 				t.Errorf("no-effect call mutated object: flags=%#x values=%v", obj.flags, obj.values)
 			}

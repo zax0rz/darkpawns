@@ -38,7 +38,7 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 				"Pulling a prism from a pocket, you crush it under your heel...")
 		}
 		if reag > 0 {
-			sendAffectActRoom(ch, nil, "$n pulls something out of $s pocket and crushes it beneath $s heel...", true, world)
+			sendAffectRoom(ch, nil, "$n pulls something out of $s pocket and crushes it beneath $s heel...", true, world)
 		}
 	case SpellFireball:
 		if isMage {
@@ -46,7 +46,7 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 				"Pulling a pinch of ash from a pocket, you cast it about the room...")
 		}
 		if reag > 0 {
-			sendAffectActRoom(ch, nil, "$n pulls a pinch of ash out of a pocket and casts it about the room.", true, world)
+			sendAffectRoom(ch, nil, "$n pulls a pinch of ash out of a pocket and casts it about the room.", true, world)
 		}
 	case SpellDisintegrate:
 		if isMage {
@@ -54,7 +54,7 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 				"Pulling the eye of a beholder from a pocket, you throw it to the ground...")
 		}
 		if reag > 0 {
-			sendAffectActRoom(ch, nil, "$n pulls a small orb out of a pocket and dashes it to the ground.", true, world)
+			sendAffectRoom(ch, nil, "$n pulls a small orb out of a pocket and dashes it to the ground.", true, world)
 		}
 	case SpellSoulLeech, SpellEnergyDrain:
 		if isMage {
@@ -62,7 +62,7 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 				"Pulling the vampire dust from a pocket, you throw it into the air...")
 		}
 		if reag > 0 {
-			sendAffectActRoom(ch, nil, "$n throws some dust into the air...", true, world)
+			sendAffectRoom(ch, nil, "$n throws some dust into the air...", true, world)
 		}
 	}
 	hasReag := reag > 0

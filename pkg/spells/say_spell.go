@@ -84,37 +84,10 @@ func SaySpell(ch any, spellNum int, tch, tobj any, world any) {
 	// OBJS decide whether it sees the caster, target and object by name.
 	if d, ok := world.(interface {
 		SaySpellDeliver(ch, tch, tobj any, sameClass, otherClass, vict string) bool
-	}); ok && d.SaySpellDeliver(ch, tch, tobj,
-		strings.Replace(format, "%s", spellName, 1),
-		strings.Replace(format, "%s", obfuscated, 1), victLine) {
-		return
-	}
-
-	// Send to room — each person sees either real or obfuscated name
-	sendToRoom(format, ch, tobj, tch, spellName, obfuscated, world)
-
-	// If target char is in room and not self, send target-specific message
-	if tch != nil && !selfTarget(ch, tch) && sameRoom(ch, tch) {
-		var targetMsg string
-		tchClass := getClass(tch)
-		if chPsionic {
-			targetMsg = "$n focuses $s will on you..."
-		} else {
-			spellForTarget := spellName
-			if chClass != tchClass {
-				spellForTarget = obfuscated
-			}
-			targetMsg = "$n stares at you and utters the words, '" + spellForTarget + "'."
-		}
-		// C spell_parser.c:336-343: act(..., TO_VICT) — the target observes
-		// $n through PERS (unseen casters that aren't in the target's line of
-		// sight are "someone"). Routed through the bridge for the same
-		// audiences the game layer's Act enforces (DP-1446).
-		if renderer, ok := world.(interface {
-			SpellActToVictim(caster, victim interface{}, format string) bool
-		}); !ok || !renderer.SpellActToVictim(ch, tch, targetMsg) {
-			sendAct(capitalizeActMessage(targetMsg)+"\r\n", ch, nil, tch, world)
-		}
+	}); ok {
+		d.SaySpellDeliver(ch, tch, tobj,
+			strings.Replace(format, "%s", spellName, 1),
+			strings.Replace(format, "%s", obfuscated, 1), victLine)
 	}
 }
 
@@ -286,141 +259,14 @@ type roomIterable interface {
 	ForEachMobInRoomInterface(int, func(any))
 }
 
-// sendToRoom sends act-formatted messages to all characters in the caster's room.
-// Players of the same class as the caster see realName; others see obfuscated.
-func sendToRoom(format string, ch, tobj, tch any, realName, obfuscated string, world any) {
-	type roomed interface{ GetRoomVNum() int }
-	type classed interface{ GetClass() int }
-
-	rg, hasRoom := ch.(roomed)
-	casterClass := -1
-	if cc, ok := ch.(classed); ok {
-		casterClass = cc.GetClass()
-	}
-	if !hasRoom {
-		return
-	}
-	roomVNum := rg.GetRoomVNum()
-
-	w, ok := world.(roomIterable)
-	if !ok {
-		type sender interface{ SendMessage(string) }
-		if s, ok := ch.(sender); ok {
-			s.SendMessage(strings.Replace(format, "%s", realName, 1))
-		}
-		return
-	}
-
-	type msgSender interface{ SendMessage(string) }
-	type msgNamed interface{ GetName() string }
-	type msgObjectDescription interface{ GetShortDesc() string }
-	type msgClassed interface{ GetClass() int }
-
-	casterName := "someone"
-	if cn, ok := ch.(msgNamed); ok {
-		casterName = cn.GetName()
-	}
-
-	w.ForEachPlayerInRoomInterface(roomVNum, func(p any) {
-		if selfTarget(ch, p) || (tch != nil && selfTarget(tch, p)) {
-			return
-		}
-		if !canReceiveAct(p) {
-			return
-		}
-		rp, ok := p.(msgSender)
-		if !ok {
-			return
-		}
-		spellName := realName
-		if rc, ok := p.(msgClassed); ok && rc.GetClass() != casterClass {
-			spellName = obfuscated
-		}
-		msg := strings.Replace(format, "%s", spellName, 1)
-		msg = strings.ReplaceAll(msg, "$n", casterName)
-		if tch != nil {
-			if vn, ok := tch.(msgNamed); ok {
-				msg = strings.ReplaceAll(msg, "$N", vn.GetName())
-			}
-		}
-		msg = strings.ReplaceAll(msg, "$s", possessivePronoun(ch))
-		if tobj != nil {
-			if on, ok := tobj.(msgObjectDescription); ok {
-				msg = strings.ReplaceAll(msg, "$p", on.GetShortDesc())
-			} else if on, ok := tobj.(msgNamed); ok {
-				msg = strings.ReplaceAll(msg, "$p", on.GetName())
-			} else {
-				msg = strings.ReplaceAll(msg, "$p", "something")
-			}
-		} else {
-			msg = strings.ReplaceAll(msg, "$p", "something")
-		}
-		rp.SendMessage(capitalizeActMessage(msg) + "\r\n")
-	})
-}
-
-// sendAct is a minimal act() replacement.
-// When victim is non-nil the message is delivered to the victim; otherwise it
-// falls back to ch.
-func sendAct(format string, ch, obj, victim any, world any) {
-	type sender interface{ SendMessage(string) }
-	recipient := ch
-	if victim != nil {
-		recipient = victim
-	}
-	if s, ok := recipient.(sender); ok {
-		type namer interface{ GetName() string }
-		name := "someone"
-		if n, ok := ch.(namer); ok {
-			name = n.GetName()
-		}
-		msg := strings.ReplaceAll(format, "$n", name)
-		msg = strings.ReplaceAll(msg, "$s", possessivePronoun(ch))
-		msg = capitalizeActMessage(msg)
-		s.SendMessage(msg)
-	}
-}
-
 // sendSpellActToCaster mirrors C's act(..., TO_CHAR) formatting for spell
-// reports. The live world renders through its canonical act() implementation
-// so object visibility and short descriptions match src/comm.c; direct spell
-// unit tests use the same substitutions without a World.
+// reports through the world's canonical act() implementation.
 func sendSpellActToCaster(format string, ch, victim, obj, world any) {
 	if renderer, ok := world.(interface {
 		SpellActToChar(caster, victim, object any, format string)
 	}); ok {
 		renderer.SpellActToChar(ch, victim, obj, format)
-		return
 	}
-
-	message := format
-	if victim != nil {
-		message = strings.ReplaceAll(message, "$E", subjectivePronoun(victim))
-		message = strings.ReplaceAll(message, "$S", possessivePronoun(victim))
-	}
-	if obj != nil {
-		shortDesc := "something"
-		if named, ok := obj.(interface{ GetShortDesc() string }); ok {
-			shortDesc = named.GetShortDesc()
-		}
-		message = strings.ReplaceAll(message, "$p", shortDesc)
-	}
-	sendToCaster(ch, capitalizeActMessage(message)+"\r\n")
-}
-
-// subjectivePronoun mirrors C's HSSH macro in src/utils.h using the Go sex
-// encoding (male=0, female=1, neutral=2).
-func subjectivePronoun(ch any) string {
-	type sexer interface{ GetSex() int }
-	if s, ok := ch.(sexer); ok {
-		switch s.GetSex() {
-		case 0:
-			return "he"
-		case 1:
-			return "she"
-		}
-	}
-	return "it"
 }
 
 // capitalizeActMessage mirrors C act()'s CAP(lbuf), which uppercases the

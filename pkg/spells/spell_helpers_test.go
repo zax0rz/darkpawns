@@ -213,21 +213,6 @@ func TestSameRoomWithObj(t *testing.T) {
 	}
 }
 
-func TestSendAct(t *testing.T) {
-	caster := &msgMock{}
-	victim := &msgMock{}
-
-	sendAct("to caster", caster, nil, nil, nil)
-	if len(caster.messages) != 1 || caster.messages[0] != "To caster" {
-		t.Errorf("expected message to caster, got %v", caster.messages)
-	}
-
-	sendAct("to victim", caster, nil, victim, nil)
-	if len(victim.messages) != 1 || victim.messages[0] != "To victim" {
-		t.Errorf("expected message to victim, got %v", victim.messages)
-	}
-}
-
 // ---------------------------------------------------------------------------
 // spells.go Cast
 // ---------------------------------------------------------------------------

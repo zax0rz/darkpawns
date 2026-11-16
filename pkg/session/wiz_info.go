@@ -451,10 +451,6 @@ func syslogLevel(flags uint64) string {
 
 // cmdIdlist — dump object ID list to the fixed C report file (LVL_GRGOD).
 func cmdIdlist(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GRGOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	// C ignores command arguments and always opens "object_idlist" relative to
 	// the server process directory (src/act.wizard.c:3582-3589).
 	f, err := os.Create("object_idlist")

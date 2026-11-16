@@ -43,10 +43,6 @@ func shutdownPlanFor(option string) (shutdownPlan, bool) {
 }
 
 func cmdShutdown(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GRGOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	option := ""
 	if len(args) > 0 {
 		option = strings.ToLower(args[0])
@@ -249,10 +245,6 @@ func cmdWizlock(s *Session, args []string) error {
 
 // cmdDc — disconnect a player (LVL_IMMORT+1)
 func cmdDc(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT+1) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) == 0 {
 		s.Send("Usage: DC <connection number> (type USERS for a list)\r\n")
 		return nil
@@ -730,59 +722,13 @@ func cmdMute(s *Session, args []string) error {
 	return wizutilDispatch(s, wizutilSquelch, args[0])
 }
 
-// cmdShow — show system info (LVL_IMMORT)
+// cmdTick — advance world ticks (LVL_IMMORT)
 func cmdTick(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
-
 	slog.Warn("wizard tick forced", "by", s.playerName)
 	game.WeatherAndTime(true, s.manager.SendToOutdoor)
 	s.manager.world.AffectUpdate()
 	s.manager.world.PointUpdate()
 	s.manager.world.HuntItems()
-	return nil
-}
-
-// cmdBroadcast — broadcast a message to all playing characters (LVL_GOD)
-// Ported from act.wizard.c:do_broadcast(). Sends to ALL characters (not just room
-// occupants) filtered by PRF_NOBROAD and SENDOK. Uses perform_act for substitution.
-// Format: broadcast <message>
-func cmdBroadcast(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
-	if len(args) == 0 {
-		s.Send("Broadcast what?")
-		return nil
-	}
-	msg := "[Broadcast] " + strings.Join(args, " ")
-
-	if len(msg) > 500 {
-		s.Send("Maximum broadcast length is 500 characters.")
-		return nil
-	}
-
-	// Send to all playing sessions (equivalent to checking !d->connected in C)
-	s.manager.mu.RLock()
-	for _, sess := range s.manager.sessions {
-		if sess.player == nil || !sess.authenticated {
-			continue
-		}
-		// Check PRF_NOBROAD equivalent: if the session has a "nobroad" preference, skip
-		sess.player.RLock()
-		nb := sess.player.NoBroadcast
-		sess.player.RUnlock()
-		if nb {
-			continue
-		}
-		sess.Send(msg)
-	}
-	s.manager.mu.RUnlock()
-
-	slog.Warn("wizard broadcast", "by", s.playerName, "message", msg)
 	return nil
 }
 

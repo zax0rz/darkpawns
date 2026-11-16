@@ -58,7 +58,7 @@ func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int
 		if isClassMage(ch) && consumeSpellReagentVNum(ch, 1234) {
 			reag = 1
 			sendToCaster(ch, "You crush a small lens under your heel.\r\n")
-			sendAffectActRoom(ch, nil, "$n crushes a small lens under $s heel.", true, world)
+			sendAffectRoom(ch, nil, "$n crushes a small lens under $s heel.", true, world)
 		}
 	case SpellWaterwalk:
 		if consumeSpellReagentVNum(ch, 1228) {
@@ -71,7 +71,7 @@ func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int
 			sendToCaster(ch, "A small chunk of iron melts in your palm as you cast the spell...\r\n")
 		}
 		if reag > 0 {
-			sendAffectActRoom(ch, nil, "A small chunk of iron melts in $n's palm as $e cast a spell...", true, world)
+			sendAffectRoom(ch, nil, "A small chunk of iron melts in $n's palm as $e cast a spell...", true, world)
 		}
 	case SpellSleep:
 		// C magic.c:1203-1210 consumes the exact vnum-1226 sand component
@@ -135,7 +135,7 @@ func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int
 	if spellNum == SpellCurse && !saved && isClassMage(ch) && consumeSpellReagentVNum(ch, 1233) {
 		reag = 1
 		sendToCaster(ch, "You throw a raven's feather into the air...\r\n")
-		sendAffectActRoom(ch, nil, "$n throws a feather into the air...", true, world)
+		sendAffectRoom(ch, nil, "$n throws a feather into the air...", true, world)
 	}
 	magAffectsApply(level, ch, victim, spellNum, saved, reag, world, castType)
 }
@@ -763,8 +763,8 @@ func MagPoints(level int, ch, victim interface{}, spellNum, savetype int, world 
 			const layHandsAct = "Your wounds start to heal beneath $n's hands!"
 			if renderer, ok := world.(interface {
 				SpellActToVictim(caster, victim interface{}, format string) bool
-			}); !ok || !renderer.SpellActToVictim(ch, victim, layHandsAct) {
-				sendAct(layHandsAct+"\r\n", ch, nil, victim, world)
+			}); ok {
+				renderer.SpellActToVictim(ch, victim, layHandsAct)
 			}
 		}
 	}
@@ -1217,8 +1217,8 @@ func MagSummons(level int, ch, obj interface{}, spellNum int, world interface{})
 		// listener, blind or not, gets two.
 		if a, ok := world.(interface {
 			SpellActToRoom(ch, vict interface{}, format string, hideInvisible bool) bool
-		}); !ok || !a.SpellActToRoom(ch, mob, "\r\n", false) {
-			sendAffectRoomFallback(ch, mob, nil, "\r\n\r\n", world)
+		}); ok {
+			a.SpellActToRoom(ch, mob, "\r\n", false)
 		}
 		sendToCaster(ch, "The corpse starts to twitch, then stands with a life of it's own!\r\n")
 	}
@@ -1410,13 +1410,7 @@ func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{
 	}); ok {
 		acter.SpellObjectAct(ch, obj, effect, false)
 		acter.SpellObjectAct(ch, obj, effect, true)
-		return
 	}
-	name := "something"
-	if named, ok := obj.(interface{ GetShortDesc() string }); ok {
-		name = named.GetShortDesc()
-	}
-	sendToCaster(ch, capitalizeActMessage(strings.ReplaceAll(effect, "$p", name))+"\r\n")
 }
 
 // ExecuteManualSpell dispatches manual (ASPELL) spell implementations.
@@ -1559,10 +1553,9 @@ func joinAffect(entity interface{}, aff *engine.Affect, addDuration, addMagnitud
 func mendRoomLine(ch, victim, world interface{}) {
 	if a, ok := world.(interface {
 		SpellActNotVict(ch, vict interface{}, format string, hideInvisible bool) bool
-	}); ok && a.SpellActNotVict(ch, victim, "$N's wounds glow and mend themselves.", true) {
-		return
+	}); ok {
+		a.SpellActNotVict(ch, victim, "$N's wounds glow and mend themselves.", true)
 	}
-	sendAffectRoomFallback(ch, victim, victim, "$N's wounds glow and mend themselves.\r\n", world)
 }
 
 func sendAffectRoom(actor, target interface{}, format string, hideInvisible bool, world interface{}) {
@@ -1570,53 +1563,9 @@ func sendAffectRoom(actor, target interface{}, format string, hideInvisible bool
 		SpellActToRoom(actor, target interface{}, format string, hideInvisible bool) bool
 	}
 	actFormat := strings.TrimRight(format, "\r\n")
-	if a, ok := world.(roomActor); ok && a.SpellActToRoom(actor, target, actFormat, hideInvisible) {
-		return
+	if a, ok := world.(roomActor); ok {
+		a.SpellActToRoom(actor, target, actFormat, hideInvisible)
 	}
-	sendAffectRoomFallback(actor, target, nil, format, world)
-}
-
-// sendAffectRoomFallback keeps small spell test adapters usable when they do
-// not provide the live act() renderer. Production worlds take the path above.
-func sendAffectRoomFallback(actor, target, extraExclude interface{}, format string, world interface{}) {
-	type roomed interface{ GetRoomVNum() int }
-	type named interface{ GetName() string }
-	type sender interface{ SendMessage(string) }
-	w, ok := world.(roomIterable)
-	ar, roomOK := actor.(roomed)
-	actorName, actorNameOK := actor.(named)
-	if !ok || !roomOK || !actorNameOK {
-		return
-	}
-	targetName := ""
-	if namedTarget, ok := target.(named); ok {
-		targetName = namedTarget.GetName()
-	}
-	msg := strings.ReplaceAll(format, "$n", actorName.GetName())
-	msg = strings.ReplaceAll(msg, "$N", targetName)
-	msg = strings.ReplaceAll(msg, "$s", possessivePronoun(actor))
-	msg = strings.ReplaceAll(msg, "$S", possessivePronoun(target))
-	msg = strings.ReplaceAll(msg, "$m", objectivePronoun(actor))
-	msg = strings.ReplaceAll(msg, "$M", objectivePronoun(target))
-	if !strings.HasSuffix(msg, "\r\n") {
-		msg += "\r\n"
-	}
-	w.ForEachPlayerInRoomInterface(ar.GetRoomVNum(), func(p interface{}) {
-		if selfTarget(actor, p) || (extraExclude != nil && selfTarget(extraExclude, p)) {
-			return
-		}
-		if !canReceiveAct(p) {
-			return
-		}
-		if s, ok := p.(sender); ok {
-			s.SendMessage(capitalizeActMessage(msg))
-		}
-	})
-}
-
-func sendAffectActRoom(actor, target interface{}, format string, hideInvisible bool, world interface{}) {
-	format = strings.ReplaceAll(format, "$e", subjectivePronoun(actor))
-	sendAffectRoom(actor, target, format, hideInvisible, world)
 }
 
 func removeAffect(entity interface{}, spellNum int) {
@@ -2097,7 +2046,6 @@ func castCoC(level int, ch interface{}, world interface{}) {
 	s, ok := world.(spawner)
 	if !ok {
 		slog.Warn("spell_coc: world does not support object spawning")
-		sendToCaster(ch, "The magic fails.\r\n")
 		return
 	}
 
@@ -2115,7 +2063,6 @@ func castCoC(level int, ch interface{}, world interface{}) {
 	obj, err := s.SpawnObjectToRoomForSpell(CocVnum, roomVNum)
 	if err != nil {
 		slog.Error("spell_coc: failed to spawn COC object", "error", err, "vnum", CocVnum)
-		sendToCaster(ch, "The magic fails.\r\n")
 		return
 	}
 
@@ -3015,7 +2962,6 @@ func castMeteorSwarm(level int, ch, world interface{}) {
 
 	w, ok := world.(worldAoe)
 	if !ok {
-		sendToCaster(ch, "The magic fizzles.\r\n")
 		return
 	}
 
@@ -3092,7 +3038,6 @@ func castMeteorSwarm(level int, ch, world interface{}) {
 func castHellfire(level int, ch, world interface{}) {
 	w, ok := world.(worldAoe)
 	if !ok {
-		sendToCaster(ch, "The magic fizzles.\r\n")
 		return
 	}
 
@@ -3336,8 +3281,8 @@ func castCharm(level int, ch, cvict, world interface{}) {
 	const successAct = "Isn't $n just such a nice fellow?"
 	if renderer, ok := world.(interface {
 		SpellActToVictim(caster, victim interface{}, format string) bool
-	}); !ok || !renderer.SpellActToVictim(ch, cvict, successAct) {
-		sendAct(successAct, ch, nil, cvict, world)
+	}); ok {
+		renderer.SpellActToVictim(ch, cvict, successAct)
 	}
 }
 
@@ -3491,8 +3436,8 @@ func castSummon(level int, ch, cvict, world interface{}) {
 		const summonedAct = "$n has summoned you!"
 		if renderer, ok := world.(interface {
 			SpellActToVictim(caster, victim interface{}, format string) bool
-		}); !ok || !renderer.SpellActToVictim(ch, cvict, summonedAct) {
-			sendAct(summonedAct+"\r\n", ch, nil, cvict, world)
+		}); ok {
+			renderer.SpellActToVictim(ch, cvict, summonedAct)
 		}
 		// C calls look_at_room(victim, 0) immediately after the awake victim
 		// message; the game adapter owns the room renderer to avoid a package
@@ -3714,7 +3659,6 @@ func castConjureElemental(level int, ch, world interface{}) {
 
 	ri, ok := world.(roomItems)
 	if !ok {
-		sendToCaster(ch, "The magic fails.\r\n")
 		return
 	}
 
@@ -3758,14 +3702,12 @@ func castConjureElemental(level int, ch, world interface{}) {
 	}
 	spawner, ok := world.(mobSpawner)
 	if !ok {
-		sendToCaster(ch, "The magic fails.\r\n")
 		return
 	}
 
 	mob, err := spawner.SpawnMobWithLevelI(mobVNum, roomVNum, mobLevel)
 	if err != nil {
 		slog.Warn("spell_conjure_elemental: failed to spawn", "error", err, "vnum", mobVNum)
-		sendToCaster(ch, "The magic fails.\r\n")
 		return
 	}
 
@@ -3850,7 +3792,6 @@ func castMindsight(level int, ch, cvict, world interface{}) {
 	}
 	tw, ok := world.(mindsightWorld)
 	if !ok {
-		sendToCaster(ch, "The magic fails.\r\n")
 		return
 	}
 

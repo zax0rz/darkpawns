@@ -205,10 +205,6 @@ func cmdOlist(s *Session, args []string) error {
 // descriptor. C atoi accepts a signed decimal prefix, including an empty
 // string as zero.
 func cmdMlist(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	pw := s.GetWorld().GetParsedWorld()
 	if pw == nil {
 		s.Send("No parsed world available.")

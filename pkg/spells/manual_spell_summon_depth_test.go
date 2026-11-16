@@ -63,6 +63,14 @@ func (w *summonBackfireWorld) ForEachPlayerInRoomInterface(room int, fn func(any
 	}
 }
 
+func (w *summonBackfireWorld) SpellActToRoom(actor, target any, format string, hideInvisible bool) bool {
+	return testActWorld{roomChars: func(room int) []any { return w.players[room] }}.SpellActToRoom(actor, target, format, hideInvisible)
+}
+
+func (w *summonBackfireWorld) SpellActToVictim(caster, victim any, format string) bool {
+	return testActWorld{}.SpellActToVictim(caster, victim, format)
+}
+
 func (w *summonBackfireWorld) ForEachMobInRoomInterface(int, func(any)) {}
 
 func (w *summonBackfireWorld) PlayerTransfer(actor any, room int) error {
@@ -226,20 +234,5 @@ func TestSummonSuccessCapitalizesLowercaseCasterAndSendSpellActFallback(t *testi
 	ExecuteManualSpell(SpellSummon, combat.LVL_IMMORT, caster, victim, nil, "", world)
 	if got, want := victim.messages, []string{"A high priest has summoned you!\r\n"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("victim messages = %#v, want %#v", got, want)
-	}
-
-	// Unnamed caster fallback in sendAct ("someone" -> "Someone").
-	unnamedVictim := &mockSpellsChar{name: "Target", position: int(PosStanding)}
-	sendAct("$n has summoned you!\r\n", struct{}{}, nil, unnamedVictim, nil)
-	if got, want := unnamedVictim.messages, []string{"Someone has summoned you!\r\n"}; !reflect.DeepEqual(got, want) {
-		t.Fatalf("unnamed sendAct messages = %#v, want %#v", got, want)
-	}
-
-	// sendSpellActToCaster fallback without a World renderer capitalizes $p.
-	flaskCaster := &mockSpellsChar{name: "Caster"}
-	chalice := &alterObjFixture{typ: 17, weight: 1}
-	sendSpellActToCaster("$p is filled.", flaskCaster, nil, chalice, nil)
-	if got, want := flaskCaster.messages, []string{"A test object is filled.\r\n"}; !reflect.DeepEqual(got, want) {
-		t.Fatalf("sendSpellActToCaster fallback messages = %#v, want %#v", got, want)
 	}
 }

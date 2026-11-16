@@ -57,7 +57,7 @@ func TestCastEnchantOutputBranches(t *testing.T) {
 				alignment:      tc.alignment,
 			}
 			obj := &enchantOutputObject{identifyOutputObject: identifyOutputObject{typeFlag: tc.objType, short: tc.shortDesc}}
-			ExecuteManualSpell(tc.spell, caster.level, caster, nil, obj, "", nil)
+			ExecuteManualSpell(tc.spell, caster.level, caster, nil, obj, "", testActWorld{})
 
 			want := capitalizeActMessage(tc.shortDesc) + " glows " + tc.color + ".\r\n"
 			if got := strings.Join(caster.messages, ""); got != want {
@@ -576,7 +576,7 @@ func TestCastMentalLapseOutputBranches(t *testing.T) {
 				mockSpellsChar: mockSpellsChar{name: "Hunted", npc: true, sex: tc.sex},
 				hunting:        tc.hunting,
 			}
-			ExecuteManualSpell(SpellMentalLapse, tc.level, caster, victim, nil, "", nil)
+			ExecuteManualSpell(SpellMentalLapse, tc.level, caster, victim, nil, "", testActWorld{})
 			if got := strings.Join(caster.messages, ""); got != tc.want {
 				t.Fatalf("mental lapse output = %q, want exact C bytes %q", got, tc.want)
 			}
@@ -618,7 +618,7 @@ func TestCastEnchantAlignThresholds(t *testing.T) {
 				alignment:      tc.alignment,
 			}
 			obj := &enchantOutputObject{identifyOutputObject: identifyOutputObject{typeFlag: tc.objType, short: tc.shortDesc}}
-			ExecuteManualSpell(tc.spell, caster.level, caster, nil, obj, "", nil)
+			ExecuteManualSpell(tc.spell, caster.level, caster, nil, obj, "", testActWorld{})
 
 			want := capitalizeActMessage(tc.shortDesc) + " glows " + tc.color + ".\r\n"
 			if got := strings.Join(caster.messages, ""); got != want {
