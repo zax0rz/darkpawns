@@ -275,10 +275,11 @@ func (w *World) RunObjPulseScript(obj *ObjectInstance) {
 // every live object with a prototype runs its OS_ONPULSE script each
 // PULSE_MOBILE, after mobile_activity and room_activity (comm.c:815-820).
 // Drink containers, fountains and corpses are skipped before the script
-// check exactly as in C. C's weight-mismatch SYSERR arm before the script is
-// a defensive invariant that only fires on corrupt object weight and is not
-// ported. C walks the object_list prepend order; higher instance IDs are
-// newer and therefore run first, matching create_obj/read_object insertion.
+// check exactly as in C. Removing the last positive-weight item from a
+// zero-weight container leaves C's obj_from_obj floor at 1, so the weight
+// mismatch below can be reached through ordinary get/put commands. C walks
+// the object_list prepend order; higher instance IDs are newer and therefore
+// run first, matching create_obj/read_object insertion.
 func (w *World) ObjectActivity() {
 	objs := w.liveObjectsInCOrder()
 	for _, obj := range objs {
@@ -297,11 +298,11 @@ func (w *World) ObjectActivity() {
 }
 
 // repairObjectWeight ports C's weight-mismatch arm in object_activity
-// (comm.c:773-787): an object whose instance weight differs from its
-// prototype's is reported at BRF/LVL_IMMORT/file TRUE and then reset to the
-// prototype's weight, but only while it holds nothing (comm.c:774). Drink
-// containers, fountains and corpses never reach here: the caller's skip at
-// comm.c:770-771 continues past both this block and the script block.
+// (comm.c:773-787): an instance weight override or pending obj_from_obj floor
+// is reported at BRF/LVL_IMMORT/file TRUE and reset to prototype state, but
+// only while it holds nothing (comm.c:774). Drink containers, fountains and
+// corpses never reach here: the caller's skip at comm.c:770-771 continues past
+// both this block and the script block.
 //
 // The location wordings are C's, which are not the obvious mapping.
 // C tests obj->carried_by for truth, then obj->in_room, then obj->worn_by, and
@@ -324,7 +325,8 @@ func (w *World) repairObjectWeight(obj *ObjectInstance) {
 	if obj == nil || obj.Prototype == nil {
 		return
 	}
-	if obj.GetWeight() == obj.Prototype.Weight {
+	weightMismatch := obj.GetWeight() != obj.Prototype.Weight
+	if !weightMismatch && !obj.weightFloorPending.Load() {
 		return
 	}
 	if len(obj.Contains) != 0 {
@@ -341,7 +343,10 @@ func (w *World) repairObjectWeight(obj *ObjectInstance) {
 	}
 	MudLog(fmt.Sprintf("SYSERR: Object '%s' weight incorrect, location '%s'",
 		obj.GetShortDesc(), location), MudlogBrief, LVL_IMMORT, true)
-	obj.SetWeight(obj.Prototype.Weight)
+	if weightMismatch {
+		obj.SetWeight(obj.Prototype.Weight)
+	}
+	obj.weightFloorPending.Store(false)
 }
 
 // liveObjectsInCOrder snapshots every live object instance in C's newest-first

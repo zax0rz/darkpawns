@@ -175,3 +175,58 @@ func TestObjectActivityWeightMudlog(t *testing.T) {
 		}, true, "carried")
 	})
 }
+
+func TestObjectActivityLogsContainerWeightFloorAfterGet(t *testing.T) {
+	w, _ := newZoneResetTestSpawner(t)
+	provider, file, watch, below, off := weightProbe(t)
+
+	container, err := w.SpawnObject(204, -1)
+	if err != nil {
+		t.Fatalf("spawn container: %v", err)
+	}
+	container.Prototype.TypeFlag = ITEM_CONTAINER
+	container.Prototype.Weight = 0
+	container.Prototype.ShortDesc = "an empty zero-weight container"
+	if err := w.MoveObjectToRoom(container, 100); err != nil {
+		t.Fatalf("place container: %v", err)
+	}
+
+	item, err := w.SpawnObject(200, -1)
+	if err != nil {
+		t.Fatalf("spawn item: %v", err)
+	}
+	item.Prototype.Weight = 12
+	if err := w.MoveObjectToContainer(item, container); err != nil {
+		t.Fatalf("put item in container: %v", err)
+	}
+
+	carrier := NewPlayer(704, "Wtcarrier", 100)
+	if err := w.AddPlayer(carrier); err != nil {
+		t.Fatalf("AddPlayer: %v", err)
+	}
+	if err := w.MoveObjectToPlayerInventory(item, carrier); err != nil {
+		t.Fatalf("get item from container: %v", err)
+	}
+	if got := container.GetWeight(); got != 0 || !container.weightFloorPending.Load() {
+		t.Fatalf("empty zero-weight container weight = %d, pending floor = %v; want derived weight 0 with C floor pending", got, container.weightFloorPending.Load())
+	}
+
+	// C get_from_container calls obj_from_obj before the next mobile pulse
+	// reaches object_activity (src/act.item.c:197-209; src/handler.c:963-990;
+	// src/comm.c:815-820). The empty container's diagnostic is visible to the
+	// BRF/LVL_IMMORT observer, then the pulse clears the pending marker.
+	w.ObjectActivity()
+	payload := "SYSERR: Object 'an empty zero-weight container' weight incorrect, location 'in room'"
+	if got := strings.Count(file.String(), payload); got != 1 {
+		t.Fatalf("file payload count=%d want 1; log=%q", got, file.String())
+	}
+	if want := "[ " + payload + " ]\r\n"; !strings.Contains(provider.lines[watch.Name], want) {
+		t.Fatalf("observer bytes=%q want %q", provider.lines[watch.Name], want)
+	}
+	if strings.Contains(provider.lines[below.Name], payload) || strings.Contains(provider.lines[off.Name], payload) {
+		t.Fatal("level or type filter leak")
+	}
+	if got := container.GetWeight(); got != container.Prototype.Weight || container.weightFloorPending.Load() {
+		t.Fatalf("container after object activity: weight=%d pending floor=%v, want prototype weight %d and no pending floor", got, container.weightFloorPending.Load(), container.Prototype.Weight)
+	}
+}
