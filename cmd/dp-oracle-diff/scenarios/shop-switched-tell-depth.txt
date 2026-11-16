@@ -1,0 +1,56 @@
+# C-first vehicle for shopkeeper do_tell delivery to a switched mobile
+# (src/shop.c:828; src/act.comm.c:901-931; DP-1548).
+# A god switches into Puff (1, single-word short_desc matching keyword) in
+# shop 12101 (Hansen the merchant, 12135) and runs bare value, buy, and sell;
+# C's do_tell delivers each refusal to Puff's attached descriptor. The
+# reply after them proves the shopkeeper wrote GET_IDNUM(mob) = 0 into the
+# shared last_tell (src/act.comm.c:895), not its name.
+#
+# depth-case: shops.switched-mob-tell-delivery
+
+[fixture]
+empty-players
+quiet-mobs
+quiet-zone 121
+spawn-mob 12102 1 12135 121
+replace-room-exits 12135 none
+
+[setup:oracle]
+Shopswitch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopswitch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12135
+load mob 1
+
+[probe]
+switch Puff
+value
+buy
+sell
+reply anyone there
+return
