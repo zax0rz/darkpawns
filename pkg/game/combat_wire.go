@@ -451,6 +451,11 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 				return weapon.GetShortDesc()
 			}
 		}
+		if m, ok := name.(*MobInstance); ok && m != nil {
+			if weapon := m.Equipped(mobWearWield); weapon != nil {
+				return weapon.GetShortDesc()
+			}
+		}
 		return ""
 	}
 

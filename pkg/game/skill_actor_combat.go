@@ -10,16 +10,30 @@ import (
 )
 
 const (
-	skillNumBackstab   = 131
-	skillNumBash       = 132
-	skillNumCutthroat  = 143
-	skillNumCharge     = 147
-	skillNumCircle     = 173
-	skillNumGroinrip   = 174
-	skillNumDisarm     = 177
-	skillNumDisembowel = 184
-	skillNumDragonKick = 188
-	skillNumHeadbutt   = 141
+	skillNumBackstab    = 131
+	skillNumAmbush      = 191
+	skillNumBash        = 132
+	skillNumCutthroat   = 143
+	skillNumCharge      = 147
+	skillNumCircle      = 173
+	skillNumGroinrip    = 174
+	skillNumDisarm      = 177
+	skillNumDisembowel  = 184
+	skillNumDragonKick  = 188
+	skillNumHeadbutt    = 141
+	skillNumKick        = 134
+	skillNumNeckbreak   = 190
+	skillNumParry       = 172
+	skillNumRescue      = 137
+	skillNumSerpentKick = 156
+	skillNumShoot       = 148
+	skillNumSlug        = 146
+	skillNumSmackheads  = 145
+	skillNumSleeper     = 187
+	skillNumStrike      = 155
+	skillNumSubdue      = 152
+	skillNumTigerPunch  = 189
+	skillNumTrip        = 144
 )
 
 // CharacterCombatSkill routes the mobile body of the selected combat skills.
@@ -32,6 +46,8 @@ func CharacterCombatSkill(ctx CharacterCommandContext, commandName string, args 
 		return CharacterCommandUnsupported
 	}
 	switch strings.ToLower(commandName) {
+	case "ambush":
+		return characterAmbush(ctx, args)
 	case "backstab":
 		return characterBackstab(ctx, mob, args)
 	case "bash":
@@ -52,6 +68,36 @@ func CharacterCombatSkill(ctx CharacterCommandContext, commandName string, args 
 		return characterGroinrip(ctx, mob, args)
 	case "headbutt":
 		return characterHeadbutt(ctx, mob, args)
+	case "kick":
+		return characterKick(ctx, mob, args)
+	case "neckbreak":
+		return characterNeckbreak(ctx, mob, args)
+	case "parry":
+		return characterParry(ctx, mob)
+	case "rescue":
+		return characterRescue(ctx, mob, args)
+	case "serpent":
+		return characterSerpentKick(ctx, mob, args)
+	case "shoot":
+		return characterShoot(ctx, args)
+	case "spike", "stake":
+		return characterSpikeStake(ctx, mob, commandName, args)
+	case "slug":
+		return characterSlug(ctx, mob, args)
+	case "smackheads":
+		return characterSmackheads(ctx, mob, args)
+	case "sleeper":
+		return characterSleeper(ctx, mob, args)
+	case "strike":
+		return characterStrike(ctx, mob, args)
+	case "subdue":
+		return characterSubdue(ctx, mob, args)
+	case "tiger":
+		return characterTigerPunch(ctx, mob, args)
+	case "tag":
+		return characterTag(ctx, mob, args)
+	case "trip":
+		return characterTrip(ctx, mob, args)
 	default:
 		return CharacterCommandUnsupported
 	}
@@ -116,16 +162,20 @@ func mobileWeaponType(obj *ObjectInstance) (int, bool) {
 	return obj.GetValue(3), true
 }
 
-// cByte mirrors C's unsigned byte assignments in handlers declaring their
-// probability values as byte (new_cmds.c:552,878; act.offensive.c:636).
+// cByte mirrors the platform C `byte` typedef, which is plain `char` in
+// src/structs.h:703 and signed on the reference build. Probability handlers
+// that assign a wider result to `byte` therefore retain signed 8-bit wrap.
 func cByte(value int) int {
-	return value & 0xff
+	return mobileSignedPoint(value, 8)
 }
 
 func characterBackstab(ctx CharacterCommandContext, mob *MobInstance, args []string) CharacterCommandResult {
-	if ctx.World.DummyMobSkill(skillNumBackstab) == 0 {
+	prob := ctx.World.DummyMobSkill(skillNumBackstab)
+	if prob == 0 {
 		mobileSend(ctx, mob, "You have no idea how.\r\n")
-		return CharacterCommandHandled
+		if ctx.Subcmd == 0 {
+			return CharacterCommandHandled
+		}
 	}
 	victim := mobileCommandTarget(ctx, mob, args, false)
 	if victim == nil {
@@ -160,7 +210,10 @@ func characterBackstab(ctx CharacterCommandContext, mob *MobInstance, args []str
 		return CharacterCommandHandled
 	}
 	percent := dprng.Number(1, 101)
-	if victim.GetPosition() > combat.PosSleeping && percent > ctx.World.DummyMobSkill(skillNumBackstab) {
+	if ctx.Subcmd != 0 {
+		prob = dprng.Number(50, 100)
+	}
+	if victim.GetPosition() > combat.PosSleeping && percent > prob {
 		ctx.World.mobileCommandSkillDamage(mob, victim, 0, SkillBackstabNum)
 	} else {
 		mobileSkillHit(ctx.World, mob, victim, SkillBackstabNum)
@@ -173,7 +226,9 @@ func characterBash(ctx CharacterCommandContext, mob *MobInstance, args []string)
 	prob := ctx.World.DummyMobSkill(skillNumBash)
 	if prob == 0 {
 		mobileSend(ctx, mob, "You'd better leave all the martial arts to fighters.\r\n")
-		return CharacterCommandHandled
+		if ctx.Subcmd == 0 {
+			return CharacterCommandHandled
+		}
 	}
 	if ctx.World.RoomHasFlag(mob.GetRoom(), "peaceful") {
 		mobileSend(ctx, mob, "This room just has such a peaceful, easy feeling...\r\n")
@@ -201,6 +256,9 @@ func characterBash(ctx CharacterCommandContext, mob *MobInstance, args []string)
 		return CharacterCommandHandled
 	}
 	percent := ((5 - (victim.GetAC() / 10)) * 2) + dprng.Number(1, 101)
+	if ctx.Subcmd != 0 {
+		prob = 131
+	}
 	if targetMob, isMob := victim.(*MobInstance); isMob && targetMob.HasMobFlag(MobFlagNobash) && mob.GetLevel() < LVL_IMMORT {
 		percent = 101
 	}
@@ -222,7 +280,9 @@ func characterCharge(ctx CharacterCommandContext, mob *MobInstance, args []strin
 	prob := ctx.World.DummyMobSkill(skillNumCharge)
 	if prob == 0 {
 		mobileSend(ctx, mob, "You couldn't charge if you wanted to!\r\n")
-		return CharacterCommandHandled
+		if ctx.Subcmd == 0 {
+			return CharacterCommandHandled
+		}
 	}
 	victim := mobileCommandTarget(ctx, mob, args, true)
 	if victim == nil {
@@ -249,6 +309,9 @@ func characterCharge(ctx CharacterCommandContext, mob *MobInstance, args []strin
 	}
 	if targetMob, isMob := victim.(*MobInstance); isMob && targetMob.HasMobFlag(MobFlagNobash) {
 		percent = cByte(percent + 25)
+	}
+	if ctx.Subcmd != 0 {
+		prob = 131
 	}
 	if percent > prob {
 		ctx.World.mobileCommandSkillDamage(mob, victim, 0, SkillChargeNum)
@@ -406,7 +469,9 @@ func characterDisarm(ctx CharacterCommandContext, mob *MobInstance, args []strin
 	prob := ctx.World.DummyMobSkill(skillNumDisarm)
 	if prob == 0 {
 		mobileSend(ctx, mob, "You'd better leave all the martial arts to fighters.\r\n")
-		return CharacterCommandHandled
+		if ctx.Subcmd == 0 {
+			return CharacterCommandHandled
+		}
 	}
 	var victim combat.Combatant
 	if mob.GetFightingBody() != nil {
@@ -433,6 +498,9 @@ func characterDisarm(ctx CharacterCommandContext, mob *MobInstance, args []strin
 		return CharacterCommandHandled
 	}
 	percent := dprng.Number(1, 101+victim.GetLevel())
+	if ctx.Subcmd != 0 {
+		prob = 200
+	}
 	if percent < prob {
 		ActWithPrivateSink(ctx.World, false, mob, victim, weapon, nil,
 			"You disarm $N and $p goes flying!", "", ToChar, mob, ctx.PrivateOutput)
@@ -541,7 +609,8 @@ func characterDragonKick(ctx CharacterCommandContext, mob *MobInstance, args []s
 		mobileSend(ctx, mob, "You're too exhausted!\r\n")
 		return CharacterCommandHandled
 	}
-	percent := cByte(((5 - (victim.GetAC() / 10)) * 2) + dprng.Number(1, 101))
+	// do_dragon_kick declares `percent` as int (src/act.offensive.c:638).
+	percent := ((5 - (victim.GetAC() / 10)) * 2) + dprng.Number(1, 101)
 	if percent > prob {
 		ctx.World.mobileCommandSkillDamage(mob, victim, 0, SkillDragonKickNum)
 	} else {
@@ -608,7 +677,7 @@ func characterGroinrip(ctx CharacterCommandContext, mob *MobInstance, args []str
 }
 
 func characterHeadbutt(ctx CharacterCommandContext, mob *MobInstance, args []string) CharacterCommandResult {
-	if ctx.PrivateOutput == nil {
+	if ctx.PrivateOutput == nil && ctx.Subcmd == 0 {
 		return CharacterCommandHandled
 	}
 	if ctx.World.RoomHasFlag(mob.GetRoom(), "peaceful") {
@@ -618,7 +687,9 @@ func characterHeadbutt(ctx CharacterCommandContext, mob *MobInstance, args []str
 	prob := ctx.World.DummyMobSkill(skillNumHeadbutt)
 	if prob == 0 {
 		mobileSend(ctx, mob, "You aren't qualified to headbutt anyone!\r\n")
-		return CharacterCommandHandled
+		if ctx.Subcmd == 0 {
+			return CharacterCommandHandled
+		}
 	}
 	if mob.IsMountedMob() {
 		mobileSend(ctx, mob, "Dismount first!\r\n")
@@ -649,6 +720,9 @@ func characterHeadbutt(ctx CharacterCommandContext, mob *MobInstance, args []str
 	if mob.GetLevel()/2 > mob.GetHP() {
 		mobileSend(ctx, mob, "But that could kill you!\n\r")
 		return CharacterCommandHandled
+	}
+	if ctx.Subcmd != 0 {
+		prob = dprng.Number(50, 100)
 	}
 	if victim.GetPosition() <= combat.PosDead {
 		mob.SetWaitStatePulses(3)

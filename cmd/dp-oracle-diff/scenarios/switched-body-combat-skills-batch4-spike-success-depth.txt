@@ -1,0 +1,79 @@
+# C-first switched-body success witness for spike. The mobile gets its spike from its zone equipment entry, and the target carries AFF_WEREWOLF. src/new_cmds.c:1098-1198; src/utils.h:234; src/act.wizard.c:1584-1618; src/db.c:104,1281; src/utils.h:343.
+
+# depth-case: spike.switched-mobile-success
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 16303 1 8105 80
+spawn-mob 69 1 8105 80
+equip-object 69 7905 999 16 80
+set-mob-aff 16303 134217728
+
+[setup:oracle]
+SwitchBattle
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchBattle
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+BattleWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+BattleWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport BattleWatch 8105
+set mob clone level 39
+goto 8162
+restore clone
+switch clone
+
+[probe]
+spike trainee

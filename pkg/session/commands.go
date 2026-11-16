@@ -128,6 +128,7 @@ func init() {
 	registerCommand("murder", wrapArgs(cmdHit), "Attack a target (C alias of hit).")
 	registerActorCommand("murder", hitActor)
 	registerCommand("parry", wrapArgs(cmdParry), "Enter a defensive parry position.")
+	registerActorCommand("parry", combatSkillActorHandler)
 	registerCommand("kill", wrapArgs(cmdKill), "Kill a target (immortal instakill).")
 	registerActorCommand("kill", hitActor)
 	registerCommand("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.")
@@ -247,6 +248,10 @@ func init() {
 		return game.CharacterPour(ctx, commandName)
 	})
 	registerCommand("quaff", wrapArgs(cmdQuaff), "Quaff a potion.")
+	registerActorCommand("quaff", func(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterItemMagic(ctx, commandName)
+	})
 
 	// Info
 	registerCommand("score", wrapBodyArgs(cmdScoreBody), "Show your character stats.")
@@ -328,12 +333,18 @@ func init() {
 		registerCommand(name, wrapArgs(cmdNotHere), "Unavailable outside its special procedure.")
 	}
 	registerCommand("use", wrapArgs(cmdUse), "Use a wand/staff or a skill.")
+	registerActorCommand("use", func(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterItemMagic(ctx, commandName)
+	})
 
 	// Combat skills (delegated to pkg/command)
 	registerCommand("backstab", wrapSkill(command.CmdBackstab), "Backstab a target with a piercing weapon.")
 	registerActorCommand("backstab", combatSkillActorHandler)
 	registerCommand("spike", wrapSkill(command.CmdSpike), "Spike a werewolf with a spiked weapon.")
+	registerActorCommand("spike", combatSkillActorHandler)
 	registerCommand("stake", wrapSkill(command.CmdStake), "Stake a vampire with a wooden stake.")
+	registerActorCommand("stake", combatSkillActorHandler)
 	registerCommand("bash", wrapSkill(command.CmdBash), "Bash a target, potentially stunning them.")
 	registerActorCommand("bash", combatSkillActorHandler)
 	registerCommand("circle", wrapSkill(command.CmdCircle), "Circle behind a target for a piercing attack.")
@@ -344,7 +355,10 @@ func init() {
 	registerCommand("trip", wrapSkill(command.CmdTrip), "Trip a target, knocking them down.")
 	registerCommand("headbutt", wrapSkill(command.CmdHeadbutt), "Headbutt a target for high damage.")
 	registerActorCommand("headbutt", combatSkillActorHandler)
+	registerActorCommand("kick", combatSkillActorHandler)
+	registerActorCommand("trip", combatSkillActorHandler)
 	registerCommand("rescue", wrapSkill(command.CmdRescue), "Rescue someone from combat.")
+	registerActorCommand("rescue", combatSkillActorHandler)
 	registerCommand("sneak", wrapSkill(command.CmdSneak), "Attempt to move silently.")
 	registerCommand("hide", wrapSkill(command.CmdHide), "Attempt to hide in the shadows.")
 	registerCommand("kabuki", wrapSkill(command.CmdKabuki), "Practice the art of kabuki (hide variant).")
@@ -353,6 +367,10 @@ func init() {
 	// layer API; the command name belongs to the C OLC surface.
 	registerCommand("dig", wrapArgs(cmdDig), "Create a room exit.")
 	registerCommand("steal", wrapSkill(command.CmdSteal), "Steal from a target.")
+	registerActorCommand("steal", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterSteal(ctx, args)
+	})
 	registerCommand("berserk", wrapSkill(command.CmdBerserk), "Summon your battle rage for a hitroll/damroll boost.")
 	registerActorCommand("berserk", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
 		return game.CharacterBerserk(ctx, args)
@@ -490,11 +508,17 @@ func init() {
 	registerCommand("dragon", wrapSkill(command.CmdDragonKick), "Dragon-style kick attack.")
 	registerActorCommand("dragon", combatSkillActorHandler)
 	registerCommand("tiger", wrapSkill(command.CmdTigerPunch), "Tiger-style punch attack (bare hands).")
+	registerActorCommand("tiger", combatSkillActorHandler)
 	registerCommand("shoot", wrapSkill(command.CmdShoot), "Shoot a target with a ranged weapon.")
+	registerActorCommand("shoot", combatSkillActorHandler)
 	registerCommand("subdue", wrapSkill(command.CmdSubdue), "Subdue a target (non-lethal).")
+	registerActorCommand("subdue", combatSkillActorHandler)
 	registerCommand("sleeper", wrapSkill(command.CmdSleeper), "Apply a sleeper hold to a target.")
+	registerActorCommand("sleeper", combatSkillActorHandler)
 	registerCommand("neckbreak", wrapSkill(command.CmdNeckbreak), "Break a target's neck (bare hands).")
+	registerActorCommand("neckbreak", combatSkillActorHandler)
 	registerCommand("ambush", wrapSkill(command.CmdAmbush), "Ambush a target from hiding.")
+	registerActorCommand("ambush", combatSkillActorHandler)
 
 	// Port completion: skill handlers that were implemented in pkg/command but
 	// never registered, leaving them unreachable by players. Positions/levels
@@ -516,6 +540,9 @@ func init() {
 	registerCommand("cutthroat", wrapSkill(command.CmdCutthroat), "Slit a target's throat.")
 	registerActorCommand("cutthroat", combatSkillActorHandler)
 	registerCommand("search", wrapSkill(command.CmdDetect), "Search for hidden exits.")
+	registerActorCommand("search", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		return game.CharacterDetect(ctx, args)
+	})
 	registerCommand("disarm", wrapSkill(command.CmdDisarm), "Disarm a target's weapon.")
 	registerActorCommand("disarm", combatSkillActorHandler)
 	registerCommand("groinrip", wrapSkill(command.CmdGroinrip), "Rip a target's groin.")
@@ -525,11 +552,18 @@ func init() {
 	registerCommand("palm", wrapSkill(command.CmdPalm), "Palm an item discreetly.")
 	registerCommand("point", wrapSkill(command.CmdPoint), "Point out something.")
 	registerCommand("scrounge", wrapSkill(command.CmdScrounge), "Scrounge for useful items.")
+	registerActorCommand("scrounge", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
+		return game.CharacterScrounge(ctx, args)
+	})
 	registerCommand("sharpen", wrapSkill(command.CmdSharpen), "Sharpen a bladed weapon.")
 	registerCommand("slug", wrapSkill(command.CmdSlug), "Slug a target with a heavy blow.")
+	registerActorCommand("slug", combatSkillActorHandler)
 	registerCommand("smackheads", wrapSkill(command.CmdSmackheads), "Smack two targets' heads together.")
+	registerActorCommand("smackheads", combatSkillActorHandler)
 	registerCommand("strike", wrapSkill(command.CmdStrike), "Strike a target with a focused blow.")
+	registerActorCommand("strike", combatSkillActorHandler)
 	registerCommand("tag", wrapSkill(command.CmdTag), "Tag a target.")
+	registerActorCommand("tag", combatSkillActorHandler)
 	registerCommand("turn", wrapSkill(command.CmdTurn), "Turn undead.")
 	registerCommand("aid", wrapSkill(command.CmdFirstAid), "Administer first aid to a target.")
 	registerCommand("alter", wrapSkill(command.CmdFleshAlter), "Alter flesh.", "flesh")
@@ -540,6 +574,7 @@ func init() {
 		return game.CharacterFleshAlter(ctx, args)
 	})
 	registerCommand("serpent", wrapSkill(command.CmdSerpentKick), "Serpent-style kick attack.")
+	registerActorCommand("serpent", combatSkillActorHandler)
 
 	registerCommand("order", wrapArgs(cmdOrder), "Order a pet or follower.")
 	registerCommand("orgasm", wrapArgs(cmdOrgasm), "Touch someone into orgasm.")

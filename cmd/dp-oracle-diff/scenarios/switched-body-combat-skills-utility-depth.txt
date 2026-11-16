@@ -19,12 +19,12 @@
 [fixture]
 empty-players
 quiet-mobs
-spawn-mob 4350 1 8162 40
-spawn-mob 4500 1 8162 40
-spawn-mob 69 1 8162 40
-spawn-obj 8010 1 8162 40
-give-object 69 12132 1 40
-equip-object 69 8022 999 16 40
+spawn-mob 4350 1 8162 80
+spawn-mob 4500 1 8162 80
+spawn-mob 69 1 8162 80
+spawn-obj 8010 1 8162 80
+give-object 69 12132 1 80
+equip-object 69 8022 999 16 80
 
 [setup:oracle]
 SwitchedSkill

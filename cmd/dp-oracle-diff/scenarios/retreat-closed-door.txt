@@ -2,14 +2,18 @@
 # CAN_GO's third clause skips closed doors (src/utils.h:565-567), so C's
 # do_retreat never attempts a closed exit (src/act.offensive.c:1056-1076)
 # even though do_simple_move has no door check of its own. The mortal fights
-# a zookeeper at 8040, whose west gate is closed: the six direction draws
-# must skip it, and whichever open exit is drawn, both engines take the same
-# one.
+# a zookeeper in 8162. All six disposable exits are closed before combat, so
+# a successful retreat must skip every direction and take the terminal
+# cornered branch. This is a C-first proof of the closed-door gate, not a
+# queued input behind the opening hit's wait.
 
 [fixture]
 empty-players
 quiet-mobs
-spawn-mob 14500 1 8040 145
+set-room-flag 8162 4 off
+replace-room-exits 8162 all 8163 1 gate
+replace-room-exits 8163 none
+spawn-mob 14500 1 8162 145
 
 [setup:oracle]
 Retgod
@@ -68,13 +72,20 @@ Y
 1
 
 [warmup]
-teleport Retmort 8040
-goto 8040
+teleport Retmort 8162
+goto 8162
+set Retmort maxhit 5000
+set Retmort hit 5000
 skillset Retmort 'retreat' 100
+send:mortal close gate north
+send:mortal close gate east
+send:mortal close gate south
+send:mortal close gate west
+send:mortal close gate up
+send:mortal close gate down
+send:mortal kill zookeeper
+~dpclock pulse 27
 
 [probe:mortal]
-kill zookeeper
 retreat
-~dpclock pulse 27
 look
-score

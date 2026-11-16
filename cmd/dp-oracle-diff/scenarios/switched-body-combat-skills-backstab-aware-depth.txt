@@ -1,0 +1,56 @@
+# C-first switched-body witness for backstab.aware. The awake harbor guard
+# prototype has MOB_AWARE and reaches C's notice-and-retaliate branch after
+# the switched body passes its learned-skill and piercing-weapon gates.
+# src/act.offensive.c:165-218; src/act.wizard.c:1584-1618.
+
+# depth-case: backstab.aware
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+
+spawn-mob 18223 1 8162 80
+spawn-mob 69 1 8162 80
+equip-object 69 8036 999 16 80
+[setup:oracle]
+SwitchSkill
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchSkill
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set mob clone level 39
+set mob guard maxhit 5000
+set mob guard hit 5000
+set mob guard ac 50
+skillset SwitchSkill 'backstab' 0
+restore clone
+switch clone
+
+[probe]
+look
+backstab guard

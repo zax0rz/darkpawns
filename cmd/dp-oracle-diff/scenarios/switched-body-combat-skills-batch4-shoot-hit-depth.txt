@@ -1,0 +1,127 @@
+# C-first switched-body witness for do_shoot's equipped inventory, direction,
+# invalid-direction and no-exit gates, hit and NPC retaliation path.
+# src/act.offensive.c:746-996; src/spells.h:196;
+# src/act.wizard.c:1584-1618; src/db.c:104,1281; src/utils.h:343.
+
+# depth-case: shoot.switched-mobile-projectile-hit-and-retaliation
+# depth-case: shoot.switched-mobile-invalid-direction
+# depth-case: shoot.invalid-direction
+# depth-case: shoot.switched-mobile-valid-direction-no-exit
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 4841 1 8162 48
+spawn-obj 4802 1 8162 48
+spawn-mob 16304 1 8163 80
+spawn-mob 69 1 8162 80
+replace-room-exits 8162 north 8163 0
+replace-room-exits 8163 none
+set-room-flag 8162 4 off
+set-room-flag 8163 4 off
+
+[setup:oracle]
+SwitchBattle
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchBattle
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:origin]
+BattleOrigin
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:origin]
+BattleOrigin
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:destination]
+BattleDest
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:destination]
+BattleDest
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport BattleOrigin 8162
+teleport BattleDest 8163
+set mob instructor maxhit 30000
+set mob instructor hit 30000
+set mob instructor dex 0
+skillset SwitchBattle 'shoot' 0
+set mob clone level 39
+set mob clone dex 18
+restore clone
+switch clone
+
+[probe]
+look
+get arrow
+get hoopak
+wield hoopak
+shoot arrow sideways instructor
+shoot arrow east instructor
+shoot arrow north instructor

@@ -150,6 +150,7 @@ replace-room-exits 8161 none
 set-room-flag 8161 1 on
 set-room-sector 8161 7
 room-script 8162 oracle/item_transfer.lua 24
+set-mob-flag 69 SENTINEL
 [probe:victim]
 recite scroll
 `
@@ -172,6 +173,9 @@ recite scroll
 	}
 	if !sc.EmptyPlayers {
 		t.Fatal("EmptyPlayers = false, want true")
+	}
+	if len(sc.MobFlagFixtures) != 1 || sc.MobFlagFixtures[0] != (MobFlagFixture{MobVNum: 69, Flag: "SENTINEL", Enabled: true}) {
+		t.Fatalf("MobFlagFixtures = %#v", sc.MobFlagFixtures)
 	}
 	if sc.ProbeActor != "victim" {
 		t.Fatalf("ProbeActor = %q, want victim", sc.ProbeActor)

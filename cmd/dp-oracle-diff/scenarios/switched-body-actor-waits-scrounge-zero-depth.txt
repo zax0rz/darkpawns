@@ -1,0 +1,52 @@
+# C-first switched-body witness for do_scrounge's zero-skill actor wait.
+# The NPC uses dummy_mob's shared skill record (src/new_cmds2.c:64-75;
+# src/db.c:104,1281); the refusal installs WAIT_STATE(2 * PULSE_VIOLENCE).
+# The immediate look is queued while that 40-pulse wait is active; the final
+# look after the pulse pad proves command input resumes when the wait drains.
+
+# depth-case: switched.scrounge.zero-skill-refusal
+# depth-case: switched.scrounge.zero-skill-wait
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 3
+spawn-mob 69 1 8105 80
+
+[setup:oracle]
+Scroungebody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scroungebody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+switch clone
+
+[probe]
+scrounge
+look
+~dpclock pulse 40
+look

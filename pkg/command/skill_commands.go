@@ -722,6 +722,8 @@ func CmdShoot(s SessionInterface, args []string) error {
 	}
 	direction, validDirection := directions[directionName]
 	if !validDirection {
+		// C's final else emits the lower-case refusal for an unrecognized
+		// search_block() result (src/act.offensive.c:990-996).
 		return s.SendMessage("Interesting direction.\r\n")
 	}
 
@@ -731,6 +733,8 @@ func CmdShoot(s SessionInterface, args []string) error {
 	}
 	exit, ok := room.Exits[direction]
 	if !ok {
+		// A recognized direction with no exit reaches the earlier capitalized
+		// refusal (src/act.offensive.c:814-820).
 		return s.SendMessage("Interesting Direction.\r\n")
 	}
 	if ch.Equipment == nil {

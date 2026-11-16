@@ -285,4 +285,8 @@ func cmdZap(s *Session, args []string) error {
 
 func init() {
 	registerCommand("recite", wrapArgs(cmdRecite), "Read a scroll.")
+	registerActorCommand("recite", func(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+		ctx = withCharacterCommandArgs(ctx, args)
+		return game.CharacterItemMagic(ctx, commandName)
+	})
 }

@@ -77,6 +77,48 @@ func TestAwardMobKillXPUsesGainExpCap(t *testing.T) {
 	}
 }
 
+func TestAwardSoloMobKillXPReachesSwitchedMobileDescriptor(t *testing.T) {
+	w := newXPTestWorld(t)
+	owner := NewPlayer(1, "Controller", 1001)
+	if err := w.AddPlayer(owner); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+	mob := NewMob(&parser.Mob{VNum: 9001, ShortDesc: "a watcher", Level: 5}, 1001)
+	mob.world = w
+
+	var mobileOutput strings.Builder
+	w.MobileDescriptorOwner = func(body *MobInstance) *Player {
+		if body == mob {
+			return owner
+		}
+		return nil
+	}
+	w.MobileMessageSink = func(body *MobInstance, message []byte) {
+		if body == mob {
+			mobileOutput.Write(message)
+		}
+	}
+
+	w.AwardMobKillXP(mob, nil, 1000, 0, 5, 0)
+
+	if got, want := mobileOutput.String(), "You receive 1000 experience points.\r\n"; got != want {
+		t.Fatalf("switched mobile output = %q, want %q", got, want)
+	}
+	if got := owner.GetExp(); got != 0 {
+		t.Fatalf("descriptor owner gained %d XP, want no XP for an NPC body", got)
+	}
+	if got := mob.GetExp(); got != 0 {
+		t.Fatalf("NPC body gained %d XP, want C's IS_NPC gain_exp guard", got)
+	}
+
+	// With no descriptor owner, the same C send_to_char is silent.
+	w.MobileDescriptorOwner = func(*MobInstance) *Player { return nil }
+	w.AwardMobKillXP(mob, nil, 1000, 0, 5, 0)
+	if got, want := mobileOutput.String(), "You receive 1000 experience points.\r\n"; got != want {
+		t.Fatalf("descriptorless mobile output = %q, want unchanged %q", got, want)
+	}
+}
+
 func TestUngroupedFollowerKillUsesSoloXP(t *testing.T) {
 	w := newXPTestWorld(t)
 	leader := NewPlayer(1, "Leader", 1001)

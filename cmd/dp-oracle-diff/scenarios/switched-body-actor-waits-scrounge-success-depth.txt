@@ -1,0 +1,54 @@
+# C-first switched-body success witness for do_scrounge. Restore supplies the
+# shared mobile skill record; forest food is vnum 28 (src/new_cmds2.c:77-130).
+# The immediate look is queued under scrounge's 40-pulse wait. A pulse pad then
+# drains it and the final look produces room output; the wait is body-owned.
+
+# depth-case: switched.scrounge.success-and-wait
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 3
+set-mob-flag 69 SENTINEL
+spawn-mob 69 1 8105 80
+
+[setup:oracle]
+Scroungesuccess
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scroungesuccess
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport clone 8105
+set mob clone level 31
+restore clone
+switch clone
+
+[probe]
+scrounge
+look
+~dpclock pulse 40
+look

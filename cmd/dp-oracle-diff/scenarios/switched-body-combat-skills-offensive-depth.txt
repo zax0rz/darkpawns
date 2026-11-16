@@ -26,10 +26,10 @@
 empty-players
 quiet-mobs
 set-room-flag 8162 4 off
-spawn-mob 16303 1 8162 40
-spawn-mob 69 1 8162 40
-give-object 69 8036 1 40
-equip-object 69 8036 999 16 40
+spawn-mob 16303 1 8162 80
+spawn-mob 69 1 8162 80
+give-object 69 8036 1 80
+equip-object 69 8036 999 16 80
 
 [setup:oracle]
 SwitchedSkill

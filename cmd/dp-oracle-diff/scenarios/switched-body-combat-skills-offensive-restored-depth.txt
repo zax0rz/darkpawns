@@ -11,9 +11,9 @@
 [fixture]
 empty-players
 quiet-mobs
-spawn-mob 16303 1 8105 40
-spawn-mob 70 1 8105 40
-equip-object 70 8022 999 16 40
+spawn-mob 16303 1 8105 80
+spawn-mob 70 1 8105 80
+equip-object 70 8022 999 16 80
 
 [setup:oracle]
 SwitchedRestore
