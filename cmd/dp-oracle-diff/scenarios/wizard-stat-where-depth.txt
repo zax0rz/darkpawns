@@ -9,6 +9,7 @@
 # depth-case: stat.mob-fallback-world
 # depth-case: stat.character-spell-affects
 # depth-case: where.immort-mob-and-obj
+# depth-case: where.argument-not-found
 
 [fixture]
 empty-players
@@ -76,6 +77,7 @@ Y
 stat orc
 where orc
 where bread
+where no-such-object
 goto 8162
 teleport Statwherepeer 8162
 get bread

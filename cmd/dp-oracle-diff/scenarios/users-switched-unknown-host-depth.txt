@@ -1,0 +1,75 @@
+# C-first do_users vehicle: a level-39 God lists the descriptor after the
+# first God switches into a level-39 mobile (src/act.informative.c:2026-2112).
+# This keeps C's switched-body idle gate aligned with the Go descriptor owner.
+
+# depth-case: users.switched-state
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8105 80
+
+[setup:oracle]
+Usersowner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Usersowner
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Userspeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Userspeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Userspeer level 39
+goto 8105
+set mob clone level 39
+switch clone
+
+[probe]
+send:peer users

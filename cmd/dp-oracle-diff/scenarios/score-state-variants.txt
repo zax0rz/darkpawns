@@ -5,6 +5,7 @@
 # depth-case: score.ac.dragon
 # depth-case: score.ac.hell-gates
 # depth-case: score.veteran
+# depth-case: score.state-variants.intoxicated
 # C-first do_score state vehicle (src/act.informative.c:1168-1405).
 # The God actor drives every score-visible state arm that has a reachable
 # command path: AC bands, chosen/summonable flags, tattoo stat totals,
@@ -65,4 +66,6 @@ set Scorevar tattoo 9
 score
 set Scorevar played 2592000
 set Scorevar kills 10000
+score
+set Scorevar drunk 11
 score

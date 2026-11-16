@@ -9,6 +9,7 @@
 # depth-case: mount.self-target
 # depth-case: mount.player-target
 # depth-case: mount.success-audiences
+# depth-case: score.state-variants.mounted-live
 # depth-case: mount.actor-already-mounted
 # depth-case: mount.alias-ride
 # depth-case: mount.unmountable-mob
@@ -86,6 +87,7 @@ mount Nobody
 mount Mountactor
 mount Mountpeer trailing words are ignored
 mount horse
+score
 mount horse
 dismount
 ride horse

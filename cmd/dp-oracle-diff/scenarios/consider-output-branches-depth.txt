@@ -1,0 +1,129 @@
+# C-first do_consider output vehicle (src/act.informative.c:2330-2431).
+# A God controller sets two live players to level 1, making both unarmed damage
+# rolls deterministic, then changes the target's damage/HP around each C
+# threshold. The low-level actor issues each registered command.
+
+# depth-case: consider.damage-tear-up-output
+# depth-case: consider.damage-hurt-output
+# depth-case: consider.damage-very-easy-output
+# depth-case: consider.damage-not-worth-output
+# depth-case: consider.health-lot-better-output
+# depth-case: consider.health-little-worse-output
+# depth-case: consider.health-worse-output
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Considergod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Considergod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Consideractor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Consideractor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Considerpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Considerpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Consideractor level 1
+set player Consideractor hit 1000
+set player Consideractor maxhit 1000
+set player Consideractor str 18
+set player Consideractor damroll 0
+set player Considerpeer level 1
+set player Considerpeer hit 1000
+set player Considerpeer maxhit 1000
+set player Considerpeer str 18
+set player Considerpeer damroll 0
+
+[probe]
+set player Considerpeer damroll 15
+send:actor consider Considerpeer
+set player Considerpeer damroll 8
+send:actor consider Considerpeer
+set player Considerpeer damroll -7
+send:actor consider Considerpeer
+set player Considerpeer damroll -12
+send:actor consider Considerpeer
+set player Considerpeer damroll 0
+set player Considerpeer hit 3501
+send:actor consider Considerpeer
+set player Considerpeer hit 976
+send:actor consider Considerpeer
+set player Considerpeer hit 975
+send:actor consider Considerpeer
