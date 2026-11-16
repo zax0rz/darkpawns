@@ -1,0 +1,50 @@
+# depth-case: score.pack.fairly-light
+# depth-case: score.pack.fairly-heavy
+# depth-case: score.pack.heavy
+# depth-case: score.pack.almost-too-heavy
+# C-first score pack ratio at src/act.informative.c:1302-1316. With STR 3,
+# C carry capacity is 10; indexed object weights 3, 2, 5, and 1 cross the
+# integer ratios 3, 2, 1, and 0 through the ordinary inventory path.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Scorepack
+Y
+scorepack1
+scorepack1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scorepack
+y
+scorepack1
+scorepack1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+set Scorepack str 3
+load obj 12121
+score
+load obj 12122
+score
+load obj 8037
+score
+load obj 4372
+score

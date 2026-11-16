@@ -1,0 +1,75 @@
+# depth-case: score.position.mortally-wounded
+# C-first score position witness: set the hit count to -8 and cast the
+# registered sobriety spell so src/spells.c:688-698 calls update_pos; the
+# resulting POS_MORTALLY body can still issue score (src/interpreter.c:674).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mortalscore
+Y
+mortpass
+mortpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mortalscore
+y
+mortpass
+mortpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Mortalpeer
+Y
+mpeerpass
+mpeerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Mortalpeer
+y
+mpeerpass
+mpeerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Mortalpeer 8162
+set player Mortalscore level 39
+
+[probe]
+set player Mortalpeer hit -8
+cast 'sobriety' Mortalpeer
+~dpclock pulse 20
+send:peer score

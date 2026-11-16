@@ -1,4 +1,5 @@
 # depth-case: look.fighting-thin-air
+# depth-case: score.position.fighting-thin-air
 # C list_one_char's general path (src/act.informative.c:596-598): a character at
 # POS_FIGHTING whose FIGHTING() pointer is NULL prints "$n is here struggling
 # with thin air.". Nothing assigns that pair directly, but the position writers
@@ -54,3 +55,6 @@ q
 y
 load mob 16303
 look
+switch trainee
+score
+return
