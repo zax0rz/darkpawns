@@ -216,10 +216,9 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp 
 	// --- Experience handling ---
 	grouped := w.combatIsInGroup(killer)
 
-	// Solo kill (not in any group) — fight.c damage() lines 1639-1667. A
-	// mobile killer on this path produces nothing observable: C's
-	// send_to_char no-ops, gain_exp skips NPCs, its PRF bits are clear, and
-	// change_alignment returns for NPCs (src/fight.c:486-489).
+	// Solo kill (not in any group) — fight.c damage() lines 1639-1667. C sends
+	// the XP line to every killer body, including a switched mobile with a
+	// descriptor; gain_exp and player-only preferences remain gated below.
 	if !grouped {
 		w.awardSoloMobKillXP(killer, victimExp, victimGold, victimLevel, victimAlign)
 		return
@@ -290,17 +289,17 @@ func (w *World) awardGroupMobKillXP(inRoom []combat.Combatant, victimLevel, base
 }
 
 func (w *World) awardSoloMobKillXP(killer combat.Combatant, victimExp, victimGold, victimLevel, victimAlign int) {
-	p, ok := combatPlayer(killer)
-	if !ok {
-		return
-	}
 	// Level-difference XP penalty — fight.c calc_level_diff(), solo path
 	// gets the C two-level slack before higher-level penalties apply.
 	xp := combat.CalcXPShare(killer.GetLevel(), victimLevel, victimExp, false, maxExpGain)
 	if xp > 1 {
-		p.SendMessage(fmt.Sprintf("You receive %d experience points.\r\n", xp))
+		combatSendMessage(killer, fmt.Sprintf("You receive %d experience points.\r\n", xp))
 	} else {
-		p.SendMessage("You receive one lousy experience point.\r\n")
+		combatSendMessage(killer, "You receive one lousy experience point.\r\n")
+	}
+	p, ok := combatPlayer(killer)
+	if !ok {
+		return
 	}
 	w.GainExp(p, xp)
 	// Solo damage(): XP, then PRF_AUTOGOLD (src/fight.c:1644-1667).
@@ -408,8 +407,8 @@ func (w *World) awardGroupKillGold(
 	}
 }
 
-// combatSendMessage delivers a C send_to_char to any character body. Mobiles
-// have no descriptor, so their copy is the C no-op.
+// combatSendMessage delivers a C send_to_char to any character body. Ordinary
+// mobiles have no descriptor and no-op; a switched mobile routes to its owner.
 func combatSendMessage(body combat.Combatant, msg string) {
 	switch b := body.(type) {
 	case *Player:

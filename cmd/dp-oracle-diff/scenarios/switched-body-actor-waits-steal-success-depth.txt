@@ -1,0 +1,56 @@
+# C-first switched-body success witness for do_steal's coin transfer and
+# PULSE_VIOLENCE wait. C NPCs read the shared dummy skill record
+# (src/act.other.c:370-538; src/db.c:104,1281).
+
+# depth-case: switched.steal.coins-success
+# depth-case: switched.steal.success-wait
+# depth-case: switch.original-player-linkless-tag
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Stealbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stealbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set mob clone level 39
+skillset Stealbody 'steal' 0
+restore clone
+set mob clone dex 18
+set mob trainee gold 1000
+switch clone
+
+[probe]
+steal coins trainee
+look
+~dpclock pulse 20
+look

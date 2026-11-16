@@ -1,0 +1,89 @@
+# C-first DP-1535 witness for the next ten switched combat-skill bodies.
+# The descriptor owner knows these skills; the switched clone reads the fresh
+# world's shared zero dummy_mob skills. Its dagger and trainee target live in
+# room 8162 while the immortal remains in 8105. The clone prototype is level 0,
+# so set it to level 1 to pass six command lookup gates whose C minimum is 1.
+# Circle reaches its skill check only after target, weapon, mount, and awareness
+# gates.
+# src/act.offensive.c:165-234,419-501,636-692;
+# src/new_cmds.c:368-470,552-665,878-965,2391-2505,2565-2662;
+# src/new_cmds2.c:191-258.
+
+# depth-case: backstab.switched-mobile-zero-skill
+# depth-case: bash.switched-mobile-zero-skill
+# depth-case: charge.switched-mobile-zero-skill
+# depth-case: circle.switched-mobile-zero-skill
+# depth-case: cutthroat.switched-mobile-zero-skill
+# depth-case: disarm.switched-mobile-zero-skill
+# depth-case: disembowel.switched-mobile-zero-skill
+# depth-case: dragon.switched-mobile-zero-skill
+# depth-case: groinrip.switched-mobile-zero-skill
+# depth-case: headbutt.switched-mobile-zero-skill
+
+# depth-case: switched.combat.mobile-zero-skill-branches
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-mob 16303 1 8162 80
+spawn-mob 69 1 8162 80
+give-object 69 8036 1 80
+equip-object 69 8036 999 16 80
+
+[setup:oracle]
+SwitchedSkill
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchedSkill
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset SwitchedSkill 'backstab' 100
+skillset SwitchedSkill 'bash' 100
+skillset SwitchedSkill 'charge' 100
+skillset SwitchedSkill 'circle' 100
+skillset SwitchedSkill 'cutthroat' 100
+skillset SwitchedSkill 'disarm' 100
+skillset SwitchedSkill 'disembowel' 100
+skillset SwitchedSkill 'dragon kick' 100
+skillset SwitchedSkill 'groinrip' 100
+skillset SwitchedSkill 'headbutt' 100
+goto 8162
+set clone level 1
+goto 8105
+switch clone
+
+[probe]
+backstab
+bash
+charge
+circle trainee
+cutthroat
+disarm
+disembowel
+dragon
+groinrip
+headbutt
+return

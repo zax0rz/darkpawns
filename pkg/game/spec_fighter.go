@@ -22,13 +22,64 @@ func (w *World) mobSkillDamage(ch *MobInstance, vict combat.Combatant, dam, skil
 // mobSkillDamageAfterGate is mobSkillDamage for a caller that has already
 // asked damage()'s protection gate.
 func (w *World) mobSkillDamageAfterGate(ch *MobInstance, vict combat.Combatant, dam, skillNum int) bool {
-	// Native damage() performs jail/charm/switcheroo redirects before applying
-	// the supplied amount. CombatEngine already owns that shared C seam for
-	// one_hit(); use it here too for direct mob-special damage (R3/R5b/R5c).
-	if redirector, ok := w.combatEngine.(interface {
+	return w.mobSkillDamageWithDamageGate(ch, vict, dam, skillNum, false)
+}
+
+// mobileCommandSkillDamage is the command body's direct damage() entry. C
+// enrolls the command body and victim here, after damage protection and
+// redirects, unlike a fighter special whose source is already in combat
+// (src/fight.c:1318-1453).
+func (w *World) mobileCommandSkillDamage(ch *MobInstance, vict combat.Combatant, dam, skillNum int) bool {
+	if ch == nil || vict == nil || w == nil || w.DamageRefused(ch, vict) {
+		return false
+	}
+	return w.mobSkillDamageWithDamageGate(ch, vict, dam, skillNum, true)
+}
+
+func (w *World) mobSkillDamageWithDamageGate(ch *MobInstance, vict combat.Combatant, dam, skillNum int, enrollAttacker bool) bool {
+	if enrollAttacker {
+		enterAttacker := func() {
+			if ch != vict && ch.GetPosition() > combat.PosStunned && ch.GetFightingBody() == nil {
+				ch.SetFightingBody(vict)
+				ch.SetPosition(combat.PosFighting)
+			}
+		}
+		if redirector, ok := w.combatEngine.(interface {
+			ApplyMobDamageRedirectsAfterAttackerEnrollment(combat.Combatant, combat.Combatant, func()) bool
+		}); ok {
+			if redirector.ApplyMobDamageRedirectsAfterAttackerEnrollment(ch, vict, enterAttacker) {
+				return false
+			}
+		} else {
+			// Engines without the production seam keep the legacy redirect path;
+			// production runs the C jail-before-enrollment order above.
+			enterAttacker()
+			if redirector, ok := w.combatEngine.(interface {
+				ApplyMobDamageRedirects(combat.Combatant, combat.Combatant) bool
+			}); ok && redirector.ApplyMobDamageRedirects(ch, vict) {
+				return false
+			}
+		}
+	} else if redirector, ok := w.combatEngine.(interface {
 		ApplyMobDamageRedirects(combat.Combatant, combat.Combatant) bool
 	}); ok && redirector.ApplyMobDamageRedirects(ch, vict) {
 		return false
+	}
+	if enrollAttacker {
+		if vict != ch && vict.GetPosition() > combat.PosStunned && vict.GetFightingBody() == nil {
+			// C's victim-side set_fighting is after those redirects
+			// (fight.c:1443-1453), and is independent of the attacker's position.
+			vict.SetFightingBody(ch)
+			vict.SetPosition(combat.PosFighting)
+		}
+		if w.combatEngine != nil {
+			if err := w.StartCombatAfterDamage(ch, vict); err != nil {
+				slog.Warn("StartCombatAfterDamage failed in mobile command damage", "mob", ch.GetName(), "victim", vict.GetName(), "error", err)
+			}
+		}
+		if ch.HasMobFlag(MobFlagHunter) && !vict.IsNPC() && vict.GetLevel() < LVL_IMMORT {
+			w.SetHuntingTarget(ch, asActor(vict))
+		}
 	}
 
 	// damage() enrolls both sides before applying its modifier block. The

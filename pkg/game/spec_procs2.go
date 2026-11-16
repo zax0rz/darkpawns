@@ -1858,6 +1858,27 @@ func specBreedKiller(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	} else if randRange(0, 5) == 0 {
 		Act(w, false, me, nil, nil, nil, "You hear a low growl in the back of $n's throat.", "", ToRoom)
 	}
+	// C calls do_spike directly for a wielded spike/stake before its ordinary
+	// hit, preserving the command body's output, kill and wait effects
+	// (src/spec_procs2.c:1708-1717).
+	if weapon := mobileWielded(me); weapon != nil {
+		keywords := objName(weapon, me)
+		commandName := ""
+		subcmd := 0
+		if strings.Contains(keywords, "spike") {
+			commandName = "spike"
+		} else if strings.Contains(keywords, "stake") {
+			commandName = "stake"
+			subcmd = 1
+		}
+		if commandName != "" {
+			arg := victim.GetName()
+			CharacterCombatSkill(CharacterCommandContext{
+				Actor: me, DescriptorOwner: ch, World: w,
+				RawArgs: arg, DirectCall: true, Subcmd: subcmd,
+			}, commandName, []string{arg})
+		}
+	}
 
 	// C suppresses the actual hit for NOHASSLE victims, but still handles the
 	// special after the authored speech/growl branch.

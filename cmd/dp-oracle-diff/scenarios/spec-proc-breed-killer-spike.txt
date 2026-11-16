@@ -1,0 +1,91 @@
+# C-first witness for breed_killer direct SCMD_STAKE -> do_spike.
+# BreedPeer becomes a vampire through Lothar, while the equipped hunter
+# uses the direct command before the NOHASSLE gate suppresses its generic hit.
+# C path: src/spec_procs2.c:1679-1717; src/new_cmds.c:1098-1188;
+# src/act.other.c:1503.
+# depth-case: mob.breed-killer-direct-spike-command
+
+[fixture]
+empty-players
+quiet-mobs
+fixed-time 650812932
+spawn-mob 14110 1 8105 80
+clear-mob-flag 14110 AGGRESSIVE
+spawn-mob 7910 1 8105 80
+clear-mob-flag 7910 AGGRESSIVE
+set-mob-flag 7910 SPEC
+equip-object 7910 7904 999 16 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+BreedGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BreedGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+BreedPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+BreedPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+# DP-1511: use C set fields hit/align; maxhit and hit clamp to 5000
+# (src/act.wizard.c:2547-2553,2736-2748). No hp/alignment alias exists.
+[warmup]
+goto 8105
+# Zone 79 randload scatters 7900-7998 hunters; gather the equipped killer.
+teleport killer 8105
+teleport BreedPeer 8105
+set BreedPeer maxhit 5000
+set BreedPeer hit 5000
+
+[probe]
+send:peer look lothar
+set player BreedPeer nohassle on
+send:peer transform
+# Cross one full PULSE_MOBILE interval; C's 15-second menu idle check is not reached.
+~dpclock pulse 40

@@ -175,8 +175,10 @@ func (w *World) npcCommandDirectFallback(me *MobInstance, commandName, argument 
 		if strings.TrimSpace(argument) != "" {
 			return CharacterCommandUnsupported
 		}
-		// Direct do_look(mobile, "", ...) has only descriptor output. The
-		// start_room special runs it after moving a descriptor-less mobile.
+		// C's direct do_look writes only to ch->desc (act.informative.c).
+		// MobInstance.SendMessage is silent without a switched descriptor and
+		// routes the rendered look to that descriptor when one is attached.
+		w.doLook(me, nil, "look", "")
 	case "behead":
 		return w.npcBeheadDirect(me, argument)
 	case "ride":

@@ -99,7 +99,7 @@ Y
 [warmup]
 goto 8162
 advance Mounthelper 39
-send:helper goto 8162
+trans Mounthelper
 trans Moveexhaust
 send:helper switch horse
 send:helper rest

@@ -1,0 +1,86 @@
+# C-first switched-body delayed-action witness for ambush. The owner has no
+# learned ambush skill; do_restore populates the shared mobile skill table.
+# src/act.offensive.c:1386-1506; src/act.wizard.c:1584-1618;
+# src/db.c:104,1281; src/utils.h:343.
+
+# depth-case: ambush.switched-mobile-delayed-action
+# depth-case: ambush.switched-mobile-kill-xp-output
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+SwitchBattle
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchBattle
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+BattleWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+BattleWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport BattleWatch 8105
+load obj 4802
+skillset SwitchBattle 'ambush' 0
+set mob clone level 39
+goto 8162
+restore clone
+switch clone
+
+[probe]
+ambush trainee
+ambush trainee
+~dpclock pulse 20
+~dpclock pulse 20

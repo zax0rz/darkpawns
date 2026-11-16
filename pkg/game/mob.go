@@ -73,6 +73,8 @@ type MobInstance struct {
 	// write-only for mobs. SetWaitState stores rounds*PULSE_VIOLENCE like
 	// the player accessor.
 	WaitState int
+	// ambushAction mirrors C's GET_ACTION slot for a delayed mobile ambush.
+	ambushAction uint64
 	// MobWait is GET_MOB_WAIT (src/utils.h:434,
 	// mob_specials.wait_state): the Lua bridge's timer is its only writer
 	// (src/scripts.c:2015-2018) and the violence pass drains it by
@@ -1091,6 +1093,24 @@ func (m *MobInstance) SetWaitStatePulses(pulses int) {
 		pulses = 0
 	}
 	m.WaitState = pulses
+}
+
+func (m *MobInstance) getAmbushAction() uint64 {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.ambushAction
+}
+
+func (m *MobInstance) setAmbushAction(action uint64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.ambushAction = action
+}
+
+func (m *MobInstance) clearAmbushAction() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.ambushAction = 0
 }
 
 // DecrementWaitState reduces ch->wait by one pulse, for a mob carrying a

@@ -128,6 +128,53 @@ func TestSpecStartRoomMovesMobilesUpToTheImmortalStop(t *testing.T) {
 	}
 }
 
+func TestSpecStartRoomSendsBirthAndLookToSwitchedMobile(t *testing.T) {
+	w, messages := newActorRoomTestWorld(t,
+		parser.Room{VNum: NewbieStartRoom, Name: "Burning Hut"},
+		parser.Room{VNum: MortalStartRoom, Name: "Temple Altar"},
+	)
+	owner := NewPlayer(2, "SwitchOwner", MortalStartRoom)
+	if err := w.AddPlayer(owner); err != nil {
+		t.Fatalf("AddPlayer: %v", err)
+	}
+	horse := newSpecProcTestMob(t, w, NewbieStartRoom, 17)
+	horse.SetLiveShortDesc("a horse")
+	var switchedOutput strings.Builder
+	w.MobileDescriptorOwner = func(body *MobInstance) *Player {
+		if body == horse {
+			return owner
+		}
+		return nil
+	}
+	w.MobileMessageSink = func(body *MobInstance, message []byte) {
+		if body == horse {
+			switchedOutput.Write(message)
+		}
+	}
+	w.CharacterCommandDirectExecFunc = func(combat.Combatant, string, string, int) CharacterCommandResult {
+		// The session dispatcher has no generic NPC look command; C's direct
+		// do_look therefore continues through npcCommandDirectFallback.
+		return CharacterCommandUnsupported
+	}
+
+	if !specStartRoomBody(w, NewbieStartRoom) {
+		t.Fatal("start_room declined with only the switched mortal mobile present")
+	}
+	if got := horse.GetRoomVNum(); got != MortalStartRoom {
+		t.Fatalf("horse room = %d, want %d", got, MortalStartRoom)
+	}
+	got := switchedOutput.String()
+	if !strings.HasPrefix(got, startRoomBirthMessage(horse.GetName())) {
+		t.Fatalf("switched output does not start with the birth message: %q", got)
+	}
+	if !strings.Contains(got, "Temple Altar") {
+		t.Fatalf("switched output is missing the destination look: %q", got)
+	}
+	if got := messages[owner.GetName()]; got != "" {
+		t.Fatalf("descriptorless original body received duplicate output: %q", got)
+	}
+}
+
 // TestSpecDumpActorClearsRoomAndDeclines pins SPECIAL(dump)
 // (src/spec_procs.c:254-293) for a mobile actor: the room is cleared before the
 // command is read, a non-drop command declines so the pet's command runs, and

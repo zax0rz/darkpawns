@@ -1,0 +1,52 @@
+# C-first switched-body witness for do_detect's RACE_ELF exception. Mobile
+# 7901 has Race: 1 in lib/world/mob/79.mob; zero dummy skill still reaches the
+# roll, failure output and WAIT_STATE(PULSE_VIOLENCE + 1) (new_cmds2.c:498-521).
+# The immediate look is queued under the elf's 21-pulse search wait; the final
+# look after the pulse pad proves command input resumes when it drains.
+
+# depth-case: switched.search.elf-zero-skill-roll
+# depth-case: switched.search.elf-zero-skill-wait
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 none
+spawn-mob 7901 1 8105 80
+
+[setup:oracle]
+SearchElfbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SearchElfbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+switch Talon
+
+[probe]
+search
+look
+~dpclock pulse 21
+look

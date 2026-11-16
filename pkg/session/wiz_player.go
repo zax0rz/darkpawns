@@ -144,8 +144,8 @@ func cmdSwitch(s *Session, args []string) error {
 		s.player = target.Player
 	}
 	m.mu.Unlock()
+	s.switchedOriginal.SetLinkless(true)
 	if target.Player != nil {
-		s.switchedOriginal.SetLinkless(true)
 		target.Player.SetSwitchedOriginal(s.switchedOriginal)
 		target.Player.SetLinkless(false)
 	}

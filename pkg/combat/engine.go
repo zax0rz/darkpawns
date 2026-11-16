@@ -289,6 +289,18 @@ func (ce *CombatEngine) ApplyMobDamageRedirects(attacker, defender Combatant) bo
 	return ce.applyMobCombatRedirects(attacker, defender)
 }
 
+// ApplyMobDamageRedirectsAfterAttackerEnrollment preserves damage()'s command
+// order: the jail guard runs before set_fighting(ch), then the supplied
+// callback runs before charm and switcheroo redirects (src/fight.c:1370-1440).
+func (ce *CombatEngine) ApplyMobDamageRedirectsAfterAttackerEnrollment(attacker, defender Combatant, enrollAttacker func()) bool {
+	return ce.applyMobCombatRedirectsAfterJail(attacker, defender, func() bool {
+		if enrollAttacker != nil {
+			enrollAttacker()
+		}
+		return true
+	})
+}
+
 func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderEnrollment, afterDamage bool) error {
 	return ce.startCombatOpt(attacker, defender, deferDefenderEnrollment, afterDamage, false)
 }

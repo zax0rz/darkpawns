@@ -9,6 +9,28 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
+func TestSwitchMobMarksOriginalLinklessUntilReturn(t *testing.T) {
+	m := makeTestManagerWithMobs(t)
+	s := makeTestSession(t, m, "Wizard", 1001, true)
+	s.player.SetLevel(LVL_IMPL)
+	s.transportDone = make(chan struct{})
+	registerTestSession(t, m, s, "Wizard")
+	registerMob(t, m, 2001, 1001)
+
+	if err := cmdSwitch(s, []string{"goblin"}); err != nil {
+		t.Fatal(err)
+	}
+	if !s.player.IsLinkless() {
+		t.Fatal("switching to a mob did not leave the original descriptorless")
+	}
+	if err := cmdReturn(s, nil); err != nil {
+		t.Fatal(err)
+	}
+	if s.player.IsLinkless() {
+		t.Fatal("returning from a mob left the original linkless")
+	}
+}
+
 func TestSwitchHandleTransportDisconnect(t *testing.T) {
 	m, s, h, original := switchedPCFixture(t)
 	body := h.player

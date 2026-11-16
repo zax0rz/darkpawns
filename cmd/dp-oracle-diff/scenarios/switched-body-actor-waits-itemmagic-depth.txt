@@ -1,0 +1,83 @@
+# C-first switched-body witnesses for each item-type WAIT_STATE in
+# mag_objectmagic: wand, staff, scroll and potion (src/act.other.c:897-980;
+# src/spell_parser.c:560-817). Objects are carried by the mobile before the
+# switch; use/recite/quaff must act on that body and its descriptor.
+# Each immediate `look` is intentionally queued while WAIT_STATE is active;
+# the following pulse pad drains it before the next item command. This is the
+# descriptor-issued wait interaction documented in DEPTH_TESTING.md.
+
+# depth-case: switched.itemmagic.wand-use-and-wait
+# depth-case: switched.itemmagic.staff-use-and-wait
+# depth-case: switched.itemmagic.scroll-recite-and-wait
+# depth-case: switched.itemmagic.potion-quaff-and-wait
+# depth-case: switch.original-player-linkless-tag
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Itemmagicbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Itemmagicbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set mob clone level 1
+set mob trainee maxhit 30000
+set mob trainee hit 30000
+load obj 8053
+give wand clone
+load obj 8054
+give staff clone
+load obj 8050
+give scroll clone
+load obj 8010
+give bread clone
+load obj 8051
+give potion clone
+switch clone
+
+[probe]
+hold wand
+use wand trainee
+look
+~dpclock pulse 20
+remove wand
+hold staff
+use staff
+look
+~dpclock pulse 20
+remove staff
+recite scroll bread
+look
+~dpclock pulse 20
+quaff potion
+look
+~dpclock pulse 20
+look

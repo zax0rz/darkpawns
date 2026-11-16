@@ -1,0 +1,58 @@
+# C-first switched-body success witness for backstab. The owner’s
+# trained value is zero; do_restore writes the shared dummy_mob skill
+# record to 100, then the descriptor switches into clone, which uses
+# its own room, movement, equipment and target. src/act.offensive.c:165-234;
+# src/act.wizard.c:1584-1618; src/db.c:104,1281; src/utils.h:343.
+
+# depth-case: backstab.switched-mobile-restored-skill-and-hit
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+spawn-mob 16303 1 8105 80
+spawn-mob 69 1 8105 80
+equip-object 69 8036 999 16 80
+[setup:oracle]
+SwitchSkill
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchSkill
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set mob clone level 39
+set mob trainee maxhit 5000
+set mob trainee hit 5000
+set mob trainee ac 50
+skillset SwitchSkill 'backstab' 0
+force trainee sleep
+goto 8162
+restore clone
+switch clone
+
+[probe]
+backstab trainee

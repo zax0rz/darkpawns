@@ -1,0 +1,85 @@
+# C-first switched-body success witness for smackheads; the owner has no learned skill and do_restore restores the shared mobile skill table. src/new_cmds.c:966-1097; src/act.wizard.c:1584-1618; src/db.c:104,1281; src/utils.h:343.
+
+# depth-case: smackheads.switched-mobile-restored-skill-and-success
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 80
+spawn-mob 16302 1 8105 80
+
+[setup:oracle]
+SwitchBattle
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchBattle
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+BattleWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+BattleWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport BattleWatch 8105
+set mob trainee maxhit 30000
+set mob trainee hit 30000
+set mob trainee ac 100
+set mob recruit maxhit 30000
+set mob recruit hit 30000
+set mob recruit ac 100
+skillset SwitchBattle 'smackheads' 0
+set mob clone level 39
+goto 8162
+restore clone
+switch clone
+
+[probe]
+smackheads trainee recruit

@@ -540,12 +540,16 @@ func specStartRoomBody(w *World, roomVNum int) bool {
 		if !ok {
 			continue
 		}
-		// C's send_to_char and do_look write nothing to a descriptor-less
-		// mobile; preserve the command call after the same room transfer.
+		// C sends the birth text to every mortal body. MobInstance.SendMessage
+		// is silent for an ordinary mobile and follows the descriptor when a
+		// wizard has switched into this body (src/comm.c send_to_char).
+		mob.SendMessage(startRoomBirthMessage(mob.GetName()))
 		if err := w.MobTransfer(mob, NewbieHometownRoom(0)); err != nil {
 			slog.Warn("start_room mobile transfer failed", "mob_vnum", mob.GetVNum(), "error", err)
 			continue
 		}
+		// C's direct do_look is descriptor-only for an ordinary mobile, but
+		// produces the destination look for a switched body.
 		w.NPCCommandDirect(mob, "look", "")
 	}
 	return true

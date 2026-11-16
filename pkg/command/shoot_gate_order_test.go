@@ -8,12 +8,14 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
-// C src/act.offensive.c:794-814 checks inventory and missile type before direction.
+// C src/act.offensive.c:794-814,990-996 checks inventory/type order and both
+// direction refusals.
 func TestShootProjectileBeforeDirection(t *testing.T) {
-	for _, c := range []struct{ object, want string }{
-		{"rock", "You don't seem to have any rocks.\r\n"},
-		{"bow", "A bow is not a projectile!\r\n"},
-		{"arrow", "Interesting direction.\r\n"},
+	for _, c := range []struct{ object, direction, want string }{
+		{"rock", "sideways", "You don't seem to have any rocks.\r\n"},
+		{"bow", "sideways", "A bow is not a projectile!\r\n"},
+		{"arrow", "sideways", "Interesting direction.\r\n"},
+		{"arrow", "east", "Interesting Direction.\r\n"},
 	} {
 		t.Run(c.object, func(t *testing.T) {
 			s, arrow := newShootGateSession(t)
@@ -29,7 +31,7 @@ func TestShootProjectileBeforeDirection(t *testing.T) {
 			dprng.ResetStream(71)
 			next := dprng.Next()
 			dprng.ResetStream(71)
-			if err := CmdShoot(s, []string{c.object, "sideways", "nobody"}); err != nil {
+			if err := CmdShoot(s, []string{c.object, c.direction, "nobody"}); err != nil {
 				t.Fatal(err)
 			}
 			if got := strings.Join(s.getMessages(), ""); got != c.want {

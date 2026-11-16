@@ -1,0 +1,85 @@
+# C-first witness for SPECIAL(start_room)'s direct do_look on a switched body
+# with a descriptor (src/spec_procs.c:2204-2243). The owner switches into a
+# mobile in room 8099 while still immortal; the horse enters first so the owner
+# is ahead of it in C's newest-first room list. A second god then lowers and
+# moves the descriptor-less original body out of the room. On the switched
+# body's next command, start_room moves the mobile to its default hometown and
+# calls do_look on the descriptor-backed body (src/act.wizard.c:1175-1200).
+# C path: src/interpreter.c:1407-1415 -> src/spec_procs.c:2204-2243 ->
+# act.informative.c:1103-1104.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Startroomowner
+Y
+startown1
+startown1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Startroomowner
+y
+startown1
+startown1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Startroompeer
+Y
+startpeer1
+startpeer1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Startroompeer
+y
+startpeer1
+startpeer1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Startroompeer level 39
+teleport Startroompeer 8162
+set player Startroomowner level 38
+load mob 8021
+teleport horse 8099
+goto 8099
+switch horse
+send:peer set player Startroomowner level 1
+send:peer teleport Startroomowner 1204
+
+[probe]
+score
+
+# depth-case: room.start-room-switched-body-look

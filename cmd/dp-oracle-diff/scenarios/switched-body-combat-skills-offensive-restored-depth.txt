@@ -1,0 +1,55 @@
+# C-first DP-1535 witness for do_restore's shared mobile-skill write-through.
+# The descriptor owner's headbutt skill is zero; restore satan makes the C
+# dummy_mob record 100, and the switched Satan Klaus body then reaches a
+# headbutt damage branch against a separate trainee in its own room.
+# src/act.wizard.c:1584-1618; src/new_cmds.c:368-470;
+# src/db.c:104,1281; src/utils.h:343.
+
+# depth-case: headbutt.switched-mobile-restored-skill
+# depth-case: switched.combat.restored-mobile-skill-and-damage
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+spawn-mob 70 1 8105 80
+equip-object 70 8022 999 16 80
+
+[setup:oracle]
+SwitchedRestore
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchedRestore
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset SwitchedRestore 'headbutt' 0
+set mob trainee maxhit 30000
+set mob trainee hit 30000
+goto 8162
+restore satan
+switch satan
+
+[probe]
+headbutt trainee
