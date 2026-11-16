@@ -59,7 +59,6 @@ func init() {
 	RegisterSpec("portal_to_temple", specPortalToTemple)
 	RegisterSpec("turn_undead", specTurnUndead)
 	RegisterSpec("itoh", specItoh)
-	RegisterSpec("mirror", specMirror)
 	RegisterSpec("prostitute", specProstitute)
 	RegisterSpec("roach", specRoach)
 	RegisterSpec("mortician", specMortician)
@@ -970,60 +969,6 @@ func specItoh(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	Act(w, false, ch, nil, nil, nil,
 		"\r\nWith a blinding flash of light and a crack of thunder, $n appears!\r\n\r\n", "", ToRoom)
 	return true
-}
-
-// specMirror creates reflections and swaps players.
-// C source: SPECIAL(mirror) — ch2 is anyone in room 14496. Hit/kill: spawn obj 14503,
-// move ch2 to obj's room. Look: swap ch and ch2's rooms.
-func specMirror(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if me == nil {
-		return false
-	}
-	objRoom := me.GetRoomVNum()
-	if objRoom <= 0 {
-		return false
-	}
-	arg = strings.TrimSpace(arg)
-	if !cIsName(arg, me.GetName()) {
-		return false
-	}
-
-	// ch2 is anyone in the mirror room (14496)
-	var ch2 *Player
-	for _, p := range w.GetPlayersInRoom(14496) {
-		ch2 = p
-		break
-	}
-
-	if cmd == "hit" || cmd == "kill" {
-		sendToChar(ch, "You break the object into tiny pieces!")
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s shatters the object into a million pieces!", ch.GetName()))
-		if ch2 != nil {
-			ch2.SetRoom(objRoom)
-			ch2.SendMessage("You feel pulled in a hundred different directions!\r\n")
-			w.roomMessage(ch2.GetRoomVNum(), fmt.Sprintf("%s appears in a brilliant flash!", ch2.GetName()))
-		}
-		// Remove old object, spawn replacement (14503) in the same room
-		w.RemoveItemFromRoomByVNum(me.GetVNum(), objRoom)
-		if _, err := w.SpawnObject(14503, objRoom); err != nil {
-			slog.Warn("SpawnObject failed in teleport spec", "vnum", 14503, "room", objRoom, "error", err)
-		}
-		return true
-	}
-	if cmd == "look" {
-		sendToChar(ch, "You feel pulled in a hundred different directions!")
-		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s disappears in a brilliant flash!", ch.GetName()))
-		if ch2 != nil {
-			// Move ch2 to obj's room
-			ch2.SetRoom(objRoom)
-			ch2.SendMessage("You feel pulled in a hundred different directions!\r\n")
-			w.roomMessage(ch2.GetRoomVNum(), fmt.Sprintf("%s appears in a brilliant flash!", ch2.GetName()))
-		}
-		// Move ch to room 14496
-		ch.SetRoom(14496)
-		return true
-	}
-	return false
 }
 
 // prostituteCanSee mirrors CAN_SEE(mobile, ch) for SPECIAL(prostitute).

@@ -57,66 +57,6 @@ func oneArgumentSkillTarget(world *game.World, ch *game.Player, args []string, r
 	return target, found
 }
 
-// cmdSkills displays all learned skills
-func CmdSkills(s SessionInterface, args []string) error {
-	player, err := skillPlayer(s)
-	if err != nil {
-		return err
-	}
-	skillManager := player.SkillManager
-	if skillManager == nil {
-		return s.SendMessage("You have no skills.\r\n")
-	}
-
-	learnedSkills := skillManager.GetLearnedSkills()
-	if len(learnedSkills) == 0 {
-		return s.SendMessage("You haven't learned any skills yet.\r\n")
-	}
-
-	var output strings.Builder
-	output.WriteString("╔══════════════════════════════════════════════════════╗\r\n")
-	output.WriteString("║                     Your Skills                      ║\r\n")
-	output.WriteString("╠══════════════════════════╦══════╦════════╦═══════════╣\r\n")
-	output.WriteString("║ Skill                    ║ Level║ Progress║ Type     ║\r\n")
-	output.WriteString("╠══════════════════════════╬══════╬════════╬═══════════╣\r\n")
-
-	for _, skill := range learnedSkills {
-		// Truncate display name if too long
-		displayName := skill.DisplayName
-		if len(displayName) > 22 {
-			displayName = displayName[:19] + "..."
-		}
-
-		// Get skill type as string
-		typeStr := "Utility"
-		switch skill.Type {
-		case engine.SkillTypeCombat:
-			typeStr = "Combat"
-		case engine.SkillTypeMagic:
-			typeStr = "Magic"
-		}
-
-		// Get progress percentage
-		progress := skill.GetProgress()
-
-		fmt.Fprintf(&output, "║ %-22s ║ %4d ║ %3d%%   ║ %-9s ║\r\n",
-			displayName, skill.Level, progress, typeStr)
-	}
-
-	output.WriteString("╚══════════════════════════╩══════╩════════╩═══════════╝\r\n")
-
-	// Add skill points and slots info
-	points := skillManager.GetSkillPoints()
-	usedSlots := skillManager.GetUsedSlots()
-	totalSlots := skillManager.GetSlots()
-	availableSlots := skillManager.GetAvailableSlots()
-
-	fmt.Fprintf(&output, "\r\nSkill points: %d | Slots: %d/%d (%d available)\r\n",
-		points, usedSlots, totalSlots, availableSlots)
-
-	return s.SendMessage(output.String())
-}
-
 // cmdForget forgets a skill
 func CmdForget(s SessionInterface, args []string) error {
 	player, err := skillPlayer(s)
@@ -1309,10 +1249,6 @@ func CmdSerpentKick(s SessionInterface, args []string) error {
 
 	if len(args) == 0 {
 		// Try to kick whoever we're fighting
-		fighting := ch.GetFightingBody()
-		if fighting == nil {
-			return s.SendMessage("Kick who?\r\n")
-		}
 		target, found = heldFightingTarget(ch)
 		if !found {
 			return s.SendMessage("Kick who?\r\n")
@@ -1325,10 +1261,6 @@ func CmdSerpentKick(s SessionInterface, args []string) error {
 		if !found {
 			// C falls back to FIGHTING(ch) after an unsuccessful named lookup,
 			// not only when the command has no argument (new_cmds2.c:705-713).
-			fighting := ch.GetFightingBody()
-			if fighting == nil {
-				return s.SendMessage("Kick who?\r\n")
-			}
 			target, found = heldFightingTarget(ch)
 			if !found {
 				return s.SendMessage("Kick who?\r\n")

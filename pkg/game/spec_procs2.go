@@ -16,9 +16,8 @@ import (
 )
 
 func init() {
-	// Chunk 1: normal_checker, ninelives, whirlpool, couch, stableboy, tipster
+	// Chunk 1: normal_checker, whirlpool, couch, stableboy, tipster
 	RegisterSpec("normal_checker", specNormalChecker)
-	RegisterSpec("ninelives", specNinelives)
 	RegisterSpec("whirlpool", specWhirlpool)
 	RegisterSpec("couch", specCouch)
 	RegisterSpec("stableboy", specStableboy)
@@ -164,49 +163,6 @@ func specNormalChecker(w *World, ch *Player, me *MobInstance, cmd string, arg st
 			}
 			return true
 		}
-	}
-	return false
-}
-
-// ================================================================
-// ninelives — Cat has 9 lives (using MaxMove as life counter), auto-revives
-// ================================================================
-func specNinelives(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.GetPosition() <= combat.PosSleeping && ch.GetHP() > 0 {
-		return false
-	}
-	if cmd != "" {
-		a := strings.TrimSpace(arg)
-		if a == "" {
-			return false
-		}
-		if !strings.Contains(a, "chest") {
-			return false
-		}
-		if cmd == "open" || cmd == "look" || cmd == "examine" {
-			if !ch.IsNPC() {
-				if err := me.Attack(ch, w); err != nil {
-					slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
-				}
-			}
-			return true
-		}
-		return false
-	}
-	if ch.GetFightingBody() == nil || ch.GetHP() > 0 {
-		return false
-	}
-	lives := ch.GetMaxMove()
-	if lives > 0 {
-		if lives > 8 {
-			lives = 8
-		} else {
-			lives--
-		}
-		ch.SetMaxMove(lives)
-		ch.SetHP(ch.GetMaxHP())
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s rises from the dead and keeps fighting!", mobName(me)))
-		return true
 	}
 	return false
 }

@@ -947,14 +947,6 @@ func MagGroups(level int, ch interface{}, spellNum, savetype int, world interfac
 			// C src/magic.c:1442-1443 routes each grouped member through
 			// spell_recall, including its BFR/fighting gates and sleeping landing.
 			ExecuteManualSpell(SpellWordOfRecall, level, ch, tch, nil, "", world)
-		case SpellMassDominate:
-			// Unreachable in play: MASS_DOMINATE is MAG_AREAS-only
-			// (src/spell_parser.c:1480-1481) and mag_groups runs only under
-			// MAG_GROUPS (src/spell_parser.c:488-489). The C case still has
-			// no break and falls through into SPELL_GROUP_INVIS
-			// (src/magic.c:1438-1441); this keeps the function twin faithful.
-			ExecuteManualSpell(SpellCharm, level, ch, tch, nil, "", world)
-			MagAffects(level, ch, tch, SpellInvisible, savetype, world)
 		}
 	}
 

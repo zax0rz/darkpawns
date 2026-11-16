@@ -714,10 +714,7 @@ func cmdNotitle(s *Session, args []string) error {
 // cmdMute — standalone "mute <player>" command.
 // Source: src/interpreter.c do_wizutil/SCMD_SQUELCH, table level 1 (do_wizutil's inner
 // LVL_IMMORT||PLR_CHOSEN guard applies). C toggles PLR_NOSHOUT; the dispatch case
-// (wizutilSquelch) carries the behavior. NOTE: pkg/command/admin_commands.go also defines a
-// "mute" (duration-based moderation), but AdminCommands is never instantiated/wired at
-// startup (NewAdminCommands has no caller), so it never registers — this C-faithful command
-// is the one that actually runs. See DP-1225.
+// (wizutilSquelch) carries the behavior. See DP-1225.
 func cmdMute(s *Session, args []string) error {
 	if !wizutilAuthed(s) {
 		s.Send("Huh?!?")

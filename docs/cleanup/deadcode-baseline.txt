@@ -9,19 +9,6 @@
 # these entries and the 238-vs-108 whole-module finding.
 pkg/audit/logger.go: unreachable func: LogAdminAction
 pkg/audit/logger.go: unreachable func: LogLoginAttempt
-pkg/command/admin_commands.go: unreachable func: AdminCommands.RegisterCommands
-pkg/command/admin_commands.go: unreachable func: AdminCommands.cmdBan
-pkg/command/admin_commands.go: unreachable func: AdminCommands.cmdInvestigate
-pkg/command/admin_commands.go: unreachable func: AdminCommands.cmdKick
-pkg/command/admin_commands.go: unreachable func: AdminCommands.cmdListPenalties
-pkg/command/admin_commands.go: unreachable func: AdminCommands.cmdListReports
-pkg/command/admin_commands.go: unreachable func: AdminCommands.cmdMute
-pkg/command/admin_commands.go: unreachable func: AdminCommands.cmdWarn
-pkg/command/admin_commands.go: unreachable func: AdminCommands.cmdWordFilter
-pkg/command/admin_commands.go: unreachable func: AdminCommands.getAllActivePenalties
-pkg/command/admin_commands.go: unreachable func: AdminCommands.getPenalties
-pkg/command/admin_commands.go: unreachable func: AdminCommands.logAdminAction
-pkg/command/admin_commands.go: unreachable func: AdminCommands.notifyPlayer
 pkg/command/skill_commands.go: unreachable func: CmdScan
 pkg/dprng/drawlog.go: unreachable func: DrawLogEnabled
 pkg/dprng/drawlog.go: unreachable func: DrawLogIndex
@@ -35,7 +22,6 @@ pkg/events/types.go: unreachable func: PlayerConnectedEvent.Type
 pkg/events/types.go: unreachable func: PlayerDisconnectedEvent.Type
 pkg/events/types.go: unreachable func: RoomEnteredEvent.Type
 pkg/events/types.go: unreachable func: WizardCommandEvent.Type
-pkg/game/char_mgmt.go: unreachable func: UpdateObject
 pkg/game/character.go: unreachable func: DoStart
 pkg/game/class_tables.go: unreachable func: ParseClass
 pkg/game/death.go: unreachable func: IsDonationRoom
@@ -47,7 +33,6 @@ pkg/game/item_helpers.go: unreachable func: ItemType.IsReadable
 pkg/game/item_helpers.go: unreachable func: ItemType.IsWeapon
 pkg/game/logging.go: unreachable func: Alogf
 pkg/game/logging.go: unreachable func: CoreDump
-pkg/game/look.go: unreachable func: AsActor
 pkg/game/serialize.go: unreachable func: SerializeEquipment
 pkg/game/serialize.go: unreachable func: SerializeInventory
 pkg/game/skill_advanced.go: unreachable func: DoScan

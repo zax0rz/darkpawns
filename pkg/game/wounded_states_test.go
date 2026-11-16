@@ -48,7 +48,7 @@ func TestDoDamage_WoundedBandThreshold(t *testing.T) {
 
 	// Drop to exactly 0 HP → POS_STUNNED, still alive.
 	hp := mob.GetHP()
-	w.doDamage(player, mob, hp, "bash")
+	w.ApplySkillDamage(player, mob, hp, SkillBashNum)
 	if !mob.IsAlive() {
 		t.Fatal("mob at 0 HP should be stunned, not dead")
 	}
@@ -57,7 +57,7 @@ func TestDoDamage_WoundedBandThreshold(t *testing.T) {
 	}
 
 	// Bleed into the mortally-wounded band (HP -8), still alive.
-	w.doDamage(player, mob, 8, "bash")
+	w.ApplySkillDamage(player, mob, 8, SkillBashNum)
 	if !mob.IsAlive() {
 		t.Fatal("mob at -8 HP should be mortally wounded, not dead")
 	}
@@ -66,7 +66,7 @@ func TestDoDamage_WoundedBandThreshold(t *testing.T) {
 	}
 
 	// Cross the POS_DEAD threshold (HP <= -11) → dead.
-	w.doDamage(player, mob, 5, "bash")
+	w.ApplySkillDamage(player, mob, 5, SkillBashNum)
 	if mob.IsAlive() {
 		t.Error("mob at -11 HP should be dead")
 	}
@@ -122,14 +122,14 @@ func TestDoDamage_SanctuaryHalvesLiveSkillDamage(t *testing.T) {
 	mob.MaxHP = 200
 
 	// Baseline: no sanctuary, 100 damage lands in full.
-	w.doDamage(player, mob, 100, "bash")
+	w.ApplySkillDamage(player, mob, 100, SkillBashNum)
 	if got := mob.GetHP(); got != 100 {
 		t.Fatalf("no-sanctuary: mob HP = %d, want 100 (took full 100)", got)
 	}
 
 	// With sanctuary (AFF bit 7), 100 damage is halved to 50.
 	mob.SetAffected(affSanctuary)
-	w.doDamage(player, mob, 100, "bash")
+	w.ApplySkillDamage(player, mob, 100, SkillBashNum)
 	if got := mob.GetHP(); got != 50 {
 		t.Errorf("sanctuary: mob HP = %d, want 50 (took halved 50)", got)
 	}
@@ -154,7 +154,7 @@ func TestDoDamage_WornApplySpellProvidesSanctuary(t *testing.T) {
 	orig := combat.GetCallbacks()
 	defer combat.SetCallbacks(orig)
 	combat.SetCallbacks(w.WireCombatCallbacks())
-	w.doDamage(attacker, victim, 100, "bash")
+	w.ApplySkillDamage(attacker, victim, 100, SkillBashNum)
 	if got := victim.GetHP(); got != 150 {
 		t.Fatalf("worn sanctuary HP = %d, want 150", got)
 	}
@@ -163,7 +163,7 @@ func TestDoDamage_WornApplySpellProvidesSanctuary(t *testing.T) {
 		t.Fatal(err)
 	}
 	victim.AffectTotal()
-	w.doDamage(attacker, victim, 100, "bash")
+	w.ApplySkillDamage(attacker, victim, 100, SkillBashNum)
 	if got := victim.GetHP(); got != 50 {
 		t.Fatalf("HP after removing worn sanctuary = %d, want 50", got)
 	}

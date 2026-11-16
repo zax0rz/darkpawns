@@ -470,54 +470,6 @@ func TestNewbieThiefUtilityCommandsBypassGuildMinimumLevels(t *testing.T) {
 	}
 }
 
-func TestCmdSkills(t *testing.T) {
-	t.Run("no player", func(t *testing.T) {
-		session := &skillCommandSession{}
-		if err := CmdSkills(session, nil); err == nil {
-			t.Fatal("expected error when player is nil")
-		}
-	})
-
-	t.Run("no skill manager", func(t *testing.T) {
-		session := newSkillCommandSession(t)
-		session.player.SkillManager = nil
-		if err := CmdSkills(session, nil); err != nil {
-			t.Fatalf("CmdSkills error: %v", err)
-		}
-		if !strings.Contains(joinMessages(session.messages), "You have no skills") {
-			t.Errorf("expected 'You have no skills', got: %v", session.messages)
-		}
-	})
-
-	t.Run("no learned skills", func(t *testing.T) {
-		session := newSkillCommandSession(t)
-		session.player.SkillManager = engine.NewSkillManager()
-		if err := CmdSkills(session, nil); err != nil {
-			t.Fatalf("CmdSkills error: %v", err)
-		}
-		if !strings.Contains(joinMessages(session.messages), "haven't learned any skills") {
-			t.Errorf("expected 'haven't learned any skills', got: %v", session.messages)
-		}
-	})
-
-	t.Run("lists learned skill", func(t *testing.T) {
-		session := newSkillCommandSession(t)
-		sm := engine.NewSkillManager()
-		sm.RegisterSkill(&engine.Skill{Name: "bash", DisplayName: "Bash", Type: engine.SkillTypeCombat, Level: 1, Practice: 0, Difficulty: 1, MaxLevel: 100, Learned: true})
-		session.player.SkillManager = sm
-		if err := CmdSkills(session, nil); err != nil {
-			t.Fatalf("CmdSkills error: %v", err)
-		}
-		output := joinMessages(session.messages)
-		if !strings.Contains(output, "Bash") {
-			t.Errorf("expected skill name 'Bash' in output, got: %v", session.messages)
-		}
-		if !strings.Contains(output, "Skill points") {
-			t.Errorf("expected skill points footer, got: %v", session.messages)
-		}
-	})
-}
-
 func TestCmdForget(t *testing.T) {
 	t.Run("no args", func(t *testing.T) {
 		session := newSkillCommandSession(t)
