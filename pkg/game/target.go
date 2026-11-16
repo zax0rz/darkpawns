@@ -306,7 +306,7 @@ func (w *World) ResolveObjectInEquipment(ch combat.Combatant, name string) (*Obj
 	if ch == nil {
 		return nil, false
 	}
-	for cPosition := range cWearToGoSlot {
+	for cPosition := 0; cPosition < int(SlotMax); cPosition++ {
 		object, _ := observationBodyEquipped(ch, cPosition)
 		if object != nil && isCompleteName(name, object.GetKeywords()) {
 			return object, true
@@ -317,7 +317,7 @@ func (w *World) ResolveObjectInEquipment(ch combat.Combatant, name string) (*Obj
 
 // ResolveObjectInEquipmentVis mirrors get_object_in_equip_vis (src/handler.c:1384-1394).
 func (w *World) ResolveObjectInEquipmentVis(ch combat.Combatant, name string) (*ObjectInstance, bool) {
-	for cPosition := range cWearToGoSlot {
+	for cPosition := 0; cPosition < int(SlotMax); cPosition++ {
 		object, _ := observationBodyEquipped(ch, cPosition)
 		if object != nil && canSeeObject(asActor(ch), object) && isnameWithAbbrevs(name, object.GetKeywords()) {
 			return object, true
@@ -366,7 +366,7 @@ func (w *World) GenericFindObject(ch combat.Combatant, name string) (*ObjectInst
 	if ch == nil {
 		return nil, GenericFindNone
 	}
-	for cPosition := range cWearToGoSlot {
+	for cPosition := 0; cPosition < int(SlotMax); cPosition++ {
 		object, _ := observationBodyEquipped(ch, cPosition)
 		if object != nil && isnameWithAbbrevs(name, object.GetKeywords()) {
 			return object, GenericFindEquip

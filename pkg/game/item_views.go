@@ -12,56 +12,22 @@ import (
 // Inventory / equipment display — ported from C act.informative.c
 // ---------------------------------------------------------------------------
 
-// cWearToGoSlot maps each C WEAR_ index to the Go EquipmentSlot that stores
-// that item, including C's extended throw/ablegs/face/hover positions.
-var cWearToGoSlot = []EquipmentSlot{
-	0:  SlotLight,
-	1:  SlotFingerR,
-	2:  SlotFingerL,
-	3:  SlotNeck1,
-	4:  SlotNeck2,
-	5:  SlotBody,
-	6:  SlotHead,
-	7:  SlotLegs,
-	8:  SlotFeet,
-	9:  SlotHands,
-	10: SlotArms,
-	11: SlotShield,
-	12: SlotAbout,
-	13: SlotWaist,
-	14: SlotWristR,
-	15: SlotWristL,
-	16: SlotWield,
-	17: SlotHold,
-	18: SlotThrow,
-	19: SlotAblegs,
-	20: SlotFace,
-	21: SlotHover,
-}
-
-// cWearSlot maps a C WEAR_ position to the Go EquipmentSlot used for storage.
+// cWearSlot maps a C WEAR_ position to EquipmentSlot (which shares the same 0..SlotMax-1 numbering).
 func cWearSlot(where int) (EquipmentSlot, bool) {
-	if where < 0 || where >= len(cWearToGoSlot) {
-		return 0, false
-	}
-	slot := cWearToGoSlot[where]
-	return slot, true
+	return CWearPosToSlot(where)
 }
 
 // COrderedWorn returns the character's equipped objects in C's WEAR_ order
 // (src/structs.h:390-411: WEAR_LIGHT 0 .. WEAR_HOVER 21, NUM_WEARS 22), with
-// empty slots skipped. Go's EquipmentSlot numbering is its own (DP-1157), so
-// the C order comes from cWearToGoSlot — the same table the Lua bridge uses
-// when it builds ch->equipment for scripts — and never from iterating the
-// Slots map. C's special() walks this order looking for an object special
-// (src/interpreter.c:1427-1440).
+// empty slots skipped. C's special() walks this order looking for an object
+// special (src/interpreter.c:1427-1440).
 func COrderedWorn(ch *Player) []*ObjectInstance {
 	if ch == nil || ch.Equipment == nil {
 		return nil
 	}
-	out := make([]*ObjectInstance, 0, len(cWearToGoSlot))
-	for i := range cWearToGoSlot {
-		item, ok := ch.Equipment.GetItemInSlot(cWearToGoSlot[i])
+	out := make([]*ObjectInstance, 0, SlotMax)
+	for slot := SlotLight; slot < SlotMax; slot++ {
+		item, ok := ch.Equipment.GetItemInSlot(slot)
 		if !ok || item == nil {
 			continue
 		}
@@ -118,7 +84,7 @@ func (w *World) DoEquipment(ch combat.Combatant) {
 	b.WriteString("You are using:\r\n")
 
 	found := false
-	for i := range cWearToGoSlot {
+	for i := 0; i < int(SlotMax); i++ {
 		item, ok := observationBodyEquipped(ch, i)
 		if !ok || item == nil {
 			continue
@@ -177,12 +143,8 @@ func observationBodyEquipmentPositionCovered(body combat.Combatant, cPos int) bo
 		return exists && item != nil
 	}
 	if mob, ok := body.(*MobInstance); ok {
-		for cPosition, slot := range cWearToGoSlot {
-			if slot == coverSlot {
-				item, exists := mob.EquipmentSnapshot()[cPosition]
-				return exists && item != nil
-			}
-		}
+		item, exists := mob.EquipmentSnapshot()[int(coverSlot)]
+		return exists && item != nil
 	}
 	return false
 }

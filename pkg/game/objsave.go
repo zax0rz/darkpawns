@@ -14,61 +14,17 @@ package game
 // --------------------------------------------------------------------------
 
 func CWearPosToSlot(cPos int) (EquipmentSlot, bool) {
-	m := map[int]EquipmentSlot{
-		0:  SlotLight,
-		1:  SlotFingerR,
-		2:  SlotFingerL,
-		3:  SlotNeck1,
-		4:  SlotNeck2,
-		5:  SlotBody,
-		6:  SlotHead,
-		7:  SlotLegs,
-		8:  SlotFeet,
-		9:  SlotHands,
-		10: SlotArms,
-		11: SlotShield,
-		12: SlotAbout,
-		13: SlotWaist,
-		14: SlotWristR,
-		15: SlotWristL,
-		16: SlotWield,
-		17: SlotHold,
-		18: SlotThrow,
-		19: SlotAblegs,
-		20: SlotFace,
-		21: SlotHover,
+	if cPos < 0 || cPos >= int(SlotMax) {
+		return 0, false
 	}
-	s, ok := m[cPos]
-	return s, ok
+	return EquipmentSlot(cPos), true
 }
 
 func SlotToCWearPos(s EquipmentSlot) (int, bool) {
-	m := map[EquipmentSlot]int{
-		SlotLight:   0,
-		SlotFingerR: 1,
-		SlotFingerL: 2,
-		SlotNeck1:   3,
-		SlotNeck2:   4,
-		SlotBody:    5,
-		SlotHead:    6,
-		SlotLegs:    7,
-		SlotFeet:    8,
-		SlotHands:   9,
-		SlotArms:    10,
-		SlotShield:  11,
-		SlotAbout:   12,
-		SlotWaist:   13,
-		SlotWristR:  14,
-		SlotWristL:  15,
-		SlotWield:   16,
-		SlotHold:    17,
-		SlotThrow:   18,
-		SlotAblegs:  19,
-		SlotFace:    20,
-		SlotHover:   21,
+	if s < 0 || s >= SlotMax {
+		return 0, false
 	}
-	c, ok := m[s]
-	return c, ok
+	return int(s), true
 }
 
 // Flag constants matching ITEM_* from structs.h used for alignment checks.
