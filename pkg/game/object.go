@@ -50,6 +50,12 @@ type ObjectInstance struct {
 	// drink container) without mutating the prototype. C: weight_change_object.
 	WeightOverride *int
 
+	// weightFloorPending remembers obj_from_obj's sub-one weight floor until
+	// object_activity reports and repairs the empty object. Go derives container
+	// weight from its contents, so adding this floor to WeightOverride would
+	// incorrectly increase derived inventory carry weight.
+	weightFloorPending atomic.Bool
+
 	// Instance-level overrides for enchantment spells.
 	// When non-nil, these override the prototype values.
 	// Source: src/spells.c spell_enchant_weapon/armor, spell_silken_missile.

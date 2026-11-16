@@ -77,7 +77,9 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 	case ObjInContainer:
 		if old.ContainerObjID > 0 {
 			if container, ok := w.objectInstances[old.ContainerObjID]; ok {
-				container.RemoveFromContainer(obj)
+				if container.RemoveFromContainer(obj) {
+					w.noteObjectWeightFloorChainLocked(container)
+				}
 			}
 		}
 
@@ -86,6 +88,26 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 	}
 
 	return old, nil
+}
+
+// noteObjectWeightFloorChainLocked records obj_from_obj's minimum weight
+// repair for the affected object and its containing ancestors
+// (src/handler.c:974-985). The Go model derives container weight from its
+// contents, while C's carried-weight counter does not add the floor itself.
+// Keep the C mismatch pending for object_activity's next mobile pulse without
+// changing Go's derived carry weight (src/comm.c:773-785).
+// Caller MUST hold w.mu.
+func (w *World) noteObjectWeightFloorChainLocked(container *ObjectInstance) {
+	for current := container; current != nil; {
+		if current.GetTotalWeight() < 1 {
+			current.weightFloorPending.Store(true)
+		}
+
+		if current.Location.Kind != ObjInContainer || current.Location.ContainerObjID <= 0 {
+			return
+		}
+		current = w.objectInstances[current.Location.ContainerObjID]
+	}
 }
 
 // attachObjectLocked adds an object to a destination location.

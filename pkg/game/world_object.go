@@ -147,7 +147,9 @@ func (w *World) extractObjectLocked(obj *ObjectInstance) {
 	// Remove from container based on Location
 	if obj.Location.Kind == ObjInContainer && obj.Location.ContainerObjID > 0 {
 		if container, ok := w.objectInstances[obj.Location.ContainerObjID]; ok {
-			container.RemoveFromContainer(obj)
+			if container.RemoveFromContainer(obj) {
+				w.noteObjectWeightFloorChainLocked(container)
+			}
 		}
 	}
 
