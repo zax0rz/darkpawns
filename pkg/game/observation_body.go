@@ -61,7 +61,7 @@ func observationBodyInventory(body combat.Combatant) []*ObjectInstance {
 }
 
 func observationBodyEquipped(body combat.Combatant, cPosition int) (*ObjectInstance, bool) {
-	if cPosition < 0 || cPosition >= len(cWearToGoSlot) {
+	if cPosition < 0 || cPosition >= int(SlotMax) {
 		return nil, false
 	}
 	switch character := body.(type) {
@@ -69,7 +69,7 @@ func observationBodyEquipped(body combat.Combatant, cPosition int) (*ObjectInsta
 		if character == nil || character.Equipment == nil {
 			return nil, false
 		}
-		return character.Equipment.GetItemInSlot(cWearToGoSlot[cPosition])
+		return character.Equipment.GetItemInSlot(EquipmentSlot(cPosition))
 	case *MobInstance:
 		if character == nil {
 			return nil, false

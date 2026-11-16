@@ -112,7 +112,7 @@ func (a *WorldScriptableAdapter) CharFields(ref scripting.CharRef) (scripting.Ch
 			f.Carry = objRefs(p.Inventory.FindItems(""))
 		}
 		if p.Equipment != nil {
-			for _, slot := range cWearToGoSlot {
+			for slot := SlotLight; slot < SlotMax; slot++ {
 				if item, ok := p.Equipment.GetItemInSlot(slot); ok && item != nil {
 					f.Worn = append(f.Worn, scripting.ObjRef{ID: item.ID})
 				}

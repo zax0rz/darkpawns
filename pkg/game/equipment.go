@@ -6,90 +6,72 @@ import (
 	"sync"
 )
 
-// EquipmentSlot represents where an item can be equipped.
+// EquipmentSlot represents a C WEAR_* equipment position (src/structs.h:390-413).
 type EquipmentSlot int
 
 const (
-	SlotHead EquipmentSlot = iota
-	SlotBody
-	SlotArms
-	SlotHands
-	SlotLegs
-	SlotFeet
-	SlotWield
-	SlotHold
-	SlotLight
-	SlotNeck
-	SlotAbout
-	SlotWaist
-	SlotWrist
-	SlotFinger
-	SlotEar
-	SlotShoulder
-	SlotBack
-	// Dual equipment slots (M4)
-	SlotFingerR
-	SlotFingerL
-	SlotNeck1
-	SlotNeck2
-	SlotWristR
-	SlotWristL
-	// Shield slot (M2/M3)
-	SlotShield
-	SlotMax // Sentinel value
-)
-
-// Extended equipment positions are real C WEAR_* slots. They sit outside
-// the legacy Go slot range so the existing public slot values remain stable.
-const (
-	SlotThrow EquipmentSlot = 100 + iota
-	SlotAblegs
-	SlotFace
-	SlotHover
+	SlotLight   EquipmentSlot = iota // 0: WEAR_LIGHT
+	SlotFingerR                      // 1: WEAR_FINGER_R
+	SlotFingerL                      // 2: WEAR_FINGER_L
+	SlotNeck1                        // 3: WEAR_NECK_1
+	SlotNeck2                        // 4: WEAR_NECK_2
+	SlotBody                         // 5: WEAR_BODY
+	SlotHead                         // 6: WEAR_HEAD
+	SlotLegs                         // 7: WEAR_LEGS
+	SlotFeet                         // 8: WEAR_FEET
+	SlotHands                        // 9: WEAR_HANDS
+	SlotArms                         // 10: WEAR_ARMS
+	SlotShield                       // 11: WEAR_SHIELD
+	SlotAbout                        // 12: WEAR_ABOUT
+	SlotWaist                        // 13: WEAR_WAIST
+	SlotWristR                       // 14: WEAR_WRIST_R
+	SlotWristL                       // 15: WEAR_WRIST_L
+	SlotWield                        // 16: WEAR_WIELD
+	SlotHold                         // 17: WEAR_HOLD
+	SlotThrow                        // 18: WEAR_THROW
+	SlotAblegs                       // 19: WEAR_ABLEGS
+	SlotFace                         // 20: WEAR_FACE
+	SlotHover                        // 21: WEAR_HOVER
+	SlotMax                          // 22: NUM_WEARS
 )
 
 // equipmentSlotNames is the canonical player-facing name for each slot.
 var equipmentSlotNames = map[EquipmentSlot]string{
-	SlotHead:     "head",
-	SlotBody:     "body",
-	SlotArms:     "arms",
-	SlotHands:    "hands",
-	SlotLegs:     "legs",
-	SlotFeet:     "feet",
-	SlotWield:    "wield",
-	SlotHold:     "hold",
-	SlotLight:    "light",
-	SlotNeck:     "neck",
-	SlotAbout:    "about",
-	SlotWaist:    "waist",
-	SlotWrist:    "wrist",
-	SlotFinger:   "finger",
-	SlotEar:      "ear",
-	SlotShoulder: "shoulder",
-	SlotBack:     "back",
-	SlotFingerR:  "finger right",
-	SlotFingerL:  "finger left",
-	SlotNeck1:    "neck 1",
-	SlotNeck2:    "neck 2",
-	SlotWristR:   "wrist right",
-	SlotWristL:   "wrist left",
-	SlotShield:   "shield",
-	SlotThrow:    "throw",
-	SlotAblegs:   "ablegs",
-	SlotFace:     "face",
-	SlotHover:    "hover",
+	SlotLight:   "light",
+	SlotFingerR: "finger right",
+	SlotFingerL: "finger left",
+	SlotNeck1:   "neck 1",
+	SlotNeck2:   "neck 2",
+	SlotBody:    "body",
+	SlotHead:    "head",
+	SlotLegs:    "legs",
+	SlotFeet:    "feet",
+	SlotHands:   "hands",
+	SlotArms:    "arms",
+	SlotShield:  "shield",
+	SlotAbout:   "about",
+	SlotWaist:   "waist",
+	SlotWristR:  "wrist right",
+	SlotWristL:  "wrist left",
+	SlotWield:   "wield",
+	SlotHold:    "hold",
+	SlotThrow:   "throw",
+	SlotAblegs:  "ablegs",
+	SlotFace:    "face",
+	SlotHover:   "hover",
 }
 
 var equipmentSlotInputs = map[string]EquipmentSlot{
-	"head": SlotHead, "body": SlotBody, "arms": SlotArms, "hands": SlotHands,
-	"legs": SlotLegs, "feet": SlotFeet, "wield": SlotWield, "hold": SlotHold,
-	"light": SlotLight, "neck": SlotNeck, "about": SlotAbout, "waist": SlotWaist,
-	"wrist": SlotWrist, "finger": SlotFinger, "ear": SlotEar, "shoulder": SlotShoulder,
-	"back": SlotBack, "finger right": SlotFingerR, "finger_r": SlotFingerR,
-	"finger left": SlotFingerL, "finger_l": SlotFingerL, "neck 1": SlotNeck1,
-	"neck1": SlotNeck1, "neck 2": SlotNeck2, "neck2": SlotNeck2,
-	"wrist right": SlotWristR, "wrist_r": SlotWristR, "wrist left": SlotWristL,
-	"wrist_l": SlotWristL, "shield": SlotShield, "throw": SlotThrow,
+	"light": SlotLight, "finger right": SlotFingerR, "finger_r": SlotFingerR,
+	"finger": SlotFingerR, "finger left": SlotFingerL, "finger_l": SlotFingerL,
+	"neck 1": SlotNeck1, "neck1": SlotNeck1, "neck": SlotNeck1,
+	"neck 2": SlotNeck2, "neck2": SlotNeck2,
+	"body": SlotBody, "head": SlotHead, "legs": SlotLegs, "feet": SlotFeet,
+	"hands": SlotHands, "arms": SlotArms, "shield": SlotShield,
+	"about": SlotAbout, "waist": SlotWaist,
+	"wrist right": SlotWristR, "wrist_r": SlotWristR, "wrist": SlotWristR,
+	"wrist left": SlotWristL, "wrist_l": SlotWristL,
+	"wield": SlotWield, "hold": SlotHold, "throw": SlotThrow,
 	"ablegs": SlotAblegs, "face": SlotFace, "hover": SlotHover,
 }
 

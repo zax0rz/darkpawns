@@ -582,7 +582,7 @@ func (w *World) DoLookTarget(ch combat.Combatant, arg string) ObservationResult 
 		result.literal(ch, desc)
 		return result
 	}
-	for cPosition := range cWearToGoSlot {
+	for cPosition := 0; cPosition < int(SlotMax); cPosition++ {
 		item, ok := observationBodyEquipped(ch, cPosition)
 		if !ok || !chCanSeeObj(observationBodyActor(ch), item) {
 			continue
@@ -1257,7 +1257,8 @@ func appendPlayerEquipment(result *ObservationResult, ch combat.Combatant, targe
 		return
 	}
 	result.act(ch, target, nil, "\r\n$N is using:")
-	for cPos, slot := range cWearToGoSlot {
+	for slot := SlotLight; slot < SlotMax; slot++ {
+		cPos := int(slot)
 		item, _ := target.Equipment.GetItemInSlot(slot)
 		if item == nil || !chCanSeeObj(observationBodyActor(ch), item) {
 			continue

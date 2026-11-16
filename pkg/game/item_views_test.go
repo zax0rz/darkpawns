@@ -156,7 +156,7 @@ func TestDoEquipmentUsesCOrderAndLabels(t *testing.T) {
 
 func TestDoEquipmentRendersEveryCWearSlot(t *testing.T) {
 	w, p, msgs := newViewTestWorld(t)
-	for cPos := range cWearToGoSlot {
+	for cPos := 0; cPos < int(SlotMax); cPos++ {
 		obj := NewObjectInstance(&parser.Obj{
 			VNum: 3200 + cPos, ShortDesc: fmt.Sprintf("slot-%02d", cPos), Keywords: "slot",
 		}, -1)
@@ -233,7 +233,8 @@ func TestCharacterLookListsEverySlotInCOrder(t *testing.T) {
 	_, viewer, _ := newViewTestWorld(t)
 	viewer.SetLevel(LVL_IMPL)
 	target := NewPlayer(2, "Wearer", 100)
-	for cPos, slot := range cWearToGoSlot {
+	for slot := SlotLight; slot < SlotMax; slot++ {
+		cPos := int(slot)
 		item := NewObjectInstance(&parser.Obj{
 			VNum: 3300 + cPos, ShortDesc: fmt.Sprintf("slot-%02d", cPos),
 		}, -1)
@@ -245,7 +246,7 @@ func TestCharacterLookListsEverySlotInCOrder(t *testing.T) {
 	var result ObservationResult
 	appendPlayerEquipment(&result, viewer, target)
 	last := -1
-	for cPos := range cWearToGoSlot {
+	for cPos := 0; cPos < int(SlotMax); cPos++ {
 		needle := fmt.Sprintf("slot-%02d", cPos)
 		found := -1
 		for i, message := range result.Messages {

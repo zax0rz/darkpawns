@@ -438,15 +438,6 @@ func (w *World) useStaff(ch *Player, item *ObjectInstance, targetArg string, spe
 	}
 }
 
-// cWearOrder lists the equipment slots in C WEAR_* order (src/structs.h:390-411)
-// so useEquipdHold can reproduce mag_objectmagic's `equipd = wear_pos + 1` scan
-// (src/spell_parser.c:569-578).
-var cWearOrder = []EquipmentSlot{
-	SlotLight, SlotFingerR, SlotFingerL, SlotNeck1, SlotNeck2, SlotBody, SlotHead,
-	SlotLegs, SlotFeet, SlotHands, SlotArms, SlotShield, SlotAbout, SlotWaist,
-	SlotWristR, SlotWristL, SlotWield, SlotHold, SlotThrow, SlotAblegs, SlotFace, SlotHover,
-}
-
 // useEquipdHold reproduces mag_objectmagic's `equipd == WEAR_HOLD` test for a
 // held staff or wand (src/spell_parser.c:569-578). C scans wear positions
 // 0..NUM_WEARS-1 in order and keeps the LAST name match, so equipd=wear_pos+1
@@ -458,13 +449,13 @@ func (w *World) useEquipdHold(ch *Player, buf string) bool {
 		return false
 	}
 	last := -1
-	for i, slot := range cWearOrder {
+	for slot := SlotLight; slot < SlotMax; slot++ {
 		item, ok := ch.Equipment.GetItemInSlot(slot)
 		if ok && item != nil && useHeldNameMatches(buf, item.GetKeywords()) {
-			last = i
+			last = int(slot)
 		}
 	}
-	return last == 16 // WEAR_WIELD (src/structs.h:406)
+	return last == int(SlotWield) // WEAR_WIELD (src/structs.h:406)
 }
 
 // useStaffTap is mag_objectmagic's switch ITEM_STAFF tap branch
