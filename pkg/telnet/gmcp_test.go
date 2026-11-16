@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -157,6 +158,25 @@ func gmcpTestWorld(t *testing.T) *game.World {
 // a dark room, leaves it, and speaks.
 var gmcpWalkScript = []string{"north", "north", "east", "south", "west", "east", "say hello", "quit"}
 
+var (
+	oraclePassOnce sync.Once
+	oraclePassHash string
+	oraclePassErr  error
+)
+
+func cachedOraclePassHash(t *testing.T) string {
+	t.Helper()
+	oraclePassOnce.Do(func() {
+		var h []byte
+		h, oraclePassErr = bcrypt.GenerateFromPassword([]byte("oraclepass"), bcrypt.MinCost)
+		oraclePassHash = string(h)
+	})
+	if oraclePassErr != nil {
+		t.Fatal(oraclePassErr)
+	}
+	return oraclePassHash
+}
+
 // newTelnetManagerWithPlayers seeds returning MortalStartRoom players and
 // drives ExtractPendingChars on a short test ticker so `quit` returns sessions
 // to the menu cleanly.
@@ -167,13 +187,10 @@ func newTelnetManagerWithPlayers(t *testing.T, world *game.World, names ...strin
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = database.Close() })
-	hash, err := bcrypt.GenerateFromPassword([]byte("oraclepass"), bcrypt.MinCost)
-	if err != nil {
-		t.Fatal(err)
-	}
+	hash := cachedOraclePassHash(t)
 	for _, name := range names {
 		if err := database.CreatePlayer(&db.PlayerRecord{
-			Name: name, Password: string(hash), RoomVNum: game.MortalStartRoom,
+			Name: name, Password: hash, RoomVNum: game.MortalStartRoom,
 			Level: 1, Health: 20, MaxHealth: 20, Mana: 20, MaxMana: 20,
 			Move: 100, MaxMove: 100, Class: game.ClassThief, Race: game.RaceKender,
 			StatStr: 10, StatInt: 10, StatWis: 10, StatDex: 10, StatCon: 10, StatCha: 10,
@@ -224,11 +241,10 @@ func runTelnetScriptOn(t *testing.T, conn net.Conn, preamble []byte, name string
 	t.Helper()
 	defer conn.Close()
 
-	output := make(chan []byte, 1)
-	go func() {
-		raw, _ := io.ReadAll(conn)
-		output <- raw
-	}()
+	deadline := time.Now().Add(30 * time.Second)
+	if err := conn.SetDeadline(deadline); err != nil {
+		t.Fatal(err)
+	}
 
 	input := append([]byte(nil), preamble...)
 	input = append(input, name+"\r\n"...)
@@ -241,17 +257,36 @@ func runTelnetScriptOn(t *testing.T, conn net.Conn, preamble []byte, name string
 	if _, err := conn.Write(input); err != nil {
 		t.Fatal(err)
 	}
-	// Let ExtractPendingChars process `quit` into the menu before sending `0`.
-	time.Sleep(80 * time.Millisecond)
-	if _, err := conn.Write([]byte("0\r\n")); err != nil {
-		t.Fatal(err)
-	}
-	select {
-	case raw := <-output:
-		return raw
-	case <-time.After(10 * time.Second):
-		t.Fatal("server did not close the connection after quit")
-		return nil
+
+	// Wait for the post-quit menu prompt before sending `0`, instead of a
+	// fixed sleep that races under CI load (DP-1550).
+	var buf bytes.Buffer
+	tmp := make([]byte, 4096)
+	sentExit := false
+	for {
+		n, err := conn.Read(tmp)
+		if n > 0 {
+			buf.Write(tmp[:n])
+			if !sentExit {
+				raw := buf.Bytes()
+				if idx := bytes.Index(raw, []byte("Goodbye, friend.. Come back soon!")); idx >= 0 &&
+					bytes.Contains(raw[idx:], []byte("Make your choice:")) {
+					if _, werr := conn.Write([]byte("0\r\n")); werr != nil {
+						t.Fatal(werr)
+					}
+					sentExit = true
+				}
+			}
+		}
+		if err == io.EOF {
+			if !sentExit {
+				t.Fatalf("server closed before post-quit menu prompt; got %q", buf.String())
+			}
+			return buf.Bytes()
+		}
+		if err != nil {
+			t.Fatalf("reading telnet script stream (sentExit=%v): %v", sentExit, err)
+		}
 	}
 }
 
