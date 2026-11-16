@@ -116,74 +116,69 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 		return true
 	}
 
-	// C checks WEAR_HOLD with exact isname before the innate tattoo
-	// branch, without CAN_SEE_OBJ (src/act.other.c:906-924). Resolve this
-	// tattoo shadow here; other keywords retain their existing item lookup.
-	var held *ObjectInstance
-	if strings.EqualFold(itemArg, "tattoo") && ch.Equipment != nil {
-		candidate, _ := ch.Equipment.GetItemInSlot(SlotHold)
-		if candidate != nil && useHeldNameMatches(itemArg, candidate.GetKeywords()) {
-			held = candidate
-		}
+	// C do_use (act.other.c:907-936) initializes mag_item = GET_EQ(ch, WEAR_HOLD)
+	// without CAN_SEE_OBJ. If mag_item is nil or its keywords do not match arg,
+	// SCMD_USE checks "tattoo" and then scans equipped slots with CAN_SEE_OBJ;
+	// if no equipped slot matches, mag_item retains WEAR_HOLD (falling back to
+	// the held wand/staff even when arg names something else).
+	var item *ObjectInstance
+	if ch.Equipment != nil {
+		item, _ = ch.Equipment.GetItemInSlot(SlotHold)
 	}
-	// Handle tattoo use — from src/tattoo.c use_tattoo().
-	if held == nil && strings.EqualFold(itemArg, "tattoo") {
-		if ch.TatTimer != 0 {
-			suffix := "s"
-			if ch.TatTimer <= 1 {
-				suffix = ""
+	if item == nil || !useHeldNameMatches(itemArg, item.GetKeywords()) {
+		// Handle tattoo use — from src/tattoo.c use_tattoo().
+		if strings.EqualFold(itemArg, "tattoo") {
+			if ch.TatTimer != 0 {
+				suffix := "s"
+				if ch.TatTimer <= 1 {
+					suffix = ""
+				}
+				ch.SendMessage(fmt.Sprintf("You can't use your tattoo's magick for %d more hour%s.\r\n",
+					ch.TatTimer, suffix))
+				return true
 			}
-			ch.SendMessage(fmt.Sprintf("You can't use your tattoo's magick for %d more hour%s.\r\n",
-				ch.TatTimer, suffix))
+			switch ch.Tattoo {
+			case TattooNone:
+				ch.SendMessage("You don't have a tattoo.\r\n")
+			case TattooSkull:
+				// Summon mob vnum 9 (skull), charm it, make it follow
+				mob, err := w.SpawnMob(9, ch.GetRoom())
+				if err != nil {
+					slog.Error("SpawnMob failed for tattoo skull", "error", err)
+					break
+				}
+				AddFollowerQuietMob(mob, ch)
+				// Apply charm affect (duration 20)
+				mob.AddAffect(&engine.Affect{
+					SpellID:   spells.SpellCharm,
+					Type:      spells.SpellCharm, // backward compat
+					Duration:  20,
+					Magnitude: 0,
+					Flags:     engine.AFFCharm, // C AFF_CHARM (structs.h:331), translated by AddAffect
+				})
+				w.tattooRoomAct(ch, mob, "$n's tattoo glows brightly for a second, and $N appears!")
+				Act(w, true, ch, mob, nil, nil, "Your tattoo glows brightly for a second, and $N appears!", "", ToChar)
+			case TattooEye:
+				w.castTattoo(ch, spells.SpellGreatPercept)
+			case TattooShip:
+				w.castTattoo(ch, spells.SpellChangeDensity)
+			case TattooAngel:
+				w.castTattoo(ch, spells.SpellBless)
+			default:
+				ch.SendMessage("Your tattoo can't be 'use'd.\r\n")
+				return true
+			}
+			ch.TatTimer = 24
 			return true
 		}
-		switch ch.Tattoo {
-		case TattooNone:
-			ch.SendMessage("You don't have a tattoo.\r\n")
-		case TattooSkull:
-			// Summon mob vnum 9 (skull), charm it, make it follow
-			mob, err := w.SpawnMob(9, ch.GetRoom())
-			if err != nil {
-				slog.Error("SpawnMob failed for tattoo skull", "error", err)
-				break
-			}
-			AddFollowerQuietMob(mob, ch)
-			// Apply charm affect (duration 20)
-			mob.AddAffect(&engine.Affect{
-				SpellID:   spells.SpellCharm,
-				Type:      spells.SpellCharm, // backward compat
-				Duration:  20,
-				Magnitude: 0,
-				Flags:     engine.AFFCharm, // C AFF_CHARM (structs.h:331), translated by AddAffect
-			})
-			w.tattooRoomAct(ch, mob, "$n's tattoo glows brightly for a second, and $N appears!")
-			Act(w, true, ch, mob, nil, nil, "Your tattoo glows brightly for a second, and $N appears!", "", ToChar)
-		case TattooEye:
-			w.castTattoo(ch, spells.SpellGreatPercept)
-		case TattooShip:
-			w.castTattoo(ch, spells.SpellChangeDensity)
-		case TattooAngel:
-			w.castTattoo(ch, spells.SpellBless)
-		default:
-			ch.SendMessage("Your tattoo can't be 'use'd.\r\n")
+
+		if eqMatch := w.FindEquippedVis(ch, itemArg); eqMatch != nil {
+			item = eqMatch
+		}
+		if item == nil {
+			ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(itemArg), itemArg))
 			return true
 		}
-		ch.TatTimer = 24
-		return true
-	}
-
-	// C do_use (act.other.c:897-936) searches equipped objects only, with
-	// WEAR_HOLD is resolved above without a visibility gate; the remaining
-	// slots use the existing visible lookup. Inventory and room objects are
-	// not valid `use` targets.
-	item := held
-	if item == nil {
-		item = w.FindEquippedVis(ch, itemArg)
-	}
-
-	if item == nil {
-		ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(itemArg), itemArg))
-		return true
 	}
 
 	itemType := item.GetTypeFlag()

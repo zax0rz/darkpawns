@@ -1,0 +1,49 @@
+# C-first vehicle for do_use SCMD_USE WEAR_HOLD fallback (src/act.other.c:907-937;
+# DP-1549). Holding an ironwood wand (5504) and running `use Wandself` does not
+# match any equipped slot by name, so C keeps mag_item = GET_EQ(ch, WEAR_HOLD)
+# and hands off to mag_objectmagic ("You can't use an ironwood wand like that.").
+#
+# depth-case: use.held-wand-nonmatching-arg
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-obj 5504 1 8162 80
+force-load 5504
+
+[setup:oracle]
+Wandself
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wandself
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+get wand
+hold wand
+
+[probe]
+use Wandself
