@@ -1,0 +1,46 @@
+# depth-case: look.dark-room-infravision-eyes
+# C's dark-room return path (src/act.informative.c:731-756) emits the red-eyes
+# line for an ordinary, unsneaking mobile with AFF_INFRAVISION. The implementor
+# observer has no infravision and room 8162 is dark, so the room look reaches
+# this exact line before the normal character list.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 0 on
+spawn-mob 16303 1 8162 80
+set-mob-aff 16303 1024
+
+[setup:oracle]
+Darkeyes
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Darkeyes
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+look

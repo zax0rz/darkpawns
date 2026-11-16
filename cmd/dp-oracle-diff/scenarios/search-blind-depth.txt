@@ -1,4 +1,5 @@
 # depth-case: search.blind
+# depth-case: look.blind-infinite-darkness
 # C-first witness for do_detect's blind gate, "You're fucking blind, you can't
 # find anything!!", DP-1502 lists at src/new_cmds2.c:512. The "search" command
 # (do_detect, POS_STANDING, src/interpreter.c:411) first needs the detect skill
@@ -82,3 +83,5 @@ quaff plaid
 ~dpclock pulse 20
 ~dpclock pulse 20
 search
+look
+north

@@ -1,10 +1,13 @@
 # depth-case: look.target-equip-first
+# depth-case: look.object-yellow-glow
 # DP-1518: look_at_target (src/act.informative.c:1017) searches equipment before
 # inventory (src/handler.c:1537-1556). A worn plain dagger and a carried
 # enchanted (magic) dagger share "dagger"; C shows plain for the worn one,
 # old Go showed "(blue glow)" for the carried one. Neither dagger has an extra
 # description, so mode 5 flags are the witness. Detect magic makes the magic
-# flag visible without hiding either dagger.
+# flag visible without hiding either dagger. The inventory probe also sees
+# ITEM_MAGIC's yellow-glow annotation through show_obj_to_char
+# (src/act.informative.c:148).
 [fixture]
 empty-players
 quiet-mobs
@@ -55,4 +58,8 @@ cast 'enchant weapon' dagger
 [probe]
 inventory
 look dagger
+look at dagger
+inventory
+remove vengeance
+drop vengeance
 look at dagger
