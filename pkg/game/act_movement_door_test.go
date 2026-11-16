@@ -297,7 +297,12 @@ func TestZoneDoorResetUsesRuntimeBits(t *testing.T) {
 	}
 }
 
-func TestKeylessDoorRejectsCoinPileKey(t *testing.T) {
+// TestKeylessDoorMatchesCNoKeyGuard verifies C's has_key behavior
+// (src/act.movement.c:428-441): C has no `key < 0` guard, and money picked up
+// from the room is converted to gold and extracted by get_check_money so it
+// never sits in inventory to collide with Key: -1, whereas a VNum -1 object in
+// inventory (such as a corpse or mail note) matches key == -1.
+func TestKeylessDoorMatchesCNoKeyGuard(t *testing.T) {
 	parsed := &parser.World{
 		Rooms: []parser.Room{
 			{VNum: 200, Name: "Keyless near", Exits: map[string]parser.Exit{
@@ -306,9 +311,6 @@ func TestKeylessDoorRejectsCoinPileKey(t *testing.T) {
 			{VNum: 201, Name: "Keyless far", Exits: map[string]parser.Exit{
 				"west": {Direction: "west", ToRoom: 200, DoorState: 1, ExitInfo: parser.ExitIsDoor | parser.ExitClosed | parser.ExitLocked, Key: -1, Keywords: "wooden door"},
 			}},
-		},
-		Objs: []parser.Obj{
-			{VNum: -1, Keywords: "coins gold", ShortDesc: "a pile of coins"},
 		},
 	}
 	w, err := NewWorld(parsed)
@@ -323,35 +325,41 @@ func TestKeylessDoorRejectsCoinPileKey(t *testing.T) {
 		t.Fatalf("AddPlayer: %v", err)
 	}
 
-	coins, err := w.SpawnObject(-1, -1)
-	if err != nil {
-		t.Fatalf("SpawnObject(-1): %v", err)
-	}
-	if err := w.MoveObjectToPlayerInventory(coins, p); err != nil {
-		t.Fatalf("MoveObjectToPlayerInventory: %v", err)
-	}
-
 	messages := make(map[string][]string)
 	w.MessageSink = func(name string, msg []byte) {
 		messages[name] = append(messages[name], string(msg))
 	}
 
+	// Picked-up money is converted to gold and extracted, so it cannot unlock Key: -1.
+	money := w.createMoneyObject(50)
+	if err := w.MoveObjectToRoom(money, 200); err != nil {
+		t.Fatalf("MoveObjectToRoom: %v", err)
+	}
+	w.DoGet(p, "coins")
+	if p.GetGold() != 50 {
+		t.Fatalf("gold after get coins = %d, want 50", p.GetGold())
+	}
+	messages[p.Name] = nil
 	w.DoUnlock(p, "door east")
 	if got := joinedDoorMessages(messages, p.Name); !strings.Contains(got, "You don't seem to have the proper key.") {
-		t.Fatalf("unlock message = %q, want proper-key rejection", got)
+		t.Fatalf("unlock message after picking up coins = %q, want proper-key rejection", got)
 	}
 
-	// For locking, the door must be closed and unlocked to reach the key check.
-	nearExit := w.GetRoomInWorld(200).Exits["east"]
-	nearExit.ExitInfo &^= parser.ExitLocked
-	w.GetRoomInWorld(200).Exits["east"] = nearExit
-	farExit := w.GetRoomInWorld(201).Exits["west"]
-	farExit.ExitInfo &^= parser.ExitLocked
-	w.GetRoomInWorld(201).Exits["west"] = farExit
+	// A VNum -1 object actually in inventory (like C's NOTHING=-1 corpse/note)
+	// matches key == -1 in C's has_key.
+	synthetic := NewObjectInstance(&parser.Obj{VNum: -1, Keywords: "note", ShortDesc: "a note"}, -1)
+	if err := w.MoveObjectToPlayerInventory(synthetic, p); err != nil {
+		t.Fatalf("MoveObjectToPlayerInventory: %v", err)
+	}
+	messages[p.Name] = nil
+	w.DoUnlock(p, "door east")
+	if got := joinedDoorMessages(messages, p.Name); !strings.Contains(got, "*Click*") {
+		t.Fatalf("unlock message with VNum -1 item = %q, want *Click*", got)
+	}
 	messages[p.Name] = nil
 	w.DoLock(p, "door east")
-	if got := joinedDoorMessages(messages, p.Name); !strings.Contains(got, "You don't seem to have the proper key.") {
-		t.Fatalf("lock message = %q, want proper-key rejection", got)
+	if got := joinedDoorMessages(messages, p.Name); !strings.Contains(got, "*Click*") {
+		t.Fatalf("lock message with VNum -1 item = %q, want *Click*", got)
 	}
 }
 
