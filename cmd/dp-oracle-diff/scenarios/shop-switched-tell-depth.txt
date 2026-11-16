@@ -2,7 +2,9 @@
 # (src/shop.c:828; src/act.comm.c:901-931; DP-1548).
 # A god switches into Puff (1, single-word short_desc matching keyword) in
 # shop 12101 (Hansen the merchant, 12135) and runs bare value, buy, and sell;
-# C's do_tell delivers each refusal to Puff's attached descriptor.
+# C's do_tell delivers each refusal to Puff's attached descriptor. The
+# reply after them proves the shopkeeper wrote GET_IDNUM(mob) = 0 into the
+# shared last_tell (src/act.comm.c:895), not its name.
 #
 # depth-case: shops.switched-mob-tell-delivery
 
@@ -50,4 +52,5 @@ switch Puff
 value
 buy
 sell
+reply anyone there
 return

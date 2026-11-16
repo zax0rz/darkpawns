@@ -348,7 +348,7 @@ func (w *World) npcTell(me *MobInstance, argument string) {
 			Act(w, false, me, mob, nil, nil, "$E can't hear you.", "", ToChar|ToSleep)
 			return
 		}
-		w.playerTellMob(me, mob, message)
+		w.mobPerformTell(me, mob, message)
 		return
 	}
 	target := resolved.Player
