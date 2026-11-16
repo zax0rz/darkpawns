@@ -1,0 +1,85 @@
+# depth-case: comm.object-activity-empty-carried-container-weight-floor
+# C's obj_from_obj clamps a zero-weight container to 1 after the last item is
+# removed. The carry-weight counter does not count that floor while the
+# container stays carried; a level-1 str-3 character can still pick up a
+# second 5-pound sword at the exact 10-pound limit before the next pulse.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 4410 99 8105 43
+spawn-obj 8037 99 8105 80
+spawn-obj 8037 99 8105 80
+force-load 8037
+
+[setup:oracle]
+Carryadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Carryadmin
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:owner]
+Carrywatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:owner]
+Carrywatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+syslog complete
+force Carrywatch remove all
+force Carrywatch drop all
+set player Carrywatch str 3
+set player Carrywatch dex 1
+teleport Carrywatch 8105
+
+[probe:owner]
+get rack
+get sword
+put sword rack
+get sword rack
+get sword
+~dpclock pulse 40
