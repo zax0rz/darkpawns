@@ -438,13 +438,6 @@ func (w *World) recordKill(killer combat.Combatant) {
 	}
 }
 
-// HandleSpellDeath is a bridge for the spell system. Accepts interface{} and type-asserts.
-func (w *World) HandleSpellDeath(victim any) {
-	if c, ok := victim.(combat.Combatant); ok {
-		w.HandleNonCombatDeath(c)
-	}
-}
-
 // HandleNonCombatDeath handles non-combat deaths (bleed-out, legacy).
 // Source: fight.c die() uses GET_EXP(ch)/3
 func (w *World) HandleNonCombatDeath(victim combat.Combatant) {

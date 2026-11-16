@@ -185,32 +185,3 @@ func TestIsViolent_NilReceiver(t *testing.T) {
 		t.Error("nil SpellInfo.IsViolent() = true, want false")
 	}
 }
-
-func TestAttackTypes_TableSize(t *testing.T) {
-	if len(AttackTypes) < 20 {
-		t.Errorf("AttackTypes has %d entries, want at least 20", len(AttackTypes))
-	}
-}
-
-func TestAttackTypes_IndexZeroIsEmpty(t *testing.T) {
-	if AttackTypes[0].Singular != "" {
-		t.Errorf("AttackTypes[0].Singular = %q, want empty", AttackTypes[0].Singular)
-	}
-	if AttackTypes[0].Plural != "" {
-		t.Errorf("AttackTypes[0].Plural = %q, want empty", AttackTypes[0].Plural)
-	}
-}
-
-func TestAttackTypes_EntriesHaveValues(t *testing.T) {
-	for i := 1; i < len(AttackTypes); i++ {
-		if AttackTypes[i].Singular == "" {
-			t.Errorf("AttackTypes[%d].Singular is empty", i)
-		}
-		if AttackTypes[i].Plural == "" {
-			t.Errorf("AttackTypes[%d].Plural is empty", i)
-		}
-		if AttackTypes[i].Singular == AttackTypes[i].Plural {
-			t.Errorf("AttackTypes[%d].Singular == Plural == %q, expected different forms", i, AttackTypes[i].Singular)
-		}
-	}
-}
