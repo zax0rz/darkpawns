@@ -1,0 +1,173 @@
+# C-first witness for attitude_loot's second junk pass TO_CHAR site
+# (src/fight.c:1145) alongside the first pass (src/fight.c:1129).
+# The vnum-19650 looter (level 34, default dex 11 -> CAN_CARRY_N=27) starts
+# with 26 unjunkable containers (8006), so pass 1 do_get("all corpse") picks up
+# 1 of the victim's 2 cheap swords (8037), junks it (line 1129), and frees the
+# 27th slot for pass 2 do_get("all corpse") to pick up and junk the 2nd sword
+# (line 1145).
+# depth-case: fight.attitude-loot-second-pass-junk
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19650 1 8105 196
+
+[setup:oracle]
+Lootadmin
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lootadmin
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Lootvictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Lootvictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Lootobserver
+Y
+obsrpass
+obsrpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Lootobserver
+y
+obsrpass
+obsrpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Lootvictim 8105
+teleport Lootobserver 8105
+set player Lootvictim maxhit 1
+set player Lootvictim hit 1
+load obj 8037
+give sword Lootvictim
+load obj 8037
+give sword Lootvictim
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+load obj 8006
+give beltpouch watcher
+nohassle
+switch watcher
+
+[probe]
+kill Lootvictim
