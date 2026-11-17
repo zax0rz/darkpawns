@@ -1,5 +1,6 @@
 scenario	manifest	case_id	status	stability
 alias-cap	alias.tsv	alias.cap-refusal	excluded	
+chill-touch-lethal-pc-depth	cast.tsv	spell.chill-touch.lethal-death-affect	blocked	
 fault-mail-runtime	mail.tsv	mail.send-store-inert	excluded	
 postmaster-mail-login-notices-depth	entry.tsv	entry.reconnect-mail-notice	excluded	
 postmaster-mail-login-notices-depth	entry.tsv	entry.world-entry-mail-notice	excluded	

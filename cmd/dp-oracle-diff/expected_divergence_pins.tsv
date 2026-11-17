@@ -1,5 +1,6 @@
 scenario	label	sha256	citations
 alias-cap	alias c500 look	77b5fd9fd9a232844c4f9bf080aa5e9cd0961c1b72682f40826fa0a0a679640c	alias.tsv:alias.cap-refusal:excluded
+chill-touch-lethal-pc-depth	cast 'chill touch' FrostVictim [victim]	2c73d7216ca1d7d5b2a36fafeca56730c2beb6f066f7e9f90f42fd051397f28a	cast.tsv:spell.chill-touch.lethal-death-affect:blocked
 fault-mail-runtime	check	0a5403916777443cc130081df4e42bf09a47b5aefaabcd784f8eb6c861cfda2e	mail.tsv:mail.send-store-inert:excluded
 fault-mail-runtime	receive	4c4db1e44462436f6926d27e38e9ba7cfdf6d5d5533f43319b36ad86b403c84b	mail.tsv:mail.send-store-inert:excluded
 postmaster-mail-login-notices-depth	<RELOGIN> [actor]	e60233e135f411672c14c7ba70b4496358aa38bbb64ed04a6289aaa075d62574	entry.tsv:entry.reconnect-mail-notice:excluded;entry.tsv:entry.world-entry-mail-notice:excluded;mail.tsv:mail.send-store-inert-login-notices:excluded
