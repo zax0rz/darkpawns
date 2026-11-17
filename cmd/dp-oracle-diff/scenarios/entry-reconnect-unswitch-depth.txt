@@ -1,0 +1,114 @@
+# A saved second God owns the switched descriptor; a pre-authenticated
+# connection logs that name and takes the C UNSWITCH branch.
+# C path: src/interpreter.c:1548-1556,1652-1655.
+# Saved-name nanny sets wait=1; advance one pulse between name and password.
+# depth-case: entry.reconnect-unswitch
+# depth-case: entry.reconnect-unswitch-login-mudlog
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 69 1 8105 80
+
+[setup:oracle]
+
+[setup:port]
+
+[setup:oracle:b-switched]
+Unswitchadmin
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:b-switched]
+Unswitchadmin
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:a-root]
+Rootkeeper
+Y
+rootpass
+rootpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:a-root]
+Rootkeeper
+y
+rootpass
+rootpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:z-observer]
+Syswatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:z-observer]
+Syswatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+send:a-root set player Unswitchadmin level 32
+send:a-root syslog normal
+send:a-root set player Syswatch level 31
+send:a-root force Syswatch syslog normal
+send:b-switched goto 8105
+send:b-switched save
+send:b-switched switch clone
+
+[probe]
+Unswitchadmin
+~dpclock pulse 1
+adminpass

@@ -1,0 +1,48 @@
+# The switched descriptor inhabits a charmed mobile and reaches do_order's
+# actor-charmed refusal through the registered command interpreter.
+# C path: src/interpreter.c:586,921-924; src/act.offensive.c:313-320;
+# src/act.wizard.c:1175-1200.
+# depth-case: order.actor-charmed-gate
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 80
+set-mob-aff 69 2097152
+
+[setup:oracle]
+Orderactor
+Y
+orderpass
+orderpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Orderactor
+y
+orderpass
+orderpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set mob clone level 39
+switch clone
+
+[probe]
+order trainee say hello

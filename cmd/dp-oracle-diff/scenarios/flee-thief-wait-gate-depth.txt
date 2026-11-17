@@ -1,0 +1,75 @@
+# A forced kick reaches the thief's live combat command and leaves its wait
+# counter set; a synchronous forced flee then reaches CHECK_WAIT.
+# C path: src/interpreter.c:528,883-949; src/act.offensive.c:386-391,587-625.
+# depth-case: flee.thief-wait-gate
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Fleeadmin
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fleeadmin
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:thief]
+Thief
+Y
+thiefpass
+thiefpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:thief]
+Thief
+y
+thiefpass
+thiefpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Thief 8105
+set player Thief class thief
+skillset Thief 'kick' 100
+
+[probe]
+force Thief kick trainee
+force Thief flee

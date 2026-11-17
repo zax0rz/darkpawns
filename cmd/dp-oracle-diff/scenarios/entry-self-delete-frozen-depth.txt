@@ -1,0 +1,95 @@
+# A God freezes a saved player after a real quit. The target's fresh nanny
+# session reaches the confirmed self-delete gate and C refuses before deletion.
+# C path: src/act.wizard.c:2605-2617, src/interpreter.c:2321-2327.
+# depth-case: entry.self-delete-frozen
+
+[fixture]
+empty-players
+quiet-mobs
+allow-setup-refusal
+# setup-refusal-reason: Reclaim has inventory, so C asks for REALLYQUIT before leaving; the next directed input confirms this intentional logout.
+
+[setup:oracle]
+Freezeadmin
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Freezeadmin
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Reclaim
+Y
+icepass
+icepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Reclaim
+y
+icepass
+icepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Reclaim 8105
+send:target quit
+send:target reallyquit
+~dpclock pulse 1
+
+[peer-drop]
+target
+
+[probe]
+set file Reclaim frozen on
+quit
+<RELOGIN>
+5
+icepass
+yes
+
+[relogin:oracle]
+Reclaim
+~dpclock pulse 1
+icepass
+<ENTER>
+
+[relogin:port]
+Reclaim
+icepass
+<ENTER>

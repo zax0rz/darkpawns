@@ -1,0 +1,94 @@
+# A real God set operation creates the saved zero-CON state; a normal relogin
+# reaches nanny's option-1 health guard after reset_char.
+# C path: src/act.wizard.c:2610-2617,2805-2809; src/interpreter.c:2174-2180.
+# depth-case: entry.too-unhealthy
+
+[fixture]
+empty-players
+allow-setup-refusal
+compare-close
+# setup-refusal-reason: Unhealthy carries inventory, so it confirms REALLYQUIT before disconnecting.
+
+[setup:oracle]
+Healthadmin
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Healthadmin
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Unhealthy
+Y
+healpass
+healpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Unhealthy
+y
+healpass
+healpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Unhealthy 8105
+set player Unhealthy con 0
+send:target quit
+send:target reallyquit
+~dpclock pulse 1
+
+[peer-drop]
+target
+
+[probe]
+set file Unhealthy con 0
+quit
+<RELOGIN>
+1
+
+[relogin:oracle]
+Unhealthy
+~dpclock pulse 1
+healpass
+<ENTER>
+
+[relogin:port]
+Unhealthy
+healpass
+<ENTER>
