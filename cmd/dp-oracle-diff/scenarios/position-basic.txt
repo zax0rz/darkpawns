@@ -4,9 +4,6 @@
 # depth-case: sit.from-resting
 # depth-case: sleep.from-sitting
 # depth-case: sleep.already-sleeping
-# depth-case: sit.while-sleeping
-# depth-case: stand.while-sleeping
-# depth-case: rest.while-sleeping
 # depth-case: wake.self-awaken
 # depth-case: stand.from-sitting
 # depth-case: wake.already-awake
@@ -15,10 +12,11 @@
 # depth-case: sit.already-sitting
 # depth-case: rest.from-sitting
 # depth-case: stand.from-resting
-# Actor-only walk through the do_stand/do_sit/do_rest/do_sleep/do_wake
-# state machine (src/act.movement.c:696-880). Position commands set no
-# wait state, so many probes run back to back. Room-audience bytes are
-# covered by position-room; here every case must match the TO_CHAR arm.
+# Actor-only walk through the reachable do_stand/do_sit/do_rest/do_sleep/
+# do_wake arms (src/act.movement.c:696-880). Position commands set no wait
+# state, so many probes run back to back. The sit/stand/rest attempts after
+# sleeping exercise command_interpreter's minimum-position refusal, not the
+# handler's POS_SLEEPING arms. Room-audience bytes are covered by position-room.
 
 [fixture]
 quiet-mobs

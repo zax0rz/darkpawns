@@ -1,0 +1,116 @@
+# C-first witness for the mounted-NPC position refusal. A switched, fighting
+# horse receives a rider command to flee, reaching do_simple_move's NPC
+# position branch while its rider descriptor is elsewhere.
+# (src/act.offensive.c:392-412; src/act.movement.c:118-153;
+# src/act.wizard.c:1193-1200).
+# depth-case: movement.mount-switched-position-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 0
+replace-room-exits 8162 east 8161 0
+replace-room-exits 8162 south 8161 0
+replace-room-exits 8162 west 8161 0
+replace-room-exits 8162 up 8161 0
+replace-room-exits 8162 down 8161 0
+set-room-flag 8162 3 off
+set-room-flag 8162 4 off
+set-room-flag 8161 3 off
+set-room-flag 8161 4 off
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Mountswitch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mountswitch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:rider]
+MountRider
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:rider]
+MountRider
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Mountattack
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker]
+Mountattack
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport MountRider 8162
+send:rider mount horse
+teleport MountRider 8161
+switch horse
+send:attacker kill horse
+
+[probe]
+send:primary flee
