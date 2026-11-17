@@ -58,6 +58,7 @@ postmaster-mail-login-notices-depth	<RELOGIN> [actor]	e60233e135f411672c14c7ba70
 postmaster-saved-recipient-depth	check [actor]	87c5a4814825628b6d88ebd0e65a8eb4992a9653cc7a7e062b76c5224ee35590	mail.tsv:mail.send-store-inert-saved-recipient:excluded
 postmaster-saved-recipient-depth	receive [actor]	593ed57b8a1009575c81a3935087e186d828e26376f1659d704958dbc4a9f6cd	mail.tsv:mail.send-store-inert-saved-recipient:excluded
 postmaster-saved-recipient-depth	receive [observer]	ea0b3226afef8f1ef7101017a9c5e4702fc7eeeb3cae70f4b30a5b6f61176460	mail.tsv:mail.send-store-inert-saved-recipient:excluded
+review-invisible-depth	send:reviewpeer review [reviewpeer]	348de86db4ef6d052370709603380f82a3b6bb0c13a8fb9175d815919808dae1	review.tsv:review.invisible-speaker:blocked
 users-connected-creation-states-depth	users [actor]	8cab1d9ad8046ed376ff0beee931f0e975e4d04ab49d6325f9890d4b04c70fdb	informative.tsv:users.connection.reading-motd:blocked;informative.tsv:users.connection.select-class:blocked;informative.tsv:users.connection.select-sex:blocked
 users-connected-delete-states-depth	users [actor]	9662a6fba59dbbc54e8c0f59c8f355316a5796a43894b603240f8ddcc045a33d	informative.tsv:users.connection.self-delete-1:blocked;informative.tsv:users.connection.self-delete-2:blocked
 users-connected-hometown-depth	users [actor]	58c5b98512b4484585a9e1933141fdff950896e8407086a3251da7ab4074c001	informative.tsv:users.connection.getting-hometown:blocked
