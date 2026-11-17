@@ -9,10 +9,16 @@ spellmatrix-staff-olc-09-depth	cast.tsv	spell.identify.matrix-staff-olc	blocked	
 users-connected-creation-states-depth	informative.tsv	users.connection.reading-motd	blocked	
 users-connected-creation-states-depth	informative.tsv	users.connection.select-class	blocked	
 users-connected-creation-states-depth	informative.tsv	users.connection.select-sex	blocked	
+users-connected-delete-states-depth	informative.tsv	users.connection.self-delete-1	blocked	
+users-connected-delete-states-depth	informative.tsv	users.connection.self-delete-2	blocked	
+users-connected-hometown-depth	informative.tsv	users.connection.getting-hometown	blocked	
 users-connected-login-states-depth	informative.tsv	users.connection.confirm-name	blocked	
 users-connected-login-states-depth	informative.tsv	users.connection.confirm-new-password	blocked	
 users-connected-login-states-depth	informative.tsv	users.connection.get-name	blocked	
 users-connected-login-states-depth	informative.tsv	users.connection.get-new-password	blocked	
 users-connected-login-states-depth	informative.tsv	users.connection.get-password	blocked	
 users-connected-menu-states-depth	informative.tsv	users.connection.get-description	blocked	
+users-connected-shop-creation-depth	informative.tsv	users.connection.asking-color	blocked	
+users-connected-shop-creation-depth	informative.tsv	users.connection.asking-race	blocked	
+users-connected-shop-creation-depth	informative.tsv	users.connection.rolling-abilities-2	blocked	
 wizhelp-privileged-depth	informative.tsv	commands.wizhelp-privileged-header	blocked	
