@@ -1,0 +1,69 @@
+# depth-case: reply.target-notell
+# C do_reply uses GET_LAST_TELL to select the peer, then checks the peer's
+# PRF_NOTELL before delivering the reply (src/act.comm.c:934-973).
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Replyactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Replyactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Replypeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Replypeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+send:peer tell Replyactor first message
+send:peer notell
+
+[probe]
+reply checking in

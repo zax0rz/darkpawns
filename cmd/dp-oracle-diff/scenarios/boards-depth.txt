@@ -82,10 +82,11 @@ look board
 read board
 read 1
 remove 1
+tell Boardpeer before writing
 write
 write depth headline
-tell Boardactor blocked while writing
-reply blocked while writing
+send:peer tell Boardactor blocked while writing
+send:peer reply blocked while writing
 remove 1
 board body
 /e1 revised body

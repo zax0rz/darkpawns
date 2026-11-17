@@ -8,6 +8,8 @@
 # depth-case: rsay.same-race-original
 # depth-case: rsay.other-race-translated
 # depth-case: rsay.punctuation-verbs
+# depth-case: rsay.same-race-audience-template
+# depth-case: rsay.actor-audience-template
 # depth-case: rsay.norepeat
 # depth-case: rsay.raw-internal-spacing
 
@@ -109,6 +111,7 @@ rsay
 rsay how are you?
 rsay what is this!
 rsay thus.
+rsay the sky is clear
 rsay how   are you?
 norepeat
 rsay repeat is hidden.

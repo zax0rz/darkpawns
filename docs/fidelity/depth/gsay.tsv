@@ -5,8 +5,8 @@ do_gsay	gsay	gsay.position-gate	D1	shared	delegated	group.position-gate	interpre
 do_gsay	gtell	gtell.position-gate	D1	shared	delegated	group.position-gate	interpreter.c:484; comm.c:910-947	The gtell alias uses the same shared POS_SLEEPING command rejection.
 do_gsay	gsay	gsay.not-in-group	D1	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:829-834	A caller without AFF_GROUP receives the exact group-membership refusal before argument handling.
 do_gsay	gtell	gtell.not-in-group	D1	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:829-834	The gtell row reaches the same do_gsay group-membership refusal.
-do_gsay	gsay	gsay.no-argument	D1	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:829-836	An in-group caller with no argument receives the exact empty group-say prompt.
-do_gsay	gtell	gtell.no-argument	D1	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:829-836	The gtell alias preserves the same empty-argument prompt.
+do_gsay	gsay	gsay.no-argument	D1	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	src/act.comm.c:829-836	After the actor joins a group, a bare gsay reaches C's exact empty group-say prompt (R1/R3/R5e).
+do_gsay	gtell	gtell.no-argument	D1	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	src/act.comm.c:829-836	After the actor joins a group, a bare gtell reaches C's shared empty group-say prompt (R1/R3/R5e).
 do_gsay	gsay	gsay.group-audience	D3	audience	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:838-858	A grouped leader reaches all grouped followers and receives the exact self confirmation.
 do_gsay	gtell	gtell.alias-audience	D3	audience	oracle-green-multiseed	gsay-depth@1,2,3,5,8	interpreter.c:483-484; act.comm.c:838-858	The adjacent gtell row shares the handler and emits identical leader/follower audience bytes.
 do_gsay	gsay	gsay.norepeat	D2	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:860-866	Grouped recipients still receive the message while PRF_NOREPEAT changes only the actor confirmation to C's Okay. text.
