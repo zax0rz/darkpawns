@@ -33,11 +33,11 @@ src/mobprog.c:240	mp_bribe	proven	mob.mp-bribe-whore-service	A sufficient offer 
 src/mobprog.c:242	mp_bribe	proven	mob.mp-bribe-whore-service	A sufficient offer reaches the private act (R1/R5e).
 src/mobprog.c:244	mp_bribe	proven	mob.mp-bribe-whore-service	A sufficient offer reaches this direct send to the briber (R1/R5e).
 src/mobprog.c:248	mp_bribe	proven	mob.mp-bribe-whore-refusal	An insufficient offer reaches the refusal room act (R1/R5e).
-src/mobprog.c:253	mp_bribe	proven	mob.mp-bribe-gremlin-tunnel	A sufficient offer reaches the bystander-only hidden-door act (R1/R5e).
-src/mobprog.c:262	mp_bribe	proven	mob.mp-bribe-gremlin-tunnel	A sufficient offer sends the tunnel description directly to the briber (R1/R5e).
-src/mobprog.c:270	mp_bribe	proven	mob.mp-bribe-gremlin-eject	An insufficient offer reaches the room exclamation act (R1/R5e).
-src/mobprog.c:272	mp_bribe	proven	mob.mp-bribe-gremlin-eject	An insufficient offer reaches the bystander-only kicked-out act (R1/R5e).
-src/mobprog.c:273	mp_bribe	proven	mob.mp-bribe-gremlin-eject	An insufficient offer reaches the briber-only kicked-out act (R1/R5e).
+src/mobprog.c:253	mp_bribe	unreachable		C-unreachable from the shipped runtime: C `index_boot` reads only entries in the mob/world/zone indexes (`src/db.c:549-668`), which omit all `131.*` files; therefore vnum 13108 cannot enter `mp_bribe` through `perform_give_gold` (`src/act.item.c:733-760`). This is dead against the shipped indexes (R1/R2/R4/R5e/R5g).
+src/mobprog.c:262	mp_bribe	unreachable		C-unreachable from the shipped runtime: C `index_boot` reads only entries in the mob/world/zone indexes (`src/db.c:549-668`), which omit all `131.*` files; therefore vnum 13108 cannot enter `mp_bribe` through `perform_give_gold` (`src/act.item.c:733-760`). This is dead against the shipped indexes (R1/R2/R4/R5e/R5g).
+src/mobprog.c:270	mp_bribe	unreachable		C-unreachable from the shipped runtime: C `index_boot` reads only entries in the mob/world/zone indexes (`src/db.c:549-668`), which omit all `131.*` files; therefore vnum 13108 cannot enter `mp_bribe` through `perform_give_gold` (`src/act.item.c:733-760`). This is dead against the shipped indexes (R1/R2/R4/R5e/R5g).
+src/mobprog.c:272	mp_bribe	unreachable		C-unreachable from the shipped runtime: C `index_boot` reads only entries in the mob/world/zone indexes (`src/db.c:549-668`), which omit all `131.*` files; therefore vnum 13108 cannot enter `mp_bribe` through `perform_give_gold` (`src/act.item.c:733-760`). This is dead against the shipped indexes (R1/R2/R4/R5e/R5g).
+src/mobprog.c:273	mp_bribe	unreachable		C-unreachable from the shipped runtime: C `index_boot` reads only entries in the mob/world/zone indexes (`src/db.c:549-668`), which omit all `131.*` files; therefore vnum 13108 cannot enter `mp_bribe` through `perform_give_gold` (`src/act.item.c:733-760`). This is dead against the shipped indexes (R1/R2/R4/R5e/R5g).
 src/mobprog.c:305	entry_prog	proven	mob.entry-prog-wake-guard	The captain wakes a sleeping guard during real NPC movement (R1/R5e).
 src/mobprog.c:306	entry_prog	proven	mob.entry-prog-wake-guard	The sleeping guard receives this room act during the C entry branch (R1/R5e).
 src/mobprog.c:308	entry_prog	proven	mob.entry-prog-wake-guard	The captain's report act is emitted after the wake act (R1/R5e).

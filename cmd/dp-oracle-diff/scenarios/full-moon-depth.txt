@@ -11,6 +11,7 @@
 # depth-case: weather.full-moon-transform
 # depth-case: weather.lunar-hunter-draws
 # depth-case: weather.lunar-hunter-die-line
+# depth-case: wizutil.unaffect-werewolf
 
 [fixture]
 empty-players
@@ -117,3 +118,4 @@ set player Moonhigh level 20
 time
 ~dpclock pulse 630
 time
+unaffect Moonwolf
