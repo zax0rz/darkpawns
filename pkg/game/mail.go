@@ -586,10 +586,20 @@ func (w *World) PostmasterReceiveMail(ch *Player, mailman *MobInstance) {
 
 // CreateMailObject creates a note object containing mail text.
 // HandleMailInput processes a line of input from a player in PLR_WRITING/PLR_MAILING state.
-// Returns true when the mail is complete (line == "@").
+// Returns true when the mail is complete (line == "@", "/s", or "/a").
 // The caller (session handler) should clear PLR_WRITING on return.
 func HandleMailInput(ch *Player, line string) bool {
-	if line == "@" {
+	switch line {
+	case "/a":
+		mailWriteMu.Lock()
+		delete(mailWriteEntries, ch.ID)
+		mailWriteMu.Unlock()
+
+		ch.SetPlrFlag(PlrWriting, false)
+		ch.SetPlrFlag(PlrMailing, false)
+		ch.SendMessage("Mail aborted.\r\n")
+		return true
+	case "@", "/s":
 		mailWriteMu.Lock()
 		state, ok := mailWriteEntries[ch.ID]
 		delete(mailWriteEntries, ch.ID)

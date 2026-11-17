@@ -404,14 +404,7 @@ func (s *Session) routeDescriptorLine(command string, args []string, rawLine str
 	// string target (mail_to = board + magic); it must precede the generic
 	// PLR_WRITING branch.
 	if s.player.WriteMagic != 0 && s.manager.world.Boards != nil {
-		line := command
-		if len(args) > 0 {
-			if strings.HasPrefix(line, "/") {
-				line += strings.Join(args, " ")
-			} else {
-				line += " " + strings.Join(args, " ")
-			}
-		}
+		line := joinDescriptorSlashLine(command, args)
 		switch line {
 		case "@", "/s":
 			s.manager.world.Boards.FinalizeBoardWrite(s.player.WriteMagic, s.player)
@@ -451,14 +444,27 @@ func (s *Session) routeDescriptorLine(command string, args []string, rawLine str
 	}
 	// PLR_WRITING intercept: composing mail (PLR_MAILING) or a note (do_write).
 	if s.player.GetFlags()&(1<<game.PlrWriting) != 0 {
+		line := joinDescriptorSlashLine(command, args)
 		if s.player.GetFlags()&(1<<game.PlrMailing) != 0 {
-			game.HandleMailInput(s.player, joined)
+			game.HandleMailInput(s.player, line)
 		} else {
-			game.HandleNoteInput(s.player, joined)
+			game.HandleNoteInput(s.player, line)
 		}
 		return true
 	}
 	return false
+}
+
+func joinDescriptorSlashLine(command string, args []string) string {
+	line := command
+	if len(args) > 0 {
+		if strings.HasPrefix(line, "/") {
+			line += strings.Join(args, " ")
+		} else {
+			line += " " + strings.Join(args, " ")
+		}
+	}
+	return line
 }
 
 // untagItIfPlayingPresent ports store_to_char's tag-game check

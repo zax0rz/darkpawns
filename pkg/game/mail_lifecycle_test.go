@@ -323,3 +323,55 @@ func preserveMailFixture(fixtureRoot, preserveRoot string) error {
 	}
 	return os.WriteFile(filepath.Join(mailDir, "mail"), mailBytes, 0o600)
 }
+
+func TestHandleMailAndNoteSlashAAbort(t *testing.T) {
+	t.Chdir(t.TempDir())
+	if err := os.Mkdir("data", 0o700); err != nil {
+		t.Fatal(err)
+	}
+	w, sender, postmasterFn, postmasterMob, messages := newMailLifecycleWorld(t)
+	defer CancelMailWriting(sender.ID)
+	if !InitMailSystem(mailLifecycleNameByID, mailLifecycleIDByName) {
+		t.Fatal("mail initialization failed")
+	}
+
+	postmasterFn(w, sender, postmasterMob, "mail", "Recipient")
+	if HandleMailInput(sender, "draft body") {
+		t.Fatal("draft body unexpectedly ended mail composition")
+	}
+	if !HandleMailInput(sender, "/a") {
+		t.Fatal("/a did not abort mail composition")
+	}
+	if got := mailLifecycleLastMessage(messages, sender.Name); got != "Mail aborted." {
+		t.Fatalf("last message = %q, want %q", got, "Mail aborted.")
+	}
+	if sender.HasPLRFlag(PlrWriting) || sender.HasPLRFlag(PlrMailing) {
+		t.Fatal("PLR_WRITING / PLR_MAILING not cleared after /a")
+	}
+	if hasMail(mailLifecycleRecipientID) {
+		t.Fatal("/a stored mail instead of discarding draft")
+	}
+
+	note := &ObjectInstance{VNum: 1}
+	noteWriteMu.Lock()
+	noteWriteEntries[sender.ID] = &noteWriteEntry{obj: note}
+	noteWriteMu.Unlock()
+	defer func() {
+		noteWriteMu.Lock()
+		delete(noteWriteEntries, sender.ID)
+		noteWriteMu.Unlock()
+	}()
+	sender.SetPlrFlag(PlrWriting, true)
+	if HandleNoteInput(sender, "draft note") {
+		t.Fatal("draft note unexpectedly ended note composition")
+	}
+	if !HandleNoteInput(sender, "/a") {
+		t.Fatal("/a did not abort note composition")
+	}
+	if sender.HasPLRFlag(PlrWriting) {
+		t.Fatal("PLR_WRITING not cleared after note /a")
+	}
+	if note.Runtime.NoteText != "" {
+		t.Fatalf("note /a stored text %q, want empty", note.Runtime.NoteText)
+	}
+}
