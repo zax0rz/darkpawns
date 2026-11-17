@@ -26,6 +26,8 @@
 # depth-case: set.room-invalid
 # depth-case: set.class-invalid
 # depth-case: set.race-invalid
+# depth-case: set.loadroom-missing-room
+# depth-case: set.loadroom-invalid-text
 
 [fixture]
 empty-players
@@ -121,6 +123,8 @@ set Setalltarget cla c
 set Setalltarget race elf
 set Setalltarget loadroom 8162
 set Setalltarget loadroom off
+set Setalltarget loadroom 999999
+set Setalltarget loadroom not-a-vnum
 set Setalltarget color on
 set Setalltarget idnum 77
 set Setalltarget passwd secret

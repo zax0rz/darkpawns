@@ -1,7 +1,8 @@
 # The mortal peer starts a real fight with a guard trainee by forced command.
 # The admin triggers the oncmd script directly and explicitly saves me to put
 # the mobile in sitting position with no wait, then switches into that body.
-# Both direct NPC and peer outputs are witnessed after the violence pulses.
+# The victim, peer, and room observer outputs are witnessed after the violence
+# pulses, including the TO_NOTVICT dodge line.
 # C paths: src/interpreter.c:1459; src/scripts.c:1718-1810,2015-2017;
 # src/fight.c:1965-1972,1982-1986; src/act.wizard.c:1175-1200.
 # Explicit me writeback: src/scripts.c:1292-1302,1805-1813,1980-2018.
@@ -84,9 +85,38 @@ Y
 <ENTER>
 1
 
+[setup:oracle:observer]
+Violencewatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Violencewatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 goto 8105
 teleport Violencepeer 8105
+teleport Violencewatch 8105
 set player Violencepeer class warrior
 set player Violencepeer level 1
 set player Violencepeer outlaw on

@@ -10,6 +10,7 @@
 [fixture]
 empty-players
 quiet-mobs
+set-room-flag 8162 4 off
 spawn-obj 8022 9999 8162 80
 force-load 8022
 
@@ -101,6 +102,8 @@ Y
 goto 8162
 teleport Sharpenactor 8162
 teleport Sharpenvictim 8162
+set Sharpenactor level 11
+set Sharpenvictim level 11
 set Sharpenvictim maxhit 50000
 set Sharpenvictim hit 50000
 force Sharpenactor get long

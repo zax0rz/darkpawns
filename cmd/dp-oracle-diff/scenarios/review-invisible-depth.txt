@@ -1,0 +1,74 @@
+# C-first witness for review's stored-invisibility placeholder. The immortal
+# speaker gossips while invisible, then the level-two peer reads the review
+# history and must see C's exact "Someone invisible" label.
+#
+# depth-case: review.invisible-speaker
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Reviewghost
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Reviewghost
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Reviewpeer]
+Reviewpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Reviewpeer]
+Reviewpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Reviewpeer level 2
+set player Reviewghost invis 40
+~dpclock pulse 20
+
+[probe]
+gossip hidden review entry
+send:reviewpeer review

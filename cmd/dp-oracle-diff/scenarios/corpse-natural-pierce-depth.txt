@@ -1,0 +1,78 @@
+# A C-first dagger kill reaches make_corpse(TYPE_PIERCE) and its room description.
+# depth-case: corpse.well-ventilated
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Corpsegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Corpsegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+LookWitness
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+LookWitness
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport LookWitness 8105
+set player Corpsegod class warrior
+set mob trainee maxhit 1
+set mob trainee hit -10
+force trainee sleep
+load obj 8020
+wield dagger
+
+[probe]
+hit trainee
+send:observer look

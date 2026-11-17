@@ -1,0 +1,183 @@
+# C-first live combat-state witnesses for Phase C sites in new_cmds.c. The
+# first victim pair fights mutually; Parryattacker then attacks the already
+# occupied target, creating C's real one-way FIGHTING relation. The exact
+# command handlers are called through the ordinary wizard force path.
+#
+# depth-case: smackheads.actor-fighting
+# depth-case: smackheads.target-fighting
+# depth-case: parry.mutual-fighting-gate
+# depth-case: circle.mutual-fighting-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+
+[setup:oracle]
+Depthfightadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Depthfightadmin
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Paira]
+Depthpaira
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Paira]
+Depthpaira
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Pairb]
+Depthpairb
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Pairb]
+Depthpairb
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Parryattacker]
+Depthparryattacker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Parryattacker]
+Depthparryattacker
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Smackcaller]
+Depthsmackcaller
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Smackcaller]
+Depthsmackcaller
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Depthpaira level 30
+set player Depthpairb level 30
+set player Depthparryattacker level 30
+set player Depthsmackcaller level 30
+set player Depthpaira maxhit 5000
+set player Depthpairb maxhit 5000
+set player Depthparryattacker maxhit 5000
+set player Depthsmackcaller maxhit 5000
+set player Depthpaira hit 5000
+set player Depthpairb hit 5000
+set player Depthparryattacker hit 5000
+set player Depthsmackcaller hit 5000
+teleport Depthpaira 8162
+teleport Depthpairb 8162
+teleport Depthparryattacker 8162
+teleport Depthsmackcaller 8162
+skillset Depthparryattacker 'parry' 100
+skillset Depthparryattacker 'smackheads' 75
+skillset Depthsmackcaller 'smackheads' 75
+force Depthpaira hit Depthpairb
+force Depthparryattacker hit Depthpaira
+
+[probe]
+force Depthparryattacker parry
+force Depthparryattacker smackheads Depthpaira Depthpairb
+force Depthpaira circle Depthpairb
+force Depthsmackcaller smackheads Depthpaira Depthpairb

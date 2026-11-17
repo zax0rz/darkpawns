@@ -1,0 +1,81 @@
+# C-first spoken Chill Touch kills a connected PC. The cast block exposes the
+# post-damage affect message emitted only by Go after the victim's death.
+# depth-case: spell.chill-touch.lethal-death-affect
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+FrostActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+FrostActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+FrostVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+FrostVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport FrostVictim 8105
+set player FrostActor class mage
+skillset FrostActor 'chill touch' 100
+set player FrostActor maxmana 5000
+set player FrostActor mana 5000
+set player FrostActor align 1000
+set player FrostVictim class mage
+set player FrostVictim level 20
+set player FrostVictim maxhit 1
+set player FrostVictim hit -10
+set player FrostActor level 31
+
+[probe]
+cast 'chill touch' FrostVictim

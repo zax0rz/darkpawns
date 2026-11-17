@@ -76,9 +76,43 @@ south
 east
 wield dagger
 
+[setup:oracle:Cutthroatfailvictim]
+Cutthroatfailvictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Cutthroatfailvictim]
+Cutthroatfailvictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 skillset Cutthroatfailthief 'cutthroat' 1
+goto 8105
+teleport Cutthroatfailvictim 8105
+set player Cutthroatfailvictim level 20
+set player Cutthroatfailvictim maxhit 5000
+set player Cutthroatfailvictim hit 5000
+set player Cutthroatfailvictim outlaw on
 
 [probe:Cutthroatfailthief]
-cutthroat trainee
+cutthroat Cutthroatfailvictim
 ~dpclock pulse 20

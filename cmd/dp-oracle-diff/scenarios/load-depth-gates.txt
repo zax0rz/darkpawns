@@ -43,6 +43,7 @@ set Mordecai level 34
 
 [probe]
 load obj 8096
+load obj 8055
 load obj 81
 load obj 82
 load obj 8095

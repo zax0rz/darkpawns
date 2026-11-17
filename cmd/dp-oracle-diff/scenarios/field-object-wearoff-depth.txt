@@ -1,0 +1,48 @@
+# C-first room audience for the two field object wear-off literals. Loading
+# the ground objects, dropping them, and advancing one MUD hour reaches
+# point_update's timer-zero branch in limits.c.
+#
+# depth-case: field-object.fire-wall-wears-off
+# depth-case: field-object.poison-gas-wears-off
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+Fieldgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fieldgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8105
+load obj 50
+drop wall
+load obj 52
+drop gas
+~dpclock pulse 630
+look

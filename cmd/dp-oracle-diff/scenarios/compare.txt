@@ -5,18 +5,21 @@
 # for the success prob, never to gate), and Go's DoCompare was a stub
 # ("You don't have that item." / "X vs Y: comparing..."). Both are fixed to
 # C's verbatim flow. The fixture supplies a second weapon and same-slot armor
-# so the RNG comparison paths are live, not merely transcribed.
+# so the RNG comparison paths are live, not merely transcribed. The appended
+# fixed-stat pairs straddle the five L1 report thresholds. A level-82
+# appraiser keeps C's 1..101 success roll above every possible draw, so these
+# five exact literals do not depend on the +/-3 failure noise.
 #
-# Fresh Warrior inventory (C do_start obj_to_char, all in carrying — none
-# auto-wielded): a small sword (8037, weapon), a frayed tunic (8019, armor),
-# a pack. Probes:
+# The fixture supplies the same carried object classes a fresh Warrior starts
+# with, plus unambiguous fixed-stat weapons. Probes:
 # - compare            → empty arg → "Looks like you don't have those objects.."
-# - compare sword sword→ same object → "They're the same thing!"
-# - compare sword tunic→ weapon vs armor (type mismatch) → "You can't compare those things!"
-# - compare sword dagger→ weapon comparison result and C random-draw path
+# - compare short short→ same object → "They're the same thing!"
+# - compare short tunic→ weapon vs armor (type mismatch) → "You can't compare those things!"
+# - compare short bokken→ weapon comparison result and C random-draw path
+# - fixed weapon pairs→ each of C's five comparison-result thresholds
 # - compare breast chain→ same-slot armor comparison result and C random-draw path
 # - compare breast helmet→ different-slot armor gate
-# - compare pack bag→ same-type non-comparable-item gate
+# - compare bag box→ same-type non-comparable-item gate
 
 # depth-case: compare.missing-objects
 # depth-case: compare.same-object
@@ -25,14 +28,32 @@
 # depth-case: compare.armor-result
 # depth-case: compare.armor-slot-mismatch
 # depth-case: compare.non-comparable-type
+# depth-case: compare.output-much-worse
+# depth-case: compare.output-a-little-worse
+# depth-case: compare.output-slightly-worse
+# depth-case: compare.output-slightly-better
+# depth-case: compare.output-much-better
 
 [fixture]
+empty-players
 quiet-mobs
+force-load 7915
+force-load 5200
+force-load 18262
+spawn-obj 8037 1 8162 80
+spawn-obj 8019 1 8162 80
+spawn-obj 8033 1 8162 80
 spawn-obj 8036 1 8162 80
 spawn-obj 8040 1 8162 80
 spawn-obj 8041 1 8162 80
 spawn-obj 8075 1 8162 80
 spawn-obj 8032 1 8162 80
+spawn-obj 7915 99 8162 79
+spawn-obj 5200 99 8162 52
+spawn-obj 18252 99 8162 182
+spawn-obj 18258 99 8162 182
+spawn-obj 18262 99 8162 182
+spawn-obj 19519 99 8162 195
 
 [setup:oracle]
 Cmpactor
@@ -63,17 +84,34 @@ Y
 1
 
 [warmup]
+goto 8162
+set player Cmpactor level 39
+skillset Cmpactor 'appraise' 100
+get short
+get tunic
+get box
 get dagger
 get breast
 get chain
 get helmet
 get bag
+get holy
+get ornate
+get bokken
+get chiang
+get fang
+get elven
 
 [probe]
 compare
-compare sword sword
-compare sword tunic
-compare sword dagger
+compare short short
+compare short tunic
+compare short bokken
 compare breast chain
 compare breast helmet
-compare pack bag
+compare bag box
+compare bokken holy
+compare elven ornate
+compare bokken chiang
+compare fang short
+compare holy bokken

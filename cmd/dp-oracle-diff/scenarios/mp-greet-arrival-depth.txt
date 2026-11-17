@@ -1,0 +1,83 @@
+# C-first witness for the two hardcoded mp_greet audience messages. A forced
+# dog mobile enters the disposable room through do_simple_move, where a live
+# shopkeeper and vnum-19406 innkeeper both address the room audience.
+# depth-case: mob.mp-greet-shopkeeper-dog
+# depth-case: mob.mp-greet-innkeeper
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 east 8106 0
+replace-room-exits 8106 none
+spawn-mob 8063 1 8105 80
+spawn-mob 8062 1 8105 80
+spawn-mob 8003 1 8106 80
+spawn-mob 19406 1 8106 194
+set-mob-flag 8063 SENTINEL
+set-mob-flag 8062 SENTINEL
+set-mob-flag 8003 SENTINEL
+set-mob-flag 19406 SENTINEL
+
+[setup:oracle]
+Greetactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Greetactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Greetobserver
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Greetobserver
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Greetobserver 8106
+
+[probe]
+force fido east
+force citizen east

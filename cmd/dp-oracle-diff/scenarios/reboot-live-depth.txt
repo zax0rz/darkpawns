@@ -1,0 +1,25 @@
+# depth-case: shutdown.broadcast-reboot
+# Live C-first vehicle for the terminal reboot arm of do_shutdown.
+# Testor is the shipped Implementor and the only connected descriptor.
+
+[fixture]
+seed-player
+quiet-mobs
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+shutdown reboot

@@ -1,6 +1,7 @@
 # A spoken-cast matrix fixture Psiblast cast reaches M@1206 through mag_damage -> damage -> SkillMessage.
 # The connected caster, PC victim, and room observer expose all three recipient lines.
 # depth-case: spell.psiblast.matrix-spoken-death
+# depth-case: corpse.brains-exploded
 
 [fixture]
 empty-players
@@ -109,3 +110,5 @@ set player PsiActor level 31
 
 [probe]
 will 'psiblast' PsiVictim
+~dpclock pulse 20
+look

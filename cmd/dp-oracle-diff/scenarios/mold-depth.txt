@@ -64,4 +64,4 @@ mold clay statue A fine statue
 inventory
 drop statue
 look
-get statue
+get mold_item

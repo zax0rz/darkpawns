@@ -1,5 +1,6 @@
 # depth-case: date.machine-time
 # depth-case: date.argument-ignored
+# depth-case: date.uptime-line
 # C-first vehicle for the date command. The command table binds date to
 # do_date with SCMD_DATE; date arguments are not parsed. Uptime is a separate
 # command-table row at interpreter.c:795 using SCMD_UPTIME. The machine-time
@@ -41,3 +42,4 @@ Y
 [probe]
 date
 date boot
+uptime

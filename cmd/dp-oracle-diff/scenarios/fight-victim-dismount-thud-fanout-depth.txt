@@ -1,0 +1,275 @@
+# C-first one-shot attacks; six additional high-skill PCs give the 10-percent damage roll repeated chances without advancing combat pulses.
+# The mounted PC and the room peers witness the dismount lines; DEX 0 selects the thud result (src/act.offensive.c:627-630; src/fight.c:1547-1556).
+# depth-case: fight.damage-victim-knockoff-char
+# depth-case: fight.damage-victim-dismount-thud
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 off
+set-room-flag 8162 4 off
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Knockattacker
+Y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Knockattacker
+y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:rider]
+Knockrider
+Y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:rider]
+Knockrider
+y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:kickalpha]
+Kickalpha
+Y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:kickalpha]
+Kickalpha
+y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:kickbravo]
+Kickbravo
+Y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:kickbravo]
+Kickbravo
+y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:kickcharlie]
+Kickcharlie
+Y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:kickcharlie]
+Kickcharlie
+y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:kickdelta]
+Kickdelta
+Y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:kickdelta]
+Kickdelta
+y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:kickeagle]
+Kickeagle
+Y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:kickeagle]
+Kickeagle
+y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:kickfoxtrot]
+Kickfoxtrot
+Y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:kickfoxtrot]
+Kickfoxtrot
+y
+kickpass
+kickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+skillset Knockattacker 'kick' 100
+teleport Knockrider 8162
+skillset Kickalpha 'kick' 100
+teleport Kickalpha 8162
+skillset Kickbravo 'kick' 100
+teleport Kickbravo 8162
+skillset Kickcharlie 'kick' 100
+teleport Kickcharlie 8162
+skillset Kickdelta 'kick' 100
+teleport Kickdelta 8162
+skillset Kickeagle 'kick' 100
+teleport Kickeagle 8162
+skillset Kickfoxtrot 'kick' 100
+teleport Kickfoxtrot 8162
+set player Knockrider level 20
+set player Knockrider maxhit 5000
+set player Knockrider hit 5000
+set player Knockrider ac 70
+set player Knockrider dex 0
+set player Knockrider outlaw on
+set player Kickalpha level 30
+set player Kickbravo level 30
+set player Kickcharlie level 30
+set player Kickdelta level 30
+set player Kickeagle level 30
+set player Kickfoxtrot level 30
+set player Knockattacker level 30
+
+[probe]
+send:rider ride horse
+kick Knockrider
+send:kickalpha kick Knockrider
+send:kickbravo kick Knockrider
+send:kickcharlie kick Knockrider
+send:kickdelta kick Knockrider
+send:kickeagle kick Knockrider
+send:kickfoxtrot kick Knockrider

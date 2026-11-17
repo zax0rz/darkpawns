@@ -9,6 +9,7 @@
 # depth-case: rlist.trailing-argument-ignored
 # depth-case: rlist.populated-zone
 # depth-case: rlist.no-argument
+# depth-case: rlist.overflow
 
 [fixture]
 empty-players
@@ -47,3 +48,4 @@ rlist 999
 rlist 999abc ignored words
 rlist 10 extra tokens
 rlist
+rlist 203

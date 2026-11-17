@@ -1,4 +1,5 @@
 # depth-case: wiznet.hidden-sender-shadow
+# depth-case: wiznet.hidden-sender-level-prefix
 # A chosen mortal peer is eligible for the default wiznet level, but an
 # Implementor who sets invisibility to level 34 is not visible to that peer.
 # The peer must receive C's shadow sender line, "Someone: ...".
@@ -66,9 +67,11 @@ Y
 
 [warmup]
 set Wiznetpeer chosen on
+set Wiznetpeer level 32
 set Wiznetdepth level 34
 
 [probe]
 invis 34
 wiznet hidden-sender-proof
+wiznet #32 hidden-level-proof
 send:peer look
