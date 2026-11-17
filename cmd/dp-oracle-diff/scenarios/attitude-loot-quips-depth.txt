@@ -7,6 +7,10 @@
 # depth-case: attitude-loot.quip-case5-evil
 # depth-case: attitude-loot.quip-case6
 # depth-case: attitude-loot.quip-case7
+# depth-case: attitude-loot.quip-case8
+# depth-case: attitude-loot.quip-case9
+# depth-case: attitude-loot.quip-case10
+# depth-case: attitude-loot.quip-case11
 # attitude_loot runs do_get(ch, "all corpse") (src/fight.c:1120). The corpse
 # carries the victim's gold as a create_money pile (src/fight.c:406-413), and
 # create_money sets ITEM_WEAR_TAKE on it (src/handler.c:1484-1486), so

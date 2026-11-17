@@ -3,6 +3,7 @@
 # depth-case: behead.headless
 # depth-case: behead.non-container
 # depth-case: behead.slash-message
+# depth-case: behead.hacked-head-description
 # C-first witness for five do_behead sites DP-1502 lists in src/new_cmds.c.
 # behead is POS_STANDING, so no combat round is needed for the refusals: the God
 # beheads itself (:247), a living fish (:252), the headless corpse 17 (:263) and
@@ -65,3 +66,4 @@ behead rat
 behead headless
 behead bread
 behead corpse
+inventory

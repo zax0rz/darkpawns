@@ -2,6 +2,9 @@
 # depth-case: rest.while-fighting
 # depth-case: sleep.while-fighting
 # depth-case: stand.while-fighting
+# carve and behead have POS_STANDING table minima; command_interpreter's
+# POS_FIGHTING position rejection emits the generic refusal before either
+# handler runs. Their handler-local fighting literals are C-unreachable.
 # The POS_FIGHTING arms of do_sit/do_rest/do_sleep/do_stand
 # (act.movement.c:720-722, 758-760, 795-797, 827-829): each answers its MAD
 # variant and leaves the position untouched. Combat entry happens during
@@ -61,3 +64,5 @@ sit
 rest
 sleep
 stand
+carve
+behead trainee

@@ -3,6 +3,7 @@
 # depth-case: behead.bare-message
 # depth-case: behead.object-state
 # depth-case: behead.room-audience
+# depth-case: behead.replacement-state
 #
 # Object-level C vehicle.  Object 1210 is an ITEM_CONTAINER with value[3]=1
 # but its keywords do not contain corpse.  C's do_behead accepts it by type
@@ -77,4 +78,5 @@ teleport Beheadobjpeer 8162
 behead fractal trailing words
 inventory
 look
+look headless
 send:peer look
