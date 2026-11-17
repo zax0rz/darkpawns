@@ -46,7 +46,15 @@ type noteWriteEntry struct {
 // trailing CRLF, exactly as string_add appends "\r\n" after every line
 // (src/modify.c:216-217).
 func HandleNoteInput(ch *Player, line string) bool {
-	if line == "@" {
+	switch line {
+	case "/a":
+		noteWriteMu.Lock()
+		delete(noteWriteEntries, ch.ID)
+		noteWriteMu.Unlock()
+
+		ch.SetPlrFlag(PlrWriting, false)
+		return true
+	case "@", "/s":
 		noteWriteMu.Lock()
 		state, ok := noteWriteEntries[ch.ID]
 		delete(noteWriteEntries, ch.ID)
