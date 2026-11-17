@@ -9,6 +9,7 @@
 # depth-case: alias.complex-semicolon
 # depth-case: alias.complex-positional
 # depth-case: alias.complex-glob
+# depth-case: alias.length-truncate
 # C-first vehicle for src/interpreter.c:981-1038 and 1102-1141. It proves the
 # player-facing alias manager and the normal command-interpreter expansion
 # path without editing either oracle tree.
@@ -61,3 +62,4 @@ alias p say $1
 p hello world
 alias g say $*
 g hello world
+alias long xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

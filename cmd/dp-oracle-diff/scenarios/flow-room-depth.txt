@@ -1,0 +1,77 @@
+# depth-case: flow.mounted-arrival-from
+# depth-case: flow.rider-direct-drift
+# depth-case: flow.rider-room-arrival
+# C room_activity calls flow_room for a connected player in a flagged room
+# (src/comm.c:742; src/new_cmds2.c:887-955). A mounted rider and a peer in the
+# destination expose the mount arrival, actor line, and room arrival.
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 north 8106 0
+set-room-flag 8105 21 on
+spawn-mob 8021 1 8105 80
+
+[setup:oracle]
+Flowrider
+Y
+flowpass
+flowpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Flowrider
+y
+flowpass
+flowpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Flowwatch
+Y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Flowwatch
+y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Flowwatch 8106
+set Flowrider nohassle off
+
+[probe]
+mount horse
+~dpclock pulse 600

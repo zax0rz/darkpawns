@@ -1,0 +1,151 @@
+# depth-case: turn.shiver-band
+# depth-case: turn.disintegrate-switched-vampire-output
+# The target is Mikel, a race-8 vampire mobile, switched into a live player
+# descriptor. C can therefore deliver both TO_CHAR literals to the switched
+# player. The first turn uses a level-one actor (shiver); then the actor rises
+# to level 40 and Mikel is set to 25 (lethal diff 15).
+# C path: src/new_cmds2.c:976-1014; src/act.wizard.c:1175-1200;
+# src/fight.c:470-476,534-581.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Turnadmin
+Y
+turnpass
+turnpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+load mob 3107
+
+[setup:port]
+Turnadmin
+y
+turnpass
+turnpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+load mob 3107
+
+[setup:oracle:actor]
+Turnactor
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Turnactor
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Turnvictim
+Y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Turnvictim
+y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Turnwatch
+Y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Turnwatch
+y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Turnactor 8162
+teleport Turnvictim 8162
+teleport Turnwatch 8162
+set Turnactor align 1000
+skillset Turnactor 'turn' 100
+set Turnactor maxmana 5000
+set Turnactor mana 5000
+set Turnactor maxhit 5000
+set Turnactor hit 5000
+set Turnactor level 1
+set Turnvictim level 39
+set mob Mikel level 27
+send:victim switch Mikel
+
+[probe]
+send:actor turn
+set mob Mikel level 24
+set Turnactor level 39
+set Turnactor mana 5000
+send:actor turn

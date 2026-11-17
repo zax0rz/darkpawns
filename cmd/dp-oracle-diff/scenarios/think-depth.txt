@@ -1,9 +1,11 @@
 # depth-case: think.no-argument
 # depth-case: think.spoken-thought
+# depth-case: think.noshout
 # C-first vehicle for act.comm.c:1356-1386. The co-located peer captures
 # the room Act while the actor captures the direct confirmation. No RNG.
 
 [fixture]
+empty-players
 quiet-mobs
 
 [setup:oracle]
@@ -65,3 +67,5 @@ Y
 [probe]
 think
 think about tulips
+mute Mordecai
+think blocked aloud

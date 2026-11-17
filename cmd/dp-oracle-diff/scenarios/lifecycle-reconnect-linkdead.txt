@@ -1,5 +1,6 @@
 # Linkdead reconnect and a fresh world entry (DP-1325).
 # depth-case: entry.reconnect-linkdead
+# depth-case: entry.reconnect-room-announcement
 #
 # The actor's connection drops without quitting, which leaves the character in
 # the room, linkdead (close_socket; the observer sees "has lost his link.").
