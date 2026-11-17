@@ -1,0 +1,74 @@
+# C-first exhausted random-direction branch in do_track. Room 2869 has one
+# exit, a closed door south to 2868; TRACK_THROUGH_DOORS lets BFS find the peer
+# behind it, while CAN_GO rejects that closed exit through all ten retries.
+
+# depth-case: track.no-way-out
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Trackgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Trackgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Trackpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Trackpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Trackpeer 2868
+goto 2869
+set player Trackgod class warrior
+skillset Trackgod 'track' 1
+
+[probe]
+track Trackpeer

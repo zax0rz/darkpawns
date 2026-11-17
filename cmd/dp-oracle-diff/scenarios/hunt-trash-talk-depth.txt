@@ -1,0 +1,149 @@
+# C-first mobile hunter voice witness. The uniquely named Darek receives the
+# player through registered sethunt in room 8055, then follows the player to
+# room 11165. Sixty mobile pulses provide enough post-move draws before the
+# hunter can arrive. A unique hunter name keeps C and Go on the same mobile.
+# Four registered track commands in warmup establish the deterministic draw
+# path that selects both cases 0 and 1; their outputs and draws are compared.
+# Call path: src/act.wizard.c:3444-3473; src/mobact.c:68-80;
+# src/graph.c:262-358; src/act.comm.c:873-895,1146-1298.
+
+# depth-case: mob.hunt-trash-talk-contest
+# depth-case: mob.hunt-trash-talk-auction
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Huntadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Huntadmin
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Huntvictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Huntvictim
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Huntadmin level 38
+goto 8055
+teleport Huntvictim 8055
+send:target save
+set player Huntvictim maxhit 5000
+set player Huntvictim hit 5000
+teleport Huntvictim 11165
+skillset Huntadmin 'track' 100
+track Huntvictim
+track Huntvictim
+track Huntvictim
+track Huntvictim
+sethunt Huntvictim Darek
+set mob Darek hitroll -20
+stat mob Darek
+
+[probe]
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
