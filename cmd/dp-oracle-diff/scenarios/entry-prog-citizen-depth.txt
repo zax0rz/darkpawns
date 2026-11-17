@@ -1,0 +1,77 @@
+# C-first witness for entry_prog's citizen branch and room audiences.
+# C movement/force path: src/act.wizard.c:1856-1880; src/act.movement.c:95-104,265-274.
+# depth-case: mob.entry-prog-greet-citizen
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 none
+replace-room-exits 8105 north 8107 0
+replace-room-exits 8107 none
+spawn-mob 8059 1 8105 80
+spawn-mob 8062 1 8107 80
+set-mob-flag 8059 SENTINEL
+set-mob-flag 8062 SENTINEL
+
+[setup:oracle]
+Entryactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Entryactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Entryobserver
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Entryobserver
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Entryobserver 8107
+
+[probe]
+force Aversin north

@@ -1,0 +1,43 @@
+# C-first witness for the singing drunk's fixed mp_sound emote.
+# The only ambient mobile is vnum 8072 in a sealed room; the mobile_activity
+# 1-in-16 gate is sampled by two pulse windows (src/mobact.c:145-147).
+# depth-case: mob.mp-sound-singing-drunk
+
+[fixture]
+quiet-mobs
+replace-room-exits 8162 none
+spawn-mob 8072 1 8162 80
+
+[setup:oracle]
+Snddrunk
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Snddrunk
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[probe]
+look
+~dpclock pulse 2000
+~dpclock pulse 2000
+look
