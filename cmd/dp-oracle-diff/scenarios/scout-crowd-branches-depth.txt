@@ -7,6 +7,12 @@
 # depth-case: scout.crowd-size-7
 # depth-case: scout.crowd-size-8
 # depth-case: scout.crowd-size-9
+# depth-case: scout.crowd-size-10
+# depth-case: scout.crowd-size-11
+# depth-case: scout.crowd-size-12
+# depth-case: scout.crowd-size-13
+# depth-case: scout.crowd-size-14
+# depth-case: scout.crowd-size-15
 
 [fixture]
 empty-players
@@ -29,6 +35,24 @@ replace-room-exits 8006 east 8107 0
 set-room-sector 8007 1
 set-room-flag 8007 3 off
 replace-room-exits 8007 east 8108 0
+set-room-sector 8008 1
+set-room-flag 8008 3 off
+replace-room-exits 8008 east 8109 0
+set-room-sector 8009 1
+set-room-flag 8009 3 off
+replace-room-exits 8009 east 8110 0
+set-room-sector 8010 1
+set-room-flag 8010 3 off
+replace-room-exits 8010 east 8111 0
+set-room-sector 8011 1
+set-room-flag 8011 3 off
+replace-room-exits 8011 east 8112 0
+set-room-sector 8012 1
+set-room-flag 8012 3 off
+replace-room-exits 8012 east 8113 0
+set-room-sector 8013 1
+set-room-flag 8013 3 off
+replace-room-exits 8013 east 8114 0
 spawn-mob 5 999 8161 80
 spawn-mob 5 999 8161 80
 spawn-mob 5 999 8161 80
@@ -67,6 +91,81 @@ spawn-mob 5 999 8108 80
 spawn-mob 5 999 8108 80
 spawn-mob 5 999 8108 80
 spawn-mob 5 999 8108 80
+spawn-mob 5 999 8109 80
+spawn-mob 5 999 8109 80
+spawn-mob 5 999 8109 80
+spawn-mob 5 999 8109 80
+spawn-mob 5 999 8109 80
+spawn-mob 5 999 8109 80
+spawn-mob 5 999 8109 80
+spawn-mob 5 999 8109 80
+spawn-mob 5 999 8109 80
+spawn-mob 5 999 8109 80
+spawn-mob 5 999 8110 80
+spawn-mob 5 999 8110 80
+spawn-mob 5 999 8110 80
+spawn-mob 5 999 8110 80
+spawn-mob 5 999 8110 80
+spawn-mob 5 999 8110 80
+spawn-mob 5 999 8110 80
+spawn-mob 5 999 8110 80
+spawn-mob 5 999 8110 80
+spawn-mob 5 999 8110 80
+spawn-mob 5 999 8110 80
+spawn-mob 5 999 8111 80
+spawn-mob 5 999 8111 80
+spawn-mob 5 999 8111 80
+spawn-mob 5 999 8111 80
+spawn-mob 5 999 8111 80
+spawn-mob 5 999 8111 80
+spawn-mob 5 999 8111 80
+spawn-mob 5 999 8111 80
+spawn-mob 5 999 8111 80
+spawn-mob 5 999 8111 80
+spawn-mob 5 999 8111 80
+spawn-mob 5 999 8111 80
+spawn-mob 5 999 8112 80
+spawn-mob 5 999 8112 80
+spawn-mob 5 999 8112 80
+spawn-mob 5 999 8112 80
+spawn-mob 5 999 8112 80
+spawn-mob 5 999 8112 80
+spawn-mob 5 999 8112 80
+spawn-mob 5 999 8112 80
+spawn-mob 5 999 8112 80
+spawn-mob 5 999 8112 80
+spawn-mob 5 999 8112 80
+spawn-mob 5 999 8112 80
+spawn-mob 5 999 8112 80
+spawn-mob 5 999 8113 80
+spawn-mob 5 999 8113 80
+spawn-mob 5 999 8113 80
+spawn-mob 5 999 8113 80
+spawn-mob 5 999 8113 80
+spawn-mob 5 999 8113 80
+spawn-mob 5 999 8113 80
+spawn-mob 5 999 8113 80
+spawn-mob 5 999 8113 80
+spawn-mob 5 999 8113 80
+spawn-mob 5 999 8113 80
+spawn-mob 5 999 8113 80
+spawn-mob 5 999 8113 80
+spawn-mob 5 999 8113 80
+spawn-mob 5 999 8114 80
+spawn-mob 5 999 8114 80
+spawn-mob 5 999 8114 80
+spawn-mob 5 999 8114 80
+spawn-mob 5 999 8114 80
+spawn-mob 5 999 8114 80
+spawn-mob 5 999 8114 80
+spawn-mob 5 999 8114 80
+spawn-mob 5 999 8114 80
+spawn-mob 5 999 8114 80
+spawn-mob 5 999 8114 80
+spawn-mob 5 999 8114 80
+spawn-mob 5 999 8114 80
+spawn-mob 5 999 8114 80
+spawn-mob 5 999 8114 80
 spawn-mob 5 999 8108 80
 
 [setup:oracle]
@@ -112,4 +211,16 @@ scout east
 goto 8006
 scout east
 goto 8007
+scout east
+goto 8008
+scout east
+goto 8009
+scout east
+goto 8010
+scout east
+goto 8011
+scout east
+goto 8012
+scout east
+goto 8013
 scout east
