@@ -1,0 +1,80 @@
+# C-first witness for do_quit POS_INCAP death branch and death_cry (src/act.other.c:120-121; src/fight.c:506-573,626-629).
+# depth-case: quit.incapacitated-death
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Quitgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Quitgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Quitincap
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Quitincap
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Quitincap 8105
+set player Quitincap level 20
+set player Quitincap outlaw on
+set player Quitincap maxhit 100
+set player Quitincap hit 28
+set player Quitgod class mage
+set player Quitgod maxmana 5000
+set player Quitgod mana 5000
+skillset Quitgod 'burning hands' 100
+set player Quitgod outlaw on
+set player Quitgod level 20
+cast 'burning hands' Quitincap
+
+[probe:victim]
+quit
