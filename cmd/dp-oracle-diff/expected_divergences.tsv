@@ -9,6 +9,7 @@ fight-victim-dismount-feet-fanout-depth	fight-output.tsv	fight.damage-victim-dis
 fight-victim-dismount-feet-fanout-depth	fight-output.tsv	fight.damage-victim-knockoff-char	blocked	
 fight-victim-dismount-thud-fanout-depth	fight-output.tsv	fight.damage-victim-dismount-thud	blocked	
 fight-victim-dismount-thud-fanout-depth	fight-output.tsv	fight.damage-victim-knockoff-char	blocked	
+movement-switched-mount-exhaustion-depth	movement.tsv	movement.mount-switched-rider-exhaustion	blocked	
 postmaster-mail-login-notices-depth	entry.tsv	entry.reconnect-mail-notice	excluded	
 postmaster-mail-login-notices-depth	entry.tsv	entry.world-entry-mail-notice	excluded	
 postmaster-mail-login-notices-depth	mail.tsv	mail.send-store-inert-login-notices	excluded	

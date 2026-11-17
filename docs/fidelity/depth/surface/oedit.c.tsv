@@ -1,7 +1,7 @@
 c_site	function	classification	case_ids	notes
-src/oedit.c:463	oedit_disp_container_flags_menu	proven	oedit.value-cascade	Builder OEDIT D -> ITEM_CONTAINER value cascade reaches the container flag menu; TestOeditValueCascadeSkipsByType asserts the rendered menu and toggled summary.
-src/oedit.c:472	oedit_disp_container_flags_menu	proven	oedit.value-cascade	Builder OEDIT D -> ITEM_CONTAINER value cascade reaches the container flag menu; TestOeditValueCascadeSkipsByType asserts the rendered menu and toggled summary.
-src/oedit.c:481	oedit_disp_script_menu	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
+src/oedit.c:463	oedit_disp_container_flags_menu	proven	oedit.value-cascade;oedit.container-flags-menu	C-first builder OEDIT D -> ITEM_CONTAINER value cascade reaches this send; oedit-container-flags-depth matches the complete menu, including the four labels and current flag state (R1/R2/R5e/R5h).
+src/oedit.c:472	oedit_disp_container_flags_menu	proven	oedit.value-cascade;oedit.container-flags-menu	The same C-first scenario matches the full menu send byte-for-byte (R1/R2/R5e/R5h).
+src/oedit.c:481	oedit_disp_script_menu	proven	oedit.script-shallow;oedit.script-unsaved	OEDIT main-menu S reaches this send; the C-first unsaved-object scenario also matches the saved-object refusal byte-for-byte.
 src/oedit.c:500	oedit_disp_script_menu	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
 src/oedit.c:510	oedit_disp_script_flags	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
 src/oedit.c:517	oedit_disp_script_flags	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
@@ -31,18 +31,18 @@ src/oedit.c:703	oedit_disp_spells_menu	proven	oedit.spell-slot-menus	A wand valu
 src/oedit.c:710	oedit_disp_spells_menu	proven	oedit.spell-slot-menus	The wand value cascade emits and compares all spell-slot rows.
 src/oedit.c:713	oedit_disp_spells_menu	proven	oedit.spell-slot-menus	The spell-slot table emits C’s exact choice prompt.
 src/oedit.c:730	oedit_disp_val1_menu	proven	oedit.value1-type-prompts	The registered OEDIT test selects ITEM_SCROLL and compares the exact spell-level prompt (R1/R2/R5e/R5h).
-src/oedit.c:739	oedit_disp_val1_menu	proven	oedit.value1-type-prompts	The registered OEDIT test selects ITEM_ARMOR and compares the exact AC prompt (R1/R2/R5e/R5h).
-src/oedit.c:742	oedit_disp_val1_menu	proven	oedit.value-cascade	TestOeditValueCascadeSkipsByType follows ITEM_CONTAINER/FOOD/LIGHT value routes and asserts these exact prompts.
+src/oedit.c:739	oedit_disp_val1_menu	proven	oedit.value1-type-prompts;oedit.value-prompt-matrix	The registered OEDIT test and C-first type/value matrix compare the exact armor AC prompt (R1/R2/R5e/R5h).
+src/oedit.c:742	oedit_disp_val1_menu	proven	oedit.value-cascade;oedit.value-prompt-matrix	The C-first type/value matrix compares the container capacity prompt on the registered OEDIT route.
 src/oedit.c:746	oedit_disp_val1_menu	proven	oedit.value1-type-prompts	The registered OEDIT test selects ITEM_DRINKCON and compares the exact maximum-units prompt (R1/R2/R5e/R5h).
-src/oedit.c:749	oedit_disp_val1_menu	proven	oedit.value-cascade	TestOeditValueCascadeSkipsByType follows ITEM_CONTAINER/FOOD/LIGHT value routes and asserts these exact prompts.
-src/oedit.c:752	oedit_disp_val1_menu	proven	oedit.value1-type-prompts	The registered OEDIT test selects ITEM_MONEY and compares the exact gold-count prompt (R1/R2/R5e/R5h).
+src/oedit.c:749	oedit_disp_val1_menu	proven	oedit.value-cascade;oedit.value-prompt-matrix	The C-first type/value matrix compares the food stomach-hours prompt on the registered OEDIT route.
+src/oedit.c:752	oedit_disp_val1_menu	proven	oedit.value1-type-prompts;oedit.value-prompt-matrix	The registered OEDIT test and C-first type/value matrix compare the exact money gold-count prompt (R1/R2/R5e/R5h).
 src/oedit.c:773	oedit_disp_val2_menu	proven	oedit.wand-charge-prompts	The wand value2 branch emits the maximum-charge prompt.
 src/oedit.c:778	oedit_disp_val2_menu	proven	oedit.weapon-val3-fallthrough	The weapon value cascade reaches damage prompts and oedit_disp_weapon_menu; the boundary scenario compares this full transcript.
 src/oedit.c:790	oedit_disp_val2_menu	proven	oedit.liquid-value-prompts	The drink-container value2 branch emits the initial-units prompt.
-src/oedit.c:805	oedit_disp_val3_menu	proven	oedit.value-cascade	TestOeditValueCascadeSkipsByType follows ITEM_CONTAINER/FOOD/LIGHT value routes and asserts these exact prompts.
+src/oedit.c:805	oedit_disp_val3_menu	proven	oedit.value-cascade;oedit.value-prompt-matrix	The C-first type/value matrix selects ITEM_LIGHT and compares the exact burn-hours prompt (R1/R2/R5e/R5h).
 src/oedit.c:814	oedit_disp_val3_menu	proven	oedit.wand-charge-prompts	The wand value3 branch emits the remaining-charges prompt.
 src/oedit.c:819	oedit_disp_val3_menu	proven	oedit.weapon-val3-fallthrough	The weapon value cascade reaches damage prompts and oedit_disp_weapon_menu; the boundary scenario compares this full transcript.
-src/oedit.c:822	oedit_disp_val3_menu	proven	oedit.value-cascade	TestOeditValueCascadeSkipsByType follows ITEM_CONTAINER/FOOD/LIGHT value routes and asserts these exact prompts.
+src/oedit.c:822	oedit_disp_val3_menu	proven	oedit.value-cascade;oedit.value-prompt-matrix	The C-first type/value matrix selects ITEM_CONTAINER and compares the exact key-vnum prompt (R1/R2/R5e/R5h).
 src/oedit.c:853	oedit_disp_val4_menu	proven	oedit.value-cascade	TestOeditValueCascadeSkipsByType follows ITEM_CONTAINER/FOOD/LIGHT value routes and asserts these exact prompts.
 src/oedit.c:865	oedit_disp_type_menu	proven	oedit.type-menu	The boundary scenario enters the type table, follows invalid and valid choices, and compares the menu/retry bytes.
 src/oedit.c:872	oedit_disp_type_menu	proven	oedit.type-menu	The boundary scenario enters the type table, follows invalid and valid choices, and compares the menu/retry bytes.
@@ -60,14 +60,14 @@ src/oedit.c:1043	oedit_parse	proven	oedit.confirm-save	Changed-object quit reach
 src/oedit.c:1044	oedit_parse	proven	oedit.confirm-save	Changed-object quit reaches the first save prompt, invalid confirmation retry, and accepted save message in the boundary scenario.
 src/oedit.c:1057	oedit_parse	proven	oedit.confirm-save	Changed-object quit reaches the first save prompt, invalid confirmation retry, and accepted save message in the boundary scenario.
 src/oedit.c:1065	oedit_parse	proven	oedit.main-field-entry-prompts	The registered OEDIT session test selects choice 1 and checks the exact namelist prompt (R1/R2/R5e/R5h).
-src/oedit.c:1069	oedit_parse	proven	oedit.main-field-entry-prompts	The registered OEDIT session test selects choice 2 and checks the exact short-description prompt (R1/R2/R5e/R5h).
-src/oedit.c:1073	oedit_parse	proven	oedit.main-field-entry-prompts	The registered OEDIT session test selects choice 3 and checks the exact long-description prompt bytes (R1/R2/R5e/R5h).
-src/oedit.c:1101	oedit_parse	proven	oedit.main-field-entry-prompts	The registered OEDIT session test selects choice 8 and checks the exact weight prompt (R1/R2/R5e/R5h).
+src/oedit.c:1069	oedit_parse	proven	oedit.main-field-entry-prompts;oedit.field-prompt-matrix	The registered OEDIT session test and C-first matrix compare the exact short-description prompt (R1/R2/R5e/R5h).
+src/oedit.c:1073	oedit_parse	proven	oedit.main-field-entry-prompts;oedit.field-prompt-matrix	The registered OEDIT session test and C-first matrix compare the exact long-description prompt bytes (R1/R2/R5e/R5h).
+src/oedit.c:1101	oedit_parse	proven	oedit.main-field-entry-prompts;oedit.field-prompt-matrix	The registered OEDIT session test and C-first matrix compare the exact weight prompt (R1/R2/R5e/R5h).
 src/oedit.c:1105	oedit_parse	proven	oedit.cost-prompt	OEDIT main-menu choice 9 emits the exact misleading maximum prompt in the boundary scenario.
 src/oedit.c:1110	oedit_parse	proven	oedit.load-float	OEDIT main-menu choice A emits this percent-load prompt before atof/clamp; the boundary scenario compares it.
 src/oedit.c:1116	oedit_parse	proven	oedit.main-field-entry-prompts	The registered OEDIT session test selects choice B and checks the exact timer prompt (R1/R2/R5e/R5h).
 src/oedit.c:1184	oedit_parse	proven	oedit.type-menu	The boundary scenario enters the type table, follows invalid and valid choices, and compares the menu/retry bytes.
 src/oedit.c:1219	oedit_parse	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
-src/oedit.c:1417	oedit_parse	proven	oedit.apply-modifier-entry-prompt	The registered OEDIT test selects an empty affect slot and APPLY_STR, then compares the exact modifier prompt (R1/R2/R5e/R5h).
+src/oedit.c:1417	oedit_parse	proven	oedit.apply-modifier-entry-prompt;oedit.field-prompt-matrix	The registered OEDIT test and C-first matrix select an empty affect slot and APPLY_STR, then compare the exact modifier prompt (R1/R2/R5e/R5h).
 src/oedit.c:1436	oedit_parse	proven	oedit.script-shallow	Script menu choice 1 enters OEDIT_SCRIPT_NAME and the focused proof compares this direct prompt.
 src/oedit.c:1506	oedit_parse	proven	oedit.extra-desc	Extra-description choice 1 enters keyword editing and the proof compares this direct prompt.

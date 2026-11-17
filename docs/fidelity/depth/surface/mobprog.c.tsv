@@ -38,13 +38,13 @@ src/mobprog.c:262	mp_bribe	unreachable		C-unreachable from the shipped runtime: 
 src/mobprog.c:270	mp_bribe	unreachable		C-unreachable from the shipped runtime: C `index_boot` reads only entries in the mob/world/zone indexes (`src/db.c:549-668`), which omit all `131.*` files; therefore vnum 13108 cannot enter `mp_bribe` through `perform_give_gold` (`src/act.item.c:733-760`). This is dead against the shipped indexes (R1/R2/R4/R5e/R5g).
 src/mobprog.c:272	mp_bribe	unreachable		C-unreachable from the shipped runtime: C `index_boot` reads only entries in the mob/world/zone indexes (`src/db.c:549-668`), which omit all `131.*` files; therefore vnum 13108 cannot enter `mp_bribe` through `perform_give_gold` (`src/act.item.c:733-760`). This is dead against the shipped indexes (R1/R2/R4/R5e/R5g).
 src/mobprog.c:273	mp_bribe	unreachable		C-unreachable from the shipped runtime: C `index_boot` reads only entries in the mob/world/zone indexes (`src/db.c:549-668`), which omit all `131.*` files; therefore vnum 13108 cannot enter `mp_bribe` through `perform_give_gold` (`src/act.item.c:733-760`). This is dead against the shipped indexes (R1/R2/R4/R5e/R5g).
-src/mobprog.c:305	entry_prog	proven	mob.entry-prog-wake-guard	The captain wakes a sleeping guard during real NPC movement (R1/R5e).
-src/mobprog.c:306	entry_prog	proven	mob.entry-prog-wake-guard	The sleeping guard receives this room act during the C entry branch (R1/R5e).
-src/mobprog.c:308	entry_prog	proven	mob.entry-prog-wake-guard	The captain's report act is emitted after the wake act (R1/R5e).
-src/mobprog.c:315	entry_prog	proven	mob.entry-prog-salute-guard	A standing guard emits the salute act during real NPC movement (R1/R5e).
-src/mobprog.c:316	entry_prog	proven	mob.entry-prog-salute-guard	The captain emits the at-ease act during real NPC movement (R1/R5e).
-src/mobprog.c:322	entry_prog	proven	mob.entry-prog-greet-citizen	The captain frown act substitutes the citizen's short description (R1/R5e).
-src/mobprog.c:323	entry_prog	proven	mob.entry-prog-greet-citizen	The citizen greeting act follows the captain's frown (R1/R5e).
+src/mobprog.c:305	entry_prog	proven	mob.entry-prog-wake-guard	C-first forced Aversin reaches the sleeping-guard branch through command_interpreter and no-descriptor do_simple_move; the oracle matches the bark act (src/act.wizard.c:1856-1880; src/act.movement.c:95-104,265-274; R1/R2/R5e/R5h).
+src/mobprog.c:306	entry_prog	proven	mob.entry-prog-wake-guard	The C-first movement scenario matches the sleeping guard's wake act byte-for-byte (R1/R5e/R5h).
+src/mobprog.c:308	entry_prog	proven	mob.entry-prog-wake-guard	The C-first movement scenario matches Aversin's report act after the wake act (R1/R5e/R5h).
+src/mobprog.c:315	entry_prog	proven	mob.entry-prog-salute-guard	C-first forced Aversin reaches the standing-guard branch; the oracle matches the salute room act (src/act.wizard.c:1856-1880; src/act.movement.c:95-104,265-274; R1/R2/R5e/R5h).
+src/mobprog.c:316	entry_prog	proven	mob.entry-prog-salute-guard	The C-first movement scenario matches Aversin's at-ease act after the salute (R1/R5e/R5h).
+src/mobprog.c:322	entry_prog	proven	mob.entry-prog-greet-citizen	C-first forced Aversin reaches the citizen branch; the oracle matches the frown act with citizen short-description substitution (src/act.wizard.c:1856-1880; src/act.movement.c:95-104,265-274; R1/R2/R5e/R5h).
+src/mobprog.c:323	entry_prog	proven	mob.entry-prog-greet-citizen	The C-first movement scenario matches the citizen greeting act after the frown (R1/R5e/R5h).
 src/mobprog.c:425	kill_bad_guy	unreachable		No C caller exists in src/: rg finds only this definition; no registered path reaches kill_bad_guy (R2/R4/R5e).
 src/mobprog.c:445	npc_rescue	unreachable		No C caller exists in src/: rg finds only this definition; no registered path reaches npc_rescue (R2/R4/R5e).
 src/mobprog.c:446	npc_rescue	unreachable		No C caller exists in src/: rg finds only this definition; no registered path reaches npc_rescue (R2/R4/R5e).

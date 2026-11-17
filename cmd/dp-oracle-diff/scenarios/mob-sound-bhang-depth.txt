@@ -1,0 +1,43 @@
+# C-first witness for Bhang's fixed mp_sound emote. Vnum 14202 is in the
+# shipped 142.mob index. A sealed room and two pulse windows isolate the
+# mobile_activity sound gate (src/mobact.c:145-147).
+# depth-case: mob.mp-sound-bhang-emote
+
+[fixture]
+quiet-mobs
+replace-room-exits 8162 none
+spawn-mob 14202 1 8162 142
+
+[setup:oracle]
+Sndbhang
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sndbhang
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[probe]
+look
+~dpclock pulse 2000
+~dpclock pulse 2000
+look

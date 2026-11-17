@@ -1,0 +1,77 @@
+# C-first witness for entry_prog's standing cityguard branch.
+# C movement/force path: src/act.wizard.c:1856-1880; src/act.movement.c:95-104,265-274.
+# depth-case: mob.entry-prog-salute-guard
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 none
+replace-room-exits 8105 east 8106 0
+replace-room-exits 8106 none
+spawn-mob 8059 1 8105 80
+spawn-mob 8060 1 8106 80
+set-mob-flag 8059 SENTINEL
+set-mob-flag 8060 SENTINEL
+
+[setup:oracle]
+Entryactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Entryactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Entryobserver
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Entryobserver
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Entryobserver 8106
+
+[probe]
+force Aversin east
