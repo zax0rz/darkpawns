@@ -1,6 +1,6 @@
 c_site	function	classification	case_ids	notes
-src/oedit.c:463	oedit_disp_container_flags_menu	proven	oedit.value-cascade	Builder OEDIT D -> ITEM_CONTAINER value cascade reaches the container flag menu; TestOeditValueCascadeSkipsByType asserts the rendered menu and toggled summary.
-src/oedit.c:472	oedit_disp_container_flags_menu	proven	oedit.value-cascade	Builder OEDIT D -> ITEM_CONTAINER value cascade reaches the container flag menu; TestOeditValueCascadeSkipsByType asserts the rendered menu and toggled summary.
+src/oedit.c:463	oedit_disp_container_flags_menu	proven	oedit.value-cascade;oedit.container-flags-menu	C-first builder OEDIT D -> ITEM_CONTAINER value cascade reaches this send; oedit-container-flags-depth matches the complete menu, including the four labels and current flag state (R1/R2/R5e/R5h).
+src/oedit.c:472	oedit_disp_container_flags_menu	proven	oedit.value-cascade;oedit.container-flags-menu	The same C-first scenario matches the full menu send byte-for-byte (R1/R2/R5e/R5h).
 src/oedit.c:481	oedit_disp_script_menu	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
 src/oedit.c:500	oedit_disp_script_menu	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
 src/oedit.c:510	oedit_disp_script_flags	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
