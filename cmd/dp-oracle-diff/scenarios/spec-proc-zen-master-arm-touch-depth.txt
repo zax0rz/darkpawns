@@ -1,0 +1,89 @@
+# depth-case: mob.zen-master-arm-touch-output
+# C assigns mob 18219 to zen_master (src/spec_assign.c:406). Its combat turn
+# invokes the native special after ordinary attacks; commandless mob AI does
+# not reach the fighting callback. Six discarded peer rolls shift the fixed
+# seed-1 stream to case 0 before case 20. A co-located peer proves TO_NOTVICT
+# and TO_VICT, while high hit points keep the live fight running (R1/R3/R5e).
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 none
+
+[setup:oracle]
+Combatant
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8105
+load mob 18219
+
+[setup:port]
+Combatant
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8105
+load mob 18219
+
+[setup:oracle:peer]
+Onlooker
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Onlooker
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set player Onlooker room 8105
+set Combatant maxhit 5000
+set Combatant hit 5000
+set Onlooker maxhit 5000
+set Onlooker hit 5000
+send:peer roll 1d20
+send:peer roll 1d20
+send:peer roll 1d20
+send:peer roll 1d20
+send:peer roll 1d20
+send:peer roll 1d20
+hit zen master
+
+[probe]
+~dpclock pulse 400

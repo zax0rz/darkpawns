@@ -2,6 +2,7 @@
 # depth-case: channels.recipient-gates
 # depth-case: channels.zone-gate
 # depth-case: channels.level-gate
+# depth-case: channels.holler-exhaustion
 # C-first do_gen_comm vehicle (src/act.comm.c:1146-1310) for gossip,
 # shout, auction, grats, and holler. The named peers exercise global versus
 # zone fanout and the shared level gate. Holler is
@@ -104,3 +105,5 @@ shout zone hello
 auction item hello
 grats well done
 holler world hello
+set Channelgod move 0
+holler exhausted

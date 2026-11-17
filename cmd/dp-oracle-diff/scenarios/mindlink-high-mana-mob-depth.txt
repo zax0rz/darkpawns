@@ -1,0 +1,78 @@
+# depth-case: mindlink.npc-drained-output
+# A C-first high-mana NPC failure outcome. C returns early for PC targets; a
+# normal NPC reaches the unconditional actor drain after its class-gated
+# success arm. The target's mana is raised through C do_set.
+# C path: src/new_cmds2.c:274-314; src/utils.h:366,418-419.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 163
+
+[setup:oracle]
+Mindlinkhigh
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mindlinkhigh
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Mindlinkwatch
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Mindlinkwatch
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Mindlinkwatch 8105
+skillset Mindlinkhigh 'mindlink' 100
+set mob trainee maxmana 500
+set mob trainee mana 500
+set Mindlinkhigh maxhit 500
+set Mindlinkhigh hit 500
+
+[probe]
+mindlink trainee

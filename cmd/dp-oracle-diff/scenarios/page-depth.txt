@@ -14,6 +14,7 @@
 # depth-case: page.self-alias
 # depth-case: page.norepeat-acknowledgement
 # depth-case: page.all-global-audience
+# depth-case: page.all-authorization
 
 [fixture]
 empty-players
@@ -122,3 +123,5 @@ page me self alias message
 norepeat
 page Pgtarget quiet  message  
 page all global  message  
+set Pgactor level 34
+page all god-level-refusal

@@ -9,6 +9,7 @@
 # depth-case: disarm.success-actor
 # depth-case: disarm.success-victim
 # depth-case: disarm.success-room
+# depth-case: disarm.not-fighting-output
 
 [fixture]
 empty-players
@@ -130,7 +131,8 @@ teleport Disarmvictim 8105
 teleport Disarmobserver 8105
 set Disarmvictim level 11
 skillset Disarmactor 'disarm' 100
-force Disarmvictim hit Disarmactor
 
 [probe]
+disarm Disarmvictim
+force Disarmvictim hit Disarmactor
 disarm nobody

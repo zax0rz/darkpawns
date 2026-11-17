@@ -3,6 +3,8 @@
 # depth-case: afk.enable
 # depth-case: afk.disable
 # depth-case: afk.argument-ignored
+# depth-case: tell.afk-right-now
+# depth-case: tell.afk-may-not-hear
 # C-first vehicle for do_afk: src/act.other.c:1283-1300. The primary and a
 # named peer share a room so the actor and TO_ROOM audiences are compared.
 
@@ -74,3 +76,5 @@ teleport Afkpeer 8004
 afk
 afk ignored-argument
 afk
+send:peer afk
+tell Afkpeer checking in

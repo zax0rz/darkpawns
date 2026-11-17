@@ -1,0 +1,143 @@
+# C-first rank gates for clan demotion and promotion. The two-rank Wolves clan
+# lets the god drive both non-enrolled and top-rank promotion refusals, then
+# sets up equal-rank mortal peers for the demotion ceiling.
+
+# depth-case: clan.demote-output-gates
+# depth-case: clan.promote-output-gates
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Clangod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clangod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:leader]
+Clanmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:leader]
+Clanmate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:applicant]
+Clanapply
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:applicant]
+Clanapply
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Clansubject
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Clansubject
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Clanmate 8162
+teleport Clanapply 8162
+teleport Clansubject 8162
+clan create Clanmate Wolves
+clan set applev 1 Wolves
+
+[probe]
+force Clanapply clan apply Wolves
+force Clansubject clan apply Wolves
+clan promote Clanapply Wolves
+force Clanmate clan enroll Clanapply
+force Clanmate clan enroll Clansubject
+clan promote Clanapply Wolves
+clan promote Clanapply Wolves
+clan promote Clansubject Wolves
+force Clanmate clan demote Clansubject
+clan demote Clanapply Wolves
+clan demote Clanapply Wolves

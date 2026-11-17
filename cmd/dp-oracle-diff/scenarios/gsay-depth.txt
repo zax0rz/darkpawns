@@ -117,6 +117,8 @@ gtell
 force Gsaypeer follow Gsayleader
 force Gsayobserver follow Gsayleader
 group all
+gsay
+gtell
 gsay hello group
 gtell hello alias
 norepeat

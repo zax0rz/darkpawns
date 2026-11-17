@@ -6,6 +6,7 @@
 # depth-case: qsay.entry-gate
 # depth-case: qsay.quest-gate
 # depth-case: qsay.noshout-gate
+# depth-case: qsay.noshout-refusal-literal
 # depth-case: qsay.empty
 # depth-case: qsay.broadcast
 # depth-case: qsay.spacing
@@ -113,9 +114,9 @@ quest
 qsay
 qsay Alpha  beta  gamma  
 qsay &Rred&n
-noshout
+mute Qsayactor
 qsay muted channel
-noshout
+mute Qsayactor
 norepeat
 qsay norepeat  spacing
 norepeat

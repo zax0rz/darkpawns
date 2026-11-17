@@ -1,6 +1,7 @@
 # depth-case: write.paper-not-note
 # depth-case: write.pen-not-pen
 # depth-case: write.non-note-paper
+# depth-case: write.pen-without-held-item
 # depth-case: write.editor-entry
 # C do_write's object-type ladder (src/act.comm.c:1066-1100): a carried object
 # that is neither a note nor a pen is "That thing has nothing to do with
@@ -79,4 +80,5 @@ load obj 8037
 write sword
 write parchment sword
 write sword quill
+write quill
 write parchment quill
