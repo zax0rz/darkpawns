@@ -209,6 +209,9 @@ func TestMeditNewMobDefaults(t *testing.T) {
 	if !strings.Contains(menu, "C) Num HP Dice: [   1],  D) Size HP Dice: [   1]") {
 		t.Fatalf("menu missing HP dice: %q", menu)
 	}
+	if !strings.Contains(menu, "8) Hitroll:     [   0],  9) Damroll:      [   0]") {
+		t.Fatalf("menu missing Hitroll 0 / Damroll 0: %q", menu)
+	}
 	if !strings.Contains(menu, "F) Armor Class: [ 100]") {
 		t.Fatalf("menu missing AC: %q", menu)
 	}

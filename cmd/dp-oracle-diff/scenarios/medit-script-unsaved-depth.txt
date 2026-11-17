@@ -1,0 +1,43 @@
+# C-first witness for medit_setup_new defaults (Hitroll: 0) and medit_disp_script_menu unsaved-mob guard (src/medit.c:102-122,184-209,685#1).
+# depth-case: medit.new-mob-script-rejected
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mobeditor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mobeditor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+medit 8199
+S
+Q
+N

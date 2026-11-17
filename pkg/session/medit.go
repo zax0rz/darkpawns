@@ -208,6 +208,7 @@ func newMeditMob(number int) parser.Mob {
 		Position:     8,
 		DefaultPos:   8,
 		AC:           100,
+		THAC0:        20,
 		HP:           parser.DiceRoll{Num: 1, Sides: 1, Plus: 0},
 		Damage:       parser.DiceRoll{Num: 1, Sides: 1, Plus: 0},
 		Weight:       200,
