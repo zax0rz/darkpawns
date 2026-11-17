@@ -1,6 +1,8 @@
 scenario	manifest	case_id	status	stability
 alias-cap	alias.tsv	alias.cap-refusal	excluded	
+backstab-aware-switched-target-depth	backstab.tsv	backstab.aware-switched-target	blocked	
 chill-touch-lethal-pc-depth	cast.tsv	spell.chill-touch.lethal-death-affect	blocked	
+circle-aware-switched-target-depth	circle.tsv	circle.aware-switched-target	blocked	
 fault-mail-runtime	mail.tsv	mail.send-store-inert	excluded	
 fight-quan-lo-five-fingers-depth	fight.tsv	damage.quan-lo-five-fingers	blocked	
 fight-victim-dismount-feet-fanout-depth	fight-output.tsv	fight.damage-victim-dismount-feet	blocked	

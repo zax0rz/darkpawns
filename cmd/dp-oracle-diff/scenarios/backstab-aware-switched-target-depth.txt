@@ -1,0 +1,91 @@
+# MOB_AWARE branch vehicle for do_backstab (src/act.offensive.c:212-218).
+# Undead seagull 19104 is authored AWARE and awake. The switched target has a
+# descriptor, so C's TO_CHAR notice reaches that player's session. C then
+# immediately calls hit(vict, ch, TYPE_UNDEFINED); no backstab roll or wait follows.
+#
+# depth-case: backstab.aware
+# depth-case: backstab.aware-switched-target
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19104 1 8105 80
+spawn-obj 8036 1 8105 80
+
+[setup:oracle]
+Circlelord
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Circlelord
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+T
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Circleaware]
+Circleaware
+Y
+circlepass
+circlepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+get dagger
+wield dagger
+
+[setup:port:Circleaware]
+Circleaware
+y
+circlepass
+circlepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+get dagger
+wield dagger
+
+[warmup]
+skillset Circleaware 'backstab' 75
+goto 8105
+switch seagull
+
+[probe]
+send:circleaware backstab seagull

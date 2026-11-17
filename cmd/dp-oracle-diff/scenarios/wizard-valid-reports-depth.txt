@@ -1,4 +1,5 @@
 # C-first valid-report vehicle for the registered vnum/stat/vstat handlers.
+# Phase C adds exact live item-type reports for light, scroll, and weapon values.
 # The primary is the crowned Implementor; a peer supplies a live player save
 # and the disposable mob/object fixtures make the local stat selectors reach
 # their valid report bodies.
@@ -12,6 +13,10 @@
 # depth-case: stat.player-default-position
 # depth-case: stat.file-success
 # depth-case: stat.object-success
+# depth-case: stat.object-light-infinite
+# depth-case: stat.object-light-finite
+# depth-case: stat.object-scroll-values
+# depth-case: stat.object-weapon-values
 # depth-case: stat.object-fallback-success
 # depth-case: vstat.mob-success
 # depth-case: vstat.mob-attack-type
@@ -22,6 +27,10 @@ empty-players
 quiet-mobs
 spawn-mob 2109 1 8162 80
 spawn-obj 8010 1 8162 80
+spawn-obj 16227 99 8162 162
+spawn-obj 18221 99 8162 182
+spawn-obj 11701 99 8162 117
+spawn-obj 9101 99 8162 91
 
 [setup:oracle]
 Wizardvalid
@@ -97,6 +106,10 @@ poofout a cloud of departure
 stat player Wizardvalid
 stat file Wizardvalidpeer
 stat object bread
+stat object torch
+stat object lantern
+stat object crystal
+stat object sharp
 stat bread
 vstat mob 2109
 vstat mob 5000
