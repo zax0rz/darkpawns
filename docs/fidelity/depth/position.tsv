@@ -17,11 +17,11 @@ do_sit	sit	sit.stunned-or-worse	D2	state	excluded	-	src/act.movement.c:761-765; 
 do_rest	rest	rest.from-standing	D2	command	oracle-green	position-basic	act.movement.c:773-783	"You sit down and rest your tired bones." + "$n sits down and rests."
 do_rest	rest	rest.already-resting	D2	command	oracle-green	position-basic	act.movement.c:789-791	"You are already resting."
 do_rest	rest	rest.from-sitting	D2	command	oracle-green	position-basic	act.movement.c:784-788	"You rest your tired bones." + "$n rests."
-do_rest	rest	rest.while-sleeping	D2	command	excluded	-	src/act.movement.c:792-794; src/interpreter.c:623,923-945; src/structs.h:209-217	C-unreachable: `rest` requires POS_RESTING (5), so POS_SLEEPING (4) is rejected by command_interpreter before do_rest; do_rest has no other C caller (R5e/R5g).
+do_rest	rest	rest.while-sleeping	D2	command	excluded	-	src/act.movement.c:792-794; src/interpreter.c:633,923-945; src/structs.h:209-217	C-unreachable: `rest` requires POS_RESTING (5), so POS_SLEEPING (4) is rejected by command_interpreter before do_rest; do_rest has no other C caller (R5e/R5g).
 do_rest	rest	rest.room-audience	D3	command	oracle-green	position-room	act.movement.c:778	"$n sits down and rests."
 do_rest	rest	rest.while-fighting	D2	command	oracle-green	position-fighting	act.movement.c:795-797	"Rest while fighting?  Are you MAD?" (two spaces). Proven mid-fight; pure coverage.
 do_rest	rest	rest.mounted-gate	D2	command	oracle-green	position-mounted-gates	act.movement.c:774-782	"You can't rest while mounted." Proven on the horse vehicle; pure coverage.
-do_rest	rest	rest.stunned-or-worse	D4	state	excluded	-	src/act.movement.c:798-803; src/interpreter.c:623,923-945; src/structs.h:209-217	C-unreachable: POS_DEAD through POS_STUNNED are below the `rest` command's POS_RESTING minimum, and do_rest has no other C caller (R5e/R5g).
+do_rest	rest	rest.stunned-or-worse	D4	state	excluded	-	src/act.movement.c:798-803; src/interpreter.c:633,923-945; src/structs.h:209-217	C-unreachable: POS_DEAD through POS_STUNNED are below the `rest` command's POS_RESTING minimum, and do_rest has no other C caller (R5e/R5g).
 do_sleep	sleep	sleep.from-standing	D2	command	oracle-green	position-basic	act.movement.c:811-823	STANDING falls through the shared arm: "You go to sleep." + "$n lies down and falls asleep."
 do_sleep	sleep	sleep.from-sitting	D2	command	oracle-green	position-basic	act.movement.c:818-823	Shared STANDING/SITTING/RESTING arm.
 do_sleep	sleep	sleep.already-sleeping	D2	command	oracle-green	position-basic	act.movement.c:824-826	"You are already sound asleep."
