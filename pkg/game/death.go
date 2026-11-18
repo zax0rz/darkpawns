@@ -377,6 +377,7 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 			// body stays in the world, so undo the death guard's latch.
 			mob.SetAlive(true)
 			w.attitudeLootAfterKill(killer, victim)
+			w.quanLoGossipAfterKill(killer, victim)
 			if playerKiller, ok := killer.(*Player); ok && killer != victim && playerKiller.GetFlags()&(1<<PrfAutoLoot) != 0 {
 				w.DoGet(playerKiller, "all corpse")
 			}
@@ -399,9 +400,7 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 				slog.Warn("Publish PlayerKilledEvent failed", "killer", killerName, "victim", victim.GetName(), "error", err)
 			}
 		}
-		if killerMob, ok := killer.(*MobInstance); ok && killerMob.GetVNum() == 19405 {
-			w.mobGlobalGossip(killerMob, fmt.Sprintf("%s has just learned the Five Fingers of Enlightenment. Who else wishes to learn from the master?", victim.GetName()))
-		}
+		w.quanLoGossipAfterKill(killer, victim)
 	}
 }
 
@@ -412,9 +411,7 @@ func (w *World) finishMobDeath(victim, killer combat.Combatant, attackType int) 
 	// still fighting the flagged body do not (src/handler.c:1147-1151).
 	w.stopKillerAfterDie(killer)
 	w.attitudeLootAfterKill(killer, victim)
-	if killerMob, ok := killer.(*MobInstance); ok && killerMob.GetVNum() == 19405 {
-		w.mobGlobalGossip(killerMob, fmt.Sprintf("%s has just learned the Five Fingers of Enlightenment. Who else wishes to learn from the master?", victim.GetName()))
-	}
+	w.quanLoGossipAfterKill(killer, victim)
 	if playerKiller, ok := killer.(*Player); ok && killer != victim && playerKiller.GetFlags()&(1<<PrfAutoLoot) != 0 {
 		// C damage() runs the ordinary do_get only after die_with_killer
 		// and its attitude-loot tail have returned (src/fight.c:1691-1712).
@@ -1449,4 +1446,15 @@ func (w *World) observePlayerDeath(player *Player) {
 			slog.Warn("Publish PlayerDiedEvent failed", "error", err)
 		}
 	}
+}
+
+// quanLoGossipAfterKill is damage()'s vnum-19405 tail (src/fight.c:1699-1706).
+// It follows die_with_killer and attitude_loot for every victim, player or
+// NPC, and whether or not die_with_killer finished the death.
+func (w *World) quanLoGossipAfterKill(killer, victim combat.Combatant) {
+	killerMob, ok := killer.(*MobInstance)
+	if !ok || killerMob.GetVNum() != 19405 {
+		return
+	}
+	w.mobGlobalGossip(killerMob, fmt.Sprintf("%s has just learned the Five Fingers of Enlightenment. Who else wishes to learn from the master?", victim.GetName()))
 }
