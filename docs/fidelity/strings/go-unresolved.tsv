@@ -680,9 +680,6 @@ description	pkg/session/shop_cmds.go:546	.Send
 notice	pkg/session/terminal.go:334	.Send
 snapshot	pkg/session/time_weather.go:106	.Send
 itemName	pkg/session/use_cmds.go:41	.Send
-item	pkg/session/use_cmds.go:246	.Send
-item	pkg/session/use_cmds.go:255	.Send
-item	pkg/session/use_cmds.go:261	.Send
 msg	pkg/session/wiz_communication.go:66	.BroadcastToRoom
 msg	pkg/session/wiz_communication.go:68	.Send
 msg	pkg/session/wiz_communication.go:104	.SendMessage

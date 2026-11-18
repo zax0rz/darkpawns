@@ -13,15 +13,8 @@ You tumble out into a strange place...	pkg/game/spec_procs2.go:1767	.SendMessage
 The bats swarm around you, blocking your escape!	pkg/game/spec_procs2.go:1896	.SendMessage
 A bat swoops down and attacks you!	pkg/game/spec_procs2.go:1918	.SendMessage
 Nice try.	pkg/game/spec_procs4.go:455	sendToChar
-Error saving aliases.	pkg/session/act_social.go:61	.Send
-Error saving aliases.	pkg/session/act_social.go:112	.Send
 That information is not available right now.	pkg/session/gen_ps_cmds.go:132	.Send
-!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!	pkg/session/manager.go:2603	.Send
-Zap who?	pkg/session/use_cmds.go:163	.Send
-You aren't holding that.	pkg/session/use_cmds.go:184	.Send
 Usage: checkload { obj | mob } <number>	pkg/session/wiz_info.go:521	.Send
-Usage: poofset <in|out> [message]	pkg/session/wiz_info.go:721	.Send
-Usage: poofset <in|out> [message]	pkg/session/wiz_info.go:726	.Send
 World not available.	pkg/session/wiz_stats.go:659	.Send
 Room data not found.	pkg/session/wiz_stats.go:665	.Send
 World not available.	pkg/session/wiz_stats.go:827	.Send

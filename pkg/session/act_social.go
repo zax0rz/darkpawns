@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -58,8 +59,7 @@ func cmdAlias(s *Session, args []string) error {
 			if strings.EqualFold(a.Alias, aliasName) {
 				player.Aliases = append(player.Aliases[:i], player.Aliases[i+1:]...)
 				if err := game.WriteAliases(player.Name, player.Aliases); err != nil {
-					s.Send("Error saving aliases.")
-					return nil
+					slog.Error("failed to save aliases on delete", "player", player.Name, "error", err)
 				}
 				s.Send("Alias deleted.")
 				return nil
@@ -109,8 +109,7 @@ func cmdAlias(s *Session, args []string) error {
 	}
 	player.Aliases = newAliases
 	if err := game.WriteAliases(player.Name, player.Aliases); err != nil {
-		s.Send("Error saving aliases.")
-		return nil
+		slog.Error("failed to save aliases on add", "player", player.Name, "error", err)
 	}
 	s.Send("Alias added.")
 	return nil
