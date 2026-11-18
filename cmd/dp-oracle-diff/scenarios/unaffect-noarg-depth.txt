@@ -1,0 +1,37 @@
+# C-first witness for SCMD_UNAFFECT empty argument (src/act.wizard.c:2091):
+# C prints "Yes, but for whom?!?\r\n" rather than "Usage: unaffect <player>".
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Unaffgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Unaffgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+unaffect

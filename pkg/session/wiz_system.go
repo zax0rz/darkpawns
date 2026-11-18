@@ -631,7 +631,7 @@ func cmdUnaffect(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.Send("Usage: unaffect <player>")
+		s.Send("Yes, but for whom?!?\r\n")
 		return nil
 	}
 	return wizutilDispatch(s, wizutilUnaffect, args[0])
