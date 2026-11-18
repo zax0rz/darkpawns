@@ -531,9 +531,10 @@ func specStartRoomBody(w *World, roomVNum int) bool {
 				slog.Warn("start_room player transfer failed", "player", player.GetName(), "error", err)
 				continue
 			}
-			// C's do_look renders the fresh mortal's default PRF_AUTOEXIT state,
-			// which is on — the oracle's hometown look carries "[ Exits: … ]".
-			w.lookAtRoom(player, false)
+			// C calls the full do_look (src/spec_procs.c:2254), not
+			// look_at_room: below POS_SLEEPING the arrival look is
+			// "You can't see anything but stars!" (src/act.informative.c:1107).
+			w.doLook(player, nil, "look", "")
 			continue
 		}
 		mob, ok := body.(*MobInstance)

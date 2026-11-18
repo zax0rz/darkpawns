@@ -16,7 +16,7 @@ from manifest_claims import parse_oracle_proof
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 HEADER = ['system', 'c_site', 'function', 'branch', 'status', 'proof', 'owner', 'notes']
-STATUSES = {'proven', 'delegated', 'fixed', 'unreachable', 'blocked'}
+STATUSES = {'proven', 'delegated', 'fixed', 'unreachable', 'excluded', 'blocked'}
 SITE = re.compile(r'(src/[\w.-]+\.c):([1-9][0-9]*)(?:-([1-9][0-9]*))?$')
 TEST_TOKEN = re.compile(r'Test\w+$')
 SCENARIO_TOKEN = re.compile(r'[a-z0-9][a-z0-9-]*$')

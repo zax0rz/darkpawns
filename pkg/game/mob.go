@@ -54,7 +54,13 @@ type MobInstance struct {
 	CurrentMove       int
 	MaxMove           int
 	Status            string // "standing", "sleeping", "fighting", etc.
-	Level             int    // Level override (0 = use prototype level)
+	// floatingPos preserves the exact C position for Status == "floating"
+	// (src/act.informative.c:1355 default arm). C accepts 9..14 via medit
+	// (src/olc.h:46 NUM_POSITIONS=15, src/medit.c:1061) and loadpos copies
+	// the prototype verbatim (src/db.c:1757); collapsing them to one byte
+	// would invent equality for GET_POS vs GET_DEFAULT_POS look checks.
+	floatingPos int
+	Level       int // Level override (0 = use prototype level)
 
 	// AI
 	// Brain *ai.Brain // Temporarily commented out to fix circular import
@@ -186,6 +192,14 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		}
 	}
 
+	effectiveSpawnPos := proto.Position
+	// A prototype with both positions unset (0,0) is the zero value of a
+	// directly constructed parser.Mob, not a medit dead load: the parser
+	// defaults a missing position line to 8/8 (pkg/parser/mob.go), and
+	// medit leaves the default position at 8 when it writes 0 (DP-1553).
+	if effectiveSpawnPos == 0 && proto.DefaultPos == 0 {
+		effectiveSpawnPos = combat.PosStanding
+	}
 	mob := &MobInstance{
 		VNum:      proto.VNum,
 		RoomVNum:  roomVNum,
@@ -202,9 +216,9 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		// mob file's loadpos (line-11 first field) is the spawn position — a
 		// sleeping loader like 2109 must spawn asleep or mobile_activity's
 		// position gate lets it wander on the very first settle pulses.
-		// 0 means unset (clear_char's POS_STANDING default; no real record
-		// carries POS_DEAD as a loadpos).
-		Status: positionStatus(proto.Position),
+		// medit writes any 0..14 (src/medit.c:1061), so POS_DEAD (0) and
+		// floating (9..14) are reachable load positions (DP-1553).
+		Status: positionStatus(effectiveSpawnPos),
 		// C read_mobile copies the whole prototype struct (db.c:1757), so the
 		// mob file's act flags ride along. Without this, HasMobFlag reads a
 		// zero mask for every world-loaded mob and C's MOB_AWARE backstab
@@ -233,6 +247,9 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		BirthTime: time.Unix(nowFunc(), 0),
 	}
 	mob.SetProto(proto)
+	if mob.Status == "floating" {
+		mob.floatingPos = effectiveSpawnPos
+	}
 	strAdd := proto.StrAdd
 	mob.Runtime.StrAddOverride = &strAdd
 	mob.CopyBaseAttributes()
@@ -890,6 +907,11 @@ func (m *MobInstance) SetStatus(status string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.Status = status
+	if status != "floating" {
+		m.floatingPos = 0
+	} else if m.floatingPos == 0 {
+		m.floatingPos = 9
+	}
 }
 
 // GetPosition returns the mob's current position.
@@ -916,8 +938,19 @@ func (m *MobInstance) GetPosition() int {
 		return combat.PosFighting
 	case "standing":
 		return combat.PosStanding
+	case "floating":
+		if m.floatingPos != 0 {
+			return m.floatingPos
+		}
+		// Status set directly without a recorded value: the first
+		// floating position (src/act.informative.c:1355).
+		return 9
 	default:
-		return combat.PosStanding // Default to standing
+		// Zero-value / unknown status falls back to standing: only an
+		// explicit "floating" status (from a 9..14 load position) is
+		// floating. The do_score default arm handles int positions
+		// outside 0..8 at the text layer, not this string fallback.
+		return combat.PosStanding
 	}
 }
 
@@ -976,11 +1009,10 @@ func affectFlagBits(names []string) uint64 {
 }
 
 // positionStatus maps a C POS_* loadpos constant to the Status string
-// encoding. Unknown values default to standing like GetPosition does.
+// encoding. Values outside 0..8 are floating: C's do_score default arm
+// (src/act.informative.c:1355) prints floating for any position medit
+// (src/medit.c:1061, src/olc.h:46) or a world file stores above standing.
 func positionStatus(pos int) string {
-	if pos <= combat.PosDead || pos > combat.PosStanding {
-		pos = combat.PosStanding
-	}
 	switch pos {
 	case combat.PosDead:
 		return "dead"
@@ -998,8 +1030,10 @@ func positionStatus(pos int) string {
 		return "sitting"
 	case combat.PosFighting:
 		return "fighting"
-	default:
+	case combat.PosStanding:
 		return "standing"
+	default:
+		return "floating"
 	}
 }
 
@@ -1010,22 +1044,34 @@ func (m *MobInstance) SetPosition(pos int) {
 	switch pos {
 	case combat.PosDead:
 		m.Status = "dead"
+		m.floatingPos = 0
 	case combat.PosMortally:
 		m.Status = "mortally_wounded"
+		m.floatingPos = 0
 	case combat.PosIncap:
 		m.Status = "incapacitated"
+		m.floatingPos = 0
 	case combat.PosStunned:
 		m.Status = "stunned"
+		m.floatingPos = 0
 	case combat.PosSleeping:
 		m.Status = "sleeping"
+		m.floatingPos = 0
 	case combat.PosResting:
 		m.Status = "resting"
+		m.floatingPos = 0
 	case combat.PosSitting:
 		m.Status = "sitting"
+		m.floatingPos = 0
 	case combat.PosFighting:
 		m.Status = "fighting"
-	default:
+		m.floatingPos = 0
+	case combat.PosStanding:
 		m.Status = "standing"
+		m.floatingPos = 0
+	default:
+		m.Status = "floating"
+		m.floatingPos = pos
 	}
 }
 
@@ -1164,6 +1210,7 @@ func (m *MobInstance) StopFighting() {
 	// into the wounded band must stay downed when it stops fighting. Mirrors
 	// Merc stop_fighting (reset to default_pos, then update_pos). DP-1021.
 	m.Status = mobStatusFromHP(m.CurrentHP)
+	m.floatingPos = 0
 }
 
 // mobStatusFromHP maps HP to the Status string for the wounded band, matching

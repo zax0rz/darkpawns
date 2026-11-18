@@ -1,5 +1,6 @@
 # depth-case: score.state-variants
 # depth-case: score.ac.lightly-armored
+# depth-case: score.ac.extremely-well-armored
 # depth-case: score.ac.decked
 # depth-case: score.ac.wyvern
 # depth-case: score.ac.dragon
@@ -53,6 +54,8 @@ score
 set Scorevar ac -60
 score
 set Scorevar ac -100
+score
+set Scorevar ac -45
 score
 set Scorevar ac -140
 score

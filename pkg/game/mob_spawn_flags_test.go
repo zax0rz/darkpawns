@@ -15,22 +15,29 @@ import (
 // place, exactly like C.
 func TestNewMobAppliesLoadpos(t *testing.T) {
 	cases := []struct {
-		name    string
-		loadpos int
-		want    int
+		name       string
+		loadpos    int
+		defaultPos int
+		want       int
 	}{
-		{"sleeping", 4, combat.PosSleeping},
-		{"resting", 5, combat.PosResting},
-		{"sitting", 6, combat.PosSitting},
-		{"standing", 8, combat.PosStanding},
+		{"sleeping", 4, 8, combat.PosSleeping},
+		{"resting", 5, 8, combat.PosResting},
+		{"sitting", 6, 8, combat.PosSitting},
+		{"standing", 8, 8, combat.PosStanding},
 		// C clear_char defaults position to POS_STANDING before the file
 		// line overwrites it (utils.c:2997), so a record without the line
-		// never spawns at POS_DEAD.
-		{"unset defaults to standing", 0, combat.PosStanding},
+		// never spawns at POS_DEAD. The parser encodes that as 8/8; a
+		// directly constructed (0,0) proto is the same unset value.
+		{"unset defaults to standing", 0, 0, combat.PosStanding},
+		// medit writes any 0..14 (src/medit.c:1061); a 0 with the default
+		// left at 8 is an explicit dead load (DP-1553).
+		{"dead via medit", 0, 8, combat.PosDead},
+		{"floating via medit", 9, 8, 9},
+		{"floating 14", 14, 8, 14},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			mob := NewMob(&parser.Mob{VNum: 2109, Keywords: "sleeping orc worker", Position: tc.loadpos}, 8105)
+			mob := NewMob(&parser.Mob{VNum: 2109, Keywords: "sleeping orc worker", Position: tc.loadpos, DefaultPos: tc.defaultPos}, 8105)
 			if got := mob.GetPosition(); got != tc.want {
 				t.Errorf("spawn position = %d, want %d", got, tc.want)
 			}

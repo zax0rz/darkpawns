@@ -286,27 +286,34 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 	ce := combat.NewCombatEngine()
 	ce.Start()
 
-	// House-control uses the C get_name_by_id()/get_id_by_name() seam. Keep it
-	// backed by the live world for both the admin command and ordinary house
-	// commands; leaving the injected callbacks nil makes every build/list path
-	// diverge even when the player is online.
-	game.RegisterHousePlayerLookup(
-		func(id int64) string {
-			player := world.GetPlayerByID(int(id))
-			if player == nil {
-				return ""
-			}
-			return player.GetName()
-		},
-		func(name string) int64 {
-			for _, player := range world.GetPlayers() {
-				if strings.EqualFold(player.GetName(), name) {
-					return int64(player.GetID())
+	// House-control uses the C get_name_by_id()/get_id_by_name() seam
+	// (src/db.c:2313-2336, reading the persistent player index). When a
+	// database is present the DB-backed pair resolves offline players;
+	// the online-only world scan below is only the no-DB fallback.
+	if hl, ok := database.(interface {
+		HousePlayerLookups() (func(int64) string, func(string) int64)
+	}); ok && database != nil {
+		nameByID, idByName := hl.HousePlayerLookups()
+		game.RegisterHousePlayerLookup(nameByID, idByName)
+	} else {
+		game.RegisterHousePlayerLookup(
+			func(id int64) string {
+				player := world.GetPlayerByID(int(id))
+				if player == nil {
+					return ""
 				}
-			}
-			return -1
-		},
-	)
+				return player.GetName()
+			},
+			func(name string) int64 {
+				for _, player := range world.GetPlayers() {
+					if strings.EqualFold(player.GetName(), name) {
+						return int64(player.GetID())
+					}
+				}
+				return -1
+			},
+		)
+	}
 
 	shopManager := game.NewShopManager()
 	if existing, ok := world.GetShopManager().(*game.ShopManager); ok && existing != nil {

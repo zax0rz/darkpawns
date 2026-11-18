@@ -89,8 +89,51 @@ func TestAcText(t *testing.T) {
 	}
 }
 
+// TestAcTextEveryBand pins every AC band against src/act.informative.c:1232-1257
+// (DP-1551). The -45 band has no final period; the very-well armored arm at
+// :1244 is dead (ac > -20 implies ac > -40) and is not probed by value.
+func TestAcTextEveryBand(t *testing.T) {
+	for _, tt := range []struct {
+		ac   int
+		want string
+	}{
+		{ac: 101, want: "You are lightly clothed."},
+		{ac: 100, want: "You are naked, have you no shame?"},
+		{ac: 99, want: "You are lightly clothed."},
+		{ac: 71, want: "You are lightly clothed."},
+		{ac: 70, want: "You are pretty well clothed."},
+		{ac: 41, want: "You are pretty well clothed."},
+		{ac: 40, want: "You are lightly armored."},
+		{ac: 11, want: "You are lightly armored."},
+		{ac: 10, want: "You are well armored."},
+		{ac: -9, want: "You are well armored."},
+		{ac: -10, want: "You are getting pretty sweaty with all that armor on."},
+		{ac: -39, want: "You are getting pretty sweaty with all that armor on."},
+		{ac: -40, want: "You are extremely well armored"},
+		{ac: -45, want: "You are extremely well armored"},
+		{ac: -49, want: "You are extremely well armored"},
+		{ac: -50, want: "You are decked out in full battle armor."},
+		{ac: -74, want: "You are decked out in full battle armor."},
+		{ac: -75, want: "You are armored like a wyvern!"},
+		{ac: -124, want: "You are armored like a wyvern!"},
+		{ac: -125, want: "You are armored like a dragon!"},
+		{ac: -149, want: "You are armored like a dragon!"},
+		{ac: -150, want: "You could walk through the gates of Hell in all that armor!"},
+		{ac: -174, want: "You could walk through the gates of Hell in all that armor!"},
+		{ac: -175, want: "You are armored like a god!"},
+		{ac: -200, want: "You are armored like a god!"},
+	} {
+		if got := acText(tt.ac); got != tt.want {
+			t.Errorf("acText(%d) = %q, want %q", tt.ac, got, tt.want)
+		}
+		if tt.ac == -45 && acText(tt.ac) != "You are extremely well armored" {
+			t.Errorf("AC -45 must have no final period, got %q", acText(tt.ac))
+		}
+	}
+}
+
 // TestAcTextNakedIsExact100 pins C's boundary: only an exact 100 is "naked"
-// (src/act.informative.c:1240-1242). Gear and APPLY_AC affects push a
+// (src/act.informative.c:1232-1234). Gear and APPLY_AC affects push a
 // character above 100, and C still calls that "lightly clothed", so a >=100
 // test invents a band C does not have (R1/R4).
 func TestAcTextNakedIsExact100(t *testing.T) {
@@ -127,6 +170,37 @@ func TestPositionText(t *testing.T) {
 				t.Errorf("positionText(%d) = %q, expected substring %q", tt.val, got, tt.want)
 			}
 		})
+	}
+}
+
+// TestPositionTextEveryPosition pins every do_score position arm against
+// src/act.informative.c:1324-1355 (DP-1553). Floating is the default arm.
+func TestPositionTextEveryPosition(t *testing.T) {
+	for _, tt := range []struct {
+		pos  int
+		want string
+	}{
+		{pos: 0, want: "You are DEAD!(Tell a god)"},
+		{pos: 1, want: "You are mortally wounded!  You should seek help!"},
+		{pos: 2, want: "You are incapacitated, slowly fading away..."},
+		{pos: 3, want: "You are stunned!  You can't move!"},
+		{pos: 4, want: "You are sleeping."},
+		{pos: 5, want: "You are resting."},
+		{pos: 6, want: "You are sitting."},
+		{pos: 8, want: "You are standing."},
+		{pos: 9, want: "You are floating."},
+		{pos: 14, want: "You are floating."},
+		{pos: -1, want: "You are floating."},
+	} {
+		if got := positionText(tt.pos); got != tt.want {
+			t.Errorf("positionText(%d) = %q, want %q", tt.pos, got, tt.want)
+		}
+	}
+	// POS_FIGHTING without a target is handled by scorePositionText, not
+	// positionText; the bare text stays "You are fighting." for the
+	// fallback when a target name is unavailable.
+	if got := positionText(7); got != "You are fighting." {
+		t.Errorf("positionText(7) = %q, want %q", got, "You are fighting.")
 	}
 }
 
