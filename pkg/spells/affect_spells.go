@@ -3779,7 +3779,7 @@ func castMindsight(level int, ch, cvict, world interface{}) {
 	// notifies other PCs in the caster's current room (src/spells.c:938-955).
 	type mindsightWorld interface {
 		PlayerTransferForSpell(actor interface{}, toRoomVNum int) error
-		LookAtRoomForSpell(actor interface{})
+		DoLookForSpell(actor interface{})
 		MindsightNotifyWatchers(actor interface{})
 	}
 	tw, ok := world.(mindsightWorld)
@@ -3790,7 +3790,7 @@ func castMindsight(level int, ch, cvict, world interface{}) {
 	if err := tw.PlayerTransferForSpell(ch, victRoom); err != nil {
 		slog.Error("PlayerTransfer failed", "error", err)
 	}
-	tw.LookAtRoomForSpell(ch)
+	tw.DoLookForSpell(ch)
 	tw.MindsightNotifyWatchers(ch)
 	if currentRoom, ok := ch.(roomGet); ok && currentRoom.GetRoomVNum() == victRoom {
 		if err := tw.PlayerTransferForSpell(ch, chRoom); err != nil {

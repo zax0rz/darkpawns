@@ -1,0 +1,56 @@
+# depth-case: score.position.dead
+# C-first switched-body witness for do_score at POS_DEAD (DP-1553,
+# src/act.informative.c:1325). Medit accepts any 0..NUM_POSITIONS-1
+# (src/medit.c:1061, src/olc.h:46); read_mobile copies the prototype
+# (src/db.c:1757), so a trainee saved at 0/8 spawns dead. Switched into,
+# C scores "You are DEAD!(Tell a god)" (src/act.informative.c:1325);
+# Go used to spawn it standing and scored "You are standing.".
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Deadposgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Deadposgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+medit 16303
+I
+0
+J
+8
+q
+y
+load mob 16303
+look
+switch trainee
+score
+return

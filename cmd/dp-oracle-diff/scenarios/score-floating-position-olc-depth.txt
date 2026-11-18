@@ -1,0 +1,56 @@
+# depth-case: score.position.floating
+# C-first switched-body witness for do_score in the default arm (DP-1553,
+# src/act.informative.c:1355). Medit accepts any 0..NUM_POSITIONS-1
+# (src/medit.c:1061, src/olc.h:46); read_mobile copies the prototype
+# (src/db.c:1757), so a trainee saved at 9/8 spawns floating. Switched
+# into, C scores "You are floating."; Go used to spawn it standing.
+# The medit menu for 9 prints position_types[9] ("\n", src/constants.c:452).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Floatposgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Floatposgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+medit 16303
+I
+9
+J
+8
+q
+y
+load mob 16303
+look
+switch trainee
+score
+return

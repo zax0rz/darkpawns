@@ -193,11 +193,14 @@ func (w *World) DoLook(ch combat.Combatant, cmd, arg string) ObservationResult {
 		return result
 	}
 	if ch.GetPosition() < posSleeping {
-		result.literal(ch, "You can't see anything but stars!")
+		// C sends these with send_to_char (src/act.informative.c:1107,1112),
+		// which has no SENDOK gate: a sub-sleeping looker still receives
+		// the stars line. Act ToChar would drop it for a sleeper.
+		result.raw(ch, "You can't see anything but stars!")
 		return result
 	}
 	if observationBodyAffected(ch, affBlind) {
-		result.literal(ch, "You can't see a damned thing, you're blind!")
+		result.raw(ch, "You can't see a damned thing, you're blind!")
 		return result
 	}
 
@@ -1038,6 +1041,18 @@ func (w *World) LookAtRoomForSpell(victim any) {
 		return
 	}
 	w.lookAtRoom(player, false)
+}
+
+// DoLookForSpell exposes C's full do_look through the same bridge for
+// spells whose C call is do_look, not look_at_room (spell_mindsight,
+// src/spells.c:942). Below POS_SLEEPING the arrival is the stars line and
+// blind is the damned-thing line (src/act.informative.c:1107,1112).
+func (w *World) DoLookForSpell(victim any) {
+	player, ok := victim.(*Player)
+	if !ok || player == nil {
+		return
+	}
+	w.doLook(player, nil, "look", "")
 }
 
 func (w *World) listObjToChar(room *parser.Room, ch combat.Combatant) {

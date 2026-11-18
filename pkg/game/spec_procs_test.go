@@ -259,8 +259,11 @@ func TestSpecItohActPreservesCLineBreakBytesAndAudience(t *testing.T) {
 	if !specItoh(w, actor, nil, "say", "itoh") {
 		t.Fatal("specItoh did not handle its command")
 	}
-	if got, want := messages[actor.Name], "\r\nWith a blinding flash of light and a crack of thunder, you are teleported...\r\n"; got != want {
-		t.Fatalf("actor bytes = %q, want %q", got, want)
+	// C calls do_look after the arrival act (src/spec_procs3.c:606), so a
+	// standing arrival also receives the destination room look.
+	wantActorPrefix := "\r\nWith a blinding flash of light and a crack of thunder, you are teleported...\r\n"
+	if got := messages[actor.Name]; !strings.HasPrefix(got, wantActorPrefix) || !strings.Contains(got, "Destination") {
+		t.Fatalf("actor bytes = %q, want teleport line plus destination look", got)
 	}
 	const wantDisappear = "\r\nWith a blinding flash of light and a crack of thunder, Itohactor disappears!\r\n\r\n\r\n"
 	if got := messages[awake.Name]; got != wantDisappear {

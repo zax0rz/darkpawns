@@ -365,10 +365,12 @@ func meditPosName(pos int) string {
 	if pos >= 0 && pos < len(olc.PositionNames) {
 		return olc.PositionNames[pos]
 	}
-	// C indexes position_types[] out of bounds for 9-14 (undefined). The Go
-	// port stores C's clamped value for .mob fidelity but refuses to read
-	// past the table here; the values 9-14 are unreachable through valid
-	// play and no defined C byte sequence exists to match.
+	// position_types[9] is the "\n" sentinel (src/constants.c:452-462);
+	// a mob at 9 therefore prints a bare newline in the medit menu. 10..14
+	// read past the table (undefined behaviour) and keep the placeholder.
+	if pos == 9 {
+		return "\n"
+	}
 	return fmt.Sprintf("unknown (%d)", pos)
 }
 

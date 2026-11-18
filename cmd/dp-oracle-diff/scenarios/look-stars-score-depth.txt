@@ -1,0 +1,80 @@
+# depth-case: look.start-room-position-gate
+# C-first witness for SPECIAL(start_room)'s full do_look (DP-1552,
+# src/spec_procs.c:2254). A mortally wounded descriptor-backed player in
+# 8099 who issues a command is moved to their hometown and looked at with
+# do_look, whose position gate (src/act.informative.c:1107) answers with
+# stars. Go used to call lookAtRoom and showed the full destination room.
+# Setup mirrors score-mortally-wounded-depth: hit -8 plus sobriety leaves
+# the peer mortally wounded (src/spells.c:688-698 update_pos).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Starsgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Starsgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Starspeer
+Y
+starspass
+starspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Starspeer
+y
+starspass
+starspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Starspeer 8162
+set player Starsgod level 39
+
+[probe]
+set player Starspeer hit -8
+cast 'sobriety' Starspeer
+~dpclock pulse 20
+teleport Starspeer 8099
+send:peer score
