@@ -68,3 +68,24 @@ func TestCombatDismountCallbackUsesCDoDismount(t *testing.T) {
 		t.Fatal("combat dismount left rider mounted")
 	}
 }
+
+func TestCombatActCharPreservesCEmbeddedLineBreak(t *testing.T) {
+	w, rider := newMovementTestWorld(t)
+	var got string
+	w.MessageSink = func(name string, message []byte) {
+		if name == rider.Name {
+			got += string(message)
+		}
+	}
+	callback := w.WireCombatCallbacks().ActChar
+	if callback == nil {
+		t.Fatal("combat callbacks have no private act route")
+	}
+
+	callback(rider, "The hit knocks you off of your mount!\r\n")
+
+	want := "The hit knocks you off of your mount!\r\n\r\n"
+	if got != want {
+		t.Fatalf("private act bytes = %q, want %q", got, want)
+	}
+}

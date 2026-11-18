@@ -21,7 +21,7 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		w.WoundAct(room, victim, format, hideInvisible)
 	}
 	cb.ActChar = func(ch combat.Combatant, format string) {
-		Act(w, false, asActor(ch), nil, nil, nil, strings.TrimSuffix(format, "\r\n"), "", ToChar)
+		Act(w, false, asActor(ch), nil, nil, nil, format, "", ToChar)
 	}
 	pre := w.damageBeforeMessageCallbacks()
 	cb.DamageNewbieExp = pre.DamageNewbieExp
