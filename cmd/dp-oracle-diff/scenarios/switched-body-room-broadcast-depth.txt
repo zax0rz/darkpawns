@@ -1,0 +1,77 @@
+# C-first witness for DP-1571: room broadcasts deliver to switched mobile
+# descriptors in the room (src/comm.c:2507-2511, src/act.wizard.c:1193-1200).
+# Switchedrx switches into clone in room 8105, starts a fight with trainee,
+# and Broadcaster runs `peace` and `purge`: Switchedrx must receive both
+# "The peace of the ancients fills your soul." and the purge room line.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8105 80
+spawn-mob 8010 1 8105 80
+
+[setup:oracle]
+Broadcaster
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Broadcaster
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Switchedrx
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Switchedrx
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+send:peer goto 8105
+send:peer switch clone
+send:peer kill trainee
+
+[probe]
+peace
+purge

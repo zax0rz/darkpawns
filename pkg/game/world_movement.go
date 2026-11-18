@@ -201,6 +201,9 @@ func (w *World) MindsightNotifyWatchers(actor any) {
 			observer.SendMessage("You feel like you're being watched.\r\n")
 		}
 	}
+	for _, mob := range w.GetMobsInRoom(caster.GetRoom()) {
+		mob.SendMessage("You feel like you're being watched.\r\n")
+	}
 }
 
 // MobTransfer moves a mob to a new room, stopping fights.

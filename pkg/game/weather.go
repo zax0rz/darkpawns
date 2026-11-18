@@ -824,6 +824,11 @@ func sendWeatherRoom(w *World, room int, message string) {
 			player.SendMessage(message + "\r\n")
 		}
 	}
+	for _, mob := range w.GetMobsInRoom(room) {
+		if mob.GetPosition() > combat.PosSleeping {
+			mob.SendMessage(message + "\r\n")
+		}
+	}
 }
 
 // GetSunlight returns the current sunlight state.

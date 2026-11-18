@@ -280,6 +280,11 @@ func sendPurgeRoomLine(s *Session, roomVNum int, message string) {
 			peer.Send(message)
 		}
 	}
+	for _, mob := range s.manager.world.GetMobsInRoom(roomVNum) {
+		if game.CanReceiveActActor(mob) {
+			mob.SendMessage(message)
+		}
+	}
 }
 
 // ---------------------------------------------------------------------------

@@ -382,6 +382,7 @@ func cmdDark(s *Session, args []string) error {
 		if len(mob.GetMemory()) > 0 {
 			mob.ClearMemory()
 		}
+		mob.SendMessage("The peace of the ancients fills your soul.\n")
 	}
 
 	s.Send("You stop the senseless violence in the room with a wave of your hand.\r\n")
