@@ -96,6 +96,28 @@ func TestClassSkillMinLevel(t *testing.T) {
 	}
 }
 
+func TestClassSkillMinLevelCDefaultAndUnusedSlots(t *testing.T) {
+	for _, tc := range []struct {
+		class int
+		num   int
+		want  int
+		name  string
+	}{
+		{ClassWarrior, 136, LVL_IMMORT, "skillo punch defaults for other classes"},
+		{ClassWarrior, 178, LVL_IMMORT, "skillo mindlink defaults for other classes"},
+		{ClassWarrior, 150, LVL_IMPL + 1, "unused bite remains above implementor"},
+		{ClassWarrior, 148, LVL_IMPL + 1, "unskilled shoot remains above implementor"},
+		{ClassWarrior, SkillTigerPunchNum, LVL_IMPL + 1, "unskilled tiger punch remains above implementor"},
+		{ClassWarrior, 205, LVL_IMMORT, "spello acid breath defaults to immortal"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := ClassSkillMinLevel(tc.class, tc.num); got != tc.want {
+				t.Fatalf("ClassSkillMinLevel(%d, %d) = %d, want %d", tc.class, tc.num, got, tc.want)
+			}
+		})
+	}
+}
+
 // TestRenderSkillListPracticeHeader pins C's spec_procs.c:164-168 prelude: no
 // sessions, exactly one session (singular), and the plural count. Reverting to
 // the old single plural line fails the 0 and 1 cases.
@@ -124,6 +146,9 @@ func TestRenderSkillListImmortalCatalogAndOverflow(t *testing.T) {
 	warrior.SetLevel(LVL_IMMORT)
 	if got := RenderSkillList(warrior); !strings.Contains(got, "acid blast") {
 		t.Fatal("immortal warrior list omitted the spell catalog entry with default LVL_IMMORT min_level")
+	}
+	if got := RenderSkillList(warrior); strings.Contains(got, "acid breath") || strings.Contains(got, "bite") {
+		t.Fatal("immortal warrior list included C-excluded slots beyond MAX_SKILLS or above LVL_IMPL")
 	}
 
 	psionic := NewPlayer(2, "Pracoverflow", 1001)

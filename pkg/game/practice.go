@@ -28,7 +28,10 @@ var (
 	pracMinGain      = [12]int{25, 25, 0, 0, 25, 25, 0, 0, 0, 25, 0, 25}
 )
 
-const cSkillListMaxStringLength = 8192 // src/structs.h:643
+const (
+	cSkillListMaxStringLength = 8192 // src/structs.h:643
+	cSkillListMaxSkills       = 200  // src/structs.h:654
+)
 
 func pracLearned(class int) int {
 	if class < 0 || class >= 12 {
@@ -127,8 +130,8 @@ func RenderSkillList(p *Player) string {
 		num     int
 		rawName string
 	}
-	entries := make([]entry, 0, skillCatalogSize()-1)
-	for num := 1; num < skillCatalogSize(); num++ {
+	entries := make([]entry, 0, min(skillCatalogSize(), cSkillListMaxSkills)-1)
+	for num := 1; num < skillCatalogSize() && num < cSkillListMaxSkills; num++ {
 		entries = append(entries, entry{num: num, rawName: spells.SpellRawName(num)})
 	}
 	// C sort_spells sorts every catalog slot by raw spells[] name, including
