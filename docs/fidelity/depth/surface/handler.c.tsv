@@ -1,9 +1,9 @@
 c_site	function	classification	case_ids	notes
-src/handler.c:654	check_for_bad_stats	proven	equipment.live-zero-stats	The live equipment bad-stat matrix reaches the strength-zero send and checks C's direct bytes (R1/R5e/R5h).
-src/handler.c:657	check_for_bad_stats	proven	equipment.live-zero-stats	The live equipment bad-stat matrix reaches the intelligence-zero send and checks C's direct bytes (R1/R5e/R5h).
-src/handler.c:660	check_for_bad_stats	proven	equipment.live-zero-stats	The live equipment bad-stat matrix reaches the wisdom-zero arm, which shares the intelligence text, and checks C's direct bytes (R1/R5e/R5h).
-src/handler.c:663	check_for_bad_stats	proven	equipment.live-zero-stats	The live equipment bad-stat matrix reaches the charisma-zero send and checks C's direct bytes (R1/R5e/R5h).
-src/handler.c:668	check_for_bad_stats	proven	equipment.live-zero-stats	The live equipment bad-stat matrix reaches the dexterity-zero send and checks the exact direct line before the shared suffering damage path (R1/R5e/R5h).
+src/handler.c:654	check_for_bad_stats	proven	equipment.live-zero-stats	The C-first wear scenario reaches the strength-zero branch and checks the direct wearer bytes against C (R1/R2/R5e/R5h).
+src/handler.c:657	check_for_bad_stats	proven	equipment.live-zero-stats	The C-first wear scenario reaches the intelligence-zero branch and checks the direct wearer bytes against C (R1/R2/R5e/R5h).
+src/handler.c:660	check_for_bad_stats	proven	equipment.live-zero-stats	The C-first wear scenario reaches the wisdom-zero branch, which shares the intelligence text, and checks the direct wearer bytes against C (R1/R2/R5e/R5h).
+src/handler.c:663	check_for_bad_stats	proven	equipment.live-zero-stats	The C-first wear scenario reaches the charisma-zero branch and checks the direct wearer bytes against C (R1/R2/R5e/R5h).
+src/handler.c:668	check_for_bad_stats	proven	equipment.live-zero-stats	The C-first wear scenario emits the DEX warning before the shared 40-point damage path kills the low-level wearer; TestPlayerEquipmentDexUsesDamageTail separately pins that tail (R1/R2/R3/R5e/R5h).
 src/handler.c:705	equip_char	proven	equipment.player-anti-alignment-equip-output	The real player wear command reaches the TO_CHAR anti-alignment act and the paired observer act is checked by the same probe (R1/R2/R5e/R5h).
 src/handler.c:707	equip_char	proven	mobile.loot-wear-boundary	The real attitude-loot wear path reaches this TO_ROOM act; the observer assertion pins its exact bytes and order after the wear message (R1/R3/R5e/R5h).
 src/handler.c:715	equip_char	proven	equipment.player-invalid-class-equip-output	The real player wear command reaches the Mage-barred item TO_CHAR act and asserts no room bytes (R1/R2/R5e/R5h).

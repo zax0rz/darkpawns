@@ -1,0 +1,123 @@
+# C-first live equip_char warnings. A legal wear entry point reaches each
+# zero-stat arm after the corresponding builder-set value; the room peer checks
+# that check_for_bad_stats sends these direct lines only to the wearer. The DEX
+# warning is emitted before its following self-damage kills the low-level wearer.
+# depth-case: equipment.live-zero-stats
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Equipgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Equipgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:wearer]
+Wearer
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:wearer]
+Wearer
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Observer
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Observer
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+syslog brief
+goto 8105
+set player Wearer room 8105
+set player Observer room 8105
+set player Observer level 38
+set player Wearer class warrior
+load obj 8007
+give ring Wearer
+
+[probe]
+set player Wearer str 0
+force Wearer wear ring
+set player Wearer str 18
+force Wearer remove ring
+set player Wearer int 0
+force Wearer wear ring
+set player Wearer int 18
+force Wearer remove ring
+set player Wearer wis 0
+force Wearer wear ring
+set player Wearer wis 18
+force Wearer remove ring
+set player Wearer cha 0
+force Wearer wear ring
+set player Wearer cha 18
+force Wearer remove ring
+set player Wearer dex 0
+force Wearer wear ring
