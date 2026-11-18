@@ -123,6 +123,7 @@ type Manager struct {
 	mu           sync.RWMutex
 	snoopMu      sync.RWMutex          // protects the bidirectional snoop links
 	sessions     map[string]*Session   // keyed by player name
+	descMu       sync.Mutex            // guards descriptors only; never held while taking mu
 	descriptors  map[*Session]struct{} // all live descriptors (including pre-login)
 	world        *game.World
 	whod         *whodListener // C's WHOD daemon (src/whod.c); nil when disabled
@@ -538,21 +539,23 @@ func (m *Manager) trackDescriptor(s *Session) {
 	if m == nil || s == nil {
 		return
 	}
-	m.mu.Lock()
+	m.descMu.Lock()
 	if m.descriptors == nil {
 		m.descriptors = make(map[*Session]struct{})
 	}
 	m.descriptors[s] = struct{}{}
-	m.mu.Unlock()
+	m.descMu.Unlock()
 }
 
 func (m *Manager) untrackDescriptor(s *Session) {
 	if m == nil || s == nil {
 		return
 	}
-	m.mu.Lock()
+	// descMu, not mu: close paths reach here while register() holds mu
+	// (session takeover calls CloseSend under mu), and mu is not reentrant.
+	m.descMu.Lock()
 	delete(m.descriptors, s)
-	m.mu.Unlock()
+	m.descMu.Unlock()
 }
 
 // activeDescriptors returns all live descriptors (including pre-login
@@ -562,8 +565,10 @@ func (m *Manager) activeDescriptors() []*Session {
 	if m == nil {
 		return nil
 	}
+	// Lock order: mu before descMu. descMu is never held while taking mu.
 	m.mu.RLock()
 	defer m.mu.RUnlock()
+	m.descMu.Lock()
 	seen := make(map[*Session]struct{}, len(m.descriptors)+len(m.sessions))
 	out := make([]*Session, 0, len(m.descriptors)+len(m.sessions))
 	for s := range m.descriptors {
@@ -573,6 +578,7 @@ func (m *Manager) activeDescriptors() []*Session {
 		seen[s] = struct{}{}
 		out = append(out, s)
 	}
+	m.descMu.Unlock()
 	for _, s := range m.sessions {
 		if s == nil {
 			continue
