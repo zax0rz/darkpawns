@@ -1,0 +1,23 @@
+# C-first hcontrol show resolves both offline guest IDs in an otherwise
+# player-owned house record.
+# depth-case: hcontrol.show-offline-guests
+
+[fixture]
+quiet-mobs
+seed-player
+house-control 8162 8161 north 1 1 19604 guests=2,3
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[probe]
+hcontrol show

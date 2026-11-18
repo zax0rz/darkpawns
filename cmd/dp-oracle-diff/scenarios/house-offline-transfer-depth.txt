@@ -1,0 +1,26 @@
+# C-first house transfer to an offline player-index entry; the Go callback
+# currently sees only connected players.
+# depth-case: house.transfer-offline
+
+[fixture]
+quiet-mobs
+seed-player
+house-control 8162 8161 north 1 1 19604
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+house transfer Oraklet

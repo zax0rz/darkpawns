@@ -1,0 +1,23 @@
+# C-first hcontrol show resolves an existing house owner's name from the
+# persistent player table even when that owner is offline.
+# depth-case: hcontrol.show-offline-owner
+
+[fixture]
+quiet-mobs
+seed-player
+house-control 8162 8161 north 2 2 19604
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[probe]
+hcontrol show

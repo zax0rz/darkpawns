@@ -1,0 +1,56 @@
+# C-first observer witness for hcontrol_pay_house's audit payload. The primary
+# actor is the first player in the empty world (C implementor); the independent
+# level-38 observer enables normal syslog before the payment command.
+# depth-case: hcontrol.pay-audit-log
+
+[fixture]
+quiet-mobs
+seed-player
+house-control 8162 8161 north 1 1 19604
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:watch]
+Hcontrolwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Hcontrolwatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+advance Hcontrolwatch 38
+force Hcontrolwatch syslog normal
+
+[probe]
+hcontrol pay 8162

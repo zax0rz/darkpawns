@@ -281,6 +281,7 @@ type HouseControlFixture struct {
 	Owner     int64
 	PortOwner int64
 	Key       int
+	Guests    []int64
 }
 
 // ProbeBlock is one probe command and the raw output it produced.
@@ -333,6 +334,7 @@ type AudienceProbeBlock struct {
 //	set-room-sector 8161 7   # SECT_WATER_NOSWIM
 //	house-control 19676 19674 south 1 19604
 //	house-control 19676 19674 south 1 0 19604 # optional Go-port owner
+//	house-control 8162 8161 north 1 1 19604 guests=1001,1002 # prefilled guest IDs
 //	[warmup]            # shared commands sent and discarded after peer setup
 //	get scroll
 //	[peer-drop]         # close one named passive peer before [probe]
@@ -553,7 +555,19 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				sc.RoomScripts = append(sc.RoomScripts, RoomScriptFixture{RoomVNum: roomVNum, Path: fields[2], Flags: flags})
 				continue
 			}
-			if (len(fields) == 6 || len(fields) == 7) && strings.EqualFold(fields[0], "house-control") {
+			if len(fields) >= 6 && strings.EqualFold(fields[0], "house-control") {
+				guestIDs := []int64(nil)
+				if strings.HasPrefix(fields[len(fields)-1], "guests=") {
+					var guestsErr error
+					guestIDs, guestsErr = parseHouseFixtureGuests(strings.TrimPrefix(fields[len(fields)-1], "guests="))
+					if guestsErr != nil {
+						return Scenario{}, fmt.Errorf("scenario %q line %d: invalid house-control guests: %w", name, lineNo, guestsErr)
+					}
+					fields = fields[:len(fields)-1]
+				}
+				if len(fields) != 6 && len(fields) != 7 {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: invalid house-control %q", name, lineNo, line)
+				}
 				vnum, vnumErr := strconv.Atoi(fields[1])
 				atrium, atriumErr := strconv.Atoi(fields[2])
 				direction := strings.ToLower(fields[3])
@@ -566,12 +580,13 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 					keyField = 6
 				}
 				key, keyErr := strconv.Atoi(fields[keyField])
-				if vnumErr == nil && atriumErr == nil && ownerErr == nil && portOwnerErr == nil && keyErr == nil && vnum > 0 && atrium > 0 && owner > 0 && portOwner >= 0 && key > 0 && validFixtureDirection(direction) && fixtureDirectionIndex(direction) >= 0 {
-					sc.HouseControls = append(sc.HouseControls, HouseControlFixture{
-						VNum: vnum, Atrium: atrium, ExitNum: fixtureDirectionIndex(direction), Owner: owner, PortOwner: portOwner, Key: key,
-					})
-					continue
+				if vnumErr != nil || atriumErr != nil || ownerErr != nil || portOwnerErr != nil || keyErr != nil || vnum <= 0 || atrium <= 0 || owner <= 0 || portOwner < 0 || key <= 0 || !validFixtureDirection(direction) || fixtureDirectionIndex(direction) < 0 {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: invalid house-control %q", name, lineNo, line)
 				}
+				sc.HouseControls = append(sc.HouseControls, HouseControlFixture{
+					VNum: vnum, Atrium: atrium, ExitNum: fixtureDirectionIndex(direction), Owner: owner, PortOwner: portOwner, Key: key, Guests: guestIDs,
+				})
+				continue
 			}
 			if len(fields) == 2 && strings.EqualFold(fields[0], "inert-scroll") {
 				objVNum, objErr := strconv.Atoi(fields[1])
@@ -868,6 +883,31 @@ func validFixtureDirection(direction string) bool {
 	default:
 		return false
 	}
+}
+
+func parseHouseFixtureGuests(value string) ([]int64, error) {
+	const maxHouseGuests = 50
+	if value == "" {
+		return nil, fmt.Errorf("guest ID list is empty")
+	}
+	parts := strings.Split(value, ",")
+	if len(parts) > maxHouseGuests {
+		return nil, fmt.Errorf("guest ID list has %d entries; maximum is %d", len(parts), maxHouseGuests)
+	}
+	guests := make([]int64, 0, len(parts))
+	seen := make(map[int64]struct{}, len(parts))
+	for _, part := range parts {
+		id, err := strconv.ParseInt(part, 10, 64)
+		if err != nil || id <= 0 {
+			return nil, fmt.Errorf("invalid guest ID %q", part)
+		}
+		if _, ok := seen[id]; ok {
+			return nil, fmt.Errorf("duplicate guest ID %d", id)
+		}
+		seen[id] = struct{}{}
+		guests = append(guests, id)
+	}
+	return guests, nil
 }
 
 func parseFixtureToggle(value string) (bool, bool) {

@@ -1,0 +1,22 @@
+# C-first immortal house build resolving the owner from the persistent player
+# index while that account is offline.
+# depth-case: hcontrol.build-offline-owner
+
+[fixture]
+quiet-mobs
+seed-player
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[probe]
+hcontrol build 8162 north Oraklet

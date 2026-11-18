@@ -1182,7 +1182,7 @@ func houseFixtureUint64(field string, value int64) (uint64, error) {
 
 // applyOracleHouseControlFixtures writes the native 64-bit Linux C record
 // consumed by House_boot (src/house.h:31-47). The oracle and the Go fixture
-// deliberately share only the semantic fields used by key_seller; all other
+// share the house identity, owner, key, and optional guest IDs; all other
 // record bytes remain zero, just as a newly built C house record does.
 func applyOracleHouseControlFixtures(oracleData string, fixtures []oraclediff.HouseControlFixture) error {
 	if len(fixtures) == 0 {
@@ -1210,13 +1210,26 @@ func applyOracleHouseControlFixtures(oracleData string, fixtures []oraclediff.Ho
 		if err != nil {
 			return err
 		}
+		if len(fixture.Guests) > 50 {
+			return fmt.Errorf("house fixture has %d guest IDs; maximum is 50", len(fixture.Guests))
+		}
 		record := make([]byte, cHouseControlRecordSize)
 		binary.LittleEndian.PutUint32(record[0:], vnum)
 		binary.LittleEndian.PutUint32(record[4:], atrium)
 		binary.LittleEndian.PutUint32(record[8:], exitNum)
 		binary.LittleEndian.PutUint32(record[24:], 0) // HOUSE_PRIVATE
 		binary.LittleEndian.PutUint64(record[32:], owner)
-		binary.LittleEndian.PutUint32(record[40:], 0) // no guests
+		binary.LittleEndian.PutUint32(record[40:], uint32(len(fixture.Guests)))
+		for i, guestID := range fixture.Guests {
+			guest, err := houseFixtureUint64("guest ID", guestID)
+			if err != nil || guest == 0 {
+				if err == nil {
+					err = fmt.Errorf("house fixture guest ID must be positive")
+				}
+				return err
+			}
+			binary.LittleEndian.PutUint64(record[48+i*8:], guest)
+		}
 		binary.LittleEndian.PutUint32(record[456:], key)
 		data = append(data, record...)
 	}
@@ -1253,7 +1266,8 @@ func applyGoHouseControlFixtures(goWork string, fixtures []oraclediff.HouseContr
 	records := make([]houseControl, 0, len(fixtures))
 	for _, fixture := range fixtures {
 		records = append(records, houseControl{
-			VNum: fixture.VNum, Atrium: fixture.Atrium, ExitNum: fixture.ExitNum, Owner: fixture.PortOwner, Key: fixture.Key,
+			VNum: fixture.VNum, Atrium: fixture.Atrium, ExitNum: fixture.ExitNum, Owner: fixture.PortOwner,
+			NumOfGuests: len(fixture.Guests), Guests: houseFixtureGuestArray(fixture.Guests), Key: fixture.Key,
 		})
 	}
 	data, err := json.MarshalIndent(records, "", "  ")
@@ -1269,6 +1283,16 @@ func applyGoHouseControlFixtures(goWork string, fixtures []oraclediff.HouseContr
 		return fmt.Errorf("write %s: %w", path, err)
 	}
 	return nil
+}
+
+func houseFixtureGuestArray(guestIDs []int64) (guests [50]int64) {
+	for i, id := range guestIDs {
+		if i == len(guests) {
+			break
+		}
+		guests[i] = id
+	}
+	return guests
 }
 
 // prepareGoReloginDB creates the port's throwaway SQLite store. The C oracle's
