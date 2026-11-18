@@ -1098,7 +1098,6 @@ func (w *World) LookAtRoomSimple(roomVNum int, sender any) {
 
 	room := w.GetRoomInWorld(roomVNum)
 	if room == nil {
-		sm.SendMessage("You see nothing but void.\r\n")
 		return
 	}
 

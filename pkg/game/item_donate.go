@@ -99,7 +99,6 @@ func (w *World) performDispose(ch Actor, obj *ObjectInstance, mode int, sname st
 		if err := w.MoveObjectToRoomFront(obj, donationRoom); err != nil {
 			slog.Error("donation move failed",
 				"player", ch.GetName(), "item_vnum", obj.VNum, "error", err)
-			ch.SendMessage("Something went wrong. Your item was not donated.\r\n")
 			disposeAddInventory(ch, obj)
 			return 0
 		}
@@ -141,7 +140,6 @@ func (w *World) performDisposeGold(ch Actor, amount int, mode int, donationRoom 
 				"player", ch.GetName(), "error", err)
 			// The reservation is returned: the donation never landed.
 			disposeAddGold(ch, amount)
-			ch.SendMessage("Something went wrong. Your gold was not donated.\r\n")
 			return
 		}
 		// C act() receives a NULL actor here (src/act.item.c:453), so it uses the

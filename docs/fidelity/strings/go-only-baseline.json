@@ -38,15 +38,6 @@
       "evidence": "src/act.wizard.c:1788 \"The game is %s completely open.\\r\\n\" — C do_wizlock has no nil-manager guard; it prints the wizlock status line",
       "firstSeen": "2026-09-23"
     },
-    "Error looking up player.": {
-      "segment": "Error looking up player.",
-      "file": "pkg/session/cmd_info.go",
-      "line": 1627,
-      "sink": ".Send",
-      "reason": "bug:invented",
-      "evidence": "src/new_cmds.c:1415 \"There is no such player.\\r\\n\" — C do_whois loads the save file and prints this; the DB-error line is Go-only",
-      "firstSeen": "2026-09-23"
-    },
     "Error saving aliases.": {
       "segment": "Error saving aliases.",
       "file": "pkg/session/act_social.go",
@@ -74,15 +65,6 @@
       "evidence": "no C text; nearest: src/act.wizard.c:3336 — Go nil-parsed-world guard in rlist/olist/mlist; C reads world data directly",
       "firstSeen": "2026-09-23"
     },
-    "Nothing magical happens.": {
-      "segment": "Nothing magical happens.",
-      "file": "pkg/session/use_cmds.go",
-      "line": 66,
-      "sink": ".Send",
-      "reason": "bug:invented",
-      "evidence": "no C text; nearest: src/spell_parser.c:660 — C's ITEM_SCROLL recite has no such pre-check; invalid spellnum is silently ignored (spell_parser.c:405)",
-      "firstSeen": "2026-09-23"
-    },
     "Parsed world data not available.": {
       "segment": "Parsed world data not available.",
       "file": "pkg/session/wiz_stats.go",
@@ -92,15 +74,6 @@
       "evidence": "no C text; nearest: src/act.wizard.c:395 — Go nil-parsed-world guard in vnum; C do_vnum reads mob/obj protos directly",
       "firstSeen": "2026-09-23"
     },
-    "Player lookup not available.": {
-      "segment": "Player lookup not available.",
-      "file": "pkg/game/house_player.go",
-      "line": 148,
-      "sink": ".SendMessage",
-      "reason": "bug:invented",
-      "evidence": "no C text; nearest: src/house.c:652 — C get_id_by_name always answers; the unwired-lookup branch is port-only",
-      "firstSeen": "2026-09-23"
-    },
     "Room data not found.": {
       "segment": "Room data not found.",
       "file": "pkg/session/wiz_stats.go",
@@ -108,24 +81,6 @@
       "sink": ".Send",
       "reason": "bug:invented",
       "evidence": "src/act.wizard.c:422 \"Room name: %s%s%s\\r\\n\" — C do_stat_room prints the report unconditionally; no room-not-found branch",
-      "firstSeen": "2026-09-23"
-    },
-    "Something went wrong. Your gold was not donated.": {
-      "segment": "Something went wrong. Your gold was not donated.",
-      "file": "pkg/game/item_donate.go",
-      "line": 144,
-      "sink": ".SendMessage",
-      "reason": "bug:invented",
-      "evidence": "no C text; nearest: src/act.item.c:453 — C perform_drop_gold moves the coins unconditionally; no failure line",
-      "firstSeen": "2026-09-23"
-    },
-    "Something went wrong. Your item was not donated.": {
-      "segment": "Something went wrong. Your item was not donated.",
-      "file": "pkg/game/item_donate.go",
-      "line": 102,
-      "sink": ".SendMessage",
-      "reason": "bug:invented",
-      "evidence": "no C text; nearest: src/act.item.c:510 — C perform_drop moves the item unconditionally; no failure line",
       "firstSeen": "2026-09-23"
     },
     "That information is not available right now.": {
@@ -164,24 +119,6 @@
       "evidence": "src/spec_procs2.c:1398 \"$n exclaims, 'Don't let the bad man hurt me, mommy!\" — C little_boy never gives a note or leaves; the runs-off line is Go-only",
       "firstSeen": "2026-09-23"
     },
-    "Unknown channel.": {
-      "segment": "Unknown channel.",
-      "file": "pkg/game/comm_channel.go",
-      "line": 145,
-      "sink": "communicationSend",
-      "reason": "bug:invented",
-      "evidence": "no C text; nearest: src/act.comm.c:1146 — C do_gen_comm takes subcmd from cmd_info; no unknown-channel text (cmdChannel callers pass fixed names)",
-      "firstSeen": "2026-09-23"
-    },
-    "Unknown toggle.": {
-      "segment": "Unknown toggle.",
-      "file": "pkg/game/other_settings.go",
-      "line": 316,
-      "sink": ".SendMessage",
-      "reason": "bug:invented",
-      "evidence": "no C text; nearest: src/act.other.c:1142 — C's toggles are separate cmd_info entries into do_gen_tog; no unknown-subcmd text",
-      "firstSeen": "2026-09-23"
-    },
     "Usage: checkload { obj | mob } \u003cnumber\u003e": {
       "segment": "Usage: checkload { obj | mob } \u003cnumber\u003e",
       "file": "pkg/session/wiz_info.go",
@@ -209,31 +146,13 @@
       "evidence": "src/act.wizard.c:422 \"Room name: %s%s%s\\r\\n\" — Go nil-world guards in stat room/obj and vnum; C reads world[] and prints the report",
       "firstSeen": "2026-09-23"
     },
-    "You are Rank": {
-      "segment": "You are Rank",
-      "file": "pkg/game/clan_info.go",
-      "line": 33,
-      "sink": ".SendMessage",
-      "reason": "bug:invented",
-      "evidence": "src/clan.c:677 \"You are %s (Rank %d) of %s\\r\\n\" — rank\u003e0 with no clan: C indexes clan[-1] (UB); \"of a clan\" line has no C source",
-      "firstSeen": "2026-09-23"
-    },
     "You aren't holding that.": {
       "segment": "You aren't holding that.",
       "file": "pkg/session/use_cmds.go",
-      "line": 188,
+      "line": 184,
       "sink": ".Send",
       "reason": "bug:invented",
       "evidence": "src/act.other.c:933 \"You don't seem to have %s %s.\\r\\n\" — No zap verb in C; do_use's not-found branch says this (\"holding\" variant commented out at :939)",
-      "firstSeen": "2026-09-23"
-    },
-    "You see nothing but void.": {
-      "segment": "You see nothing but void.",
-      "file": "pkg/game/world.go",
-      "line": 1101,
-      "sink": ".SendMessage",
-      "reason": "bug:invented",
-      "evidence": "no C text; nearest: src/spells.c:935 — spell_mindsight returns silently on a bad location; look_at_room (act.informative.c:725) has no void branch",
       "firstSeen": "2026-09-23"
     },
     "You tumble out into a strange place...": {
@@ -248,7 +167,7 @@
     "Zap who?": {
       "segment": "Zap who?",
       "file": "pkg/session/use_cmds.go",
-      "line": 167,
+      "line": 163,
       "sink": ".Send",
       "reason": "bug:invented",
       "evidence": "src/act.other.c:903 \"What do you want to %s?\\r\\n\" — No zap verb in C; do_use's no-argument branch prints this with CMD_NAME",

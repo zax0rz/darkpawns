@@ -22,16 +22,16 @@ func (w *World) doClanStatus(ch *Player) {
 		return
 	}
 
+	if c == nil {
+		ch.SendMessage("You do not belong to a clan!\r\n")
+		return
+	}
 	rankName := ""
-	if c != nil && ch.ClanRank-1 >= 0 && ch.ClanRank-1 < len(c.RankName) {
+	if ch.ClanRank-1 >= 0 && ch.ClanRank-1 < len(c.RankName) {
 		rankName = c.RankName[ch.ClanRank-1]
 	}
-	if c != nil {
-		ch.SendMessage(fmt.Sprintf("You are %s (Rank %d) of %s\r\n",
-			rankName, ch.ClanRank, c.Name))
-	} else {
-		ch.SendMessage(fmt.Sprintf("You are Rank %d of a clan", ch.ClanRank))
-	}
+	ch.SendMessage(fmt.Sprintf("You are %s (Rank %d) of %s\r\n",
+		rankName, ch.ClanRank, c.Name))
 }
 
 // ---------------------------------------------------------------------------
