@@ -9,6 +9,8 @@ empty-players
 quiet-mobs
 spawn-mob 19405 1 8105 194
 spawn-mob 16303 1 8105 80
+set-mob-flag 19405 AGGRESSIVE
+set-mob-flag 19405 AGGR24
 
 [setup:oracle]
 Fingerforge
