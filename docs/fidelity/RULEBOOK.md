@@ -57,6 +57,16 @@ the C server exactly. Not "equivalent." Not "improved." Identical.
   (`show`, `stat`, `mlist`, `home`, `hcontrol`, clan info, the practice list,
   the start-room vision, the editor's numbered listing, the infobar); all
   were restored to the intended bytes against the `-O0` build.
+  **Shop and special-procedure arithmetic/identity branches that depend on
+  undefined behaviour are settled by exclusion, not by a test.** The branches
+  are `buy_price`'s float-to-int conversion when the product leaves `int` range
+  (`src/shop.c:460-468`), the signed transaction/gold sums in `shopping_buy`
+  and `shopping_sell` (`src/shop.c:548-550`, `:773-774`), `pet_shops` buying a
+  player from the roster through `read_mobile(GET_MOB_RNUM(pet), REAL)`
+  (`src/spec_procs.c:1878-1880`), and the signed bank sums in the bank special
+  (`src/spec_procs.c:2369-2392`). The port keeps bounded, defined behaviour,
+  invents no player-facing bytes, and never reproduces an out-of-bounds read or
+  a signed overflow. Each row names its C line.
 - **R1b. Normalization may not erase a player-facing byte class.** A
   normalization rule that removes or rewrites bytes in the compared transcript
   (ANSI color, line terminators, trailing whitespace) claims those bytes are
@@ -258,3 +268,4 @@ cannot observe them.
 | 2026-10-30 | R1b added | DeepSeek ANSI audit (PR #2231): the census strips ANSI and folds terminators, so combat color was never compared; same class as cutthroat #532/#537. Proposed by the auditing agent, wording widened by Claude, approved by Zach |
 | 2026-11-05 | R5i added | PR #2271: quiet-mobs, the fixture in 1,813 scenarios, hid literal `$n` on every ambient city mob (PF-100); second instance after PF-099's no-cost practice fixtures, so R5b. Proposed by GLM, approved by Zach |
 | 2026-11-06 | R5j added | PR #2280 (DP-1456): 52 spellmatrix scenarios passed on identical `Huh?!?` refusals of their item-editor setup, backing 269 manifest rows in v0.1.8; second instance after RO-012's refused peer logins, so R5b. Proposed by GLM, wording tightened by Claude, approved by Zach |
+| 2026-11-18 | R1a shop exclusion added | Five shop and bank branches (`docs/briefs/PROPOSAL-2026-11-14-shop-r1a.md`) exist only through C overflow or an out-of-bounds read, so no oracle scenario can settle them and no unit test can without inventing a semantic. Proposed by DeepSeek, approved by Zach as written |
