@@ -71,7 +71,7 @@ goto 3001
 load mob 16303
 send:peer goto 3001
 send:peer switch clone
-send:peer hit horse
+send:peer hit trainee
 
 [probe]
 peace
