@@ -1,0 +1,118 @@
+# C-first cast path: an Outlaw Mage charms a lower-level connected Mage, then
+# that charmed player attempts to animate the real NPC corpse in the same room.
+# C path: src/spells.c:407-464; src/magic.c:1673-1712; src/spell_parser.c:452-500.
+# depth-case: objmagic.animate-dead-giddy-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Animategod
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Animategod
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Outlawmage]
+Outlawmage
+Y
+ownerpass
+ownerpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:Outlawmage]
+Outlawmage
+y
+ownerpass
+ownerpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Magepeer]
+Magepeer
+Y
+magepass
+magepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:Magepeer]
+Magepeer
+y
+magepass
+magepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Outlawmage 8105
+teleport Magepeer 8105
+set player Outlawmage outlaw on
+set player Outlawmage class mage
+set player Outlawmage level 34
+set player Outlawmage maxmana 5000
+set player Outlawmage mana 5000
+skillset Outlawmage 'charm person' 100
+set player Magepeer class mage
+set player Magepeer level 0
+skillset Magepeer 'animate dead' 100
+nohassle
+kill trainee
+
+[probe]
+skillset Outlawmage 'charm person' 100
+send:outlawmage cast 'charm person' Magepeer
+~dpclock pulse 40
+send:outlawmage cast 'charm person' Magepeer
+set player Magepeer level 31
+send:magepeer cast 'animate dead' corpse
