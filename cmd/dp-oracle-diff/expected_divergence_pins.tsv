@@ -5,7 +5,7 @@ fault-mail-runtime	check	0a5403916777443cc130081df4e42bf09a47b5aefaabcd784f8eb6c
 fault-mail-runtime	receive	4c4db1e44462436f6926d27e38e9ba7cfdf6d5d5533f43319b36ad86b403c84b	mail.tsv:mail.send-store-inert:excluded
 fight-quan-lo-five-fingers-depth	~dpclock pulse 40 [actor]	49e46e14a16353a840743d0ce6448c7e77cc46eb2ca433571d1c1f858447b77f	fight.tsv:damage.quan-lo-five-fingers:blocked
 fight-quan-lo-five-fingers-depth	~dpclock pulse 40 [observer]	53bf71584da79e8ad9ac85bd1dfbc059321e4f7f2b988a29f9c6cc71c9c62f80	fight.tsv:damage.quan-lo-five-fingers:blocked
-fight-quan-lo-five-fingers-depth	~dpclock pulse 40 [victim]	d27c8c1b5b60c6e1baa8bea780320ccb35b7a59cdf5ab22622f5dc03f51267f0	fight.tsv:damage.quan-lo-five-fingers:blocked
+fight-quan-lo-five-fingers-depth	~dpclock pulse 40 [victim]	b39720f37fec013d1a09ff9ff2c662bc70cedf13ef98939ddcfe732ad29f6efd	fight.tsv:damage.quan-lo-five-fingers:blocked
 fight-victim-dismount-feet-fanout-depth	kick Knockrider [actor]	0ba2e7db73fd98e4a84bd59eea06c2b02e6f3f2959f1d264fc4dc158076fd37f	fight-output.tsv:fight.damage-victim-dismount-feet:blocked;fight-output.tsv:fight.damage-victim-knockoff-char:blocked
 fight-victim-dismount-feet-fanout-depth	kick Knockrider [kickalpha]	fa5ded9be3797ca445ba6dbac0c8f9a3678a5e2cb8bf58cd13cbb3a23c590d97	fight-output.tsv:fight.damage-victim-dismount-feet:blocked;fight-output.tsv:fight.damage-victim-knockoff-char:blocked
 fight-victim-dismount-feet-fanout-depth	kick Knockrider [kickbravo]	fa5ded9be3797ca445ba6dbac0c8f9a3678a5e2cb8bf58cd13cbb3a23c590d97	fight-output.tsv:fight.damage-victim-dismount-feet:blocked;fight-output.tsv:fight.damage-victim-knockoff-char:blocked
@@ -54,14 +54,6 @@ fight-victim-dismount-thud-fanout-depth	send:kickbravo kick Knockrider [kickeagl
 fight-victim-dismount-thud-fanout-depth	send:kickbravo kick Knockrider [kickfoxtrot]	108bceb74cf3da6125e47d54c11f3dc9e99be9663dd418fa1d05ad065a658b3d	fight-output.tsv:fight.damage-victim-dismount-thud:blocked;fight-output.tsv:fight.damage-victim-knockoff-char:blocked
 fight-victim-dismount-thud-fanout-depth	send:kickbravo kick Knockrider [primary]	53862ec6f7783221136af41326428ce7ec68cd560a61517e324f5121cc93b93b	fight-output.tsv:fight.damage-victim-dismount-thud:blocked;fight-output.tsv:fight.damage-victim-knockoff-char:blocked
 fight-victim-dismount-thud-fanout-depth	send:kickbravo kick Knockrider [rider]	fea110aa5309202fbd5d093ae8d0a359b763fbd58701eaa24dddc0fb6550eb3c	fight-output.tsv:fight.damage-victim-dismount-thud:blocked;fight-output.tsv:fight.damage-victim-knockoff-char:blocked
-hcontrol-build-offline-owner-depth	hcontrol build 8162 north Oraklet	dca3a1cfd3d435da429d016c98e253707bf7227869c49d2a02b0f1be8df57392	hcontrol.tsv:hcontrol.build-offline-owner:blocked
-hcontrol-pay-mudlog-depth	hcontrol pay 8162 [actor]	3364ce19b943ffb25abb410192351eabfcf369e9696e3a669f3bca3ed6c69f24	hcontrol.tsv:hcontrol.pay-audit-log:blocked
-hcontrol-pay-mudlog-depth	hcontrol pay 8162 [watch]	d84b45835c84eb0f099bf4cebe5db3f07007c4513a6d66e815cc1aab7b9ff9a8	hcontrol.tsv:hcontrol.pay-audit-log:blocked
-hcontrol-show-offline-guests-depth	hcontrol show	9b5c46f922e163e3d0ff0ca68340eac2ee8c9fd343fbc318d84c82c3d11f1637	hcontrol.tsv:hcontrol.show-offline-guests:blocked
-hcontrol-show-offline-owner-depth	hcontrol show	f460a664b41faf140233518283b8a4459013a75d7e6982500c5ab85dd54f037c	hcontrol.tsv:hcontrol.show-offline-owner:blocked
-house-offline-guest-list-depth	house guest	dd9129f95089c036ece5e82a9ad05206a42a7f60be0c2c653bc793385a3f22d1	house.tsv:house.guest-list-offline:blocked
-house-offline-lookup-depth	house guest Oraklet	b81af514e3c81c102cee6393518e386e009883d4beda8f673b29b6f740fc89e8	house.tsv:house.guest-add-offline:blocked
-house-offline-transfer-depth	house transfer Oraklet	2494a539a2f8f4f2c6d9338eba4e67d8e46dd92cc13e869689665348070f6f67	house.tsv:house.transfer-offline:blocked
 lua-run-script-call-error-depth	say trigger	c5da1d88e3dbd9973a58455422ad4b9b18b0b9a476f26413fe75d886c1a76003	scripts.tsv:scripts.lua-run-script-call-error:blocked
 lua-run-script-open-fail-depth	say trigger	c810616219e1252d6ab2e3cbf43e3e01a0a43a6e888da4d3de7b7fe809c9ebfa	scripts.tsv:scripts.lua-run-script-open-fail:blocked
 mudlog-olc-disk-depth	zedit save 31 [primary]	d641835b8d33f35c6ab48a20d381013727076cf180dc72b36a74ad38b7732b30	mudlog.tsv:mudlog.olc-zedit-target-open-failure:blocked;zedit.tsv:zedit.save-open-failure:blocked

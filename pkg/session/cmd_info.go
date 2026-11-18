@@ -161,12 +161,12 @@ func alignmentText(alignment int) string {
 }
 
 // acText returns a text description for an AC value.
-// Source: act.informative.c do_score() lines 1240-1265
+// Source: act.informative.c do_score() lines 1232-1257
 func acText(ac int) string {
 	switch {
 	// C: if (ac == 100) — an exact test. Gear or an APPLY_AC affect can push a
 	// character above 100, and C still calls that "lightly clothed"
-	// (src/act.informative.c:1240-1265).
+	// (src/act.informative.c:1232-1257).
 	case ac == 100:
 		return "You are naked, have you no shame?"
 	case ac > 70:
@@ -180,9 +180,12 @@ func acText(ac int) string {
 	case ac > -40:
 		return "You are getting pretty sweaty with all that armor on."
 	case ac > -20:
-		return "You are extremely well armored." // Note: this case is after -40, so -20..-40 hits here
+		// Dead in C: ac > -20 implies ac > -40, so this arm is unreachable
+		// (src/act.informative.c:1244). Kept verbatim for structure.
+		return "You are very well armored."
 	case ac > -50:
-		return "You are extremely well armored."
+		// C has no final period here (src/act.informative.c:1246).
+		return "You are extremely well armored"
 	case ac > -75:
 		return "You are decked out in full battle armor."
 	case ac > -125:
@@ -278,7 +281,7 @@ func cmdScore(s *Session) error {
 	buf.WriteString(alignmentText(p.Alignment))
 	buf.WriteString("\r\n")
 
-	// 4. AC text (from C lines 1240-1265). acText already returns "You are ..."
+	// 4. AC text (from C lines 1232-1257). acText already returns "You are ..."
 	// sentences, so do not prepend another "You" — that produced "You You are well armored."
 	buf.WriteString(acText(p.GetAC()))
 	buf.WriteString("\r\n")

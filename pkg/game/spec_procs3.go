@@ -908,7 +908,8 @@ func specPortalToTemple(w *World, ch *Player, me *MobInstance, cmd string, arg s
 	Act(w, true, ch, nil, nil, nil, "With a blinding flash of light and a crack of thunder, $n disappears!", "", ToRoom)
 	ch.SetRoom(8008)
 	Act(w, true, ch, nil, nil, nil, "With a blinding flash of light and a crack of thunder, $n appears!", "", ToRoom)
-	w.lookAtRoom(ch, false)
+	// C calls do_look (src/spec_procs3.c:537), not look_at_room.
+	w.doLook(ch, nil, "look", "")
 	return true
 }
 
@@ -968,6 +969,8 @@ func specItoh(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	ch.SetRoom(19875)
 	Act(w, false, ch, nil, nil, nil,
 		"\r\nWith a blinding flash of light and a crack of thunder, $n appears!\r\n\r\n", "", ToRoom)
+	// C calls do_look (src/spec_procs3.c:606), not look_at_room.
+	w.doLook(ch, nil, "look", "")
 	return true
 }
 

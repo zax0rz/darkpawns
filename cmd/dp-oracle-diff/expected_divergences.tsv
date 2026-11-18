@@ -7,13 +7,6 @@ fight-victim-dismount-feet-fanout-depth	fight-output.tsv	fight.damage-victim-dis
 fight-victim-dismount-feet-fanout-depth	fight-output.tsv	fight.damage-victim-knockoff-char	blocked	
 fight-victim-dismount-thud-fanout-depth	fight-output.tsv	fight.damage-victim-dismount-thud	blocked	
 fight-victim-dismount-thud-fanout-depth	fight-output.tsv	fight.damage-victim-knockoff-char	blocked	
-hcontrol-build-offline-owner-depth	hcontrol.tsv	hcontrol.build-offline-owner	blocked	
-hcontrol-pay-mudlog-depth	hcontrol.tsv	hcontrol.pay-audit-log	blocked	
-hcontrol-show-offline-guests-depth	hcontrol.tsv	hcontrol.show-offline-guests	blocked	
-hcontrol-show-offline-owner-depth	hcontrol.tsv	hcontrol.show-offline-owner	blocked	
-house-offline-guest-list-depth	house.tsv	house.guest-list-offline	blocked	
-house-offline-lookup-depth	house.tsv	house.guest-add-offline	blocked	
-house-offline-transfer-depth	house.tsv	house.transfer-offline	blocked	
 lua-run-script-call-error-depth	scripts.tsv	scripts.lua-run-script-call-error	blocked	
 lua-run-script-open-fail-depth	scripts.tsv	scripts.lua-run-script-open-fail	blocked	
 mudlog-olc-disk-depth	mudlog.tsv	mudlog.olc-zedit-target-open-failure	blocked	

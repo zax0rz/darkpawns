@@ -276,10 +276,23 @@ func (w *World) HcontrolPayHouse(ch *Player, arg string) {
 	}
 
 	chName := ch.GetName()
-	// house.c:569-570: the argument as typed; NRM, MAX(LVL_IMMORT, invis level).
-	MudLog(fmt.Sprintf("Payment for house %s collected by %s.", args[0], chName), MudlogNormal, max(LVL_IMMORT, ch.GetInvisLevel()), true)
+	payload := fmt.Sprintf("Payment for house %s collected by %s.", args[0], chName)
+	level := max(LVL_IMMORT, ch.GetInvisLevel())
+	// Release World.mu before delivering: MudLog fans out through
+	// Player.SendMessage, which re-acquires World.mu (read) for the
+	// MessageSink. Holding the write lock across the broadcast
+	// deadlocks the live server (the milestone-provider unit rig does
+	// not, so it stays green while the census sees silence). The
+	// observer line still precedes the actor reply and the save below.
+	w.mu.Unlock()
 
-	w.HouseControl[i].LastPayment = time.Now().Unix()
+	// house.c:569-570: the argument as typed; NRM, MAX(LVL_IMMORT, invis level).
+	MudLog(payload, MudlogNormal, level, true)
+
+	w.mu.Lock()
+	if j := findHouse(w.HouseControl, vnum); j >= 0 {
+		w.HouseControl[j].LastPayment = time.Now().Unix()
+	}
 	w.mu.Unlock()
 
 	w.saveHouseControl()

@@ -27,7 +27,7 @@ func captureSpecOutput(w *game.World) map[string]string {
 }
 
 func TestSpecRechargerOutputThroughCharacterDispatch(t *testing.T) {
-	m, s := specProbeSession(t, []parser.Mob{{VNum: 8, Keywords: "recharger", ShortDesc: "the recharger", DefaultPos: combat.PosStanding}})
+	m, s := specProbeSession(t, []parser.Mob{{VNum: 8, Keywords: "recharger", ShortDesc: "the recharger", Position: combat.PosStanding, DefaultPos: combat.PosStanding}})
 	if _, err := m.world.SpawnMob(8, specProbeRoom); err != nil {
 		t.Fatalf("SpawnMob recharger: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestSpecRechargerOutputThroughCharacterDispatch(t *testing.T) {
 }
 
 func TestSpecBeholderCommandOutputThroughCharacterDispatch(t *testing.T) {
-	m, s := specProbeSession(t, []parser.Mob{{VNum: 11011, Keywords: "beholder", ShortDesc: "the beholder", DefaultPos: combat.PosStanding}})
+	m, s := specProbeSession(t, []parser.Mob{{VNum: 11011, Keywords: "beholder", ShortDesc: "the beholder", Position: combat.PosStanding, DefaultPos: combat.PosStanding}})
 	if _, err := m.world.SpawnMob(11011, specProbeRoom); err != nil {
 		t.Fatalf("SpawnMob beholder: %v", err)
 	}
@@ -192,7 +192,7 @@ func TestZenMasterOutputThroughCombatSpecialDispatch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m, s := specProbeSession(t, []parser.Mob{{
 				VNum: 18219, Keywords: "zen master", ShortDesc: "the zen master",
-				DefaultPos: combat.PosStanding, Level: 1,
+				Position: combat.PosStanding, DefaultPos: combat.PosStanding, Level: 1,
 			}})
 			m.combatEngine.Stop()
 			mob, err := m.world.SpawnMob(18219, specProbeRoom)
