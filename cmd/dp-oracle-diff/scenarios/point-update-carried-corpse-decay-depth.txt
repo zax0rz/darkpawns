@@ -1,0 +1,107 @@
+# A live God edits an existing food prototype through OEDIT to set value[3]
+# with the food poison field, then switches it to ITEM_CONTAINER and sets its
+# timer. This reaches the corpse-marker branch through live OLC, load, put, and
+# point_update paths (src/oedit.c:850-854,1180-1188,1353-1378).
+# depth-case: point-update.corpse-carried-decay-output
+# depth-case: point-update.corpse-contained-decay-spill
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Decaygod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Decaygod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Decayview
+Y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Decayview
+y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Decayview 8105
+oedit 12106
+d
+500
+0
+-1
+Q
+y
+load obj 12106
+oedit 12112
+5
+19
+d
+50
+1
+5
+15
+b
+1
+Q
+y
+
+# First: let a decaying barrel nested in a live chest spill its loaf into the
+# parent. Second: repeat with the barrel carried so point_update emits the
+# actor-only decay line and drops its contents in the room.
+[probe]
+load obj 12112
+load obj 12106
+load obj 8010
+put loaf barrel
+put barrel chest
+~dpclock pulse 630
+look in chest
+load obj 12112
+load obj 8010
+put loaf barrel
+~dpclock pulse 630
+look

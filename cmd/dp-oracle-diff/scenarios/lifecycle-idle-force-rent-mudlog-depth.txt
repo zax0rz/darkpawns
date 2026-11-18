@@ -1,0 +1,104 @@
+# A live level-34 complete-syslog observer receives check_idling's force-rent
+# producer from the real 31st hourly point_update. The actor's descriptor is
+# closed first; the log line still reaches the independent observer.
+# depth-case: mudlog.idle-force-rented
+
+[fixture]
+empty-players
+quiet-mobs
+compare-close
+set-room-sector 1 0
+
+[setup:oracle]
+Clockdriver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clockdriver
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Idleforcerent
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Idleforcerent
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+syslog complete
+teleport Idleforcerent 8004
+set player Clockdriver level 34
+
+[probe]
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630

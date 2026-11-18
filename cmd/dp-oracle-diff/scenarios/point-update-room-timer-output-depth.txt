@@ -1,0 +1,86 @@
+# A God edits the real dust and summoning-circle prototypes through the live
+# OLC timer field. Dust stays carried while the circle is dropped; one hourly C
+# pulse silently extracts carried dust and emits the floor circle's room line.
+# depth-case: point-update.timer-output-location-gates
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Decaygod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Decaygod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Decayview
+Y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Decayview
+y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Decayview 8105
+oedit 18
+b
+1
+Q
+y
+oedit 64
+b
+1
+Q
+y
+load obj 18
+load obj 64
+drop circle
+
+[probe]
+~dpclock pulse 630
+look
+inventory
