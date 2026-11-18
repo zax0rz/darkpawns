@@ -1,0 +1,81 @@
+# depth-case: whod.already-on
+# depth-case: whod.turned-on
+# depth-case: whod.already-off
+# depth-case: whod.turned-off
+# depth-case: mudlog.whod-on
+# depth-case: mudlog.whod-off
+# C-first live WHOD mode sequence: C's default includes SHOW_ON; the level-38
+# actor sees both transition acknowledgements and both already-set refusals,
+# while an independent level-38 syslog observer receives the producer logs.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Whodwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Whodwatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Whodactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Whodactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+syslog brief
+goto 21226
+advance Whodactor 38
+force Whodactor goto 21226
+
+[probe:actor]
+whod on
+whod off
+whod off
+whod on

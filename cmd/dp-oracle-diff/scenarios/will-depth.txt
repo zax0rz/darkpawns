@@ -1,6 +1,7 @@
 # depth-case: cast.psionic-literal-cast
 # depth-case: cast.will-entry
 # depth-case: cast.power-entry-surface
+# depth-case: cast.power-no-target
 # depth-case: will.level-gate
 # depth-case: will.unfamiliar-power
 # C-first vehicle for do_cast's psionic/mystic entry gates, which the
@@ -79,6 +80,7 @@ set player Willpsi class i
 set player Willpsi level 20
 set player Willpsi maxmana 5000
 set player Willpsi mana 5000
+skillset Willpsi 'mind blast' 75
 
 [probe:Willpsi]
 cast 'flame arrow'

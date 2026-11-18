@@ -1,3 +1,4 @@
+# depth-case: shops.partial-weight-output
 [fixture]
 seed-player
 quiet-mobs
@@ -46,6 +47,7 @@ Y
 1
 
 [warmup]
+set Testor gold 1000000
 goto 12137
 teleport Shopwitness 12137
 
