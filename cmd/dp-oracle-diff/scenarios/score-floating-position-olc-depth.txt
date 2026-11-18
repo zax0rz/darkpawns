@@ -50,7 +50,6 @@ J
 q
 y
 load mob 16303
-look
 switch trainee
 score
 return
