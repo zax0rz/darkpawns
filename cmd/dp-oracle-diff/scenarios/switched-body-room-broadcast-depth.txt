@@ -76,3 +76,4 @@ send:peer switch trainee
 [probe]
 peace
 purge
+send:peer look
