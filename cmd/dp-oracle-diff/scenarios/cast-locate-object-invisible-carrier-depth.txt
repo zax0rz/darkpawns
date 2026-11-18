@@ -1,7 +1,6 @@
 # depth-case: spell.locate-object-invisible-carrier
-# depth-case: spell.locate-object-worn-visible-owner
-# The visible worn-owner branch formats the same location line via the C
-# locate-object loop (src/spells.c:394-398).
+# C's hidden-owner CAN_SEE arm skips sprintf, so CAP/send_to_char reuses the
+# obfuscated say_spell buffer (src/spell_parser.c:271-343; src/spells.c:375-399).
 
 [fixture]
 empty-players
@@ -73,13 +72,9 @@ set Locator maxmana 5000
 set Locator mana 5000
 load obj 3515
 give bulbous Witness
-load obj 5200
-give dagger Witness
-set Witness class warrior
-force Witness wield dagger
 advance Witness 32
+force Witness invis 32
 set Locator level 31
 
 [probe]
 cast 'locate object' bulbous
-cast 'locate object' dagger
