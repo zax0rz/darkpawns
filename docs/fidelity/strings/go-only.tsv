@@ -4,14 +4,6 @@
 attacks you for	pkg/game/mob.go:476	.SendMessage
 points around the room.	pkg/game/skill_actor_utility.go:157	Act
 points around the room.	pkg/game/skill_actor_utility.go:196	Act
-says 'You're an evil one! That won't be allowed here!'	pkg/game/spec_procs2.go:1458	.SendMessage
-The boy smiles and hands you a small note.	pkg/game/spec_procs2.go:1479	.SendMessage
-The little boy runs off!	pkg/game/spec_procs2.go:1487	.SendMessage
-says 'I don't like you, and you'd better leave before I make you!'	pkg/game/spec_procs2.go:1521	.SendMessage
-A shimmering portal appears and sucks you in!	pkg/game/spec_procs2.go:1757	.SendMessage
-You tumble out into a strange place...	pkg/game/spec_procs2.go:1767	.SendMessage
-The bats swarm around you, blocking your escape!	pkg/game/spec_procs2.go:1896	.SendMessage
-A bat swoops down and attacks you!	pkg/game/spec_procs2.go:1918	.SendMessage
 Nice try.	pkg/game/spec_procs4.go:455	sendToChar
 Error saving aliases.	pkg/session/act_social.go:61	.Send
 Error saving aliases.	pkg/session/act_social.go:112	.Send

@@ -1807,6 +1807,34 @@ func (m *MobInstance) SetAlignment(align int) {
 	m.Runtime.AlignmentOverride = &align
 }
 
+// GetTalk reads C's GET_TALK(ch, i) (src/spec_procs.c:1328-1329).
+func (m *MobInstance) GetTalk(i int) int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if i < 0 || i >= len(m.Runtime.Talk) {
+		return 0
+	}
+	return m.Runtime.Talk[i]
+}
+
+// SetTalk writes C's GET_TALK(ch, i) (src/spec_procs.c:1318-1320).
+func (m *MobInstance) SetTalk(i, v int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if i < 0 || i >= len(m.Runtime.Talk) {
+		return
+	}
+	m.Runtime.Talk[i] = v
+}
+
+// ResetTalk zeroes C's GET_TALK(ch, 0..2) (src/spec_procs.c:1318-1320,
+// :1365-1367).
+func (m *MobInstance) ResetTalk() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Runtime.Talk = [3]int{}
+}
+
 // GetSavingThrow exposes C points.saving_throws to the existing spell accessor.
 func (m *MobInstance) GetSavingThrow(kind int) int {
 	m.mu.RLock()

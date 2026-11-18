@@ -290,6 +290,7 @@ and seems like	src/act.informative.c:2428	buffered:strcat	do_consider
 in battle before.	src/act.informative.c:2428	buffered:strcat	do_consider
 Diagnose who?	src/act.informative.c:2454	send_to_char	do_diagnose
 are available to	src/act.informative.c:2663	buffered:sprintf	do_commands
+privileged	src/act.informative.c:2664	buffered:sprintf	do_commands
 ([M]age, [C]leric, [T]hief, [W]arrior, Ps[i]onic, [N]inja,	src/act.informative.c:2699	send_to_char	do_skills
 A[s]sassin, M[a]gus, A[v]atar, [P]aladin)	src/act.informative.c:2699	send_to_char	do_skills
 Usage: skills <class abbrev>	src/act.informative.c:2699	send_to_char	do_skills
@@ -2385,18 +2386,6 @@ You catch	src/spec_procs.c:1123	buffered:sprintf	mini_thief
 's hand entering thier coin purse.	src/spec_procs.c:1125	buffered:sprintf	mini_thief
 sees the knight dressed in red and gives a battle cry!	src/spec_procs.c:1197	act	black_undead_knight
 sees the knight dressed in black and gives a battle cry!	src/spec_procs.c:1256	act	red_undead_knight
-, I'm gonna kill you.'	src/spec_procs.c:1336	act	mickey
-asks, 'And you wanna know why?'	src/spec_procs.c:1345	act	mickey
-says, 'I'll tell you later,	src/spec_procs.c:1353	act	mickey
-walks out the door and vanishes.	src/spec_procs.c:1355	act	mickey
-, I'm a natural born killer.'.	src/spec_procs.c:1361	act	mickey
-says, 'Shit	src/spec_procs.c:1361	act	mickey
-asks, 'How do you like me now?'	src/spec_procs.c:1390	act	mallory
-says, 'That was the worst head I've ever got.'	src/spec_procs.c:1394	act	mallory
-asks, 'How sexy am i now, fucker?'	src/spec_procs.c:1398	act	mallory
-asks, 'How sexy am i NOW?'	src/spec_procs.c:1400	act	mallory
-giggles madly.	src/spec_procs.c:1405	act	mallory
-shouts, 'You stupid biiitch!'	src/spec_procs.c:1408	act	mallory
 shouts, 'I said give me your ticket!'	src/spec_procs.c:1643	act	conductor
 asks, 'Why are you so stupid?'	src/spec_procs.c:1647	act	conductor
 shouts 'Get off my train you trash!'	src/spec_procs.c:1651	act	conductor
@@ -2407,7 +2396,6 @@ asks, 'Pardon me	src/spec_procs.c:1700	act	conductor
 asks, 'I said, do you have your ticket?'	src/spec_procs.c:1709	act	conductor
 , I'll let ya off this time, but don't do it again'.	src/spec_procs.c:1717	act	conductor
 says, 'Ok	src/spec_procs.c:1717	act	conductor
-walks out the door and vanishes.	src/spec_procs.c:1720	act	conductor
 says, 'Well then...'.	src/spec_procs.c:1727	act	conductor
 screams, 'GET THE HELL OFF MY TRAIN!!!'	src/spec_procs.c:1728	act	conductor
 A small sign on a chain around the neck says 'My name is	src/spec_procs.c:1888	buffered:sprintf	pet_shops
@@ -2491,16 +2479,8 @@ through a hidden trapdoor and returns a moment later, alone.	src/spec_procs2.c:1
 You follow Swiss though a small trapdoor into a maze of twists and	src/spec_procs2.c:1372	send_to_char	evillead
 life. As you near a narrow, well lit passage, Swiss turns around and vanishes	src/spec_procs2.c:1372	send_to_char	evillead
 turns, winding through the various tunnels as if he's been doing it all his	src/spec_procs2.c:1372	send_to_char	evillead
-exclaims, 'Don't let the bad man hurt me, mommy!	src/spec_procs2.c:1398	act	little_boy
-exclaims, 'Dirty Orange Scum!'	src/spec_procs2.c:1417	act	ira
 killed by Medusa special at	src/spec_procs2.c:1571	buffered:sprintf	medusa
 all.black	src/spec_procs2.c:1633	buffered:sprintf	eq_thief
-Your movements wake up	src/spec_procs2.c:1763	act	bat_room
-swoops down, narrowly missing your face.	src/spec_procs2.c:1780	act	bat
-lets out a shrill, piercing scream.	src/spec_procs2.c:1785	act	bat
-Circling around your head,	src/spec_procs2.c:1790	act	bat
-lets out a high-pitched shriek.	src/spec_procs2.c:1790	act	bat
-up with it's flapping!	src/spec_procs2.c:1812	act	bat
 humiliates you and blocks your way.	src/spec_procs2.c:1837	act	no_move_east
 Sorry, I only serve the house owner.	src/spec_procs2.c:1888	buffered:sprintf	key_seller
 I only sell keys, currently.	src/spec_procs2.c:1899	buffered:sprintf	key_seller

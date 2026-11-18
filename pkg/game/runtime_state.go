@@ -85,4 +85,9 @@ type MobRuntimeState struct {
 	DamageSidesOverride *int           `json:"damage_sides_override,omitempty"`
 	Horse               *HorseState    `json:"horse,omitempty"`
 	Script              map[string]any `json:"script,omitempty"`
+	// Talk mirrors C's GET_TALK(ch, 0..2) (char_data.talk[3],
+	// src/spec_procs.c:1318-1320) for mobiles whose special tracks a
+	// three-beat approach (mickey, src/spec_procs.c:1269-1371). Mobs are
+	// ephemeral (never saved), so this is not a save-format change.
+	Talk [3]int `json:"talk,omitempty"`
 }
