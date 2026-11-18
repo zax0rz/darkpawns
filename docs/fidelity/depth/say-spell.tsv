@@ -1,0 +1,5 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+say_spell	cast	say-spell.same-room-self	D3	audience	oracle-green	spell-parser-say-spell-audiences-depth@1	src/spell_parser.c:286-296	C-first Mage self-target cast reaches tch==ch in the same room and emits the closes-eyes/uttered-words line to the room observer.
+say_spell	cast	say-spell.same-room-character	D3	audience	oracle-green	spell-parser-say-spell-audiences-depth@1	src/spell_parser.c:286-298	C-first Mage cast to a distinct same-room player reaches the stares-at-$N/uttered-words template; the named Mage observer receives the exact words.
+say_spell	cast	say-spell.carried-object	D3	audience	oracle-green	identify-affects-depth@1	src/spell_parser.c:300-312	C-first Identify cast at a carried sword reaches the stares-at-$p/uttered-words template; its named room Mage receives the exact object-target act.
+say_spell	cast	say-spell.no-target-fallback	D3	audience	oracle-green	magic-surface-callsite-depth@1	src/spell_parser.c:313-326	C-first targetless Create Food cast reaches the fallback uttered-words template before the routine reports its targetless outcome.
