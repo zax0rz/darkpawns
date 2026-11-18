@@ -1,0 +1,82 @@
+# depth-case: mob.memory-warning-exclaim
+# A level-30 peer hits the memory mobile once; the next C mobile pulse emits
+# the remembered-attacker warning before its hit (src/fight.c:1448;
+# src/mobact.c:261-282).
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 14304 99 8105 143
+replace-room-exits 8105 none
+
+[setup:oracle]
+Mirek
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mirek
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Orlan
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Orlan
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Orlan 8105
+set Orlan level 30
+set Orlan maxhit 5000000
+set Orlan hit 5000000
+set mob slave maxhit 5000
+set mob slave hit 5000
+goto 8004
+
+[probe]
+send:peer hit slave
+~dpclock pulse 40
+look

@@ -1,0 +1,33 @@
+# C-first probe for run_script's failed oncmd callback diagnostics. C's brief
+# syslog includes the raw Lua error plus the call-site diagnostic; Go omits the
+# raw error block. See divergence DP-1575.
+# depth-case: scripts.lua-run-script-call-error
+
+[fixture]
+quiet-mobs
+spawn-mob 8012 1 8162 80
+mob-script 8012 oracle/call-error.lua 512
+
+[lua-script mob/oracle/call-error.lua]
+function oncmd()
+  error("oracle probe")
+end
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8162
+syslog brief
+
+[probe]
+say trigger

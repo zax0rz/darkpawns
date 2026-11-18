@@ -335,7 +335,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	if err := os.CopyFS(filepath.Join(tmp, "text"), os.DirFS(filepath.Join(repoRoot, "lib", "text"))); err != nil {
 		return fmt.Errorf("copy lib/text to throwaway directory: %w", err)
 	}
-	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.MobObjectFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.MobFlagFixtures) > 0 || len(scenario.ObjIndexFixtures) > 0 || len(scenario.WldIndexFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.RoomScripts) > 0 || len(scenario.ForceLoadVNums) > 0 || len(scenario.HouseControls) > 0 {
+	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.ZoneCommandFixtures) > 0 || len(scenario.MobObjectFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.MobFlagFixtures) > 0 || len(scenario.ObjIndexFixtures) > 0 || len(scenario.WldIndexFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.RoomScripts) > 0 || len(scenario.ForceLoadVNums) > 0 || len(scenario.HouseControls) > 0 {
 		if err := applyObjIndexFixtures(filepath.Join(oracleData, "world"), scenario.ObjIndexFixtures); err != nil {
 			return fmt.Errorf("apply C oracle obj index fixtures: %w", err)
 		}
@@ -379,6 +379,12 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 			if err := applyQuietMobFixtures(goWorld); err != nil {
 				return fmt.Errorf("apply Go port quiet-mob fixture: %w", err)
 			}
+		}
+		if err := applyZoneCommandFixtures(filepath.Join(oracleData, "world"), scenario.ZoneCommandFixtures); err != nil {
+			return fmt.Errorf("apply C oracle zone-command fixtures: %w", err)
+		}
+		if err := applyZoneCommandFixtures(goWorld, scenario.ZoneCommandFixtures); err != nil {
+			return fmt.Errorf("apply Go port zone-command fixtures: %w", err)
 		}
 		if err := applyMobFixtures(filepath.Join(oracleData, "world"), scenario.MobFixtures); err != nil {
 			return fmt.Errorf("apply C oracle mob fixtures: %w", err)
@@ -1182,7 +1188,7 @@ func houseFixtureUint64(field string, value int64) (uint64, error) {
 
 // applyOracleHouseControlFixtures writes the native 64-bit Linux C record
 // consumed by House_boot (src/house.h:31-47). The oracle and the Go fixture
-// deliberately share only the semantic fields used by key_seller; all other
+// share the house identity, owner, key, and optional guest IDs; all other
 // record bytes remain zero, just as a newly built C house record does.
 func applyOracleHouseControlFixtures(oracleData string, fixtures []oraclediff.HouseControlFixture) error {
 	if len(fixtures) == 0 {
@@ -1210,13 +1216,26 @@ func applyOracleHouseControlFixtures(oracleData string, fixtures []oraclediff.Ho
 		if err != nil {
 			return err
 		}
+		if len(fixture.Guests) > 50 {
+			return fmt.Errorf("house fixture has %d guest IDs; maximum is 50", len(fixture.Guests))
+		}
 		record := make([]byte, cHouseControlRecordSize)
 		binary.LittleEndian.PutUint32(record[0:], vnum)
 		binary.LittleEndian.PutUint32(record[4:], atrium)
 		binary.LittleEndian.PutUint32(record[8:], exitNum)
 		binary.LittleEndian.PutUint32(record[24:], 0) // HOUSE_PRIVATE
 		binary.LittleEndian.PutUint64(record[32:], owner)
-		binary.LittleEndian.PutUint32(record[40:], 0) // no guests
+		binary.LittleEndian.PutUint32(record[40:], uint32(len(fixture.Guests)))
+		for i, guestID := range fixture.Guests {
+			guest, err := houseFixtureUint64("guest ID", guestID)
+			if err != nil || guest == 0 {
+				if err == nil {
+					err = fmt.Errorf("house fixture guest ID must be positive")
+				}
+				return err
+			}
+			binary.LittleEndian.PutUint64(record[48+i*8:], guest)
+		}
 		binary.LittleEndian.PutUint32(record[456:], key)
 		data = append(data, record...)
 	}
@@ -1253,7 +1272,8 @@ func applyGoHouseControlFixtures(goWork string, fixtures []oraclediff.HouseContr
 	records := make([]houseControl, 0, len(fixtures))
 	for _, fixture := range fixtures {
 		records = append(records, houseControl{
-			VNum: fixture.VNum, Atrium: fixture.Atrium, ExitNum: fixture.ExitNum, Owner: fixture.PortOwner, Key: fixture.Key,
+			VNum: fixture.VNum, Atrium: fixture.Atrium, ExitNum: fixture.ExitNum, Owner: fixture.PortOwner,
+			NumOfGuests: len(fixture.Guests), Guests: houseFixtureGuestArray(fixture.Guests), Key: fixture.Key,
 		})
 	}
 	data, err := json.MarshalIndent(records, "", "  ")
@@ -1269,6 +1289,16 @@ func applyGoHouseControlFixtures(goWork string, fixtures []oraclediff.HouseContr
 		return fmt.Errorf("write %s: %w", path, err)
 	}
 	return nil
+}
+
+func houseFixtureGuestArray(guestIDs []int64) (guests [50]int64) {
+	for i, id := range guestIDs {
+		if i == len(guests) {
+			break
+		}
+		guests[i] = id
+	}
+	return guests
 }
 
 // prepareGoReloginDB creates the port's throwaway SQLite store. The C oracle's
@@ -2014,6 +2044,38 @@ func applyQuietZoneFixtures(worldDir string, zoneNumbers []int) error {
 		path := filepath.Join(worldDir, "zon", fmt.Sprintf("%d.zon", zoneNumber))
 		if err := quietMobResets(path); err != nil {
 			return fmt.Errorf("quiet zone %d: %w", zoneNumber, err)
+		}
+	}
+	return nil
+}
+
+func applyZoneCommandFixtures(worldDir string, fixtures []oraclediff.ZoneCommandFixture) error {
+	for _, fixture := range fixtures {
+		path := filepath.Join(worldDir, "zon", fmt.Sprintf("%d.zon", fixture.ZoneNumber))
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("read zone %d: %w", fixture.ZoneNumber, err)
+		}
+		lines := strings.Split(string(data), "\n")
+		inserted := false
+		for i, line := range lines {
+			if strings.TrimSpace(line) != "S" {
+				continue
+			}
+			command := fmt.Sprintf("%s %d %d %d", fixture.Command, fixture.IfFlag, fixture.Arg1, fixture.Arg2)
+			lines = append(lines[:i], append([]string{command}, lines[i:]...)...)
+			inserted = true
+			break
+		}
+		if !inserted {
+			return fmt.Errorf("zone %d has no S terminator", fixture.ZoneNumber)
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("stat zone %d: %w", fixture.ZoneNumber, err)
+		}
+		if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm()); err != nil { // #nosec G703 -- zone number is parsed and joined under a disposable world root
+			return fmt.Errorf("write zone %d: %w", fixture.ZoneNumber, err)
 		}
 	}
 	return nil

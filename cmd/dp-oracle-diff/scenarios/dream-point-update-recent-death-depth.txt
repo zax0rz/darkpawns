@@ -1,0 +1,123 @@
+# A PC dies to a staged Zoomaster, reenters, then sleeps and reaches dream()
+# during the first real day. The frozen MUD clock drives point_update without
+# advancing the C wall clock across a day boundary.
+# depth-case: dream.point-update-recent-death
+
+[fixture]
+quiet-mobs
+seed-player
+spawn-mob 14516 1 8101 145
+
+[setup:oracle]
+Deathrecover
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Deathrecover
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+Dreamwitness
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+Dreamwitness
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[probe]
+# Under DP_SEED=1 the fresh-death draw fires by the tenth hourly point_update.
+# Repeating sleep resets the idle timer while keeping the peer awake in room
+# 8004; the 10 MUD hours remain below the first real-day cutoff.
+~dpclock pulse 40
+north
+east
+south
+west
+send:testor set player Deathrecover hit 1
+kill zoomaster
+~dpclock pulse 100
+1
+send:testor teleport Dreamwitness 8004
+score
+sleep
+~dpclock pulse 630
+send:witness look
+sleep
+~dpclock pulse 630
+send:witness look
+sleep
+~dpclock pulse 630
+send:witness look
+sleep
+~dpclock pulse 630
+send:witness look
+sleep
+~dpclock pulse 630
+send:witness look
+sleep
+~dpclock pulse 630
+send:witness look
+sleep
+~dpclock pulse 630
+send:witness look
+sleep
+~dpclock pulse 630
+send:witness look
+sleep
+~dpclock pulse 630
+send:witness look
+sleep
+~dpclock pulse 630
+send:witness look

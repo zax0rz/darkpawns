@@ -37,21 +37,22 @@ type Scenario struct {
 	// PeerDrop names one passive peer whose TCP connection is closed after
 	// setup/warmup and before the compared probe. The character remains in the
 	// live-world lifecycle, which exposes C's linkless descriptor branches.
-	PeerDrop          string
-	Peers             map[string]*PeerSetup
-	MiscFiles         []MiscFileFixture
-	FaultFixtures     []FaultFixture
-	Fixtures          []ObjectFixture
-	ObjectSpawns      []ObjectSpawnFixture
-	MobFixtures       []MobFixture
-	MobObjectFixtures []MobObjectFixture
-	MobAffFixtures    []MobAffFixture
-	MobFlagFixtures   []MobFlagFixture
-	ObjIndexFixtures  []ObjIndexFixture
-	WldIndexFixtures  []WldIndexFixture
-	QuietZones        []int
-	QuietAllMobs      bool
-	EmptyPlayers      bool
+	PeerDrop            string
+	Peers               map[string]*PeerSetup
+	MiscFiles           []MiscFileFixture
+	FaultFixtures       []FaultFixture
+	Fixtures            []ObjectFixture
+	ObjectSpawns        []ObjectSpawnFixture
+	MobFixtures         []MobFixture
+	ZoneCommandFixtures []ZoneCommandFixture
+	MobObjectFixtures   []MobObjectFixture
+	MobAffFixtures      []MobAffFixture
+	MobFlagFixtures     []MobFlagFixture
+	ObjIndexFixtures    []ObjIndexFixture
+	WldIndexFixtures    []WldIndexFixture
+	QuietZones          []int
+	QuietAllMobs        bool
+	EmptyPlayers        bool
 	// SeedPlayer seeds the port's player store with C's shipped first player
 	// (Testor, player ID 1) before boot, so both engines log in an existing
 	// player and neither side rolls character-creation draws. Mutually
@@ -191,6 +192,17 @@ type MobFixture struct {
 	ZoneNumber  int
 }
 
+// ZoneCommandFixture inserts one raw three-argument reset opcode into a
+// disposable zone file before its S terminator. It exercises C's imported
+// unknown-command handling without editing either source world tree.
+type ZoneCommandFixture struct {
+	ZoneNumber int
+	Command    string
+	IfFlag     int
+	Arg1       int
+	Arg2       int
+}
+
 // MobObjectFixture appends a G reset for the last mob reset in a disposable
 // zone. It is deliberately paired with spawn-mob in focused vehicles so a
 // scenario can populate a known keeper without editing authoritative zones.
@@ -281,6 +293,7 @@ type HouseControlFixture struct {
 	Owner     int64
 	PortOwner int64
 	Key       int
+	Guests    []int64
 }
 
 // ProbeBlock is one probe command and the raw output it produced.
@@ -316,6 +329,7 @@ type AudienceProbeBlock struct {
 //	add-obj-index 131.obj    # load an otherwise-unindexed obj file's prototypes
 //	add-wld-index 181.wld    # load an otherwise-unindexed room file
 //	spawn-obj 8010 1 8004 80  # object, max existing, room, zone file
+//	zone-command 80 X 0 1 2   # raw unknown opcode, inserted before the zone S
 //	give-object 12100 12132 1 121 # mob, object, max existing, zone file
 //	equip-object 18301 12120 1 16 80 # mob, object, max, C wear slot, zone
 //	quiet-zone 80             # suppress mobile resets in a disposable zone
@@ -333,6 +347,7 @@ type AudienceProbeBlock struct {
 //	set-room-sector 8161 7   # SECT_WATER_NOSWIM
 //	house-control 19676 19674 south 1 19604
 //	house-control 19676 19674 south 1 0 19604 # optional Go-port owner
+//	house-control 8162 8161 north 1 1 19604 guests=1001,1002 # prefilled guest IDs
 //	[warmup]            # shared commands sent and discarded after peer setup
 //	get scroll
 //	[peer-drop]         # close one named passive peer before [probe]
@@ -496,6 +511,18 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				strings.EqualFold(fields[0], "fault-shop-temper") {
 				return Scenario{}, fmt.Errorf("scenario %q line %d: invalid fault fixture", name, lineNo)
 			}
+			if len(fields) == 6 && strings.EqualFold(fields[0], "zone-command") {
+				zoneNumber, zoneErr := strconv.Atoi(fields[1])
+				ifFlag, ifErr := strconv.Atoi(fields[3])
+				arg1, arg1Err := strconv.Atoi(fields[4])
+				arg2, arg2Err := strconv.Atoi(fields[5])
+				command := strings.ToUpper(fields[2])
+				if zoneErr == nil && ifErr == nil && arg1Err == nil && arg2Err == nil && zoneNumber > 0 && (ifFlag == 0 || ifFlag == 1) && len(command) == 1 && !strings.ContainsRune("MOEPDRLGS*$", rune(command[0])) {
+					sc.ZoneCommandFixtures = append(sc.ZoneCommandFixtures, ZoneCommandFixture{ZoneNumber: zoneNumber, Command: command, IfFlag: ifFlag, Arg1: arg1, Arg2: arg2})
+					continue
+				}
+				return Scenario{}, fmt.Errorf("scenario %q line %d: invalid zone-command fixture", name, lineNo)
+			}
 			if len(fields) >= 4 && fields[0] == "misc-file" {
 				count, err := strconv.Atoi(fields[2])
 				fileName := fields[1]
@@ -553,7 +580,19 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				sc.RoomScripts = append(sc.RoomScripts, RoomScriptFixture{RoomVNum: roomVNum, Path: fields[2], Flags: flags})
 				continue
 			}
-			if (len(fields) == 6 || len(fields) == 7) && strings.EqualFold(fields[0], "house-control") {
+			if len(fields) >= 6 && strings.EqualFold(fields[0], "house-control") {
+				guestIDs := []int64(nil)
+				if strings.HasPrefix(fields[len(fields)-1], "guests=") {
+					var guestsErr error
+					guestIDs, guestsErr = parseHouseFixtureGuests(strings.TrimPrefix(fields[len(fields)-1], "guests="))
+					if guestsErr != nil {
+						return Scenario{}, fmt.Errorf("scenario %q line %d: invalid house-control guests: %w", name, lineNo, guestsErr)
+					}
+					fields = fields[:len(fields)-1]
+				}
+				if len(fields) != 6 && len(fields) != 7 {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: invalid house-control %q", name, lineNo, line)
+				}
 				vnum, vnumErr := strconv.Atoi(fields[1])
 				atrium, atriumErr := strconv.Atoi(fields[2])
 				direction := strings.ToLower(fields[3])
@@ -566,12 +605,13 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 					keyField = 6
 				}
 				key, keyErr := strconv.Atoi(fields[keyField])
-				if vnumErr == nil && atriumErr == nil && ownerErr == nil && portOwnerErr == nil && keyErr == nil && vnum > 0 && atrium > 0 && owner > 0 && portOwner >= 0 && key > 0 && validFixtureDirection(direction) && fixtureDirectionIndex(direction) >= 0 {
-					sc.HouseControls = append(sc.HouseControls, HouseControlFixture{
-						VNum: vnum, Atrium: atrium, ExitNum: fixtureDirectionIndex(direction), Owner: owner, PortOwner: portOwner, Key: key,
-					})
-					continue
+				if vnumErr != nil || atriumErr != nil || ownerErr != nil || portOwnerErr != nil || keyErr != nil || vnum <= 0 || atrium <= 0 || owner <= 0 || portOwner < 0 || key <= 0 || !validFixtureDirection(direction) || fixtureDirectionIndex(direction) < 0 {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: invalid house-control %q", name, lineNo, line)
 				}
+				sc.HouseControls = append(sc.HouseControls, HouseControlFixture{
+					VNum: vnum, Atrium: atrium, ExitNum: fixtureDirectionIndex(direction), Owner: owner, PortOwner: portOwner, Key: key, Guests: guestIDs,
+				})
+				continue
 			}
 			if len(fields) == 2 && strings.EqualFold(fields[0], "inert-scroll") {
 				objVNum, objErr := strconv.Atoi(fields[1])
@@ -868,6 +908,31 @@ func validFixtureDirection(direction string) bool {
 	default:
 		return false
 	}
+}
+
+func parseHouseFixtureGuests(value string) ([]int64, error) {
+	const maxHouseGuests = 50
+	if value == "" {
+		return nil, fmt.Errorf("guest ID list is empty")
+	}
+	parts := strings.Split(value, ",")
+	if len(parts) > maxHouseGuests {
+		return nil, fmt.Errorf("guest ID list has %d entries; maximum is %d", len(parts), maxHouseGuests)
+	}
+	guests := make([]int64, 0, len(parts))
+	seen := make(map[int64]struct{}, len(parts))
+	for _, part := range parts {
+		id, err := strconv.ParseInt(part, 10, 64)
+		if err != nil || id <= 0 {
+			return nil, fmt.Errorf("invalid guest ID %q", part)
+		}
+		if _, ok := seen[id]; ok {
+			return nil, fmt.Errorf("duplicate guest ID %d", id)
+		}
+		seen[id] = struct{}{}
+		guests = append(guests, id)
+	}
+	return guests, nil
 }
 
 func parseFixtureToggle(value string) (bool, bool) {

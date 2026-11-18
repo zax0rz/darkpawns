@@ -1,8 +1,8 @@
 # depth-case: get.all-of-what
 # C find_all_dots (handler.c:1567) maps a bare "all." to FIND_ALLDOT with an
-# empty keyword, not FIND_ALL. So the empty-keyword prompt fires for both get
-# and drop. Go's findAllDots wrongly lumped "all." in with "all" (FIND_ALL).
-# Shared helper -> prove across the class.
+# empty keyword, not FIND_ALL. The port now preserves that distinction; this
+# C-first case reaches the get and drop empty-keyword prompts and the
+# get-from-empty-container-name guard.
 
 [fixture]
 quiet-mobs

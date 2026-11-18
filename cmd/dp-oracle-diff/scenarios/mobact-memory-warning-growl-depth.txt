@@ -1,0 +1,82 @@
+# depth-case: mob.memory-warning-silent-growl
+# The memory mobile has race 12 (Other), outside intelligent_races, so its C
+# pulse sends the room growl before trying the hit
+# (src/mobact.c:261-282; src/utils.c:685-687).
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 7970 99 8105 79
+replace-room-exits 8105 none
+
+[setup:oracle]
+Mirek
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mirek
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Orlan
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Orlan
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Orlan 8105
+set Orlan level 30
+set Orlan maxhit 5000000
+set Orlan hit 5000000
+set mob unicorn maxhit 5000
+set mob unicorn hit 5000
+goto 8004
+
+[probe]
+send:peer hit slave
+~dpclock pulse 40
+look

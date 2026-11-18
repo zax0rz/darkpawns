@@ -7,10 +7,23 @@ fight-victim-dismount-feet-fanout-depth	fight-output.tsv	fight.damage-victim-dis
 fight-victim-dismount-feet-fanout-depth	fight-output.tsv	fight.damage-victim-knockoff-char	blocked	
 fight-victim-dismount-thud-fanout-depth	fight-output.tsv	fight.damage-victim-dismount-thud	blocked	
 fight-victim-dismount-thud-fanout-depth	fight-output.tsv	fight.damage-victim-knockoff-char	blocked	
+hcontrol-build-offline-owner-depth	hcontrol.tsv	hcontrol.build-offline-owner	blocked	
+hcontrol-pay-mudlog-depth	hcontrol.tsv	hcontrol.pay-audit-log	blocked	
+hcontrol-show-offline-guests-depth	hcontrol.tsv	hcontrol.show-offline-guests	blocked	
+hcontrol-show-offline-owner-depth	hcontrol.tsv	hcontrol.show-offline-owner	blocked	
+house-offline-guest-list-depth	house.tsv	house.guest-list-offline	blocked	
+house-offline-lookup-depth	house.tsv	house.guest-add-offline	blocked	
+house-offline-transfer-depth	house.tsv	house.transfer-offline	blocked	
+lua-run-script-call-error-depth	scripts.tsv	scripts.lua-run-script-call-error	blocked	
+lua-run-script-open-fail-depth	scripts.tsv	scripts.lua-run-script-open-fail	blocked	
+mudlog-olc-disk-depth	mudlog.tsv	mudlog.olc-zedit-target-open-failure	blocked	
+mudlog-olc-disk-depth	zedit.tsv	zedit.save-open-failure	blocked	
 postmaster-mail-login-notices-depth	entry.tsv	entry.reconnect-mail-notice	excluded	
 postmaster-mail-login-notices-depth	entry.tsv	entry.world-entry-mail-notice	excluded	
 postmaster-mail-login-notices-depth	mail.tsv	mail.send-store-inert-login-notices	excluded	
 postmaster-saved-recipient-depth	mail.tsv	mail.send-store-inert-saved-recipient	excluded	
 review-invisible-depth	review.tsv	review.invisible-speaker	blocked	
+spec-proc-guild-how-good-unknown-depth	spec-procs.tsv	mob.guild-how-good-superb	blocked	
+spec-proc-list-skills-overflow-depth	spec-procs.tsv	mob.list-skills-overflow	blocked	
 spellmatrix-staff-olc-09-depth	cast.tsv	spell.identify.matrix-staff-olc	blocked	run-varying
 wizhelp-privileged-depth	informative.tsv	commands.wizhelp-privileged-header	blocked	

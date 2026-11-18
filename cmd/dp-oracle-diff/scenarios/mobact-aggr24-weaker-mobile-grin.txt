@@ -1,4 +1,5 @@
 # depth-case: mobact.peaceful-first-hit-enrolment
+# depth-case: mobact.aggr24-room-grin-act
 # Room 8162 is ROOM_PEACEFUL (flags 28, lib/world/wld/80.wld). C's AGGR24 +
 # AGGRESSIVE full-health scan selects the visible weaker daemon courier and
 # grins, but hit() never calls set_fighting: damage()'s peaceful arm is gated

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"net"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -144,6 +145,7 @@ inert-scroll 8038
 empty-players
 quiet-mobs
 spawn-mob 18306 1 8162 80
+zone-command 80 X 0 1 2
 strip-mob-script 18306
 replace-room-exits 8162 west 8161 1 secret
 replace-room-exits 8161 none
@@ -167,6 +169,9 @@ recite scroll
 	}
 	if len(sc.MobFixtures) != 1 || sc.MobFixtures[0] != (MobFixture{MobVNum: 18306, MaxExisting: 1, RoomVNum: 8162, ZoneNumber: 80}) {
 		t.Fatalf("MobFixtures = %#v", sc.MobFixtures)
+	}
+	if len(sc.ZoneCommandFixtures) != 1 || sc.ZoneCommandFixtures[0] != (ZoneCommandFixture{ZoneNumber: 80, Command: "X", IfFlag: 0, Arg1: 1, Arg2: 2}) {
+		t.Fatalf("ZoneCommandFixtures = %#v", sc.ZoneCommandFixtures)
 	}
 	if !sc.QuietAllMobs {
 		t.Fatal("QuietAllMobs = false, want true")
@@ -194,6 +199,51 @@ recite scroll
 	}
 	if len(sc.RoomScripts) != 1 || sc.RoomScripts[0] != (RoomScriptFixture{RoomVNum: 8162, Path: "oracle/item_transfer.lua", Flags: 24}) {
 		t.Fatalf("RoomScripts = %#v", sc.RoomScripts)
+	}
+}
+
+func TestParseScenarioHouseControlGuestIDs(t *testing.T) {
+	input := "[fixture]\nhouse-control 8162 8161 north 1 19604 guests=1001,1002\n[probe]\nhouse\n"
+	sc, err := ParseScenario("house-guests", strings.NewReader(input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(sc.HouseControls) != 1 {
+		t.Fatalf("HouseControls = %#v, want one fixture", sc.HouseControls)
+	}
+	fixture := sc.HouseControls[0]
+	if fixture.VNum != 8162 || fixture.Atrium != 8161 || fixture.Owner != 1 || fixture.PortOwner != 1 || fixture.Key != 19604 {
+		t.Fatalf("house fixture fields = %#v", fixture)
+	}
+	if len(fixture.Guests) != 2 || fixture.Guests[0] != 1001 || fixture.Guests[1] != 1002 {
+		t.Fatalf("house fixture guests = %v, want [1001 1002]", fixture.Guests)
+	}
+
+	withPortOwner, err := ParseScenario("house-guests-port-owner", strings.NewReader(
+		"[fixture]\nhouse-control 8162 8161 north 1 2 19604 guests=1003\n[probe]\nhouse\n",
+	))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := withPortOwner.HouseControls[0].PortOwner; got != 2 {
+		t.Fatalf("PortOwner = %d, want 2", got)
+	}
+
+	for _, guests := range []string{"", "0", "1,1", "not-an-id"} {
+		t.Run("invalid-"+strings.ReplaceAll(guests, ",", "_"), func(t *testing.T) {
+			body := "[fixture]\nhouse-control 8162 8161 north 1 19604 guests=" + guests + "\n[probe]\nhouse\n"
+			if _, err := ParseScenario("bad-house-guests", strings.NewReader(body)); err == nil {
+				t.Fatalf("ParseScenario accepted guest IDs %q", guests)
+			}
+		})
+	}
+	tooMany := make([]string, 51)
+	for i := range tooMany {
+		tooMany[i] = strconv.Itoa(i + 1)
+	}
+	body := "[fixture]\nhouse-control 8162 8161 north 1 19604 guests=" + strings.Join(tooMany, ",") + "\n[probe]\nhouse\n"
+	if _, err := ParseScenario("too-many-house-guests", strings.NewReader(body)); err == nil {
+		t.Fatal("ParseScenario accepted more than 50 guest IDs")
 	}
 }
 

@@ -1,9 +1,8 @@
 # C-first house/do_house vehicle (src/interpreter.c:502; src/house.c:603-718).
 # The fixture creates a private house at 8162 with atrium 8161 owned by player
-# ID 1. seed-player twins C's shipped lib/etc/players Testor (ID 1) into the
-# port's store, so both engines log in the same existing owner and neither
-# side rolls character-creation draws for the actor. The online guest makes
-# get_id_by_name reachable in both engines.
+# ID 1. seed-player twins C's shipped Testor (ID 1) into the port's store, so
+# both engines log in the same existing owner and neither side rolls
+# character-creation draws for the actor.
 
 # depth-case: house.usage
 # depth-case: house.guest-list-empty
@@ -11,10 +10,12 @@
 # depth-case: house.guest-list
 # depth-case: house.guest-delete
 # depth-case: house.guest-not-found
+# depth-case: house.guest-owner-gate
 # depth-case: house.fill-word-boundary
 # depth-case: house.transfer-usage
 # depth-case: house.transfer-not-found
 # depth-case: house.transfer-success
+# depth-case: house.transfer-audit-log
 # depth-case: house.owner-gate-after-transfer
 # depth-case: house.unknown-subcommand
 # depth-case: entry.identity-persistent-id-house-access
@@ -64,12 +65,43 @@ Y
 <ENTER>
 1
 
+[setup:oracle:watch]
+Housewatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Housewatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 goto 8162
 teleport Houseguest 8162
+advance Housewatch 38
+force Housewatch syslog normal
 ~dpclock pulse 20
 
 [probe]
+send:guest house guest Houseguest
 house
 house guest
 house guest Nobody
@@ -78,7 +110,9 @@ house guest
 house guest Houseguest trailing words are ignored
 house guest
 house guest the Houseguest
+house guest Houseguest
 house transfer
 house transfer Nobody
 house nonsense
 house transfer Houseguest trailing words are ignored
+house guest Houseguest

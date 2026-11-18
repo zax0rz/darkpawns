@@ -1,5 +1,6 @@
 # C src/act.item.c:1050-1090; real transform and native kill corpse.
 # depth-case: eat.werewolf-corpse
+# depth-case: eat.werewolf-room-noncorpse
 [fixture]
 empty-players
 quiet-mobs
@@ -87,8 +88,11 @@ load obj 4104
 give glass trainee
 kill trainee
 set Wolfactor hunger 39
+load obj 5200
+drop dagger
 set Wolfactor level 18
 [probe]
+eat dagger
 eat corpse
 look
 eat flesh

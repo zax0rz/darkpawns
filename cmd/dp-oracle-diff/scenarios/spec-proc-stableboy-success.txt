@@ -1,6 +1,7 @@
 # depth-case: mob.stableboy-buy-success-output
 # depth-case: mob.stableboy-stable-success-output
 # depth-case: mob.stableboy-collect-success-output
+# depth-case: mob.stableboy-collect-insufficient-gold
 # depth-case: mob.stableboy-audience
 # C-first success vehicle for the registered stableboy vnum 8022. The actor is
 # given enough gold through the existing wizard warmup to exercise purchase,
@@ -76,4 +77,5 @@ set StableSuccess gold 1000
 [probe]
 buy horse
 stable
+set StableSuccess gold 0
 collect

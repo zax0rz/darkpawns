@@ -1,0 +1,26 @@
+# C-first proof of listing an offline house guest by persistent player ID.
+# The guest is present in both offline player stores but has no active session.
+# depth-case: house.guest-list-offline
+
+[fixture]
+quiet-mobs
+seed-player
+house-control 8162 8161 north 1 1 19604 guests=2
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+house guest

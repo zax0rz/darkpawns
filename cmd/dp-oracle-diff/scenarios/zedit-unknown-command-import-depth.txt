@@ -1,0 +1,73 @@
+# depth-case: zedit.imported-invalid-opcode-filtered
+# C-first control: boot reset disables an imported unknown opcode before
+# login; live zedit menu/save paths then omit it on both engines.
+
+[fixture]
+empty-players
+quiet-mobs
+zone-command 80 X 0 1 2
+
+[setup:oracle]
+Zeditimport
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zeditimport
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:syslog]
+Wizwatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:syslog]
+Wizwatch
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+advance Wizwatch 34
+force Wizwatch syslog normal
+
+[probe]
+zedit 8004
+q
+zedit save 80

@@ -73,8 +73,29 @@ goto 1360
 [probe]
 drop talisman
 get talisman
+goto 8105
+load obj 1301
+teleport CylinderPeer 1364
+goto 1364
+drop talisman
+get talisman
+goto 8105
+load obj 1302
+teleport CylinderPeer 1380
+goto 1380
+drop talisman
+get talisman
+goto 8105
+load obj 1303
+teleport CylinderPeer 1384
+goto 1384
+drop talisman
+get talisman
 
 # depth-case: room.elements-load-cylinders-entry
 # depth-case: room.elements-load-cylinders-matching
 # depth-case: room.elements-load-cylinders-audience
 # depth-case: room.elements-load-cylinders-cleanup
+# depth-case: room.elements-load-cylinders-yellow
+# depth-case: room.elements-load-cylinders-red
+# depth-case: room.elements-load-cylinders-blue

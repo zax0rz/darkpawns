@@ -1,0 +1,201 @@
+# C-first maximum catalog probe for list_skills' **OVERFLOW** guard. The
+# existing Testor immortal is set to psionic with ANSI on; the normal level
+# ceiling maximizes visible spells and the cost column. All catalog skills are set to zero so the longer `(not learned)` band and ANSI
+# cost column exercise the maximum buffer length. The numbered pager jump
+# reaches the final page, where C appends the overflow sentinel if its bounded
+# list exceeds MAX_STRING_LENGTH - 32.
+# depth-case: mob.list-skills-overflow
+
+[fixture]
+quiet-mobs
+keep-ansi
+spawn-mob 8012 1 8162 80
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set Testor class i
+set Testor practices 99
+set Testor color on
+skillset Testor 'holy ward' 0
+skillset Testor 'shift reality' 0
+skillset Testor 'bless' 0
+skillset Testor 'blindness' 0
+skillset Testor 'burning hands' 0
+skillset Testor 'call lightning' 0
+skillset Testor 'charm person' 0
+skillset Testor 'chill touch' 0
+skillset Testor 'clone' 0
+skillset Testor 'color spray' 0
+skillset Testor 'control weather' 0
+skillset Testor 'create food' 0
+skillset Testor 'create water' 0
+skillset Testor 'cure blind' 0
+skillset Testor 'cure critic' 0
+skillset Testor 'cure light' 0
+skillset Testor 'curse' 0
+skillset Testor 'detect alignment' 0
+skillset Testor 'detect invisibility' 0
+skillset Testor 'detect magic' 0
+skillset Testor 'detect poison' 0
+skillset Testor 'dispel evil' 0
+skillset Testor 'earthquake' 0
+skillset Testor 'enchant weapon' 0
+skillset Testor 'energy drain' 0
+skillset Testor 'fireball' 0
+skillset Testor 'harm' 0
+skillset Testor 'heal' 0
+skillset Testor 'invisibility' 0
+skillset Testor 'lightning bolt' 0
+skillset Testor 'locate object' 0
+skillset Testor 'flame arrow' 0
+skillset Testor 'poison' 0
+skillset Testor 'protection from evil' 0
+skillset Testor 'remove curse' 0
+skillset Testor 'sanctuary' 0
+skillset Testor 'shocking grasp' 0
+skillset Testor 'sleep' 0
+skillset Testor 'strength' 0
+skillset Testor 'summon' 0
+skillset Testor 'meteor swarm' 0
+skillset Testor 'word of recall' 0
+skillset Testor 'remove poison' 0
+skillset Testor 'sense life' 0
+skillset Testor 'animate dead' 0
+skillset Testor 'dispel good' 0
+skillset Testor 'holy shield' 0
+skillset Testor 'group heal' 0
+skillset Testor 'group recall' 0
+skillset Testor 'infravision' 0
+skillset Testor 'waterwalk' 0
+skillset Testor 'mass heal' 0
+skillset Testor 'fly' 0
+skillset Testor 'lycanthropy' 0
+skillset Testor 'vampirism' 0
+skillset Testor 'sobriety' 0
+skillset Testor 'group invisibility' 0
+skillset Testor 'hellfire' 0
+skillset Testor 'enchant armor' 0
+skillset Testor 'identify' 0
+skillset Testor 'mind poke' 0
+skillset Testor 'mind blast' 0
+skillset Testor 'chameleon' 0
+skillset Testor 'levitate' 0
+skillset Testor 'metalskin' 0
+skillset Testor 'globe of invulnerability' 0
+skillset Testor 'vitality' 0
+skillset Testor 'invigorate' 0
+skillset Testor 'lesser perception' 0
+skillset Testor 'greater perception' 0
+skillset Testor 'mind attack' 0
+skillset Testor 'adrenaline boost' 0
+skillset Testor 'psychic shield' 0
+skillset Testor 'change density' 0
+skillset Testor 'acid blast' 0
+skillset Testor 'dominate' 0
+skillset Testor 'cell adjustment' 0
+skillset Testor 'zen' 0
+skillset Testor 'mirror image' 0
+skillset Testor 'mass dominate' 0
+skillset Testor 'divine intervention' 0
+skillset Testor 'mind bar' 0
+skillset Testor 'soul leech' 0
+skillset Testor 'mindsight' 0
+skillset Testor 'transparency' 0
+skillset Testor 'know align' 0
+skillset Testor 'gate' 0
+skillset Testor 'word of intellect' 0
+skillset Testor 'lay hands' 0
+skillset Testor 'mental lapse' 0
+skillset Testor 'smokescreen' 0
+skillset Testor 'ray of disruption' 0
+skillset Testor 'disintegration' 0
+skillset Testor 'calliope' 0
+skillset Testor 'protection from good' 0
+skillset Testor 'flame strike' 0
+skillset Testor 'haste' 0
+skillset Testor 'slow' 0
+skillset Testor 'dream travel' 0
+skillset Testor 'psiblast' 0
+skillset Testor 'glyph of summoning' 0
+skillset Testor 'waterbreathe' 0
+skillset Testor '!drowning!' 0
+skillset Testor '!petrify!' 0
+skillset Testor 'conjure elemental' 0
+skillset Testor 'backstab' 0
+skillset Testor 'bash' 0
+skillset Testor 'hide' 0
+skillset Testor 'kick' 0
+skillset Testor 'pick lock' 0
+skillset Testor 'punch' 0
+skillset Testor 'rescue' 0
+skillset Testor 'sneak' 0
+skillset Testor 'steal' 0
+skillset Testor 'track' 0
+skillset Testor 'headbutt' 0
+skillset Testor 'bearhug' 0
+skillset Testor 'cutthroat' 0
+skillset Testor 'trip' 0
+skillset Testor 'smackheads' 0
+skillset Testor 'slug' 0
+skillset Testor 'charge' 0
+skillset Testor 'shoot' 0
+skillset Testor 'retreat' 0
+skillset Testor 'bite' 0
+skillset Testor 'peek' 0
+skillset Testor 'subdue' 0
+skillset Testor 'stealth' 0
+skillset Testor 'kabuki' 0
+skillset Testor 'strike of revenge' 0
+skillset Testor 'serpent kick' 0
+skillset Testor 'escape of the mongoose' 0
+skillset Testor 'kuji-kiri rin' 0
+skillset Testor 'kuji-kiri kyo' 0
+skillset Testor 'kuji-kiri toh' 0
+skillset Testor 'kuji-kiri kai' 0
+skillset Testor 'kuji-kiri jin' 0
+skillset Testor 'kuji-kiri retsu' 0
+skillset Testor 'kuji-kiri zai' 0
+skillset Testor 'kuji-kiri zhen' 0
+skillset Testor 'kuji-kiri sha' 0
+skillset Testor 'appraise' 0
+skillset Testor 'flesh alter' 0
+skillset Testor 'compare' 0
+skillset Testor 'palm' 0
+skillset Testor 'berserk' 0
+skillset Testor 'parry' 0
+skillset Testor 'circle' 0
+skillset Testor 'groinrip' 0
+skillset Testor 'sharpen' 0
+skillset Testor 'scrounge' 0
+skillset Testor 'disarm' 0
+skillset Testor 'mindlink' 0
+skillset Testor 'aid' 0
+skillset Testor 'search' 0
+skillset Testor 'shadow' 0
+skillset Testor 'swordplay' 0
+skillset Testor 'knifeplay' 0
+skillset Testor 'disembowel' 0
+skillset Testor 'turn' 0
+skillset Testor 'evasion' 0
+skillset Testor 'sleeper' 0
+skillset Testor 'dragon kick' 0
+skillset Testor 'tiger punch' 0
+skillset Testor 'neckbreak' 0
+skillset Testor 'ambush' 0
+skillset Testor 'scout' 0
+
+[probe]
+practice
+8

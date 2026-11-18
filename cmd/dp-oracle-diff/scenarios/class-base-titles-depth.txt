@@ -1,16 +1,17 @@
 # The base-titles string table (src/class.c:1081-1086) is player-facing at
 # creation: db.c:3025 calls set_title(ch, NULL), which reads
 # titles[GET_CLASS(ch)] (src/limits.c:41,258), and do_look at a player prints
-# "Name Title" (src/act.informative.c:552). Only five classes pass
-# valid_user_class_choice (src/interpreter.c:1674-1690): magic-user, cleric,
-# thief, warrior, psionic, and the human ninja — so the peers cover line
+# "Name Title" (src/act.informative.c:552). Only five base classes and the
+# human ninja pass valid_user_class_choice (src/interpreter.c:1674-1690):
+# magic-user, cleric, thief, warrior, and psionic — so the peers cover line
 # 1083's four strings (Mage, Cleric, Thief, Warrior) and line 1084's Ninja
-# and Psionic strings. Line 1085 (the Ranger, the Mystic) is unreachable at
-# creation and the remorter assigns GET_CLASS without set_title
-# (src/spec_procs2.c:754), so its base strings are never read.
+# and Psionic strings. The defaults for Magus, Avatar, Assassin, Paladin,
+# Ranger, and Mystic (src/class.c:1083-1086) are unreachable at creation, and
+# the remorter assigns GET_CLASS without set_title (src/spec_procs2.c:753-756),
+# so those base strings are never read.
 
 # depth-case: class.base-titles-creation
-# depth-case: class.base-titles-ranger-mystic-unreachable
+# depth-case: class.noncreatable-default-titles-unreachable
 
 [fixture]
 empty-players

@@ -1,0 +1,27 @@
+# C-first reproduction of the offline player-name lookup tracked by DP-1572.
+# Testor owns the fixture house; Oraklet exists in C's persistent player index
+# and the seeded Go store but has no active session in either engine.
+# depth-case: house.guest-add-offline
+
+[fixture]
+quiet-mobs
+seed-player
+house-control 8162 8161 north 1 1 19604
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+house guest Oraklet
