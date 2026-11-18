@@ -1443,50 +1443,18 @@ func specTattoo4(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 }
 
 // ================================================================
-// evillead — Give of cheese 13100 leads the giver through a trapdoor
-// Ported from SPECIAL(evillead) (src/spec_procs2.c:1342-1388) (DP-1485).
-// C omits the get_obj_in_list_vis fetch that eviltrade has
-// (src/spec_procs2.c:1149-1152), leaving obj NULL and the
-// `if (!obj) return(FALSE)` (:1354-1355) always true; the Go port
-// resolves the object as eviltrade does so the trapdoor is reachable,
-// mirroring the ruling (Zach, 2026-11-18). Go has no mini_mud runtime
-// mode, so !mini_mud always holds.
+// evillead — SPECIAL(evillead) (src/spec_procs2.c:1342-1388) (DP-1485).
+// C declares obj = NULL (:1345) and never fetches it: unlike eviltrade
+// (:1149-1152) there is no get_obj_in_list_vis call. Every give that
+// passes the argument and target gates (:1349-1353) then meets
+// `if (!obj) return(FALSE)` (:1354-1355), and every other path returns
+// FALSE too, with no output and no state change. The junk, goody-goody
+// and trapdoor arms after it are unreachable in C, so the faithful port
+// returns false and the give proceeds normally (R1/R4). Zach ruled the
+// Go must match C (2026-11-18).
 // ================================================================
-func specEvilLead(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if w == nil || ch == nil || me == nil || ch.IsNPC() || cmd != "give" {
-		return false
-	}
-	if strings.TrimSpace(arg) == "" {
-		return false
-	}
-	objName, rest := oneArgument(arg)
-	targetName, _ := oneArgument(rest)
-	if objName == "" || targetName == "" || !isCName(targetName, charKeywords(me)) {
-		return false
-	}
-	obj, found := w.ResolveObjectInInventory(ch, objName)
-	if !found {
-		return false
-	}
-	if obj.GetVNum() != 13100 {
-		tellFromMob(w, me, ch, "Don't give me that crap.")
-		return true
-	}
-	if ch.GetAlignment() > 0 {
-		tellFromMob(w, me, ch, "Get lost, goody-goody.")
-		return true
-	}
-	if err := w.MoveObjectToMobInventoryFront(obj, me); err != nil {
-		slog.Error("evillead could not take the cheese", "player", ch.GetName(), "mob", me.GetName(), "error", err)
-		return false
-	}
-	Act(w, true, me, ch, nil, nil, "$n leads $N through a hidden trapdoor and returns a moment later, alone.\r\n", "", ToRoom)
-	ch.SendMessage("  You follow Swiss though a small trapdoor into a maze of twists and\r\nturns, winding through the various tunnels as if he's been doing it all his\r\nlife. As you near a narrow, well lit passage, Swiss turns around and vanishes\r\nin a puff of smoke!\r\n")
-	if err := w.PlayerTransfer(ch, 13195); err != nil {
-		slog.Warn("evillead trapdoor transfer failed", "player", ch.GetName(), "error", err)
-	}
-	w.lookAtRoom(ch, false)
-	return true
+func specEvilLead(_ *World, _ *Player, _ *MobInstance, _ string, _ string) bool {
+	return false
 }
 
 // ================================================================
