@@ -266,22 +266,36 @@ func (w *World) castTattoo(ch *Player, spell int) {
 
 // tattooCanSee applies C CAN_SEE, including world light, without the
 // generic room-listing AFF_HIDE extension (src/utils.h:515-530).
-func (w *World) tattooCanSee(observer, caster *Player) bool {
-	if observer == caster {
-		return true
+func (w *World) tattooCanSee(observer Actor, caster *Player) bool {
+	if observer == nil {
+		return false
+	}
+	if p, ok := observer.(*Player); ok {
+		if p == caster {
+			return true
+		}
+		if p.GetHolyLight() {
+			return true
+		}
 	}
 	if caster.GetInvisLevel() > 0 && realLevel(observer, w) < caster.GetInvisLevel() {
 		return false
 	}
-	lightOK := !observer.IsAffected(affBlind) && (!w.IsRoomDark(observer.GetRoom()) || observer.IsAffected(affInfravision))
-	invisOK := !caster.IsAffected(affInvisible) || observer.IsAffected(affDetectInvisible)
-	return observer.GetHolyLight() || (lightOK && invisOK)
+	var isBlind, hasInfra, hasDetectInvis bool
+	if aff, ok := observer.(interface{ IsAffected(int) bool }); ok {
+		isBlind = aff.IsAffected(affBlind)
+		hasInfra = aff.IsAffected(affInfravision)
+		hasDetectInvis = aff.IsAffected(affDetectInvisible)
+	}
+	lightOK := !isBlind && (!w.IsRoomDark(observer.GetRoom()) || hasInfra)
+	invisOK := !caster.IsAffected(affInvisible) || hasDetectInvis
+	return lightOK && invisOK
 }
 
 func (w *World) tattooRoomAct(ch *Player, skull *MobInstance, format string) {
 	actDeliver(w, false, ch, skull, nil, nil, format, "", ToRoom, func(to Actor, line string) {
-		if player, ok := to.(*Player); ok && w.tattooCanSee(player, ch) {
-			player.SendMessage(line)
+		if w.hasRoomDescriptor(to) && w.tattooCanSee(to, ch) {
+			to.SendMessage(line)
 		}
 	})
 }
@@ -306,9 +320,9 @@ type tattooSpellWorld struct {
 }
 
 func (w tattooSpellWorld) ForEachPlayerInRoomInterface(room int, fn func(any)) {
-	for _, player := range w.GetPlayersInRoom(room) {
-		if sendOk(player, false) && w.tattooCanSee(player, w.caster) {
-			fn(player)
+	for _, to := range w.actChar(room) {
+		if w.hasRoomDescriptor(to) && CanReceiveActActor(to) && w.tattooCanSee(to, w.caster) {
+			fn(to)
 		}
 	}
 }

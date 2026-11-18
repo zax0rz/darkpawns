@@ -1,0 +1,77 @@
+# C-first witness for DP-1578: tattooSpellWorld.ForEachPlayerInRoomInterface
+# delivers benign self-spell room messages to switched mobile descriptors
+# (src/magic.c:1418-1421, src/tattoo.c:66-74).
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+set-room-flag 8162 7 off
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Tattoogod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tattoogod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Switchedrx
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Switchedrx
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Switchedrx level 39
+goto 8162
+set Tattoogod tattoo 6
+send:peer goto 3001
+send:peer switch trainee
+
+[probe]
+use tattoo
+send:peer look

@@ -659,8 +659,8 @@ func conSellerTell(w *World, me *MobInstance, target *Player, msg string) {
 // conSellerRoomAct emits the two fixed TO_NOTVICT/TO_ROOM acts without using
 // roomMessage, preserving C's actor/victim exclusion and PERS substitutions.
 func conSellerRoomAct(w *World, me *MobInstance, victim *Player, hideInvisible bool, render func(Actor) string) {
-	for _, to := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if (victim != nil && to == victim) || !sendOk(to, false) {
+	for _, to := range w.actChar(me.GetRoomVNum()) {
+		if (victim != nil && to == Actor(victim)) || !w.hasRoomDescriptor(to) || !CanReceiveActActor(to) {
 			continue
 		}
 		if hideInvisible && !conSellerCanSee(w, to, me) {
@@ -743,14 +743,24 @@ func specAlienElevator(w *World, ch *Player, me *MobInstance, cmd string, arg st
 		const roomA = 19551
 		const roomB = 19599
 		playersA := w.GetPlayersInRoom(roomA)
+		mobsA := w.COrderedRoomMobs(roomA)
 		playersB := w.GetPlayersInRoom(roomB)
+		mobsB := w.COrderedRoomMobs(roomB)
 		for _, p := range playersA {
 			p.SetRoom(roomB)
 			p.SendMessage("The room starts to move!\r\n")
 		}
+		for _, m := range mobsA {
+			m.SetRoom(roomB)
+			m.SendMessage("The room starts to move!\r\n")
+		}
 		for _, p := range playersB {
 			p.SetRoom(roomA)
 			p.SendMessage("The room starts to move!\r\n")
+		}
+		for _, m := range mobsB {
+			m.SetRoom(roomA)
+			m.SendMessage("The room starts to move!\r\n")
 		}
 		return true
 	}

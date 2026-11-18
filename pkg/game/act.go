@@ -800,6 +800,47 @@ func actorRoomEntrySequence(a Actor) uint64 {
 	return 0
 }
 
+// hasRoomDescriptor reports whether to is a player or a switched mobile with
+// an attached descriptor.
+func (w *World) hasRoomDescriptor(to Actor) bool {
+	if to == nil {
+		return false
+	}
+	if mob, ok := to.(*MobInstance); ok {
+		return w != nil && w.MobileDescriptorOwner != nil && w.MobileDescriptorOwner(mob) != nil
+	}
+	return true
+}
+
+// roomSwitchedMobs returns every switched mobile in roomVNum in C's
+// world[room].people order (newest arrival first).
+func (w *World) roomSwitchedMobs(roomVNum int) []*MobInstance {
+	if w == nil || w.MobileDescriptorOwner == nil {
+		return nil
+	}
+	var out []*MobInstance
+	for _, mob := range w.COrderedRoomMobs(roomVNum) {
+		if w.MobileDescriptorOwner(mob) != nil {
+			out = append(out, mob)
+		}
+	}
+	return out
+}
+
+// sendActRoomMessage delivers pre-rendered text to every occupant in roomVNum
+// (players and switched mobiles) that passes C's SENDOK gate for act().
+func (w *World) sendActRoomMessage(roomVNum int, msg string) {
+	if w == nil {
+		return
+	}
+	for _, to := range w.actChar(roomVNum) {
+		if !w.hasRoomDescriptor(to) || !CanReceiveActActor(to) {
+			continue
+		}
+		to.SendMessage(msg)
+	}
+}
+
 // --------------------------------------------------------------------------
 // Convenience wrappers
 // --------------------------------------------------------------------------

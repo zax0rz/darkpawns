@@ -264,12 +264,13 @@ func isSocialSelf(target socialTarget, ch combat.Combatant) bool {
 	}
 }
 
-// roomMessageExcludeTwo sends a message to all players in a room except two named ones.
+// roomMessageExcludeTwo sends a message to all occupants in a room except two named ones.
 func (w *World) roomMessageExcludeTwo(vnum int, msg string, exclude1, exclude2 string) {
-	for _, p := range w.GetPlayersInRoom(vnum) {
-		if p.Name == exclude1 || p.Name == exclude2 || !sendOk(p, false) {
+	for _, to := range w.actChar(vnum) {
+		name := to.GetName()
+		if name == exclude1 || name == exclude2 || !w.hasRoomDescriptor(to) || !CanReceiveActActor(to) {
 			continue
 		}
-		p.SendMessage(msg + "\r\n")
+		to.SendMessage(msg + "\r\n")
 	}
 }
