@@ -123,10 +123,10 @@ func TestLuaSkipSpacesInvalidArgumentProducer(t *testing.T) {
 	}
 }
 
-// TestLuaRunScriptLoadFailureProducers drives scripts.c:1674-1694 through real
-// RunScript loads. The C-first missing-script transcript leaves the BRF line
-// absent from the brief observer, so the port retains only the classified
-// CMP/file producer and does not synthesize a visible SYSERR line.
+// TestLuaRunScriptLoadFailureProducers drives scripts.c:1674-1694 and
+// 1777-1779 through real RunScript loads: the classified open_lua_file line at
+// CMP/LVL_IMMORT/file TRUE, then run_script's own line at BRF/LVL_IMMORT/file
+// TRUE, in that order.
 func TestLuaRunScriptLoadFailureProducers(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -155,13 +155,10 @@ func TestLuaRunScriptLoadFailureProducers(t *testing.T) {
 			if _, err := engine.RunScript(luaMudlogContext(bridge), name, "oncmd"); err == nil {
 				t.Fatal("a failing load must return an error")
 			}
-			assertProducers(t, fileLogs(bridge), []recordedMudlog{{
-				msg: "[Lua] Could not call script " + name + ": " + tc.kind,
-				typ: 3, level: 31, toFile: true,
-			}})
-			if len(bridge.logs) != 0 {
-				t.Fatalf("load failure emitted a Go-only brief syslog line: %q", bridge.logs)
-			}
+			assertProducers(t, fileLogs(bridge), []recordedMudlog{
+				{msg: "[Lua] Could not call script " + name + ": " + tc.kind, typ: 3, level: 31, toFile: true},
+				{msg: "SYSERR: Error opening lua script " + name + ".", typ: 1, level: 31, toFile: true},
+			})
 		})
 	}
 }
@@ -211,22 +208,22 @@ func TestLuaRunScriptCallFailureProducer(t *testing.T) {
 }
 
 // TestLuaRunScriptCachedLoadFailureStillLogs: C's run_script retries
-// lua_dofile and its classified open_lua_file producer (src/scripts.c:1674-1694).
-// The port's negative cache (DP-903) skips the retry, so it must still emit
-// that classified line on each call without adding a brief syslog line.
+// lua_dofile and logs both load-failure producers on every call
+// (src/scripts.c:1674-1694, 1777-1779). The port's negative cache (DP-903)
+// skips the retry, so it must still emit the same two lines on each call.
 func TestLuaRunScriptCachedLoadFailureStillLogs(t *testing.T) {
 	engine := newScriptEngine(t, "bad.lua", "function oncmd(\n")
-	want := []recordedMudlog{{msg: "[Lua] Could not call script bad.lua: Syntax error.", typ: 3, level: 31, toFile: true}}
+	want := []recordedMudlog{
+		{msg: "[Lua] Could not call script bad.lua: Syntax error.", typ: 3, level: 31, toFile: true},
+		{msg: "SYSERR: Error opening lua script bad.lua.", typ: 1, level: 31, toFile: true},
+	}
 	for call := 1; call <= 3; call++ {
 		bridge := newRecordingBridge()
 		if _, err := engine.RunScript(luaMudlogContext(bridge), "bad.lua", "oncmd"); err == nil {
 			t.Fatalf("call %d: a failing load must return an error", call)
 		}
-		if got := fileLogs(bridge); len(got) != len(want) || got[0] != want[0] {
+		if got := fileLogs(bridge); len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
 			t.Fatalf("call %d: producers=%+v want %+v (the cached failure must log like C's retry)", call, got, want)
-		}
-		if len(bridge.logs) != 0 {
-			t.Fatalf("call %d: cached load failure emitted a Go-only brief syslog line: %q", call, bridge.logs)
 		}
 	}
 }

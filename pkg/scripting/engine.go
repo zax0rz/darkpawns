@@ -382,6 +382,7 @@ func scriptMudLogLoadFailure(bridge Bridge, name, kind string) {
 	if kind != "" {
 		scriptMudLogFile(bridge, fmt.Sprintf("[Lua] Could not call script %s: %s", name, kind), scriptMudlogComplete)
 	}
+	scriptMudLogFile(bridge, fmt.Sprintf("SYSERR: Error opening lua script %s.", name), scriptMudlogBrief)
 }
 
 // luaCallErrorMessage returns the Lua value passed to C's ERRORMESSAGE hook,
