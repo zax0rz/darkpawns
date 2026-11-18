@@ -434,6 +434,15 @@
       "evidence": "src/fight.c:907 \"$n tries to #w you, but misses.\" — C dam_message dam==0 victim line; Go re-words it as a hit that does not hurt",
       "firstSeen": "2026-09-23"
     },
+    "points around the room.": {
+      "segment": "points around the room.",
+      "file": "pkg/game/skill_actor_utility.go",
+      "line": 157,
+      "sink": "Act",
+      "reason": "census:composed",
+      "evidence": "src/new_cmds.c:2533 to_room = \"$n points around the room.\" — do_point assigns to_room on several branches and acts it at :2557, so the census sink lexer cannot resolve it; the actor line is witnessed by switched-body-utility-skills-depth, which has no room observer for the bare point",
+      "firstSeen": "2026-11-18"
+    },
     "says 'I don't like you, and you'd better leave before I make you!'": {
       "segment": "says 'I don't like you, and you'd better leave before I make you!'",
       "file": "pkg/game/spec_procs2.go",

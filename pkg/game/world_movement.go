@@ -201,9 +201,8 @@ func (w *World) MindsightNotifyWatchers(actor any) {
 			observer.SendMessage("You feel like you're being watched.\r\n")
 		}
 	}
-	for _, mob := range w.GetMobsInRoom(caster.GetRoom()) {
-		mob.SendMessage("You feel like you're being watched.\r\n")
-	}
+	// No mobile loop: C skips NPC observers (!IS_NPC(i), src/spells.c:946),
+	// and a switched mobile is still an NPC, so its descriptor gets nothing.
 }
 
 // MobTransfer moves a mob to a new room, stopping fights.
