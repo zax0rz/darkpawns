@@ -1383,45 +1383,15 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			_ = s.SendMessage(chMessage)
 		}
 		if result.MessageToVict != "" && target != nil {
-			if p, ok := target.(*game.Player); ok {
-				if !result.VictimMessageAct || game.CanReceiveAct(p) {
-					p.SendMessage(skillMessageTerminator(game.CapitalizeSentence(result.MessageToVict)))
-				}
-			}
+			sendSkillVictimMessage(target, result.VictimMessageAct, skillMessageTerminator(game.CapitalizeSentence(result.MessageToVict)))
 		}
 		if result.MessageToRoom != "" {
-			roomVNum := ch.GetRoom()
-			world := s.GetWorld()
-			players := world.GetPlayersInRoom(roomVNum)
-			for _, p := range players {
-				if !game.CanReceiveAct(p) {
-					continue
-				}
-				if p == ch && !result.RoomIncludesActor {
-					continue
-				}
-				if target != nil && !result.RoomIncludesTarget && p == target {
-					continue
-				}
-				p.SendMessage(skillMessageTerminator(game.CapitalizeSentence(result.MessageToRoom)))
-			}
+			sendSkillRoomMessage(s.GetWorld(), ch, target, result.RoomIncludesActor, result.RoomIncludesTarget,
+				skillMessageTerminator(game.CapitalizeSentence(result.MessageToRoom)))
 		}
 		if result.MessageToRoomSecond != "" {
-			roomVNum := ch.GetRoom()
-			world := s.GetWorld()
-			players := world.GetPlayersInRoom(roomVNum)
-			for _, p := range players {
-				if !game.CanReceiveAct(p) {
-					continue
-				}
-				if p == ch && !result.RoomIncludesActor {
-					continue
-				}
-				if target != nil && !result.RoomIncludesTarget && p == target {
-					continue
-				}
-				p.SendMessage(skillMessageTerminator(game.CapitalizeSentence(result.MessageToRoomSecond)))
-			}
+			sendSkillRoomMessage(s.GetWorld(), ch, target, result.RoomIncludesActor, result.RoomIncludesTarget,
+				skillMessageTerminator(game.CapitalizeSentence(result.MessageToRoomSecond)))
 		}
 	}
 	performRetaliateHit := func() {
@@ -1656,18 +1626,12 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 
 	// Send to victim
 	if !result.SkillMsgAfterDamage && !result.RetaliateHitAfterMessages && result.MessageToVict != "" && target != nil {
-		if p, ok := target.(*game.Player); ok {
-			if !result.VictimMessageAct || game.CanReceiveAct(p) {
-				p.SendMessage(game.CapitalizeSentence(result.MessageToVict) + "\r\n")
-			}
-		}
+		sendSkillVictimMessage(target, result.VictimMessageAct, game.CapitalizeSentence(result.MessageToVict)+"\r\n")
 	}
 
 	// Send to room (excluding ch and target)
 	if !result.SkillMsgAfterDamage && !result.RetaliateHitAfterMessages && (result.MessageToRoom != "" || result.MessageToRoomSecond != "") {
-		roomVNum := ch.GetRoom()
 		world := s.GetWorld()
-		players := world.GetPlayersInRoom(roomVNum)
 		sendRoom := func(message string) {
 			if message == "" {
 				return
@@ -1681,18 +1645,8 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 					return
 				}
 			}
-			for _, p := range players {
-				if !game.CanReceiveAct(p) {
-					continue
-				}
-				if p == ch && !result.RoomIncludesActor {
-					continue
-				}
-				if target != nil && !result.RoomIncludesTarget && p == target {
-					continue
-				}
-				p.SendMessage(game.CapitalizeSentence(message) + "\r\n")
-			}
+			sendSkillRoomMessage(world, ch, target, result.RoomIncludesActor, result.RoomIncludesTarget,
+				game.CapitalizeSentence(message)+"\r\n")
 		}
 		sendRoom(result.MessageToRoom)
 		sendRoom(result.MessageToRoomSecond)
@@ -2367,4 +2321,47 @@ func CmdListSkills(s SessionInterface, args []string) error {
 		points, availableSlots)
 
 	return s.SendMessage(output.String())
+}
+
+// sendSkillVictimMessage delivers a skill's victim line to any Combatant
+// target (both players and switched mobiles), honoring VictimMessageAct.
+func sendSkillVictimMessage(target combat.Combatant, actGate bool, formatted string) {
+	actor, ok := target.(game.Actor)
+	if !ok || actor == nil {
+		return
+	}
+	if actGate && !game.CanReceiveActActor(actor) {
+		return
+	}
+	actor.SendMessage(formatted)
+}
+
+// sendSkillRoomMessage delivers a skill's room line to every eligible player
+// and switched mobile in ch's room.
+func sendSkillRoomMessage(world *game.World, ch *game.Player, target combat.Combatant, includeActor, includeTarget bool, formatted string) {
+	if world == nil || ch == nil {
+		return
+	}
+	roomVNum := ch.GetRoom()
+	for _, p := range world.GetPlayersInRoom(roomVNum) {
+		if !game.CanReceiveAct(p) {
+			continue
+		}
+		if p == ch && !includeActor {
+			continue
+		}
+		if target != nil && !includeTarget && p == target {
+			continue
+		}
+		p.SendMessage(formatted)
+	}
+	for _, m := range world.GetMobsInRoom(roomVNum) {
+		if !game.CanReceiveActActor(m) {
+			continue
+		}
+		if target != nil && !includeTarget && m == target {
+			continue
+		}
+		m.SendMessage(formatted)
+	}
 }

@@ -1,16 +1,12 @@
 scenario	manifest	case_id	status	stability
 alias-cap	alias.tsv	alias.cap-refusal	excluded	
-backstab-aware-switched-target-depth	backstab.tsv	backstab.aware-switched-target	blocked	
 chill-touch-lethal-pc-depth	cast.tsv	spell.chill-touch.lethal-death-affect	blocked	
-circle-aware-switched-target-depth	circle.tsv	circle.aware-switched-target	blocked	
 fault-mail-runtime	mail.tsv	mail.send-store-inert	excluded	
 fight-quan-lo-five-fingers-depth	fight.tsv	damage.quan-lo-five-fingers	blocked	
 fight-victim-dismount-feet-fanout-depth	fight-output.tsv	fight.damage-victim-dismount-feet	blocked	
 fight-victim-dismount-feet-fanout-depth	fight-output.tsv	fight.damage-victim-knockoff-char	blocked	
 fight-victim-dismount-thud-fanout-depth	fight-output.tsv	fight.damage-victim-dismount-thud	blocked	
 fight-victim-dismount-thud-fanout-depth	fight-output.tsv	fight.damage-victim-knockoff-char	blocked	
-movement-switched-mount-exhaustion-depth	movement.tsv	movement.mount-switched-rider-exhaustion	blocked	
-order-actor-charmed-gate-depth	order.tsv	order.actor-charmed-gate	blocked	
 postmaster-mail-login-notices-depth	entry.tsv	entry.reconnect-mail-notice	excluded	
 postmaster-mail-login-notices-depth	entry.tsv	entry.world-entry-mail-notice	excluded	
 postmaster-mail-login-notices-depth	mail.tsv	mail.send-store-inert-login-notices	excluded	
