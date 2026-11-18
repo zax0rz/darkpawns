@@ -1,0 +1,3 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+read_mobile	load	db.read-mobile-missing-vnum-log	D1	boot	excluded	-	src/db.c:1734-1736; src/utils.h:39; src/utils.c:155-174	The absent-mobile message is passed to log(), which aliases basic_mud_log and writes the server logfile only; no descriptor or player channel is in this call path (R1/R5e).
+read_object	load	db.read-object-missing-vnum-log	D1	boot	excluded	-	src/db.c:1939-1940; src/utils.h:39; src/utils.c:155-174	The absent-object message is passed to log(), which aliases basic_mud_log and writes the server logfile only; no descriptor or player channel is in this call path (R1/R5e).

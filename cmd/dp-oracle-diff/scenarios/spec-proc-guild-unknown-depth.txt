@@ -1,0 +1,44 @@
+# C-first unknown-skill refusal from the active guildmaster. The separate
+# scenario keeps the bare practice catalog's pager from consuming this probe.
+# depth-case: mob.guild-unknown-skill
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8012 1 8162 80
+
+[setup:oracle]
+GuildUnknown
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+GuildUnknown
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set GuildUnknown class warrior
+set GuildUnknown practices 1
+
+[probe]
+practice phasec-unknown

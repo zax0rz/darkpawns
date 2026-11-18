@@ -1,0 +1,67 @@
+# C-first witness for the conjured branch where a real master remains after
+# AFF_CHARM is removed. The room script uses C's mload/follow/aff_flags bridges;
+# it temporarily binds `me` to the loaded elemental so C's follow helper makes
+# the connected player its master without a random charm save. The second command lets the
+# registered conjured special deliver the master-only fizzle notice.
+# depth-case: mob.conjured-fizzle-master
+
+[fixture]
+empty-players
+quiet-mobs
+room-script 8162 oracle/conjured-master.lua 32
+
+[lua-script room/oracle/conjured-master.lua]
+function oncmd()
+  if (argument == "say spawn") then
+    local elemental = mload(81, 8162)
+    if (elemental ~= nil) then
+      local original = me
+      me = elemental
+      follow(ch, 1)
+      me = original
+    end
+    return TRUE
+  elseif (argument == "say break") then
+    local elemental = inworld("mob", 81)
+    if (elemental ~= nil) then
+      aff_flags(elemental, "remove", AFF_CHARM)
+    end
+    return FALSE
+  end
+  return FALSE
+end
+
+[setup:oracle]
+ConjuredMaster
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ConjuredMaster
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+say spawn
+say break

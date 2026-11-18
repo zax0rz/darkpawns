@@ -1,0 +1,44 @@
+# C-first guild list witness for the (superb) how_good band. The standard
+# character-creation class path matches guild-practice; skillset sets one early
+# list entry so the selected literal appears on the first page.
+# depth-case: mob.guild-how-good-superb
+
+[fixture]
+empty-players
+spawn-mob 8012 1 8162 80
+quiet-mobs
+
+[setup:oracle]
+GuildProof
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+GuildProof
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set GuildProof class w
+skillset GuildProof 'bash' 90
+
+[probe]
+practice

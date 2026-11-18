@@ -1,0 +1,28 @@
+# C-first probe for run_script's missing-file report. In the retained transcript
+# C returns only the actor echo while Go also delivers the BRF line to Testor's
+# brief syslog; see divergence DP-2799.
+# depth-case: scripts.lua-run-script-open-fail
+
+[fixture]
+quiet-mobs
+spawn-mob 8012 1 8162 80
+mob-script 8012 oracle/missing.lua 512
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8162
+syslog brief
+
+[probe]
+say trigger
