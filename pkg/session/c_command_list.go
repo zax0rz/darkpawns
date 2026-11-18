@@ -60,6 +60,18 @@ func cCommandsForLevel(level int) []string {
 	return names
 }
 
+func cWizhelpForLevel(level int) []string {
+	names := make([]string, 0, len(cCommandOrder))
+	for _, entry := range cCommandOrder {
+		if entry.minLevel < game.LVL_IMMORT || level < entry.minLevel {
+			continue
+		}
+		names = append(names, entry.name)
+	}
+	sort.Strings(names)
+	return names
+}
+
 func isCCommandSocial(name string) bool {
 	for _, entry := range cSocialCommandOrder {
 		if entry.name == name {
