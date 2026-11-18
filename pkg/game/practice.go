@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 // C-faithful skill/spell catalog + practice math.
@@ -25,6 +27,8 @@ var (
 	pracMaxGain      = [12]int{100, 100, 25, 25, 100, 100, 25, 25, 25, 100, 25, 100}
 	pracMinGain      = [12]int{25, 25, 0, 0, 25, 25, 0, 0, 0, 25, 0, 25}
 )
+
+const cSkillListMaxStringLength = 8192 // src/structs.h:643
 
 func pracLearned(class int) int {
 	if class < 0 || class >= 12 {
@@ -82,8 +86,8 @@ func howGood(percent int) string {
 }
 
 // RenderSkillList ports the player-visible list_skills() result from
-// spec_procs.c: every skill/spell the class can learn at its level (from
-// ClassSpells = init_spell_levels), alpha-sorted by display name, with
+// spec_procs.c: every skill/spell whose spell_info min_level is reached,
+// alpha-sorted by the raw spells[] name, with
 // how_good(GET_SKILL). The practice-count prelude follows
 // spec_procs.c:164-168 exactly: no sessions, one session, or a plural count.
 // list_skills was not patched in the oracle; the reference oracle is simply
@@ -120,33 +124,38 @@ func RenderSkillList(p *Player) string {
 	fmt.Fprintf(&b, "You know of the following %ss:\r\n", SplSkl(class))
 
 	type entry struct {
-		name string
-		pct  int
+		num     int
+		rawName string
 	}
-	var entries []entry
-	if class >= 0 && class < len(ClassSpells) {
-		for _, e := range ClassSpells[class] {
-			if level < e.Level {
-				continue
-			}
-			name := SkillCatalogName(e.Num)
-			if name == "" {
-				continue
-			}
-			entries = append(entries, entry{name: name, pct: p.GetSkill(SkillStorageName(e.Num))})
-		}
+	entries := make([]entry, 0, skillCatalogSize()-1)
+	for num := 1; num < skillCatalogSize(); num++ {
+		entries = append(entries, entry{num: num, rawName: spells.SpellRawName(num)})
 	}
-	// C displays in spell_sort_info order = alphabetical by name.
-	sort.SliceStable(entries, func(i, j int) bool { return entries[i].name < entries[j].name })
+	// C sort_spells sorts every catalog slot by raw spells[] name, including
+	// unused entries that list_skills later skips by min_level.
+	sort.SliceStable(entries, func(i, j int) bool { return entries[i].rawName < entries[j].rawName })
 
 	for _, e := range entries {
+		// list_skills checks the output bound before its min_level gate on every
+		// sort position (src/spec_procs.c:175-184).
+		if b.Len() >= cSkillListMaxStringLength-32 {
+			b.WriteString("**OVERFLOW**\r\n")
+			break
+		}
+		if level < ClassSkillMinLevel(class, e.num) {
+			continue
+		}
+		name := SkillCatalogName(e.num)
+		if name == "" {
+			continue
+		}
 		// C: sprintf("%-20s %s %s\r\n", spells[i], how_good(pct), mana?manastring:"")
 		// spec_procs.c:185-192: the cost comes from mag_manacost over
 		// find_skill_num(spells[i]) — the same formula cast uses — and prints
 		// "( CCRED %d mana|psi pts CCNRM )" only when non-zero. Skills have
 		// no mana → the final %s is empty (leaving a trailing space).
 		manastring := ""
-		if mana := ManaCost(FindSkillNum(e.name), class, level); mana != 0 {
+		if mana := ManaCost(FindSkillNum(name), class, level); mana != 0 {
 			red, nrm := "", ""
 			if colorLevel(p) >= colorComplete {
 				red, nrm = ansiRed, ansiReset // CCRED/CCNRM at C_CMP (screen.h:50-51)
@@ -157,7 +166,7 @@ func RenderSkillList(p *Player) string {
 			}
 			manastring = fmt.Sprintf("( %s%d %s%s )", red, mana, unit, nrm)
 		}
-		fmt.Fprintf(&b, "%-20s %s %s\r\n", e.name, howGood(e.pct), manastring)
+		fmt.Fprintf(&b, "%-20s %s %s\r\n", name, howGood(p.GetSkill(SkillStorageName(e.num))), manastring)
 	}
 
 	return b.String()

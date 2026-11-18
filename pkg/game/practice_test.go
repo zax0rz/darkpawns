@@ -118,6 +118,28 @@ func TestRenderSkillListPracticeHeader(t *testing.T) {
 	}
 }
 
+func TestRenderSkillListImmortalCatalogAndOverflow(t *testing.T) {
+	warrior := NewPlayer(1, "Pracimmortal", 1001)
+	warrior.Class = ClassWarrior
+	warrior.SetLevel(LVL_IMMORT)
+	if got := RenderSkillList(warrior); !strings.Contains(got, "acid blast") {
+		t.Fatal("immortal warrior list omitted the spell catalog entry with default LVL_IMMORT min_level")
+	}
+
+	psionic := NewPlayer(2, "Pracoverflow", 1001)
+	psionic.Class = ClassPsionic
+	psionic.SetLevel(LVL_IMMORT)
+	psionic.SetPlrFlag(PrfColor1, true)
+	psionic.SetPlrFlag(PrfColor2, true)
+	got := RenderSkillList(psionic)
+	if !strings.HasSuffix(got, "**OVERFLOW**\r\n") {
+		t.Fatalf("immortal catalog did not hit C's MAX_STRING_LENGTH guard: len=%d suffix=%q", len(got), got[max(0, len(got)-32):])
+	}
+	if len(got) > cSkillListMaxStringLength {
+		t.Fatalf("catalog output exceeded C's bounded buffer: len=%d", len(got))
+	}
+}
+
 // firstLine returns the first CRLF-terminated line for failure messages.
 func firstLine(s string) string {
 	if i := strings.Index(s, "\r\n"); i >= 0 {

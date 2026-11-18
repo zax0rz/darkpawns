@@ -20,6 +20,6 @@ func cmdPractice(s *Session, args []string) error {
 		s.Send("You can only practice skills in your guild.\r\n")
 		return nil
 	}
-	s.Send(game.RenderActorSkillList(actor))
+	PageString(s, game.RenderActorSkillList(actor))
 	return nil
 }

@@ -18,11 +18,16 @@ const (
 // receives the actual command actor. NPCFallback applies only when the entry
 // has no actor-aware callback.
 type SpecEntry struct {
-	Legacy      SpecFunc
-	Actor       ActorSpecFunc
-	ActorObject ActorObjectSpecFunc
-	NPCFallback SpecialResult
+	Legacy        SpecFunc
+	PlayerContext PlayerContextSpecFunc
+	Actor         ActorSpecFunc
+	ActorObject   ActorObjectSpecFunc
+	NPCFallback   SpecialResult
 }
+
+// PlayerContextSpecFunc is an optional player-special lane that needs the
+// descriptor context, such as C page_string output through the session pager.
+type PlayerContextSpecFunc func(w *World, ctx CharacterSpecialContext, me *MobInstance, cmd, arg string) SpecialResult
 
 // CharacterSpecialContext keeps the real body separate from the descriptor
 // that may control it. PrivateOutput is supplied by the owning session when
@@ -30,6 +35,7 @@ type SpecEntry struct {
 type CharacterSpecialContext struct {
 	Actor         combat.Combatant
 	PrivateOutput func(string)
+	PageOutput    func(string)
 }
 
 // ActActor returns the actual actor body so Act retains its visibility,
@@ -55,13 +61,20 @@ type ActorObjectSpecFunc func(w *World, ctx CharacterSpecialContext, obj *Object
 // specials explicitly. It does not manufacture a Player or Session.
 func DispatchCharacterSpecial(name string, w *World, ctx CharacterSpecialContext, me *MobInstance, cmd, arg string) SpecialResult {
 	entry, ok := SpecRegistry[name]
-	if !ok || (entry.Legacy == nil && entry.Actor == nil) {
+	if !ok || (entry.Legacy == nil && entry.PlayerContext == nil && entry.Actor == nil) {
 		return SpecialUnsupported
 	}
 	if ctx.Actor == nil {
 		return SpecialUnsupported
 	}
 	if player, ok := ctx.Actor.(*Player); ok {
+		if entry.PlayerContext != nil {
+			result := entry.PlayerContext(w, ctx, me, cmd, arg)
+			if result == SpecialDeclined || result == SpecialHandled || result == SpecialUnsupported {
+				return result
+			}
+			return SpecialUnsupported
+		}
 		if entry.Legacy == nil {
 			return SpecialUnsupported
 		}
