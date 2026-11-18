@@ -5,7 +5,5 @@ postmaster-mail-login-notices-depth	entry.tsv	entry.reconnect-mail-notice	exclud
 postmaster-mail-login-notices-depth	entry.tsv	entry.world-entry-mail-notice	excluded	
 postmaster-mail-login-notices-depth	mail.tsv	mail.send-store-inert-login-notices	excluded	
 postmaster-saved-recipient-depth	mail.tsv	mail.send-store-inert-saved-recipient	excluded	
-spec-proc-guild-how-good-unknown-depth	spec-procs.tsv	mob.guild-how-good-superb	blocked	
-spec-proc-list-skills-overflow-depth	spec-procs.tsv	mob.list-skills-overflow	blocked	
 spellmatrix-staff-olc-09-depth	cast.tsv	spell.identify.matrix-staff-olc	blocked	run-varying
 wizhelp-privileged-depth	informative.tsv	commands.wizhelp-privileged-header	blocked	

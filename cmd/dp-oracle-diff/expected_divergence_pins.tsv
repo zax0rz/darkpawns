@@ -6,7 +6,4 @@ postmaster-mail-login-notices-depth	<RELOGIN> [actor]	e60233e135f411672c14c7ba70
 postmaster-saved-recipient-depth	check [actor]	87c5a4814825628b6d88ebd0e65a8eb4992a9653cc7a7e062b76c5224ee35590	mail.tsv:mail.send-store-inert-saved-recipient:excluded
 postmaster-saved-recipient-depth	receive [actor]	593ed57b8a1009575c81a3935087e186d828e26376f1659d704958dbc4a9f6cd	mail.tsv:mail.send-store-inert-saved-recipient:excluded
 postmaster-saved-recipient-depth	receive [observer]	ea0b3226afef8f1ef7101017a9c5e4702fc7eeeb3cae70f4b30a5b6f61176460	mail.tsv:mail.send-store-inert-saved-recipient:excluded
-spec-proc-guild-how-good-unknown-depth	practice	52ba43c5b04cbc0ba3dba067b8a3513fbf19d50039bc85ca8e3a783e259d2cfa	spec-procs.tsv:mob.guild-how-good-superb:blocked
-spec-proc-list-skills-overflow-depth	8	f3f6a95359f4adc3d721d87a540fa5e0f649ca99584eb0f923589ba52e180406	spec-procs.tsv:mob.list-skills-overflow:blocked
-spec-proc-list-skills-overflow-depth	practice	8cdbf3b2afeb8f5722622158140a3d84db5d48986c5e75fbeed59584dbc405d5	spec-procs.tsv:mob.list-skills-overflow:blocked
 wizhelp-privileged-depth	wizhelp	70ccff24c404e18b1fd1a1a66fb29fdd227702c67d20e8a7fd655bcd05197e54	informative.tsv:commands.wizhelp-privileged-header:blocked
