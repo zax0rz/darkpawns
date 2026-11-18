@@ -1,0 +1,188 @@
+# C-first witness for the two post-damage send_to_zone messages. A separate
+# awake observer waits in the same zone, outside the caster's room. Repeated
+# casts exercise the low-probability 1-in-11 noise arms after damage.
+# C path: src/magic.c:832-839; src/comm.c:2380-2385.
+# depth-case: objmagic.fireball-zone-noise
+# depth-case: objmagic.lightning-zone-noise
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Zonegod
+Y
+adminpass
+adminpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zonegod
+y
+adminpass
+adminpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:ZoneMage]
+ZoneMage
+Y
+magepass
+magepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:ZoneMage]
+ZoneMage
+y
+magepass
+magepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+ZoneVictim
+Y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+ZoneVictim
+y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Zonewatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Zonewatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport ZoneMage 8105
+teleport ZoneVictim 8105
+teleport Zonewatch 8106
+set player ZoneMage class mage
+set player ZoneMage level 31
+set player ZoneMage maxmana 50000
+set player ZoneMage mana 50000
+set player ZoneVictim level 20
+set player ZoneVictim maxhit 100000
+set player ZoneVictim hit 100000
+set player Zonewatch level 31
+skillset ZoneMage 'fireball' 100
+skillset ZoneMage 'call lightning' 100
+
+[probe:ZoneMage]
+cast 'fireball' ZoneVictim
+~dpclock pulse 20
+cast 'fireball' ZoneVictim
+~dpclock pulse 20
+cast 'fireball' ZoneVictim
+~dpclock pulse 20
+cast 'fireball' ZoneVictim
+~dpclock pulse 20
+cast 'fireball' ZoneVictim
+~dpclock pulse 20
+cast 'fireball' ZoneVictim
+~dpclock pulse 20
+cast 'fireball' ZoneVictim
+~dpclock pulse 20
+cast 'fireball' ZoneVictim
+~dpclock pulse 20
+cast 'fireball' ZoneVictim
+~dpclock pulse 20
+cast 'fireball' ZoneVictim
+~dpclock pulse 20
+cast 'fireball' ZoneVictim
+~dpclock pulse 20
+cast 'fireball' ZoneVictim
+~dpclock pulse 20
+cast 'call lightning' ZoneVictim
+~dpclock pulse 20
+cast 'call lightning' ZoneVictim
+~dpclock pulse 20
+cast 'call lightning' ZoneVictim
+~dpclock pulse 20
+cast 'call lightning' ZoneVictim
+~dpclock pulse 20
+cast 'call lightning' ZoneVictim
+~dpclock pulse 20
+cast 'call lightning' ZoneVictim
+~dpclock pulse 20
+cast 'call lightning' ZoneVictim
+~dpclock pulse 20
+cast 'call lightning' ZoneVictim
+~dpclock pulse 20
+cast 'call lightning' ZoneVictim
+~dpclock pulse 20
+cast 'call lightning' ZoneVictim
+~dpclock pulse 20
+cast 'call lightning' ZoneVictim
+~dpclock pulse 20
+cast 'call lightning' ZoneVictim

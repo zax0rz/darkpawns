@@ -1,0 +1,91 @@
+# A Lua oncmd fixture writes the C mobile timer while the mob is fighting. A
+# switched descriptor then reaches do_flee's NPC wait refusal.
+# C path: src/scripts.c:1887,2015-2018; src/utils.h:434;
+# src/act.offensive.c:360-384; src/act.wizard.c:1175-1200.
+# depth-case: flee.npc-wait-gate
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 14405 1 8105 144
+spawn-mob 16303 1 8105 80
+mob-script 16303 oracle/flee_wait.lua 512
+
+[lua-script mob/oracle/flee_wait.lua]
+function oncmd()
+if (argument == "say wait") then
+me.timer = 1000000
+save_char(me)
+return TRUE
+end
+return FALSE
+end
+
+[setup:oracle]
+Fleebody
+Y
+mobpass
+mobpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fleebody
+y
+mobpass
+mobpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Waitpeer
+Y
+waitpass
+waitpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Waitpeer
+y
+waitpass
+waitpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Waitpeer 8105
+set mob trainee maxhit 5000
+set mob trainee hit 5000
+force gil-glash hit trainee
+force Waitpeer say wait
+switch trainee
+
+[probe]
+flee

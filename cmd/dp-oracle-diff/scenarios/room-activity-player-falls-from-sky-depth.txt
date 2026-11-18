@@ -1,0 +1,81 @@
+# depth-case: room-activity.flying-fall-output
+# C-first actor and origin-room witness for a non-flying player in a flying
+# sector. The later peer receives C's Fly affect and stays in the origin while
+# the primary actor falls through the canonical room_activity path.
+# C path: src/comm.c:727-739; IS_FLYING in src/utils.h:148-149.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8106 9
+replace-room-exits 8106 down 8105 0
+
+[setup:oracle]
+Faller
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Faller
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watch]
+Fallwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Fallwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8106
+teleport Fallwatch 8106
+set player Faller class mage
+skillset Faller 'fly' 100
+set player Fallwatch class mage
+set player Fallwatch level 31
+skillset Fallwatch 'fly' 100
+cast 'fly' Fallwatch
+
+[probe]
+~dpclock pulse 40
+look

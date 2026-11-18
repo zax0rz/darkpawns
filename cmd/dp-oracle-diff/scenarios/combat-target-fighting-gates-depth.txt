@@ -1,0 +1,56 @@
+# C-first witness for handler-level target fighting gates. A separate NPC is
+# attacked first; the awake player caller is not in combat and can invoke both
+# commands before the next violence pulse.
+# C path: src/act.offensive.c:1241-1245,1490-1496.
+# depth-case: sleeper.target-fighting
+# depth-case: ambush.target-fighting
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12105 1 8105 121
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Combatgate
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Combatgate
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Combatgate 'sleeper' 100
+skillset Combatgate 'ambush' 100
+set Talis level 1
+set Talis maxhit 5000
+set Talis hit 5000
+set Talis hitroll 0
+set trainee level 1
+set trainee hitroll 0
+
+[probe]
+force trainee hit Talis
+sleeper Talis
+ambush Talis

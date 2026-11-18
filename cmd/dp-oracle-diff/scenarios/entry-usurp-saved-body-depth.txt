@@ -1,11 +1,14 @@
-# A second live descriptor logs into seeded Testor while the peer still owns
-# the playing body. C's perform_dupe_check takes over the body, closes the old
-# socket, and sends the takeover act to the room (src/interpreter.c:1528-1649).
+# A second live descriptor logs into the target player's saved account while
+# its original descriptor is in the world; C takes the USURP branch and sends
+# the body act and reconnect mudlog to their separate audiences.
+# C path: src/interpreter.c:1528-1563,1640-1649.
 # depth-case: entry.reconnect-usurp
 # depth-case: entry.identity-persistent-id-duplicate-sessions
 
 [fixture]
-seed-player
+empty-players
+no-settle
+quiet-mobs
 
 [setup:oracle]
 Usurpspirit
@@ -35,17 +38,9 @@ Y
 <ENTER>
 1
 
-[setup:oracle:peer]
-Testor
-testpassword
-<ENTER>
-1
+[setup:oracle:login]
 
-[setup:port:peer]
-Testor
-testpassword
-<ENTER>
-1
+[setup:port:login]
 
 [setup:oracle:observer]
 Usurpwatch
@@ -75,17 +70,39 @@ Y
 <ENTER>
 1
 
-[relogin:oracle]
+[setup:oracle:target]
+Testor
+Y
+testpass
+testpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Testor
+y
+testpass
+testpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Usurpwatch level 31
+force Usurpwatch syslog normal
+
+[probe:login]
 Testor
 ~dpclock pulse 1
-testpassword
-
-[relogin:port]
-Testor
-~dpclock pulse 1
-testpassword
-
-[probe]
-quit
-0
-<RELOGIN>
+testpass
