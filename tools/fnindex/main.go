@@ -58,12 +58,23 @@ func main() {
 	root := flag.String("root", ".", "repository root")
 	output := flag.String("output", "docs/research/function-index/index.tsv", "index output path")
 	cOutput := flag.String("c-output", "docs/research/function-index/c-functions.tsv", "C function inventory output path")
+	check := flag.Bool("check", false, "check current C citations against the baseline without writing inventories")
+	baseline := flag.String("baseline", "docs/research/function-index/baseline.tsv", "approved C-to-Go association baseline")
+	duplicates := flag.String("duplicates", "docs/research/function-index/duplicates.tsv", "active duplicate associations, which may only shrink")
 	flag.Parse()
 
 	functions, cByFile, err := buildIndex(*root)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+	if *check {
+		if err := checkRatchet(*root, *baseline, *duplicates, functions); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		fmt.Println("function-index ratchet clean")
+		return
 	}
 	attachCallSites(*root, cByFile)
 	goPorts := productionGoPorts(functions)
@@ -79,14 +90,23 @@ func main() {
 		os.Exit(1)
 	}
 	w := bufio.NewWriter(f)
-	fmt.Fprintln(w, "go_package\tgo_function\tgo_file\tgo_line\tc_functions\tcitation_text\tresolution_errors")
+	if _, err := fmt.Fprintln(w, "go_package\tgo_function\tgo_file\tgo_line\tc_functions\tcitation_text\tresolution_errors"); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		_ = f.Close()
+		os.Exit(1)
+	}
 	unresolved := 0
-	for _, fn := range functions {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%s\t%s\t%s\n",
+	for i := range functions {
+		fn := functions[i]
+		if _, err := fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%s\t%s\t%s\n",
 			clean(fn.Package), clean(fn.Name), clean(fn.File), fn.Line,
 			clean(strings.Join(fn.CFunctions, "; ")),
 			clean(strings.Join(fn.Cites, " | ")),
-			clean(strings.Join(fn.Errors, " | ")))
+			clean(strings.Join(fn.Errors, " | "))); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			_ = f.Close()
+			os.Exit(1)
+		}
 		unresolved += len(fn.Errors)
 	}
 	if err := w.Flush(); err != nil {
@@ -389,7 +409,8 @@ func parseCFunctions(source, file string) []cFunction {
 
 func productionGoPorts(functions []goFunction) map[string][]string {
 	ports := make(map[string][]string)
-	for _, fn := range functions {
+	for i := range functions {
+		fn := functions[i]
 		if strings.HasSuffix(fn.File, "_test.go") {
 			continue
 		}
@@ -405,7 +426,8 @@ func productionGoPorts(functions []goFunction) map[string][]string {
 
 func productionGoNameCandidates(functions []goFunction) map[string][]string {
 	byName := make(map[string][]string)
-	for _, fn := range functions {
+	for i := range functions {
+		fn := functions[i]
 		if strings.HasSuffix(fn.File, "_test.go") {
 			continue
 		}
@@ -532,7 +554,10 @@ func writeCInventory(path string, byFile map[string][]cFunction, goPorts, goName
 				disposition = "active-c-reference-no-go-name-match-missing-lead"
 			}
 		}
-		fmt.Fprintf(w, "%s\t%s\t%d\t%d\t%d\t%s\t%d\t%s\t%s\t%s\n", clean(fn.Name), clean(fn.File), fn.StartLine, fn.EndLine, len(fn.CallSites), clean(strings.Join(fn.CallSites, ";")), len(ports), clean(strings.Join(ports, ";")), clean(strings.Join(candidates, ";")), disposition)
+		if _, err := fmt.Fprintf(w, "%s\t%s\t%d\t%d\t%d\t%s\t%d\t%s\t%s\t%s\n", clean(fn.Name), clean(fn.File), fn.StartLine, fn.EndLine, len(fn.CallSites), clean(strings.Join(fn.CallSites, ";")), len(ports), clean(strings.Join(ports, ";")), clean(strings.Join(candidates, ";")), disposition); err != nil {
+			_ = f.Close()
+			return err
+		}
 	}
 	if err := w.Flush(); err != nil {
 		_ = f.Close()
@@ -656,9 +681,10 @@ func stripCCommentsAndStrings(s string) string {
 func matchingBrace(s string, start int) int {
 	depth := 0
 	for i := start; i < len(s); i++ {
-		if s[i] == '{' {
+		switch s[i] {
+		case '{':
 			depth++
-		} else if s[i] == '}' {
+		case '}':
 			depth--
 			if depth == 0 {
 				return i

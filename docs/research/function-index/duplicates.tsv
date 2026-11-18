@@ -1,0 +1,3 @@
+c_function	go_file	go_function	duplicate_of_file	duplicate_of_function	basis
+src/interpreter.c:is_number	pkg/game/clans.go	isClanNumber	pkg/game/act_comm.go	CIsNumber	identical Go body; clan-number caller is separate at pkg/game/clans.go:278
+src/new_cmds.c:flesh_alter_weapon	pkg/session/cmd_info.go	fleshAlterWeapon	pkg/game/skill_special.go	fleshAlterWeapon	identical Go body; separate callers at pkg/session/cmd_info.go:411,599
