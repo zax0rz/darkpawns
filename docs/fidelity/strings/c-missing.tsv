@@ -558,9 +558,7 @@ Shutting down.	src/act.wizard.c:1088	send_to_all	do_shutdown
 (GC) Reboot by	src/act.wizard.c:1091	buffered:sprintf	do_shutdown
 Rebooting.. come back in a minute or two.	src/act.wizard.c:1093	send_to_all	do_shutdown
 (GC) Shutdown by	src/act.wizard.c:1097	buffered:sprintf	do_shutdown
-Shutting down for maintenance.	src/act.wizard.c:1099	send_to_all	do_shutdown
 (GC) Shutdown by	src/act.wizard.c:1103	buffered:sprintf	do_shutdown
-Shutting down for maintenance.	src/act.wizard.c:1105	send_to_all	do_shutdown
 Suddenly the walls run red with blood and a neon '666' sign flashes.	src/act.wizard.c:1231	act	random_load_msg
 Suddenly the walls run red with blood and a neon '666' sign flashes.	src/act.wizard.c:1233	act	random_load_msg
 The flames of Hell roar up then fade, leaving something behind...	src/act.wizard.c:1237	act	random_load_msg
