@@ -1,0 +1,79 @@
+# depth-case: mob.eq-thief-junk-black-item
+# C-first witness for SPECIAL(eq_thief) junking an item matching "black".
+# Mob 12118 (kender, assigned eq_thief at src/spec_assign.c:350) stands in a
+# room with a mortal peer and carries a "black" object (#14500, black horn).
+# When mobile_activity() hits !number(0, 4), eq_thief finds the "black" item
+# in its inventory and emits "$n junks $p. It vanishes in a puff of smoke!"
+# to the room before extracting it.
+# C path: src/mobact.c:68-93 -> src/spec_procs2.c:1613-1646.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12118 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+EqThiefGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+EqThiefGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+EqThiefPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+EqThiefPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport EqThiefPeer 8105
+load obj 14500
+give black kender
+
+[probe]
+~dpclock pulse 400
