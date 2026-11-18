@@ -68,7 +68,7 @@ Y
 [warmup]
 set player Switchedrx level 39
 goto 8105
-load m 69
+load mob 69
 send:peer goto 8105
 send:peer switch clone
 send:peer hit 2.clone
