@@ -57,6 +57,8 @@ fight-victim-dismount-thud-fanout-depth	send:kickbravo kick Knockrider [kickfoxt
 fight-victim-dismount-thud-fanout-depth	send:kickbravo kick Knockrider [primary]	53862ec6f7783221136af41326428ce7ec68cd560a61517e324f5121cc93b93b	fight-output.tsv:fight.damage-victim-dismount-thud:blocked;fight-output.tsv:fight.damage-victim-knockoff-char:blocked
 fight-victim-dismount-thud-fanout-depth	send:kickbravo kick Knockrider [rider]	fea110aa5309202fbd5d093ae8d0a359b763fbd58701eaa24dddc0fb6550eb3c	fight-output.tsv:fight.damage-victim-dismount-thud:blocked;fight-output.tsv:fight.damage-victim-knockoff-char:blocked
 hcontrol-build-offline-owner-depth	hcontrol build 8162 north Oraklet	dca3a1cfd3d435da429d016c98e253707bf7227869c49d2a02b0f1be8df57392	hcontrol.tsv:hcontrol.build-offline-owner:blocked
+hcontrol-pay-mudlog-depth	hcontrol pay 8162 [actor]	3364ce19b943ffb25abb410192351eabfcf369e9696e3a669f3bca3ed6c69f24	hcontrol.tsv:hcontrol.pay-audit-log:blocked
+hcontrol-pay-mudlog-depth	hcontrol pay 8162 [watch]	d84b45835c84eb0f099bf4cebe5db3f07007c4513a6d66e815cc1aab7b9ff9a8	hcontrol.tsv:hcontrol.pay-audit-log:blocked
 hcontrol-show-offline-guests-depth	hcontrol show	9b5c46f922e163e3d0ff0ca68340eac2ee8c9fd343fbc318d84c82c3d11f1637	hcontrol.tsv:hcontrol.show-offline-guests:blocked
 hcontrol-show-offline-owner-depth	hcontrol show	f460a664b41faf140233518283b8a4459013a75d7e6982500c5ab85dd54f037c	hcontrol.tsv:hcontrol.show-offline-owner:blocked
 house-offline-guest-list-depth	house guest	dd9129f95089c036ece5e82a9ad05206a42a7f60be0c2c653bc793385a3f22d1	house.tsv:house.guest-list-offline:blocked
