@@ -41,42 +41,35 @@ var citizenNumber = dprng.Number
 // Callers that replace C send_to_room() must use World.SendToRoom instead,
 // whose recipient rule differs by allowing PLR_WRITING recipients.
 func (w *World) roomMessage(roomVNum int, msg string) {
-	players := w.GetPlayersInRoom(roomVNum)
-	for _, p := range players {
-		if !sendOk(p, false) {
-			continue
-		}
-		p.SendMessage(msg + "\r\n")
-	}
+	w.sendActRoomMessage(roomVNum, msg+"\r\n")
 }
 
-// actMessage sends audience-aware messages to players in a room.
-// toChar is sent to the actor (if actor is a player), toVict to the victim,
-// and toRoom to everyone else. Empty strings are skipped.
+// actMessage sends audience-aware messages to occupants in a room.
+// toChar is sent to the actor, toVict to the victim, and toRoom to everyone
+// else (including switched mobiles). Empty strings are skipped.
 // Mirrors C's act() with TO_CHAR / TO_VICT / TO_ROOM.
 func (w *World) actMessage(roomVNum int, actor, victim combat.Combatant, toChar, toVict, toRoom string) {
 	// C's perform_act capitalizes the substituted line (CAP(lbuf),
 	// src/comm.c:2477); every message here mirrors a C act() built from
 	// lowercase short descriptions, so the same CAP applies (R1).
-	players := w.GetPlayersInRoom(roomVNum)
-	for _, p := range players {
-		if !sendOk(p, false) {
+	for _, to := range w.actChar(roomVNum) {
+		if !w.hasRoomDescriptor(to) || !CanReceiveActActor(to) {
 			continue
 		}
-		if actor != nil && p == actor {
+		if actor != nil && any(to) == any(actor) {
 			if toChar != "" {
-				p.SendMessage(cap(toChar) + "\r\n")
+				to.SendMessage(cap(toChar) + "\r\n")
 			}
 			continue
 		}
-		if victim != nil && p == victim {
+		if victim != nil && any(to) == any(victim) {
 			if toVict != "" {
-				p.SendMessage(cap(toVict) + "\r\n")
+				to.SendMessage(cap(toVict) + "\r\n")
 			}
 			continue
 		}
 		if toRoom != "" {
-			p.SendMessage(cap(toRoom) + "\r\n")
+			to.SendMessage(cap(toRoom) + "\r\n")
 		}
 	}
 }

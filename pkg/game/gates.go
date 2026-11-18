@@ -118,16 +118,17 @@ func (w *World) RealRoom(vnum int) int {
 	return vnum
 }
 
-// SendToRoom sends a message to all players in a room.
+// SendToRoom sends a message to all awake recipients in a room.
 func (w *World) SendToRoom(rnum int, msg string) {
-	// C comm.c:2366-2372 sends only to players with descriptors and position
-	// above POS_SLEEPING. Unlike act()/SENDOK, send_to_room does not suppress
+	// C comm.c:2366-2372 walks world[room].people and sends to any character
+	// with a descriptor and position above POS_SLEEPING (including switched
+	// mobiles). Unlike act()/SENDOK, send_to_room does not suppress
 	// PLR_WRITING recipients. Preserve the caller's bytes exactly.
-	for _, player := range w.GetPlayersInRoom(rnum) {
-		if player.GetPosition() <= combat.PosSleeping {
+	for _, to := range w.actChar(rnum) {
+		if !w.hasRoomDescriptor(to) || to.GetPosition() <= combat.PosSleeping {
 			continue
 		}
-		player.SendMessage(msg)
+		to.SendMessage(msg)
 	}
 }
 

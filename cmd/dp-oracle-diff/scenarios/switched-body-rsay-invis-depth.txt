@@ -1,0 +1,78 @@
+# C-first witness for DP-1578: rsay and perform_immort_invis deliver to
+# switched mobile descriptors in the room (src/act.comm.c:681-726,
+# src/act.wizard.c:1646-1655).
+# Broadcaster (Human, level 39) runs `rsay hello`, `invis 39`, and `invis 0`
+# in room 8105 while Switchedrx is switched into trainee in room 8105.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 163
+
+[setup:oracle]
+Broadcaster
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Broadcaster
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Switchedrx
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Switchedrx
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Switchedrx level 39
+holylight
+goto 8105
+send:peer switch trainee
+
+[probe]
+rsay hello
+invis 40
+invis 0
+send:peer look

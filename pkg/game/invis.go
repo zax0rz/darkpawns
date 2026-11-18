@@ -52,15 +52,24 @@ func (w *World) performImmortVis(ch *Player) {
 // performImmortInvis ports perform_immort_invis from src/act.wizard.c:1641-1659.
 func (w *World) performImmortInvis(ch *Player, level int) {
 	oldLevel := ch.GetInvisLevel()
-	for _, target := range w.GetPlayersInRoom(ch.GetRoom()) {
-		if target == ch {
+	for _, target := range w.actChar(ch.GetRoom()) {
+		if target == Actor(ch) || !w.hasRoomDescriptor(target) {
 			continue
 		}
-		if target.GetLevel() >= oldLevel && target.GetLevel() < level {
+		var targetLevel int
+		switch t := target.(type) {
+		case *Player:
+			targetLevel = t.GetLevel()
+		case *MobInstance:
+			targetLevel = t.GetLevel()
+		default:
+			continue
+		}
+		if targetLevel >= oldLevel && targetLevel < level {
 			Act(nil, false, ch, target, nil, nil,
 				"You blink and suddenly realize that $n is gone.", "", ToVict)
 		}
-		if target.GetLevel() < oldLevel && target.GetLevel() >= level {
+		if targetLevel < oldLevel && targetLevel >= level {
 			Act(nil, false, ch, target, nil, nil,
 				"You suddenly realize that $n is standing beside you.", "", ToVict)
 		}

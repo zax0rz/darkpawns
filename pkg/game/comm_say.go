@@ -69,6 +69,14 @@ func (w *World) doRaceSay(ch *Player, me *MobInstance, cmd string, arg string) b
 			p.SendMessage(fmt.Sprintf("%s%s'%s'\r\n", ch.Name, verbMsg, translated))
 		}
 	}
+	// Switched mobiles are NPCs (!IS_NPC is false in C src/act.comm.c:684),
+	// so they receive the untranslated "(In <Race>)" branch when awake.
+	for _, mob := range w.roomSwitchedMobs(ch.RoomVNum) {
+		if mob.GetPosition() <= posSleeping {
+			continue
+		}
+		mob.SendMessage(fmt.Sprintf("%s%s'(In %s) %s'\r\n", ch.Name, verbMsg, raceName, arg))
+	}
 
 	// Self-message.
 	if ch.Flags&(1<<PrfNoRepeat) == 0 {
@@ -132,6 +140,12 @@ func (w *World) NPCDoRaceSay(ch *MobInstance, arg string) {
 		} else {
 			player.SendMessage(fmt.Sprintf("%s%s'%s'\r\n", ch.GetName(), verbMsg, translated))
 		}
+	}
+	for _, mob := range w.roomSwitchedMobs(ch.GetRoomVNum()) {
+		if mob == ch || mob.GetPosition() <= posSleeping {
+			continue
+		}
+		mob.SendMessage(fmt.Sprintf("%s%s'(In %s) %s'\r\n", ch.GetName(), verbMsg, raceName, arg))
 	}
 	actorVerb := verb[:len(verb)-1]
 	ch.SendMessage(fmt.Sprintf("You %s, '(In %s) %s'\r\n", actorVerb, raceName, arg))
