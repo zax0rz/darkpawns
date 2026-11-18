@@ -95,3 +95,29 @@ func TestOrderRejectsCharmedActorWithCMessage(t *testing.T) {
 	default:
 	}
 }
+
+func TestOrderSwitchedCharmedMobRefuses(t *testing.T) {
+	m := makeTestManagerWithMobs(t)
+	actor := makeTestSession(t, m, "Orderactor", 1001, true)
+	target := makeTestSession(t, m, "Ordertarget", 1001, true)
+	registerInWorld(t, actor)
+	registerInWorld(t, target)
+
+	mob := registerMob(t, m, 2001, 1001)
+	mob.SetAffected(game.AffCharm)
+	actor.isSwitched = true
+	actor.switchedOriginal = actor.player
+	actor.switchedMob = mob
+
+	if err := cmdOrder(actor, []string{"Ordertarget", "say", "hello"}); err != nil {
+		t.Fatalf("cmdOrder: %v", err)
+	}
+	if got := readSessionText(t, actor); got != "Your superior would not aprove of you giving orders.\r\n" {
+		t.Fatalf("switched charmed mob output = %q, want C message", got)
+	}
+	select {
+	case got := <-target.send:
+		t.Fatalf("target received output despite switched mob charm gate: %q", got)
+	default:
+	}
+}

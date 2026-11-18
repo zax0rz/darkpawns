@@ -146,3 +146,59 @@ func TestSendSkillResultSendsLFCRBytesExactly(t *testing.T) {
 		}
 	}
 }
+
+func TestSendSkillResultDeliversToSwitchedMob(t *testing.T) {
+	world, err := game.NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Test Room", Zone: 1}},
+		Mobs: []parser.Mob{
+			{VNum: 2001, Keywords: "seagull", ShortDesc: "a seagull", LongDesc: "A seagull is here.", Level: 5},
+			{VNum: 2002, Keywords: "bystander", ShortDesc: "a bystander", LongDesc: "A bystander is here.", Level: 5},
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(world.StopAITicker)
+
+	actor := game.NewPlayer(1, "Actor", 1001)
+	if err := world.AddPlayer(actor); err != nil {
+		t.Fatalf("AddPlayer actor: %v", err)
+	}
+	targetMob, err := world.SpawnMob(2001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob target: %v", err)
+	}
+	bystanderMob, err := world.SpawnMob(2002, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob bystander: %v", err)
+	}
+
+	mobOut := make(map[*game.MobInstance]string)
+	world.MobileDescriptorOwner = func(m *game.MobInstance) *game.Player {
+		if m == targetMob || m == bystanderMob {
+			return actor
+		}
+		return nil
+	}
+	world.MobileMessageSink = func(m *game.MobInstance, msg []byte) {
+		mobOut[m] += string(msg)
+	}
+
+	session := &skillCommandSession{player: actor, world: world}
+	result := game.SkillResult{
+		RetaliateHitAfterMessages: true,
+		MessageToCh:               "A seagull notices you lunging at it!",
+		MessageToVict:             "You notice Actor lunging at you!",
+		MessageToRoom:             "A seagull notices Actor lunging at it!",
+	}
+	if err := sendSkillResult(session, actor, targetMob, result); err != nil {
+		t.Fatalf("sendSkillResult: %v", err)
+	}
+
+	if got, want := mobOut[targetMob], "You notice Actor lunging at you!\r\n"; got != want {
+		t.Fatalf("switched target mob bytes = %q, want %q", got, want)
+	}
+	if got, want := mobOut[bystanderMob], "A seagull notices Actor lunging at it!\r\n"; got != want {
+		t.Fatalf("switched bystander mob bytes = %q, want %q", got, want)
+	}
+}

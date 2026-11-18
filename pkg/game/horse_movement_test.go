@@ -137,6 +137,27 @@ func TestMountedTravelSpendsTheMountPool(t *testing.T) {
 	if len(out) == 0 || out[len(out)-1] != want {
 		t.Fatalf("exhaustion line = %q, want %q", out, want)
 	}
+
+	// Switched mount descriptor also receives the mount exhaustion message (DP-1568).
+	var mountOut []string
+	w.MobileDescriptorOwner = func(m *MobInstance) *Player {
+		if m == horse {
+			return rider
+		}
+		return nil
+	}
+	w.MobileMessageSink = func(m *MobInstance, msg []byte) {
+		if m == horse {
+			mountOut = append(mountOut, string(msg))
+		}
+	}
+	if w.DoMove(rider, "north").Success {
+		t.Fatal("exhausted mount move succeeded")
+	}
+	wantMount := "You are too exhausted to carry your rider further.\r\n"
+	if len(mountOut) == 0 || mountOut[len(mountOut)-1] != wantMount {
+		t.Fatalf("switched mount exhaustion line = %q, want %q", mountOut, wantMount)
+	}
 }
 
 // TestHorseAppearsInRoomLook pins C list_char_to_char's default-position branch

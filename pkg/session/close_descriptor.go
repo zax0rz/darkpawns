@@ -30,6 +30,9 @@ func (s *Session) markDescriptorBound() {
 // played, choosing the arm from the descriptor's C state. It is a no-op the
 // second time (and for a playing descriptor).
 func (s *Session) LoseDescriptor() {
+	if s != nil && s.manager != nil {
+		s.manager.untrackDescriptor(s)
+	}
 	s.descriptorLossOnce.Do(func() {
 		if !s.descriptorBound {
 			// C has no character on this descriptor: the client dropped
@@ -45,6 +48,9 @@ func (s *Session) LoseDescriptor() {
 // perform_dupe_check has already cleared d->character (src/interpreter.c:1551-1576)
 // before the descriptor is closed: close_socket then finds no character at all.
 func (s *Session) LoseDescriptorWithoutChar() {
+	if s != nil && s.manager != nil {
+		s.manager.untrackDescriptor(s)
+	}
 	s.descriptorLossOnce.Do(func() {
 		game.MudLog("Losing descriptor without char.", game.MudlogComplete, game.LVL_IMMORT, true)
 	})
