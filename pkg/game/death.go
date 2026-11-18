@@ -412,6 +412,9 @@ func (w *World) finishMobDeath(victim, killer combat.Combatant, attackType int) 
 	// still fighting the flagged body do not (src/handler.c:1147-1151).
 	w.stopKillerAfterDie(killer)
 	w.attitudeLootAfterKill(killer, victim)
+	if killerMob, ok := killer.(*MobInstance); ok && killerMob.GetVNum() == 19405 {
+		w.mobGlobalGossip(killerMob, fmt.Sprintf("%s has just learned the Five Fingers of Enlightenment. Who else wishes to learn from the master?", victim.GetName()))
+	}
 	if playerKiller, ok := killer.(*Player); ok && killer != victim && playerKiller.GetFlags()&(1<<PrfAutoLoot) != 0 {
 		// C damage() runs the ordinary do_get only after die_with_killer
 		// and its attitude-loot tail have returned (src/fight.c:1691-1712).
