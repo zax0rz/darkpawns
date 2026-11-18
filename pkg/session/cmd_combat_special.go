@@ -15,26 +15,35 @@ func cmdOrder(s *Session, args []string) error {
 		return nil
 	}
 
+	actor := s.combatBody()
+	if actor == nil {
+		return nil
+	}
+	actActor, ok := actor.(game.Actor)
+	if !ok || actActor == nil {
+		return nil
+	}
+
 	targetName := strings.ToLower(args[0])
 	orderCmd := strings.Join(args[1:], " ")
 	world := s.manager.world
-	roomVNum := s.player.GetRoom()
+	roomVNum := actor.GetRoom()
 
 	// C do_order resolves a room character before checking the special
 	// "followers" pseudo-target (act.offensive.c:304-306). This includes the
 	// actor, players, and mobs through get_char_room_vis (handler.c:1276-1300).
-	target, found := world.ResolveCharInRoom(s.player, targetName)
+	target, found := world.ResolveCharInRoom(actor, targetName)
 	if !found && !isFollowersTarget(targetName) {
 		s.Send("That person isn't here.\r\n")
 		return nil
 	}
-	if found && target.Player == s.player {
+	if found && targetActor(target) == actActor {
 		s.Send("You obviously suffer from skitzofrenia.\r\n")
 		return nil
 	}
 
 	// A charmed actor cannot issue orders (act.offensive.c:310-317).
-	if s.player.IsAffected(game.AffCharm) {
+	if world.IsCharmedI(actor) {
 		s.Send("Your superior would not aprove of you giving orders.\r\n")
 		return nil
 	}
@@ -44,12 +53,12 @@ func cmdOrder(s *Session, args []string) error {
 		if victim == nil {
 			return fmt.Errorf("order target is not an actor")
 		}
-		game.Act(world, false, victim, s.player, nil, nil,
+		game.Act(world, false, victim, actActor, nil, nil,
 			fmt.Sprintf("$N orders you to '%s'", orderCmd), "", game.ToChar)
-		game.Act(world, false, s.player, victim, nil, nil,
+		game.Act(world, false, actActor, victim, nil, nil,
 			"$n gives $N an order.", "", game.ToRoom)
 
-		if orderFollowing(victim) != s.player.Name || !world.IsCharmedI(victim) {
+		if orderFollowing(victim) != actor.GetName() || !world.IsCharmedI(victim) {
 			game.Act(world, false, victim, nil, nil, nil,
 				"$n has an indifferent look.", "", game.ToRoom)
 			return nil
@@ -63,10 +72,10 @@ func cmdOrder(s *Session, args []string) error {
 	// C's followers arm emits the room announcement first, then dispatches each
 	// same-room charmed follower, and acknowledges only if one was found
 	// (act.offensive.c:337-357).
-	game.Act(world, false, s.player, nil, nil, nil,
+	game.Act(world, false, actActor, nil, nil, nil,
 		fmt.Sprintf("$n issues the order '%s'.", orderCmd), "", game.ToRoom)
 	foundFollower := false
-	for _, follower := range world.GetFollowerActors(s.player.Name) {
+	for _, follower := range world.GetFollowerActors(actor.GetName()) {
 		if follower.GetRoom() != roomVNum || !world.IsCharmedI(follower) {
 			continue
 		}

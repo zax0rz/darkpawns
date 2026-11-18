@@ -756,11 +756,12 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 		victPronouns := GetPronouns(target.GetName(), target.GetSex())
 		chPronouns := GetPronouns(ch.Name, ch.GetSex())
 		return SkillResult{
-			Success:       false,
-			MessageToCh:   ActMessage("$e notices you lunging at $m!", victPronouns, &chPronouns, ""),
-			MessageToVict: ActMessage("You notice $N lunging at you!", victPronouns, &chPronouns, ""),
-			MessageToRoom: ActMessage("$n notices $N lunging at $m!", victPronouns, &chPronouns, ""),
-			RetaliateHit:  target.GetFightingBody() == nil,
+			Success:                   false,
+			MessageToCh:               ActMessage("$e notices you lunging at $m!", victPronouns, &chPronouns, ""),
+			MessageToVict:             ActMessage("You notice $N lunging at you!", victPronouns, &chPronouns, ""),
+			MessageToRoom:             ActMessage("$n notices $N lunging at $m!", victPronouns, &chPronouns, ""),
+			RetaliateHit:              target.GetFightingBody() == nil,
+			RetaliateHitAfterMessages: true,
 		}
 	}
 

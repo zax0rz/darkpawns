@@ -297,6 +297,7 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	}
 	if mount != nil && mount.GetMove() < needMovement {
 		movementSendToChar(ch, "Your mount is too exhausted to carry you further.")
+		SendToChar(mount, "You are too exhausted to carry your rider further.\r\n")
 		return false
 	}
 	if mount == nil && ch.GetLevel() < lvlImmort && ch.GetMove() < needMovement {

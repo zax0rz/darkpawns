@@ -1,0 +1,76 @@
+# C-first do_users witness for DP-1554: a level-39 God runs users while a
+# level-40 God is switched into a level-9 mobile (clone). C computes the idle
+# cell from d->character (the level-9 body, < 39) and prints "  0", whereas
+# Go previously checked the level-40 owner and left the cell blank.
+# (src/act.informative.c:2051-2076)
+
+# depth-case: users.switched-idle
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8105 80
+
+[setup:oracle]
+Usersowner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Usersowner
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Userspeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Userspeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Userspeer level 39
+goto 8105
+switch clone
+
+[probe]
+send:peer users

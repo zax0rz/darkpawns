@@ -72,7 +72,7 @@ func (s *Session) GetPlayerLevel() int {
 // NewSession creates a bare session not associated with any WebSocket (for telnet/embed use).
 func (m *Manager) NewSession() *Session {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &Session{
+	s := &Session{
 		manager:          m,
 		send:             make(chan []byte, 256),
 		limiter:          rate.NewLimiter(rate.Limit(10), 10),
@@ -84,6 +84,8 @@ func (m *Manager) NewSession() *Session {
 		transportDone:    make(chan struct{}),
 		connectionNumber: m.allocateConnectionNumber(),
 	}
+	m.trackDescriptor(s)
+	return s
 }
 
 // Manager returns the session manager that owns this session.
@@ -121,6 +123,9 @@ func (s *Session) CloseAfterSend() {
 
 func (s *Session) closeSendNow() {
 	s.releaseEntryName()
+	if s.manager != nil {
+		s.manager.untrackDescriptor(s)
+	}
 	if s.send == nil {
 		return
 	}
@@ -182,6 +187,9 @@ func (s *Session) SetDrainBeforeCloseFunc(fn func()) {
 // not an orderly quit: close_socket() keeps the playing character in the
 // world with a NULL descriptor so tell can report the linkless state.
 func (s *Session) DetachTransport() {
+	if s.manager != nil {
+		s.manager.untrackDescriptor(s)
+	}
 	s.transportOnce.Do(func() {
 		close(s.transportDone)
 	})

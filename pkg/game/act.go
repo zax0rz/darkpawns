@@ -297,6 +297,12 @@ func CanReceiveAct(to *Player) bool {
 	return to != nil && sendOk(to, false)
 }
 
+// CanReceiveActActor reports whether any actor recipient (including a switched
+// mobile) passes C's SENDOK gate for an ordinary act() message.
+func CanReceiveActActor(to Actor) bool {
+	return to != nil && sendOk(to, false)
+}
+
 // objName returns the object's first keyword or "something" if not visible.
 // C: OBJN(obj, vict) — fname(obj->name) if CAN_SEE_OBJ, else "something"
 // (src/utils.h:557-558). fname() is CFName; see world_object.go.

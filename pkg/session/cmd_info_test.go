@@ -663,6 +663,116 @@ func TestCmdUsersCFormat(t *testing.T) {
 	}
 }
 
+func TestCmdUsersPreLoginAndStateLabels(t *testing.T) {
+	m := makeTestManager(t)
+	imm := makeTestSession(t, m, "Watcher", 1001, true)
+	imm.player.SetLevel(game.LVL_IMPL)
+	imm.connectionNumber = 1
+	m.mu.Lock()
+	m.sessions[imm.player.Name] = imm
+	m.mu.Unlock()
+
+	preLogin := m.NewSession()
+	preLogin.SetRemoteIP("127.0.0.1")
+
+	creationRoll := m.NewSession()
+	creationRoll.SetRemoteIP("127.0.0.1")
+	creationRoll.charCreating = true
+	creationRoll.charStage = "stats_roll"
+	creationRoll.charName = "Roller"
+
+	creationMotd := m.NewSession()
+	creationMotd.SetRemoteIP("127.0.0.1")
+	creationMotd.charCreating = true
+	creationMotd.charStage = "motd"
+	creationMotd.charName = "MotdPeer"
+
+	menuDesc := makeTestSession(t, m, "DescPeer", 1001, true)
+	menuDesc.authenticated = true
+	menuDesc.menuActive = true
+	menuDesc.menuStage = "description"
+	menuDesc.textEdit = &textEditState{}
+	m.mu.Lock()
+	m.sessions[menuDesc.player.Name] = menuDesc
+	m.mu.Unlock()
+
+	del1 := makeTestSession(t, m, "DelOne", 1001, true)
+	del1.authenticated = true
+	del1.menuActive = true
+	del1.menuStage = "delete_password"
+	m.mu.Lock()
+	m.sessions[del1.player.Name] = del1
+	m.mu.Unlock()
+
+	del2 := makeTestSession(t, m, "DelTwo", 1001, true)
+	del2.authenticated = true
+	del2.menuActive = true
+	del2.menuStage = "delete_confirm"
+	m.mu.Lock()
+	m.sessions[del2.player.Name] = del2
+	m.mu.Unlock()
+
+	if err := cmdUsers(imm, nil); err != nil {
+		t.Fatalf("cmdUsers: %v", err)
+	}
+	got := readSessionText(t, imm)
+	for _, want := range []string{
+		"UNDEFINED    Get name",
+		"Roller       Rolling abilities 2",
+		"MotdPeer     Reading MOTD",
+		"DescPeer     Get descript.",
+		"DelOne       Self-Delete 1",
+		"DelTwo       Self-Delete 2",
+		"\r\n7 visible sockets connected.\r\n",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("users output missing %q:\n%s", want, got)
+		}
+	}
+
+	preLogin.LoseDescriptor()
+	if err := cmdUsers(imm, nil); err != nil {
+		t.Fatalf("cmdUsers after LoseDescriptor: %v", err)
+	}
+	gotAfter := readSessionText(t, imm)
+	if strings.Contains(gotAfter, "UNDEFINED") || !strings.Contains(gotAfter, "\r\n6 visible sockets connected.\r\n") {
+		t.Fatalf("users output did not drop closed pre-login descriptor:\n%s", gotAfter)
+	}
+}
+
+func TestCmdUsersSwitchedIdleUsesBodyLevel(t *testing.T) {
+	m := makeTestManagerWithMobs(t)
+	viewer := makeTestSession(t, m, "Viewer", 1001, true)
+	viewer.player.SetLevel(game.LVL_GRGOD) // 39
+	viewer.connectionNumber = 2
+
+	owner := makeTestSession(t, m, "Owner", 1001, true)
+	owner.player.SetLevel(game.LVL_IMPL) // 40
+	owner.connectionNumber = 1
+	owner.connectedAt = time.Date(2026, time.September, 4, 22, 58, 48, 0, time.UTC)
+	owner.SetRemoteIP("127.0.0.1")
+
+	mob := registerMob(t, m, 2001, 1001)
+	mob.SetLevel(9)
+	owner.isSwitched = true
+	owner.switchedOriginal = owner.player
+	owner.switchedMob = mob
+
+	m.mu.Lock()
+	m.sessions[viewer.player.Name] = viewer
+	m.sessions[owner.player.Name] = owner
+	m.mu.Unlock()
+
+	if err := cmdUsers(viewer, nil); err != nil {
+		t.Fatalf("cmdUsers: %v", err)
+	}
+	got := readSessionText(t, viewer)
+	wantRow := "  1 [40 Mu] Owner        Switched         0 22:58:48 [Hostname unknown]"
+	if !strings.Contains(got, wantRow) {
+		t.Fatalf("users switched idle row = %q, want %q", got, wantRow)
+	}
+}
+
 func TestCmdWhoisOffline(t *testing.T) {
 	database := testutil.NewMockDatabase()
 	parsed := &parser.World{
