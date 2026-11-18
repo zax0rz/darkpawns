@@ -820,12 +820,7 @@ func cmdUsers(s *Session, args []string) error {
 	buf.WriteString("--- ------- ------------ -------------- --- -------- ------------------------\r\n")
 
 	count := 0
-	s.manager.mu.RLock()
-	sessions := make([]*Session, 0, len(s.manager.sessions))
-	for _, sess := range s.manager.sessions {
-		sessions = append(sessions, sess)
-	}
-	s.manager.mu.RUnlock()
+	sessions := s.manager.activeDescriptors()
 	sort.SliceStable(sessions, func(i, j int) bool {
 		if sessions[i].connectionNumber != sessions[j].connectionNumber {
 			return sessions[i].connectionNumber > sessions[j].connectionNumber
@@ -833,17 +828,33 @@ func cmdUsers(s *Session, args []string) error {
 		return sessions[i].playerName > sessions[j].playerName
 	})
 	for _, sess := range sessions {
-		if sess.player == nil || !sess.hasDescriptor() {
+		if !sess.hasDescriptor() {
 			continue
 		}
 		playing := sess.isConPlaying()
 		if (opts.playing && !playing) || (opts.deadweight && playing) {
 			continue
 		}
-		player := sess.player
-		level := player.GetLevel()
+		owner := sess.player
+		if sess.isSwitched && sess.switchedOriginal != nil {
+			owner = sess.switchedOriginal
+		}
+		var body game.Actor = sess.player
+		bodyLevel := 0
+		bodyIdleTimer := 0
+		if sess.isSwitched && sess.switchedMob != nil {
+			body = sess.switchedMob
+			bodyLevel = sess.switchedMob.GetLevel()
+		} else if sess.player != nil {
+			bodyLevel = sess.player.GetLevel()
+			bodyIdleTimer = sess.player.GetIdleTimer()
+		}
 		if playing {
-			if opts.name != "" && !strings.EqualFold(player.Name, opts.name) {
+			if owner == nil || body == nil {
+				continue
+			}
+			level := owner.GetLevel()
+			if opts.name != "" && !strings.EqualFold(owner.Name, opts.name) {
 				continue
 			}
 			if opts.host != "" && !strings.Contains(usersHost(sess), opts.host) {
@@ -852,32 +863,41 @@ func cmdUsers(s *Session, args []string) error {
 			if level < opts.low || level > opts.high {
 				continue
 			}
-			if opts.classMask != 0 && opts.classMask&(1<<uint(player.GetClass())) == 0 {
+			if opts.classMask != 0 && opts.classMask&(1<<uint(owner.GetClass())) == 0 {
 				continue
 			}
 			if s.player.GetInvisLevel() > s.player.GetLevel() {
 				continue
 			}
+			if !game.CanSee(s.player, owner) {
+				continue
+			}
 		}
-		if playing && !game.CanSee(s.player, player) {
+		if playing && !game.CanSee(s.player, body) {
 			continue
 		}
-		classAbbr := "--"
-		if class := player.GetClass(); class >= 0 && class < len(game.ClassAbbrevs) {
-			classAbbr = game.ClassAbbrevs[class]
-		}
-		idle := ""
 		classCell := "   -   "
 		if playing {
-			classCell = fmt.Sprintf("[%2d %s]", level, classAbbr)
+			classAbbr := "--"
+			if class := owner.GetClass(); class >= 0 && class < len(game.ClassAbbrevs) {
+				classAbbr = game.ClassAbbrevs[class]
+			}
+			classCell = fmt.Sprintf("[%2d %s]", owner.GetLevel(), classAbbr)
 		}
-		if playing && (player.GetLevel() < s.player.GetLevel() || s.player.GetLevel() == game.LVL_IMPL) {
-			idle = fmt.Sprintf("%3d", player.GetIdleTimer()*game.SECS_PER_MUD_HOUR/60)
+		idle := ""
+		if playing && (bodyLevel < s.player.GetLevel() || s.player.GetLevel() == game.LVL_IMPL) {
+			idle = fmt.Sprintf("%3d", bodyIdleTimer*game.SECS_PER_MUD_HOUR/60)
+		}
+		name := "UNDEFINED"
+		if owner != nil && owner.Name != "" {
+			name = owner.Name
+		} else if sess.charName != "" {
+			name = sess.charName
 		}
 		loginAt := sess.connectedAt.Format("15:04:05")
 		state := usersDescriptorState(sess)
 		fmt.Fprintf(&buf, "%3d %-7s %-12s %-14s %-3s %-8s [%s]\r\n",
-			sess.connectionNumber, classCell, player.Name, state, idle, loginAt, usersHost(sess))
+			sess.connectionNumber, classCell, name, state, idle, loginAt, usersHost(sess))
 		count++
 	}
 
@@ -911,15 +931,12 @@ func usersDescriptorState(sess *Session) string {
 	if sess.isSeditEditing() {
 		return "Shop edit"
 	}
-	if editing, playing := sess.editorPromptState(); editing && !playing {
-		return "Text edit"
-	}
 	if sess.charCreating {
 		states := map[string]string{ // #nosec G101 -- not credentials; C connected_types state labels (act.informative.c do_users)
 			"get_name": "Get name", "confirm_name": "Confirm name", "login_password": "Get password",
 			"create_password": "Get new PW", "confirm_password": "Confirm new PW", "sex": "Select sex",
-			"class": "Select class", "race": "Asking race", "color": "Asking color",
-			"hometown": "Getting hometown", "stats_roll": "Rolling abilities 1",
+			"class": "Select class", "motd": "Reading MOTD", "race": "Asking race",
+			"color": "Asking color", "hometown": "Getting hometown", "stats_roll": "Rolling abilities 2",
 		}
 		if state := states[sess.charStage]; state != "" {
 			return state
@@ -929,11 +946,17 @@ func usersDescriptorState(sess *Session) string {
 		states := map[string]string{ // #nosec G101 -- not credentials; C connected_types state labels (act.informative.c do_users)
 			"motd": "Reading MOTD", "menu": "Main Menu", "description": "Get descript.",
 			"background": "Get descript.", "password_old": "Changing PW 1", "password_new": "Changing PW 2",
-			"password_confirm": "Changing PW 3", "delete_confirm": "Self-Delete 1", "delete_password": "Self-Delete 2",
+			"password_confirm": "Changing PW 3", "delete_password": "Self-Delete 1", "delete_confirm": "Self-Delete 2",
 		}
 		if state := states[sess.menuStage]; state != "" {
 			return state
 		}
+	}
+	if editing, playing := sess.editorPromptState(); editing && !playing {
+		return "Text edit"
+	}
+	if !sess.authenticated {
+		return "Get name"
 	}
 	return "Disconnecting"
 }

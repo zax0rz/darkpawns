@@ -121,8 +121,9 @@ type Manager struct {
 	entryNames   map[*Session]string
 	creationMu   sync.Mutex // Serializes first-player selection with persistence.
 	mu           sync.RWMutex
-	snoopMu      sync.RWMutex        // protects the bidirectional snoop links
-	sessions     map[string]*Session // keyed by player name
+	snoopMu      sync.RWMutex          // protects the bidirectional snoop links
+	sessions     map[string]*Session   // keyed by player name
+	descriptors  map[*Session]struct{} // all live descriptors (including pre-login)
 	world        *game.World
 	whod         *whodListener // C's WHOD daemon (src/whod.c); nil when disabled
 	combatEngine *combat.CombatEngine
@@ -531,6 +532,57 @@ func (m *Manager) allocateConnectionNumber() int {
 		m.nextConnectionNumber = 1
 	}
 	return m.nextConnectionNumber
+}
+
+func (m *Manager) trackDescriptor(s *Session) {
+	if m == nil || s == nil {
+		return
+	}
+	m.mu.Lock()
+	if m.descriptors == nil {
+		m.descriptors = make(map[*Session]struct{})
+	}
+	m.descriptors[s] = struct{}{}
+	m.mu.Unlock()
+}
+
+func (m *Manager) untrackDescriptor(s *Session) {
+	if m == nil || s == nil {
+		return
+	}
+	m.mu.Lock()
+	delete(m.descriptors, s)
+	m.mu.Unlock()
+}
+
+// activeDescriptors returns all live descriptors (including pre-login
+// connections not yet in m.sessions) plus any test sessions inserted directly
+// into m.sessions.
+func (m *Manager) activeDescriptors() []*Session {
+	if m == nil {
+		return nil
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	seen := make(map[*Session]struct{}, len(m.descriptors)+len(m.sessions))
+	out := make([]*Session, 0, len(m.descriptors)+len(m.sessions))
+	for s := range m.descriptors {
+		if s == nil {
+			continue
+		}
+		seen[s] = struct{}{}
+		out = append(out, s)
+	}
+	for _, s := range m.sessions {
+		if s == nil {
+			continue
+		}
+		if _, ok := seen[s]; !ok {
+			seen[s] = struct{}{}
+			out = append(out, s)
+		}
+	}
+	return out
 }
 
 // SetCombatBroadcastFunc sets the broadcast function for combat messages.
@@ -1491,6 +1543,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Start goroutines for reading and writing
+	m.trackDescriptor(session)
 	go session.writePump()
 	go session.readPump()
 }
@@ -1599,6 +1652,7 @@ func (m *Manager) enterWorld(name string, s *Session) error {
 // multiple times for the same session. Both Unregister and UnregisterAndClose
 // delegate here to guarantee consistent cleanup ordering.
 func (m *Manager) cleanupSession(s *Session, playerName string) {
+	m.untrackDescriptor(s)
 	if s.activePCSwitch() {
 		m.detachPCSwitch(s, false)
 	}
