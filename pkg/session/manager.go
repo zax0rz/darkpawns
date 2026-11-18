@@ -1024,13 +1024,11 @@ func (m *Manager) SetDeathFunc() {
 	m.combatEngine.DeathFunc = func(victim, killer combat.Combatant, attackType int) {
 		m.world.HandleDeath(victim, killer, attackType)
 
-		// If victim was a player, send updated room state after respawn
+		// A dead player gets no look: C's raw_kill ends in extract_char
+		// (src/fight.c:534-580), which sends the player to the menu. The
+		// invented post-death look was silent only while DoLook's stars line
+		// went through Act; it prints now that it uses send_to_char semantics.
 		if !victim.IsNPC() {
-			if s := m.combatSession(victim); s != nil {
-				if err := cmdLook(s, nil); err != nil {
-					slog.Error("cmdLook failed after death", "player", victim.GetName(), "error", err)
-				}
-			}
 			return
 		}
 
