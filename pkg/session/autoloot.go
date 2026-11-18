@@ -22,9 +22,9 @@ func cmdAutoLoot(s *Session, args []string) error {
 	enabled := IsAutoLootEnabled(s.player)
 	s.player.SetPlrFlag(game.PrfAutoLoot, !enabled)
 	if !enabled {
-		s.Send("Auto-loot enabled.")
+		s.Send("You will now automatically loot corpses.\r\n")
 	} else {
-		s.Send("Auto-loot disabled.")
+		s.Send("You will no longer loot corpses.\r\n")
 	}
 	return nil
 }

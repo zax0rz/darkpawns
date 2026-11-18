@@ -62,10 +62,6 @@ func cmdRecite(s *Session, args []string) error {
 		s.Send("You can't do this sitting!!")
 		return nil
 	}
-	if item.Prototype == nil || len(item.Prototype.Values) < 2 {
-		s.Send("Nothing magical happens.")
-		return nil
-	}
 
 	// C uses object-instance values 0..3 for level and up to three spells.
 	spellLevel := item.GetValue(0)

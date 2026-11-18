@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"log/slog"
 	"sort"
 	"strconv"
 	"strings"
@@ -1624,7 +1625,8 @@ func cmdWhois(s *Session, args []string) error {
 	if s.manager.hasDB {
 		rec, err := s.manager.db.GetPlayer(targetName)
 		if err != nil {
-			s.Send("Error looking up player.\r\n")
+			slog.Warn("whois player lookup failed", "target", targetName, "error", err)
+			s.Send("There is no such player.\r\n")
 			return nil
 		}
 		if rec == nil {

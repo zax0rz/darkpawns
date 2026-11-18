@@ -181,8 +181,8 @@ func TestDoGenTogUnknownCommand(t *testing.T) {
 	before := ch.GetFlags()
 
 	w.doGenTog(ch, nil, "autocxits", "")
-	if msg := lastMsg(); !strings.Contains(msg, "Unknown toggle") {
-		t.Errorf("unmapped command message: got %q", msg)
+	if msg := lastMsg(); msg != "" {
+		t.Errorf("unmapped command message: got %q, want empty", msg)
 	}
 	if ch.GetFlags() != before {
 		t.Errorf("unmapped command should not change player flags")

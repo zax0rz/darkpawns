@@ -144,7 +144,7 @@ func (w *World) HcontrolBuildHouse(ch *Player, arg string) {
 					} else if toRoom(destRoom, revDir[exitNum]) != virtHouse {
 						message = "A house's exit must be a two-way door.\r\n"
 					} else if getPlayerIDByName == nil {
-						message = "Player lookup not available.\r\n"
+						message = fmt.Sprintf("Unknown player '%s'.\r\n", toLower(args[2]))
 					} else {
 						// The live lookup reads World.players and therefore takes the
 						// same world read lock used by Player.SendMessage. Release

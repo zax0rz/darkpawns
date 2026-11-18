@@ -142,7 +142,6 @@ func (w *World) DoChannel(ch *Player, argument, subcmd string) {
 	channel := strings.ToLower(subcmd)
 	spec, ok := communicationChannels[channel]
 	if !ok {
-		communicationSend(ch, "Unknown channel.")
 		return
 	}
 

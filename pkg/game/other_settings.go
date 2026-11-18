@@ -283,8 +283,7 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 
 	msgs, ok := toggleMessages[cmd]
 	if !ok {
-		ch.SendMessage("Unknown toggle.\r\n")
-		return true
+		return false
 	}
 
 	// SCMD_NOCTELL clan gate — act.other.c:1194. A clanless player cannot toggle
@@ -313,8 +312,7 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 	default:
 		flag, ok := toggleFlags[cmd]
 		if !ok {
-			ch.SendMessage("Unknown toggle.\r\n")
-			return true
+			return false
 		}
 
 		// PRF_TOG_CHK: toggle the bit and capture the NEW state. result==1 means

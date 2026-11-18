@@ -190,7 +190,7 @@ func TestHcontrolBuildHouseWithoutLookup(t *testing.T) {
 	}
 
 	w.HcontrolBuildHouse(ch, "100 north Houselord")
-	if got, want := out.String(), "Player lookup not available.\r\n"; got != want {
+	if got, want := out.String(), "Unknown player 'houselord'.\r\n"; got != want {
 		t.Fatalf("output = %q, want %q", got, want)
 	}
 }
