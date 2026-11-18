@@ -67,6 +67,7 @@ Y
 1
 
 [warmup]
+set player Switchedrx level 40
 goto 8105
 send:peer goto 8105
 send:peer switch clone
