@@ -20,6 +20,9 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	cb.ActRoom = func(room int, victim combat.Combatant, format string, hideInvisible bool) {
 		w.WoundAct(room, victim, format, hideInvisible)
 	}
+	cb.ActChar = func(ch combat.Combatant, format string) {
+		Act(w, false, asActor(ch), nil, nil, nil, format, "", ToChar)
+	}
 	pre := w.damageBeforeMessageCallbacks()
 	cb.DamageNewbieExp = pre.DamageNewbieExp
 	cb.StopFighting = pre.StopFighting
@@ -273,6 +276,9 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	}
 
 	cb.DamageRefused = w.DamageRefused
+	cb.DamageRedirects = func(attacker, defender combat.Combatant, damage int) bool {
+		return w.ApplyMobDamageRedirects(attacker, defender, damage)
+	}
 
 	cb.HasMobVNum = func(name combat.Combatant, vnum int) bool {
 		m := combatMob(name)
@@ -388,15 +394,13 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	}
 
 	cb.Dismount = func(name combat.Combatant) {
-		p, ok := combatPlayer(name)
+		p, ok := name.(*Player)
 		if !ok || !p.IsMounted() {
 			return
 		}
-		if mount := w.riddenMount(p); mount != nil {
-			mount.SetMountRider("")
-		}
-		p.SetAffect(affMounted, false)
-		p.SetFollowing("")
+		// damage() calls do_dismount after the two knock-off act() lines;
+		// preserve its private rider/mount messages and follower links.
+		w.doDismountActor(p)
 	}
 
 	cb.Unmount = func(name combat.Combatant) {

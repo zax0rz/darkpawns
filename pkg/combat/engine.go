@@ -286,14 +286,21 @@ func (ce *CombatEngine) StartCombatFromMob(attacker, defender Combatant) error {
 // caller-supplied damage amount (fight.c:1370-1440), so the game layer must
 // use this same seam for direct fighter-special damage as well.
 func (ce *CombatEngine) ApplyMobDamageRedirects(attacker, defender Combatant) bool {
-	return ce.applyMobCombatRedirects(attacker, defender)
+	return ce.ApplyMobDamageRedirectsForDamage(attacker, defender, 1)
+}
+
+// ApplyMobDamageRedirectsForDamage carries damage()'s amount gate into the
+// jail-guard arm. Charm and switcheroo redirects still run for zero damage;
+// C's jail cart is nested under `if (dam)` (src/fight.c:1369-1400).
+func (ce *CombatEngine) ApplyMobDamageRedirectsForDamage(attacker, defender Combatant, damage int) bool {
+	return ce.applyMobCombatRedirectsAfterJail(attacker, defender, damage, nil)
 }
 
 // ApplyMobDamageRedirectsAfterAttackerEnrollment preserves damage()'s command
 // order: the jail guard runs before set_fighting(ch), then the supplied
 // callback runs before charm and switcheroo redirects (src/fight.c:1370-1440).
-func (ce *CombatEngine) ApplyMobDamageRedirectsAfterAttackerEnrollment(attacker, defender Combatant, enrollAttacker func()) bool {
-	return ce.applyMobCombatRedirectsAfterJail(attacker, defender, func() bool {
+func (ce *CombatEngine) ApplyMobDamageRedirectsAfterAttackerEnrollment(attacker, defender Combatant, damage int, enrollAttacker func()) bool {
+	return ce.applyMobCombatRedirectsAfterJail(attacker, defender, damage, func() bool {
 		if enrollAttacker != nil {
 			enrollAttacker()
 		}
@@ -1066,7 +1073,7 @@ func (ce *CombatEngine) performOneHitBody(pair *CombatPair) bool {
 			return true
 		}
 	}
-	if ce.applyMobCombatRedirectsAfterJail(attacker, defender, afterJail) {
+	if ce.applyMobCombatRedirectsAfterJail(attacker, defender, damage, afterJail) {
 		return true
 	}
 
@@ -1179,6 +1186,7 @@ func (ce *CombatEngine) performOneHitBody(pair *CombatPair) bool {
 		return true
 	}
 	ce.sendHitMessage(attacker, defender, damage, msgAttackType)
+	ApplyMountedHitTail(attacker, defender, damage)
 	if (BodyRetired(attacker) && !pair.AllowRetiredAttacker) || (BodyRetired(defender) && !pair.AllowRetiredDefender) {
 		return true
 	}
@@ -1247,18 +1255,18 @@ func (ce *CombatEngine) handleSurvivingVictimState(attacker, defender Combatant,
 // src/fight.c:1370-1440. These run before damage lands and may move the victim
 // or retarget the attacker, causing this combat exchange to abort.
 func (ce *CombatEngine) applyMobCombatRedirects(attacker, defender Combatant) bool {
-	return ce.applyMobCombatRedirectsAfterJail(attacker, defender, nil)
+	return ce.applyMobCombatRedirectsAfterJail(attacker, defender, 1, nil)
 }
 
 // afterJail is exclusive to direct ranged hit entry; ordinary readers pass nil.
-func (ce *CombatEngine) applyMobCombatRedirectsAfterJail(attacker, defender Combatant, afterJail func() bool) bool {
+func (ce *CombatEngine) applyMobCombatRedirectsAfterJail(attacker, defender Combatant, damage int, afterJail func() bool) bool {
 	if !attacker.IsNPC() {
 		return false
 	}
 
 	// Jail guard intercept: city jail guards subdue eligible PCs instead of
 	// killing them, then cart them to jail.
-	if !defender.IsNPC() &&
+	if damage != 0 && !defender.IsNPC() &&
 		cbMobHasJailGuardSpec(attacker) &&
 		cbCanSee(attacker, defender) &&
 		attacker.GetHP() > attacker.GetMaxHP()/2 &&

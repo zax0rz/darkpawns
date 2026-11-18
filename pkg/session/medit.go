@@ -129,7 +129,7 @@ func cmdMedit(s *Session, args []string) error {
 		game.MudLog(fmt.Sprintf("OLC: %s saves mobs for zone %d", s.player.GetName(), zone.Number), game.MudlogComplete, LVL_IMMORT, true)
 		if err := saveMeditZone(s.manager.world, zone); err != nil {
 			// src/medit.c:349-352: only the proven common parent-obstruction fopen arm.
-			logOLCOpenParentFailure(s.manager.world, "mob", "SYSERR: OLC: Cannot open mob file!", err)
+			logOLCSaveFailure(s.manager.world, "mob", zone.Number, "SYSERR: OLC: Cannot open mob file!", err)
 			slog.Error("medit disk save failed",
 				"player", s.playerName, "zone", zone.Number, "error", err)
 		}

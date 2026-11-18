@@ -1298,7 +1298,15 @@ func runSpecials(ctx command.ExecutionContext, name string, args []string, rawAr
 	var actorMob *game.MobInstance
 	actorPlayer, _ := ctx.Body.(*game.Player)
 	actorMob, _ = ctx.Body.(*game.MobInstance)
-	specialCtx := game.CharacterSpecialContext{Actor: ctx.Body, PrivateOutput: ctx.Session.Send}
+	var pageOutput func(string)
+	if session := commandSessionFromContext(ctx); session != nil {
+		pageOutput = func(text string) { PageString(session, text) }
+	}
+	specialCtx := game.CharacterSpecialContext{
+		Actor:         ctx.Body,
+		PrivateOutput: ctx.Session.Send,
+		PageOutput:    pageOutput,
+	}
 	var roomVNum int
 	var wornList, carriedList []*game.ObjectInstance
 	if actorMob != nil {

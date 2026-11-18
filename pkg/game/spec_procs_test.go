@@ -324,6 +324,26 @@ func TestSpecGuild_Golden(t *testing.T) {
 	}
 }
 
+func TestSpecGuildPracticeListUsesDescriptorPagerCallback(t *testing.T) {
+	w, player, _ := newSpecProcTestWorld(t)
+	player.Class = ClassPsionic
+	player.SetLevel(LVL_IMMORT)
+	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+	var paged string
+	result := DispatchCharacterSpecial("guild", w, CharacterSpecialContext{
+		Actor: player,
+		PageOutput: func(text string) {
+			paged = text
+		},
+	}, mob, "practice", "")
+	if result != SpecialHandled {
+		t.Fatalf("guild practice special result = %v, want handled", result)
+	}
+	if want := RenderSkillList(player); paged != want {
+		t.Fatalf("paged catalog bytes differed from RenderSkillList: len=%d want=%d", len(paged), len(want))
+	}
+}
+
 // TestSpecGuild_Gates covers the remaining player-visible guild branches from
 // src/spec_procs.c:208-249: no practices, already learned, and learning to the
 // class cap. The unknown-skill and non-practice gates are covered above in the

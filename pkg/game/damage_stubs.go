@@ -172,6 +172,9 @@ func (w *World) ApplySkillDamage(attacker, victim any, dam, attackType int) bool
 func (w *World) ApplySkillDamageWithMessage(attacker, victim any, dam, attackType int, message func(int)) bool {
 	killer := combatantFromInterface(attacker)
 	victimC := combatantFromInterface(victim)
+	if killer != nil && victimC != nil && w.ApplyMobDamageRedirects(killer, victimC, dam) {
+		return false
+	}
 	combat.EnterDamageFighting(killer, victimC)
 	// fight.c:1457-1464: break the victim's following when the attacker is
 	// the master, then fade a hidden attacker — before the modifier block
@@ -194,6 +197,9 @@ func (w *World) ApplySkillDamageWithMessage(attacker, victim any, dam, attackTyp
 	}
 	if message != nil {
 		message(dam)
+	}
+	if killer != nil && victimC != nil {
+		combat.ApplyMountedHitTail(killer, victimC, dam)
 	}
 	if dam <= 0 {
 		return false

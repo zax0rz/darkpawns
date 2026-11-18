@@ -116,9 +116,8 @@ func saveOLCEntry(world *game.World, entry olc.DirtyEntry) error {
 	return writer(world, &zone)
 }
 
-// Reuse only the already-proven common fopen/atomic-open parent-obstruction
-// boundary. The approved retry divergence does not widen error classification.
-// No writer, zone, world or save-list lock survives into MudLog delivery.
+// Reuse the proven fopen/atomic-open failure classes. No writer, zone, world or
+// save-list lock survives into MudLog delivery.
 func logOLCSaveAllFailure(world *game.World, entry olc.DirtyEntry, err error) {
 	var extension, payload string
 	switch entry.Kind {
@@ -135,5 +134,5 @@ func logOLCSaveAllFailure(world *game.World, entry olc.DirtyEntry, err error) {
 	default:
 		return
 	}
-	logOLCOpenParentFailure(world, extension, payload, err)
+	logOLCSaveFailure(world, extension, entry.Zone, payload, err)
 }

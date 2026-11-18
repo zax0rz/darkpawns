@@ -372,6 +372,38 @@ func EmitDeathPositionMessage(victim Combatant, actRoom func(roomVNum int, victi
 	}
 }
 
+// ApplyMountedHitTail is damage()'s mounted-rider follow-up after the attack
+// message and before update_pos (src/fight.c:1547-1557). All Go damage entry
+// points call this so the random draws, dismount state, and audience messages
+// stay in C order.
+func ApplyMountedHitTail(ch, victim Combatant, dam int) {
+	if ch == nil || victim == nil || victim.IsNPC() || dam <= 0 || !cbIsMounted(victim) {
+		return
+	}
+	if GetRoller().Number(0, 99) >= 10 {
+		return
+	}
+	cbActChar(victim, "The hit knocks you off of your mount!\r\n")
+	cbActRoom(victim.GetRoom(), victim, "$n gets knocked off of his mount.", false)
+	cbDismount(victim)
+	if float64(GetRoller().Number(0, 99)) < float64(victim.GetDex())*1.5 {
+		sendCombatMessage(ch, "You land on your feet!\r\n")
+		return
+	}
+	sendCombatMessage(ch, "You hit the ground with a thud.\r\n")
+	ch.SetPosition(PosSitting)
+}
+
+// EmitQuanLoDeathGossip is damage()'s vnum-19405 player-kill tail
+// (src/fight.c:1699-1706). BroadChat retains the NPC do_gen_comm recipient
+// gates and global gossip-history behavior.
+func EmitQuanLoDeathGossip(ch, victim Combatant) {
+	if ch == nil || victim == nil || victim.IsNPC() || !cbHasMobVNum(ch, 19405) {
+		return
+	}
+	cbBroadChat(ch, fmt.Sprintf("%s has just learned the Five Fingers of Enlightenment. Who else wishes to learn from the master?", victim.GetName()))
+}
+
 // **********************************
 // 5. takeDamage()
 // **********************************
@@ -520,6 +552,9 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 	if gate && cbDamageRefused(ch, victim) {
 		return false
 	}
+	if cbDamageRedirects(ch, victim, dam) {
+		return false
+	}
 
 	// jail guard logic (fight.c:1370): guards respond to PK in cities
 	if ch.IsNPC() && !victim.IsNPC() &&
@@ -600,9 +635,7 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 		}
 	}
 
-	if !victim.IsNPC() && cbIsMounted(victim) && dam > 0 && GetRoller().Number(0, 99) < 10 {
-		cbDismount(victim)
-	}
+	ApplyMountedHitTail(ch, victim, dam)
 
 	emitDamagePositionMessage(ch, victim, dam, newPos, victimName, roomVNum)
 	if newPos <= PosSleeping && victim.GetFightingBody() != nil {
@@ -688,6 +721,7 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 
 			CounterProcs(ch)
 			DieWithKiller(victim, ch, attackType)
+			EmitQuanLoDeathGossip(ch, victim)
 		}
 
 		// C's attitude_loot tail (fight.c:1690-1697) runs from the game

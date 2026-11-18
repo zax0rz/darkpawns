@@ -361,10 +361,33 @@ func ClassSkillMinLevel(class, num int) int {
 	}
 	if num > 0 && num < spells.SkillCatalogSize() {
 		raw := spells.SpellRawName(num)
-		if raw == "" || raw[0] == '!' {
-			return LVL_IMPL + 1
+		if raw != "" && raw[0] != '!' && (spells.GetSpellInfo(num) != nil || hasCDefaultSkilloLevel(num)) {
+			return LVL_IMMORT
 		}
-		return LVL_IMMORT
+		return LVL_IMPL + 1
 	}
 	return 999
+}
+
+// hasCDefaultSkilloLevel reports entries whose C skillo() leaves the
+// all-class default at LVL_IMMORT. Most are also assigned to a class in
+// init_spell_levels; Punch and Mindlink are the two skillo entries without a
+// class assignment. Dragon Kick, Tiger Punch, Retreat, and Shoot have class
+// assignments but no skillo(), so their other classes retain unused_spell's
+// LVL_IMPL+1 gate (src/spell_parser.c:1153-1180,1571-1625; src/class.c:769-1074).
+func hasCDefaultSkilloLevel(num int) bool {
+	switch num {
+	case SkillPunchNum, 178: // SKILL_PUNCH, SKILL_MINDLINK (src/spells.h:183,226)
+		return true
+	case 148, 149, SkillDragonKickNum, SkillTigerPunchNum: // no C skillo() declaration
+		return false
+	}
+	for _, entries := range ClassSpells {
+		for _, entry := range entries {
+			if entry.Num == num {
+				return true
+			}
+		}
+	}
+	return false
 }

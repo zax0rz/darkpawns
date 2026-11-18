@@ -490,7 +490,9 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 	if toSelf != "" && ch != victim {
 		sendToCaster(ch, substituteToSelfPronouns(toSelf, victim))
 	}
-	if toVictim != "" {
+	// C's act(..., FALSE, victim, 0, ch, TO_CHAR) fails SENDOK for a dead
+	// victim, although the affect_join above still runs (src/comm.c:2480-2510).
+	if toVictim != "" && getPos(victim) > combat.PosDead {
 		sendToVictim(victim, toVictim)
 	}
 	if toRoom != "" {

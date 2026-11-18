@@ -436,6 +436,14 @@ func RegisterSpec(name string, fn SpecFunc) {
 	SpecRegistry[name] = entry
 }
 
+// RegisterPlayerContextSpec adds the player-special lane that can use
+// descriptor-owned behavior such as the C page_string pager.
+func RegisterPlayerContextSpec(name string, fn PlayerContextSpecFunc) {
+	entry := SpecRegistry[name]
+	entry.PlayerContext = fn
+	SpecRegistry[name] = entry
+}
+
 // RegisterActorSpec adds the actor-aware lane to the existing special entry.
 // It intentionally does not replace the legacy player callback.
 func RegisterActorSpec(name string, fn ActorSpecFunc) {
