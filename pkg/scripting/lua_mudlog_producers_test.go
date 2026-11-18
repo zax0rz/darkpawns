@@ -19,10 +19,17 @@ type recordedMudlog struct {
 type recordingBridge struct {
 	*fakeBridge
 	mudlogs []recordedMudlog
+	events  []string
+}
+
+func (r *recordingBridge) Log(msg string) {
+	r.fakeBridge.Log(msg)
+	r.events = append(r.events, "log:"+msg)
 }
 
 func (r *recordingBridge) MudLog(msg string, typ, level int, toFile bool) {
 	r.mudlogs = append(r.mudlogs, recordedMudlog{msg: msg, typ: typ, level: level, toFile: toFile})
+	r.events = append(r.events, "mudlog:"+msg)
 }
 
 // The engine reaches the file-TRUE sink by inline assertion; this keeps the
@@ -165,9 +172,10 @@ func TestLuaRunScriptCallFailureProducer(t *testing.T) {
 		name    string
 		src     string
 		wantErr bool
+		wantRaw string
 	}{
-		{"missing trigger", "function onother() return TRUE end\n", false},
-		{"trigger raises", "function oncmd() error('boom') end\n", true},
+		{"missing trigger", "function onother() return TRUE end\n", false, ""},
+		{"trigger raises", "function oncmd() error('oracle probe') end\n", true, "error: oracle probe\n"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			engine := newScriptEngine(t, "call.lua", tc.src)
@@ -182,6 +190,19 @@ func TestLuaRunScriptCallFailureProducer(t *testing.T) {
 				level:  31,
 				toFile: true,
 			}})
+			wantEvents := []string{}
+			if tc.wantRaw != "" {
+				wantEvents = append(wantEvents, "log:"+tc.wantRaw)
+			}
+			wantEvents = append(wantEvents, "mudlog:[Lua] Script call.lua being called with an error, function 'oncmd'.")
+			if len(bridge.events) != len(wantEvents) {
+				t.Fatalf("Lua call error event order=%q want %q", bridge.events, wantEvents)
+			}
+			for i := range wantEvents {
+				if bridge.events[i] != wantEvents[i] {
+					t.Fatalf("Lua call error event order=%q want %q", bridge.events, wantEvents)
+				}
+			}
 		})
 	}
 }

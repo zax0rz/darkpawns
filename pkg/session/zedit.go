@@ -118,9 +118,9 @@ func cmdZedit(s *Session, args []string) error {
 		s.zeditSend("Saving all zone information.\r\n")
 		game.MudLog(fmt.Sprintf("OLC: %s saves zone info for zone %d", s.player.GetName(), zone.Number), game.MudlogComplete, LVL_IMMORT, true)
 		if err := saveZeditZone(s.manager.world, zone); err != nil {
-			// src/zedit.c:366-370: only the proven common fopen/atomic-open
-			// parent obstruction, after the save mutex is released.
-			logOLCOpenParentFailure(s.manager.world, "zon", fmt.Sprintf("SYSERR: OLC: zedit_save_to_disk:  Can't write zone %d.", zone.Number), err)
+			// src/zedit.c:366-370: the target's fopen failure is logged after
+			// the save mutex is released.
+			logOLCSaveFailure(s.manager.world, "zon", zone.Number, fmt.Sprintf("SYSERR: OLC: zedit_save_to_disk:  Can't write zone %d.", zone.Number), err)
 			slog.Error("zedit disk save failed", "player", s.playerName, "zone", zone.Number, "error", err)
 		}
 		return nil

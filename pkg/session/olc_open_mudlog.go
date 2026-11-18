@@ -2,6 +2,7 @@ package session
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -28,11 +29,27 @@ func olcOpenParentObstruction(err error, parent string) bool {
 	return errors.Is(statErr, os.ErrNotExist) || errors.Is(statErr, syscall.ENOTDIR)
 }
 
-// logOLCOpenParentFailure is called only by the descriptor save-command error
-// arms, after save helpers release their zone and snapshot locks. The shared
-// admin writers deliberately do not call it. src/redit.c:291-294 is the first
-// producer; each caller cites and supplies its own exact C payload.
-func logOLCOpenParentFailure(world *game.World, extension, payload string, err error) {
+// olcSaveTargetDirectoryFailure recognizes atomic replacement failing because
+// the exact C fopen target is a directory. C opens that target directly and
+// emits its open-failure diagnostic; Go first writes a sibling temporary file,
+// then gets a directory-target error from rename. Other rename/write failures
+// remain distinct.
+func olcSaveTargetDirectoryFailure(err error, target string) bool {
+	var failure *os.LinkError
+	targetKindError := errors.Is(err, syscall.EISDIR) || errors.Is(err, syscall.EEXIST) || errors.Is(err, syscall.ENOTEMPTY)
+	if target == "" || !errors.As(err, &failure) || failure.Op != "rename" ||
+		filepath.Clean(failure.New) != filepath.Clean(target) || !targetKindError {
+		return false
+	}
+	info, statErr := os.Stat(target)
+	return statErr == nil && info.IsDir()
+}
+
+// logOLCSaveFailure is called by descriptor save-command error arms after
+// save helpers release their zone and snapshot locks. It preserves the proven
+// missing/non-directory-parent boundary and also maps an exact target-directory
+// rename failure to C's fopen failure. Each caller supplies its own C payload.
+func logOLCSaveFailure(world *game.World, extension string, zone int, payload string, err error) {
 	if world == nil {
 		return
 	}
@@ -44,7 +61,9 @@ func logOLCOpenParentFailure(world *game.World, extension, payload string, err e
 		}
 		root = parsed.SourceDir
 	}
-	if root != "" && olcOpenParentObstruction(err, filepath.Join(root, extension)) {
+	parent := filepath.Join(root, extension)
+	target := filepath.Join(parent, fmt.Sprintf("%d.%s", zone, extension))
+	if root != "" && (olcOpenParentObstruction(err, parent) || olcSaveTargetDirectoryFailure(err, target)) {
 		game.MudLog(payload, game.MudlogBrief, game.LVL_IMMORT, true)
 	}
 }

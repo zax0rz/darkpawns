@@ -399,6 +399,9 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 				slog.Warn("Publish PlayerKilledEvent failed", "killer", killerName, "victim", victim.GetName(), "error", err)
 			}
 		}
+		if killerMob, ok := killer.(*MobInstance); ok && killerMob.GetVNum() == 19405 {
+			w.mobGlobalGossip(killerMob, fmt.Sprintf("%s has just learned the Five Fingers of Enlightenment. Who else wishes to learn from the master?", victim.GetName()))
+		}
 	}
 }
 

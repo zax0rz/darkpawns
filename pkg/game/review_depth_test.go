@@ -28,6 +28,17 @@ func TestReviewGossipHidesHigherInvisibility(t *testing.T) {
 	}
 }
 
+func TestGossipChannelHistoryKeepsSpeakerInvisibility(t *testing.T) {
+	w, speaker, viewer, _, _ := newChannelWorld(t)
+	speaker.SetInvisLevel(40)
+	w.DoChannel(speaker, "hidden review entry", "gossip")
+
+	want := "Last Gossips:\r\n-------------\r\nSomeone invisible: hidden review entry\n\r"
+	if got := w.ReviewGossip(viewer); got != want {
+		t.Fatalf("review = %q, want %q", got, want)
+	}
+}
+
 func TestReviewGossipRetainsTheCappedHistoryWindow(t *testing.T) {
 	w, viewer, _, _, _ := newChannelWorld(t)
 	for index := 1; index <= maxGossipHistory+1; index++ {

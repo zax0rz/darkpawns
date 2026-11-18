@@ -554,7 +554,11 @@ func (w *World) ReviewGossip(ch combat.Combatant) string {
 // The optional operational mirror gets act()'s rendering for an unaided level-1
 // mortal in a lit room, regardless of whether a mortal happens to be connected.
 func (w *World) recordGossip(speaker Actor, name, message string) {
-	w.updateGossipHistory(name, message, 0)
+	invisLevel := 0
+	if subject, ok := speaker.(invisLevelSubject); ok {
+		invisLevel = subject.GetInvisLevel()
+	}
+	w.updateGossipHistory(name, message, invisLevel)
 	w.gossipMu.RLock()
 	observe := w.gossipObserver
 	w.gossipMu.RUnlock()

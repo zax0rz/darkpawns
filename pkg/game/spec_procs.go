@@ -209,6 +209,21 @@ func specGuild(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	return true
 }
 
+func specGuildWithPlayerContext(w *World, ctx CharacterSpecialContext, me *MobInstance, cmd, arg string) SpecialResult {
+	ch, ok := ctx.Actor.(*Player)
+	if !ok {
+		return SpecialDeclined
+	}
+	if cmd == "practice" && strings.TrimSpace(arg) == "" && ctx.PageOutput != nil {
+		ctx.PageOutput(RenderSkillList(ch))
+		return SpecialHandled
+	}
+	if specGuild(w, ch, me, cmd, arg) {
+		return SpecialHandled
+	}
+	return SpecialDeclined
+}
+
 // intAppLearn returns int_app[intScore].learn with bounds clamping.
 func intAppLearn(intScore int) int {
 	if intScore < 0 {
@@ -1237,6 +1252,7 @@ func specMallory(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 
 func init() {
 	RegisterSpec("guild", specGuild)
+	RegisterPlayerContextSpec("guild", specGuildWithPlayerContext)
 	RegisterSpec("dump", specDump)
 	RegisterSpec("snake", specSnake)
 	RegisterSpec("summoner", specSummoner)
