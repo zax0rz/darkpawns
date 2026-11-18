@@ -7,7 +7,7 @@
 [fixture]
 empty-players
 quiet-mobs
-spawn-mob 69 1 3001 80
+spawn-mob 69 1 8105 80
 
 [setup:oracle]
 Broadcaster
@@ -67,10 +67,11 @@ Y
 
 [warmup]
 set player Switchedrx level 39
-goto 3001
-send:peer goto 3001
+goto 8105
+toggle holylight
+send:peer goto 8105
 send:peer switch clone
-send:peer hit Broadcaster
+hit clone
 
 [probe]
 peace
