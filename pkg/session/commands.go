@@ -602,7 +602,7 @@ func init() {
 	registerCommand("color", wrapArgs(cmdColor), "Toggle ANSI color.")
 	registerCommand("commands", wrapBodyArgs(cmdCommandsBody), "List available commands.")
 	registerCommand("socials", wrapBodyArgs(cmdSocialsBody), "List available socials.")
-	registerCommand("wizhelp", wrapArgs(cmdWizhelp), "List privileged (immortal) commands.")
+	registerCommand("wizhelp", wrapBodyArgs(cmdWizhelpBody), "List privileged (immortal) commands.")
 	// "glance" is src/interpreter.c's other top-level name for do_diagnose — identical handler.
 	registerCommand("diagnose", wrapBodyArgs(cmdDiagnoseBody), "Diagnose health status of a target.", "glance")
 	registerCommand("toggle", wrapArgs(cmdToggle), "Toggle a player preference.")

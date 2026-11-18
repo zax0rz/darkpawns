@@ -12,7 +12,6 @@ import (
 
 type orderScriptRecorder struct{ visit func(string) bool }
 
-func (orderScriptRecorder) ForgetFailures() {}
 func (r orderScriptRecorder) RunScript(_ *game.ScriptContext, filename, trigger string) (bool, error) {
 	return r.visit(filename), nil
 }

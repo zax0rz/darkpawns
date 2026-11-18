@@ -6,13 +6,25 @@ package game
 // the pre-bridge context or stops firing.
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
+
+type loadFailureScriptRecorder struct{}
+
+func (loadFailureScriptRecorder) RunScript(ctx *ScriptContext, _, _ string) (bool, error) {
+	if ctx.ClearOwnerScriptFlags == nil {
+		return false, errors.New("owner flag clear callback missing")
+	}
+	ctx.ClearOwnerScriptFlags()
+	return true, errors.New("script load failed")
+}
 
 // roomObjScriptRecorder records filename:trigger plus the parts of the
 // ScriptContext DP-1360 added: the owner type and the ch/me/obj refs C
@@ -20,8 +32,6 @@ import (
 type roomObjScriptRecorder struct {
 	calls *[]string
 }
-
-func (roomObjScriptRecorder) ForgetFailures() {}
 
 func (r roomObjScriptRecorder) RunScript(ctx *ScriptContext, filename, trigger string) (bool, error) {
 	var b strings.Builder
@@ -75,6 +85,45 @@ func scriptedRoomWorld(t *testing.T, scriptFuncs int) (*World, *Player) {
 		t.Fatalf("AddPlayer: %v", err)
 	}
 	return w, ch
+}
+
+func TestLoadFailureClearsMobRoomAndObjectFlags(t *testing.T) {
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Scripted", ScriptName: "room.lua", ScriptFunctions: 1 << 5}},
+		Mobs:  []parser.Mob{{VNum: 9001, ShortDesc: "a script mob", ScriptName: "mob.lua", LuaFunctions: 1 << 9}},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+	w.MessageSink = func(string, []byte) {}
+	ch := NewPlayer(1, "Actor", 1001)
+	if err := w.AddPlayer(ch); err != nil {
+		t.Fatalf("AddPlayer: %v", err)
+	}
+	mob, err := w.SpawnMob(9001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob: %v", err)
+	}
+	objProto := &parser.Obj{VNum: 3001, Keywords: "thing", ShortDesc: "a thing", ScriptName: "obj.lua", LuaFunctions: 1 << 1}
+	obj := w.NewObjectFromProto(objProto, 1001)
+	if obj == nil {
+		t.Fatal("NewObjectFromProto returned nil")
+	}
+	prev := ScriptEngine
+	ScriptEngine = loadFailureScriptRecorder{}
+	t.Cleanup(func() { ScriptEngine = prev })
+
+	handled, err := mob.RunScript("oncmd", mob.CreateScriptContext(ch, nil, "say trigger"))
+	if err == nil || !handled || mob.Proto().LuaFunctions != 0 {
+		t.Fatalf("mob failure = (handled=%v, err=%v, flags=%d), want handled error and cleared flags", handled, err, mob.Proto().LuaFunctions)
+	}
+	if !w.RunRoomOnCmdScript(ch, "say trigger") || w.GetRoomInWorld(1001).ScriptFunctions != 0 {
+		t.Fatal("room failure did not consume command and clear room flags")
+	}
+	if !w.RunObjOnCmdScript(&scripting.CharRef{ID: ch.ID}, ch, obj, 1001, "say trigger") || obj.Prototype.LuaFunctions != 0 {
+		t.Fatal("object failure did not consume command and clear object flags")
+	}
 }
 
 // TestRoomEnterScriptFiresOnce proves the enter site fires exactly once per
@@ -199,8 +248,6 @@ type pulseOrderRecorder struct {
 	hpAtScript *int
 	player     *Player
 }
-
-func (pulseOrderRecorder) ForgetFailures() {}
 
 func (r pulseOrderRecorder) RunScript(ctx *ScriptContext, filename, trigger string) (bool, error) {
 	*r.calls = append(*r.calls, filename+":"+trigger+":owner="+ctx.OwnerType)

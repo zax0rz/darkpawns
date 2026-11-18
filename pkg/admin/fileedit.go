@@ -213,7 +213,6 @@ func registerFileEdit(api huma.API, world *game.World, database *db.DB, auditLog
 			if err := fileedit.Delete(target.root, target.name, in.IfMatch); err != nil {
 				return nil, fileOperationError(err)
 			}
-			forgetScriptFailures()
 			auditFileEdit(ctx, auditLogger, "file_edit_delete", fmt.Sprintf("%s:%s %s", in.Root, in.Path, in.IfMatch))
 			return &noContentOutput{Status: http.StatusNoContent}, nil
 		})
@@ -332,20 +331,12 @@ func (t fileTarget) authorizeWrite(level int) error {
 	return nil
 }
 
-// afterSave converges on the telnet save's side effects: a script save clears
-// the failed-scripts negative cache, a tedit save refreshes the live text.
+// afterSave refreshes the live tedit text after the file is written.
 func (t fileTarget) afterSave(world *game.World, content string) {
 	if t.kind == "lua" {
-		forgetScriptFailures()
 		return
 	}
 	fileedit.NotifyTextSaved(world, t.textFile, content)
-}
-
-func forgetScriptFailures() {
-	if game.ScriptEngine != nil {
-		game.ScriptEngine.ForgetFailures()
-	}
 }
 
 func resolveFileTarget(world *game.World, rootKind, name string) (fileTarget, error) {

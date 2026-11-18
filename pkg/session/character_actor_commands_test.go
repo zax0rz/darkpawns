@@ -245,7 +245,6 @@ func TestNPCFloorObjectOnCmdReceivesExactRawCommandWithRunScript(t *testing.T) {
 
 type actorOnCmdArgumentRecorder struct{ arguments *[]string }
 
-func (actorOnCmdArgumentRecorder) ForgetFailures() {}
 func (r actorOnCmdArgumentRecorder) RunScript(ctx *game.ScriptContext, _, _ string) (bool, error) {
 	*r.arguments = append(*r.arguments, ctx.Argument)
 	return true, nil

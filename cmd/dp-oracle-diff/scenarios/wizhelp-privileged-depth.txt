@@ -1,5 +1,6 @@
 # C-first `wizhelp` exercises do_commands' SCMD_WIZHELP format in the live
-# command table (src/interpreter.c:832; src/act.informative.c:2633-2678).
+# command table, including the privileged social snowball (src/interpreter.c:722,832;
+# src/act.informative.c:2633-2685).
 
 # depth-case: commands.wizhelp-privileged-header
 

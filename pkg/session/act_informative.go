@@ -2,7 +2,6 @@ package session
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -134,7 +133,7 @@ func cmdCommandsForBody(s *Session, body combat.Combatant, args []string) error 
 		}
 		level, name, self = target.GetLevel(), target.GetName(), false
 	}
-	return sendCommandsForBody(s, level, name, self, cCommandsForLevel, false)
+	return sendCommandsForBody(s, level, name, self, cCommandsForLevel, false, false)
 }
 
 // cmdSocials — "socials" lists the available social commands.
@@ -209,10 +208,10 @@ func cmdSocialsForBody(s *Session, body combat.Combatant, args []string) error {
 		}
 		level, name, self = target.GetLevel(), target.GetName(), false
 	}
-	return sendCommandsForBody(s, level, name, self, cSocialsForLevel, true)
+	return sendCommandsForBody(s, level, name, self, cSocialsForLevel, true, false)
 }
 
-func sendCommandsForBody(s *Session, level int, name string, self bool, commands func(int) []string, socials bool) error {
+func sendCommandsForBody(s *Session, level int, name string, self bool, commands func(int) []string, socials, wizhelp bool) error {
 	names := commands(level)
 	if len(names) == 0 {
 		if socials {
@@ -227,7 +226,11 @@ func sendCommandsForBody(s *Session, level int, name string, self bool, commands
 		label = "socials"
 	}
 	var buf strings.Builder
-	buf.WriteString("The following " + label + " are available to ")
+	buf.WriteString("The following ")
+	if wizhelp {
+		buf.WriteString("privileged ")
+	}
+	buf.WriteString(label + " are available to ")
 	if self {
 		buf.WriteString("you")
 	} else {
@@ -245,35 +248,36 @@ func sendCommandsForBody(s *Session, level int, name string, self bool, commands
 	return nil
 }
 
-// cmdWizhelp — "wizhelp" lists the privileged (immortal+) commands.
-// Source: act.informative.c do_commands/SCMD_WIZHELP — lists commands whose min level is
-// >= LVL_IMMORT. The Go registry carries MinLevel on every entry.
-func cmdWizhelp(s *Session, args []string) error {
-	entries := cmdRegistry.GetAll()
-	var names []string
-	for _, e := range entries {
-		if e.MinLevel >= LVL_IMMORT {
-			names = append(names, e.Name)
-		}
-	}
-	sort.Strings(names)
-	if len(names) == 0 {
-		s.Send("No privileged commands available.")
+// cmdWizhelpBody routes SCMD_WIZHELP through do_commands' shared target and
+// pager path, with the C level-filtered command table selected by wizhelp=true.
+func cmdWizhelpBody(ctx command.ExecutionContext, args []string) error {
+	s := commandSessionFromContext(ctx)
+	body := ctx.Body
+	if s == nil || body == nil {
 		return nil
 	}
-	var buf strings.Builder
-	buf.WriteString("The following privileged commands are available:\r\n")
-	for i, name := range names {
-		fmt.Fprintf(&buf, "%-16s", name)
-		if (i+1)%5 == 0 {
-			buf.WriteString("\r\n")
+	level, name, self := body.GetLevel(), body.GetName(), true
+	if len(args) > 0 {
+		var target *game.Player
+		if actor, ok := body.(game.Actor); ok {
+			for _, candidate := range s.manager.world.GetAllPlayers() {
+				if strings.EqualFold(candidate.GetName(), args[0]) && game.CanSee(actor, candidate) {
+					target = candidate
+					break
+				}
+			}
 		}
+		if target == nil {
+			s.Send("Who is that?\r\n")
+			return nil
+		}
+		if body.GetLevel() < target.GetLevel() {
+			s.Send("You can't see the commands of people above your level.\r\n")
+			return nil
+		}
+		level, name, self = target.GetLevel(), target.GetName(), false
 	}
-	if len(names)%5 != 0 {
-		buf.WriteString("\r\n")
-	}
-	s.Send(buf.String())
-	return nil
+	return sendCommandsForBody(s, level, name, self, cWizhelpForLevel, false, true)
 }
 
 // cmdToggle — show the player's preference-flag grid.

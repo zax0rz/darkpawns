@@ -23,6 +23,11 @@ func newQuanLoTestWorld(t *testing.T) (*World, *MobInstance, *Player, *Player, m
 			Keywords:  "master shaolin quan lo",
 			ShortDesc: "Quan Lo",
 			Level:     24,
+		}, {
+			VNum:      16303,
+			Keywords:  "trainee",
+			ShortDesc: "a guard trainee",
+			Level:     1,
 		}},
 	})
 	if err != nil {
@@ -57,6 +62,46 @@ func TestQuanLoPlayerDeathSendsFiveFingersToGlobalGossip(t *testing.T) {
 
 	want := "Quan Lo gossips, 'QuanActor has just learned the Five Fingers of Enlightenment. Who else wishes to learn from the master?'\r\n"
 	for _, recipient := range []*Player{victim, peer} {
+		if got := messages[recipient.GetName()]; !strings.Contains(got, want) {
+			t.Errorf("%s output = %q, want global Five Fingers line %q", recipient.GetName(), got, want)
+		}
+	}
+}
+
+func TestQuanLoMobDeathSendsFiveFingersToGlobalGossip(t *testing.T) {
+	w, mob, actor, peer, messages := newQuanLoTestWorld(t)
+	victim, err := w.SpawnMob(16303, actor.GetRoom())
+	if err != nil {
+		t.Fatalf("SpawnMob victim: %v", err)
+	}
+	victim.CurrentHP = -1 // HandleDeath is the combat callback after the lethal HP drop.
+	clearQuanLoMessages(messages)
+
+	w.HandleDeath(victim, mob, combat.TYPE_HIT)
+
+	want := "Quan Lo gossips, 'a guard trainee has just learned the Five Fingers of Enlightenment. Who else wishes to learn from the master?'\r\n"
+	for _, recipient := range []*Player{actor, peer} {
+		if got := messages[recipient.GetName()]; !strings.Contains(got, want) {
+			t.Errorf("%s output = %q, want global Five Fingers line %q", recipient.GetName(), got, want)
+		}
+	}
+}
+
+// C's Quan Lo tail runs after die_with_killer even when the death was
+// cancelled and the victim still stands (src/fight.c:1692-1706).
+func TestQuanLoCancelledMobDeathStillGossips(t *testing.T) {
+	w, mob, actor, peer, messages := newQuanLoTestWorld(t)
+	victim, err := w.SpawnMob(16303, actor.GetRoom())
+	if err != nil {
+		t.Fatalf("SpawnMob victim: %v", err)
+	}
+	victim.CurrentHP = 5 // never_die-style cancel: the body is still standing.
+	clearQuanLoMessages(messages)
+
+	w.HandleDeath(victim, mob, combat.TYPE_HIT)
+
+	want := "Quan Lo gossips, 'a guard trainee has just learned the Five Fingers of Enlightenment. Who else wishes to learn from the master?'\r\n"
+	for _, recipient := range []*Player{actor, peer} {
 		if got := messages[recipient.GetName()]; !strings.Contains(got, want) {
 			t.Errorf("%s output = %q, want global Five Fingers line %q", recipient.GetName(), got, want)
 		}

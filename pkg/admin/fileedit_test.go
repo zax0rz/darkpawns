@@ -15,13 +15,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
-type forgetRecorder struct{ calls int }
-
-func (f *forgetRecorder) RunScript(*game.ScriptContext, string, string) (bool, error) {
-	return false, nil
-}
-func (f *forgetRecorder) ForgetFailures() { f.calls++ }
-
 type fileEditFixture struct {
 	t       *testing.T
 	world   *game.World
@@ -94,11 +87,6 @@ func TestFileEditRoundTripsAndConflicts(t *testing.T) {
 	if read.Code != http.StatusOK || etag != fileedit.ETag([]byte("return true\n")) {
 		t.Fatalf("read = %d etag=%q body=%s", read.Code, etag, read.Body.String())
 	}
-	recorder := &forgetRecorder{}
-	previousEngine := game.ScriptEngine
-	game.ScriptEngine = recorder
-	t.Cleanup(func() { game.ScriptEngine = previousEngine })
-
 	broken := f.do(http.MethodPut, contentURL("lua", "mob/guard.lua"), map[string]string{"If-Match": etag}, new("local x = 1\nfunction broken(\n"))
 	if broken.Code != http.StatusUnprocessableEntity || !strings.Contains(broken.Body.String(), "line 2 (end of file)") {
 		t.Fatalf("broken Lua = %d %q; want 422 naming the line", broken.Code, broken.Body.String())
@@ -110,13 +98,9 @@ func TestFileEditRoundTripsAndConflicts(t *testing.T) {
 	if unchanged, _ := os.ReadFile(filepath.Join(f.world.ScriptsDir, "mob", "guard.lua")); string(unchanged) != "return true\n" {
 		t.Fatalf("broken Lua touched disk: %q", unchanged)
 	}
-	if recorder.calls != 0 {
-		t.Fatalf("a refused save cleared the failed-scripts cache")
-	}
-
 	saved := f.do(http.MethodPut, contentURL("lua", "mob/guard.lua"), map[string]string{"If-Match": etag}, new("return false\n"))
-	if saved.Code != http.StatusOK || recorder.calls != 1 {
-		t.Fatalf("save = %d, forget calls=%d, body=%s", saved.Code, recorder.calls, saved.Body.String())
+	if saved.Code != http.StatusOK {
+		t.Fatalf("save = %d, body=%s", saved.Code, saved.Body.String())
 	}
 	stale := f.do(http.MethodPut, contentURL("lua", "mob/guard.lua"), map[string]string{"If-Match": etag}, new("return true\n"))
 	if stale.Code != http.StatusPreconditionFailed || !strings.Contains(stale.Body.String(), "reload to compare") {
@@ -134,8 +118,8 @@ func TestFileEditRoundTripsAndConflicts(t *testing.T) {
 		t.Fatalf("create over an existing file = %d; want 412", again.Code)
 	}
 	del := f.do(http.MethodDelete, contentURL("lua", "mob/new.lua"), map[string]string{"If-Match": created.Header().Get("ETag")}, nil)
-	if del.Code != http.StatusNoContent || recorder.calls != 3 {
-		t.Fatalf("delete = %d forget calls=%d", del.Code, recorder.calls)
+	if del.Code != http.StatusNoContent {
+		t.Fatalf("delete = %d", del.Code)
 	}
 }
 

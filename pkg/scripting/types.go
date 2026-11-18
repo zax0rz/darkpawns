@@ -275,4 +275,8 @@ type ScriptContext struct {
 	// obj/), which only the mob call sites use. A non-empty OwnerType also
 	// bridges the run, because object onpulse passes me = NULL (comm.c:791).
 	OwnerType string
+	// ClearOwnerScriptFlags mirrors run_script's load-error arm, which disables
+	// the owning mob, room, or object script record before returning TRUE.
+	// It is called only when the script file fails to load.
+	ClearOwnerScriptFlags func()
 }

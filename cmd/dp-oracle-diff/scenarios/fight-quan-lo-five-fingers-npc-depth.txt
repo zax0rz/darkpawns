@@ -1,0 +1,79 @@
+# depth-case: death.quan-lo-five-fingers-npc-victim
+# An immortal forces Quan Lo to kill a one-hit-point mobile. The death tail
+# emits vnum-19405 gossip after die_with_killer and attitude_loot; GET_NAME on
+# an NPC is its short description (src/fight.c:1688-1712; src/utils.h:275-276;
+# src/act.comm.c:1204-1296).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19405 1 8105 194
+set-mob-flag 19405 AGGRESSIVE
+set-mob-flag 19405 AGGR24
+
+[setup:oracle]
+Fingerforge
+Y
+fingerpass
+fingerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fingerforge
+y
+fingerpass
+fingerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:listener]
+Fingerswatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:listener]
+Fingerswatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Fingerswatch 8105
+load mob 16303
+set mob trainee maxhit 1
+set mob trainee hit 1
+
+[probe]
+force quan hit trainee
+~dpclock pulse 40

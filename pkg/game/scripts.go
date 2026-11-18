@@ -13,9 +13,6 @@ type ScriptContext = scripting.ScriptContext
 // ScriptEngine is set by the server at startup.
 var ScriptEngine interface {
 	RunScript(ctx *ScriptContext, fname string, trigger string) (bool, error)
-	// ForgetFailures clears the negative cache of failed script loads so a
-	// fixed script runs on its next trigger instead of after a reboot.
-	ForgetFailures()
 }
 
 // MobInstance methods for script handling
@@ -71,6 +68,13 @@ func (m *MobInstance) HasScript(trigger string) bool {
 func (m *MobInstance) RunScript(trigger string, ctx *ScriptContext) (bool, error) {
 	if ScriptEngine == nil || !m.HasScript(trigger) {
 		return false, nil
+	}
+	if ctx.ClearOwnerScriptFlags == nil {
+		ctx.ClearOwnerScriptFlags = func() {
+			if proto := m.Proto(); proto != nil {
+				proto.LuaFunctions = 0
+			}
+		}
 	}
 
 	// run_script's !*script_name arm (src/scripts.c:1763-1767): the mobile's

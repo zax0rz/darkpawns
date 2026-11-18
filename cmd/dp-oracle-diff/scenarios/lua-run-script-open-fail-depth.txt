@@ -1,6 +1,7 @@
-# C-first probe for run_script's missing-file report. In the retained transcript
-# C returns only the actor echo while Go also delivers the BRF line to Testor's
-# brief syslog; see divergence DP-1574.
+# C-first probe for run_script's load-failure handling. The warmup confirms
+# syslog brief took effect before entering the trigger room. The first command
+# reports the load error and is consumed; the second runs normally after C
+# clears the mob's script flags.
 # depth-case: scripts.lua-run-script-open-fail
 
 [fixture]

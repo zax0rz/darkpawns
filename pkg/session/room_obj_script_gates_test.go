@@ -20,8 +20,6 @@ type gateRecorder struct {
 	calls *[]string
 }
 
-func (gateRecorder) ForgetFailures() {}
-
 func (r gateRecorder) RunScript(ctx *game.ScriptContext, filename, trigger string) (bool, error) {
 	var b strings.Builder
 	b.WriteString(filename)

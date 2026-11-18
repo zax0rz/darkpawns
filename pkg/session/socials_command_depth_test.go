@@ -67,6 +67,29 @@ func TestSocialsRegistrationUsesCEntryGateAndCList(t *testing.T) {
 	}
 }
 
+func TestWizhelpUsesPrivilegedCCommandRows(t *testing.T) {
+	if names := cWizhelpForLevel(game.LVL_IMMORT - 1); len(names) != 0 {
+		t.Fatalf("pre-immortal wizhelp rows = %v, want none", names)
+	}
+	names := cWizhelpForLevel(game.LVL_IMMORT)
+	if !containsString(names, "snowball") {
+		t.Fatal("immortal wizhelp listing omits snowball, which is a privileged social in C's command table")
+	}
+	if !containsString(names, "wizhelp") {
+		t.Fatal("immortal wizhelp listing omits its own privileged command row")
+	}
+	if containsString(names, "say") || containsString(names, "socials") {
+		t.Fatal("wizhelp listing includes a command below LVL_IMMORT")
+	}
+	ordered := append([]string(nil), names...)
+	sort.Strings(ordered)
+	for i := range names {
+		if names[i] != ordered[i] {
+			t.Fatalf("C wizhelp listing is not lexical at index %d: got %q, want %q", i, names[i], ordered[i])
+		}
+	}
+}
+
 func containsString(values []string, want string) bool {
 	for _, value := range values {
 		if value == want {
