@@ -9,14 +9,23 @@ import (
 )
 
 func cmdAssist(s *Session, args []string) error {
-	// 1. Player must not already be fighting
-	if s.manager.combatEngine.IsFighting(s.player) {
+	actor := s.combatBody()
+	if actor == nil {
+		return nil
+	}
+	actActor, ok := actor.(game.Actor)
+	if !ok || actActor == nil {
+		return nil
+	}
+
+	// 1. Actor must not already be fighting
+	if s.manager.combatEngine.IsFighting(actor) {
 		s.Send("You're already fighting!  How can you assist someone else?\r\n")
 		return nil
 	}
 
 	// 2. If mounted, must dismount first
-	if s.player.IsMounted() {
+	if mounter, ok := actor.(interface{ IsMounted() bool }); ok && mounter.IsMounted() {
 		s.Send("Dismount first!\r\n")
 		return nil
 	}
@@ -31,7 +40,7 @@ func cmdAssist(s *Session, args []string) error {
 	// 3. Find the target character in the room. C do_assist resolves the
 	// helpee with get_char_room_vis (src/act.offensive.c:74 →
 	// src/handler.c:1277-1300), then tests helpee == ch for the self-refusal.
-	target, ok := s.manager.world.ResolveCharInRoom(s.player, targetName)
+	target, ok := s.manager.world.ResolveCharInRoom(actor, targetName)
 	if !ok {
 		// C get_char_room_vis failure prints NOPERSON (config.c:93).
 		s.Send("No-one by that name here.\r\n")
@@ -44,7 +53,7 @@ func cmdAssist(s *Session, args []string) error {
 	} else {
 		helpee, helpeeName = target.Mob, target.Mob.GetShortDesc()
 	}
-	if target.Player == s.player {
+	if targetActor(target) == actActor {
 		s.Send("You can't help yourself any more than this!\r\n")
 		return nil
 	}
@@ -54,7 +63,7 @@ func cmdAssist(s *Session, args []string) error {
 	if !fighting {
 		// C uses $M (objective pronoun): "But nobody is fighting him!"
 		if helpeeActor, ok := helpee.(game.Actor); ok {
-			game.Act(nil, false, s.player, helpeeActor, nil, nil,
+			game.Act(nil, false, actActor, helpeeActor, nil, nil,
 				"But nobody is fighting $M!", "", game.ToChar)
 		} else {
 			s.Send(fmt.Sprintf("But nobody is fighting %s!\r\n", helpeeName))
@@ -62,30 +71,28 @@ func cmdAssist(s *Session, args []string) error {
 		return nil
 	}
 	// C's do_assist refuses to join when the opponent fighting the helpee is
-	// invisible to the assisting player (act.offensive.c:87-89). The helpee is
+	// invisible to the assisting actor (act.offensive.c:87-89). The helpee is
 	// the $M target of the message; no combat state or audience output changes
 	// on this rejection.
 	if helpeeActor, ok := helpee.(game.Actor); ok {
-		if opponentActor, ok := opponent.(game.Actor); ok && !game.CanSee(s.player, opponentActor) {
-			game.Act(nil, false, s.player, helpeeActor, nil, nil,
+		if opponentActor, ok := opponent.(game.Actor); ok && !game.CanSee(actActor, opponentActor) {
+			game.Act(nil, false, actActor, helpeeActor, nil, nil,
 				"You can't see who is fighting $M!", "", game.ToChar)
 			return nil
 		}
 	}
 
-	// 4. Player joins the fight. C's do_assist swings immediately via hit()
+	// 4. Actor joins the fight. C's do_assist swings immediately via hit()
 	// (act.offensive.c:95) and — unlike do_hit — sets NO wait state.
 	s.Send("You join the fight!\r\n")
-	// Notify the helpee
-	if !helpee.IsNPC() {
-		if helpeeSess, ok := s.manager.GetSession(helpeeName); ok {
-			helpeeSess.Send(fmt.Sprintf("%s assists you!\r\n", s.player.Name))
-		}
+	// Notify the helpee (covers both players and switched mobs).
+	if helpeeActor, ok := helpee.(game.Actor); ok {
+		helpeeActor.SendMessage(fmt.Sprintf("%s assists you!\r\n", actor.GetName()))
 	}
 	// C act("$n assists $N.", ..., TO_NOTVICT) excludes both the actor and the
 	// helpee — the helper must not hear their own assist line.
 	if helpeeActor, ok := helpee.(game.Actor); ok {
-		game.Act(s.manager.world, false, s.player, helpeeActor, nil, nil,
+		game.Act(s.manager.world, false, actActor, helpeeActor, nil, nil,
 			"$n assists $N.", "", game.ToNotVict)
 	}
 
@@ -94,7 +101,7 @@ func cmdAssist(s *Session, args []string) error {
 	// draws and only then reaches damage()'s protection block
 	// (fight.c:1318-1368) against the pre-enrolment state. The helper enrols
 	// at the damage point only when the damage is not refused.
-	if err := s.manager.combatEngine.PerformDeferredInitialAttack(s.player, opponent); err != nil {
+	if err := s.manager.combatEngine.PerformDeferredInitialAttack(actor, opponent); err != nil {
 		return err
 	}
 	s.markDirty(VarFighting)

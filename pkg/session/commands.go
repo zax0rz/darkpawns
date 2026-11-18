@@ -317,6 +317,15 @@ func init() {
 	registerCommand("buy", wrapArgs(cmdBuy), "Buy an item from a shop.")
 	registerCommand("sell", wrapArgs(cmdSell), "Sell an item to a shop.")
 	registerCommand("value", wrapArgs(cmdValue), "Ask a shopkeeper for an item's sale price.")
+	for _, shopCmd := range []string{"list", "buy", "sell", "value"} {
+		registerActorCommand(shopCmd, func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+			// When a shopkeeper is in the room, specShopKeeperActor handles it first.
+			if ctx.Actor != nil {
+				ctx.Actor.SendMessage("Sorry, but you cannot do that here!\r\n")
+			}
+			return game.CharacterCommandHandled
+		})
+	}
 	// C registers these names under do_not_here (act.other.c:208). Room
 	// special procedures intercept them first; these handlers preserve C's
 	// generic fallback when no matching special procedure is present.
@@ -360,8 +369,11 @@ func init() {
 	registerCommand("rescue", wrapSkill(command.CmdRescue), "Rescue someone from combat.")
 	registerActorCommand("rescue", combatSkillActorHandler)
 	registerCommand("sneak", wrapSkill(command.CmdSneak), "Attempt to move silently.")
+	registerActorCommand("sneak", utilitySkillActorHandler)
 	registerCommand("hide", wrapSkill(command.CmdHide), "Attempt to hide in the shadows.")
+	registerActorCommand("hide", utilitySkillActorHandler)
 	registerCommand("kabuki", wrapSkill(command.CmdKabuki), "Practice the art of kabuki (hide variant).")
+	registerActorCommand("kabuki", utilitySkillActorHandler)
 	// C do_dig (src/new_cmds2.c:818) is the LVL_BUILDER OLC exit-creator. The
 	// unrelated mortal foraging skill remains available only through its game
 	// layer API; the command name belongs to the C OLC surface.
@@ -536,7 +548,9 @@ func init() {
 		return game.CharacterBite(ctx, args)
 	})
 	registerCommand("carve", wrapSkill(command.CmdCarve), "Carve a corpse.")
+	registerActorCommand("carve", utilitySkillActorHandler)
 	registerCommand("compare", wrapSkill(command.CmdCompare), "Compare two items.")
+	registerActorCommand("compare", utilitySkillActorHandler)
 	registerCommand("cutthroat", wrapSkill(command.CmdCutthroat), "Slit a target's throat.")
 	registerActorCommand("cutthroat", combatSkillActorHandler)
 	registerCommand("search", wrapSkill(command.CmdDetect), "Search for hidden exits.")
@@ -548,14 +562,18 @@ func init() {
 	registerCommand("groinrip", wrapSkill(command.CmdGroinrip), "Rip a target's groin.")
 	registerActorCommand("groinrip", combatSkillActorHandler)
 	registerCommand("mindlink", wrapSkill(command.CmdMindlink), "Form a psychic mind link.")
+	registerActorCommand("mindlink", utilitySkillActorHandler)
 	registerCommand("mold", wrapSkill(command.CmdMold), "Mold a clay item.")
 	registerCommand("palm", wrapSkill(command.CmdPalm), "Palm an item discreetly.")
+	registerActorCommand("palm", utilitySkillActorHandler)
 	registerCommand("point", wrapSkill(command.CmdPoint), "Point out something.")
+	registerActorCommand("point", utilitySkillActorHandler)
 	registerCommand("scrounge", wrapSkill(command.CmdScrounge), "Scrounge for useful items.")
 	registerActorCommand("scrounge", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
 		return game.CharacterScrounge(ctx, args)
 	})
 	registerCommand("sharpen", wrapSkill(command.CmdSharpen), "Sharpen a bladed weapon.")
+	registerActorCommand("sharpen", utilitySkillActorHandler)
 	registerCommand("slug", wrapSkill(command.CmdSlug), "Slug a target with a heavy blow.")
 	registerActorCommand("slug", combatSkillActorHandler)
 	registerCommand("smackheads", wrapSkill(command.CmdSmackheads), "Smack two targets' heads together.")
@@ -565,6 +583,7 @@ func init() {
 	registerCommand("tag", wrapSkill(command.CmdTag), "Tag a target.")
 	registerActorCommand("tag", combatSkillActorHandler)
 	registerCommand("turn", wrapSkill(command.CmdTurn), "Turn undead.")
+	registerActorCommand("turn", utilitySkillActorHandler)
 	registerCommand("aid", wrapSkill(command.CmdFirstAid), "Administer first aid to a target.")
 	registerCommand("alter", wrapSkill(command.CmdFleshAlter), "Alter flesh.", "flesh")
 	registerActorCommand("aid", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
@@ -630,6 +649,7 @@ func init() {
 	})
 	registerCommand("recall", wrapBodyArgs(cmdRecall), "Recall to your home city.")
 	registerCommand("stealth", wrapSkill(command.CmdStealth), "Enter stealth mode.")
+	registerActorCommand("stealth", utilitySkillActorHandler)
 	registerCommand("appraise", wrapBodyArgs(cmdAppraise), "Appraise an item's value.")
 	registerActorCommand("appraise", func(ctx game.CharacterCommandContext, _ string, args []string) game.CharacterCommandResult {
 		ctx = withCharacterCommandArgs(ctx, args)
@@ -741,6 +761,10 @@ func npcActorHandler(run func(*game.World, *game.MobInstance, string)) character
 
 func combatSkillActorHandler(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
 	return game.CharacterCombatSkill(ctx, commandName, args)
+}
+
+func utilitySkillActorHandler(ctx game.CharacterCommandContext, commandName string, args []string) game.CharacterCommandResult {
+	return game.CharacterUtilitySkill(ctx, commandName, args)
 }
 
 func kujiKiriActorHandler(seal string) characterActorHandler {

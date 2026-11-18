@@ -90,6 +90,18 @@ func howGood(percent int) string {
 // built at -O0, where the prelude survives its own appends. Every entry with
 // a non-zero mag_manacost carries C's cost column (spec_procs.c:185-192),
 // through the same ManaCost formula cast uses.
+// RenderActorSkillList renders the skill/spell list for either a player or a
+// switched mobile (src/spec_procs.c:157-192).
+func RenderActorSkillList(actor Actor) string {
+	if p, ok := actor.(*Player); ok {
+		return RenderSkillList(p)
+	}
+	if mob, ok := actor.(*MobInstance); ok {
+		return fmt.Sprintf("You have no practice sessions remaining.\r\nYou know of the following %ss:\r\n", SplSkl(mob.GetClass()))
+	}
+	return ""
+}
+
 func RenderSkillList(p *Player) string {
 	class := p.GetClass()
 	level := p.GetLevel()

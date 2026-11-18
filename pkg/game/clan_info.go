@@ -80,7 +80,7 @@ func (w *World) doClanApply(ch *Player, arg string) {
 // Sub-command: do_clan_info
 // ---------------------------------------------------------------------------
 
-func (w *World) doClanInfo(ch *Player, arg string) {
+func (w *World) doClanInfo(ch Actor, arg string) {
 	if w.Clans.ClanCount() == 0 {
 		ch.SendMessage("No clans have formed yet.\r\n")
 		return
@@ -96,7 +96,7 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 			if c == nil {
 				continue
 			}
-			if ch.GetLevel() >= LVL_IMMORT {
+			if p, ok := ch.(*Player); ok && p.GetLevel() >= LVL_IMMORT {
 				fmt.Fprintf(&msg, "[%-2d]  %-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\r\n",
 					c.ID, c.Name, c.Members, c.Power, c.AppFee, c.ApplLevel)
 			} else if c.Private == 0 {

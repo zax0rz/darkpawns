@@ -2287,8 +2287,10 @@ func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer st
 		if name == excludePlayer {
 			continue
 		}
-		if s.player != nil && s.player.GetRoom() == roomVNum {
-			if !game.CanReceiveAct(s.player) {
+		body := s.combatBody()
+		actBody, ok := body.(game.Actor)
+		if ok && actBody != nil && body.GetRoom() == roomVNum {
+			if !game.CanReceiveActActor(actBody) {
 				continue
 			}
 			s.sendGuarded(message)

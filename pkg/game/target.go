@@ -399,7 +399,7 @@ func (w *World) ResolveObjectWorld(ch *Player, name string) (*ObjectInstance, bo
 // WhereMatches implements do_where's argument branch (src/act.informative.c:2281-2306),
 // walking character_list (players and mobiles) and object_list in C's newest-first
 // order with print_object_location (src/act.informative.c:2203-2241).
-func (w *World) WhereMatches(ch *Player, rawArg string) string {
+func (w *World) WhereMatches(ch Actor, rawArg string) string {
 	arg, _ := OneArgument(rawArg)
 	if arg == "" {
 		return ""
@@ -446,7 +446,7 @@ func (w *World) WhereMatches(ch *Player, rawArg string) string {
 	return out.String()
 }
 
-func (w *World) printObjectLocation(num int, obj *ObjectInstance, ch *Player, recur bool) string {
+func (w *World) printObjectLocation(num int, obj *ObjectInstance, ch Actor, recur bool) string {
 	var prefix string
 	if num > 0 {
 		prefix = fmt.Sprintf("O%3d. %-25s - ", num, obj.GetShortDesc())
@@ -482,7 +482,7 @@ func (w *World) printObjectLocation(num int, obj *ObjectInstance, ch *Player, re
 	return prefix + "in an unknown location\r\n"
 }
 
-func (w *World) whereOwnerPers(ch *Player, loc ObjectLocation) string {
+func (w *World) whereOwnerPers(ch Actor, loc ObjectLocation) string {
 	switch loc.OwnerKind {
 	case OwnerPlayer:
 		if owner, ok := w.GetPlayer(loc.PlayerName); ok && owner != nil {

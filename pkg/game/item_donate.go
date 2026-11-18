@@ -7,23 +7,86 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
+func disposeInventorySnapshot(ch Actor) []*ObjectInstance {
+	switch v := ch.(type) {
+	case *Player:
+		return v.Inventory.Snapshot()
+	case *MobInstance:
+		return v.InventorySnapshot()
+	default:
+		return nil
+	}
+}
+
+func disposeAddInventory(ch Actor, obj *ObjectInstance) {
+	switch v := ch.(type) {
+	case *Player:
+		//nolint:errcheck // best-effort rollback
+		v.Inventory.AddItem(obj)
+	case *MobInstance:
+		v.AddToInventory(obj)
+	}
+}
+
+func disposeRemoveInventory(ch Actor, obj *ObjectInstance) {
+	switch v := ch.(type) {
+	case *Player:
+		v.Inventory.RemoveItem(obj)
+	case *MobInstance:
+		v.RemoveFromInventory(obj)
+	}
+}
+
+func disposeSpendGold(ch Actor, amount int) bool {
+	switch v := ch.(type) {
+	case *Player:
+		return v.SpendGold(amount)
+	case *MobInstance:
+		return v.SpendGold(amount)
+	default:
+		return false
+	}
+}
+
+func disposeAddGold(ch Actor, amount int) {
+	switch v := ch.(type) {
+	case *Player:
+		v.AddGold(amount)
+	case *MobInstance:
+		v.SetGold(v.GetGold() + amount)
+	}
+}
+
+func disposeSetWaitState(ch Actor, rounds int) {
+	switch v := ch.(type) {
+	case *Player:
+		v.SetWaitState(rounds)
+	case *MobInstance:
+		v.SetWaitState(rounds)
+	}
+}
+
 // performDispose implements perform_drop() for the junk/donate paths —
 // src/act.item.c:480-525. mode is scmdJunk or scmdDonate; donationRoom is
 // the dice-selected destination room for a donate (unused for junk).
 // Returns the junk-value reward (0 for a successful donate, or when the
 // item couldn't be disposed of at all).
-func (w *World) performDispose(ch *Player, obj *ObjectInstance, mode int, sname string, donationRoom int) int {
-	if obj.HasExtraFlag(0, extraFlagNoDrop) && ch.GetLevel() < lvlImmort {
-		w.actToChar(ch, fmt.Sprintf("You can't %s $p, it must be CURSED!", sname), obj, nil)
+func (w *World) performDispose(ch Actor, obj *ObjectInstance, mode int, sname string, donationRoom int) int {
+	chLevel := 0
+	if l, ok := ch.(interface{ GetLevel() int }); ok {
+		chLevel = l.GetLevel()
+	}
+	if obj.HasExtraFlag(0, extraFlagNoDrop) && chLevel < lvlImmort {
+		Act(w, false, ch, nil, obj, nil, fmt.Sprintf("You can't %s $p, it must be CURSED!", sname), "", ToChar)
 		return 0
 	}
 
 	// VANISH(mode) — act.item.c:477-478. Always applies here since this
 	// helper is only ever called with mode == junk or donate.
 	const vanish = "  It vanishes in a puff of smoke!"
-	w.actToChar(ch, fmt.Sprintf("You %s $p.%s", sname, vanish), obj, nil)
-	w.actToRoom(ch, fmt.Sprintf("$n %ss $p.%s", sname, vanish), obj, nil, true)
-	ch.Inventory.RemoveItem(obj)
+	Act(w, false, ch, nil, obj, nil, fmt.Sprintf("You %s $p.%s", sname, vanish), "", ToChar)
+	Act(w, true, ch, nil, obj, nil, fmt.Sprintf("$n %ss $p.%s", sname, vanish), "", ToRoom)
+	disposeRemoveInventory(ch, obj)
 
 	// A donated item flagged NODONATE is silently junked instead — act.item.c:498-499.
 	if mode == scmdDonate && obj.HasExtraFlag(0, extraFlagNoDonate) {
@@ -37,8 +100,7 @@ func (w *World) performDispose(ch *Player, obj *ObjectInstance, mode int, sname 
 			slog.Error("donation move failed",
 				"player", ch.GetName(), "item_vnum", obj.VNum, "error", err)
 			ch.SendMessage("Something went wrong. Your item was not donated.\r\n")
-			//nolint:errcheck // best-effort rollback — player already saw failure message
-			ch.Inventory.AddItem(obj)
+			disposeAddInventory(ch, obj)
 			return 0
 		}
 		// C act() receives a NULL actor here (src/act.item.c:511), so it uses the
@@ -47,7 +109,7 @@ func (w *World) performDispose(ch *Player, obj *ObjectInstance, mode int, sname 
 		return 0
 	case scmdJunk:
 		value := min(max(obj.GetCost()>>4, 1), 200)
-		w.ExtractObject(obj, ch.GetRoomVNum())
+		w.ExtractObject(obj, ch.GetRoom())
 		return value
 	}
 	return 0
@@ -55,30 +117,30 @@ func (w *World) performDispose(ch *Player, obj *ObjectInstance, mode int, sname 
 
 // performDisposeGold implements perform_drop_gold() for the junk/donate
 // gold paths — src/act.item.c:430-474. mode is scmdJunk or scmdDonate.
-func (w *World) performDisposeGold(ch *Player, amount int, mode int, donationRoom int) {
+func (w *World) performDisposeGold(ch Actor, amount int, mode int, donationRoom int) {
 	if amount <= 0 {
 		ch.SendMessage("Heh heh heh.. we are jolly funny today, eh?\r\n")
 		return
 	}
-	if !ch.SpendGold(amount) {
+	if !disposeSpendGold(ch, amount) {
 		ch.SendMessage("You don't have that many coins!\r\n")
 		return
 	}
 
 	if mode == scmdJunk {
-		w.actToRoom(ch, fmt.Sprintf("$n drops %s which disappears in a puff of smoke!", createMoneyDesc(amount)), nil, nil, false)
+		Act(w, false, ch, nil, nil, nil, fmt.Sprintf("$n drops %s which disappears in a puff of smoke!", createMoneyDesc(amount)), "", ToRoom)
 		ch.SendMessage("You drop some gold which disappears in a puff of smoke!\r\n")
 	} else {
-		ch.SetWaitState(1) // WAIT_STATE(ch, PULSE_VIOLENCE) — discourage coin-bombing
+		disposeSetWaitState(ch, 1) // WAIT_STATE(ch, PULSE_VIOLENCE) — discourage coin-bombing
 		ch.SendMessage("You throw some gold into the air where it disappears in a puff of smoke!\r\n")
-		w.actToRoom(ch, "$n throws some gold into the air where it disappears in a puff of smoke!", nil, nil, false)
+		Act(w, false, ch, nil, nil, nil, "$n throws some gold into the air where it disappears in a puff of smoke!", "", ToRoom)
 		moneyObj := w.createMoneyObject(amount)
 		// C perform_drop_gold's donate arm is obj_to_room (act.item.c:452).
 		if err := w.MoveObjectToRoomFront(moneyObj, donationRoom); err != nil {
 			slog.Error("donation gold move failed",
 				"player", ch.GetName(), "error", err)
 			// The reservation is returned: the donation never landed.
-			ch.AddGold(amount)
+			disposeAddGold(ch, amount)
 			ch.SendMessage("Something went wrong. Your gold was not donated.\r\n")
 			return
 		}
@@ -93,7 +155,7 @@ func (w *World) performDisposeGold(ch *Player, amount int, mode int, donationRoo
 // literal typed command ("junk" or "donate"); the junk-only exp reward is
 // gated on sname, not on any per-item mode flip (donate never grants exp,
 // even when the dice roll secretly junks an item).
-func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donationRoom int) {
+func (w *World) doDispose(ch Actor, arg string, mode int, sname string, donationRoom int) {
 	// C do_drop (junk/donate) parses with one_argument: fill words dropped,
 	// argument lowercased. A fill-word-only argument reads as empty.
 	arg1, rest := oneArgument(arg)
@@ -139,7 +201,7 @@ func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donati
 			ch.SendMessage(fmt.Sprintf("What do you want to %s all of?\r\n", sname))
 			return
 		}
-		items := ch.Inventory.Snapshot()
+		items := disposeInventorySnapshot(ch)
 		found := false
 		for _, obj := range items {
 			if isnameWithAbbrevs(keyword, obj.GetKeywords()) {
@@ -152,7 +214,7 @@ func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donati
 		}
 	default:
 		var obj *ObjectInstance
-		for _, o := range ch.Inventory.Snapshot() {
+		for _, o := range disposeInventorySnapshot(ch) {
 			if isnameWithAbbrevs(arg1, o.GetKeywords()) {
 				obj = o
 				break
@@ -167,14 +229,16 @@ func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donati
 
 	if amount > 0 && sname == "junk" {
 		ch.SendMessage("You have been rewarded by the gods!\r\n")
-		w.actToRoom(ch, "$n has been rewarded by the gods!", nil, nil, true)
-		w.GainExp(ch, min(10, amount))
+		Act(w, true, ch, nil, nil, nil, "$n has been rewarded by the gods!", "", ToRoom)
+		if p, ok := ch.(*Player); ok {
+			w.GainExp(p, min(10, amount))
+		}
 	}
 }
 
 // DoJunk implements the junk command — src/act.item.c ACMD(do_drop) with
 // subcmd SCMD_JUNK.
-func (w *World) DoJunk(ch *Player, arg string) {
+func (w *World) DoJunk(ch Actor, arg string) {
 	w.doDispose(ch, arg, scmdJunk, "junk", 0)
 }
 
@@ -187,7 +251,7 @@ func (w *World) DoJunk(ch *Player, arg string) {
 // donation_room_2 (18204). These donation rooms intentionally don't match
 // the dump-spec rooms (8085/21223) — a pre-existing inconsistency in the
 // original game, preserved here rather than "fixed".
-func (w *World) DoDonate(ch *Player, arg string) {
+func (w *World) DoDonate(ch Actor, arg string) {
 	mode := scmdDonate
 	donationRoom := 0
 

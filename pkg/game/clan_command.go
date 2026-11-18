@@ -15,6 +15,49 @@ func (w *World) saveCharSiteInRoom(p *Player, why string) {
 	}
 }
 
+// ExecClanCommandActor routes clan commands for either a player or a switched
+// mobile body (src/clan.c:1541).
+func (w *World) ExecClanCommandActor(actor Actor, argument string) {
+	if p, ok := actor.(*Player); ok {
+		w.ExecClanCommand(p, argument)
+		return
+	}
+	if actor == nil {
+		return
+	}
+	arg1, arg2 := halfChop(argument)
+	switch {
+	case isAbbrev(arg1, "create"):
+		if arg2 == "" {
+			w.sendClanFormat(actor)
+		} else {
+			actor.SendMessage("You are not mighty enough to create new clans!\r\n")
+		}
+	case isAbbrev(arg1, "destroy"):
+		if arg2 == "" {
+			w.sendClanFormat(actor)
+		} else {
+			actor.SendMessage("Your not mighty enough to destroy clans!\r\n")
+		}
+	case isAbbrev(arg1, "who"), isAbbrev(arg1, "status"):
+		actor.SendMessage("You do not belong to a clan!\r\n")
+	case isAbbrev(arg1, "info"):
+		w.doClanInfo(actor, arg2)
+	case isAbbrev(arg1, "members"), isAbbrev(arg1, "quit"):
+		actor.SendMessage("You aren't in a clan!\r\n")
+	case isAbbrev(arg1, "enroll"), isAbbrev(arg1, "expel"), isAbbrev(arg1, "demote"),
+		isAbbrev(arg1, "promote"), isAbbrev(arg1, "set"), isAbbrev(arg1, "private"),
+		isAbbrev(arg1, "withdraw"), isAbbrev(arg1, "deposit"):
+		if arg2 == "" && !isAbbrev(arg1, "enroll") {
+			w.sendClanFormat(actor)
+		} else {
+			actor.SendMessage("You don't belong to any clan!\r\n")
+		}
+	default:
+		w.sendClanFormat(actor)
+	}
+}
+
 func (w *World) ExecClanCommand(ch *Player, argument string) {
 	arg1, arg2 := halfChop(argument)
 

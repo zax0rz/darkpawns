@@ -13,12 +13,12 @@ the counts below in step with the baseline).
 |---|---|
 | `bug:invented` | 34 |
 | `bug:paraphrase` | 14 |
-| `census:composed` | 1 |
+| `census:composed` | 2 |
 | `data` | 0 |
 | `surface:no-c` | 0 |
 | `unsure` | 0 |
 | `divergence:approved` | 1 |
-| **total** | **50** |
+| **total** | **51** |
 
 `unsure` is 0/50 (0.0%).
 
@@ -367,8 +367,9 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 ### `src/tattoo.c` — `use_tattoo` (2)
 
 
-## census:composed (5)
+## census:composed (6)
 
+- Go `pkg/game/skill_actor_utility.go:157` — “points around the room.” — src/new_cmds.c:2533: to_room = "$n points around the room."; — do_point assigns to_room on several branches and acts it at :2557, invisible to the census sink lexer
 - Go `pkg/session/wiz_info.go:386` — “Usage: checkload { obj | mob } <number>” — src/act.wizard.c:3825: "Usage: checkload { obj | mob } <number>\r\n" — C holds it in a local const char* usage, invisible to the census sink lexer
 - Go `pkg/game/graph.go:267` — “auctions, '” — src/act.comm.c:1273: sprintf(buf, "$n %ss, '%s'", com_msgs[subcmd][1], argument); — C composes these bytes via this sprintf plus com_msgs[SCMD_AUCTION][1] = auction (line 1189)
 - Go `pkg/session/wiz_info.go:20` — “zones player rent stats errors” — src/act.wizard.c:2246-2259,2279-2288 — C defines the five show fields separately and formats them into a five-column row at runtime
