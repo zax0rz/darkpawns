@@ -3,6 +3,8 @@
 # depth-case: mudlog.olc-disk-oedit
 # depth-case: mudlog.olc-disk-medit
 # depth-case: mudlog.olc-disk-sedit
+# depth-case: mudlog.olc-zedit-target-open-failure
+# depth-case: zedit.save-open-failure
 
 [fixture]
 empty-players
@@ -98,6 +100,7 @@ advance Mudwizard 38
 
 [probe:actor]
 redit save 31
+~fault fault-dir zone-31
 zedit save 31
 oedit save 31
 medit save 31

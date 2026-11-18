@@ -1,6 +1,8 @@
 # setup-refusal-reason: C historical whitehouse.gov ban is cleared; Go starts empty and its unban-not-found refusal is intentional.
 # depth-case: ban.no-bans
 # depth-case: ban.add
+# depth-case: ban.log-site-banned
+# depth-case: mudlog.ban-site-banned
 # depth-case: ban.list-format
 # depth-case: ban.fill-and-trailing-parse
 # depth-case: ban.list-order
@@ -10,6 +12,8 @@
 # depth-case: ban.missing-site
 # depth-case: ban.unban-no-argument
 # depth-case: ban.unban-not-found
+# depth-case: ban.log-site-unbanned
+# depth-case: mudlog.unban-site-unbanned
 # C-first vehicle for ban.c:132-244. The first-player God satisfies the
 # LVL_GRGOD command gate; all writes use the harness's disposable Go runtime
 # and copied C lib tree.
@@ -47,11 +51,41 @@ Y
 <ENTER>
 1
 
+[setup:oracle:syslog]
+Banwitness
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:syslog]
+Banwitness
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+y
+<ENTER>
+1
+
 [warmup]
 # The shipped C oracle data contains a historical whitehouse.gov ban while the
 # fresh Go runtime starts empty. Remove it on both sides before comparing the
 # do_ban surface; warmup output is intentionally not diffed.
 unban whitehouse.gov
+advance Banwitness 34
+force Banwitness syslog normal
 
 [probe]
 ban
@@ -66,3 +100,4 @@ ban new 012345678901234567890123456789012345678901234567890123456789
 ban all 01234567890123456789012345678901234567890123456789
 unban the
 unban missing.example
+unban Example.COM

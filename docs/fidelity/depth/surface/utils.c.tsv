@@ -1,6 +1,6 @@
 c_site	function	classification	case_ids	notes
 src/utils.c:236	mudlog	proven	mudlog.broadcast-by-syslog-level	A qualifying syslog observer receives the exact bracketed record; the case's proof includes the color-level matrix for this send (R1/R5h).
-src/utils.c:237	mudlog	proven	mudlog.broadcast-by-syslog-level	The broadcast body is asserted byte-for-byte for eligible and excluded observers (R1/R5h).
+src/utils.c:237	mudlog	proven	mudlog.broadcast-by-syslog-level;mudlog.ban-site-banned;mudlog.unban-site-unbanned;mudlog.olc-zedit-target-open-failure	The shared C mudlog send is byte-proven for qualified observers; ban-depth and the zedit disk scenario exercise their producers through live syslog peers (R1/R2/R5h).
 src/utils.c:238	mudlog	proven	mudlog.broadcast-by-syslog-level	The same proof checks the color reset after the CRLF across color levels (R1/R5h).
 src/utils.c:412	stop_follower	proven	hit.dismount-branch	A damage-triggered charm break enters this branch of stop_follower before the swing output (R1/R5e/R5h).
 src/utils.c:413	stop_follower	proven	hit.dismount-branch	The same reached charm-break branch sends its room audience act (R1/R5e/R5h).

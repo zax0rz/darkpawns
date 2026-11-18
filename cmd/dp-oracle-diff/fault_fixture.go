@@ -58,6 +58,13 @@ func faultPaths(t faultTrees, ff oraclediff.FaultFixture) (cPath, goPath string,
 		case "object_idlist":
 			return filepath.Join(t.oracleLib, "object_idlist"), filepath.Join(t.goRoot, "object_idlist"), nil
 		}
+		if strings.HasPrefix(ff.Target, "zone-") {
+			zoneNumber, convErr := strconv.Atoi(strings.TrimPrefix(ff.Target, "zone-"))
+			if convErr == nil && zoneNumber > 0 {
+				name := fmt.Sprintf("%d.zon", zoneNumber)
+				return filepath.Join(t.oracleLib, "world", "zon", name), filepath.Join(t.goWorld, "zon", name), nil
+			}
+		}
 	case "fault-corrupt-mail":
 		return filepath.Join(t.oracleLib, "etc", "plrmail"), filepath.Join(t.goRoot, "data", "mail"), nil
 	case "fault-board":
@@ -124,7 +131,7 @@ func parseFaultStep(fields []string) (oraclediff.FaultFixture, bool) {
 	}
 	switch strings.ToLower(fields[0]) {
 	case "fault-dir":
-		if len(fields) == 2 && (fields[1] == "object_idlist" || fields[1] == "mail") {
+		if len(fields) == 2 && (fields[1] == "object_idlist" || fields[1] == "mail" || validZoneFaultTarget(fields[1])) {
 			return oraclediff.FaultFixture{Verb: "fault-dir", Target: fields[1]}, true
 		}
 	case "fault-corrupt-mail":
@@ -133,6 +140,14 @@ func parseFaultStep(fields []string) (oraclediff.FaultFixture, bool) {
 		}
 	}
 	return oraclediff.FaultFixture{}, false
+}
+
+func validZoneFaultTarget(target string) bool {
+	if !strings.HasPrefix(target, "zone-") {
+		return false
+	}
+	zoneNumber, err := strconv.Atoi(strings.TrimPrefix(target, "zone-"))
+	return err == nil && zoneNumber > 0
 }
 
 func applyFaultVerb(t faultTrees, ff oraclediff.FaultFixture) error {

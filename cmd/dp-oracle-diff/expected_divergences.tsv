@@ -19,6 +19,8 @@ house-offline-transfer-depth	house.tsv	house.transfer-offline	blocked
 lua-run-script-call-error-depth	scripts.tsv	scripts.lua-run-script-call-error	blocked	
 lua-run-script-open-fail-depth	scripts.tsv	scripts.lua-run-script-open-fail	blocked	
 movement-switched-mount-exhaustion-depth	movement.tsv	movement.mount-switched-rider-exhaustion	blocked	
+mudlog-olc-disk-depth	mudlog.tsv	mudlog.olc-zedit-target-open-failure	blocked	
+mudlog-olc-disk-depth	zedit.tsv	zedit.save-open-failure	blocked	
 order-actor-charmed-gate-depth	order.tsv	order.actor-charmed-gate	blocked	
 postmaster-mail-login-notices-depth	entry.tsv	entry.reconnect-mail-notice	excluded	
 postmaster-mail-login-notices-depth	entry.tsv	entry.world-entry-mail-notice	excluded	

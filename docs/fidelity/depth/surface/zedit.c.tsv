@@ -2,7 +2,7 @@ c_site	function	classification	case_ids	notes
 src/zedit.c:117	zedit_new_zone	proven	zedit.new-zone-refusals	TestZeditNewZoneRefusals drives the high-god ZEDIT handler with `new 327` and asserts the maximum-zone refusal.
 src/zedit.c:127	zedit_new_zone	proven	zedit.new-zone-refusals	TestZeditNewZoneRefusals drives the high-god ZEDIT handler with `new 30` and asserts the overlap refusal.
 src/zedit.c:227	zedit_new_zone	proven	zedit.new-zone-templates	TestZeditNewZoneTemplatesAndIndexInsertion asserts the exact Zone created response on the successful new-zone path.
-src/zedit.c:700	zedit_disp_menu	proven	zedit.no-argument-current-room;zedit.main-invalid;zedit.menu-colors-on-raw;zedit.menu-colors-off-raw	The initial menu send is reached by entry, invalid-choice redraw, and raw color-on/off oracle scenarios.
+src/zedit.c:700	zedit_disp_menu	proven	zedit.no-argument-current-room;zedit.main-invalid;zedit.menu-colors-on-raw;zedit.menu-colors-off-raw;zedit.zone-header-gates;zedit.imported-invalid-opcode-filtered	The initial menu send is reached by entry, invalid-choice redraw, raw color-on/off cases, reset-mode header boundaries, and the C-first external-opcode control (R1/R2/R5e/R5h).
 src/zedit.c:720	zedit_disp_comtype	proven	zedit.new-at-end	The boundary scenario appends at the end, chooses D, and compares the command-type menu before continuing.
 src/zedit.c:733	zedit_disp_arg1	proven	zedit.command-type-and-if-flag	TestZeditStaleCarryAndCommandSave asserts the exact mobile VNUM prompt after choosing M.
 src/zedit.c:740	zedit_disp_arg1	proven	zedit.object-load-prompts	TestZeditObjectLoadPrompts asserts the exact object VNUM prompt after choosing O.

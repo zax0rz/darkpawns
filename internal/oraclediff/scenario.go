@@ -37,21 +37,22 @@ type Scenario struct {
 	// PeerDrop names one passive peer whose TCP connection is closed after
 	// setup/warmup and before the compared probe. The character remains in the
 	// live-world lifecycle, which exposes C's linkless descriptor branches.
-	PeerDrop          string
-	Peers             map[string]*PeerSetup
-	MiscFiles         []MiscFileFixture
-	FaultFixtures     []FaultFixture
-	Fixtures          []ObjectFixture
-	ObjectSpawns      []ObjectSpawnFixture
-	MobFixtures       []MobFixture
-	MobObjectFixtures []MobObjectFixture
-	MobAffFixtures    []MobAffFixture
-	MobFlagFixtures   []MobFlagFixture
-	ObjIndexFixtures  []ObjIndexFixture
-	WldIndexFixtures  []WldIndexFixture
-	QuietZones        []int
-	QuietAllMobs      bool
-	EmptyPlayers      bool
+	PeerDrop            string
+	Peers               map[string]*PeerSetup
+	MiscFiles           []MiscFileFixture
+	FaultFixtures       []FaultFixture
+	Fixtures            []ObjectFixture
+	ObjectSpawns        []ObjectSpawnFixture
+	MobFixtures         []MobFixture
+	ZoneCommandFixtures []ZoneCommandFixture
+	MobObjectFixtures   []MobObjectFixture
+	MobAffFixtures      []MobAffFixture
+	MobFlagFixtures     []MobFlagFixture
+	ObjIndexFixtures    []ObjIndexFixture
+	WldIndexFixtures    []WldIndexFixture
+	QuietZones          []int
+	QuietAllMobs        bool
+	EmptyPlayers        bool
 	// SeedPlayer seeds the port's player store with C's shipped first player
 	// (Testor, player ID 1) before boot, so both engines log in an existing
 	// player and neither side rolls character-creation draws. Mutually
@@ -191,6 +192,17 @@ type MobFixture struct {
 	ZoneNumber  int
 }
 
+// ZoneCommandFixture inserts one raw three-argument reset opcode into a
+// disposable zone file before its S terminator. It exercises C's imported
+// unknown-command handling without editing either source world tree.
+type ZoneCommandFixture struct {
+	ZoneNumber int
+	Command    string
+	IfFlag     int
+	Arg1       int
+	Arg2       int
+}
+
 // MobObjectFixture appends a G reset for the last mob reset in a disposable
 // zone. It is deliberately paired with spawn-mob in focused vehicles so a
 // scenario can populate a known keeper without editing authoritative zones.
@@ -317,6 +329,7 @@ type AudienceProbeBlock struct {
 //	add-obj-index 131.obj    # load an otherwise-unindexed obj file's prototypes
 //	add-wld-index 181.wld    # load an otherwise-unindexed room file
 //	spawn-obj 8010 1 8004 80  # object, max existing, room, zone file
+//	zone-command 80 X 0 1 2   # raw unknown opcode, inserted before the zone S
 //	give-object 12100 12132 1 121 # mob, object, max existing, zone file
 //	equip-object 18301 12120 1 16 80 # mob, object, max, C wear slot, zone
 //	quiet-zone 80             # suppress mobile resets in a disposable zone
@@ -497,6 +510,18 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				strings.EqualFold(fields[0], "fault-crash-file") ||
 				strings.EqualFold(fields[0], "fault-shop-temper") {
 				return Scenario{}, fmt.Errorf("scenario %q line %d: invalid fault fixture", name, lineNo)
+			}
+			if len(fields) == 6 && strings.EqualFold(fields[0], "zone-command") {
+				zoneNumber, zoneErr := strconv.Atoi(fields[1])
+				ifFlag, ifErr := strconv.Atoi(fields[3])
+				arg1, arg1Err := strconv.Atoi(fields[4])
+				arg2, arg2Err := strconv.Atoi(fields[5])
+				command := strings.ToUpper(fields[2])
+				if zoneErr == nil && ifErr == nil && arg1Err == nil && arg2Err == nil && zoneNumber > 0 && (ifFlag == 0 || ifFlag == 1) && len(command) == 1 && !strings.ContainsRune("MOEPDRLGS*$", rune(command[0])) {
+					sc.ZoneCommandFixtures = append(sc.ZoneCommandFixtures, ZoneCommandFixture{ZoneNumber: zoneNumber, Command: command, IfFlag: ifFlag, Arg1: arg1, Arg2: arg2})
+					continue
+				}
+				return Scenario{}, fmt.Errorf("scenario %q line %d: invalid zone-command fixture", name, lineNo)
 			}
 			if len(fields) >= 4 && fields[0] == "misc-file" {
 				count, err := strconv.Atoi(fields[2])

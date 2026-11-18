@@ -145,6 +145,7 @@ inert-scroll 8038
 empty-players
 quiet-mobs
 spawn-mob 18306 1 8162 80
+zone-command 80 X 0 1 2
 strip-mob-script 18306
 replace-room-exits 8162 west 8161 1 secret
 replace-room-exits 8161 none
@@ -168,6 +169,9 @@ recite scroll
 	}
 	if len(sc.MobFixtures) != 1 || sc.MobFixtures[0] != (MobFixture{MobVNum: 18306, MaxExisting: 1, RoomVNum: 8162, ZoneNumber: 80}) {
 		t.Fatalf("MobFixtures = %#v", sc.MobFixtures)
+	}
+	if len(sc.ZoneCommandFixtures) != 1 || sc.ZoneCommandFixtures[0] != (ZoneCommandFixture{ZoneNumber: 80, Command: "X", IfFlag: 0, Arg1: 1, Arg2: 2}) {
+		t.Fatalf("ZoneCommandFixtures = %#v", sc.ZoneCommandFixtures)
 	}
 	if !sc.QuietAllMobs {
 		t.Fatal("QuietAllMobs = false, want true")

@@ -15,6 +15,31 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
+func TestApplyZoneCommandFixturesInsertsUnknownOpcodeBeforeStop(t *testing.T) {
+	worldDir := t.TempDir()
+	zoneDir := filepath.Join(worldDir, "zon")
+	if err := os.MkdirAll(zoneDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(zoneDir, "80.zon")
+	before := "#80\nTest zone~\n8199 25 2\nM 0 1 1 8004\nS\n$\n"
+	if err := os.WriteFile(path, []byte(before), 0o640); err != nil {
+		t.Fatal(err)
+	}
+	fixture := oraclediff.ZoneCommandFixture{ZoneNumber: 80, Command: "X", IfFlag: 0, Arg1: 1, Arg2: 2}
+	if err := applyZoneCommandFixtures(worldDir, []oraclediff.ZoneCommandFixture{fixture}); err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := strings.Replace(before, "S\n", "X 0 1 2\nS\n", 1)
+	if string(got) != want {
+		t.Fatalf("zone command fixture output = %q, want %q", got, want)
+	}
+}
+
 func TestWithCloseMarkerRendersObservedServerClose(t *testing.T) {
 	if got := withCloseMarker("", false); got != "" {
 		t.Errorf("withCloseMarker(\"\", false) = %q, want empty", got)

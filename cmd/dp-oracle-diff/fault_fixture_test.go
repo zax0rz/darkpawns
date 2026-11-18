@@ -19,6 +19,7 @@ func TestFaultPathsResolveOnBothSides(t *testing.T) {
 	for _, ff := range []oraclediff.FaultFixture{
 		{Verb: "fault-dir", Target: "mail"},
 		{Verb: "fault-dir", Target: "object_idlist"},
+		{Verb: "fault-dir", Target: "zone-31"},
 		{Verb: "fault-corrupt-mail", Target: "unaligned"},
 		{Verb: "fault-board", Target: "19652", Detail: "empty-message-huge-slot"},
 		{Verb: "fault-shop-temper", Target: "8038", Detail: "1"},
@@ -71,6 +72,9 @@ func TestParseFaultStepRejectsUnknown(t *testing.T) {
 	}
 	if _, ok := parseFaultStep([]string{"fault-dir", "mail"}); !ok {
 		t.Fatal("parseFaultStep rejected a valid fault-dir mail step")
+	}
+	if _, ok := parseFaultStep([]string{"fault-dir", "zone-31"}); !ok {
+		t.Fatal("parseFaultStep rejected a valid zone file obstruction step")
 	}
 	if _, ok := parseFaultStep([]string{"fault-corrupt-mail", "bad-header"}); !ok {
 		t.Fatal("parseFaultStep rejected a valid corrupt-mail step")
