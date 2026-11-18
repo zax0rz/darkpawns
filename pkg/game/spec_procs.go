@@ -1192,8 +1192,12 @@ func specRedUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, arg 
 }
 
 // mickey — mob spec: harasses and attacks (from Natural Born Killers)
+// Ported statement-for-statement from SPECIAL(mickey)
+// (src/spec_procs.c:1269-1371). Go has no mini_mud runtime mode, so
+// !mini_mud always holds; ch != nil maps C's !IS_NPC(ch) (autonomous
+// dispatch passes a nil player, src/spec_procs.c:1274).
 func specMickey(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetHP() < 0 {
+	if me == nil || ch != nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
 	if me.IsFighting() {
@@ -1202,6 +1206,8 @@ func specMickey(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 			// ordinary stand acts for the mobile's position.
 			w.npcStand(me)
 		} else {
+			// C case 5 (:1301-1303) has no break and falls into default
+			// (:1304-1305, a break); one number(1,10) draw either way (R3).
 			switch randRange(1, 10) {
 			case 1:
 				Act(w, false, me, nil, nil, nil, "$n shouts, 'I'll always love you Mal, no matter what!'", "", ToRoom)
@@ -1213,37 +1219,125 @@ func specMickey(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 				Act(w, false, me, nil, nil, nil, "$n shouts, 'When they come and ask you who did this, tell them it was Mickey and Mallory Knox!'", "", ToRoom)
 			case 5:
 				Act(w, false, me, nil, nil, nil, "$n states, 'It's not nice to point.'", "", ToRoom)
+			default:
+				break
 			}
 		}
 		return true
 	}
-	return false
+	// Non-combat approach (src/spec_procs.c:1310-1370): the first visible
+	// non-NOHASSLE player in the room, tracked in GET_ALIGNMENT.
+	var victim *Player
+	for _, candidate := range w.GetPlayersInRoom(me.GetRoomVNum()) {
+		if !canSee(me, candidate) {
+			continue
+		}
+		if candidate.GetFlags()&(1<<uint(PrfNohassle)) != 0 {
+			continue
+		}
+		victim = candidate
+		if victim.GetID() != me.GetAlignment() {
+			me.ResetTalk()
+			me.SetAlignment(victim.GetID())
+		}
+		break
+	}
+	if victim == nil {
+		return false
+	}
+	chances := 0
+	if me.GetTalk(1) != 0 {
+		chances++
+	}
+	if me.GetTalk(2) != 0 {
+		chances++
+	}
+	switch chances {
+	case 0:
+		wakeBody(w, me, victim.GetName(), nil)
+		Act(w, false, me, victim, nil, nil, "$n says, '$N, I'm gonna kill you.'", "", ToRoom)
+		me.SetTalk(1, 1)
+		return true
+	case 1:
+		// C's IS_NPC(victim) arm (:1342) is dead: the loop above admits
+		// only players. Keep it for fidelity (R4).
+		if victim.IsNPC() {
+			w.DoFlee(victim)
+		} else {
+			Act(w, false, me, victim, nil, nil, "$n asks, 'And you wanna know why?'", "", ToRoom)
+		}
+		me.SetTalk(2, 1)
+		return true
+	default:
+		if w.roomHasFlag(me.GetRoomVNum(), "peaceful") {
+			Act(w, false, me, victim, nil, nil, "$n says, 'I'll tell you later, $N'.", "", ToRoom)
+			Act(w, false, me, victim, nil, nil, "$n walks out the door and vanishes.", "", ToRoom)
+			if err := w.MobTransfer(me, 11369); err != nil {
+				slog.Warn("Mickey transfer to MICKSROOM failed", "mob", me.GetName(), "error", err)
+			}
+		} else {
+			Act(w, false, me, victim, nil, nil, "$n says, 'Shit $N, I'm a natural born killer.'.", "", ToRoom)
+			if err := w.mobHit(me, victim); err != nil {
+				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
+			}
+		}
+		me.ResetTalk()
+	}
+	return true
 }
 
 // mallory — mob spec: barks + calls mickey for revenge
+// Ported statement-for-statement from SPECIAL(mallory)
+// (src/spec_procs.c:1374-1422). Always returns FALSE (DP-1413, DP-1455);
+// Go has no mini_mud runtime mode, so !mini_mud always holds (see
+// specMickey).
 func specMallory(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetHP() < 0 {
+	if me == nil || ch != nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
 	if me.IsFighting() {
 		if me.GetPosition() > combat.PosSleeping && me.GetPosition() < combat.PosFighting {
-			w.roomMessage(me.RoomVNum, me.GetName()+" stands up!")
+			w.npcStand(me)
 		} else {
 			switch randRange(1, 10) {
 			case 1:
-				w.roomMessage(me.RoomVNum, me.GetName()+" asks, 'How do you like me now?'")
+				Act(w, false, me, nil, nil, nil, "$n asks, 'How do you like me now?'", "", ToRoom)
 			case 2:
-				w.roomMessage(me.RoomVNum, me.GetName()+" says, 'That was the worst head I've ever got.'")
+				Act(w, false, me, nil, nil, nil, "$n says, 'That was the worst head I've ever got.'", "", ToRoom)
 			case 3:
-				w.roomMessage(me.RoomVNum, me.GetName()+" asks, 'How sexy am I now, fucker?'")
-				w.roomMessage(me.RoomVNum, me.GetName()+" asks, 'How sexy am I NOW?'")
+				Act(w, false, me, nil, nil, nil, "$n asks, 'How sexy am i now, fucker?'", "", ToRoom)
+				Act(w, false, me, nil, nil, nil, "$n asks, 'How sexy am i NOW?'", "", ToRoom)
+			case 4:
 			case 5:
-				w.roomMessage(me.RoomVNum, me.GetName()+" asks, 'Did you bring enough for everybody?  Here... try one...'")
+				Act(w, false, me, nil, nil, nil, "$n giggles madly.", "", ToRoom)
+			default:
+				Act(w, false, me, nil, nil, nil, "$n shouts, 'You stupid biiitch!'", "", ToRoom)
 			}
 		}
-		return true
+		// Revenge mallory (src/spec_procs.c:1412-1419): the newest Mickey
+		// (7969, src/spec_procs.c:1267) in C's character_list order.
+		mickey := newestMickey(w)
+		if mickey == nil {
+			return false
+		}
+		if mickey.IsHunting() {
+			return false
+		}
+		w.SetHuntingTarget(mickey, me.GetFightingBody())
 	}
 	return false
+}
+
+// newestMickey returns the newest live mobile with MICKEY's vnum in C's
+// newest-first character_list order (src/shop.c:1345-1350,
+// src/spec_procs.c:1267), or nil.
+func newestMickey(w *World) *MobInstance {
+	for _, oc := range w.cOrderedCharacters() {
+		if oc.mob != nil && oc.mob.GetVNum() == 7969 {
+			return oc.mob
+		}
+	}
+	return nil
 }
 
 // ================================================================

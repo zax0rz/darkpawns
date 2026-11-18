@@ -11,24 +11,6 @@
       "evidence": "src/act.wizard.c:1099 \"Shutting down for maintenance.\\r\\n\" — OS SIGINT/SIGTERM path cmd/server/main.go:874,971; in-game shutdown uses C do_shutdown's own bytes; trigger is the OS SIGINT/SIGTERM path, but a telnet player reads the bytes, so R4 applies; C's only shutdown text is the in-game do_shutdown line quoted here",
       "firstSeen": "2026-09-23"
     },
-    "A bat swoops down and attacks you!": {
-      "segment": "A bat swoops down and attacks you!",
-      "file": "pkg/game/spec_procs2.go",
-      "line": 1918,
-      "sink": ".SendMessage",
-      "reason": "bug:paraphrase",
-      "evidence": "src/spec_procs2.c:1780 \"$n swoops down, narrowly missing your face.\" — C bat proc emotes this on random pulses; Go re-words it into an attack on look dripping",
-      "firstSeen": "2026-09-23"
-    },
-    "A shimmering portal appears and sucks you in!": {
-      "segment": "A shimmering portal appears and sucks you in!",
-      "file": "pkg/game/spec_procs2.go",
-      "line": 1757,
-      "sink": ".SendMessage",
-      "reason": "bug:paraphrase",
-      "evidence": "src/spec_procs2.c:1665 \"\\r\\nWith a blinding flash of light and a crack of thunder, you are\" — C portal_room tells the victim this on teleport; Go re-words it and teleports on movement",
-      "firstSeen": "2026-09-23"
-    },
     "Cannot access manager state.": {
       "segment": "Cannot access manager state.",
       "file": "pkg/session/wiz_system.go",
@@ -92,33 +74,6 @@
       "evidence": "no C text; nearest: src/act.informative.c:2137 — C do_gen_ps pages the boot-loaded file; an unreadable file prints nothing",
       "firstSeen": "2026-09-23"
     },
-    "The bats swarm around you, blocking your escape!": {
-      "segment": "The bats swarm around you, blocking your escape!",
-      "file": "pkg/game/spec_procs2.go",
-      "line": 1896,
-      "sink": ".SendMessage",
-      "reason": "bug:invented",
-      "evidence": "no C text; nearest: src/spec_procs2.c:1756 — C bat_room only wakes sleeping bats (Your movements wake up $n!); no blocking branch",
-      "firstSeen": "2026-09-23"
-    },
-    "The boy smiles and hands you a small note.": {
-      "segment": "The boy smiles and hands you a small note.",
-      "file": "pkg/game/spec_procs2.go",
-      "line": 1479,
-      "sink": ".SendMessage",
-      "reason": "bug:invented",
-      "evidence": "src/spec_procs2.c:1398 \"$n exclaims, 'Don't let the bad man hurt me, mommy!\" — C little_boy only exclaims this at random; the give-flower-for-note exchange is Go-only",
-      "firstSeen": "2026-09-23"
-    },
-    "The little boy runs off!": {
-      "segment": "The little boy runs off!",
-      "file": "pkg/game/spec_procs2.go",
-      "line": 1487,
-      "sink": ".SendMessage",
-      "reason": "bug:invented",
-      "evidence": "src/spec_procs2.c:1398 \"$n exclaims, 'Don't let the bad man hurt me, mommy!\" — C little_boy never gives a note or leaves; the runs-off line is Go-only",
-      "firstSeen": "2026-09-23"
-    },
     "Usage: checkload { obj | mob } \u003cnumber\u003e": {
       "segment": "Usage: checkload { obj | mob } \u003cnumber\u003e",
       "file": "pkg/session/wiz_info.go",
@@ -155,15 +110,6 @@
       "evidence": "src/act.other.c:933 \"You don't seem to have %s %s.\\r\\n\" — No zap verb in C; do_use's not-found branch says this (\"holding\" variant commented out at :939)",
       "firstSeen": "2026-09-23"
     },
-    "You tumble out into a strange place...": {
-      "segment": "You tumble out into a strange place...",
-      "file": "pkg/game/spec_procs2.go",
-      "line": 1767,
-      "sink": ".SendMessage",
-      "reason": "bug:invented",
-      "evidence": "src/spec_procs2.c:1672 \"\\r\\nWith a blinding flash of light and a crack of thunder, $n \" — C tells only the room $n appears and gives the victim do_look; tumble line is Go-only",
-      "firstSeen": "2026-09-23"
-    },
     "Zap who?": {
       "segment": "Zap who?",
       "file": "pkg/session/use_cmds.go",
@@ -190,24 +136,6 @@
       "reason": "census:composed",
       "evidence": "src/new_cmds.c:2533 to_room = \"$n points around the room.\" — do_point assigns to_room on several branches and acts it at :2557, so the census sink lexer cannot resolve it; the actor line is witnessed by switched-body-utility-skills-depth, which has no room observer for the bare point",
       "firstSeen": "2026-11-18"
-    },
-    "says 'I don't like you, and you'd better leave before I make you!'": {
-      "segment": "says 'I don't like you, and you'd better leave before I make you!'",
-      "file": "pkg/game/spec_procs2.go",
-      "line": 1521,
-      "sink": ".SendMessage",
-      "reason": "bug:paraphrase",
-      "evidence": "src/spec_procs2.c:1417 \"$n exclaims, 'Dirty Orange Scum!'\" — C ira exclaims this before hit(); Go substitutes a leave-or-I-attack line",
-      "firstSeen": "2026-09-23"
-    },
-    "says 'You're an evil one! That won't be allowed here!'": {
-      "segment": "says 'You're an evil one! That won't be allowed here!'",
-      "file": "pkg/game/spec_procs2.go",
-      "line": 1458,
-      "sink": ".SendMessage",
-      "reason": "bug:invented",
-      "evidence": "no C text; nearest: src/spec_procs2.c:1342 — C evillead only handles a give of cheese 13100 and teleports the giver; no alignment attack",
-      "firstSeen": "2026-09-23"
     }
   }
 }
