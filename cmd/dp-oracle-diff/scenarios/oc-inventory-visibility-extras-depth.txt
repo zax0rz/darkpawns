@@ -1,0 +1,54 @@
+# depth-case: inventory.item-invisible-extra
+# depth-case: inventory.item-blessed-blue-glow
+# depth-case: inventory.mode15-encumbrance-header
+# Real inventory mode 15 rows expose the C oc_show_list extra-flag lines.
+# Stock indexed vnums 15803 and 2500 carry ITEM_INVISIBLE and ITEM_BLESS.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+Objectlist
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Objectlist
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Objectlist class mage
+set Objectlist level 31
+load obj 15803
+load obj 2500
+load obj 16114
+load obj 16131
+
+[probe]
+recite scroll Objectlist
+~dpclock pulse 40
+recite scroll Objectlist
+~dpclock pulse 40
+inventory

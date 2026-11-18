@@ -1,0 +1,81 @@
+# depth-case: mobact.aggr24-player-room-acts
+# A voice-capable trainee's AGGR24 pulse selects the level-30 peer and sends
+# the grin and both spoken acts before its attack (src/mobact.c:304-322).
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 16303 1 8105 80
+set-mob-flag 16303 AGGR24
+replace-room-exits 8105 none
+
+[setup:oracle]
+Agggod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Agggod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Aggpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Aggpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Aggpeer 8105
+set Aggpeer level 30
+set Aggpeer maxhit 5000000
+set Aggpeer hit 5000000
+set mob trainee maxhit 5000000
+set mob trainee hit 5000000
+goto 8004
+
+[probe]
+~dpclock pulse 40
+look

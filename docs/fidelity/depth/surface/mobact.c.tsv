@@ -1,10 +1,10 @@
 c_site	function	classification	case_ids	notes
 src/mobact.c:115	mobile_activity	proven	mob.scavenger-pickup-act	TestMobileActivityScavengerUsesCanGetVisibility drives the pickup through mobile activity and checks exact Act bytes for visible, invisible, and dark-room recipients; reverting the C-equivalent Act path fails (R1/R5e/R5h).
-src/mobact.c:252	mobile_activity	proven	mob.race-hate-warning-act	TestRaceHateEquipmentRebuildAndRemoval equips the real race-hate object, dispatches the mobile, and asserts the exact warning bytes with controlled draws (R1/R5e/R5h).
-src/mobact.c:274	mobile_activity	proven	mob.memory-warning-acts	TestMobileActivityMemoryWarningActs checks the speaking branch's exact observer bytes on the live pulse (R1/R5e/R5h).
-src/mobact.c:277	mobile_activity	proven	mob.memory-warning-acts	TestMobileActivityMemoryWarningActs checks the silent growl branch's exact observer bytes on the live pulse (R1/R5e/R5h).
+src/mobact.c:252	mobile_activity	proven	mob.race-hate-warning-act	The CLEAN C-first mobact-race-hate-warning-depth pulse equips the authored race-hate dagger and compares the observer warning before the hit (R1/R3/R5e/R5h).
+src/mobact.c:274	mobile_activity	proven	mob.memory-warning-exclaim	The CLEAN C-first mobact-memory-warning-depth pulse proves the can_speak exclaim; TestMobileActivityMemoryWarningActs retains peaceful-suppression coverage (R1/R3/R5e/R5h).
+src/mobact.c:277	mobile_activity	proven	mob.memory-warning-silent-growl	The CLEAN C-first mobact-memory-warning-growl-depth pulse proves the race-12 mobile's growl; TestMobileActivityMemoryWarningActs retains peaceful-gate coverage (R1/R3/R5e/R5h).
 src/mobact.c:298	mobile_activity	proven	mob.helper-aid-act	TestMobileActivityHelperJumpsToAid checks exact room bytes and the target pair on the live pulse (R1/R5e/R5h).
-src/mobact.c:313	mobile_activity	proven	mobact.aggr24-player-room-acts	TestMobileActivityAggr24PlayerRoomActs checks exact grin bytes and order on the live pulse (R1/R5e/R5h).
-src/mobact.c:316	mobile_activity	proven	mobact.aggr24-player-room-acts	TestMobileActivityAggr24PlayerRoomActs checks the exact spoken taunt bytes and order on the live pulse (R1/R5e/R5h).
-src/mobact.c:318	mobile_activity	proven	mobact.aggr24-player-room-acts	TestMobileActivityAggr24PlayerRoomActs checks the exact second speech act, including its embedded line ending, on the live pulse (R1/R5e/R5h).
-src/mobact.c:333	mobile_activity	proven	mobact.aggr24-room-grin-act	TestMobileActivityAggr24WeakerMobileGrin checks exact observer bytes immediately before the live pulse's attack (R1/R5e/R5h).
+src/mobact.c:313	mobile_activity	proven	mobact.aggr24-player-room-acts	The CLEAN C-first mobact-aggr24-player-acts pulse compares the grin and both spoken acts before the hit (R1/R3/R5e/R5h).
+src/mobact.c:316	mobile_activity	proven	mobact.aggr24-player-room-acts	The CLEAN C-first pulse compares the exact AGGR24 taunt after the grin and before the second speech act and hit (R1/R3/R5e/R5h).
+src/mobact.c:318	mobile_activity	proven	mobact.aggr24-player-room-acts	The CLEAN C-first pulse compares the second AGGR24 speech act, including its embedded line ending, before the hit (R1/R3/R5e/R5h).
+src/mobact.c:333	mobile_activity	proven	mobact.aggr24-room-grin-act	C-first mobact-aggr24-weaker-mobile-grin shows the exact room grin before the peaceful first-hit refusal; TestMobileActivityAggr24WeakerMobileGrin retains the revert proof (R1/R3/R5e/R5h).

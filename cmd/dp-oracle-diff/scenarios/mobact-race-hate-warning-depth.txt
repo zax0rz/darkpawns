@@ -1,0 +1,81 @@
+# depth-case: mob.race-hate-warning-act
+# The real stone giant has race 18; wielding the authored dagger adds race-hate
+# entries 18 and 20 to the observer. C says the warning before its peaceful-
+# room hit attempt (src/mobact.c:236-258; src/handler.c:205-238).
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 16000 99 8162 160
+replace-room-exits 8162 none
+
+[setup:oracle]
+Racehate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Racehate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Hatepeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Hatepeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Hatepeer 8162
+set Hatepeer level 30
+set Hatepeer maxhit 5000000
+set Hatepeer hit 5000000
+load obj 5200
+give dagger Hatepeer
+force Hatepeer wield dagger
+
+[probe]
+~dpclock pulse 400
+look
