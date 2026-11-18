@@ -569,7 +569,9 @@ func TestMobRedirect_JailGuardSubduesInsteadOfDamaging(t *testing.T) {
 		t.Fatalf("StartCombat failed: %v", err)
 	}
 
-	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: guard, Target: victim}])
+	if !ce.ApplyMobDamageRedirectsForDamage(guard, victim, 25) {
+		t.Fatal("positive damage should enter the jail guard redirect")
+	}
 
 	if !subdued {
 		t.Fatal("expected jail guard subdue callback")

@@ -45,24 +45,20 @@ func (w *World) mobSkillDamageWithDamageGate(ch *MobInstance, vict combat.Combat
 			}
 		}
 		if redirector, ok := w.combatEngine.(interface {
-			ApplyMobDamageRedirectsAfterAttackerEnrollment(combat.Combatant, combat.Combatant, func()) bool
+			ApplyMobDamageRedirectsAfterAttackerEnrollment(combat.Combatant, combat.Combatant, int, func()) bool
 		}); ok {
-			if redirector.ApplyMobDamageRedirectsAfterAttackerEnrollment(ch, vict, enterAttacker) {
+			if redirector.ApplyMobDamageRedirectsAfterAttackerEnrollment(ch, vict, dam, enterAttacker) {
 				return false
 			}
 		} else {
 			// Engines without the production seam keep the legacy redirect path;
 			// production runs the C jail-before-enrollment order above.
-			enterAttacker()
-			if redirector, ok := w.combatEngine.(interface {
-				ApplyMobDamageRedirects(combat.Combatant, combat.Combatant) bool
-			}); ok && redirector.ApplyMobDamageRedirects(ch, vict) {
+			if w.ApplyMobDamageRedirects(ch, vict, dam) {
 				return false
 			}
+			enterAttacker()
 		}
-	} else if redirector, ok := w.combatEngine.(interface {
-		ApplyMobDamageRedirects(combat.Combatant, combat.Combatant) bool
-	}); ok && redirector.ApplyMobDamageRedirects(ch, vict) {
+	} else if w.ApplyMobDamageRedirects(ch, vict, dam) {
 		return false
 	}
 	if enrollAttacker {
@@ -108,6 +104,7 @@ func (w *World) mobSkillDamageWithDamageGate(ch *MobInstance, vict combat.Combat
 	// (fight.c:1534-1545, 1560-1613). Keep that ordering even for a
 	// protection-reduced zero-damage result.
 	combat.EmitSkillMessage(dam, ch, vict, skillNum, ch.GetRoom())
+	combat.ApplyMountedHitTail(ch, vict, dam)
 	w.emitMobSkillSurvival(ch, vict, dam, newPos)
 	if newPos == combat.PosDead {
 		w.HandleDeath(vict, ch, skillNum)

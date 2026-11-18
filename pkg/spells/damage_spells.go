@@ -363,6 +363,11 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 		if g, ok := world.(damageGate); ok && g.DamageRefused(chCombat, victCombat) {
 			return false
 		}
+		if redirector, ok := world.(interface {
+			ApplyMobDamageRedirects(combat.Combatant, combat.Combatant, int) bool
+		}); ok && redirector.ApplyMobDamageRedirects(chCombat, victCombat, dam) {
+			return false
+		}
 
 		combat.EnterDamageFighting(chCombat, victCombat)
 
@@ -421,6 +426,7 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 		// zero-damage spells receive the miss branch; both consume the message
 		// selector draw and remain player-visible (fight.c:1480, 296-327).
 		combat.EmitSkillMessage(dam, chCombat, victCombat, attackType, chCombat.GetRoom())
+		combat.ApplyMountedHitTail(chCombat, victCombat, dam)
 
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).

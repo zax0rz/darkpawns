@@ -31,6 +31,7 @@ type GameCallbacks struct {
 	// layer wires this to Act. Nil falls back to Broadcast with the expanded
 	// real-name string, keeping engine-less fixtures on the old bytes.
 	ActRoom    func(roomVNum int, victim Combatant, format string, hideInvisible bool)
+	ActChar    func(ch Combatant, format string)
 	SendToChar func(name Combatant, msg string)
 	// SendText retains the ordinary text-event route for formerly direct body messages.
 	SendText     func(body Combatant, msg string)
@@ -90,7 +91,10 @@ type GameCallbacks struct {
 	// DamageRefused is damage()'s protection block (fight.c:1318-1368),
 	// owned by the game layer so every damage seam emits the same refusal
 	// bytes. True means C's damage() returned FALSE before hurting victim.
-	DamageRefused     func(ch, victim Combatant) bool
+	DamageRefused func(ch, victim Combatant) bool
+	// DamageRedirects runs damage()'s jail/charm/switcheroo redirects for
+	// damage entry points outside CombatEngine's ordinary one_hit path.
+	DamageRedirects   func(attacker, defender Combatant, damage int) bool
 	GetRoomCombatants func(roomVNum int) []Combatant
 	GetFollowing      func(name Combatant) Combatant
 	JailGuardSubdue   func(guardName, victimName Combatant) bool
@@ -217,6 +221,16 @@ func cbActRoom(room int, victim Combatant, format string, hide bool) {
 		name = victim.GetName()
 	}
 	cbBroadcast(room, capitalizeFightMessage(expandActDollars(format, name)), []Combatant{victim})
+}
+
+func cbActChar(ch Combatant, format string) {
+	if cb := callbacks; cb != nil && cb.ActChar != nil {
+		cb.ActChar(ch, format)
+		return
+	}
+	if ch != nil && ch.GetPosition() > PosSleeping {
+		sendCombatMessage(ch, format)
+	}
 }
 
 // expandActDollars substitutes the C act codes the wounded/death lines use
@@ -497,6 +511,20 @@ func cbDamageRefused(ch, victim Combatant) bool {
 		return cb.DamageRefused(ch, victim)
 	}
 	return defaultDamageRefused(ch, victim)
+}
+
+func cbDamageRedirects(attacker, defender Combatant, damage int) bool {
+	if cb := callbacks; cb != nil && cb.DamageRedirects != nil {
+		return cb.DamageRedirects(attacker, defender, damage)
+	}
+	return false
+}
+
+func cbHasMobVNum(name Combatant, vnum int) bool {
+	if cb := callbacks; cb != nil && cb.HasMobVNum != nil {
+		return cb.HasMobVNum(name, vnum)
+	}
+	return false
 }
 
 // cbCanSee delegates character visibility to the game layer, where room light

@@ -1,6 +1,7 @@
 package game
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -12,6 +13,7 @@ func newQuanLoTestWorld(t *testing.T) (*World, *MobInstance, *Player, *Player, m
 	w, err := NewWorld(&parser.World{
 		Rooms: []parser.Room{
 			{VNum: 19424, Name: "Shaolin Hall", Zone: 194},
+			{VNum: 8004, Name: "Mortal Start"},
 			{VNum: 10049, Name: "Remote Room", Zone: 100},
 			{VNum: 10050, Name: "Writing Room", Zone: 100},
 			{VNum: 10051, Name: "Soundproof Room", Zone: 100, Flags: []string{"32", "0", "0", "0"}},
@@ -45,6 +47,20 @@ func newQuanLoTestWorld(t *testing.T) (*World, *MobInstance, *Player, *Player, m
 	}
 	clearQuanLoMessages(messages)
 	return w, mob, actor, peer, messages
+}
+
+func TestQuanLoPlayerDeathSendsFiveFingersToGlobalGossip(t *testing.T) {
+	w, mob, victim, peer, messages := newQuanLoTestWorld(t)
+	clearQuanLoMessages(messages)
+
+	w.HandleDeath(victim, mob, combat.TYPE_HIT)
+
+	want := "Quan Lo gossips, 'QuanActor has just learned the Five Fingers of Enlightenment. Who else wishes to learn from the master?'\r\n"
+	for _, recipient := range []*Player{victim, peer} {
+		if got := messages[recipient.GetName()]; !strings.Contains(got, want) {
+			t.Errorf("%s output = %q, want global Five Fingers line %q", recipient.GetName(), got, want)
+		}
+	}
 }
 
 func clearQuanLoMessages(messages map[string]string) {

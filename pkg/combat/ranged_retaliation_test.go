@@ -58,9 +58,10 @@ func TestRangedRetaliationWoundedMobAndJailOrder(t *testing.T) {
 		attacker := &mockCombatant{name: "Mob", npc: true, room: 1, level: 10, hp: 1000, maxHP: 1000, position: PosStunned, dex: 14, str: 14}
 		if jail {
 			attacker.position = PosStanding
+			attacker.damageRoll = DiceRoll{Num: 1, Sides: 1, Plus: 5}
 		}
 		victim := &mockCombatant{name: "Shooter", room: 1, level: 20, hp: 1000, maxHP: 1000, position: PosStanding, dex: 14, str: 14}
-		SetRoller(fixedRoller{number: 10})
+		SetRoller(fixedRoller{number: 20})
 		SetCallbacks(&GameCallbacks{MobHasJailGuardSpec: func(Combatant) bool { return jail }, JailGuardSubdue: func(a, b Combatant) bool {
 			if attacker.fighting != nil || victim.fighting != nil {
 				t.Fatal("jail redirect saw premature enrollment")

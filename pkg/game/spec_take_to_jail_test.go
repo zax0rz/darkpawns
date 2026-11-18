@@ -296,6 +296,74 @@ func TestSpecTakeToJailSubdueStateAndAudience(t *testing.T) {
 	}
 }
 
+func TestSkillDamageSeamRunsFullJailGuardRedirect(t *testing.T) {
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Street"},
+			{VNum: 8118, Name: "The Main Holding Cell", Description: "A plain cell."},
+		},
+		Mobs: []parser.Mob{
+			{
+				VNum:        8001,
+				Keywords:    "city guard",
+				ShortDesc:   "a city guard",
+				Level:       20,
+				ActionFlags: []string{"spec"},
+				HP:          parser.DiceRoll{Num: 1, Sides: 1, Plus: 100},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+	outputs := make(map[string]string)
+	w.MessageSink = func(name string, message []byte) { outputs[name] += string(message) }
+	victim := NewPlayer(1, "Victim", 1001)
+	victim.SetLevel(5)
+	if err := w.AddPlayer(victim); err != nil {
+		t.Fatalf("AddPlayer victim: %v", err)
+	}
+	guard, err := w.SpawnMob(8001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob guard: %v", err)
+	}
+
+	oldCallbacks := combat.GetCallbacks()
+	defer combat.SetCallbacks(oldCallbacks)
+	engine := combat.NewCombatEngine()
+	engine.SetCallbacks(w.WireCombatCallbacks())
+	w.SetCombatEngine(engine)
+	miss := NewPlayer(2, "Miss", 1001)
+	miss.SetLevel(5)
+	if err := w.AddPlayer(miss); err != nil {
+		t.Fatalf("AddPlayer miss: %v", err)
+	}
+	missHP := miss.GetHP()
+	if w.ApplySkillDamageWithMessage(guard, miss, 0, SkillKickNum, nil) {
+		t.Fatal("zero damage should not become a jail-guard hit")
+	}
+	if miss.GetRoomVNum() != 1001 || miss.GetHP() != missHP {
+		t.Fatalf("zero-damage guard path moved or damaged victim: room=%d hp=%d", miss.GetRoomVNum(), miss.GetHP())
+	}
+
+	if w.ApplySkillDamageWithMessage(guard, victim, 25, SkillKickNum, nil) {
+		t.Fatal("jail guard redirect should return before applying damage")
+	}
+	if got := victim.GetRoomVNum(); got != 8118 {
+		t.Fatalf("victim room = %d, want jail room 8118", got)
+	}
+	if got := victim.GetHP(); got != 1 {
+		t.Fatalf("victim HP = %d, want jail-guard floor 1", got)
+	}
+	if victim.JailTimer < 2 {
+		t.Fatalf("jail timer = %d, want at least 2", victim.JailTimer)
+	}
+	if got := outputs[victim.GetName()]; !strings.Contains(got, "Jerking you to your feet, he carts you off to jail...") {
+		t.Fatalf("victim transcript = %q, want C jail cart message", got)
+	}
+}
+
 func TestTakeToJailBreedCallerAndRoomOrder(t *testing.T) {
 	for _, outlawFirst := range []bool{false, true} {
 		t.Run(fmt.Sprint(outlawFirst), func(t *testing.T) {

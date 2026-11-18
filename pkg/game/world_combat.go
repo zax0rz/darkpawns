@@ -18,6 +18,18 @@ func (w *World) StartCombat(attacker, defender combat.Combatant) error {
 	return w.combatEngine.StartCombat(attacker, defender)
 }
 
+// ApplyMobDamageRedirects exposes damage()'s pre-application mob redirects to
+// spell and skill paths that own their message/death ordering.
+func (w *World) ApplyMobDamageRedirects(attacker, defender combat.Combatant, damage int) bool {
+	if w.combatEngine == nil {
+		return false
+	}
+	redirector, ok := w.combatEngine.(interface {
+		ApplyMobDamageRedirectsForDamage(combat.Combatant, combat.Combatant, int) bool
+	})
+	return ok && redirector.ApplyMobDamageRedirectsForDamage(attacker, defender, damage)
+}
+
 // StartCombatAfterDamage exposes the engine's post-damage enrolment entry to
 // damage seams that have already copied C's FIGHTING fields, so the victim's
 // pre-combat position decides enrolment exactly as C's set_fighting gates do
