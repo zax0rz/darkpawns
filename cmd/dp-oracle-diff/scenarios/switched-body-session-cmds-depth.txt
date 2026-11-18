@@ -1,0 +1,54 @@
+# C-first witness for DP-1570 (session mortal commands on a switched mobile).
+# A level-40 God switches into a level-9 mobile (clone) and exercises:
+# - clan status: mob non-clan gate ("You do not belong to a clan!") vs immortal message
+# - junk / donate: mob inventory lookup
+# - practice: mob 0 practices & empty skill list (src/spec_procs.c:157-192)
+# - buy: outside shop -> "Sorry, but you cannot do that here!"
+# - where: switched "(in clone)" format and mob CanSee (src/act.informative.c:2263-2270)
+# - assist: mob body gate ("Whom do you wish to assist?")
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8105 80
+
+[setup:oracle]
+Switchedcmd
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchedcmd
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+switch clone
+
+[probe]
+clan status
+junk bread
+donate bread
+practice
+buy bread
+where
+assist

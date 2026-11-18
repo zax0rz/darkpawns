@@ -367,22 +367,31 @@ func (w *World) finishClanPlanWrite(ch *Player) {
 // sendClanFormat
 // ---------------------------------------------------------------------------
 
-func (w *World) sendClanFormat(ch *Player) {
+func (w *World) sendClanFormat(ch Actor) {
 	// Guard against an uninitialized clan manager (e.g. a minimal/harness world
 	// that never loaded data/clans.json). C clan.c:find_clan_by_id returns -1
 	// for a missing clan, so a nil manager is equivalent to "no clans loaded"
 	// → cIdx = -1 (no clan), which is the right answer for a clanless mortal.
 	cIdx := -1
-	if w.Clans != nil {
-		cIdx, _ = w.Clans.FindClanByID(ch.ClanID)
+	r := 0
+	if p, ok := ch.(*Player); ok {
+		if w.Clans != nil {
+			cIdx, _ = w.Clans.FindClanByID(p.ClanID)
+		}
+		r = p.ClanRank
 	}
-	r := ch.ClanRank
 
 	ch.SendMessage("Clan commands available to you:\r\n" +
 		"   clan status\r\n" +
 		"   clan info <clan>\r\n")
 
-	if ch.Level >= LVL_IMMORT {
+	chLevel := 0
+	chClanID := 0
+	if p, ok := ch.(*Player); ok {
+		chLevel = p.Level
+		chClanID = p.ClanID
+	}
+	if chLevel >= LVL_IMMORT {
 		ch.SendMessage("   clan create     <leader> <clan name>\r\n" +
 			"   clan destroy    <clan>\r\n" +
 			"   clan rename     <#> <name>\r\n" +
@@ -401,7 +410,7 @@ func (w *World) sendClanFormat(ch *Player) {
 			"   clan set privilege  <privilege>   <rank> <clan>\r\n" +
 			"   clan set title  <clan number> <rank> <title>\r\n")
 	} else {
-		if ch.ClanID == 0 {
+		if chClanID == 0 {
 			ch.SendMessage("   clan apply      <clan>\r\n")
 		}
 		if r > 0 && cIdx >= 0 {

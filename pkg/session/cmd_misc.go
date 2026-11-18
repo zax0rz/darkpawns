@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/command"
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 func cmdSave(ctx command.ExecutionContext, args []string) error {
@@ -169,7 +170,11 @@ func cmdNotHere(s *Session, _ []string) error {
 
 // cmdClan — player-facing clan management (ported from clan.c)
 func cmdClan(s *Session, args []string) error {
-	s.manager.world.ExecClanCommand(s.player, strings.Join(args, " "))
+	actor, ok := s.combatBody().(game.Actor)
+	if !ok || actor == nil {
+		return nil
+	}
+	s.manager.world.ExecClanCommandActor(actor, strings.Join(args, " "))
 	return nil
 }
 

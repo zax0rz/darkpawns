@@ -12,13 +12,14 @@ import (
 // the player to their guild. The catalog rendering + learning both live in
 // pkg/game (canonical layer) and are shared with the guild proc.
 func cmdPractice(s *Session, args []string) error {
-	if s.player == nil {
+	actor, ok := s.combatBody().(game.Actor)
+	if !ok || actor == nil {
 		return fmt.Errorf("not logged in")
 	}
 	if len(args) > 0 {
 		s.Send("You can only practice skills in your guild.\r\n")
 		return nil
 	}
-	s.Send(game.RenderSkillList(s.player))
+	s.Send(game.RenderActorSkillList(actor))
 	return nil
 }

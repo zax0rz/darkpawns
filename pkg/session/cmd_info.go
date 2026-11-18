@@ -1399,6 +1399,12 @@ func cmdWhoForBody(s *Session, viewer game.Actor, args []string) error {
 // The critical mortal vnum exposure is closed by the LVL_IMMORT command gate;
 // the optional immortal target-search branch mirrors C's one_argument path.
 func cmdWhere(s *Session, args []string) error {
+	actor := s.combatBody()
+	actActor, ok := actor.(game.Actor)
+	if !ok || actActor == nil {
+		return nil
+	}
+
 	s.manager.mu.RLock()
 	sessions := make([]*Session, 0, len(s.manager.sessions))
 	for _, sess := range s.manager.sessions {
@@ -1415,7 +1421,7 @@ func cmdWhere(s *Session, args []string) error {
 	// C's one_argument branch searches character_list (players and mobiles)
 	// and object_list (src/act.informative.c:2281-2306).
 	if len(args) > 0 && strings.TrimSpace(args[0]) != "" {
-		out := s.manager.world.WhereMatches(s.player, strings.Join(args, " "))
+		out := s.manager.world.WhereMatches(actActor, strings.Join(args, " "))
 		if out == "" {
 			s.Send("Couldn't find any such thing.\r\n")
 		} else if len(paginate(out)) > 1 {
@@ -1433,13 +1439,27 @@ func cmdWhere(s *Session, args []string) error {
 		if sess.player == nil || !sess.isConPlaying() {
 			continue
 		}
-		p := sess.player
-		room, ok := s.manager.world.GetRoom(p.GetRoom())
+		owner := sess.player
+		if sess.isSwitched && sess.switchedOriginal != nil {
+			owner = sess.switchedOriginal
+		}
+		if !game.CanSee(actActor, owner) {
+			continue
+		}
+		bodyRoom := owner.GetRoom()
+		if sess.isSwitched && sess.switchedMob != nil {
+			bodyRoom = sess.switchedMob.GetRoom()
+		}
+		room, ok := s.manager.world.GetRoom(bodyRoom)
 		if !ok {
 			continue
 		}
-		// Format mirrors do_where() line 2272: name - [vnum] room name
-		fmt.Fprintf(&out, "%-20s - [%5d] %s\n", p.Name, room.VNum, room.Name)
+		// Format mirrors do_where() lines 2263-2276.
+		if sess.isSwitched && sess.switchedMob != nil {
+			fmt.Fprintf(&out, "%-20s - [%5d] %s (in %s)\n", owner.Name, room.VNum, room.Name, sess.switchedMob.GetName())
+		} else {
+			fmt.Fprintf(&out, "%-20s - [%5d] %s\n", owner.Name, room.VNum, room.Name)
+		}
 		found = true
 	}
 	if !found {
