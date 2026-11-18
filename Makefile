@@ -1,4 +1,4 @@
-.PHONY: world-fidelity world-manifest expected-divergences build test run clean install test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test census-start census-wait census-status census-tool-test string-census string-census-update deadcode-ratchet deadcode-ratchet-update deadcode-ratchet-test check-ignored-go census-coverage db-migrate-build db-migrate-test
+.PHONY: world-fidelity world-manifest expected-divergences build test run clean install test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test census-start census-wait census-status census-tool-test string-census string-census-update deadcode-ratchet deadcode-ratchet-update deadcode-ratchet-test check-ignored-go census-coverage db-migrate-build db-migrate-test function-index
 
 # Preserve the Go 1.26 JSON bytes in saves and GMCP (R1). Go 1.27's v2-backed
 # encoding/json differs for invalid UTF-8; see the committed byte goldens.
@@ -58,6 +58,11 @@ deadcode-ratchet-update:
 
 deadcode-ratchet-test:
 	scripts/test_deadcode_ratchet.sh
+
+# Citation-backed C-to-Go function index. The C inventory also records
+# uncited C routines, textual reference sites and name-only Go candidates.
+function-index:
+	go run ./tools/fnindex
 
 # Ignored-Go-files gate (R5h): every file `go list` refuses to compile must be
 # named in scripts/check_ignored_go_files.py with the tag that justifies it. A
