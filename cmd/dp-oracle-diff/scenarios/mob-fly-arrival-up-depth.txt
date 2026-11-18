@@ -1,0 +1,77 @@
+# depth-case: movement.mob-fly-arrival-below
+# C-first witness for sendMobMovementArrival ("$n flies in from below.").
+# A mobile with AFF_FLY (bit 26 = 67108864) moves up (dir == 4) from room 8105
+# into room 8106 where a destination peer observes the arrival act.
+# C path: src/act.movement.c:243-252 (do_simple_move case 4, AFF_FLY).
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 10 1 8105 80
+set-mob-aff 10 67108864
+replace-room-exits 8105 all 8106 0
+replace-room-exits 8106 none
+
+[setup:oracle]
+FlyUpGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+FlyUpGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:destination]
+FlyUpDest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:destination]
+FlyUpDest
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport FlyUpDest 8106
+
+[probe]
+force zombie up
