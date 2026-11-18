@@ -382,7 +382,35 @@ func scriptMudLogLoadFailure(bridge Bridge, name, kind string) {
 	if kind != "" {
 		scriptMudLogFile(bridge, fmt.Sprintf("[Lua] Could not call script %s: %s", name, kind), scriptMudlogComplete)
 	}
-	scriptMudLogFile(bridge, fmt.Sprintf("SYSERR: Error opening lua script %s.", name), scriptMudlogBrief)
+}
+
+// luaCallErrorMessage returns the Lua value passed to C's ERRORMESSAGE hook,
+// without gopher-lua's source prefix or stack trace. The C runtime reports the
+// raw error before run_script logs its failed-call line (src/scripts.c:1791-1800).
+func luaCallErrorMessage(err error) string {
+	var apiErr *lua.ApiError
+	if !errors.As(err, &apiErr) {
+		return ""
+	}
+	if apiErr.Object.Type() != lua.LTString {
+		return "(no message)"
+	}
+	message := apiErr.Object.String()
+	locationEnd := strings.LastIndex(message, ": ")
+	if locationEnd < 0 {
+		return message
+	}
+	location := message[:locationEnd]
+	lineSep := strings.LastIndex(location, ":")
+	if lineSep < 0 || lineSep == len(location)-1 {
+		return message
+	}
+	for _, digit := range location[lineSep+1:] {
+		if digit < '0' || digit > '9' {
+			return message
+		}
+	}
+	return message[locationEnd+2:]
 }
 
 // scriptMudLogCallFailure emits run_script's failed-call producer
@@ -664,6 +692,9 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		// scripts.c:1798-1800 logs the failed call; C writes back afterwards.
 		// A Go-only timeout is not a C call failure and emits no C payload.
 		if !errors.Is(err, context.DeadlineExceeded) {
+			if message := luaCallErrorMessage(err); message != "" {
+				e.scriptMudLogBrief(fmt.Sprintf("error: %s\n", message))
+			}
 			scriptMudLogCallFailure(bridge, fname, triggerName)
 		}
 		if bridge != nil {
