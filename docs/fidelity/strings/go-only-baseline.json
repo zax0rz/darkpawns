@@ -451,15 +451,6 @@
       "reason": "bug:paraphrase",
       "evidence": "src/spec_procs2.c:1417 \"$n exclaims, 'Dirty Orange Scum!'\" — C ira exclaims this before hit(); Go substitutes a leave-or-I-attack line",
       "firstSeen": "2026-09-23"
-    },
-    "says 'You're an evil one! That won't be allowed here!'": {
-      "segment": "says 'You're an evil one! That won't be allowed here!'",
-      "file": "pkg/game/spec_procs2.go",
-      "line": 1469,
-      "sink": ".SendMessage",
-      "reason": "bug:invented",
-      "evidence": "no C text; nearest: src/spec_procs2.c:1342 — C evillead only handles a give of cheese 13100 and teleports the giver; no alignment attack",
-      "firstSeen": "2026-09-23"
     }
   }
 }

@@ -11,14 +11,14 @@ the counts below in step with the baseline).
 
 | reason | count |
 |---|---|
-| `bug:invented` | 34 |
+| `bug:invented` | 33 |
 | `bug:paraphrase` | 14 |
 | `census:composed` | 2 |
 | `data` | 0 |
 | `surface:no-c` | 0 |
 | `unsure` | 0 |
 | `divergence:approved` | 1 |
-| **total** | **51** |
+| **total** | **50** |
 
 `unsure` is 0/50 (0.0%).
 
