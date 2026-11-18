@@ -68,10 +68,9 @@ Y
 [warmup]
 set player Switchedrx level 39
 goto 3001
-load mob 16303
 send:peer goto 3001
 send:peer switch clone
-send:peer hit trainee
+send:peer hit Broadcaster
 
 [probe]
 peace
