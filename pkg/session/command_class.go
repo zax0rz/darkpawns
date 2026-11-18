@@ -7,7 +7,7 @@ func classifyCommand(cmd string) string {
 		return "movement"
 	case "look", "examine", "scan", "who", "where", "score", "inventory", "equipped", "skills", "spells", "areas", "help":
 		return "info"
-	case "buy", "sell", "value", "list", "get", "take", "drop", "put", "give", "wear", "wield", "hold", "remove", "eat", "drink", "use", "quaff", "recite", "zap":
+	case "buy", "sell", "value", "list", "get", "take", "drop", "put", "give", "wear", "wield", "hold", "remove", "eat", "drink", "use", "quaff", "recite":
 		return "inventory"
 	case "kill", "hit", "attack", "backstab", "flee", "kick", "punch", "bash", "rescue", "guard", "disarm", "trip", "circle", "consider", "assess":
 		return "combat"

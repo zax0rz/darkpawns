@@ -716,31 +716,16 @@ func cmdPoofsetText(s *Session, direction, message string) error {
 	return nil
 }
 
-func cmdPoofset(s *Session, args []string) error {
-	if len(args) < 1 {
-		s.Send("Usage: poofset <in|out> [message]")
-		return nil
-	}
-	direction := strings.ToLower(args[0])
-	if direction != "in" && direction != "out" {
-		s.Send("Usage: poofset <in|out> [message]")
-		return nil
-	}
-	return cmdPoofsetText(s, direction, strings.Join(args[1:], " "))
-}
-
 // cmdPoofin — standalone "poofin [message]" command.
 // Source: src/interpreter.c do_poofset/SCMD_POOFIN, gated at LVL_IMMORT.
-// Thin wrapper over cmdPoofset that fixes the direction to "in" (the C subcmd).
 func cmdPoofin(s *Session, args []string) error {
-	return cmdPoofset(s, append([]string{"in"}, args...))
+	return cmdPoofsetText(s, "in", strings.Join(args, " "))
 }
 
 // cmdPoofout — standalone "poofout [message]" command.
 // Source: src/interpreter.c do_poofset/SCMD_POOFOUT, gated at LVL_IMMORT.
-// Thin wrapper over cmdPoofset that fixes the direction to "out" (the C subcmd).
 func cmdPoofout(s *Session, args []string) error {
-	return cmdPoofset(s, append([]string{"out"}, args...))
+	return cmdPoofsetText(s, "out", strings.Join(args, " "))
 }
 
 // cmdWiznet — send message on wizard net (LVL_IMMORT)

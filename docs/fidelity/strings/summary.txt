@@ -3,19 +3,19 @@
 go files scanned	347
 c files scanned	66
 data files scanned	653
-go candidates (literal at a sink)	2181
+go candidates (literal at a sink)	2167
 c candidates (literal in a sink call)	5547
-go segments	2168
+go segments	2154
 c segments	4902
-go-only segments	21
-c-missing segments	2853
-data-sourced segments	27
-unresolved go sink arguments	769
+go-only segments	14
+c-missing segments	2851
+data-sourced segments	26
+unresolved go sink arguments	766
 
 [go sink table]
 Act	695	pkg/game Act(): the act()-style primitive (427 call sites)
 BroadcastToRoom	0	SessionManager.BroadcastToRoom, socket-level room broadcast (22 call sites)
-Send	570	Session.Send and wrapper sessions (679 call sites)
+Send	556	Session.Send and wrapper sessions (679 call sites)
 SendMessage	746	Player/MobInstance.SendMessage (599 call sites)
 SendToAll	0	World.SendToAll and SessionManager.SendToAll (10 call sites)
 SendToChar	5	act.go:744 SendToChar(): C send_to_char, a direct descriptor write with no SENDOK gate; callers supply their own line ending
@@ -52,7 +52,7 @@ write_to_output	72	descriptor output queue (107 call sites)
 
 [go candidates by package]
 pkg/game	1554
-pkg/session	617
+pkg/session	603
 pkg/spells	10
 
 [c candidates by file]
@@ -121,11 +121,8 @@ zedit.c	118
 pkg/game/mob.go	1
 pkg/game/skill_actor_utility.go	2
 pkg/game/spec_procs4.go	1
-pkg/session/act_social.go	2
 pkg/session/gen_ps_cmds.go	1
-pkg/session/manager.go	1
-pkg/session/use_cmds.go	2
-pkg/session/wiz_info.go	3
+pkg/session/wiz_info.go	1
 pkg/session/wiz_stats.go	5
 pkg/session/wiz_system.go	1
 pkg/session/wiz_zone.go	2
@@ -139,7 +136,7 @@ src/act.movement.c	43
 src/act.offensive.c	104
 src/act.other.c	38
 src/act.social.c	9
-src/act.wizard.c	147
+src/act.wizard.c	145
 src/ban.c	15
 src/boards.c	32
 src/clan.c	17

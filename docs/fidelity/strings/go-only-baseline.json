@@ -2,31 +2,13 @@
   "description": "Known Go player-facing strings with no C source and no world-data source. make string-census fails when a new one appears; each reason starts unreviewed and is settled by a human (data-driven text, transport framing, deliberate post-C addition, or a bug).",
   "generated": "2026-11-18",
   "segments": {
-    "!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!": {
-      "segment": "!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!",
-      "file": "pkg/session/manager.go",
-      "line": 2603,
-      "sink": ".Send",
-      "reason": "bug:invented",
-      "evidence": "src/act.wizard.c:1099 \"Shutting down for maintenance.\\r\\n\" — OS SIGINT/SIGTERM path cmd/server/main.go:874,971; in-game shutdown uses C do_shutdown's own bytes; trigger is the OS SIGINT/SIGTERM path, but a telnet player reads the bytes, so R4 applies; C's only shutdown text is the in-game do_shutdown line quoted here",
-      "firstSeen": "2026-09-23"
-    },
     "Cannot access manager state.": {
       "segment": "Cannot access manager state.",
       "file": "pkg/session/wiz_system.go",
       "line": 215,
       "sink": ".Send",
-      "reason": "bug:invented",
-      "evidence": "src/act.wizard.c:1788 \"The game is %s completely open.\\r\\n\" — C do_wizlock has no nil-manager guard; it prints the wizlock status line",
-      "firstSeen": "2026-09-23"
-    },
-    "Error saving aliases.": {
-      "segment": "Error saving aliases.",
-      "file": "pkg/session/act_social.go",
-      "line": 112,
-      "sink": ".Send",
-      "reason": "bug:invented",
-      "evidence": "no C text; nearest: src/interpreter.c:1013 — C do_alias prints only \"Alias deleted.\"/\"Alias added.\"; alias save errors are SYSERR-log only",
+      "reason": "surface:no-c",
+      "evidence": "DP-1581: defensive nil-manager guard in wizlock; unreachable by players in a live server",
       "firstSeen": "2026-09-23"
     },
     "Nice try.": {
@@ -43,8 +25,8 @@
       "file": "pkg/session/wiz_zone.go",
       "line": 210,
       "sink": ".Send",
-      "reason": "bug:invented",
-      "evidence": "no C text; nearest: src/act.wizard.c:3336 — Go nil-parsed-world guard in rlist/olist/mlist; C reads world data directly",
+      "reason": "surface:no-c",
+      "evidence": "DP-1581: defensive nil-parsed-world guard in rlist/olist/mlist; unreachable by players in a live server",
       "firstSeen": "2026-09-23"
     },
     "Parsed world data not available.": {
@@ -52,8 +34,8 @@
       "file": "pkg/session/wiz_stats.go",
       "line": 1252,
       "sink": ".Send",
-      "reason": "bug:invented",
-      "evidence": "no C text; nearest: src/act.wizard.c:395 — Go nil-parsed-world guard in vnum; C do_vnum reads mob/obj protos directly",
+      "reason": "surface:no-c",
+      "evidence": "DP-1581: defensive nil-parsed-world guard in vnum; unreachable by players in a live server",
       "firstSeen": "2026-09-23"
     },
     "Room data not found.": {
@@ -61,8 +43,8 @@
       "file": "pkg/session/wiz_stats.go",
       "line": 665,
       "sink": ".Send",
-      "reason": "bug:invented",
-      "evidence": "src/act.wizard.c:422 \"Room name: %s%s%s\\r\\n\" — C do_stat_room prints the report unconditionally; no room-not-found branch",
+      "reason": "surface:no-c",
+      "evidence": "DP-1581: defensive nil-room guard in stat room; unreachable by players in a live server",
       "firstSeen": "2026-09-23"
     },
     "That information is not available right now.": {
@@ -70,8 +52,8 @@
       "file": "pkg/session/gen_ps_cmds.go",
       "line": 132,
       "sink": ".Send",
-      "reason": "bug:invented",
-      "evidence": "no C text; nearest: src/act.informative.c:2137 — C do_gen_ps pages the boot-loaded file; an unreadable file prints nothing",
+      "reason": "surface:no-c",
+      "evidence": "DP-1581: defensive fallback when boot-loaded text is unavailable; unreachable by players in a live server",
       "firstSeen": "2026-09-23"
     },
     "Usage: checkload { obj | mob } \u003cnumber\u003e": {
@@ -83,40 +65,13 @@
       "evidence": "src/act.wizard.c:3825 \"Usage: checkload { obj | mob } \u003cnumber\u003e\\r\\n\" — C holds it in a local const char* usage, invisible to the census sink lexer",
       "firstSeen": "2026-09-23"
     },
-    "Usage: poofset \u003cin|out\u003e [message]": {
-      "segment": "Usage: poofset \u003cin|out\u003e [message]",
-      "file": "pkg/session/wiz_info.go",
-      "line": 726,
-      "sink": ".Send",
-      "reason": "bug:invented",
-      "evidence": "src/config.c:92 \"Okay.\\r\\n\" — no C poofset command; do_poofset (poofin/poofout) only replies OK",
-      "firstSeen": "2026-09-23"
-    },
     "World not available.": {
       "segment": "World not available.",
       "file": "pkg/session/wiz_stats.go",
       "line": 1246,
       "sink": ".Send",
-      "reason": "bug:invented",
-      "evidence": "src/act.wizard.c:422 \"Room name: %s%s%s\\r\\n\" — Go nil-world guards in stat room/obj and vnum; C reads world[] and prints the report",
-      "firstSeen": "2026-09-23"
-    },
-    "You aren't holding that.": {
-      "segment": "You aren't holding that.",
-      "file": "pkg/session/use_cmds.go",
-      "line": 184,
-      "sink": ".Send",
-      "reason": "bug:invented",
-      "evidence": "src/act.other.c:933 \"You don't seem to have %s %s.\\r\\n\" — No zap verb in C; do_use's not-found branch says this (\"holding\" variant commented out at :939)",
-      "firstSeen": "2026-09-23"
-    },
-    "Zap who?": {
-      "segment": "Zap who?",
-      "file": "pkg/session/use_cmds.go",
-      "line": 163,
-      "sink": ".Send",
-      "reason": "bug:invented",
-      "evidence": "src/act.other.c:903 \"What do you want to %s?\\r\\n\" — No zap verb in C; do_use's no-argument branch prints this with CMD_NAME",
+      "reason": "surface:no-c",
+      "evidence": "DP-1581: defensive nil-world guard in stat/vnum; unreachable by players in a live server",
       "firstSeen": "2026-09-23"
     },
     "attacks you for": {
