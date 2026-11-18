@@ -58,8 +58,8 @@ func faultPaths(t faultTrees, ff oraclediff.FaultFixture) (cPath, goPath string,
 		case "object_idlist":
 			return filepath.Join(t.oracleLib, "object_idlist"), filepath.Join(t.goRoot, "object_idlist"), nil
 		}
-		if strings.HasPrefix(ff.Target, "zone-") {
-			zoneNumber, convErr := strconv.Atoi(strings.TrimPrefix(ff.Target, "zone-"))
+		if after, ok := strings.CutPrefix(ff.Target, "zone-"); ok {
+			zoneNumber, convErr := strconv.Atoi(after)
 			if convErr == nil && zoneNumber > 0 {
 				name := fmt.Sprintf("%d.zon", zoneNumber)
 				return filepath.Join(t.oracleLib, "world", "zon", name), filepath.Join(t.goWorld, "zon", name), nil
@@ -143,10 +143,11 @@ func parseFaultStep(fields []string) (oraclediff.FaultFixture, bool) {
 }
 
 func validZoneFaultTarget(target string) bool {
-	if !strings.HasPrefix(target, "zone-") {
+	after, ok := strings.CutPrefix(target, "zone-")
+	if !ok {
 		return false
 	}
-	zoneNumber, err := strconv.Atoi(strings.TrimPrefix(target, "zone-"))
+	zoneNumber, err := strconv.Atoi(after)
 	return err == nil && zoneNumber > 0
 }
 
