@@ -40,3 +40,31 @@ func TestDismountDepthMatchesCOrderAndAffectUnmount(t *testing.T) {
 		t.Fatalf("mount's master link = %q, want retained", got)
 	}
 }
+
+func TestCombatDismountCallbackUsesCDoDismount(t *testing.T) {
+	w, rider := newMovementTestWorld(t)
+	addMovementMount(t, w, rider, 1001)
+	observer := addMovementPlayer(t, w, "Observer", 1001)
+
+	var events []string
+	w.MessageSink = func(name string, message []byte) {
+		events = append(events, name+":"+string(message))
+	}
+	callback := w.WireCombatCallbacks().Dismount
+	if callback == nil {
+		t.Fatal("combat callbacks have no dismount route")
+	}
+
+	callback(rider)
+
+	want := []string{
+		rider.Name + ":You hop off your mount.\r\n",
+		observer.Name + ":TestPlayer dismounts from the back of a pony.\r\n",
+	}
+	if !reflect.DeepEqual(events, want) {
+		t.Fatalf("combat dismount events = %#v, want %#v", events, want)
+	}
+	if rider.IsMounted() {
+		t.Fatal("combat dismount left rider mounted")
+	}
+}

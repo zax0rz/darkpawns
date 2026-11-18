@@ -394,15 +394,13 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	}
 
 	cb.Dismount = func(name combat.Combatant) {
-		p, ok := combatPlayer(name)
+		p, ok := name.(*Player)
 		if !ok || !p.IsMounted() {
 			return
 		}
-		if mount := w.riddenMount(p); mount != nil {
-			mount.SetMountRider("")
-		}
-		p.SetAffect(affMounted, false)
-		p.SetFollowing("")
+		// damage() calls do_dismount after the two knock-off act() lines;
+		// preserve its private rider/mount messages and follower links.
+		w.doDismountActor(p)
 	}
 
 	cb.Unmount = func(name combat.Combatant) {
