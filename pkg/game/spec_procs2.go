@@ -195,40 +195,42 @@ func specWhirlpool(w *World, ch *Player, me *MobInstance, cmd string, arg string
 }
 
 // ================================================================
-// couch — Mimic attacks when player looks at couch
+// couch — Mimic attacks when player looks at couch, ported from
+// SPECIAL(couch) (src/spec_procs2.c:282-313). Object special: me is nil
+// (see GetObjSpecForObject); ch->in_room is the looker's room.
 // ================================================================
 const mimicRoomVnum = 5798
 
 func specCouch(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if arg == "" {
+	if ch == nil {
 		return false
 	}
-	a := strings.TrimSpace(arg)
-	if (cmd != "look" && cmd != "examine") || !strings.Contains(a, "couch") {
+	if (cmd != "look" && cmd != "examine") || strings.TrimSpace(arg) != "couch" {
 		return false
 	}
-	for _, obj := range w.GetItemsInRoom(me.GetRoomVNum()) {
-		if strings.Contains(obj.GetKeywords(), "couch") {
-			w.RemoveItemFromRoom(obj, me.GetRoomVNum())
-			// Find mimic mob in its home room and move it here
-			playerRoom := me.GetRoomVNum()
-			for _, m := range w.GetMobsInRoom(mimicRoomVnum) {
-				m.SetRoom(playerRoom)
-				break
-			}
-			Act(w, true, ch, nil, nil, nil,
-				"Starved and needing food to make more pillows, the mimic attacks!\n\r", "", ToRoom)
-			ch.SendMessage("Starved and needing food to make more pillows, the mimic attacks you!\n\r\n\r")
-			for _, m := range w.GetMobsInRoom(playerRoom) {
-				if m.GetRoomVNum() == playerRoom && m != me {
-					if err := m.Attack(ch, w); err != nil {
-						slog.Warn("Attack failed in spec proc", "mob", m.GetName(), "error", err)
-					}
-					break
-				}
-			}
-			return true
+	playerRoom := ch.GetRoomVNum()
+	for _, obj := range w.GetItemsInRoom(playerRoom) {
+		if !canSeeObject(ch, obj) || obj.GetKeywords() != "couch" {
+			continue
 		}
+		w.ExtractObject(obj, playerRoom)
+		// The move is C's char_from_room/char_to_room pair on the first
+		// mob in the mimic home (newest-first people order).
+		mimics := w.COrderedRoomMobs(mimicRoomVnum)
+		if len(mimics) == 0 {
+			continue
+		}
+		mimic := mimics[0]
+		if err := w.MobTransfer(mimic, playerRoom); err != nil {
+			slog.Warn("Couch mimic transfer failed", "mob", mimic.GetName(), "error", err)
+		}
+		Act(w, true, ch, nil, nil, nil,
+			"Starved and needing food to make more pillows, the mimic attacks!\n\r", "", ToRoom)
+		ch.SendMessage("Starved and needing food to make more pillows, the mimic attacks you!\n\r\n\r")
+		if err := w.mobHit(mimic, ch); err != nil {
+			slog.Warn("Attack failed in spec proc", "mob", mimic.GetName(), "error", err)
+		}
+		return true
 	}
 	return false
 }
@@ -1488,64 +1490,39 @@ func specEvilLead(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 }
 
 // ================================================================
-// little_boy — Give a flower, get a note
+// little_boy — Random exclamation, ported from SPECIAL(little_boy)
+// (src/spec_procs2.c:1391-1403). C has no give/note exchange; the
+// flower logic (and littleBoyVnum) was invented (R4).
 // ================================================================
-const littleBoyVnum = 2767
-
 func specLittleBoy(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
+	if me == nil || ch != nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 || me.IsFighting() {
 		return false
 	}
-	if cmd == "give" && strings.Contains(arg, "flower") {
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s gives a flower to the little boy.", ch.GetName()))
-		ch.SendMessage("The boy smiles and hands you a small note.\r\n")
-		if obj, err := w.SpawnObject(7107, ch.GetRoom()); err == nil {
-			if ch.Inventory != nil {
-				if err := ch.Inventory.AddItem(obj); err != nil {
-					slog.Warn("spec proc item grant failed", "vnum", 7107, "player", ch.Name, "error", err)
-				}
-			}
-		}
-		ch.SendMessage("The little boy runs off!\r\n")
-		// Remove the little boy mob from the room
-		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
-			if mob != me && mob.GetVNum() == littleBoyVnum {
-				mob.SetStatus("dead")
-				break
-			}
-		}
+	if number(0, 10) == 0 {
+		Act(w, false, me, nil, nil, nil, "$n exclaims, 'Don't let the bad man hurt me, mommy!", "", ToRoom)
 		return true
 	}
 	return false
 }
 
 // ================================================================
-// ira — Angry mob, 3% chance per pulse to attack random player
+// ira — Exclaims at the first player, ported from SPECIAL(ira)
+// (src/spec_procs2.c:1405-1425). No RNG, no CAN_SEE check, no
+// invented warning (R4).
 // ================================================================
 func specIra(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" {
-		return false
-	}
-	if ch.GetPosition() <= combat.PosSleeping || ch.GetHP() < 0 {
-		return false
-	}
-	if ch.GetFightingBody() != nil {
+	if me == nil || ch != nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 || me.IsFighting() {
 		return false
 	}
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if pl.IsNPC() || pl == ch || pl.GetFightingBody() != nil {
+		if pl.GetFlags()&(1<<uint(PrfNohassle)) != 0 {
 			continue
 		}
-		if number(0, 5) != 0 {
-			continue
+		Act(w, false, me, nil, nil, nil, "$n exclaims, 'Dirty Orange Scum!'", "", ToRoom)
+		if err := w.mobHit(me, pl); err != nil {
+			slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
 		}
-		if number(0, 31) == 0 {
-			ch.SendMessage(fmt.Sprintf("%s says 'I don't like you, and you'd better leave before I make you!'\r\n", mobName(me)))
-			if err := me.Attack(pl, w); err != nil {
-				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
-			}
-			return true
-		}
+		return true
 	}
 	return false
 }
@@ -1771,27 +1748,31 @@ func specEqThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 }
 
 // ================================================================
-// portal_room — Random teleport on move command
+// portal_room — Say kallinistra teleports to 21264, ported from
+// SPECIAL(portal_room) (src/spec_procs2.c:1648-1677). Random-move
+// teleport was invented (R4). Room special: me is nil (see specItoh).
 // ================================================================
 func specPortalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "north" || cmd == "south" || cmd == "east" || cmd == "west" || cmd == "up" || cmd == "down" {
-		if !ch.IsNPC() && number(0, 2) != 0 {
-			ch.SendMessage("A shimmering portal appears and sucks you in!\r\n")
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s stumbles through a shimmering portal!", ch.GetName()))
-			// Teleport to a random room
-			rooms := w.Rooms()
-			if len(rooms) > 0 {
-				// #nosec G404 — game RNG, not cryptographic
-				// #nosec G404
-				target := rooms[dprng.Index(dprng.Number(0, len(rooms)-1), len(rooms))]
-				ch.SetRoom(target.VNum)
-			}
-			ch.SendMessage("You tumble out into a strange place...\r\n")
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s appears from a shimmering portal!", ch.GetName()))
-			return true
-		}
+	if cmd != "say" && cmd != "'" {
+		return false
 	}
-	return false
+	if ch == nil {
+		return false
+	}
+	if !strings.EqualFold(strings.TrimSpace(arg), "kallinistra") {
+		return false
+	}
+	w.DoSay(ch, arg)
+	ch.SendMessage("\r\nWith a blinding flash of light and a crack of thunder, you are teleported...\r\n")
+	Act(w, false, ch, nil, nil, nil,
+		"\r\nWith a blinding flash of light and a crack of thunder, $n disappears!\r\n\r\n", "", ToRoom)
+	if err := w.PlayerTransferNoMount(ch, 21264); err != nil {
+		slog.Warn("portal teleport failed", "player", ch.GetName(), "error", err)
+	}
+	Act(w, false, ch, nil, nil, nil,
+		"\r\nWith a blinding flash of light and a crack of thunder, $n appears!\r\n\r\n", "", ToRoom)
+	w.doLook(ch, nil, "look", "")
+	return true
 }
 
 // ================================================================
@@ -1898,50 +1879,63 @@ func specCarrion(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 }
 
 // ================================================================
-// bat_room — Bats in room block movement if bat object present
+// bat_room — Sleeping bats may wake, ported from SPECIAL(bat_room)
+// (src/spec_procs2.c:1756-1768). Movement-blocking was invented (R4).
+// Room special: me is nil; always returns FALSE.
 // ================================================================
 func specBatRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
+	if ch == nil {
 		return false
 	}
-	if cmd != "north" && cmd != "south" && cmd != "east" && cmd != "west" {
-		return false
-	}
-	found := false
-	for _, obj := range w.GetItemsInRoom(me.GetRoomVNum()) {
-		if strings.Contains(obj.GetKeywords(), "bat") {
-			found = true
-			break
+	for _, mob := range w.COrderedRoomMobs(ch.GetRoomVNum()) {
+		if !isCName("bat", charKeywords(mob)) {
+			continue
 		}
-	}
-	if found {
-		ch.SendMessage("The bats swarm around you, blocking your escape!\r\n")
-		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s is swarmed by bats and forced back!", ch.GetName()))
-		return true
+		if mob.GetPosition() > combat.PosSleeping {
+			continue
+		}
+		if number(0, 6) == 0 {
+			Act(w, true, mob, nil, nil, nil, "Your movements wake up $n!", "", ToRoom)
+			mob.SetPosition(combat.PosStanding)
+		}
 	}
 	return false
 }
 
 // ================================================================
-// bat — Bat swoops and attacks when player looks at "dripping"
+// bat — Autonomous swoops and sleep, ported from SPECIAL(bat)
+// (src/spec_procs2.c:1770-1821). Look/dripping attacks were invented (R4).
 // ================================================================
 func specBat(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
+	if me == nil || cmd != "" || (me.GetPosition() <= combat.PosSleeping && me.GetHP() > 0) {
 		return false
 	}
-	if cmd != "look" && cmd != "examine" {
-		return false
-	}
-	a := strings.TrimSpace(arg)
-	if a == "" {
-		return false
-	}
-	if strings.Contains(a, "dripping") && number(0, 4) == 0 {
-		ch.SendMessage("A bat swoops down and attacks you!\r\n")
-		if err := me.Attack(ch, w); err != nil {
-			slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
+	switch number(0, 6) {
+	case 0, 1:
+		Act(w, true, me, nil, nil, nil, "$n swoops down, narrowly missing your face.", "", ToRoom)
+	case 2, 3:
+		Act(w, true, me, nil, nil, nil, "$n lets out a shrill, piercing scream.", "", ToRoom)
+	case 4, 5:
+		Act(w, true, me, nil, nil, nil, "Circling around your head, $n lets out a high-pitched shriek.", "", ToRoom)
+	default:
+		// C: any !IS_NPC(i) in world[mobile->in_room].people — the only
+		// non-NPCs are players, so this is a player-presence check.
+		waking := len(w.GetPlayersInRoom(me.GetRoomVNum())) > 0
+		if !waking {
+			me.SetPosition(combat.PosSleeping)
+			return true
 		}
-		return true
+		var bat *MobInstance
+		for _, i := range w.COrderedRoomMobs(me.GetRoomVNum()) {
+			if isCName("bat", charKeywords(i)) && i.GetPosition() <= combat.PosSleeping {
+				bat = i
+			}
+		}
+		if bat != nil {
+			Act(w, true, me, bat, nil, nil, "$n wakes $n up with it's flapping!", "", ToRoom)
+			bat.SetPosition(combat.PosStanding)
+			return true
+		}
 	}
 	return false
 }

@@ -11,16 +11,16 @@ the counts below in step with the baseline).
 
 | reason | count |
 |---|---|
-| `bug:invented` | 33 |
-| `bug:paraphrase` | 14 |
+| `bug:invented` | 29 |
+| `bug:paraphrase` | 10 |
 | `census:composed` | 2 |
 | `data` | 0 |
 | `surface:no-c` | 0 |
 | `unsure` | 0 |
 | `divergence:approved` | 1 |
-| **total** | **50** |
+| **total** | **42** |
 
-`unsure` is 0/50 (0.0%).
+`unsure` is 0/42 (0.0%).
 
 **This document classifies; it changes no game code.** Fix work is Claude's.
 
