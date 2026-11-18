@@ -1,6 +1,6 @@
 # C-first probe for run_script's failed oncmd callback diagnostics. C's brief
 # syslog includes the raw Lua error plus the call-site diagnostic; Go omits the
-# raw error block. See divergence DP-2800.
+# raw error block. See divergence DP-1575.
 # depth-case: scripts.lua-run-script-call-error
 
 [fixture]

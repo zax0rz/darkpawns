@@ -1,6 +1,6 @@
 # C-first probe for run_script's missing-file report. In the retained transcript
 # C returns only the actor echo while Go also delivers the BRF line to Testor's
-# brief syslog; see divergence DP-2799.
+# brief syslog; see divergence DP-1574.
 # depth-case: scripts.lua-run-script-open-fail
 
 [fixture]
