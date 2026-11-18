@@ -46,3 +46,39 @@ func TestOLCOpenParentObstructionClassifier(t *testing.T) {
 		t.Fatal("non-path failure classified")
 	}
 }
+
+func TestOLCSaveTargetDirectoryFailureClassifier(t *testing.T) {
+	root := t.TempDir()
+	target := filepath.Join(root, "30.wld")
+	if err := os.Mkdir(target, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	tmp := filepath.Join(root, ".tmp-save")
+	if err := os.WriteFile(tmp, []byte("save"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	actualErr := os.Rename(tmp, target)
+	if actualErr == nil {
+		t.Fatal("rename to directory unexpectedly succeeded")
+	}
+	for _, test := range []struct {
+		name   string
+		err    error
+		target string
+		want   bool
+	}{
+		{"exact target directory rename", actualErr, target, true},
+		{"different target", actualErr, target + ".other", false},
+		{"other rename error", &os.LinkError{Op: "rename", Old: ".tmp-save", New: target, Err: syscall.EACCES}, target, false},
+		{"rename to nonexistent target", &os.LinkError{Op: "rename", Old: ".tmp-save", New: target + ".missing", Err: syscall.EEXIST}, target + ".missing", false},
+		{"other operation", &os.LinkError{Op: "open", Old: ".tmp-save", New: target, Err: syscall.EISDIR}, target, false},
+		{"plain failure", fmt.Errorf("plain failure"), target, false},
+		{"no target", &os.LinkError{Op: "rename", Old: ".tmp-save", New: target, Err: syscall.EISDIR}, "", false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if got := olcSaveTargetDirectoryFailure(test.err, test.target); got != test.want {
+				t.Fatalf("classified=%v want=%v", got, test.want)
+			}
+		})
+	}
+}

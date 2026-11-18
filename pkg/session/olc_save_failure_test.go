@@ -133,34 +133,49 @@ func TestOLCSaveAllBoundedFailure(t *testing.T) {
 	}
 }
 
-// The retry divergence covers a failed writer, but does not pretend that a
-// later atomic rename error is C's fopen error. Existing diagnostic boundaries
-// remain narrow (R5f), and later dirty entries remain untouched in either case.
-func TestOLCSaveAllAtomicFailure(t *testing.T) {
-	w, m, s := olcSaveAllFixture(t)
-	watch := makeCommandTestSession(t, m, "Atomicwatch", 40, 3001)
-	watch.player.SetPlrFlag(game.PrfLog1, true)
-	watch.player.SetPlrFlag(game.PrfLog2, true)
-	registerTestSession(t, m, watch, watch.player.Name)
-	olcSaveList.Mark(olc.KindObject, 30)
-	olcSaveList.Mark(olc.KindRoom, 30)
-	if err := os.Mkdir(filepath.Join(w.WorldPath, "wld", "30.wld"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	file := captureMudlogFile(t)
-	if err := ExecuteCommand(s, "olc", []string{"save"}); err != nil {
-		t.Fatal(err)
-	}
-	if got := strings.Join(drainSessionText(t, s), ""); got != "Rooms saved for zone 30.\r\n" {
-		t.Fatalf("atomic failure output = %q", got)
-	}
-	if file.Len() != 0 || len(watch.send) != 0 {
-		t.Fatal("atomic rename failure invented C open diagnostic or success")
-	}
-	if len(olcSaveList.Ordered()) != 2 || !olcSaveList.Dirty(olc.KindRoom, 30) {
-		t.Fatal("atomic failure lost markers")
-	}
-	if _, err := os.Stat(filepath.Join(w.WorldPath, "obj", "30.obj")); !os.IsNotExist(err) {
-		t.Fatal("atomic failure saved a later entry")
+// C fopen("w") fails on an existing directory at the target path. Go's
+// atomic writer reaches that same target at rename, so each editor reports its
+// own C open diagnostic while retaining the failed dirty marker.
+func TestOLCSaveAllTargetDirectoryFailure(t *testing.T) {
+	for _, tc := range []struct {
+		kind       olc.Kind
+		extension  string
+		diagnostic string
+	}{
+		{olc.KindRoom, "wld", "SYSERR: OLC: Cannot open room file!"},
+		{olc.KindObject, "obj", "SYSERR: OLC: Cannot open objects file!"},
+		{olc.KindZone, "zon", "SYSERR: OLC: zedit_save_to_disk:  Can't write zone 30."},
+		{olc.KindMob, "mob", "SYSERR: OLC: Cannot open mob file!"},
+		{olc.KindShop, "shp", "SYSERR: OLC: Cannot open shop file!"},
+	} {
+		t.Run(string(tc.kind), func(t *testing.T) {
+			w, m, s := olcSaveAllFixture(t)
+			watch := makeCommandTestSession(t, m, "Atomicwatch", 40, 3001)
+			watch.player.SetPlrFlag(game.PrfLog1, true)
+			watch.player.SetPlrFlag(game.PrfLog2, true)
+			registerTestSession(t, m, watch, watch.player.Name)
+			olcSaveList.Mark(tc.kind, 30)
+			target := filepath.Join(w.WorldPath, tc.extension, "30."+tc.extension)
+			if err := os.Mkdir(target, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			file := captureMudlogFile(t)
+			if err := ExecuteCommand(s, "olc", []string{"save"}); err != nil {
+				t.Fatal(err)
+			}
+			wantAck := olcSaveLabel(tc.kind) + " saved for zone 30.\r\n"
+			if got := strings.Join(drainSessionText(t, s), ""); got != wantAck {
+				t.Fatalf("save acknowledgement = %q, want %q", got, wantAck)
+			}
+			if !strings.Contains(file.String(), tc.diagnostic+"\n") {
+				t.Fatalf("missing C open diagnostic in log %q", file.String())
+			}
+			if got := strings.Join(drainSessionText(t, watch), ""); got != "[ "+tc.diagnostic+" ]\r\n" {
+				t.Fatalf("diagnostic observer = %q", got)
+			}
+			if !olcSaveList.Dirty(tc.kind, 30) {
+				t.Fatal("target-directory failure cleared its dirty marker")
+			}
+		})
 	}
 }
