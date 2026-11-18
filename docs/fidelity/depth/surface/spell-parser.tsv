@@ -78,7 +78,7 @@ src/spell_parser.c:967	do_cast	proven	will.level-gate	The CLEAN live will-depth 
 src/spell_parser.c:972	do_cast	proven	cast.unfamiliar-spell	The real cast command reaches this exact refusal with level sufficient and skill 0 (R1/R2/R5e/R5h).
 src/spell_parser.c:974	do_cast	proven	will.unfamiliar-power	The CLEAN live will-depth vehicle reaches this exact refusal with level sufficient and skill 0 (R1/R2/R5e/R5h).
 src/spell_parser.c:980	do_cast	proven	cast.peaceful-room	The real cast command reaches the peaceful-room gate for a violent spell before target lookup (R1/R2/R5e/R5h).
-src/spell_parser.c:1049	do_cast	proven	cast.no-target-violent	The draw-free no-target control reaches and compares this generated target prompt (R1/R5e/R5h).
+src/spell_parser.c:1049	do_cast	proven	cast.no-target-violent;cast.power-no-target	The draw-free normal cast and C-first will-depth controls reach this shared send_to_char with their exact class-specific no-target prompts (R1/R2/R3/R5e/R5h).
 src/spell_parser.c:1056	do_cast	proven	cast.violent-self	The CLEAN live cast-violent-self-depth vehicle (the God self-targets flame arrow) prints this normal-class self-harm refusal, and the draw-free unit control compares it (R1/R5e/R5h).
 src/spell_parser.c:1059	do_cast	proven	will.violent-self	The CLEAN live will-violent-self-depth vehicle (a level-30 Psionic wills mind blast at itself) prints the power wording, and the registered will unit control reaches it (R1/R2/R5e/R5h).
 src/spell_parser.c:1063	do_cast	proven	cast.missing-target	The C-first absent-target cast reaches this Okay send before its incantation and missing-target refusal (R1/R3/R5e/R5h).

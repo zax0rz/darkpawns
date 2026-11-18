@@ -1,5 +1,10 @@
 # depth-case: death.npc-corpse-decay-flavor
 # depth-case: death.npc-corpse-decay-dumps-contents
+# depth-case: point-update.object-location-spill-and-rng
+# depth-case: point-update.corpse-decay-maggot-room
+# depth-case: point-update.corpse-decay-maggot-actor
+# depth-case: point-update.corpse-decay-ants-room
+# depth-case: point-update.corpse-decay-ants-actor
 # An NPC corpse decays after max_npc_corpse_time mud hours (5, src/config.c:85)
 # on the hourly point_update pass (src/limits.c:590-650): the number(0,6)
 # draw picks one of four flavor lines and the contents land on the floor.
@@ -25,8 +30,37 @@ testpassword
 <ENTER>
 1
 
+[setup:oracle:observer]
+Corpsewatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Corpsewatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 goto 16301
+teleport Corpsewatch 16301
 
 [probe]
 kill initiate

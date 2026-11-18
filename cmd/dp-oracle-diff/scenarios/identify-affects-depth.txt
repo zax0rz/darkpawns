@@ -1,4 +1,5 @@
 # depth-case: spell.identify-affects
+# depth-case: say-spell.carried-object
 # C-first witness for spell_identify's object-affect listing, DP-1502 lists at
 # src/spells.c:560 ("Can affect you as :"). An enchanted weapon carries
 # APPLY_HITROLL/APPLY_DAMROLL entries, so identify prints the affects block.
@@ -36,8 +37,37 @@ Y
 <ENTER>
 1
 
+[setup:oracle:observer]
+Spellview
+Y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Spellview
+y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 goto 8162
+teleport Spellview 8162
 set Idgod align 1000
 load obj 8037
 

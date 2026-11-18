@@ -3,6 +3,7 @@
 # C path: src/interpreter.c:2154-2155,2310-2346; src/utils.c:212-240.
 # depth-case: entry.new-player-log
 # depth-case: entry.self-delete-log
+# depth-case: mudlog.close-losing-player
 
 [fixture]
 empty-players
@@ -66,7 +67,7 @@ Y
 
 [warmup]
 goto 8105
-set player Logwitness level 31
+set player Logwitness level 38
 force Logwitness syslog normal
 
 [probe]

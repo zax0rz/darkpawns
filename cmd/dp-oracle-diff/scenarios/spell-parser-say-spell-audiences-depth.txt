@@ -1,0 +1,102 @@
+# One live Mage reaches both same-room character target branches in say_spell.
+# depth-case: say-spell.same-room-self
+# depth-case: say-spell.same-room-character
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Parsermage
+Y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Parsermage
+y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Parsepeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Parsepeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Parseview
+Y
+viewpass
+viewpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Parseview
+y
+viewpass
+viewpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Parsepeer 8105
+teleport Parseview 8105
+set player Parsermage class mage
+
+[probe]
+cast 'bless' Parsermage
+~dpclock pulse 20
+cast 'bless' Parsepeer

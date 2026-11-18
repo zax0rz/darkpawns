@@ -1,0 +1,74 @@
+# C-first: a live immortal starts intoxicated and two hourly point_update calls
+# emit both gain_condition(DRUNK, -1) threshold lines. The immortal condition
+# normally stays disabled; the real wizard setter starts it at two.
+# depth-case: point-update.condition-drunk-clear
+# depth-case: point-update.condition-drunk-sober
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+DruDecayer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DruDecayer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+DruWitness
+Y
+witpass
+witpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+DruWitness
+y
+witpass
+witpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport DruWitness 8105
+set player DruDecayer drunk 2
+
+[probe]
+~dpclock pulse 630
+~dpclock pulse 630
