@@ -207,23 +207,30 @@ func TestLuaRunScriptCallFailureProducer(t *testing.T) {
 	}
 }
 
-// TestLuaRunScriptCachedLoadFailureStillLogs: C's run_script retries
-// lua_dofile and logs both load-failure producers on every call
-// (src/scripts.c:1674-1694, 1777-1779). The port's negative cache (DP-903)
-// skips the retry, so it must still emit the same two lines on each call.
+// TestLuaRunScriptCachedLoadFailureStillLogs: C's run_script logs the failed
+// load, clears owner flags, and returns TRUE (src/scripts.c:1777-1788). A direct
+// repeated call still retries like C; normal dispatch stops when those flags
+// are cleared.
 func TestLuaRunScriptCachedLoadFailureStillLogs(t *testing.T) {
 	engine := newScriptEngine(t, "bad.lua", "function oncmd(\n")
+	clears := 0
 	want := []recordedMudlog{
 		{msg: "[Lua] Could not call script bad.lua: Syntax error.", typ: 3, level: 31, toFile: true},
 		{msg: "SYSERR: Error opening lua script bad.lua.", typ: 1, level: 31, toFile: true},
 	}
 	for call := 1; call <= 3; call++ {
 		bridge := newRecordingBridge()
-		if _, err := engine.RunScript(luaMudlogContext(bridge), "bad.lua", "oncmd"); err == nil {
+		ctx := luaMudlogContext(bridge)
+		ctx.ClearOwnerScriptFlags = func() { clears++ }
+		handled, err := engine.RunScript(ctx, "bad.lua", "oncmd")
+		if err == nil || !handled {
 			t.Fatalf("call %d: a failing load must return an error", call)
 		}
 		if got := fileLogs(bridge); len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
-			t.Fatalf("call %d: producers=%+v want %+v (the cached failure must log like C's retry)", call, got, want)
+			t.Fatalf("call %d: producers=%+v want %+v (each direct run retries like C)", call, got, want)
 		}
+	}
+	if clears != 3 {
+		t.Fatalf("owner flag clears=%d, want one per failed direct run", clears)
 	}
 }

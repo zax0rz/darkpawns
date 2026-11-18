@@ -71,10 +71,9 @@ func TestRunOwnerTypedScriptResolution(t *testing.T) {
 	}
 }
 
-// TestOwnerTypeMissingScriptIsolatedFromMobCopy proves the failure cache is
-// owner-scoped: a room owner whose script file is missing must fail (and
-// cache) without being satisfied by a mob copy of the same name, and without
-// poisoning a later obj-owner run of a script that does exist.
+// TestOwnerTypeMissingScriptIsolatedFromMobCopy proves a room owner's missing
+// file is not satisfied by a mob copy, while a later obj-owner run still loads
+// its own script after the failure.
 func TestOwnerTypeMissingScriptIsolatedFromMobCopy(t *testing.T) {
 	dir := t.TempDir()
 	for _, sub := range []string{"mob", "room", "obj"} {
@@ -94,11 +93,12 @@ func TestOwnerTypeMissingScriptIsolatedFromMobCopy(t *testing.T) {
 
 	// scripts/room/only-mob.lua does not exist; the mob copy must not satisfy
 	// the room owner.
-	if _, err := engine.RunScript(&ScriptContext{OwnerType: "room"}, "only-mob.lua", "oncmd"); err == nil {
-		t.Fatal("room owner found a script; want not-found (no mob fallback)")
+	handled, err := engine.RunScript(&ScriptContext{OwnerType: "room"}, "only-mob.lua", "oncmd")
+	if err == nil || !handled {
+		t.Fatalf("room owner result: handled=%v err=%v, want handled not-found", handled, err)
 	}
 	// The obj owner's own script still loads after that failure.
-	handled, err := engine.RunScript(&ScriptContext{OwnerType: "obj"}, "real.lua", "oncmd")
+	handled, err = engine.RunScript(&ScriptContext{OwnerType: "obj"}, "real.lua", "oncmd")
 	if err != nil || !handled {
 		t.Fatalf("obj owner run after failure: handled=%v err=%v", handled, err)
 	}

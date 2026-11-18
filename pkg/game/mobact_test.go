@@ -326,8 +326,6 @@ type extractionPulseRecorder struct {
 	calls []string
 }
 
-func (r *extractionPulseRecorder) ForgetFailures() {}
-
 func (r *extractionPulseRecorder) RunScript(_ *ScriptContext, _ string, trigger string) (bool, error) {
 	r.calls = append(r.calls, trigger)
 	if trigger == "onpulse_all" {

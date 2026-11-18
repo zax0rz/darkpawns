@@ -40,21 +40,8 @@ type Engine struct {
 	// outermost run replaces the state once the outer script has returned.
 	recreatePending bool
 	transitItems    map[int]*transitEntry // in-flight items moved by objfrom/objto (key = instance ID)
-	// failedScripts is a negative cache of scripts that failed to load
-	// (file-not-found, Lua parse/compile errors, load timeouts). The first
-	// failure is logged at slog.Error; subsequent RunScript calls for the
-	// same script return immediately with a cheap error and no log line,
-	// so a missing script can't flood the log every pulse. Path-traversal
-	// rejections are intentionally NOT cached — those should keep logging.
-	// Accessed only under e.mu.
-	failedScripts map[string]struct{}
-	// failedScriptKinds keeps C's open_lua_file kind for each cached load
-	// failure that has a C counterpart (timeouts are absent). C retries and
-	// logs on every run_script call; the cache skips the retry but still
-	// emits the producers (src/scripts.c:1674-1694, 1777-1779).
-	failedScriptKinds map[string]string
-	done              chan struct{}
-	closeOnce         sync.Once
+	done            chan struct{}
+	closeOnce       sync.Once
 
 	// Script execution budget. Scripting is single-threaded (e.mu is held for
 	// the whole of RunScript) to match the C game loop, so one script blocks all
@@ -196,8 +183,6 @@ func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 	engine := &Engine{
 		scriptsDir:          scriptsDir,
 		transitItems:        make(map[int]*transitEntry),
-		failedScripts:       make(map[string]struct{}),
-		failedScriptKinds:   make(map[string]string),
 		world:               world,
 		done:                make(chan struct{}),
 		scriptTimeout:       defaultScriptTimeout,
@@ -220,17 +205,6 @@ func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 // C game loop), a script blocks all others for its whole duration — lowering
 // the timeout bounds a runaway script's impact; the slow log surfaces offenders.
 // Non-positive values leave the corresponding setting unchanged.
-// ForgetFailures clears the negative cache of failed script loads. The cache
-// assumes failures are stable per file (DP-903); an in-game save under the
-// scripts tree invalidates that assumption wholesale, so luaedit clears it
-// after every successful write or delete.
-func (e *Engine) ForgetFailures() {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	e.failedScripts = make(map[string]struct{})
-	e.failedScriptKinds = make(map[string]string)
-}
-
 const transitItemTTL = 30 * time.Second
 
 type transitEntry struct {
@@ -599,36 +573,22 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 
 	// Owner-typed runs resolve strictly as SCRIPT_DIR/type/script_name
 	// (scripts.c:1775); the mob-era search stays below for mob call sites.
-	// The negative-cache key carries the owner type because one name can
-	// exist for one owner and be missing for another.
-	cacheKey := cleanName
 	var scriptPath string
 	if ctx.OwnerType == "room" || ctx.OwnerType == "obj" {
-		cacheKey = ctx.OwnerType + "/" + cleanName
 		scriptPath = ResolveOwnerScriptPath(e.scriptsDir, ctx.OwnerType, cleanName)
 	} else {
 		scriptPath = e.resolveScriptPath(cleanName)
 	}
 
-	// Negative cache: if this script previously failed to load (file-not-found,
-	// parse error, load timeout), skip the disk hit and log entirely. The first
-	// failure was already logged when it was added to failedScripts. Per-pulse
-	// retries on a missing script would otherwise flood the log (DP-903).
-	if _, failed := e.failedScripts[cacheKey]; failed {
-		if kind, logged := e.failedScriptKinds[cacheKey]; logged {
-			scriptMudLogLoadFailure(bridge, fname, kind)
-		}
-		return false, fmt.Errorf("script %s previously failed to load", fname)
-	}
-
 	if scriptPath == "" {
-		e.failedScripts[cacheKey] = struct{}{}
 		slog.Error("error loading script", "file", fname, "error", "script not found")
 		// C reaches the same case inside lua_dofile (src/scripts.c:1677-1678
 		// "No such file.") and logs both producers before returning.
-		e.failedScriptKinds[cacheKey] = "No such file."
 		scriptMudLogLoadFailure(bridge, fname, "No such file.")
-		return false, fmt.Errorf("script not found: %s", fname)
+		if ctx.ClearOwnerScriptFlags != nil {
+			ctx.ClearOwnerScriptFlags()
+		}
+		return true, fmt.Errorf("script not found: %s", fname)
 	}
 	// Load and execute the script file
 	// Based on open_lua_file() in scripts.c lines 1666-1699
@@ -652,10 +612,6 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	}
 
 	if err := L.DoFile(scriptPath); err != nil {
-		// Negative-cache the script so subsequent pulses skip the disk hit
-		// and the error log. Both timeout and file-not-found/parse errors are
-		// stable per file — they won't fix themselves between pulses (DP-903).
-		e.failedScripts[cacheKey] = struct{}{}
 		timeout := errors.Is(err, context.DeadlineExceeded)
 		if timeout {
 			slog.Error("script timed out during load", "file", fname, "error", err)
@@ -665,11 +621,13 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 			// scripts.c:1674-1694 then 1777-1779. A Go-only timeout has no C
 			// kind, so it emits neither line rather than an invented one.
 			kind := luaLoadErrorKind(err)
-			e.failedScriptKinds[cacheKey] = kind
 			scriptMudLogLoadFailure(bridge, fname, kind)
+			if ctx.ClearOwnerScriptFlags != nil {
+				ctx.ClearOwnerScriptFlags()
+			}
 		}
 		releaseContext()
-		return false, err
+		return !timeout, err
 	}
 
 	// Call the trigger function

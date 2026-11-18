@@ -124,7 +124,6 @@ type bodyScriptRecorder struct {
 	actors []*Player
 }
 
-func (*bodyScriptRecorder) ForgetFailures() {}
 func (r *bodyScriptRecorder) RunScript(ctx *ScriptContext, _ string, _ string) (bool, error) {
 	r.bodies = append(r.bodies, ctx.Me.(combat.Combatant))
 	p, _ := ctx.Ch.(*Player)

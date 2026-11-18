@@ -24,8 +24,6 @@ type actorRoomScriptRecorder struct {
 	calls *[]actorRoomScriptCall
 }
 
-func (actorRoomScriptRecorder) ForgetFailures() {}
-
 func (r actorRoomScriptRecorder) RunScript(ctx *ScriptContext, _ string, trigger string) (bool, error) {
 	call := actorRoomScriptCall{trigger: trigger, owner: ctx.OwnerType, roomVNum: ctx.RoomVNum}
 	if ctx.ChRef != nil {

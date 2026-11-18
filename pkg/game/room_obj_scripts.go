@@ -97,11 +97,12 @@ func (w *World) RunRoomEnterScriptForActor(ch combat.Combatant) {
 	}
 	ref := &scripting.CharRef{NPC: true, ID: mob.GetID()}
 	ctx := &ScriptContext{
-		RoomVNum:  room.VNum,
-		World:     NewWorldScriptableAdapter(w),
-		ChRef:     ref,
-		MeRef:     ref,
-		OwnerType: "room",
+		RoomVNum:              room.VNum,
+		World:                 NewWorldScriptableAdapter(w),
+		ChRef:                 ref,
+		MeRef:                 ref,
+		OwnerType:             "room",
+		ClearOwnerScriptFlags: func() { room.ScriptFunctions = 0 },
 	}
 	if _, err := ScriptEngine.RunScript(ctx, room.ScriptName, "enter"); err != nil {
 		slog.Warn("room script error", "trigger", "enter", "room_vnum", room.VNum, "script", room.ScriptName, "error", err)
@@ -154,6 +155,7 @@ func (w *World) RunRoomObjTriggerScriptForActor(ch combat.Combatant, obj *Object
 	ctx.World = NewWorldScriptableAdapter(w)
 	ctx.RoomVNum = room.VNum
 	ctx.OwnerType = "room"
+	ctx.ClearOwnerScriptFlags = func() { room.ScriptFunctions = 0 }
 	if _, err := ScriptEngine.RunScript(ctx, room.ScriptName, trigger); err != nil {
 		slog.Warn("room script error", "trigger", trigger, "room_vnum", room.VNum, "script", room.ScriptName, "error", err)
 	}
@@ -179,14 +181,15 @@ func (w *World) runRoomScript(ch *Player, obj *ObjectInstance, bit int, trigger,
 		return true
 	}
 	ctx := &ScriptContext{
-		Ch:        ch,
-		Obj:       obj,
-		RoomVNum:  room.VNum,
-		Argument:  argument,
-		World:     NewWorldScriptableAdapter(w),
-		ChRef:     &scripting.CharRef{ID: ch.ID},
-		MeRef:     &scripting.CharRef{ID: ch.ID},
-		OwnerType: "room",
+		Ch:                    ch,
+		Obj:                   obj,
+		RoomVNum:              room.VNum,
+		Argument:              argument,
+		World:                 NewWorldScriptableAdapter(w),
+		ChRef:                 &scripting.CharRef{ID: ch.ID},
+		MeRef:                 &scripting.CharRef{ID: ch.ID},
+		OwnerType:             "room",
+		ClearOwnerScriptFlags: func() { room.ScriptFunctions = 0 },
 	}
 	if obj != nil {
 		ctx.ObjRef = &scripting.ObjRef{ID: obj.ID}
@@ -219,15 +222,16 @@ func (w *World) RunObjOnCmdScript(actorRef *scripting.CharRef, actorPlayer *Play
 		return true
 	}
 	ctx := &ScriptContext{
-		Ch:        actorPlayer,
-		Obj:       obj,
-		RoomVNum:  roomVNum,
-		Argument:  argument,
-		World:     NewWorldScriptableAdapter(w),
-		ChRef:     actorRef,
-		MeRef:     actorRef,
-		ObjRef:    &scripting.ObjRef{ID: obj.ID},
-		OwnerType: "obj",
+		Ch:                    actorPlayer,
+		Obj:                   obj,
+		RoomVNum:              roomVNum,
+		Argument:              argument,
+		World:                 NewWorldScriptableAdapter(w),
+		ChRef:                 actorRef,
+		MeRef:                 actorRef,
+		ObjRef:                &scripting.ObjRef{ID: obj.ID},
+		OwnerType:             "obj",
+		ClearOwnerScriptFlags: func() { obj.Prototype.LuaFunctions = 0 },
 	}
 	handled, err := ScriptEngine.RunScript(ctx, obj.Prototype.ScriptName, "oncmd")
 	if err != nil {
@@ -260,11 +264,12 @@ func (w *World) RunObjPulseScript(obj *ObjectInstance) {
 	// object carries OS_ONPULSE). Those run without a room global.
 	roomVNum := objPulseRoomVNum(w, obj)
 	ctx := &ScriptContext{
-		Obj:       obj,
-		RoomVNum:  roomVNum,
-		World:     NewWorldScriptableAdapter(w),
-		ObjRef:    &scripting.ObjRef{ID: obj.ID},
-		OwnerType: "obj",
+		Obj:                   obj,
+		RoomVNum:              roomVNum,
+		World:                 NewWorldScriptableAdapter(w),
+		ObjRef:                &scripting.ObjRef{ID: obj.ID},
+		OwnerType:             "obj",
+		ClearOwnerScriptFlags: func() { obj.Prototype.LuaFunctions = 0 },
 	}
 	if _, err := ScriptEngine.RunScript(ctx, obj.Prototype.ScriptName, "onpulse"); err != nil {
 		slog.Warn("object onpulse script error", "obj_vnum", obj.VNum, "script", obj.Prototype.ScriptName, "error", err)

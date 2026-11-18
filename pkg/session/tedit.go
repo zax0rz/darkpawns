@@ -361,7 +361,6 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 					game.MudLog(fmt.Sprintf("OLC: %s deletes '%s'.", s.fileEditorActorName(), state.storage), game.MudlogComplete, game.LVL_GOD, true)
 				}
 				s.sendTextEditor("Deleted.\r\n")
-				s.forgetScriptFailures(state.path)
 			}
 		} else {
 			savedText := strings.ReplaceAll(state.buffer, "\r", "")
@@ -380,7 +379,6 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 					game.MudLog(fmt.Sprintf("OLC: %s saves '%s'.", s.fileEditorActorName(), state.storage), game.MudlogComplete, game.LVL_GOD, true)
 				}
 				s.sendTextEditor("Saved.\r\n")
-				s.forgetScriptFailures(state.path)
 			}
 		}
 	case textEditAbort:
