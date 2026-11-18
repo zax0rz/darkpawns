@@ -69,7 +69,6 @@ Y
 set player Switchedrx level 39
 holylight
 goto 8105
-send:peer goto 8105
 send:peer switch trainee
 
 [probe]
