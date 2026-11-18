@@ -1,8 +1,6 @@
 scenario	manifest	case_id	status	stability
 alias-cap	alias.tsv	alias.cap-refusal	excluded	
 fault-mail-runtime	mail.tsv	mail.send-store-inert	excluded	
-lua-run-script-call-error-depth	scripts.tsv	scripts.lua-run-script-call-error	blocked	
-lua-run-script-open-fail-depth	scripts.tsv	scripts.lua-run-script-open-fail	blocked	
 mudlog-olc-disk-depth	mudlog.tsv	mudlog.olc-zedit-target-open-failure	blocked	
 mudlog-olc-disk-depth	zedit.tsv	zedit.save-open-failure	blocked	
 postmaster-mail-login-notices-depth	entry.tsv	entry.reconnect-mail-notice	excluded	
