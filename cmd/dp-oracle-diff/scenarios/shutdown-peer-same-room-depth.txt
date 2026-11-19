@@ -1,0 +1,74 @@
+# depth-case: shutdown.no-shutdown-leave-broadcast
+# C-first witness for the shutdown leave-line disposition. The peer starts in
+# the immortal's room before `shutdown pause`. C exits its game loop before
+# closing descriptors; there is no output pass after the resulting room acts
+# are queued (src/comm.c:478-688,283-286; src/comm.c:2129-2135).
+# C path: src/act.wizard.c:1102-1115 -> src/comm.c:478-688,283-286.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+ShutGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ShutGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ShutPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ShutPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport ShutPeer 8105
+
+[probe]
+shutdown pause
