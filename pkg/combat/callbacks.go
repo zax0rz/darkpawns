@@ -13,12 +13,13 @@ type GameCallbacks struct {
 	DamageNewbieExp func(Combatant, int)
 	StopFighting    func(Combatant)
 	NeutralRescue   func(Combatant, Combatant)
-	// RangedHunt supplies shoot retaliation's damage-side hunter assignment.
-	RangedHunt func(attacker, defender Combatant)
-	// DefenderEnrolled supplies damage()'s MOB_MEMORY / MOB_HUNTER hooks when
-	// an awake, non-fighting NPC victim is first enrolled against a mortal PC
-	// attacker (src/fight.c:1443-1452).
-	DefenderEnrolled func(attacker, defender Combatant)
+	// DamageVictimEnrolled supplies damage()'s MOB_MEMORY / MOB_HUNTER hooks
+	// when an awake, non-fighting NPC victim is first enrolled against a mortal
+	// PC attacker (src/fight.c:1443-1452).
+	DamageVictimEnrolled func(attacker, defender Combatant)
+	// DamageAttackerHunt supplies damage()'s attacker-side MOB_HUNTER hook when
+	// an NPC deals damage to a mortal PC victim (src/fight.c:1453-1455).
+	DamageAttackerHunt func(attacker, defender Combatant)
 	// Messaging
 	Broadcast func(roomVNum int, msg string, exclude []Combatant)
 	// BroadcastPerReceiver renders and delivers one act() message per

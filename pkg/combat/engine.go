@@ -1102,17 +1102,10 @@ func (ce *CombatEngine) performOneHitBody(pair *CombatPair) bool {
 	}
 	ce.mu.Unlock()
 
-	if defenderEnrolled && defender.IsNPC() && !attacker.IsNPC() && attacker.GetLevel() < LVL_IMMORT {
-		if cb := GetCallbacks(); cb != nil && cb.DefenderEnrolled != nil {
-			cb.DefenderEnrolled(attacker, defender)
-		}
+	if defenderEnrolled {
+		NotifyDamageVictimEnrolled(attacker, defender)
 	}
-
-	if ranged && attacker.IsNPC() && !defender.IsNPC() && defender.GetLevel() < LVL_IMMORT {
-		if cb := GetCallbacks(); cb != nil && cb.RangedHunt != nil {
-			cb.RangedHunt(attacker, defender)
-		}
-	}
+	NotifyDamageAttackerHunt(attacker, defender)
 
 	// C set_fighting(victim) — which sets POS_FIGHTING — runs INSIDE damage(),
 	// after the to-hit decision AND after one_hit has finished computing damage

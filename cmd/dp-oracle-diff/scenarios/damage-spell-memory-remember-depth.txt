@@ -1,0 +1,90 @@
+# depth-case: combat.damage-spell-memory-remember
+# C-first witness for DP-1590 (spell damage MOB_MEMORY enrollment).
+# A level-10 mortal mage casts 'magic missile' at a MOB_MEMORY mob (#14304,
+# human slave, MOB_SENTINEL), flees north to room 8106, and walks back south.
+# On the next mobile_activity() pulse, C's mob remembers the spell attacker
+# (src/fight.c:1443-1448) and attacks on sight with
+# "'Hey!  You're the fiend that attacked me!!!', exclaims a human slave."
+# (src/mobact.c:274).
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 14304 1 8105 80
+replace-room-exits 8105 all 8106 0
+replace-room-exits 8106 south 8105 0
+
+[setup:oracle]
+Mirek
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mirek
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Orlan
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Orlan
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Orlan 8105
+set Orlan level 10
+set Orlan maxhit 5000
+set Orlan hit 5000
+set Orlan maxmana 5000
+set Orlan mana 5000
+skillset Orlan 'flame arrow' 100
+set mob slave maxhit 5000
+set mob slave hit 5000
+
+[probe]
+send:peer cast 'flame arrow' slave
+force Orlan flee
+force Orlan south
+~dpclock pulse 40

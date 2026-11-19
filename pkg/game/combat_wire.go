@@ -27,7 +27,7 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	cb.DamageNewbieExp = pre.DamageNewbieExp
 	cb.StopFighting = pre.StopFighting
 	cb.NeutralRescue = pre.NeutralRescue
-	cb.RangedHunt = func(attacker, defender combat.Combatant) {
+	cb.DamageAttackerHunt = func(attacker, defender combat.Combatant) {
 		if mob, ok := attacker.(*MobInstance); ok && mob.HasMobFlag(MobFlagHunter) {
 			// damage()'s hunter arm: set_hunting(ch, victim) with the body
 			// the mob just hit (src/fight.c:1453-1455).
@@ -36,7 +36,7 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			}
 		}
 	}
-	cb.DefenderEnrolled = func(attacker, defender combat.Combatant) {
+	cb.DamageVictimEnrolled = func(attacker, defender combat.Combatant) {
 		mob, ok := defender.(*MobInstance)
 		if !ok || attacker.IsNPC() || attacker.GetLevel() >= LVL_IMMORT {
 			return

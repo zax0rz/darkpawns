@@ -1,0 +1,85 @@
+# depth-case: combat.damage-melee-attacker-hunter
+# C-first witness for DP-1590 (melee attacker-side MOB_HUNTER).
+# Mob 7 (lunatic, MOB_HUNTER, no MOB_MEMORY, no MOB_SENTINEL) attacks a
+# level-10 mortal peer in melee via `force lunatic hit HuntPeer`. C's damage()
+# calls set_hunting(ch, victim) on every damage call (src/fight.c:1453-1455).
+# The peer flees north into room 8106, and on the next mobile_activity() pulse
+# the lunatic hunts north into room 8106 and attacks.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 7 1 8105 80
+replace-room-exits 8105 north 8106 0
+replace-room-exits 8106 south 8105 0
+
+[setup:oracle]
+HuntGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+HuntGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+HuntPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+HuntPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport HuntPeer 8105
+set HuntPeer level 10
+set HuntPeer maxhit 5000
+set HuntPeer hit 5000
+set mob lunatic maxhit 5000
+set mob lunatic hit 5000
+
+[probe]
+force lunatic hit HuntPeer
+force HuntPeer flee
+~dpclock pulse 80

@@ -424,9 +424,38 @@ func TakeDamageWithDeath(ch, victim Combatant, dam int, attackType int, onDeath 
 	return takeDamage(ch, victim, dam, attackType, onDeath)
 }
 
+// NotifyDamageVictimEnrolled invokes the shared victim-enrollment callback for
+// MOB_MEMORY and MOB_HUNTER when an awake NPC defender first enters combat
+// against a mortal PC attacker.
+func NotifyDamageVictimEnrolled(ch, victim Combatant) {
+	if ch == nil || victim == nil || ch == victim {
+		return
+	}
+	if !victim.IsNPC() || ch.IsNPC() || ch.GetLevel() >= LVL_IMMORT {
+		return
+	}
+	if cb := GetCallbacks(); cb != nil && cb.DamageVictimEnrolled != nil {
+		cb.DamageVictimEnrolled(ch, victim)
+	}
+}
+
+// NotifyDamageAttackerHunt invokes the shared attacker-side MOB_HUNTER
+// callback when an NPC attacker deals damage to a mortal PC victim.
+func NotifyDamageAttackerHunt(ch, victim Combatant) {
+	if ch == nil || victim == nil || ch == victim {
+		return
+	}
+	if !ch.IsNPC() || victim.IsNPC() || victim.GetLevel() >= LVL_IMMORT {
+		return
+	}
+	if cb := GetCallbacks(); cb != nil && cb.DamageAttackerHunt != nil {
+		cb.DamageAttackerHunt(ch, victim)
+	}
+}
+
 // EnterDamageFighting mirrors damage()'s gated set_fighting calls, including
-// their position change, for damage seams that emit their own skill message
-// (src/fight.c:1400-1408, 1443-1445, 222-223).
+// their position change and MOB_MEMORY/MOB_HUNTER hooks, for damage seams that
+// emit their own skill message (src/fight.c:1403-1456, 222-223).
 func EnterDamageFighting(ch, victim Combatant) {
 	if ch == nil || victim == nil || ch == victim {
 		return
@@ -438,7 +467,9 @@ func EnterDamageFighting(ch, victim Combatant) {
 	if victim.GetPosition() > PosStunned && victim.GetFightingBody() == nil {
 		victim.SetFightingBody(ch)
 		victim.SetPosition(PosFighting)
+		NotifyDamageVictimEnrolled(ch, victim)
 	}
+	NotifyDamageAttackerHunt(ch, victim)
 }
 
 // TakeDamageAfterGate is TakeDamageWithDeath for a caller that has already
@@ -592,19 +623,9 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 		if victim.GetPosition() > PosStunned && victim.GetFightingBody() == nil {
 			victim.SetFightingBody(ch)
 			victim.SetPosition(PosFighting) // src/fight.c:222-223
-			// MOB_MEMORY: NPC remembers PC attacker (fight.c:1445)
-			if cbHasMobFlag(victim, "MOB_MEMORY") && !ch.IsNPC() && ch.GetLevel() < LVL_IMMORT {
-				cbPerformCommand(victim, fmt.Sprintf("remember %s", chName))
-			}
-			// MOB_HUNTER: NPC starts hunting PC attacker (fight.c:1449)
-			if cbHasMobFlag(victim, "MOB_HUNTER") && !ch.IsNPC() && ch.GetLevel() < LVL_IMMORT {
-				cbPerformCommand(victim, fmt.Sprintf("hunt %s", chName))
-			}
+			NotifyDamageVictimEnrolled(ch, victim)
 		}
-		// MOB_HUNTER: attacker also hunts victim (fight.c:1453)
-		if cbHasMobFlag(ch, "MOB_HUNTER") && !victim.IsNPC() && victim.GetLevel() < LVL_IMMORT {
-			cbPerformCommand(ch, fmt.Sprintf("hunt %s", victimName))
-		}
+		NotifyDamageAttackerHunt(ch, victim)
 	}
 
 	// fight.c:1457-1464: break the victim's following when the attacker is
