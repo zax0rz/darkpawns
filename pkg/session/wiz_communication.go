@@ -3,7 +3,6 @@ package session
 import (
 	"fmt"
 	"log/slog"
-	"sort"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -25,14 +24,8 @@ func cmdGechoText(s *Session, msg string) error {
 		s.Send("That must be a mistake...\r\n")
 		return nil
 	}
-	s.manager.mu.RLock()
-	sessions := make([]*Session, 0, len(s.manager.sessions))
-	for _, sess := range s.manager.sessions {
-		sessions = append(sessions, sess)
-	}
-	s.manager.mu.RUnlock()
-	for _, sess := range sessions {
-		if sess.isConPlaying() && sess.player != s.player {
+	for _, sess := range s.manager.playingSessionsInDescriptorOrder() {
+		if sess.player != s.player {
 			sess.Send(msg)
 		}
 	}
@@ -283,29 +276,10 @@ func forceTargets(s *Session, sameRoom bool) []*Session {
 		return targets
 	}
 
-	s.manager.mu.RLock()
-	sessions := make([]*Session, 0, len(s.manager.sessions))
-	for _, target := range s.manager.sessions {
-		sessions = append(sessions, target)
-	}
-	s.manager.mu.RUnlock()
-
-	sort.SliceStable(sessions, func(i, j int) bool {
-		if sessions[i].connectionNumber != sessions[j].connectionNumber {
-			return sessions[i].connectionNumber > sessions[j].connectionNumber
-		}
-		if !sessions[i].connectedAt.Equal(sessions[j].connectedAt) {
-			return sessions[i].connectedAt.After(sessions[j].connectedAt)
-		}
-		return sessions[i].playerName > sessions[j].playerName
-	})
-
+	sessions := s.manager.playingSessionsInDescriptorOrder()
 	targets := make([]*Session, 0, len(sessions))
 	for _, target := range sessions {
 		if target.player == nil || target.player.Level >= s.player.Level {
-			continue
-		}
-		if !target.isConPlaying() {
 			continue
 		}
 		targets = append(targets, target)
@@ -496,16 +470,7 @@ func wiznetHalfChop(input string) (first, remainder string) {
 }
 
 func wiznetSessions(m *Manager) []*Session {
-	m.mu.RLock()
-	sessions := make([]*Session, 0, len(m.sessions))
-	for _, sess := range m.sessions {
-		sessions = append(sessions, sess)
-	}
-	m.mu.RUnlock()
-	sort.SliceStable(sessions, func(i, j int) bool {
-		return sessions[i].connectedAt.After(sessions[j].connectedAt)
-	})
-	return sessions
+	return m.sessionsInDescriptorOrder()
 }
 
 func wiznetRecipientEligible(sess *Session, level int, noChosen bool) bool {

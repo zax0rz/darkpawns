@@ -3,7 +3,6 @@ package session
 import (
 	"fmt"
 	"log/slog"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -825,12 +824,6 @@ func cmdUsers(s *Session, args []string) error {
 
 	count := 0
 	sessions := s.manager.activeDescriptors()
-	sort.SliceStable(sessions, func(i, j int) bool {
-		if sessions[i].connectionNumber != sessions[j].connectionNumber {
-			return sessions[i].connectionNumber > sessions[j].connectionNumber
-		}
-		return sessions[i].playerName > sessions[j].playerName
-	})
 	for _, sess := range sessions {
 		if !sess.hasDescriptor() {
 			continue
@@ -1328,15 +1321,7 @@ func cmdWhoForBody(s *Session, viewer game.Actor, args []string) error {
 		return nil
 	}
 
-	s.manager.mu.RLock()
-	sessions := make([]*Session, 0, len(s.manager.sessions))
-	for _, sess := range s.manager.sessions {
-		sessions = append(sessions, sess)
-	}
-	s.manager.mu.RUnlock()
-	sort.SliceStable(sessions, func(i, j int) bool {
-		return sessions[i].connectedAt.After(sessions[j].connectedAt)
-	})
+	sessions := s.manager.sessionsInDescriptorOrder()
 
 	var out strings.Builder
 	out.WriteString("Players\r\n-------\r\n")
@@ -1409,18 +1394,7 @@ func cmdWhere(s *Session, args []string) error {
 		return nil
 	}
 
-	s.manager.mu.RLock()
-	sessions := make([]*Session, 0, len(s.manager.sessions))
-	for _, sess := range s.manager.sessions {
-		sessions = append(sessions, sess)
-	}
-	s.manager.mu.RUnlock()
-	// C iterates descriptor_list, which prepends new connections — the most
-	// recently connected player is listed first (same order cmdWhere's who
-	// sibling uses).
-	sort.SliceStable(sessions, func(i, j int) bool {
-		return sessions[i].connectedAt.After(sessions[j].connectedAt)
-	})
+	sessions := s.manager.sessionsInDescriptorOrder()
 
 	// C's one_argument branch searches character_list (players and mobiles)
 	// and object_list (src/act.informative.c:2281-2306).

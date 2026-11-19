@@ -3,7 +3,6 @@ package session
 import (
 	"fmt"
 	"log/slog"
-	"sort"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/common"
@@ -389,22 +388,7 @@ func cmdTransfer(s *Session, args []string) error {
 			return nil
 		}
 
-		s.manager.mu.RLock()
-		sessions := make([]*Session, 0, len(s.manager.sessions))
-		for _, target := range s.manager.sessions {
-			sessions = append(sessions, target)
-		}
-		s.manager.mu.RUnlock()
-		// C walks descriptor_list, which prepends each new descriptor, so the
-		// newest connection is first (src/act.wizard.c:347). Go has no such
-		// list; connectionNumber descending is the same order cmdUsers and the
-		// whod listener model.
-		sort.SliceStable(sessions, func(i, j int) bool {
-			if sessions[i].connectionNumber != sessions[j].connectionNumber {
-				return sessions[i].connectionNumber > sessions[j].connectionNumber
-			}
-			return sessions[i].playerName > sessions[j].playerName
-		})
+		sessions := s.manager.sessionsInDescriptorOrder()
 
 		for _, target := range sessions {
 			// C skips the caller, descriptors not in CON_PLAYING, missing
