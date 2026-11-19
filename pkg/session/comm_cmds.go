@@ -176,14 +176,8 @@ func cmdPageText(s *Session, argument string) error {
 			s.Send("You will never be godly enough to do that!")
 			return nil
 		}
-		s.manager.mu.RLock()
-		sessions := make([]*Session, 0, len(s.manager.sessions))
-		for _, target := range s.manager.sessions {
-			sessions = append(sessions, target)
-		}
-		s.manager.mu.RUnlock()
-		for _, target := range sessions {
-			if target.isConPlaying() && target.player.GetPosition() > combat.PosSleeping {
+		for _, target := range s.manager.playingSessionsInDescriptorOrder() {
+			if target.player != nil && target.player.GetPosition() > combat.PosSleeping {
 				target.Send(cActText)
 			}
 		}

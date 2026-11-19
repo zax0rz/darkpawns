@@ -1,0 +1,110 @@
+# C-first descriptor_list ordering witness for DP-1589.
+# Primary (Ordergod) connects first, then peer "one" (Orderone), then peer "two"
+# (Ordertwo) because peers connect in sorted name order. C prepends new
+# connections to descriptor_list (src/comm.c:1591,1603), so newest-first order is
+# Ordertwo, Orderone, Ordergod across do_who (src/act.informative.c:1750),
+# do_where (src/act.informative.c:2257), do_users (src/act.informative.c:2026),
+# and do_wiznet '@' (src/act.wizard.c:1949,1968).
+
+# depth-case: who.descriptor-order-trio
+# depth-case: where.descriptor-order-trio
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Ordergod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ordergod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:one]
+Orderone
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:one]
+Orderone
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:two]
+Ordertwo
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:two]
+Ordertwo
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+
+[probe]
+who
+send:one who
+where
+users
+advance Orderone 31
+advance Ordertwo 31
+wiznet @

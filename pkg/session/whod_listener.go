@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
-	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -172,19 +171,7 @@ func (l *whodListener) entries() []game.WhodEntry {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	sessions := make([]*Session, 0, len(m.sessions))
-	for _, s := range m.sessions {
-		sessions = append(sessions, s)
-	}
-	// C walks character_list, which prepends each new character, so the newest
-	// descriptor is first. Go has no equivalent list; connectionNumber
-	// descending is the same order the users command models.
-	sort.SliceStable(sessions, func(i, j int) bool {
-		if sessions[i].connectionNumber != sessions[j].connectionNumber {
-			return sessions[i].connectionNumber > sessions[j].connectionNumber
-		}
-		return sessions[i].playerName > sessions[j].playerName
-	})
+	sessions := m.sessionsInDescriptorOrderLocked()
 
 	entries := make([]game.WhodEntry, 0, len(sessions))
 	for _, s := range sessions {

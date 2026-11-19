@@ -595,6 +595,7 @@ func (m *Manager) activeDescriptors() []*Session {
 			out = append(out, s)
 		}
 	}
+	sortSessionsDescriptorOrder(out)
 	return out
 }
 
@@ -1376,7 +1377,7 @@ func (m *Manager) drainInputPass(decrement bool) bool {
 
 	m.mu.RLock()
 	jobs := make([]drainJob, 0)
-	for _, s := range m.sessions {
+	for _, s := range m.sessionsInDescriptorOrderLocked() {
 		if s.player == nil {
 			continue
 		}
@@ -1976,12 +1977,7 @@ func (m *Manager) closeDuplicateSessions(quitting *Session) {
 // EachSession is the descriptor list mudlog walks (game.ImmortalSessionProvider):
 // every connected session with a character in the game.
 func (m *Manager) EachSession(fn func(player any, send func(msg string))) {
-	m.mu.RLock()
-	sessions := make([]*Session, 0, len(m.sessions))
-	for _, s := range m.sessions {
-		sessions = append(sessions, s)
-	}
-	m.mu.RUnlock()
+	sessions := m.sessionsInDescriptorOrder()
 	for _, s := range sessions {
 		m.mu.RLock()
 		p := s.player
@@ -2071,12 +2067,7 @@ func (m *Manager) AutosaveTick() {
 // is not eligible, and neither are menu or creation states (not
 // CON_PLAYING).
 func (m *Manager) CrashSaveAll(why string) {
-	m.mu.RLock()
-	sessions := make([]*Session, 0, len(m.sessions))
-	for _, s := range m.sessions {
-		sessions = append(sessions, s)
-	}
-	m.mu.RUnlock()
+	sessions := m.sessionsInDescriptorOrder()
 	for _, s := range sessions {
 		if s == nil || s.player == nil || !s.authenticated {
 			continue
