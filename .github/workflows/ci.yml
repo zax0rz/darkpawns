@@ -104,6 +104,12 @@ jobs:
         make deadcode-ratchet-test
         make deadcode-ratchet
 
+    # Function citation ratchet (R5c): adding a second Go association to a C
+    # function requires a reviewed baseline entry; exact duplicate rows only
+    # shrink. The gate also proves a fake duplicate goes red before cleanup.
+    - name: C-to-Go function-index ratchet
+      run: make function-index-check
+
     # Fidelity depth + unit proofs (R5c/R5h): gen_fidelity_depth re-derives
     # the depth manifests from the scenario fixtures and validates every row
     # (claims-pair parse, scenario depth-case annotations, unit-proof rows),
