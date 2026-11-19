@@ -60,13 +60,12 @@ func cmdShutdown(s *Session, args []string) error {
 }
 
 // forceAllSave is do_shutdown's do_force(ch, "all save") (src/act.wizard.c:1113).
-// It runs the same force-all body as the force command, so each victim's save
-// goes through command_interpreter and takes its number(0,3) hide draw
-// (src/interpreter.c:889).
 func (m *Manager) forceAllSave(caster *Session) {
 	if caster == nil || caster.player == nil {
 		return
 	}
+	// The shared force-all body runs each victim's save through the command
+	// interpreter, which takes C's number(0,3) hide draw (interpreter.c:889).
 	forceAll(caster, "save")
 }
 

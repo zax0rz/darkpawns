@@ -211,8 +211,8 @@ do_stat_object	src/act.wizard.c	515	688	6	src/act.wizard.c:1051;src/act.wizard.c
 mob_race_name	src/act.wizard.c	691	697	1	src/act.wizard.c:892	2	pkg/session/wiz_stats.go:1080:(Session).statColorGates;pkg/session/wiz_stats.go:541:statRaceHateName		has-comment-cited-port
 do_stat_character	src/act.wizard.c	700	992	6	src/act.wizard.c:1014;src/act.wizard.c:1023;src/act.wizard.c:1039;src/act.wizard.c:1061;src/act.wizard.c:1065;src/act.wizard.c:1405	3	pkg/session/wiz_stats.go:1080:(Session).statColorGates;pkg/session/wiz_stats.go:1092:wizardFollowerListOutput;pkg/session/wiz_stats.go:470:(Session).sendStatAffectLines		has-comment-cited-port
 do_stat	src/act.wizard.c	995	1071	2	src/interpreter.c:249;src/interpreter.c:738	0			active-c-reference-no-go-name-match-missing-lead
-do_shutdown	src/act.wizard.c	1074	1117	3	src/interpreter.c:235;src/interpreter.c:698;src/interpreter.c:699	0			active-c-reference-no-go-name-match-missing-lead
-stop_snooping	src/act.wizard.c	1120	1129	2	src/act.wizard.c:1142;src/act.wizard.c:1148	0		pkg/session/wiz_system.go:165:stopSnooping	possible-go-native-replacement-name-match-only
+do_shutdown	src/act.wizard.c	1074	1117	3	src/interpreter.c:235;src/interpreter.c:698;src/interpreter.c:699	2	pkg/session/wiz_communication.go:273:forceAll;pkg/session/wiz_system.go:63:(Manager).forceAllSave		has-comment-cited-port
+stop_snooping	src/act.wizard.c	1120	1129	2	src/act.wizard.c:1142;src/act.wizard.c:1148	0		pkg/session/wiz_system.go:145:stopSnooping	possible-go-native-replacement-name-match-only
 do_snoop	src/act.wizard.c	1132	1171	2	src/interpreter.c:244;src/interpreter.c:723	0			active-c-reference-no-go-name-match-missing-lead
 do_switch	src/act.wizard.c	1175	1202	2	src/interpreter.c:255;src/interpreter.c:751	1	pkg/session/switch_ownership.go:12:(Manager).attachedBody		has-comment-cited-port
 do_return	src/act.wizard.c	1205	1221	5	src/handler.c:1097;src/handler.c:1110;src/handler.c:1159;src/interpreter.c:217;src/interpreter.c:655	0			active-c-reference-no-go-name-match-missing-lead
@@ -231,10 +231,10 @@ do_dc	src/act.wizard.c	1736	1767	2	src/interpreter.c:118;src/interpreter.c:409	0
 do_wizlock	src/act.wizard.c	1769	1799	2	src/interpreter.c:288;src/interpreter.c:834	0			active-c-reference-no-go-name-match-missing-lead
 do_date	src/act.wizard.c	1802	1830	3	src/interpreter.c:116;src/interpreter.c:406;src/interpreter.c:795	0			active-c-reference-no-go-name-match-missing-lead
 do_last	src/act.wizard.c	1834	1853	2	src/interpreter.c:174;src/interpreter.c:535	0			active-c-reference-no-go-name-match-missing-lead
-do_force	src/act.wizard.c	1856	1908	4	src/act.wizard.c:1077;src/act.wizard.c:1113;src/interpreter.c:142;src/interpreter.c:438	2	pkg/session/wiz_communication.go:141:cmdForce;pkg/session/wiz_communication.go:147:cmdForceText		has-comment-cited-port
-do_wiznet	src/act.wizard.c	1912	2031	3	src/interpreter.c:289;src/interpreter.c:830;src/interpreter.c:831	1	pkg/session/wiz_communication.go:303:cmdWiznetText		has-comment-cited-port
+do_force	src/act.wizard.c	1856	1908	4	src/act.wizard.c:1077;src/act.wizard.c:1113;src/interpreter.c:142;src/interpreter.c:438	3	pkg/session/wiz_communication.go:141:cmdForce;pkg/session/wiz_communication.go:147:cmdForceText;pkg/session/wiz_communication.go:273:forceAll		has-comment-cited-port
+do_wiznet	src/act.wizard.c	1912	2031	3	src/interpreter.c:289;src/interpreter.c:830;src/interpreter.c:831	1	pkg/session/wiz_communication.go:311:cmdWiznetText		has-comment-cited-port
 do_zreset	src/act.wizard.c	2035	2070	2	src/interpreter.c:294;src/interpreter.c:848	0			active-c-reference-no-go-name-match-missing-lead
-do_wizutil	src/act.wizard.c	2077	2219	8	src/interpreter.c:290;src/interpreter.c:452;src/interpreter.c:559;src/interpreter.c:580;src/interpreter.c:601;src/interpreter.c:649;src/interpreter.c:768;src/interpreter.c:794	3	pkg/game/player_affects.go:471:(Player).RemoveAllActiveAffects;pkg/session/wiz_system.go:409:wizutilDispatch;pkg/session/wizutil_body.go:14:mobWizutilBody		has-comment-cited-port
+do_wizutil	src/act.wizard.c	2077	2219	8	src/interpreter.c:290;src/interpreter.c:452;src/interpreter.c:559;src/interpreter.c:580;src/interpreter.c:601;src/interpreter.c:649;src/interpreter.c:768;src/interpreter.c:794	3	pkg/game/player_affects.go:471:(Player).RemoveAllActiveAffects;pkg/session/wiz_system.go:389:wizutilDispatch;pkg/session/wizutil_body.go:14:mobWizutilBody		has-comment-cited-port
 print_zone_to_buf	src/act.wizard.c	2225	2231	3	src/act.wizard.c:2303;src/act.wizard.c:2309;src/act.wizard.c:2318	0			active-c-reference-no-go-name-match-missing-lead
 do_show	src/act.wizard.c	2234	2506	2	src/interpreter.c:234;src/interpreter.c:694	1	pkg/session/wiz_info.go:735:showZoneHooks		has-comment-cited-port
 do_set	src/act.wizard.c	2523	3073	2	src/interpreter.c:229;src/interpreter.c:682	3	pkg/game/bad_stats.go:60:(World).ReplayEquipmentBadStats;pkg/game/mobile_equipment.go:269:sbyteValue;pkg/session/wiz_set.go:116:cmdSetText		has-comment-cited-port
@@ -249,7 +249,7 @@ do_sysfile	src/act.wizard.c	3412	3442	2	src/interpreter.c:256;src/interpreter.c:
 do_sethunt	src/act.wizard.c	3444	3474	2	src/interpreter.c:230;src/interpreter.c:683	1	pkg/session/wiz_zone.go:294:cmdSethunt		has-comment-cited-port
 random_room_in_zone	src/act.wizard.c	3476	3495	0		0			dead-candidate-no-src-identifier-references
 do_tick	src/act.wizard.c	3501	3512	2	src/interpreter.c:263;src/interpreter.c:774	0			active-c-reference-no-go-name-match-missing-lead
-do_newbie	src/act.wizard.c	3516	3542	2	src/interpreter.c:187;src/interpreter.c:835	1	pkg/session/wiz_system.go:734:cmdNewbie		has-comment-cited-port
+do_newbie	src/act.wizard.c	3516	3542	2	src/interpreter.c:187;src/interpreter.c:835	1	pkg/session/wiz_system.go:714:cmdNewbie		has-comment-cited-port
 do_zlist	src/act.wizard.c	3545	3572	2	src/interpreter.c:293;src/interpreter.c:847	0			active-c-reference-no-go-name-match-missing-lead
 do_idlist	src/act.wizard.c	3575	3671	2	src/interpreter.c:164;src/interpreter.c:512	1	pkg/session/idlist.go:92:writeObjectIDList		has-comment-cited-port
 check_load	src/act.wizard.c	3681	3817	1	src/act.wizard.c:3862	3	pkg/game/world_zone.go:38:(World).ReadDisposableMob;pkg/game/world_zone.go:56:(World).ReadDisposableObject;pkg/session/idlist.go:92:writeObjectIDList		has-comment-cited-port
@@ -566,7 +566,7 @@ improved_editor_execute	src/improved-edit.c	27	92	1	src/modify.c:127	0			active-
 parse_action	src/improved-edit.c	97	478	8	src/improved-edit.c:50;src/improved-edit.c:53;src/improved-edit.c:57;src/improved-edit.c:63;src/improved-edit.c:68;src/improved-edit.c:72;src/improved-edit.c:78;src/improved-edit.c:83	1	pkg/boards/boards.go:958:(BoardSystem).ReviseBoardLine		has-comment-cited-port
 format_text	src/improved-edit.c	485	573	1	src/improved-edit.c:130	0			active-c-reference-no-go-name-match-missing-lead
 replace_str	src/improved-edit.c	575	625	1	src/improved-edit.c:155	0			active-c-reference-no-go-name-match-missing-lead
-command_interpreter	src/interpreter.c	883	949	9	src/act.offensive.c:332;src/act.offensive.c:348;src/act.wizard.c:1880;src/act.wizard.c:1892;src/act.wizard.c:1905;src/act.wizard.c:265;src/comm.c:628;src/scripts.c:127;src/scripts.c:135	5	pkg/game/character_command.go:240:CharacterMove;pkg/game/flee.go:129:(World).doSimpleMoveMob;pkg/game/skill_actor_combat.go:43:CharacterCombatSkill;pkg/session/wiz_communication.go:276:forceSessionCommand;pkg/session/wizard_cmds.go:25:getEffectiveLevel		has-comment-cited-port
+command_interpreter	src/interpreter.c	883	949	9	src/act.offensive.c:332;src/act.offensive.c:348;src/act.wizard.c:1880;src/act.wizard.c:1892;src/act.wizard.c:1905;src/act.wizard.c:265;src/comm.c:628;src/scripts.c:127;src/scripts.c:135	5	pkg/game/character_command.go:240:CharacterMove;pkg/game/flee.go:129:(World).doSimpleMoveMob;pkg/game/skill_actor_combat.go:43:CharacterCombatSkill;pkg/session/wiz_communication.go:284:forceSessionCommand;pkg/session/wizard_cmds.go:25:getEffectiveLevel		has-comment-cited-port
 find_alias	src/interpreter.c	956	967	2	src/interpreter.c:1004;src/interpreter.c:1126	1	pkg/game/aliases.go:323:FindAlias	pkg/game/aliases.go:323:FindAlias	has-comment-cited-port
 free_alias	src/interpreter.c	970	977	3	src/db.c:2753;src/db.c:2763;src/interpreter.c:1006	0			active-c-reference-no-go-name-match-missing-lead
 do_alias	src/interpreter.c	981	1039	2	src/interpreter.c:328;src/interpreter.c:89	0			active-c-reference-no-go-name-match-missing-lead
