@@ -210,9 +210,8 @@ func TestSpecConductorFightLinesThroughAct(t *testing.T) {
 		{4, "The conductor shouts 'Security!  Help me with this piece of garbage!'\r\n"},
 	} {
 		conductorNumber = func(from, to int) int { return tc.draw }
-		// The port's gate runs this arm for command dispatch (C runs it on
-		// pulses; the conductor special is unassigned in both engines).
-		specConductor(w, nil, conductor, "look", "")
+		// C evaluates the ticket line on the conductor's autonomous pulse.
+		specConductor(w, nil, conductor, "", "")
 		if !strings.Contains(observer.msgs, tc.want) {
 			t.Errorf("draw %d: observer got %q, want line %q", tc.draw, observer.msgs, tc.want)
 		}
@@ -253,11 +252,21 @@ func TestSpecElevatorThroughAct(t *testing.T) {
 	roomMate := addCapturedPlayer(t, w, "Pracmate", 1001)
 	pillar := NewMob(&parser.Mob{VNum: 8058, Keywords: "pillar", ShortDesc: "the pillar"}, 1001)
 
-	if !specElevator(w, wPlayer(t, w, "Pracmover"), pillar, "say", "sumuni elementi avia elevata") {
+	actor := wPlayer(t, w, "Pracmover")
+	actor.SetStat("INT", 11)
+	actor.SetStat("WIS", 11)
+	actor.CopyBaseAttributes()
+	if !specElevator(w, actor, pillar, "say", "sumuni elementi avia elevata") {
 		t.Fatal("specElevator = false, want true")
 	}
 
 	wantSelf := "The portal begins to rise, lifted by the air elemental summoned by your rune!\n\r\n\r"
+	if !strings.Contains(mover.msgs, "You say 'sumuni elementi avia elevata'\r\n") {
+		t.Errorf("mover got %q, want C's consumed say line", mover.msgs)
+	}
+	if !strings.Contains(roomMate.msgs, "Pracmover says, 'sumuni elementi avia elevata'\r\n") {
+		t.Errorf("room mate got %q, want C's say line", roomMate.msgs)
+	}
 	if !strings.Contains(mover.msgs, wantSelf) {
 		t.Errorf("mover got %q, want C's reversed-terminator line %q", mover.msgs, wantSelf)
 	}

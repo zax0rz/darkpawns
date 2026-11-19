@@ -47,36 +47,27 @@ func init() {
 }
 
 func specConductor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "" || !me.IsNPC() || me.GetHP() < 0 {
+	if w == nil || me == nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || !me.IsNPC() || me.GetHP() < 0 {
 		return false
 	}
 
-	if !me.IsFighting() {
-		// C source: spec_procs.c:1618-1630 — conductor wanders east/west when idle.
-		// Must be standing (awake) to move. Cases 1-2: east, 9-10: west.
-		if me.GetPosition() > combat.PosStanding {
-			return false
-		}
-		walkRoll := randRange(1, 10)
-		switch walkRoll {
+	if me.GetFightingBody() == nil {
+		switch conductorNumber(1, 10) {
 		case 1, 2:
-			// C: perform_move(ch, SCMD_EAST-1, 0) → direction index 1 (east),
-			// need_specials_check 0 (src/spec_procs.c:1626).
 			w.performMoveMob(me, 1, false)
 			return true
 		case 9, 10:
-			// C: perform_move(ch, SCMD_WEST-1, 0) → direction index 3 (west),
-			// need_specials_check 0 (src/spec_procs.c:1630).
 			w.performMoveMob(me, 3, false)
 			return true
 		}
 	}
 
-	if me.IsFighting() {
-		if me.GetPosition() <= combat.PosSleeping || me.GetPosition() >= combat.PosFighting {
-			r := conductorNumber(1, 10)
+	if me.GetFightingBody() != nil {
+		if me.GetPosition() > combat.PosSleeping && me.GetPosition() < combat.PosFighting {
+			w.NPCCommandDirect(me, "stand", "")
+		} else {
 			msg := ""
-			switch r {
+			switch conductorNumber(1, 10) {
 			case 1:
 				msg = "$n shouts, 'I said give me your ticket!'"
 			case 2:
@@ -89,30 +80,70 @@ func specConductor(w *World, ch *Player, me *MobInstance, cmd string, arg string
 				msg = "$n asks, 'Why wouldn't you just give me your ticket?'"
 			}
 			if msg != "" {
-				// C routes every fight line through act(..., TO_ROOM)
-				// (src/spec_procs.c:1643-1663; case 4's double space is C's).
 				Act(w, false, me, nil, nil, nil, msg, "", ToRoom)
 			}
 		}
 		return true
 	}
 
-	return false
-}
-
-func specBrassDragon(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "" || !isMoveCmd(cmd) {
+	var victim *Player
+	for _, player := range w.GetPlayersInRoom(me.GetRoom()) {
+		if player.GetLevel() >= LVL_IMMORT || player.GetFlags()&(1<<PrfNohassle) != 0 || !CanSee(me, player) {
+			continue
+		}
+		victim = player
+		if player.GetAlignment()+player.GetRace()-player.GetClass() != me.GetAlignment() {
+			me.ResetTalk()
+			me.SetAlignment(player.GetAlignment() + player.GetRace() - player.GetClass())
+		}
+		break
+	}
+	if victim == nil {
 		return false
 	}
 
-	if me.GetRoom() == 5065 && cmd == "west" {
-		// C: act(buf2, FALSE, ch, 0, 0, TO_ROOM) then send_to_char(buf) with
-		// C's reversed \n\r terminator (src/spec_procs.c:1750-1753).
+	chances := 0
+	if me.GetTalk(1) != 0 {
+		chances++
+	}
+	if me.GetTalk(2) != 0 {
+		chances++
+	}
+	switch chances {
+	case 0:
+		w.NPCCommandDirect(me, "wake", victim.GetName())
+		Act(w, false, me, victim, nil, nil, "$n asks, 'Pardon me $N, do you have your ticket?'", "", ToRoom)
+		me.SetTalk(1, 1)
+		return true
+	case 1:
+		Act(w, false, me, victim, nil, nil, "$n asks, 'I said, do you have your ticket?'", "", ToRoom)
+		me.SetTalk(2, 1)
+		return true
+	default:
+		if w.roomHasFlag(me.GetRoom(), "peaceful") {
+			Act(w, false, me, victim, nil, nil, "$n says, 'Ok $N, I'll let ya off this time, but don't do it again'.", "", ToRoom)
+			Act(w, false, me, victim, nil, nil, "$n walks out the door and vanishes.", "", ToRoom)
+			_ = w.MobTransfer(me, conductorsRoom)
+		} else {
+			Act(w, false, me, nil, nil, nil, "$n says, 'Well then...'.", "", ToRoom)
+			Act(w, false, me, nil, nil, nil, "$n screams, 'GET THE HELL OFF MY TRAIN!!!'", "", ToRoom)
+			_ = w.mobHit(me, victim)
+		}
+		me.ResetTalk()
+		return true
+	}
+}
+
+func specBrassDragon(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if w == nil || ch == nil || cmd == "" || !isMoveCmd(cmd) || ch.GetLevel() >= LVL_IMMORT || w.IsHunting(ch.GetName(), false) {
+		return false
+	}
+
+	if ch.GetRoomVNum() == 5065 && cmd == "west" {
 		Act(w, false, ch, nil, nil, nil, "The brass dragon humiliates $n, and blocks $s way.", "", ToRoom)
 		ch.SendMessage("The brass dragon humiliates you, and blocks your way.\n\r")
 		return true
 	}
-
 	return false
 }
 
@@ -300,7 +331,7 @@ func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 }
 
 func specEnterCircle(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "enter" && cmd != "look" {
+	if w == nil || ch == nil || (cmd != "enter" && cmd != "look") {
 		return false
 	}
 
@@ -311,128 +342,123 @@ func specEnterCircle(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 			return true
 		}
 
-		portalMobs := w.GetMobsInRoom(portalRoom)
-		if len(portalMobs) >= 2 {
+		if len(w.GetAllCharsInRoom(portalRoom)) >= 2 {
 			ch.SendMessage("You can't fit on the portal, it's too crowded.\n\r")
 			return true
 		}
 
 		ch.SendMessage("You stand in the circle.\n\r")
-		// C: act(..., 1, ch, 0, 0, TO_ROOM) — hide_invisible (src/spec_procs.c:1947).
 		Act(w, true, ch, nil, nil, nil, "$n enters the circle which suddenly starts glowing brightly, obscuring your view of $m!", "", ToRoom)
 		ch.SetRoom(portalRoom)
 		w.doLook(ch, nil, "look", "")
 		return true
 	}
 
-	// look
 	arg = strings.TrimSpace(arg)
 	if arg != "circle" && arg != "platform" {
-		return false
+		w.doLook(ch, nil, "look", arg)
+		return true
 	}
 
 	ch.SendMessage("Looking into the circle at the platform in the middle of the room, you see\r\n")
-	mobs := w.GetMobsInRoom(portalRoom)
-	if len(mobs) > 0 {
-		var names []string
-		for _, m := range mobs {
-			names = append(names, m.GetName())
+	occupants := w.GetAllCharsInRoom(portalRoom)
+	if len(occupants) > 0 {
+		for i, raw := range occupants {
+			body, ok := raw.(interface{ GetName() string })
+			if !ok {
+				continue
+			}
+			if i > 0 {
+				ch.SendMessage(" and ")
+			}
+			ch.SendMessage(body.GetName())
 		}
-		ch.SendMessage(strings.Join(names, " and "))
 	} else {
 		ch.SendMessage("no one")
 	}
-	sendToChar(ch, ".\r\n")
+	ch.SendMessage(".\n\r\n\r")
 	return true
 }
 
 func specElevator(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "say" && cmd != "'" {
+	if w == nil || ch == nil || (cmd != "say" && cmd != "'") {
 		return false
 	}
 
-	lower := strings.ToLower(strings.TrimSpace(arg))
-	if lower != "sumuni elementi avia elevata" {
+	phrase := strings.TrimSpace(arg)
+	if phrase != "Sumuni Elementi Avia Elevata" && phrase != "sumuni elementi avia elevata" {
 		return false
 	}
 
-	// C's strings end \n\r\n\r; the room line keeps that in the act() format,
-	// which appends its own terminator (src/spec_procs.c:2000-2003).
+	w.DoSay(ch, phrase)
 	ch.SendMessage("The portal begins to rise, lifted by the air elemental summoned by your rune!\n\r\n\r")
 	Act(w, false, ch, nil, nil, nil, "The portal begins to rise, lifted by the air elemental summoned by $n!\r\n\r\n", "", ToRoom)
 
-	players := w.GetPlayersInRoom(portalRoom)
-	for _, p := range players {
-		if p != nil {
-			p.SetRoom(elevatorDest)
-			w.doLook(p, nil, "look", "")
-		}
-	}
-
-	mobs := w.GetMobsInRoom(portalRoom)
-	for i, m := range mobs {
+	for i, raw := range w.GetAllCharsInRoom(portalRoom) {
 		if i >= 2 {
 			break
 		}
-		m.SetRoom(elevatorDest)
+		body, ok := raw.(combat.Combatant)
+		if !ok {
+			continue
+		}
+		if err := w.transferBody(body, elevatorDest, false); err != nil {
+			continue
+		}
+		w.doLook(body, nil, "look", "")
 	}
-
 	return true
 }
 
-// specElementalRoom ports SPECIAL(elemental_room) (src/spec_procs.c:2021-2065).
-// Dead code in both engines: C declares the special but never assigns it
-// (src/spec_assign.c declares it in assign_rooms and has no ASSIGNROOM for it),
-// so these bytes are pinned by unit test, not the census.
-// TODO(port): the loop below diverges from C, which iterates every character
-// in the room below LVL_IMMORT (people, PCs and NPCs alike), damages each by
-// 100 per pulse, and raw_kills on <= 0 (src/spec_procs.c:2029-2058); this
-// version iterates room mobs and inverts IsNPC, so its body never runs.
-// Unreachable in both engines — fix only if the special is ever assigned.
 func specElementalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" {
+	if w == nil || me == nil || cmd != "" {
 		return false
 	}
 
-	mobs := w.GetMobsInRoom(me.GetRoom())
-	for _, m := range mobs {
-		if !m.IsNPC() {
+	for _, raw := range w.GetAllCharsInRoom(me.GetRoom()) {
+		body, ok := raw.(combat.Combatant)
+		if !ok {
 			continue
 		}
-		room := w.GetRoomInWorld(m.GetRoom())
-		sector := 0
+		if body.GetLevel() >= LVL_IMMORT {
+			sendBodyMessage(w, body, "You ignore the elements that barrage you.\n\r")
+			continue
+		}
+
+		room := w.GetRoomInWorld(body.GetRoom())
+		sector := -1
 		if room != nil {
 			sector = room.Sector
 		}
-
-		// C's strings carry reversed \n\r terminators, and its wind line
-		// concatenates "the forces" and "of air" into "the forcesof air"
-		// (src/spec_procs.c:2041-2052).
 		msg := ""
 		switch sector {
-		case 0: // SECT_FIRE
+		case 0:
 			msg = "Your skin blackens as fire burns you alive...\n\r"
-		case 1: // SECT_EARTH
+		case 1:
 			msg = "Your skin is pummeled by the forces of earth, breaking your bones...\n\r"
-		case 2: // SECT_WIND
+		case 2:
 			msg = "Your flesh is peeled from your bones as the forcesof air pummel you...\n\r"
-		case 3: // SECT_WATER
+		case 3:
 			msg = "You struggle for air as your lungs fill with water...\n\r"
 		default:
 			msg = "The forces of nature slowly rip you apart...\n\r"
 		}
-		ch.SendMessage(msg)
-		ch.SendMessage("\n\rYou are DYING!\n\r")
-
-		m.SetHealth(m.GetHP() - 100)
-		if m.GetHP() <= 0 {
-			// C: act(..., TRUE, tmp_char, 0, tmp_char, TO_NOTVICT)
-			// (src/spec_procs.c:2054).
-			Act(w, true, m, m, nil, nil, "The forces of nature slowly rip $N to shreds.", "", ToNotVict)
-			w.HandleDeath(m, nil, -1)
+		sendBodyMessage(w, body, msg)
+		sendBodyMessage(w, body, "\n\rYou are DYING!\n\r")
+		health, ok := body.(interface {
+			GetHealth() int
+			SetHealth(int)
+		})
+		if !ok {
+			continue
+		}
+		health.SetHealth(health.GetHealth() - 100)
+		if health.GetHealth() <= 0 {
+			Act(w, true, body, body, nil, nil, "The forces of nature slowly rip $N to shreds.", "", ToNotVict)
+			w.RawKillCombatant(body, -1)
+			return true
 		}
 	}
-
 	return false
 }
 

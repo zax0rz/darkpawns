@@ -52,6 +52,10 @@ func TestAlienElevatorDirectSendReachesSleepingOccupant(t *testing.T) {
 	w, _, _, _, output := newChannelWorld(t)
 	const roomA = 19551
 	const roomB = 19599
+	w.mu.Lock()
+	w.rooms[roomA] = &parser.Room{VNum: roomA, Name: "Alien Elevator Lower", Zone: 1, Exits: map[string]parser.Exit{"east": {Direction: "east", ToRoom: roomB, ExitInfo: parser.ExitIsDoor}}}
+	w.rooms[roomB] = &parser.Room{VNum: roomB, Name: "Alien Elevator Upper", Zone: 1}
+	w.mu.Unlock()
 	actor := channelPlayer(t, w, 4, "Elevatoractor", roomA)
 	sleeper := channelPlayer(t, w, 5, "Elevatorsleeper", roomA)
 	awake := channelPlayer(t, w, 6, "Elevatorawake", roomB)
@@ -63,11 +67,14 @@ func TestAlienElevatorDirectSendReachesSleepingOccupant(t *testing.T) {
 	if got, want := channelOutput(output, sleeper.Name), "The room starts to move!\r\n"; got != want {
 		t.Fatalf("sleeping occupant output = %q, want direct C send_to_char bytes %q", got, want)
 	}
-	if got, want := channelOutput(output, awake.Name), "The room starts to move!\r\n"; got != want {
-		t.Fatalf("awake occupant output = %q, want %q", got, want)
+	if got := channelOutput(output, awake.Name); got != "" {
+		t.Fatalf("occupant in the other room received %q", got)
 	}
 	if got := sleeper.GetRoom(); got != roomB {
 		t.Fatalf("sleeping occupant room = %d, want %d", got, roomB)
+	}
+	if got := awake.GetRoom(); got != roomB {
+		t.Fatalf("destination occupant room = %d, want to remain %d", got, roomB)
 	}
 }
 

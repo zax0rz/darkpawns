@@ -26,7 +26,7 @@ func TestEnterCircleLookBytesMatchC(t *testing.T) {
 	// CRLF-normalized C bytes: leading line, the fragment, then the tail.
 	want := "Looking into the circle at the platform in the middle of the room, you see\r\n" +
 		"no one" +
-		".\r\n\r\n"
+		".\n\r\n\r"
 	if got != want {
 		t.Errorf("enter-circle look bytes = %q, want %q", got, want)
 	}

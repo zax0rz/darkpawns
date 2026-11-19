@@ -730,52 +730,42 @@ func isCName(name, namelist string) bool {
 	return false
 }
 
-// specAlienElevator moves all occupants between two rooms (19551↔19599).
-func specAlienElevator(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if arg == "" {
-		return false
-	}
-	arg = strings.TrimSpace(arg)
-	if cmd == "close" && strings.EqualFold(arg, "door") {
-		// C moves each occupant before sending the line directly to that
-		// character (src/spec_procs3.c:401-419). This is not an act() or
-		// send_to_room() broadcast, so sleeping occupants still receive it.
-		const roomA = 19551
-		const roomB = 19599
-		playersA := w.GetPlayersInRoom(roomA)
-		mobsA := w.COrderedRoomMobs(roomA)
-		playersB := w.GetPlayersInRoom(roomB)
-		mobsB := w.COrderedRoomMobs(roomB)
-		for _, p := range playersA {
-			p.SetRoom(roomB)
-			p.SendMessage("The room starts to move!\r\n")
-		}
-		for _, m := range mobsA {
-			m.SetRoom(roomB)
-			m.SendMessage("The room starts to move!\r\n")
-		}
-		for _, p := range playersB {
-			p.SetRoom(roomA)
-			p.SendMessage("The room starts to move!\r\n")
-		}
-		for _, m := range mobsB {
-			m.SetRoom(roomA)
-			m.SendMessage("The room starts to move!\r\n")
-		}
-		return true
-	}
-	return false
-}
-
-// werewolfNumber is the werewolf special's RNG seam. Production keeps the
-// shared deterministic game stream; focused tests pin C's two conditional
-// draws without perturbing unrelated combat cases.
+// werewolfNumber is the werewolf special's RNG seam. Production keeps the shared deterministic game stream.
 var werewolfNumber = dprng.Number
 
-// mobSendToZone sends a native NPC message through C send_to_zone's exact
-// audience: awake players in the mob's zone, excluding the mob's own room.
-// Keep this separate from the broader World.SendToZone helper because the C
-// special's exclusion and awake gate are player-visible behavior.
+// specAlienElevator moves the occupants from the caller's room when its east exit is open.
+func specAlienElevator(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if w == nil || ch == nil || cmd != "close" || !strings.EqualFold(strings.TrimSpace(arg), "door") {
+		return false
+	}
+
+	fromRoom := ch.GetRoomVNum()
+	room := w.GetRoomInWorld(fromRoom)
+	if room == nil {
+		return false
+	}
+	east, ok := room.Exits["east"]
+	if !ok || east.ExitInfo&parser.ExitClosed != 0 {
+		return false
+	}
+
+	toRoom := 19551
+	if fromRoom == 19551 {
+		toRoom = 19599
+	}
+	for _, raw := range w.GetAllCharsInRoom(fromRoom) {
+		body, ok := raw.(combat.Combatant)
+		if !ok || body.GetRoom() != fromRoom {
+			continue
+		}
+		if err := w.transferBody(body, toRoom, false); err != nil {
+			continue
+		}
+		sendBodyMessage(w, body, "The room starts to move!\r\n")
+	}
+	return true
+}
+
 func (w *World) mobSendToZone(me *MobInstance, message string) {
 	if me == nil {
 		return
@@ -966,28 +956,27 @@ func specTurnUndead(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 
 // specItoh teleports the player to room 19875.
 func specItoh(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "say" && cmd != "'" {
+	if w == nil || ch == nil || (cmd != "say" && cmd != "'") {
 		return false
 	}
 	arg = strings.TrimSpace(arg)
 	if !strings.EqualFold(arg, "itoh") {
 		return false
 	}
+
+	// C's special consumes the say command by running do_say before the
+	// teleport sequence (src/spec_procs3.c:593-606).
+	w.DoSay(ch, arg)
 	ch.SendMessage("\r\nWith a blinding flash of light and a crack of thunder, you are teleported...\r\n")
 	Act(w, false, ch, nil, nil, nil,
 		"\r\nWith a blinding flash of light and a crack of thunder, $n disappears!\r\n\r\n", "", ToRoom)
 	ch.SetRoom(19875)
 	Act(w, false, ch, nil, nil, nil,
 		"\r\nWith a blinding flash of light and a crack of thunder, $n appears!\r\n\r\n", "", ToRoom)
-	// C calls do_look (src/spec_procs3.c:606), not look_at_room.
 	w.doLook(ch, nil, "look", "")
 	return true
 }
 
-// prostituteCanSee mirrors CAN_SEE(mobile, ch) for SPECIAL(prostitute).
-// C's LIGHT_OK gate is part of this procedure's visibility test; the generic
-// Go canSee helper has no World argument and therefore cannot inspect room
-// darkness here. Source: src/utils.h:515-530.
 func prostituteCanSee(w *World, mobile *MobInstance, ch *Player) bool {
 	if w == nil || mobile == nil || ch == nil {
 		return false
@@ -1239,12 +1228,13 @@ func specConjured(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 // specHisc dispatches to other specs based on the command.
 func specHisc(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd == "south" {
-		return specNoMoveSouth(w, ch, me, cmd, arg)
+		return specNoMoveSouth(w, ch, me, cmd, "")
 	}
-	return false
+	// C delegates every other command to cleric, passing a NULL argument
+	// (src/spec_procs3.c:894-903).
+	return specCleric(w, ch, me, cmd, "")
 }
 
-// specRecruiter responds to kill and cast commands.
 func specRecruiter(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd == "" {
 		return false
