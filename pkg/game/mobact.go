@@ -173,8 +173,7 @@ func (w *World) MobileActivityForMob(mob *MobInstance) {
 // mobileActivityForMob is the internal per-mob AI dispatch.
 // Caller MUST hold mob.mu. Uses direct field access (ch.RoomVNum) instead of
 // getter methods to avoid re-entrant lock deadlock.
-// Returns true when C's mobile_activity() returns early out of the entire
-// character_list loop (src/mobact.c:290).
+// Returns true when the charmed-helper assist arm ends the entire pulse walk.
 func (w *World) mobileActivityForMob(ch *MobInstance) bool {
 	// C: if (!IS_MOB(ch) || FIGHTING(ch) || !AWAKE(ch)) continue;
 	if ch.GetFightingBody() != nil || ch.GetPosition() <= combat.PosSleeping {
