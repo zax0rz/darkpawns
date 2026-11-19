@@ -15,7 +15,7 @@ The special-procedure inventory remains exhausted and the one blocked
 ## C call path and branch inventory
 
 The C registration is `{ "leer", POS_RESTING, do_action, 0, 0 }` in
-`src/interpreter.c:537`. `comm.c:910-947` applies the command position and
+`src/interpreter.c:537`. `src/interpreter.c:909-947` applies the command position and
 level gates before invoking `ACMD(do_action)` in `src/act.social.c:102-151`.
 The social record at `lib/misc/socials:450-458` has `hide=0` and
 `min_victim_position=0`, with these reachable authored branches:

@@ -1,9 +1,13 @@
 # A live immortal observer watches a new account created during relogin,
 # then sees that new character confirm self-delete at the menu.
-# C path: src/interpreter.c:2154-2155,2310-2346; src/utils.c:212-240.
+# C path: src/interpreter.c:2154-2155,2310-2346; src/act.other.c:179;
+# src/handler.c:1172-1174; src/comm.c:2136-2138; src/utils.c:212-240.
 # depth-case: entry.new-player-log
 # depth-case: entry.self-delete-log
 # depth-case: mudlog.close-losing-player
+# The actor's quit calls extract_char, which leaves d->character attached and
+# sets CON_MENU. <RELOGIN> closes that descriptor, witnessing the distinct
+# player-bearing close_socket arm before the new-player/self-delete probes.
 
 [fixture]
 empty-players
@@ -68,7 +72,7 @@ Y
 [warmup]
 goto 8105
 set player Logwitness level 38
-force Logwitness syslog normal
+force Logwitness syslog complete
 
 [probe]
 quit

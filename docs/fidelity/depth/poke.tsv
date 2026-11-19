@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	poke	poke.entry-gate	D1	command	unit-green	TestPokeRegistrationUsesCEntryGate	interpreter.c:610; act.social.c:102-118; lib/misc/socials:570-578	The registered C row is POS_RESTING with no command minimum level; the focused test pins the command gate and exact poke record metadata (R1/R2/R5e).
-do_action	poke	poke.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:610; comm.c:910-947	The shared POS_RESTING command rejection is already proven by the social position-gate vehicle (R5b/R5c).
+do_action	poke	poke.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:610	The shared POS_RESTING command rejection is already proven by the social position-gate vehicle (R5b/R5c).
 do_action	poke	poke.noshout	D1	command	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT refusal runs before target parsing and is owned by the social boundary (R5b/R5c).
 do_action	poke	poke.no-argument	D2	command	oracle-green-multiseed	poke-depth@1,2,3,5,8	act.social.c:102-127; lib/misc/socials:570-578	The no-argument record emits its exact actor-only Poke who?? line; the C # room sentinel emits no room bytes (R1/R3/R5e).
 do_action	poke	poke.target-success	D3	audience	oracle-green-multiseed	poke-depth@1,2,3,5,8	act.social.c:128-151; lib/misc/socials:570-578	Visible player and NPC targets reach the actor, non-victim room, and victim branches with the authored poke messages (R1/R3/R5e).

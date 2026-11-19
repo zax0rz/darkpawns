@@ -1,5 +1,7 @@
 # C-first one-shot attacks; six additional high-skill PCs give the 10-percent damage roll repeated chances without advancing combat pulses.
-# The mounted PC and the room peers witness the dismount lines; DEX 67 selects the feet result (src/act.offensive.c:627-630; src/fight.c:1547-1556).
+# The mounted PC and room peers witness the dismount lines. C clamps the old
+# attempted DEX 67 value to 18, so set that legal value directly; seed evidence
+# must still show the second number(0,99) draw below 27 for the feet line.
 # depth-case: fight.damage-victim-knockoff-char
 # depth-case: fight.damage-victim-dismount-feet
 
@@ -254,7 +256,7 @@ set player Knockrider level 20
 set player Knockrider maxhit 5000
 set player Knockrider hit 5000
 set player Knockrider ac 70
-set player Knockrider dex 67
+set player Knockrider dex 18
 set player Knockrider outlaw on
 set player Kickalpha level 30
 set player Kickbravo level 30

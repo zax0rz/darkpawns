@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	gasp	gasp.entry-gate	D1	command	unit-green	TestGaspRegistrationUsesCEntryGate	interpreter.c:461; act.social.c:102-112	The registered C row is POS_RESTING with no command minimum level.
-do_action	gasp	gasp.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:461; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
+do_action	gasp	gasp.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:461	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
 do_action	gasp	gasp.no-argument	D2	audience	oracle-green-multiseed	gasp-depth@1,2,3,5,8	act.social.c:102-113; lib/misc/socials:295-298	The self-only record emits the exact actor and room gasp lines with no argument.
 do_action	gasp	gasp.argument-ignored	D2	command	oracle-green-multiseed	gasp-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:295-298	Because char_found is NULL, a visible target is ignored and the no-argument pair remains the C path.
 do_action	gasp	gasp.missing-target-ignored	D2	command	oracle-green-multiseed	gasp-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:295-298	A missing target is also ignored because the self-only record has no target branch or not-found byte.

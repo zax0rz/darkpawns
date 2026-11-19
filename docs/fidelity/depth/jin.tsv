@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_kuji_kiri	jin	jin.entry-gate	D1	command	unit-green	TestJinRegistrationUsesCEntryGate	interpreter.c:523; new_cmds.c:1552-1554	The registered C row requires no level minimum at POS_STANDING; the focused test pins the authoritative gate and Go registration (R2/R5e).
-do_kuji_kiri	jin	jin.position-gate	D1	shared	delegated	flip.position-gate	interpreter.c:523; comm.c:910-947	The shared POS_STANDING command-interpreter rejection is owned by the existing flip position-gate vehicle (R2/R5b/R5c).
+do_kuji_kiri	jin	jin.position-gate	D1	shared	delegated	flip.position-gate	interpreter.c:523	The shared POS_STANDING command-interpreter rejection is owned by the existing flip position-gate vehicle (R2/R5b/R5c).
 do_kuji_kiri	jin	jin.class-gate	D1	command	unit-green	TestDoKujiKiri_JinGuardMessages	new_cmds.c:1557-1560	A non-Ninja mortal is rejected before the kuji success draw with C's exact refusal (R1/R5e).
 do_kuji_kiri	jin	jin.fighting-gate	D1	command	unit-green	TestDoKujiKiri_JinGuardMessages	new_cmds.c:1562-1565	An active fighting pointer is rejected before the kuji success draw with C's exact refusal (R1/R5e).
 do_kuji_kiri	jin	jin.lockout-gate	D1	state	unit-green	TestDoKujiKiri_JinGuardMessages	new_cmds.c:1567-1570	An existing AFF_KUJI_KIRI lockout is rejected before the kuji success draw with C's exact refusal (R1/R5e). Live witness blocked: mid-combat injection (DP-1202 - input is drained while a wait state is live, so a landed-hit fight cannot be established in the oracle harness).

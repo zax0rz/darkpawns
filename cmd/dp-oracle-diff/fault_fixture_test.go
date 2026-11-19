@@ -20,6 +20,8 @@ func TestFaultPathsResolveOnBothSides(t *testing.T) {
 		{Verb: "fault-dir", Target: "mail"},
 		{Verb: "fault-dir", Target: "object_idlist"},
 		{Verb: "fault-dir", Target: "zone-31"},
+		{Verb: "fault-luaedit", Target: "delete"},
+		{Verb: "fault-luaedit", Target: "write"},
 		{Verb: "fault-corrupt-mail", Target: "unaligned"},
 		{Verb: "fault-board", Target: "19652", Detail: "empty-message-huge-slot"},
 		{Verb: "fault-shop-temper", Target: "8038", Detail: "1"},
@@ -78,6 +80,10 @@ func TestParseFaultStepRejectsUnknown(t *testing.T) {
 	}
 	if _, ok := parseFaultStep([]string{"fault-corrupt-mail", "bad-header"}); !ok {
 		t.Fatal("parseFaultStep rejected a valid corrupt-mail step")
+	}
+	fixture, err := oraclediff.ParseScenario("luaedit-fault", strings.NewReader("[fixture]\nfault-luaedit delete\n[probe]\nlook\n"))
+	if err != nil || len(fixture.FaultFixtures) != 1 || fixture.FaultFixtures[0].Target != "delete" {
+		t.Fatalf("ParseScenario luaedit fault fixture = %+v, %v", fixture.FaultFixtures, err)
 	}
 }
 

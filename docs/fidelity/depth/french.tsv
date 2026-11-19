@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	french	french.entry-gate	D1	command	unit-green	TestFrenchRegistrationUsesCEntryGate	interpreter.c:453; act.social.c:102-112	The C row is POS_RESTING with no minimum level, and the French social record has zero hide and victim-position metadata.
-do_action	french	french.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:453; comm.c:910-947	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle.
+do_action	french	french.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:453	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle.
 do_action	french	french.no-argument	D2	audience	oracle-green-multiseed	french-depth@1,2,3,5,8	act.social.c:102-127; lib/misc/socials:260-265	The no-target record emits French whom?? and its empty room branch.
 do_action	french	french.target-success	D3	audience	oracle-green-multiseed	french-depth@1,2,3,5,8	act.social.c:128-151; lib/misc/socials:260-265	A standing peer receives the exact actor, non-victim room, and victim kiss messages.
 do_action	french	french.sleeping-target	D3	audience	oracle-green-multiseed	french-sleeping-depth@1,2,3,5,8	act.social.c:145-151; comm.c:2480-2555; lib/misc/socials:260-265	The record's zero minimum victim position admits a sleeping target; plain TO_VICT suppresses the sleeping target's private line while the actor and awake observer retain their C output.

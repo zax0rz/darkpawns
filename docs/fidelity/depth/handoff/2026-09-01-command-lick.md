@@ -16,7 +16,7 @@ the already claimed `listen` row at line 540. The next unmanifested command is
 ## C call path and branch inventory
 
 The C registration is `{ "lick", POS_RESTING, do_action, 0, 0 }` in
-`src/interpreter.c:541`. `comm.c:910-947` applies the POS_RESTING and zero
+`src/interpreter.c:541`. `src/interpreter.c:909-947` applies the POS_RESTING and zero
 level gates before invoking `ACMD(do_action)` in `src/act.social.c:102-151`.
 The record at `lib/misc/socials:460-468` has zero hide and victim-position
 metadata and these eight authored slots:

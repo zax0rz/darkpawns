@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	grumble	grumble.entry-gate	D1	command	unit-green	TestGrumbleRegistrationUsesCEntryGate	interpreter.c:482; act.social.c:102-112	The registered C row is POS_RESTING with no command minimum level, and the self-only grumble record has hide 0 with no victim-position minimum.
-do_action	grumble	grumble.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:482; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
+do_action	grumble	grumble.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:482	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
 do_action	grumble	grumble.no-argument	D2	audience	oracle-green-multiseed	grumble-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:370-373	No argument emits the exact actor You grumble about life. line and the authored $n grumbles to $mself. room line.
 do_action	grumble	grumble.argument-ignored	D2	command	oracle-green-multiseed	grumble-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:370-373	Because char_found is NULL, a visible target plus trailing words is ignored and the no-argument actor/room pair remains the C path.
 do_action	grumble	grumble.missing-target-ignored	D2	command	oracle-green-multiseed	grumble-depth@1,2,3,5,8	act.social.c:108-121; lib/misc/socials:370-373	A missing target is also ignored because this self-only record has no target lookup or not-found branch.

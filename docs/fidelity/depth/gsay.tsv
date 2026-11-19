@@ -1,8 +1,8 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_gsay	gsay	gsay.entry-gate	D1	command	unit-green	TestGsayRegistrationUsesCEntryGates	interpreter.c:483; act.comm.c:824-836	The C gsay row is POS_SLEEPING with no command minimum level.
 do_gsay	gtell	gtell.entry-gate	D1	command	unit-green	TestGsayRegistrationUsesCEntryGates	interpreter.c:484; act.comm.c:824-836	The C gtell row shares do_gsay with gsay and preserves the same POS_SLEEPING, level-zero gate.
-do_gsay	gsay	gsay.position-gate	D1	shared	delegated	group.position-gate	interpreter.c:483; comm.c:910-947	The shared POS_SLEEPING command rejection is owned by the existing group position-gate vehicle.
-do_gsay	gtell	gtell.position-gate	D1	shared	delegated	group.position-gate	interpreter.c:484; comm.c:910-947	The gtell alias uses the same shared POS_SLEEPING command rejection.
+do_gsay	gsay	gsay.position-gate	D1	shared	delegated	group.position-gate	interpreter.c:483	The shared POS_SLEEPING command rejection is owned by the existing group position-gate vehicle.
+do_gsay	gtell	gtell.position-gate	D1	shared	delegated	group.position-gate	interpreter.c:484	The gtell alias uses the same shared POS_SLEEPING command rejection.
 do_gsay	gsay	gsay.not-in-group	D1	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:829-834	A caller without AFF_GROUP receives the exact group-membership refusal before argument handling.
 do_gsay	gtell	gtell.not-in-group	D1	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	act.comm.c:829-834	The gtell row reaches the same do_gsay group-membership refusal.
 do_gsay	gsay	gsay.no-argument	D1	command	oracle-green-multiseed	gsay-depth@1,2,3,5,8	src/act.comm.c:829-836	After the actor joins a group, a bare gsay reaches C's exact empty group-say prompt (R1/R3/R5e).

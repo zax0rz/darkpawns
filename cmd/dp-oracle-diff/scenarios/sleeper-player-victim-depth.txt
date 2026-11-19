@@ -1,0 +1,122 @@
+# C-first do_sleeper failure with a connected player victim.
+# The old failure scenario targets NPC Talis, who has no descriptor, so its
+# room/actor output cannot witness the victim-only break-free bytes. The
+# four-level gap forces prob=0 for this mortal target after the percentage
+# draw; the actor is an Outlaw and both players are standing in room 8105.
+# depth-case: sleeper.failure-message-order
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Sleeperplayergod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sleeperplayergod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Sleeperpcactor
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:actor]
+Sleeperpcactor
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+Sleeperpcvictim
+Y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+Sleeperpcvictim
+y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+set player Sleeperpcactor level 20
+set player Sleeperpcvictim level 24
+skillset Sleeperpcactor 'sleeper' 100
+set player Sleeperpcactor outlaw on
+teleport Sleeperpcactor 8105
+teleport Sleeperpcvictim 8105
+
+[probe:actor]
+sleeper Sleeperpcvictim

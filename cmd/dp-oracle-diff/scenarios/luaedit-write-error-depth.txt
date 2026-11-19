@@ -1,0 +1,58 @@
+# C-first SYSERR write failure with an independent full-syslog observer.
+# The disposable fixture replaces scripts/mob with a regular file, so the
+# absent target starts an empty editor and fopen("w") fails with ENOTDIR.
+# depth-case: mudlog.file-editor-write-error
+
+[fixture]
+seed-player
+quiet-mobs
+fault-luaedit write
+
+[setup:oracle]
+Luaerrorwriteadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Luaerrorwriteadmin
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port:observer]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+send:observer set player Luaerrorwriteadmin level 38
+send:observer syslog complete
+
+[probe]
+luaedit mob l1write
+probe
+/s

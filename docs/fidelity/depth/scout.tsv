@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_scout	scout	scout.entry-gate	D1	command	unit-green	TestScoutRegistrationUsesCEntryGate	interpreter.c:676; comm.c:910-947	The registered C row permits every level at POS_STANDING and the focused test pins the entry gate (R1/R2/R5e).
+do_scout	scout	scout.entry-gate	D1	command	unit-green	TestScoutRegistrationUsesCEntryGate	interpreter.c:676	The registered C row permits every level at POS_STANDING and the focused test pins the entry gate (R1/R2/R5e).
 do_scout	scout	scout.no-argument	D1	command	oracle-green-multiseed	scout-depth@1,2,3,5,8	act.other.c:1836-1839	A missing argument emits exactly Scout where? (R1/R3/R5e).
 do_scout	scout	scout.invalid-direction	D1	command	oracle-green-multiseed	scout-depth@1,2,3,5,8	act.other.c:1840-1843	An unknown direction emits exactly Scout in which direction? (R1/R3/R5e).
 do_scout	scout	scout.fill-word-direction	D1	command	oracle-green-multiseed	scout-depth@1,2,3,5,8	interpreter.c:1265-1283; act.other.c:1836-1846	C one_argument drops the leading fill word before direction search (R1/R2/R3/R5e).

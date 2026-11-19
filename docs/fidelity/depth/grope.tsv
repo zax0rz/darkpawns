@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	grope	grope.entry-gate	D1	command	unit-green	TestGropeRegistrationUsesCEntryGate	interpreter.c:479; act.social.c:102-117	The registered C row is POS_RESTING with minimum level 0; focused proof pins hide=5, no social level gate, and the authored eight-field grope record.
-do_action	grope	grope.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:479; comm.c:910-947	The shared POS_RESTING dispatcher rejection is owned by the existing fade position-gate vehicle.
+do_action	grope	grope.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:479	The shared POS_RESTING dispatcher rejection is owned by the existing fade position-gate vehicle.
 do_action	grope	grope.no-argument	D2	command	oracle-green-multiseed	grope-depth@1,2,3,5,8	act.social.c:119-130; lib/misc/socials:345-353	No argument emits the exact Whom do you wish to grope?? actor prompt and the authored # no-argument room branch.
 do_action	grope	grope.target-success	D3	audience	oracle-green-multiseed	grope-depth@1,2,3,5,8	act.social.c:132-147; lib/misc/socials:345-353	A visible awake target reaches the authored actor, victim, and TO_NOTVICT observer lines.
 do_action	grope	grope.target-audience	D3	audience	oracle-green-multiseed	grope-depth@1,2,3,5,8	act.social.c:145-147; comm.c:2392-2555	The awake peer receives the exact hidden social observer line while the actor is excluded from TO_NOTVICT.

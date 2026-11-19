@@ -15,7 +15,7 @@ The special-procedure inventory remains exhausted and the one blocked
 ## C call path and branch inventory
 
 The C registration is `{ "leave", POS_STANDING, do_leave, 0, 0 }` in
-`src/interpreter.c:536`. `comm.c:910-947` applies the command position and
+`src/interpreter.c:536`. `src/interpreter.c:909-947` applies the command position and
 level gates before invoking `ACMD(do_leave)` in
 `src/act.movement.c:676-694`. The handler ignores command arguments. It
 first emits `You are outside.. where do you want to go?\r\n` unless the

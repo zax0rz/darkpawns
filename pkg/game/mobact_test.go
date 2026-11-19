@@ -1125,6 +1125,41 @@ func TestMobileActivityCharmedHelperAssistsMaster(t *testing.T) {
 	}
 }
 
+// TestMobileActivityCharmedHelperAssistReturnsFromPulse pins src/mobact.c:290:
+// after a charmed MOB_HELPER calls do_assist for its fighting master, C
+// executes `return;` out of mobile_activity(), ending the entire pulse walk so
+// older mobiles in character_list do not burn wander/sound draws on that tick.
+func TestMobileActivityCharmedHelperAssistReturnsFromPulse(t *testing.T) {
+	w, _ := newMobactTestWorld(t)
+	older := newMobactTestMob(w, 9362, 1, 0, "sentinel")
+	older.Proto().ShortDesc = "an older mob"
+	newer := newMobactTestMob(w, 9363, 1, 0, "helper", "sentinel")
+	newer.Proto().ShortDesc = "a charmed helper"
+	newer.SetAffected(affCharm)
+	master := newMobactSpeakingPlayer(t, w, "Master")
+	foe := newMobactTestMob(w, 9364, 1, 0, "sentinel")
+	foe.Proto().ShortDesc = "a foe"
+	newer.SetFollowing(master.Name)
+	master.SetFightingBody(foe)
+	foe.SetFightingBody(master)
+
+	draws := 0
+	orig := mobactNumber
+	mobactNumber = func(from, to int) int {
+		draws++
+		return orig(from, to)
+	}
+	defer func() { mobactNumber = orig }()
+
+	w.MobileActivity()
+
+	// Only newer ran (wander + sound = 2 draws), then returned from the entire
+	// MobileActivity pulse before reaching older.
+	if draws != 2 {
+		t.Fatalf("mobactNumber draws = %d, want 2 (only assisting helper should run before C return)", draws)
+	}
+}
+
 func TestMobileActivityDivineAngelsStayOutOfCombat(t *testing.T) {
 	w, ce := newMobactTestWorld(t)
 	master := newMobactSpeakingPlayer(t, w, "Master")

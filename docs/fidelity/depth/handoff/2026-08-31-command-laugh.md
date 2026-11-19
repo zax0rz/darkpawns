@@ -36,7 +36,7 @@ at `src/interpreter.c:534`.
 The authoritative path is `src/interpreter.c:533` →
 `src/act.social.c:102-151` (`ACMD(do_action)`) →
 `src/comm.c:2392-2555` (`perform_act` and audience delivery), with the shared
-`src/comm.c:910-947` command-position gate before dispatch. The handler loads
+`src/interpreter.c:909-947` command-position gate before dispatch. The handler loads
 the `laugh` record from `lib/misc/socials:1034-1042`, checks the actor's
 `PLR_NOSHOUT` bit before argument parsing, and uses C `one_argument` because
 the record has a `char_found` message.

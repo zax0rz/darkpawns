@@ -16,7 +16,7 @@ claimed `lick` row at line 541. The next unmanifested command is `lock` at
 ## C call path and branch inventory
 
 The C registration is `{ "lines", POS_DEAD, do_lines, 0, 0 }` in
-`src/interpreter.c:542`; `comm.c:910-947` applies the all-position and zero
+`src/interpreter.c:542`; `src/interpreter.c:909-947` applies the all-position and zero
 level entry gates before invoking `ACMD(do_lines)` in `src/act.display.c:112-141`.
 `do_lines` calls `one_argument`, reports the current `GET_SCREENSIZE` when no
 token is present, then calls raw C `atoi`. Its reachable branches are:

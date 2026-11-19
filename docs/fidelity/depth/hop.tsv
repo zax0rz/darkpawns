@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	hop	hop.entry-gate	D1	command	unit-green	TestHopRegistrationUsesCEntryGate	interpreter.c:501; act.social.c:102-151; lib/misc/socials:400-408	The registered C row is POS_RESTING with no command minimum level; focused proof pins the zero hide/victim-position metadata and all eight authored messages.
-do_action	hop	hop.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:501; comm.c:910-947	The shared POS_RESTING dispatcher rejection is owned by the existing fade position-gate vehicle.
+do_action	hop	hop.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:501	The shared POS_RESTING dispatcher rejection is owned by the existing fade position-gate vehicle.
 do_action	hop	hop.no-argument	D2	audience	oracle-green-multiseed	hop-depth@1,2,3,5,8	act.social.c:119-127; lib/misc/socials:400-408	No argument emits the exact actor and room hippity-hop lines across the deterministic seed matrix.
 do_action	hop	hop.one-argument	D2	command	oracle-green-multiseed	hop-depth@1,2,3,5,8	act.social.c:114-121; lib/misc/socials:400-408	C one_argument selects the first target token after the fill word and ignores trailing words before lookup.
 do_action	hop	hop.target-success	D3	audience	oracle-green-multiseed	hop-depth@1,2,3,5,8	act.social.c:145-151; lib/misc/socials:400-408	A visible target reaches the authored actor and target messages while the observer receives the TO_NOTVICT room line.

@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_sharpen	sharpen	sharpen.entry-gate	D1	command	unit-green	TestSharpenRegistrationUsesCEntryGate	interpreter.c:692; comm.c:910-947	The registered C row is available at mortal level with POS_RESTING; the focused registry test pins the Go gate under R1/R2/R5e.
+do_sharpen	sharpen	sharpen.entry-gate	D1	command	unit-green	TestSharpenRegistrationUsesCEntryGate	interpreter.c:692	The registered C row is available at mortal level with POS_RESTING; the focused registry test pins the Go gate under R1/R2/R5e.
 do_sharpen	sharpen	sharpen.no-argument	D1	command	oracle-green-multiseed	sharpen-depth@1,2,3,5,8	new_cmds.c:2743-2751	No argument reaches half_chop and the failed carried lookup emits exactly Sharpen what? under R1/R3/R5e.
 do_sharpen	sharpen	sharpen.missing-object	D1	command	oracle-green-multiseed	sharpen-depth@1,2,3,5,8	new_cmds.c:2743-2751	A named object absent from carrying follows the same exact C message; no Go skill-zero early return remains under R1/R4/R5e.
 do_sharpen	sharpen	sharpen.carried-only-lookup	D1	state	unit-green	TestDoSharpenUsesCObjectGatesAndCarriedOnly	new_cmds.c:2747	The C get_obj_in_list_vis scope is carrying only; the focused test proves an equipped-only slash weapon is invisible to sharpen under R1/R5e.

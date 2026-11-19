@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	slap	slap.entry-gate	D1	command	unit-green	TestSlapRegistrationUsesCEntryGate	interpreter.c:707; act.social.c:102-112; lib/misc/socials:715-723	The registered C row is POS_RESTING with no command minimum; the focused test pins the exact slap metadata and all authored messages under R1/R2/R5e.
-do_action	slap	slap.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:707; comm.c:910-947	The shared POS_RESTING command-interpreter rejection is owned by the existing position-gate vehicle under R2/R5b/R5c.
+do_action	slap	slap.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:707	The shared POS_RESTING command-interpreter rejection is owned by the existing position-gate vehicle under R2/R5b/R5c.
 do_action	slap	slap.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT emote refusal runs before target parsing and is owned by the existing social boundary under R1/R5b/R5c.
 do_action	slap	slap.no-argument	D2	audience	oracle-green-multiseed	slap-depth@1,2,3,5,8	act.social.c:119-127; lib/misc/socials:715-723	No argument emits the exact actor-only Normally you slap SOMEBODY. line; the authored others_no_arg sentinel emits no room bytes under R1/R3/R5e.
 do_action	slap	slap.target-success	D3	audience	oracle-green-multiseed	slap-depth@1,2,3,5,8	act.social.c:145-151; lib/misc/socials:715-723	A visible target receives the exact actor and victim slap messages with the distinct observer receiving the TO_NOTVICT room line under R1/R3/R5e.

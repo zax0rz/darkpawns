@@ -1,0 +1,58 @@
+# C-first SYSERR delete failure with an independent full-syslog observer.
+# The disposable fixture makes scripts/mob read-only while assembler.lua
+# remains readable; clearing the editor then reaches remove() failure.
+# depth-case: mudlog.file-editor-delete-error
+
+[fixture]
+seed-player
+quiet-mobs
+fault-luaedit delete
+
+[setup:oracle]
+Luaerroradmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Luaerroradmin
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port:observer]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+send:observer set player Luaerroradmin level 38
+send:observer syslog complete
+
+[probe]
+luaedit mob assembler
+/c
+/s

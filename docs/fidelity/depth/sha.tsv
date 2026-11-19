@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_kuji_kiri	sha	sha.entry-gate	D1	command	unit-green	TestShaRegistrationUsesCEntryGate	interpreter.c:686;comm.c:910-947	The registered C row permits POS_STANDING callers at every level; the focused test pins the command-surface gate (R2/R5e).
-do_kuji_kiri	sha	sha.position-gate	D1	shared	delegated	flip.position-gate	interpreter.c:686;comm.c:910-947	The shared POS_STANDING dispatcher rejection is owned by the existing flip position-gate proof (R2/R5b/R5c).
+do_kuji_kiri	sha	sha.entry-gate	D1	command	unit-green	TestShaRegistrationUsesCEntryGate	interpreter.c:686	The registered C row permits POS_STANDING callers at every level; the focused test pins the command-surface gate (R2/R5e).
+do_kuji_kiri	sha	sha.position-gate	D1	shared	delegated	flip.position-gate	interpreter.c:686	The shared POS_STANDING dispatcher rejection is owned by the existing flip position-gate proof (R2/R5b/R5c).
 do_kuji_kiri	sha	sha.class-gate	D1	shared	delegated	jin.class-gate	new_cmds.c:1557-1560	The shared non-Ninja mortal refusal is owned by the Jin kuji-kiri gate proof (R1/R5b/R5c).
 do_kuji_kiri	sha	sha.fighting-gate	D1	shared	delegated	jin.fighting-gate	new_cmds.c:1562-1565	The shared FIGHTING refusal is owned by the Jin kuji-kiri gate proof (R1/R5b/R5c).
 do_kuji_kiri	sha	sha.lockout-gate	D1	shared	delegated	jin.lockout-gate	new_cmds.c:1567-1570	The shared aggregate AFF_KUJI_KIRI lockout is owned by the Jin kuji-kiri gate proof (R1/R5b/R5c).

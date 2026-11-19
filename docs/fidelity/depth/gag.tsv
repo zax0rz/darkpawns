@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	gag	gag.entry-gate	D1	command	unit-green	TestGagRegistrationUsesCEntryGate	interpreter.c:460; act.social.c:102-112	The C row is POS_RESTING with no minimum level; its social record is gag 0 5 (no hide-invisible flag, POS_RESTING victim minimum), represented in Go as MinLevel=0 and legacy HideFlag=5.
-do_action	gag	gag.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:460; comm.c:910-947	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle.
+do_action	gag	gag.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:460	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle.
 do_action	gag	gag.noshout	D1	command	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT refusal runs before target parsing and is owned by the dance social matrix.
 do_action	gag	gag.no-argument	D3	audience	oracle-green-multiseed	gag-depth@1,2,3,5,8	act.social.c:102-127; lib/misc/socials:1188-1196	The no-target record emits the exact actor and non-hidden non-victim room lines.
 do_action	gag	gag.target-success	D3	audience	oracle-green-multiseed	gag-depth@1,2,3,5,8	act.social.c:145-151; lib/misc/socials:1188-1196	An awake visible peer at POS_RESTING receives the actor, room, and victim gag messages with C substitutions.

@@ -158,16 +158,19 @@ func (w *World) MobileActivity() {
 		if !ready {
 			continue
 		}
-		w.mobileActivityForMob(ch)
+		if w.mobileActivityForMob(ch) {
+			return
+		}
 	}
 }
 
 // mobileActivityForMob is the internal per-mob AI dispatch.
 // Caller must NOT hold mob.mu; accessors lock individually (DP-590).
-func (w *World) mobileActivityForMob(ch *MobInstance) {
+// Returns true when the charmed-helper assist arm ends the entire pulse walk.
+func (w *World) mobileActivityForMob(ch *MobInstance) bool {
 	// C: if (!IS_MOB(ch) || FIGHTING(ch) || !AWAKE(ch)) continue;
 	if ch.GetFightingBody() != nil || ch.GetPosition() <= combat.PosSleeping {
-		return
+		return false
 	}
 
 	// Hunter mobs chase their targets two steps at a time. C performs both
@@ -184,11 +187,11 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	if hasMobFlag(ch, "spec") {
 		specFn := getMobVNumSpec(ch.Proto().VNum)
 		if specFn != nil && callMobSpecSafely(specFn, w, ch) {
-			return
+			return false
 		}
 	}
 	if !ch.IsAlive() || ch.RoomVNum < 0 {
-		return
+		return false
 	}
 
 	// -- Wake sleeper'd mobs --
@@ -211,11 +214,11 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	door := mobactNumber(0, 18)
 	if !hasMobFlag(ch, "sentinel") && ch.GetPosition() == combat.PosStanding {
 		if w.wanderMobWithDoor(ch, door) {
-			return // C's sector-gate continue skips the rest of this mob's pulse.
+			return false // C's sector-gate continue skips the rest of this mob's pulse.
 		}
 	}
 	if !ch.IsAlive() || ch.RoomVNum < 0 {
-		return
+		return false
 	}
 
 	// Sound trigger (C: 1-in-16 chance for mp_sound + lua sound). This draw is
@@ -234,11 +237,11 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	// return ends this mobile's turn.
 	if ch.HasScript("onpulse_all") && w.roomHasOtherOccupant(ch, false) {
 		if w.runPulseScript(ch, "onpulse_all") {
-			return
+			return false
 		}
 	}
 	if !ch.IsAlive() || ch.HasMobFlag(MobFlagExtract) || ch.RoomVNum < 0 { // utils.c:check_dead
-		return
+		return false
 	}
 
 	// mobact.c:180-193: onpulse_pc when a player is in the room.
@@ -246,7 +249,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 		w.runPulseScript(ch, "onpulse_pc")
 	}
 	if !ch.IsAlive() || ch.HasMobFlag(MobFlagExtract) || ch.RoomVNum < 0 { // utils.c:check_dead
-		return
+		return false
 	}
 
 	// -- Aggressive Mobs --
@@ -306,7 +309,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 		}
 	}
 	if !ch.IsAlive() || ch.RoomVNum < 0 {
-		return
+		return false
 	}
 
 	// -- Race-hate aggression (src/mobact.c:236-258) --
@@ -350,7 +353,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 		}
 	}
 	if !ch.IsAlive() || ch.RoomVNum < 0 {
-		return
+		return false
 	}
 
 	// -- Mob Memory --
@@ -400,7 +403,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 		}
 	}
 	if !ch.IsAlive() || ch.RoomVNum < 0 {
-		return
+		return false
 	}
 
 	// -- Helper Mobs --
@@ -415,7 +418,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				if c, ok := master.(combat.Combatant); ok && c.GetFightingBody() != nil {
 					// C: do_assist(ch, GET_NAME(ch->master), 0, 0)
 					w.NPCCommandDirect(ch, "assist", master.GetName())
-					return
+					return true
 				}
 			}
 		}
@@ -441,7 +444,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 		}
 	}
 	if !ch.IsAlive() || ch.RoomVNum < 0 {
-		return
+		return false
 	}
 
 	// -- MOB_AGGR24: attack players level 24+ --
@@ -481,7 +484,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 		}
 	}
 	if !ch.IsAlive() || ch.RoomVNum < 0 {
-		return
+		return false
 	}
 
 	// -- AGGR24 + AGGRESSIVE + Full HP: attack weaker NPCs --
@@ -505,6 +508,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			}
 		}
 	}
+	return false
 }
 
 func (w *World) scavengerPickup(ch *MobInstance) {

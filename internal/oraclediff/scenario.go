@@ -134,7 +134,7 @@ type MiscFileFixture struct {
 // disposable harness trees so the C oracle and the Go port observe the same
 // unreadable or corrupt state.
 type FaultFixture struct {
-	Verb   string // fault-dir, fault-corrupt-mail, fault-board, fault-crash-file, fault-shop-temper
+	Verb   string // fault-dir, fault-corrupt-mail, fault-board, fault-crash-file, fault-shop-temper, fault-luaedit
 	Target string // logical path (dir), corruption mode (mail), player (crash), shop vnum
 	Detail string // malformation (board), temper value (shop)
 }
@@ -512,7 +512,8 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				strings.EqualFold(fields[0], "fault-corrupt-mail") ||
 				strings.EqualFold(fields[0], "fault-board") ||
 				strings.EqualFold(fields[0], "fault-crash-file") ||
-				strings.EqualFold(fields[0], "fault-shop-temper") {
+				strings.EqualFold(fields[0], "fault-shop-temper") ||
+				strings.EqualFold(fields[0], "fault-luaedit") {
 				return Scenario{}, fmt.Errorf("scenario %q line %d: invalid fault fixture", name, lineNo)
 			}
 			if len(fields) == 6 && strings.EqualFold(fields[0], "zone-command") {
@@ -968,6 +969,7 @@ const FaultControlPrefix = "~fault"
 //	fault-corrupt-mail <unaligned|bad-header>
 //	fault-board <object-vnum> <malformation>
 //	fault-crash-file <player>
+//	fault-luaedit <delete|write>
 func parseFaultFixture(fields []string) (FaultFixture, bool) {
 	if len(fields) < 2 {
 		return FaultFixture{}, false
@@ -1001,6 +1003,10 @@ func parseFaultFixture(fields []string) (FaultFixture, bool) {
 					return FaultFixture{Verb: "fault-shop-temper", Target: fields[1], Detail: fields[2]}, true
 				}
 			}
+		}
+	case "fault-luaedit":
+		if len(fields) == 2 && (fields[1] == "delete" || fields[1] == "write") {
+			return FaultFixture{Verb: "fault-luaedit", Target: fields[1]}, true
 		}
 	}
 	return FaultFixture{}, false
