@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 
 	"github.com/zax0rz/darkpawns/pkg/common"
@@ -203,20 +204,35 @@ func cmdForceText(s *Session, argument string) error {
 		if resolved.Player != nil {
 			game.Act(s.manager.world, true, s.player, resolved.Player, nil, nil, fmt.Sprintf("$n has forced you to '%s'.", forceCmd), "", game.ToVict)
 		} else if targetActor, ok := body.(game.Actor); ok {
-			var privateSink func(string)
-			if targetSession != nil {
-				privateSink = func(text string) { targetSession.Send(text) }
-			}
-			game.ActWithPrivateSink(s.manager.world, true, s.player, targetActor, nil, nil, fmt.Sprintf("$n has forced you to '%s'.", forceCmd), "", game.ToVict, targetActor, privateSink)
+			forceMobNotice(s, targetActor, targetSession, forceCmd)
 		}
 	}
 	game.MudLog(fmt.Sprintf("(GC) %s forced %s to %s", s.player.Name, body.GetName(), forceCmd), game.MudlogNormal, max(s.player.GetLevel()+1, s.player.GetInvisLevel()), true)
 	if resolved.Player != nil {
 		forceSessionCommand(s, targetSession, forceCmd, false)
-	} else if result := s.manager.executeCharacterCommand(body, targetSession, forceCmd); result == game.CharacterCommandUnsupported {
-		slog.Warn("forced character command unsupported", "target", body.GetName(), "command", forceCmd)
+	} else {
+		forceMobCommand(s, body, targetSession, forceCmd)
 	}
 	return nil
+}
+
+// forceMobNotice is do_force's act(buf1, TRUE, ch, NULL, vict, TO_VICT) for a
+// mobile, reaching a switched descriptor when one is attached
+// (src/act.wizard.c:1875,1890).
+func forceMobNotice(s *Session, body game.Actor, targetSession *Session, forceCmd string) {
+	var privateSink func(string)
+	if targetSession != nil {
+		privateSink = func(text string) { targetSession.Send(text) }
+	}
+	game.ActWithPrivateSink(s.manager.world, true, s.player, body, nil, nil, fmt.Sprintf("$n has forced you to '%s'.", forceCmd), "", game.ToVict, body, privateSink)
+}
+
+// forceMobCommand is do_force's command_interpreter(vict, to_force) for a
+// mobile (src/act.wizard.c:1880,1891).
+func forceMobCommand(s *Session, body combat.Combatant, targetSession *Session, forceCmd string) {
+	if result := s.manager.executeCharacterCommand(body, targetSession, forceCmd); result == game.CharacterCommandUnsupported {
+		slog.Warn("forced character command unsupported", "target", body.GetName(), "command", forceCmd)
+	}
 }
 
 func findForceSession(s *Session, name string) *Session {
@@ -324,14 +340,8 @@ func forceRoom(s *Session, forceCmd string) {
 				continue
 			}
 			targetSession := s.manager.combatSession(body)
-			var privateSink func(string)
-			if targetSession != nil {
-				privateSink = func(text string) { targetSession.Send(text) }
-			}
-			game.ActWithPrivateSink(s.manager.world, true, s.player, body, nil, nil, fmt.Sprintf("$n has forced you to '%s'.", forceCmd), "", game.ToVict, body, privateSink)
-			if result := s.manager.executeCharacterCommand(body, targetSession, forceCmd); result == game.CharacterCommandUnsupported {
-				slog.Warn("forced character command unsupported", "target", body.GetName(), "command", forceCmd)
-			}
+			forceMobNotice(s, body, targetSession, forceCmd)
+			forceMobCommand(s, body, targetSession, forceCmd)
 		}
 	}
 }
