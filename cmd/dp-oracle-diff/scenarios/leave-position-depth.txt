@@ -1,5 +1,5 @@
 # C-first do_leave position-gate vehicle (src/interpreter.c:536;
-# comm.c:910-947). The actor is put to sleep before the probe, so the
+# src/interpreter.c:909-947). The actor is put to sleep before the probe, so the
 # registered POS_STANDING gate rejects leave before do_leave runs.
 
 # depth-case: leave.position-gate

@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	fume	fume.entry-gate	D1	command	unit-green	TestFumeRegistrationUsesCEntryGate	interpreter.c:455; act.social.c:102-112	The C row is POS_RESTING with no command minimum level; the social record independently carries hide=1 and victim minimum POS_RESTING.
-do_action	fume	fume.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:455; comm.c:910-947	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle.
+do_action	fume	fume.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:455	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle.
 do_action	fume	fume.no-argument	D3	audience	oracle-green-multiseed	fume-depth@1,2,3,5,8	act.social.c:102-127; lib/misc/socials:275-282	The no-target record emits its exact actor and room fume lines.
 do_action	fume	fume.target-success	D3	audience	oracle-green-multiseed	fume-depth@1,2,3,5,8	act.social.c:128-151; lib/misc/socials:275-282	A standing peer receives the actor, non-victim room, and victim branches with C's passionate fume text.
 do_action	fume	fume.target-not-found	D1	command	oracle-green-multiseed	fume-depth@1,2,3,5,8	act.social.c:128-132; lib/misc/socials:275-282	An unresolved target emits the exact record-specific not-found line.

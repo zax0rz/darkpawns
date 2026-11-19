@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	hum	hum.entry-gate	D1	command	unit-green	TestHumRegistrationUsesCEntryGate	interpreter.c:505; act.social.c:102-112; lib/misc/socials:1391-1394	The registered C row is POS_RESTING with no command minimum level; the self-only social record has hide=0, no victim-position minimum, and all three authored messages.
-do_action	hum	hum.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:505; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
+do_action	hum	hum.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:505	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
 do_action	hum	hum.no-argument	D2	audience	oracle-green-multiseed	hum-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:1391-1394	No argument emits the exact actor hum line and the authored room line across the deterministic seed matrix.
 do_action	hum	hum.argument-ignored	D2	command	oracle-green-multiseed	hum-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:1391-1394	Because char_found is NULL, a visible target plus trailing words is ignored and the no-argument actor/room pair remains the C path.
 do_action	hum	hum.missing-target-ignored	D2	command	oracle-green-multiseed	hum-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:1391-1394	A missing target is also ignored because this self-only record has no target lookup or not-found byte.

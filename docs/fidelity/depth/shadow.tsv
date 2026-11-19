@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_follow	shadow	shadow.entry-gate	D1	command	unit-green	TestShadowRegistrationUsesCEntryGate	interpreter.c:687;comm.c:910-947	The registered C row permits every level at POS_STANDING and the focused test pins the command-surface gate (R1/R2/R5e).
-do_follow	shadow	shadow.position-gate	D1	shared	delegated	flip.position-gate	interpreter.c:687;comm.c:910-947	The shared POS_STANDING dispatcher rejection is owned by the existing flip position-gate proof (R2/R5b/R5c).
+do_follow	shadow	shadow.entry-gate	D1	command	unit-green	TestShadowRegistrationUsesCEntryGate	interpreter.c:687	The registered C row permits every level at POS_STANDING and the focused test pins the command-surface gate (R1/R2/R5e).
+do_follow	shadow	shadow.position-gate	D1	shared	delegated	flip.position-gate	interpreter.c:687	The shared POS_STANDING dispatcher rejection is owned by the existing flip position-gate proof (R2/R5b/R5c).
 do_follow	shadow	shadow.no-argument	D1	shared	delegated	follow.no-argument	act.movement.c:892-901	The quiet subcommand shares C one_argument and no-target prompt with ordinary follow, owned by follow (R1/R2/R5b/R5c).
 do_follow	shadow	shadow.target-not-found	D1	shared	delegated	follow.target-not-found	act.movement.c:894-898	The visible-room target lookup and NOPERSON bytes are shared with do_follow, owned by follow (R1/R2/R5b/R5c).
 do_follow	shadow	shadow.shared-relation-gates	D3	shared	delegated	follow.player-relation-state	act.movement.c:904-948;utils.c:365-498	Charm, self, circle, and leader-switch relation state is owned by the ordinary follow matrix; shadow adds only its quiet skill branch (R1/R5b/R5c).

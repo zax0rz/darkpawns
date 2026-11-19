@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	nod	nod.entry-gate	D1	command	unit-green	TestNodRegistrationUsesCEntryGate	interpreter.c:568; act.social.c:102-151; lib/misc/socials:1044-1051	The C row permits every level at POS_RESTING; the focused test pins the command gate, zero social hide/victim metadata, and all eight authored messages including the blank others-auto record (R1/R2/R5e).
-do_action	nod	nod.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:568; comm.c:910-947	The shared POS_RESTING dispatcher rejection is owned by the existing social position-gate vehicle (R2/R5b/R5c).
+do_action	nod	nod.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:568	The shared POS_RESTING dispatcher rejection is owned by the existing social position-gate vehicle (R2/R5b/R5c).
 do_action	nod	nod.no-argument	D2	audience	oracle-green-multiseed	nod-depth@1,2,3,5,8	act.social.c:102-127; lib/misc/socials:1044-1051	The no-target record emits the exact actor and ordinary room nod lines (R1/R3/R5e).
 do_action	nod	nod.target-success	D3	audience	oracle-green-multiseed	nod-depth@1,2,3,5,8	act.social.c:145-151; lib/misc/socials:1044-1051	A visible target reaches the authored actor, non-victim room, and victim nod messages (R1/R3/R5e).
 do_action	nod	nod.target-audience	D3	audience	oracle-green-multiseed	nod-depth@1,2,3,5,8	act.social.c:145-151; comm.c:2392-2555; lib/misc/socials:1044-1051	Distinct target and observer peers prove TO_VICT and TO_NOTVICT exclusion topology with hide=0 (R1/R3/R5e).

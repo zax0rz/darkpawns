@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	mosh	mosh.entry-gate	D1	command	unit-green	TestMoshRegistrationUsesCEntryGate	interpreter.c:552; act.social.c:102-112	The registered C row is POS_RESTING with no command minimum level; the Go registry preserves both entry gates (R1/R2/R5e).
-do_action	mosh	mosh.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:552; comm.c:910-947	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle (R1/R5b/R5c).
+do_action	mosh	mosh.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:552	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle (R1/R5b/R5c).
 do_action	mosh	mosh.no-argument	D2	command	oracle-green-multiseed	mosh-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:1302-1310	No argument emits the exact actor and room social messages (R1/R3/R5e).
 do_action	mosh	mosh.one-argument	D2	command	oracle-green-multiseed	mosh-depth@1,2,3,5,8	act.social.c:114-121; interpreter.c:1267-1288	C one_argument selects only the first target token and ignores trailing words on the successful target path (R1/R2/R5e).
 do_action	mosh	mosh.target-success	D3	command	oracle-green-multiseed	mosh-depth@1,2,3,5,8	act.social.c:141-151; lib/misc/socials:1302-1308	A visible awake target reaches the authored success branch and actor output (R1/R3/R5e).

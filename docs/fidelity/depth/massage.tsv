@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	massage	massage.entry-gate	D1	command	unit-green	TestMassageRegistrationUsesCEntryGate	interpreter.c:557; act.social.c:102-121; lib/misc/socials:480-488	The C row is unrestricted at POS_RESTING; the focused test pins the command gate, hide flag, victim-position metadata, and all eight authored messages (R1/R2/R5e).
-do_action	massage	massage.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:557; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing social position-gate proof (R2/R5b/R5c).
+do_action	massage	massage.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:557	The shared POS_RESTING command rejection is owned by the existing social position-gate proof (R2/R5b/R5c).
 do_action	massage	massage.no-argument	D2	audience	oracle-green-multiseed	massage-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:480-488	No argument emits the exact actor prompt and the authored `#` room branch (R1/R3/R5e).
 do_action	massage	massage.one-argument	D2	command	oracle-green-multiseed	massage-depth@1,2,3,5,8	act.social.c:114-121; interpreter.c:1265-1283	C consumes one target token and ignores trailing words before visible-room lookup (R1/R2/R5e).
 do_action	massage	massage.target-success	D3	audience	oracle-green-multiseed	massage-depth@1,2,3,5,8	act.social.c:132-151; lib/misc/socials:480-488	A visible target receives the authored actor, observer, and victim messages (R1/R3/R5e).

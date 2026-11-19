@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	fwap	fwap.entry-gate	D1	command	unit-green	TestFwapRegistrationUsesCEntryGate	interpreter.c:457; act.social.c:102-112	The C row is POS_RESTING with no minimum level; the fwap social record also has zero hide and victim-position metadata.
-do_action	fwap	fwap.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:457; comm.c:910-947	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle.
+do_action	fwap	fwap.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:457	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle.
 do_action	fwap	fwap.noshout	D1	command	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT refusal runs before target parsing and is owned by the dance social matrix.
 do_action	fwap	fwap.no-argument	D3	audience	oracle-green-multiseed	fwap-depth@1,2,3,5,8	act.social.c:102-127; lib/misc/socials:285-293	The no-target record emits the exact actor and non-victim room lines.
 do_action	fwap	fwap.target-success	D3	audience	oracle-green-multiseed	fwap-depth@1,2,3,5,8	act.social.c:145-151; lib/misc/socials:285-293	An awake visible peer receives the actor, room, and victim fwap messages with C substitutions.

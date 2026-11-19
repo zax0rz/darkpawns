@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	smile	smile.entry-gate	D1	command	unit-green	TestSmileRegistrationUsesCEntryGateAndRecord	interpreter.c:710; act.social.c:102-112; lib/misc/socials:725-733	The registered C row is POS_RESTING with no command minimum; the social record preserves level 1, hide 0, the default zero victim-position minimum, and all eight authored slots (R1/R2/R5e).
-do_action	smile	smile.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:710; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing social position-gate vehicle (R5b/R5c).
+do_action	smile	smile.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:710	The shared POS_RESTING command rejection is owned by the existing social position-gate vehicle (R5b/R5c).
 do_action	smile	smile.social-level	D1	command	delegated	social.table-parity	act.social.c:102-112; lib/misc/socials:725-733	The shared social-level check is pinned by the record-contract/table parity evidence; the actor fixture is level 1 and reaches the C path (R2/R5b/R5c).
 do_action	smile	smile.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT refusal runs before target parsing and is owned by the social boundary (R5b/R5c).
 do_action	smile	smile.no-argument	D2	audience	oracle-green-multiseed	smile-depth@1,2,3,5,8	act.social.c:119-130; lib/misc/socials:725-733	No argument emits the exact actor and ordinary room smile messages across the deterministic seed matrix (R1/R3/R5e).

@@ -37,7 +37,7 @@ The authoritative path is `src/interpreter.c:530` →
 `src/new_cmds.c:1552-1739` (`ACMD(do_kuji_kiri)`) →
 `src/new_cmds.c:1500-1541` (`check_kk_success`) and
 `src/handler.c:473-499` (`affect_join`), with the shared
-`src/comm.c:910-947` command-position gate before dispatch and
+`src/interpreter.c:909-947` command-position gate before dispatch and
 `src/comm.c:2392-2555` audience delivery after the command returns.
 
 The handler first rejects non-Ninja mortals, active fighters, an aggregate

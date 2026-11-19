@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_shoot	shoot	shoot.entry-gate	D1	command	unit-green	TestShootRegistrationUsesCEntryGate	interpreter.c:695; comm.c:910-947	The registered row is level 0 and POS_STANDING; the focused test pins both C-derived fields and the Go entry (R1/R2/R5e).
-do_shoot	shoot	shoot.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:695; comm.c:910-947	The shared POS_STANDING command-interpreter rejection is owned by the existing fade position-gate vehicle (R2/R5b/R5c).
+do_shoot	shoot	shoot.entry-gate	D1	command	unit-green	TestShootRegistrationUsesCEntryGate	interpreter.c:695	The registered row is level 0 and POS_STANDING; the focused test pins both C-derived fields and the Go entry (R1/R2/R5e).
+do_shoot	shoot	shoot.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:695	The shared POS_STANDING command-interpreter rejection is owned by the existing fade position-gate vehicle (R2/R5b/R5c).
 do_shoot	shoot	shoot.handler-fighting-unreachable	D1	command	excluded	-	src/interpreter.c:695,883-924;src/act.offensive.c:768-775	The registered `shoot` row requires POS_STANDING and command_interpreter rejects a FIGHTING actor before dispatch; do_shoot's own fighting refusal has no C caller reachable from this command surface (R2/R4/R5e/R5g).
 do_shoot	shoot	shoot.unlearned	D1	command	oracle-green-multiseed	shoot-unlearned-depth@1,2,3,5,8	act.offensive.c:764-768	Explicit skillset zero reaches C's exact unknown-skill line before argument parsing (R1/R2/R3/R5e).
 do_shoot	shoot	shoot.no-argument	D1	command	oracle-green-multiseed	shoot-entry-depth@1,2,3,5,8	act.offensive.c:782-789	The empty argument emits Shoot what where? after the known-skill and fighting gates (R1/R2/R3/R5e).

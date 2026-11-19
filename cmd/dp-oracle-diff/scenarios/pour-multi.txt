@@ -2,8 +2,10 @@
 # depth-case: pour.pour-in-success
 # depth-case: pour.fill-success
 # Multi-container pour/fill: cup (8005, liquid type 4) forces the liquid
-# conflict; the water canteen (8012) is drunk down to make room, then the
-# skin's water pours in; the spawned fountain (8035) proves fill.
+# conflict. Drinking the canteen fails at the stomach-full gate, so the first
+# skin-to-canteen attempt still hits no-room. Pouring the canteen out then
+# empties it, and the following attempt witnesses transfer; the fountain
+# (8035) proves fill.
 [fixture]
 quiet-mobs
 spawn-obj 8005 1 8162 80
@@ -42,5 +44,7 @@ get cup
 get canteen
 pour skin cup
 drink canteen
+pour skin canteen
+pour canteen out
 pour skin canteen
 fill skin fountain

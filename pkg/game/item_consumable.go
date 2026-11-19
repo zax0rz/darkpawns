@@ -406,7 +406,9 @@ func (w *World) DoPour(ch *Player, me *MobInstance, cmd, arg string, subcmd int)
 	}
 
 	if subcmd == scmdPour {
-		ch.SendMessage(fmt.Sprintf("You pour the %s into the %s.", DrinkName(fromObj.GetValue(2)), arg2))
+		// C's successful pour send is bare (src/act.item.c:1293-1297);
+		// preserve the exact bytes so process_output supplies the only frame.
+		ch.SendLiteral(fmt.Sprintf("You pour the %s into the %s.", DrinkName(fromObj.GetValue(2)), arg2))
 	}
 	if subcmd == scmdFill {
 		Act(nil, false, ch, nil, toObj, fromObj, "You gently fill $p from $P.", "", ToChar)

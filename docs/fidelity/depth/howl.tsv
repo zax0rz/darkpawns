@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	howl	howl.entry-gate	D1	command	unit-green	TestHowlRegistrationUsesCEntryGate	interpreter.c:503; act.social.c:102-112; lib/misc/socials:1083-1086	The registered C row is POS_RESTING with no command minimum level; the social record has hide=1, no victim-position minimum, and the three authored messages.
-do_action	howl	howl.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:503; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
+do_action	howl	howl.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:503	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
 do_action	howl	howl.no-argument	D2	audience	oracle-green-multiseed	howl-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:1083-1086	No argument emits the exact actor howl line and the hide-aware authored room line across the deterministic seed matrix.
 do_action	howl	howl.argument-ignored	D2	command	oracle-green-multiseed	howl-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:1083-1086	Because char_found is NULL, a visible target plus trailing words is ignored and the no-argument actor/room pair remains the C path.
 do_action	howl	howl.missing-target-ignored	D2	command	oracle-green-multiseed	howl-depth@1,2,3,5,8	act.social.c:102-121; lib/misc/socials:1083-1086	A missing target is also ignored because this self-only record has no target lookup or not-found byte.

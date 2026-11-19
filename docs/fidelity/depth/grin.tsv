@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	grin	grin.entry-gate	D1	command	unit-green	TestGrinRegistrationUsesCEntryGate	interpreter.c:475; act.social.c:102-112	The registered C row is POS_RESTING with no command minimum level, and the grin social metadata is hide 0 with no victim-position minimum.
-do_action	grin	grin.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:475; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
+do_action	grin	grin.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:475	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
 do_action	grin	grin.no-argument	D2	command	oracle-green-multiseed	grin-depth@1,2,3,5,8	act.social.c:114-121; lib/misc/socials:330-338	No argument emits the exact actor You grin evilly. line and the record's room grin branch.
 do_action	grin	grin.target-success	D3	audience	oracle-green-multiseed	grin-depth@1,2,3,5,8	act.social.c:134-151; lib/misc/socials:330-338	A visible awake peer target receives the exact actor and victim grin messages.
 do_action	grin	grin.target-audience	D3	audience	oracle-green-multiseed	grin-depth@1,2,3,5,8	act.social.c:145-151; comm.c:2392-2555	The awake observer receives the exact $n grins at $N line for the visible cleaner mob target while the actor is excluded from TO_NOTVICT.

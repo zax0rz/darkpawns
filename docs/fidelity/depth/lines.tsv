@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_lines	lines	lines.entry-gate	D1	command	unit-green	TestLinesRegistrationUsesCEntryGate	interpreter.c:542; comm.c:910-947; act.display.c:112-115	The registered C row permits every level at POS_DEAD; the focused test pins the authoritative command gate (R2/R5e).
-do_lines	lines	lines.position-gate	D1	shared	delegated	levels.entry-gate	interpreter.c:542; comm.c:910-947	The shared POS_DEAD dispatcher gate is owned by the existing levels entry-gate proof (R2/R5b/R5c).
+do_lines	lines	lines.entry-gate	D1	command	unit-green	TestLinesRegistrationUsesCEntryGate	interpreter.c:542; act.display.c:112-115	The registered C row permits every level at POS_DEAD; the focused test pins the authoritative command gate (R2/R5e).
+do_lines	lines	lines.position-gate	D1	shared	delegated	levels.entry-gate	interpreter.c:542	The shared POS_DEAD dispatcher gate is owned by the existing levels entry-gate proof (R2/R5b/R5c).
 do_lines	lines	lines.current-default	D2	command	oracle-green-multiseed	lines-depth@1,2,3,5,8	act.display.c:112-119	A fresh character receives C's exact default screen-size query with value zero (R1/R3/R5e).
 do_lines	lines	lines.non-numeric-atoi-zero	D2	command	oracle-green-multiseed	lines-depth@1,2,3,5,8	act.display.c:121-132	C atoi turns a nonnumeric first token into zero, which reaches the minimum-size rejection rather than a Go-only usage branch (R1/R3/R5e).
 do_lines	lines	lines.minimum-rejection	D2	command	oracle-green-multiseed	lines-depth@1,2,3,5,8	act.display.c:121-132	A requested size below seven emits the exact minimum-size rejection and leaves the prior value unchanged (R1/R3/R5e).

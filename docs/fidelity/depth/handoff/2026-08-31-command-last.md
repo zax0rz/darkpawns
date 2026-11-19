@@ -12,7 +12,7 @@ command after this slice is `leave` at `src/interpreter.c:536`.
 ## C call path and branch inventory
 
 The C registration is `{ "last", POS_DEAD, do_last, LVL_GOD-1, 0 }` in
-`src/interpreter.c:535`. `comm.c:910-947` resolves the command, applies the
+`src/interpreter.c:535`. `src/interpreter.c:909-947` resolves the command, applies the
 level/position/frozen gates, and invokes `ACMD(do_last)` in
 `src/act.wizard.c:1834-1854`. The handler calls
 `one_argument()` (`src/interpreter.c:1267-1286`), which skips fill words,

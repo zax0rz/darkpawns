@@ -15,7 +15,7 @@ The special-procedure inventory remains exhausted and the one blocked
 ## C call path and branch inventory
 
 The C registration is `{ "levels", POS_DEAD, do_levels, 0, 0 }` in
-`src/interpreter.c:538`. `comm.c:910-947` applies the zero level and
+`src/interpreter.c:538`. `src/interpreter.c:909-947` applies the zero level and
 `POS_DEAD` gates before invoking `ACMD(do_levels)` in
 `src/act.informative.c:2311-2328`. The handler does not parse arguments.
 It has two branches:
