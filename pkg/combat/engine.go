@@ -1088,17 +1088,25 @@ func (ce *CombatEngine) performOneHitBody(pair *CombatPair) bool {
 		ce.mu.Unlock()
 		return true
 	}
+	defenderEnrolled := false
 	if defender.GetFightingBody() == nil && defender.GetPosition() > PosStunned {
 		defender.SetFightingBody(attacker)
 		ce.prependFighterLocked(defender)
 		pair.DeferDefenderEnrollment = false
 		pair.DefenderNeedsStand = true
+		defenderEnrolled = true
 		if ranged && attacker.GetFightingBody() == nil {
 			// C enrolls the awake victim even when the attacking mob is wounded.
 			ce.combatPairs[CombatPairKey{Attacker: defender, Target: attacker}] = &CombatPair{Attacker: defender, Defender: attacker}
 		}
 	}
 	ce.mu.Unlock()
+
+	if defenderEnrolled && defender.IsNPC() && !attacker.IsNPC() && attacker.GetLevel() < LVL_IMMORT {
+		if cb := GetCallbacks(); cb != nil && cb.DefenderEnrolled != nil {
+			cb.DefenderEnrolled(attacker, defender)
+		}
+	}
 
 	if ranged && attacker.IsNPC() && !defender.IsNPC() && defender.GetLevel() < LVL_IMMORT {
 		if cb := GetCallbacks(); cb != nil && cb.RangedHunt != nil {

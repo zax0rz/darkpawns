@@ -36,6 +36,20 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			}
 		}
 	}
+	cb.DefenderEnrolled = func(attacker, defender combat.Combatant) {
+		mob, ok := defender.(*MobInstance)
+		if !ok || attacker.IsNPC() || attacker.GetLevel() >= LVL_IMMORT {
+			return
+		}
+		if mob.HasMobFlag(MobFlagMemory) {
+			mob.Remember(attacker.GetName())
+		}
+		if mob.HasMobFlag(MobFlagHunter) {
+			if prey, ok := attacker.(Actor); ok {
+				w.SetHuntingTarget(mob, prey)
+			}
+		}
+	}
 	cb.DoFlee = func(body combat.Combatant) {
 		if mob, ok := body.(*MobInstance); ok {
 			// fight.c:1599 calls do_flee(victim) directly for a low-HP
