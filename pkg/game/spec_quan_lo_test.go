@@ -119,9 +119,10 @@ func TestSpecQuanLo_FleeAliasesUseGlobalMobGossip(t *testing.T) {
 		t.Run(command, func(t *testing.T) {
 			w, mob, actor, peer, messages := newQuanLoTestWorld(t)
 			var directName, directArg string
-			w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, name, argument string, _ int) CharacterCommandResult {
+			liveDirect := w.CharacterCommandDirectExecFunc
+			w.CharacterCommandDirectExecFunc = func(body combat.Combatant, name string, argument string, subcmdVal int) CharacterCommandResult {
 				directName, directArg = name, argument
-				return CharacterCommandUnsupported
+				return liveDirect(body, name, argument, subcmdVal)
 			}
 			if specQuanLo(w, actor, mob, command, "") {
 				t.Fatal("quan_lo should fall through after gossip")

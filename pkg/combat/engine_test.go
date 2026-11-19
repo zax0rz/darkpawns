@@ -78,49 +78,6 @@ func (m *msgMockCombatant) SendMessage(msg string) {
 	m.messages = append(m.messages, msg)
 }
 
-func TestCombatMessages_HaveNewlines(t *testing.T) {
-	attacker := &msgMockCombatant{mockCombatant: mockCombatant{name: "Attacker"}}
-	defender := &msgMockCombatant{mockCombatant: mockCombatant{name: "Defender"}}
-
-	ce := NewCombatEngine()
-	var broadcasts []string
-	ce.BroadcastFunc = func(roomVNum int, message string, excludedBodies []Combatant) {
-		broadcasts = append(broadcasts, message)
-	}
-
-	// Test hit message
-	attacker.messages = nil
-	defender.messages = nil
-	broadcasts = nil
-	ce.sendHitMessage(attacker, defender, 10, 0)
-
-	if len(attacker.messages) != 1 || !strings.HasSuffix(attacker.messages[0], "\r\n") {
-		t.Errorf("attacker hit message does not end with \\r\\n: %q", attacker.messages)
-	}
-	if len(defender.messages) != 1 || !strings.HasSuffix(defender.messages[0], "\r\n") {
-		t.Errorf("defender hit message does not end with \\r\\n: %q", defender.messages)
-	}
-	if len(broadcasts) != 1 || !strings.HasSuffix(broadcasts[0], "\r\n") {
-		t.Errorf("room hit broadcast does not end with \\r\\n: %q", broadcasts)
-	}
-
-	// Test miss message
-	attacker.messages = nil
-	defender.messages = nil
-	broadcasts = nil
-	ce.sendMissMessage(attacker, defender, 0)
-
-	if len(attacker.messages) != 1 || !strings.HasSuffix(attacker.messages[0], "\r\n") {
-		t.Errorf("attacker miss message does not end with \\r\\n: %q", attacker.messages)
-	}
-	if len(defender.messages) != 1 || !strings.HasSuffix(defender.messages[0], "\r\n") {
-		t.Errorf("defender miss message does not end with \\r\\n: %q", defender.messages)
-	}
-	if len(broadcasts) != 1 || !strings.HasSuffix(broadcasts[0], "\r\n") {
-		t.Errorf("room miss broadcast does not end with \\r\\n: %q", broadcasts)
-	}
-}
-
 func TestSendHitMessageUsesMessageFunc(t *testing.T) {
 	ce := NewCombatEngine()
 	var gotAttacker, gotDefender Combatant
@@ -446,25 +403,14 @@ func TestHandleSurvivingVictimState_PainAndObserverScream(t *testing.T) {
 	}
 }
 
-func TestSendHitMessageFallsBackWhenNil(t *testing.T) {
+func TestSendHitAndMissWithoutMessageFuncAreNoOps(t *testing.T) {
 	ce := NewCombatEngine()
 	atk := &msgMockCombatant{mockCombatant: mockCombatant{name: "Alice"}}
 	def := &msgMockCombatant{mockCombatant: mockCombatant{name: "Bob"}}
 	ce.sendHitMessage(atk, def, 25, 5)
-
-	if len(atk.messages) != 1 || !strings.Contains(atk.messages[0], "You hit Bob for 25 damage") {
-		t.Errorf("fallback hit message wrong: %q", atk.messages)
-	}
-}
-
-func TestSendMissMessageFallsBackWhenNil(t *testing.T) {
-	ce := NewCombatEngine()
-	atk := &msgMockCombatant{mockCombatant: mockCombatant{name: "Alice"}}
-	def := &msgMockCombatant{mockCombatant: mockCombatant{name: "Bob"}}
 	ce.sendMissMessage(atk, def, 5)
-
-	if len(atk.messages) != 1 || !strings.Contains(atk.messages[0], "You miss Bob") {
-		t.Errorf("fallback miss message wrong: %q", atk.messages)
+	if len(atk.messages) != 0 || len(def.messages) != 0 {
+		t.Errorf("expected no invented fallback messages when MessageFunc is nil, got atk=%q def=%q", atk.messages, def.messages)
 	}
 }
 
@@ -1156,6 +1102,11 @@ func TestProcessCombatPair_MobWithWaitStillAttacks(t *testing.T) {
 	ce.BroadcastFunc = func(roomVNum int, message string, excludedBodies []Combatant) {
 		broadcasts = append(broadcasts, message)
 	}
+	var attackMessages int
+	ce.MessageFunc = func(attacker, defender Combatant, dam, attackType int) bool {
+		attackMessages++
+		return true
+	}
 	origCB := GetCallbacks()
 	t.Cleanup(func() { SetCallbacks(origCB) })
 	SetCallbacks(defaultCombatCallbacks())
@@ -1171,10 +1122,9 @@ func TestProcessCombatPair_MobWithWaitStillAttacks(t *testing.T) {
 	if len(broadcasts) == 0 || !strings.Contains(broadcasts[0], "scrambles") {
 		t.Errorf("expected scramble broadcast, got %v", broadcasts)
 	}
-	// ch->wait does NOT zero attacks: the scripted hit lands beyond the
-	// scramble broadcast.
-	if len(broadcasts) < 2 {
-		t.Errorf("ch->wait must not zero attacks: broadcasts = %v", broadcasts)
+	// ch->wait does NOT zero attacks: the scripted hit lands via MessageFunc.
+	if attackMessages == 0 {
+		t.Errorf("ch->wait must not zero attacks: attackMessages = %d", attackMessages)
 	}
 	// ch->wait is NOT decremented by the engine (it drains in the heartbeat,
 	// matching C's comm.c:597 descriptor-loop decrement, not perform_violence).
@@ -1205,6 +1155,11 @@ func TestProcessCombatPair_MobWaitZeroesAttacksAndDrains(t *testing.T) {
 	ce.BroadcastFunc = func(roomVNum int, message string, excludedBodies []Combatant) {
 		broadcasts = append(broadcasts, message)
 	}
+	var attackMessages int
+	ce.MessageFunc = func(attacker, defender Combatant, dam, attackType int) bool {
+		attackMessages++
+		return true
+	}
 	origCB := GetCallbacks()
 	t.Cleanup(func() { SetCallbacks(origCB) })
 	SetCallbacks(defaultCombatCallbacks())
@@ -1216,8 +1171,8 @@ func TestProcessCombatPair_MobWaitZeroesAttacksAndDrains(t *testing.T) {
 	// die (1).
 	WithRoller(NewScriptedRoller([]int{20, 1, 20, 20, 1, 20, 1}), func() {
 		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
-		if len(broadcasts) != 0 {
-			t.Fatalf("GET_MOB_WAIT must zero attacks: broadcasts = %v", broadcasts)
+		if len(broadcasts) != 0 || attackMessages != 0 {
+			t.Fatalf("GET_MOB_WAIT must zero attacks: broadcasts = %v, attackMessages = %d", broadcasts, attackMessages)
 		}
 		if got := attacker.GetMobWait(); got != engine.PULSE_VIOLENCE {
 			t.Fatalf("GET_MOB_WAIT after one pass = %d, want %d", got, engine.PULSE_VIOLENCE)
@@ -1236,8 +1191,8 @@ func TestProcessCombatPair_MobWaitZeroesAttacksAndDrains(t *testing.T) {
 	if got := defender.GetHP(); got >= startHP {
 		t.Errorf("attacks did not resume after the timer cleared: defender HP = %d, want < %d", got, startHP)
 	}
-	if len(broadcasts) == 0 {
-		t.Errorf("no attack output after the timer cleared: broadcasts = %v", broadcasts)
+	if attackMessages == 0 {
+		t.Errorf("no attack output after the timer cleared: attackMessages = %d", attackMessages)
 	}
 }
 

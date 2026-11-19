@@ -101,12 +101,10 @@ func (w *World) finishIdleDisconnect(p *Player) {
 	}
 
 	// src/limits.c:442-444 closes only the attached descriptor here,
-	// before rent/extraction. The callback enters with no world/player lock.
+	// before rent/extraction. The callback enters with no world/player lock
+	// and is always wired by session.NewManager (pkg/session/manager.go).
 	if w.IdleCloseDescriptor != nil {
 		w.IdleCloseDescriptor(p)
-	} else {
-		Act(w, true, p, nil, nil, nil, "$n has lost $s link.", "", ToRoom)
-		MudLog(fmt.Sprintf("Closing link to: %s.", p.Name), MudlogNormal, max(LVL_IMMORT, p.GetInvisLevel()), true)
 	}
 
 	w.RentOut(p)

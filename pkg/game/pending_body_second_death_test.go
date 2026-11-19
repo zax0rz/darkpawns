@@ -48,6 +48,10 @@ func secondDeathWorld(t *testing.T) (*World, *Player, *MobInstance, *strings.Bui
 	room := &strings.Builder{}
 	ce := combat.NewCombatEngine()
 	ce.DeathFunc = w.HandleDeath
+	ce.MessageFunc = func(attacker, defender combat.Combatant, dam, _ int) bool {
+		fmt.Fprintf(room, "%s attacks %s (%d)\r\n", attacker.GetName(), defender.GetName(), dam)
+		return true
+	}
 	ce.SetBroadcastFunc(func(_ int, message string, _ []combat.Combatant) {
 		fmt.Fprint(room, message)
 	})

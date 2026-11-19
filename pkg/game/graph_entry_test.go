@@ -68,6 +68,7 @@ func TestAttackHuntingPreyNormalRoomSwingsAndEnrols(t *testing.T) {
 		},
 	)
 	hound, err := w.SpawnMob(9702, 1001)
+	wireLiveNPCDispatchForTest(w)
 	if err != nil {
 		t.Fatalf("SpawnMob: %v", err)
 	}

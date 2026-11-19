@@ -145,7 +145,7 @@ func TestSpecConjured_AutonomousRegisteredDispatch(t *testing.T) {
 	})
 	lastMsg()
 
-	w.MobileActivityForMob(mob)
+	w.MobileActivity()
 
 	want := "A Dominion Angel states, 'My work here is done.'\r\n" +
 		"A Dominion Angel disappears in a flash of white light!\r\n\r\n"

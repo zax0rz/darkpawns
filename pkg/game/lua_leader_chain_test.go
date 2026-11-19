@@ -20,6 +20,7 @@ func TestLuaLeaderChainBeyondFormerLimit(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(w.StopAITicker)
+	wireLiveNPCDispatchForTest(w)
 
 	root := NewPlayer(1, "Chainroot", 1001)
 	root.SetPosition(8)

@@ -143,22 +143,18 @@ func (w *World) HcontrolBuildHouse(ch *Player, arg string) {
 						message = "Destination room does not exist.\r\n"
 					} else if toRoom(destRoom, revDir[exitNum]) != virtHouse {
 						message = "A house's exit must be a two-way door.\r\n"
-					} else if getPlayerIDByName == nil {
-						message = fmt.Sprintf("Unknown player '%s'.\r\n", toLower(args[2]))
 					} else {
 						// The live lookup reads World.players and therefore takes the
 						// same world read lock used by Player.SendMessage. Release
 						// the writer lock around it; otherwise a valid build can
 						// deadlock before it reaches the player-facing response.
-						lookup := getPlayerIDByName
-						w.mu.Unlock()
-						owner := lookup(args[2])
-						if owner < 0 {
-							ch.SendMessage(fmt.Sprintf("Unknown player '%s'.\r\n", toLower(args[2])))
-							return
+						// Always registered by session.NewManager / cmd/server.
+						owner := int64(-1)
+						if lookup := getPlayerIDByName; lookup != nil {
+							w.mu.Unlock()
+							owner = lookup(args[2])
+							w.mu.Lock()
 						}
-						w.mu.Lock()
-
 						if owner < 0 {
 							message = fmt.Sprintf("Unknown player '%s'.\r\n", toLower(args[2]))
 						} else {

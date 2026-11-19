@@ -89,6 +89,13 @@ func init() {
 
 	// Look
 	registerCommand("look", wrapBodyArgs(cmdLookBody), "Look around the room.")
+	registerActorCommand("look", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		mob, ok := ctx.Actor.(*game.MobInstance)
+		if !ok || ctx.World == nil {
+			return game.CharacterCommandUnsupported
+		}
+		return ctx.World.NPCLookCommand(mob, ctx.RawArgs)
+	})
 	registerCommand("read", wrapBodyArgs(cmdReadBody), "Read a nearby object or room feature.")
 
 	// Communication
@@ -446,7 +453,9 @@ func init() {
 	registerCommand("return", wrapArgs(cmdReturn), "Return from switched body.")
 	registerCommand("invis", wrapArgs(cmdInvis), "Become invisible to players.")
 	registerCommand("gecho", wrapArgs(cmdGecho), "Echo a message to all players.")
+	registerActorCommand("gecho", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCGechoCommand(mob, arg) }))
 	registerCommand("echo", wrapArgs(cmdEcho), "Echo a message to the room.")
+	registerActorCommand("echo", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCEchoCommand(mob, arg) }))
 	registerCommand("send", wrapArgs(cmdSend), "Send a message to another character.")
 	registerCommand("force", wrapArgs(cmdForce), "Force a command on another character.")
 	registerCommand("shutdown", wrapArgs(cmdShutdown), "Shutdown the server.")
@@ -515,6 +524,7 @@ func init() {
 
 	// Offensive commands — delegated to pkg/command (C-10: real damage formulas)
 	registerCommand("assist", wrapArgs(cmdAssist), "Assist a target in combat.")
+	registerActorCommand("assist", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCAssistCommand(mob, arg) }))
 	registerCommand("disembowel", wrapSkill(command.CmdDisembowel), "Disembowel a target with a piercing weapon.")
 	registerActorCommand("disembowel", combatSkillActorHandler)
 	registerCommand("dragon", wrapSkill(command.CmdDragonKick), "Dragon-style kick attack.")

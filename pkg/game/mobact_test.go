@@ -504,6 +504,7 @@ func newMobactTestWorld(t *testing.T) (*World, *testCombatEngine) {
 		t.Fatalf("NewWorld failed: %v", err)
 	}
 	t.Cleanup(func() { w.StopAITicker() })
+	wireLiveNPCDispatchForTest(w)
 	ce := &testCombatEngine{}
 	w.combatEngine = ce
 	return w, ce
@@ -622,6 +623,7 @@ func TestDoubleSpeedHunt_CalledTwice(t *testing.T) {
 		t.Fatalf("NewWorld failed: %v", err)
 	}
 	t.Cleanup(func() { w.StopAITicker() })
+	wireLiveNPCDispatchForTest(w)
 
 	mob := newMobactTestMob(w, 9005, 1, 0, "hunter")
 	p := newMobactTestPlayer(w, "Prey")
@@ -1097,9 +1099,10 @@ func TestMobileActivityCharmedHelperAssistsMaster(t *testing.T) {
 	foe.SetFightingBody(master)
 
 	var commandName, commandArg string
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
+	liveDirect := w.CharacterCommandDirectExecFunc
+	w.CharacterCommandDirectExecFunc = func(body combat.Combatant, command, argument string, subcmd int) CharacterCommandResult {
 		commandName, commandArg = command, argument
-		return CharacterCommandUnsupported
+		return liveDirect(body, command, argument, subcmd)
 	}
 	out := captureOutput(w)
 	pinNorthWanderDraws(t)

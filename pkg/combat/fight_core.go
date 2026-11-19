@@ -664,57 +664,8 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 	}
 
 	if newPos == PosDead {
-		if onDeath == nil && victim.IsNPC() {
-			if IsInGroup(ch) {
-				GroupGain(ch, victim)
-			} else {
-				exp := cbGetExp(victim)
-				if exp > maxExpGain {
-					exp = maxExpGain
-				}
-				exp = CalcLevelDiff(ch, victim, exp)
-
-				if exp > 1 {
-					sendCombatMessage(ch, fmt.Sprintf("You receive %d experience points.\r\n", exp))
-				} else {
-					sendCombatMessage(ch, "You receive one lousy experience point.\r\n")
-				}
-				if !ch.IsNPC() {
-					cbGainExp(ch, exp)
-				}
-
-				// autogold on kill (fight.c:1654)
-				if cbHasPrfFlag(ch, "PRF_AUTOGOLD") {
-					cbPerformCommand(ch, "get all gold corpse")
-				}
-
-				// autosplit — fight.c:756-830
-				if cbHasPrfFlag(ch, "PRF_AUTOSPLIT") {
-					gold := cbGetGold(ch)
-					if gold > 0 {
-						numMembers := cbCountGroupMembers(ch, ch.GetRoom())
-						if numMembers > 1 {
-							perMember := gold / numMembers
-							if perMember > 0 {
-								cbApplyToGroupMembers(ch, ch.GetRoom(), func(memberName Combatant) {
-									if memberName != ch {
-										cbSetGold(memberName, cbGetGold(memberName)+perMember)
-									}
-								})
-								sendCombatMessage(ch, fmt.Sprintf("You split the gold and keep %d for yourself.\r\n", perMember))
-								cbSetGold(ch, cbGetGold(ch)-gold+perMember+(gold%numMembers))
-							} else {
-								sendCombatMessage(ch, "You split no gold, you got none.\r\n")
-							}
-						}
-					}
-				}
-
-				ChangeAlignment(ch, victim)
-			}
-		}
-
-		// player death section (fight.c:1665)
+		// player death section (fight.c:1665); live NPC deaths always pass
+		// onDeath (World.HandleDeath / AwardMobKillXP in pkg/game/death.go).
 		if onDeath == nil && !victim.IsNPC() {
 			if !ch.IsNPC() && ch != victim {
 				// Pkill (fight.c:1672)
@@ -1002,28 +953,8 @@ func BackstabMult(level int) float64 {
 }
 
 // **********************************
-// 7. groupGain / calcLevelDiff / performGroupGain
+// 7. CalcXPShare
 // **********************************
-
-func IsInGroup(ch Combatant) bool {
-	chRoom := ch.GetRoom()
-	if cbHasAffectStr(ch, AFF_STR_GROUP) {
-		if ch.GetName() == "" {
-			return cbGetFollowersInRoom(ch, chRoom) > 0
-		}
-		if cbGetMasterInRoom(ch, chRoom) {
-			return true
-		}
-		if cbGetFellowFollowersInRoom(ch, chRoom) {
-			return true
-		}
-	}
-	return false
-}
-
-func CalcLevelDiff(ch, victim Combatant, base int) int {
-	return CalcXPShare(ch.GetLevel(), victim.GetLevel(), base, IsInGroup(ch), maxExpGain)
-}
 
 // CalcXPShare ports src/fight.c calc_level_diff() for callers that already
 // have the character levels and group state. maxShare is passed by the caller
@@ -1058,42 +989,6 @@ func CalcXPShare(chLevel, victimLevel, base int, inGroup bool, maxShare int) int
 		share = 1
 	}
 	return share
-}
-
-func PerformGroupGain(ch, victim Combatant, base int) {
-	share := CalcLevelDiff(ch, victim, base)
-	if share > 1 {
-		sendCombatMessage(ch, fmt.Sprintf("You receive your share of experience -- %d points.\r\n", share))
-	} else {
-		sendCombatMessage(ch, "You receive your share of experience -- one measly little point!\r\n")
-	}
-	if !ch.IsNPC() {
-		cbGainExp(ch, share)
-	}
-	ChangeAlignment(ch, victim)
-}
-
-func GroupGain(ch, victim Combatant) {
-	leader := ch
-	numMembers := cbCountGroupMembers(leader, ch.GetRoom())
-	if numMembers < 1 {
-		numMembers = 1
-	}
-
-	victimExp := cbGetExp(victim)
-	base := victimExp / numMembers
-	if base > 100 {
-		// C subtracts in floating point and truncates once on assignment
-		// (src/fight.c:731-732).
-		base = int(float64(base) - float64(base)*0.01)
-	}
-	if base < 1 {
-		base = 1
-	}
-
-	cbApplyToGroupMembers(leader, ch.GetRoom(), func(memberName Combatant) {
-		PerformGroupGain(memberName, victim, base)
-	})
 }
 
 // **********************************

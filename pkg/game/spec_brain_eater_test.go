@@ -36,9 +36,10 @@ func TestSpecBrainEater_BeheadsCorpseAndLevelsInstance(t *testing.T) {
 	}
 	var commandName, commandArg string
 	var commandSubcmd int
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, subcmd int) CharacterCommandResult {
+	liveDirect := w.CharacterCommandDirectExecFunc
+	w.CharacterCommandDirectExecFunc = func(body combat.Combatant, command string, argument string, subcmd int) CharacterCommandResult {
 		commandName, commandArg, commandSubcmd = command, argument, subcmd
-		return CharacterCommandUnsupported
+		return liveDirect(body, command, argument, subcmd)
 	}
 
 	if !specBrainEater(w, nil, mob, "", "") {

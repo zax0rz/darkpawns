@@ -23,9 +23,10 @@ func TestSpecPuff_CommandAndDeathGates(t *testing.T) {
 
 	mob.CurrentHP = -1
 	var commandName, commandArg string
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
+	liveDirect := w.CharacterCommandDirectExecFunc
+	w.CharacterCommandDirectExecFunc = func(body combat.Combatant, command string, argument string, subcmdVal int) CharacterCommandResult {
 		commandName, commandArg = command, argument
-		return CharacterCommandUnsupported
+		return liveDirect(body, command, argument, subcmdVal)
 	}
 	if !specPuff(w, nil, mob, "", "") {
 		t.Fatal("dead puff should be handled")
@@ -143,9 +144,10 @@ func TestSpecPuff_CompleteCOutcomePartition(t *testing.T) {
 		seed := seedForPuffRoll(t, roll)
 		dprng.ResetStream(seed)
 		var commandCalls []mobDirectCommandCall
-		w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
+		liveDirect := w.CharacterCommandDirectExecFunc
+		w.CharacterCommandDirectExecFunc = func(body combat.Combatant, command string, argument string, subcmdVal int) CharacterCommandResult {
 			commandCalls = append(commandCalls, mobDirectCommandCall{command: command, argument: argument})
-			return CharacterCommandUnsupported
+			return liveDirect(body, command, argument, subcmdVal)
 		}
 
 		handled := specPuff(w, nil, mob, "", "")

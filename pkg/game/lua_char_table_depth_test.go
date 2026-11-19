@@ -63,6 +63,7 @@ func newLuaCharTableFixture(t *testing.T) *luaCharTableFixture {
 		t.Fatalf("NewWorld: %v", err)
 	}
 	t.Cleanup(w.StopAITicker)
+	wireLiveNPCDispatchForTest(w)
 	spawn := func(vnum int) *ObjectInstance {
 		t.Helper()
 		obj, err := w.SpawnObject(vnum, 1001)

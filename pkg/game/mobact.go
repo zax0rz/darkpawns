@@ -162,15 +162,8 @@ func (w *World) MobileActivity() {
 	}
 }
 
-// MobileActivityForMob runs mobact.c AI for a single mob.
-// Caller MUST hold mob.mu. Called by runMobAI to avoid O(N²) re-iteration.
-func (w *World) MobileActivityForMob(mob *MobInstance) {
-	w.mobileActivityForMob(mob)
-}
-
 // mobileActivityForMob is the internal per-mob AI dispatch.
-// Caller MUST hold mob.mu. Uses direct field access (ch.RoomVNum) instead of
-// getter methods to avoid re-entrant lock deadlock.
+// Caller must NOT hold mob.mu; accessors lock individually (DP-590).
 func (w *World) mobileActivityForMob(ch *MobInstance) {
 	// C: if (!IS_MOB(ch) || FIGHTING(ch) || !AWAKE(ch)) continue;
 	if ch.GetFightingBody() != nil || ch.GetPosition() <= combat.PosSleeping {

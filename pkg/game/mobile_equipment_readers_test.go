@@ -56,6 +56,7 @@ func TestMobileEquipmentReaderHitModifiers(t *testing.T) {
 
 func TestMobileEquipmentReaderFighterParry(t *testing.T) {
 	w, m, p := zoneArmedMob(t)
+	m.SetFightingBody(p)
 	p.SetFightingBody(m)
 	var out strings.Builder
 	w.MessageSink = func(_ string, b []byte) { out.Write(b) }
@@ -63,7 +64,7 @@ func TestMobileEquipmentReaderFighterParry(t *testing.T) {
 		rng := dprng.New(seed)
 		if rng.Number(1, 101) <= rng.Number(50, 100) {
 			dprng.ResetStream(seed)
-			mobParry(w, m, p)
+			callLiveMobSkill(w, m, "parry", p)
 			break
 		}
 	}
@@ -76,7 +77,7 @@ func TestMobileEquipmentReaderPaladinCharge(t *testing.T) {
 	w, m, p := zoneArmedMob(t)
 	dprng.ResetStream(17)
 	hp := p.GetHP()
-	mobCharge(w, m, p)
+	callLiveMobSkill(w, m, "charge", p)
 	if p.GetHP() >= hp {
 		t.Fatal("paladin charge missed C WEAR_WIELD weapon")
 	}
@@ -286,7 +287,7 @@ func TestMobileEquipmentReaderFighterHeadbutt(t *testing.T) {
 	m.mu.Unlock()
 	before := m.GetHP()
 	dprng.ResetStream(1)
-	mobHeadbutt(w, m, p)
+	callLiveMobSkill(w, m, "headbutt", p)
 	if m.GetHP() != before-m.GetLevel()/3 {
 		t.Fatalf("fighter head equipment not read: HP=%d want=%d", m.GetHP(), before-m.GetLevel()/3)
 	}
@@ -302,7 +303,7 @@ func TestMobileEquipmentReaderPaladinDisarm(t *testing.T) {
 	attacker.SetFightingBody(target)
 	weapon := target.Equipped(mobWearWield)
 	dprng.ResetStream(1)
-	mobDisarm(w, attacker, target)
+	callLiveMobSkill(w, attacker, "disarm", target)
 	if target.Equipped(mobWearWield) != nil || weapon.Location != LocInventoryMob(target.ID) {
 		t.Fatal("paladin disarm missed C WEAR_WIELD or unequip path")
 	}
@@ -472,7 +473,7 @@ func TestMobileEquipmentReaderLiveWeaponValues(t *testing.T) {
 	weapon.SetValue(2, 1)
 	before := p.GetHP()
 	dprng.ResetStream(17)
-	mobCharge(w, m, p)
+	callLiveMobSkill(w, m, "charge", p)
 	if p.GetHP() > before-200 {
 		t.Fatal("paladin charge ignored live weapon dice")
 	}

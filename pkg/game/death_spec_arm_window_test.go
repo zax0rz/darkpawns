@@ -56,6 +56,7 @@ func dyingArmWorld(t *testing.T, mobVNum int, shortDesc string) (*World, *MobIns
 // never_die test finds a corpse.
 func TestHandleDeathDyingSpecArmPuffSaysLine(t *testing.T) {
 	w, mob, killer, lastMsg := dyingArmWorld(t, 1, "Puff")
+	wireLiveNPCDispatchForTest(w)
 	mob.SetHealth(-15)
 
 	w.HandleDeath(mob, killer, TypeSlash)

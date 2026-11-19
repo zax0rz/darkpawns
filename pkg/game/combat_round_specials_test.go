@@ -35,6 +35,12 @@ func combatSpecialWorld(t *testing.T, specVNum, mobVNum, level, hp int, keywords
 	}
 	t.Cleanup(w.StopAITicker)
 	ce := combat.NewCombatEngine()
+	ce.MessageFunc = func(attacker, defender combat.Combatant, dam, _ int) bool {
+		if w.MessageSink != nil && defender != nil {
+			w.MessageSink(defender.GetName(), []byte(fmt.Sprintf("%s attacks you (%d).\r\n", attacker.GetName(), dam)))
+		}
+		return true
+	}
 	w.SetCombatEngine(ce)
 	ce.MobSpecialFunc = func(mob combat.Combatant) bool {
 		instance, ok := mob.(*MobInstance)

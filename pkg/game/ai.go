@@ -28,39 +28,6 @@ const (
 // CRIT-006: aiCombatEngine moved to World.combatEngine.
 // SetAICombatEngine is replaced by World.SetCombatEngine.
 
-// runMobAI runs AI for a single mob.
-//
-// DP-590: this used to hold mob.mu for the whole AI cycle (CRIT-004), but the
-// dispatch below runs entirely through self-locking accessors (GetName,
-// GetFighting, SetStatus, wanderMobWithDoor → GetRoom/SetRoom, …). Holding the write
-// lock made the first accessor self-deadlock, so the mob AI never ran. The
-// accessors provide their own synchronization; we no longer hold mob.mu here.
-func (w *World) runMobAI(mob *MobInstance) {
-	mob.mu.RLock()
-	ready := mob.Proto() != nil
-	mob.mu.RUnlock()
-	if !ready {
-		return
-	}
-
-	// Don't act if already fighting
-	if w.combatEngine != nil && w.combatEngine.IsFighting(mob) {
-		return
-	}
-
-	// MED-009: call per-mob activity instead of full MobileActivity()
-	// This fixes the O(N²) bug where runMobAI called MobileActivity()
-	// which re-iterated ALL mobs — making every mob get processed N times
-	// per tick. MobileActivityForMob processes a single mob.
-	//
-	// Wandering happens inside MobileActivityForMob (mobileActivityForMob →
-	// wanderMobWithDoor), exactly once per tick — matching C mobile_activity, which
-	// runs the movement block once per mob. DP-908 removed a redundant second
-	// wanderMobWithDoor call here plus a non-C 25% gate (number(0,99) < 25) that had
-	// no equivalent in mobact.c and dropped the effective wander rate to ~8%.
-	w.MobileActivityForMob(mob)
-}
-
 // wanderMobWithDoor moves a mob to the adjacent room selected by door, faithful
 // to C mobact.c's movement block (src/mobact.c:119-143). The caller performs
 // the unconditional number(0,18) draw before checking SENTINEL or position;

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
@@ -183,17 +184,15 @@ func TestSpecRescuer_NilChDoesNotPanic_DefendsAllyAgainstAttacker(t *testing.T) 
 	player.SetFightingBody(ally)
 	engine := &normalCheckerCombatEngine{}
 	w.SetCombatEngine(engine)
-	previousNumber := rescuerNumber
-	rescuerNumber = func(_, _ int) int { return 1 }
-	t.Cleanup(func() { rescuerNumber = previousNumber })
+	dprng.ResetStream(1)
 
 	handled := specRescuer(w, nil, rescuer, "", "")
 
 	if !handled {
 		t.Error("expected specRescuer to rescue the ally mob")
 	}
-	if len(engine.initialAttacks) == 0 {
-		t.Errorf("expected the ally's synchronous hit through the engine, got none")
+	if len(engine.starts) < 2 {
+		t.Errorf("expected rescuer + ally combat starts through the engine, got %v", engine.starts)
 	}
 	if rescuer.GetFighting() != player.GetName() || player.GetFighting() != rescuer.GetName() {
 		t.Fatalf("expected rescue to interpose rescuer, got rescuer=%q player=%q", rescuer.GetFighting(), player.GetFighting())
@@ -224,9 +223,10 @@ func TestSpecRescuer_UsesCanonicalAllyHitAndWaitState(t *testing.T) {
 
 	var hit [2]string
 	var commandName, commandArg string
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
+	liveDirect := w.CharacterCommandDirectExecFunc
+	w.CharacterCommandDirectExecFunc = func(body combat.Combatant, command string, argument string, subcmdVal int) CharacterCommandResult {
 		commandName, commandArg = command, argument
-		return CharacterCommandUnsupported
+		return liveDirect(body, command, argument, subcmdVal)
 	}
 	ce := combat.NewCombatEngine()
 	ce.MessageFunc = func(attacker, defender combat.Combatant, _, _ int) bool {
@@ -234,9 +234,6 @@ func TestSpecRescuer_UsesCanonicalAllyHitAndWaitState(t *testing.T) {
 		return true
 	}
 	w.SetCombatEngine(ce)
-	previousNumber := rescuerNumber
-	rescuerNumber = func(_, _ int) int { return 1 }
-	t.Cleanup(func() { rescuerNumber = previousNumber })
 
 	if !specRescuer(w, nil, rescuer, "", "") {
 		t.Fatal("expected rescuer to handle the autonomous rescue")

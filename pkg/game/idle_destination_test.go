@@ -37,6 +37,9 @@ func TestIdleForceRentUsesRoomIndexThree(t *testing.T) {
 		}
 		output := map[string]string{}
 		w.MessageSink = func(name string, msg []byte) { output[name] += string(msg) }
+		w.IdleCloseDescriptor = func(p *Player) {
+			Act(w, true, p, nil, nil, nil, "$n has lost $s link.", "", ToRoom)
+		}
 		w.CheckIdling(actor)
 		if actor.GetRoom() != destination {
 			t.Fatalf("idle destination=%d, want world[3] VNUM %d", actor.GetRoom(), destination)

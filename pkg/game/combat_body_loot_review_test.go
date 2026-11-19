@@ -13,6 +13,7 @@ func TestCombatBodyLootNameCollision(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(w.StopAITicker)
+	wireLiveNPCDispatchForTest(w)
 	p := NewPlayer(1, "Collision", 1001)
 	if err := w.AddPlayer(p); err != nil {
 		t.Fatal(err)
@@ -47,6 +48,7 @@ func TestCombatBodyDeathCreditNameCollision(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(w.StopAITicker)
+	wireLiveNPCDispatchForTest(w)
 	observer := NewPlayer(1, "Collision", 1001)
 	victim := NewPlayer(2, "Victim", 1001)
 	for _, p := range []*Player{observer, victim} {

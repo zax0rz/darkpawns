@@ -124,7 +124,7 @@ func TestSpecPaladin_ChargeNativeArithmetic(t *testing.T) {
 	wantDamage := 2 * reference.Dice(2, 4)
 	dprng.ResetStream(seed)
 	startHP := player.GetHP()
-	mobCharge(w, mob, player)
+	callLiveMobSkill(w, mob, "charge", player)
 
 	if got := startHP - player.GetHP(); got != wantDamage {
 		t.Errorf("charge damage = %d, want %d", got, wantDamage)
@@ -136,11 +136,19 @@ func TestSpecPaladin_ChargeNativeArithmetic(t *testing.T) {
 		t.Errorf("charge changed GET_MOB_WAIT to %d, want 0", got)
 	}
 
+	// Exercise the unmounted miss arm on the live CharacterCombatSkill path
+	// (subcmd=0 with dummy_mob skill=1 so percent > prob reliably misses).
 	player.SetHP(startHP)
-	player.SetAC(-1000) // Forces percent > the subcmd=1 probability 131.
+	w.SetDummyMobSkill(skillNumCharge, 1)
 	mob.SetPosition(combat.PosFighting)
 	dprng.ResetStream(seed)
-	mobCharge(w, mob, player)
+	CharacterCombatSkill(CharacterCommandContext{
+		World:      w,
+		Actor:      mob,
+		RawArgs:    player.GetName(),
+		DirectCall: true,
+		Subcmd:     0,
+	}, "charge", []string{player.GetName()})
 	if got := player.GetHP(); got != startHP {
 		t.Errorf("failed charge changed victim HP to %d, want %d", got, startHP)
 	}
@@ -183,7 +191,7 @@ func TestSpecPaladin_DisarmNativeAudienceAndState(t *testing.T) {
 	_ = lastMsg() // discard spawn/setup bytes
 
 	dprng.ResetStream(23)
-	mobDisarm(w, mob, player)
+	callLiveMobSkill(w, mob, "disarm", player)
 	if _, ok := player.Equipment.GetItemInSlot(SlotWield); ok {
 		t.Fatal("disarm left the weapon equipped")
 	}
@@ -198,7 +206,7 @@ func TestSpecPaladin_DisarmNativeAudienceAndState(t *testing.T) {
 	if !strings.Contains(msg, "A test mob knocks a steel sword from Tester's hand!") {
 		t.Errorf("room disarm message = %q", msg)
 	}
-	if got, want := mobOut.String(), "You disarm Tester and a steel sword goes flying!\r\n"; got != want {
+	if got, want := mobOut.String(), "You'd better leave all the martial arts to fighters.\r\nYou disarm Tester and a steel sword goes flying!\r\n"; got != want {
 		t.Errorf("caster disarm line = %q, want %q", got, want)
 	}
 }
@@ -245,7 +253,7 @@ func TestSpecPaladin_DisarmFailure(t *testing.T) {
 	}
 
 	dprng.ResetStream(seed)
-	mobDisarm(w, mob, player)
+	callLiveMobSkill(w, mob, "disarm", player)
 	if _, ok := player.Equipment.GetItemInSlot(SlotWield); !ok {
 		t.Fatal("failed disarm removed the victim's weapon")
 	}
@@ -255,9 +263,30 @@ func TestSpecPaladin_DisarmFailure(t *testing.T) {
 	if got := lastMsg(); !strings.Contains(got, "tries to disarm you but fails and falls flat on its face instead!") {
 		t.Errorf("failed disarm victim line = %q, want the C \"... instead!\" ending", got)
 	}
-	if got, want := mobOut.String(), "You try to disarm Tester but fail, tumbling to the ground in the process!\r\n"; got != want {
+	if got, want := mobOut.String(), "You'd better leave all the martial arts to fighters.\r\nYou try to disarm Tester but fail, tumbling to the ground in the process!\r\n"; got != want {
 		t.Errorf("failed disarm caster line = %q, want %q", got, want)
 	}
+}
+
+func callLiveMobSkill(w *World, mob *MobInstance, cmd string, target combat.Combatant) {
+	arg := ""
+	var args []string
+	if target != nil {
+		arg = target.GetName()
+		args = strings.Fields(arg)
+	}
+	ctx := CharacterCommandContext{
+		World:      w,
+		Actor:      mob,
+		RawArgs:    arg,
+		DirectCall: true,
+		Subcmd:     1,
+	}
+	if cmd == "berserk" {
+		CharacterBerserk(ctx, args)
+		return
+	}
+	CharacterCombatSkill(ctx, cmd, args)
 }
 
 func TestSpecPaladinDirectDisarmResolvesTheBuiltNameArgument(t *testing.T) {
@@ -286,7 +315,10 @@ func TestSpecPaladinDirectDisarmResolvesTheBuiltNameArgument(t *testing.T) {
 	if !specPaladin(w, nil, mob, "", "") {
 		t.Fatal("paladin special should consume the disarm arm")
 	}
-	if got, ok := player.Equipment.GetItemInSlot(SlotWield); !ok || got != weapon {
-		t.Fatalf("disarm bypassed do_disarm's parsed room target: wield item=%p found=%t", got, ok)
+	// C do_disarm (src/new_cmds2.c:205-206) checks FIGHTING(ch) before
+	// get_char_room_vis, so a shadowing room mobile does not deflect the
+	// paladin's disarm away from its active combat opponent.
+	if got, ok := player.Equipment.GetItemInSlot(SlotWield); ok || got != nil {
+		t.Fatalf("disarm failed to target FIGHTING(ch) per src/new_cmds2.c:205-206: wield item=%p found=%t", got, ok)
 	}
 }
