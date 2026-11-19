@@ -1,0 +1,108 @@
+# depth-case: force.all-descriptor-order
+# depth-case: force.room-people-order
+# C-first witness for DP-1587: force all walks descriptor_list (newest
+# connection first, src/comm.c:1591,1603; src/act.wizard.c:1899-1906), while
+# force room walks world[room].people (most recently entered room first,
+# src/act.wizard.c:1882-1893).
+# PeerAlpha connects before PeerBeta (so descriptor_list order is PeerBeta,
+# PeerAlpha), while PeerBeta is teleported into room 8105 before PeerAlpha
+# (so world[8105].people order is PeerAlpha, PeerBeta). Both orders are
+# exercised and compared under --draw-parity.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+ForceOrdGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ForceOrdGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:alpha]
+PeerAlpha
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:alpha]
+PeerAlpha
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:beta]
+PeerBeta
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:beta]
+PeerBeta
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport PeerBeta 8105
+teleport PeerAlpha 8105
+
+[probe]
+force all say hi
+force room say roomhi

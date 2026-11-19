@@ -144,9 +144,6 @@ func (m *MobInstance) Remember(name string) {
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if m.Memory == nil {
-		return
-	}
 	for _, n := range m.Memory {
 		if n == name {
 			return

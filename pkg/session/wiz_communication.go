@@ -241,8 +241,34 @@ func findForceSession(s *Session, name string) *Session {
 }
 
 // forceTargets returns the connected player sessions that C's room/all loops
-// would visit. C skips any victim whose level is not below the caster's.
+// would visit in C's exact order: world[room].people (most recently arrived
+// first) for "room", and descriptor_list (newest connection first, descending
+// connectionNumber) for "all". C skips any victim whose level is not below the
+// caster's.
 func forceTargets(s *Session, sameRoom bool) []*Session {
+	if sameRoom {
+		players := s.manager.world.GetPlayersInRoom(s.player.GetRoom())
+		s.manager.mu.RLock()
+		byPlayer := make(map[*game.Player]*Session, len(s.manager.sessions))
+		for _, target := range s.manager.sessions {
+			if target.player != nil {
+				byPlayer[target.player] = target
+			}
+		}
+		s.manager.mu.RUnlock()
+
+		targets := make([]*Session, 0, len(players))
+		for _, p := range players {
+			if p == nil || p.Level >= s.player.Level {
+				continue
+			}
+			if target, ok := byPlayer[p]; ok {
+				targets = append(targets, target)
+			}
+		}
+		return targets
+	}
+
 	s.manager.mu.RLock()
 	sessions := make([]*Session, 0, len(s.manager.sessions))
 	for _, target := range s.manager.sessions {
@@ -250,15 +276,22 @@ func forceTargets(s *Session, sameRoom bool) []*Session {
 	}
 	s.manager.mu.RUnlock()
 
+	sort.SliceStable(sessions, func(i, j int) bool {
+		if sessions[i].connectionNumber != sessions[j].connectionNumber {
+			return sessions[i].connectionNumber > sessions[j].connectionNumber
+		}
+		if !sessions[i].connectedAt.Equal(sessions[j].connectedAt) {
+			return sessions[i].connectedAt.After(sessions[j].connectedAt)
+		}
+		return sessions[i].playerName > sessions[j].playerName
+	})
+
 	targets := make([]*Session, 0, len(sessions))
 	for _, target := range sessions {
 		if target.player == nil || target.player.Level >= s.player.Level {
 			continue
 		}
-		if !sameRoom && !target.isConPlaying() {
-			continue
-		}
-		if sameRoom && target.player.GetRoom() != s.player.GetRoom() {
+		if !target.isConPlaying() {
 			continue
 		}
 		targets = append(targets, target)

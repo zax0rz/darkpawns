@@ -1,0 +1,87 @@
+# depth-case: mob.cleric-summoner-pull-and-hit
+# C-first witness for SPECIAL(cleric) -> SPECIAL(summoner) (DP-1588).
+# Mob 12877 (King Solomon, level 35, assigned cleric at src/spec_assign.c:429,
+# with MOB_SPEC, MOB_SENTINEL, and MOB_MEMORY) is attacked by a level-10 mortal
+# peer, who then flees north to room 8106. On subsequent mobile_activity()
+# pulses, SPECIAL(cleric) calls summoner(ch, ch, 0, NULL) (src/spec_procs.c:1455),
+# which finds the remembered player in descriptor_list, rolls !number(0, 3),
+# casts SPELL_SUMMON through call_magic(..., CAST_SPELL), pulls the peer back
+# into room 8105, and calls hit(ch, vict, TYPE_UNDEFINED).
+# C path: src/mobact.c:68-93 -> src/spec_procs.c:1453-1455 -> src/spec_procs.c:349-386.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12877 1 8105 80
+replace-room-exits 8105 north 8106 0
+replace-room-exits 8106 none
+
+[setup:oracle]
+SumGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SumGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+SumPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+SumPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport SumPeer 8105
+set SumPeer level 10
+set SumPeer maxhit 5000
+set SumPeer hit 5000
+set mob solomon maxhit 5000
+set mob solomon hit 5000
+
+[probe]
+send:peer hit solomon
+force SumPeer flee
+~dpclock pulse 400

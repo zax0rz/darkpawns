@@ -289,43 +289,97 @@ func specSnake(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	return true
 }
 
-// summoner — mob spec: summons player to it
-func specSummoner(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() != combat.PosStanding {
-		return false
+// resolveHuntingTarget resolves the active combatant a mobile is hunting:
+// retained mobile body ID first, then player ID through a playing descriptor,
+// then legacy name-only fallback.
+func (w *World) resolveHuntingTarget(m *MobInstance) combat.Combatant {
+	if w == nil || m == nil {
+		return nil
 	}
-	var vict *Player
-	for _, memName := range me.GetMemory() {
-		if p, ok := w.players[memName]; ok {
-			if !w.playerHasPlayingDescriptor(p) {
-				continue
+	m.mu.RLock()
+	preyID, playerID, preyName := m.HuntingMobID, m.HuntingID, m.Hunting
+	m.mu.RUnlock()
+
+	if preyID != 0 {
+		w.mu.RLock()
+		prey := w.activeMobs[preyID]
+		w.mu.RUnlock()
+		if prey != nil {
+			return prey
+		}
+		return nil
+	}
+	if playerID != "" {
+		id, err := parseHuntingPlayerID(playerID)
+		if err != nil {
+			return nil
+		}
+		player := w.GetPlayerByID(id)
+		if player == nil || !w.playerHasPlayingDescriptor(player) {
+			return nil
+		}
+		return player
+	}
+	if preyName != "" {
+		if player := w.findPlayerByName(preyName); player != nil {
+			if !w.playerHasPlayingDescriptor(player) {
+				return nil
 			}
-			vict = p
-			break
+			return player
+		}
+		if mob := w.GetMobByName(preyName); mob != nil {
+			return mob
 		}
 	}
+	return nil
+}
+
+// specSummoner ports SPECIAL(summoner) (src/spec_procs.c:349-386).
+// Checks hunting target first, then walks descriptor_list (newest connection
+// first) for a playing, visible remembered player in a valid room,
+// short-circuiting !number(0, 3) before casting SPELL_SUMMON via
+// call_magic(..., CAST_SPELL) and calling hit() if the victim is now in the
+// mob's room.
+func specSummoner(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if cmd != "" || me == nil || me.GetPosition() != combat.PosStanding {
+		return false
+	}
+
+	var vict combat.Combatant
+	found := false
+
+	if hunting := w.resolveHuntingTarget(me); hunting != nil {
+		vict = hunting
+		found = true
+	}
+
 	if vict == nil {
-		for _, p := range w.GetPlayersInRoom(me.GetRoom()) {
-			if !p.IsNPC() {
-				if !w.playerHasPlayingDescriptor(p) {
+		if mem := me.GetMemory(); len(mem) > 0 {
+			for _, p := range w.playingPlayersInDescriptorOrder() {
+				if p == nil || !canSeeForPers(me, p) || w.GetRoomInWorld(p.GetRoomVNum()) == nil {
 					continue
 				}
-				for _, memName := range me.GetMemory() {
+				for _, memName := range mem {
 					if memName == p.Name {
 						vict = p
+						found = true
 						break
 					}
 				}
-				if vict != nil {
+				if found {
 					break
 				}
 			}
 		}
 	}
-	if vict != nil && number(0, 4) == 0 {
-		spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), w)
-		if me.RoomVNum == vict.GetRoomVNum() {
-			me.SetFightingBody(vict)
+
+	// #nosec G404 — game RNG, not cryptographic
+	if vict != nil && found && dprng.Number(0, 3) == 0 {
+		spells.CallMagic(me, vict, nil, spells.SpellSummon, me.GetLevel(), spells.CastSpell, w)
+		if me.GetRoomVNum() == vict.GetRoom() {
+			if err := w.mobHit(me, vict); err != nil {
+				slog.Warn("summoner mobHit failed", "mob", me.GetName(), "target", vict.GetName(), "error", err)
+			}
 		}
 		return true
 	}
