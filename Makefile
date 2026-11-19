@@ -346,6 +346,7 @@ ifndef DEPLOY_HOST
 	$(error DEPLOY_HOST is not set)
 endif
 	sh scripts/check_install_entry_release.sh
+	sh scripts/check_download_release.sh
 	rsync -avz --delete website-astro/dist/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)
 
 .DEFAULT_GOAL := build

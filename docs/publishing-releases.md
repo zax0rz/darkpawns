@@ -66,6 +66,11 @@ switching publishers. There is no silent key download or trust-on-first-use path
    receipt. Test a fresh bootstrap and the installed wizard. For the second
    release, exercise a real published version-to-version update with saved login
    before approving production adoption.
+6. Deploy the website with `make deploy-site`. The download page and the docs
+   both take their version from the newest `docs/releases/vX.Y.Z.md`, so they
+   move to the new release without an edit. The deploy refuses to sync until
+   every release link on the download page resolves, so run it after step 4
+   publishes, never before.
 
 A failed upload may leave a draft that is invisible to latest-release consumers.
 Inspect it and preserve evidence. Delete or repair that draft only through a
