@@ -1,5 +1,9 @@
-// Published release assets. Update the version and verify the asset list together.
-export const releaseVersion = '0.1.4';
+import { latestRelease } from './docs-release.mjs';
+
+// Published release assets. The version is the newest docs/releases/vX.Y.Z.md,
+// the same source the docs use, so publishing a release's notes moves this page
+// with it. `make deploy-site` checks every asset link resolves before syncing.
+export const releaseVersion = latestRelease.replace(/^v/, '');
 export const releaseURL = `https://github.com/zax0rz/darkpawns/releases/tag/v${releaseVersion}`;
 export const assetBase = `https://github.com/zax0rz/darkpawns/releases/download/v${releaseVersion}`;
 export const unixInstall = 'curl -fsSL https://darkpawns.org/install.sh | bash';
