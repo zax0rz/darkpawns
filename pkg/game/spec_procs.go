@@ -1015,6 +1015,9 @@ func specMayor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	return false
 }
 
+// dragonBreathSpell returns the spell selected by SPECIAL(dragon_breath)'s
+// exact VNUM switch (src/spec_procs.c:937-954). The default is intentional:
+// an assigned future dragon still uses C's fire-breath fallback.
 func dragonBreathSpell(vnum int) int {
 	switch vnum {
 	case 4209, 4705:

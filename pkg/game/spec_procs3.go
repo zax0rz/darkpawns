@@ -730,10 +730,14 @@ func isCName(name, namelist string) bool {
 	return false
 }
 
-// werewolfNumber is the werewolf special's RNG seam. Production keeps the shared deterministic game stream.
+// werewolfNumber is the werewolf special's RNG seam. Production keeps the
+// shared deterministic game stream; focused tests pin C's two conditional
+// draws without perturbing unrelated combat cases.
 var werewolfNumber = dprng.Number
 
-// specAlienElevator moves the occupants from the caller's room when its east exit is open.
+// specAlienElevator ports SPECIAL(alien_elevator) (src/spec_procs3.c:401): on
+// "close door" with the east exit open, it moves the caller's room occupants
+// and sends each one the line directly, so sleeping occupants still get it.
 func specAlienElevator(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if w == nil || ch == nil || cmd != "close" || !strings.EqualFold(strings.TrimSpace(arg), "door") {
 		return false
@@ -766,6 +770,10 @@ func specAlienElevator(w *World, ch *Player, me *MobInstance, cmd string, arg st
 	return true
 }
 
+// mobSendToZone sends a native NPC message through C send_to_zone's exact
+// audience: awake players in the mob's zone, excluding the mob's own room.
+// Keep this separate from the broader World.SendToZone helper because the C
+// special's exclusion and awake gate are player-visible behavior.
 func (w *World) mobSendToZone(me *MobInstance, message string) {
 	if me == nil {
 		return
@@ -954,7 +962,8 @@ func specTurnUndead(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	return false
 }
 
-// specItoh teleports the player to room 19875.
+// specItoh ports SPECIAL(itoh) (src/spec_procs3.c:583): saying "itoh" runs
+// do_say, teleports the speaker to room 19875, and calls do_look.
 func specItoh(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if w == nil || ch == nil || (cmd != "say" && cmd != "'") {
 		return false
@@ -977,6 +986,10 @@ func specItoh(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	return true
 }
 
+// prostituteCanSee mirrors CAN_SEE(mobile, ch) for SPECIAL(prostitute).
+// C's LIGHT_OK gate is part of this procedure's visibility test; the generic
+// Go canSee helper has no World argument and therefore cannot inspect room
+// darkness here. Source: src/utils.h:515-530.
 func prostituteCanSee(w *World, mobile *MobInstance, ch *Player) bool {
 	if w == nil || mobile == nil || ch == nil {
 		return false
@@ -1225,7 +1238,8 @@ func specConjured(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	return true
 }
 
-// specHisc dispatches to other specs based on the command.
+// specHisc ports SPECIAL(hisc) (src/spec_procs3.c:894): "south" goes to
+// no_move_south, and every other call goes to cleric with a NULL argument.
 func specHisc(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd == "south" {
 		return specNoMoveSouth(w, ch, me, cmd, "")
@@ -1235,6 +1249,7 @@ func specHisc(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	return specCleric(w, ch, me, cmd, "")
 }
 
+// specRecruiter responds to kill and cast commands.
 func specRecruiter(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd == "" {
 		return false

@@ -46,6 +46,7 @@ func init() {
 	RegisterObjSpec("horn", specHornObject)
 }
 
+// specConductor ports SPECIAL(conductor) (src/spec_procs.c:1612).
 func specConductor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if w == nil || me == nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || !me.IsNPC() || me.GetHP() < 0 {
 		return false
@@ -134,6 +135,7 @@ func specConductor(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	}
 }
 
+// specBrassDragon ports SPECIAL(brass_dragon) (src/spec_procs.c:1740).
 func specBrassDragon(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if w == nil || ch == nil || cmd == "" || !isMoveCmd(cmd) || ch.GetLevel() >= LVL_IMMORT || w.IsHunting(ch.GetName(), false) {
 		return false
@@ -330,6 +332,7 @@ func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	return false
 }
 
+// specEnterCircle ports SPECIAL(enter_circle) (src/spec_procs.c:1920).
 func specEnterCircle(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if w == nil || ch == nil || (cmd != "enter" && cmd != "look") {
 		return false
@@ -380,6 +383,7 @@ func specEnterCircle(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	return true
 }
 
+// specElevator ports SPECIAL(elevator) (src/spec_procs.c:1981).
 func specElevator(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if w == nil || ch == nil || (cmd != "say" && cmd != "'") {
 		return false
@@ -410,6 +414,9 @@ func specElevator(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	return true
 }
 
+// specElementalRoom ports SPECIAL(elemental_room) (src/spec_procs.c:2021).
+// C declares it in assign_rooms but never assigns it, so unit tests
+// pin its bytes, not the census.
 func specElementalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if w == nil || me == nil || cmd != "" {
 		return false
