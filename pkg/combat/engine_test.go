@@ -1055,6 +1055,61 @@ func TestProcessCombatPair_ParryDefersReductionToOpponentsTurn(t *testing.T) {
 	}
 }
 
+func TestSendDefenseActSkipsBroadcastFallbackWhenRoomListFilteredEmpty(t *testing.T) {
+	fighter := &msgMockCombatant{mockCombatant: mockCombatant{
+		name: "ItemMage", room: 8162, position: PosFighting, npc: false,
+	}}
+	blindOpponent := &msgMockCombatant{mockCombatant: mockCombatant{
+		name: "ItemPeer", room: 8162, position: PosFighting, fighting: fighter, npc: false,
+	}}
+	sleeper := &msgMockCombatant{mockCombatant: mockCombatant{
+		name: "Sleeper", room: 8162, position: PosSleeping, npc: false,
+	}}
+	fighter.SetFightingBody(blindOpponent)
+
+	ce := NewCombatEngine()
+	var fallbackMessages []string
+	ce.BroadcastFunc = func(_ int, message string, _ []Combatant) { fallbackMessages = append(fallbackMessages, message) }
+
+	oldCallbacks := GetCallbacks()
+	merged := GameCallbacks{}
+	if oldCallbacks != nil {
+		merged = *oldCallbacks
+	}
+	merged.GetRoomCombatants = func(int) []Combatant { return []Combatant{fighter, blindOpponent, sleeper} }
+	merged.CanSee = func(observer, _ Combatant) bool { return observer != blindOpponent }
+	SetCallbacks(&merged)
+	defer SetCallbacks(oldCallbacks)
+
+	oldRoller := GetRoller()
+	SetRoller(NewScriptedRoller([]int{0}))
+	defer SetRoller(oldRoller)
+
+	// 1. Parry TO_ROOM (hide_invisible=TRUE): blindOpponent cannot see fighter
+	// and sleeper is asleep, so zero receivers qualify — BroadcastFunc must NOT
+	// fire, and blindOpponent must get only its TO_VICT "Someone ..." line.
+	ce.prepareRoundDefense(fighter, blindOpponent)
+	if len(fallbackMessages) != 0 {
+		t.Fatalf("parry BroadcastFunc fallback fired unexpectedly: %q", strings.Join(fallbackMessages, ""))
+	}
+	if got, want := strings.Join(blindOpponent.messages, ""), "Someone displays a dazzling show of swordplay, fending off your every blow!\r\n"; got != want {
+		t.Fatalf("blind opponent parry output = %q, want %q", got, want)
+	}
+	if len(sleeper.messages) != 0 {
+		t.Fatalf("sleeper received parry output: %q", strings.Join(sleeper.messages, ""))
+	}
+
+	// 2. Dodge/pain TO_NOTVICT: only sleeper is a non-fighter, non-opponent
+	// occupant, so zero observers qualify — BroadcastFunc must NOT fire.
+	ce.sendDefenseObserverMessage(fighter, blindOpponent, func(Combatant) string { return "observer line\r\n" })
+	if len(fallbackMessages) != 0 {
+		t.Fatalf("observer BroadcastFunc fallback fired unexpectedly: %q", strings.Join(fallbackMessages, ""))
+	}
+	if len(sleeper.messages) != 0 {
+		t.Fatalf("sleeper received observer output: %q", strings.Join(sleeper.messages, ""))
+	}
+}
+
 func TestProcessCombatPair_MobileDodgeEmitsAllCOutputs(t *testing.T) {
 	origRoller := GetRoller()
 	origCB := GetCallbacks()

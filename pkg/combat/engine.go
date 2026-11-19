@@ -825,14 +825,16 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 // (fight.c:1985/1995) — the room broadcast (capitalized via CAP, comm.c:2477)
 // plus the "You drag yourself to your feet.\r\n" self-message.
 func (ce *CombatEngine) scrambleBroadcast(c Combatant) {
-	pronoun := "its"
-	switch c.GetSex() {
-	case 0:
-		pronoun = "his"
-	case 1:
-		pronoun = "her"
-	}
-	if ce.BroadcastFunc != nil {
+	if ce.Callbacks != nil && ce.Callbacks.ActRoom != nil {
+		ce.Callbacks.ActRoom(c.GetRoom(), c, "$n scrambles to $s feet!", true)
+	} else if ce.BroadcastFunc != nil {
+		pronoun := "its"
+		switch c.GetSex() {
+		case 0:
+			pronoun = "his"
+		case 1:
+			pronoun = "her"
+		}
 		// C act() → CAP uppercases the first byte of the fully-composed string.
 		ce.BroadcastFunc(c.GetRoom(),
 			capitalizeFightMessage(fmt.Sprintf("%s scrambles to %s feet!", c.GetName(), pronoun)),
@@ -879,41 +881,42 @@ func (ce *CombatEngine) prepareRoundDefense(fighter, opponent Combatant) {
 }
 
 func (ce *CombatEngine) sendDefenseObserverMessage(fighter, opponent Combatant, render func(to Combatant) string) {
-	observed := false
-	for _, observer := range cbGetRoomCombatants(fighter.GetRoom()) {
-		if observer == nil || observer == fighter || observer == opponent || observer.GetPosition() <= PosSleeping {
-			continue
-		}
-		sendCombatMessage(observer, render(observer))
-		observed = true
-	}
-	if !observed && ce.BroadcastFunc != nil {
-		// Test and embedding fallback when the game-layer room lookup is absent.
-		ce.BroadcastFunc(fighter.GetRoom(), render(nil), []Combatant{fighter, opponent})
-	}
+	ce.sendDefenseAct(fighter, opponent, true, false, render)
 }
 
 // sendDefenseRoomMessage is act(..., TRUE, ch, 0, victim, TO_ROOM) with the
 // opponent as $N: every awake character but the fighter whom the fighter's
 // visibility gate admits. act()'s hide_invisible flag SKIPS any receiver that
-// cannot see ch (src/comm.c:2547), so a blinded opponent and blind observers
+// cannot see ch (src/comm.c:2533), so a blinded opponent and blind observers
 // receive nothing from this act; the opponent's own TO_VICT line returns
-// before that gate (src/comm.c:2500-2504) and is delivered separately.
+// before that gate (src/comm.c:2512-2516) and is delivered separately.
 func (ce *CombatEngine) sendDefenseRoomMessage(fighter, opponent Combatant, render func(to Combatant) string) {
-	observed := false
-	for _, receiver := range cbGetRoomCombatants(fighter.GetRoom()) {
-		if receiver == nil || receiver == fighter || receiver.GetPosition() <= PosSleeping {
-			continue
+	ce.sendDefenseAct(fighter, opponent, false, true, render)
+}
+
+func (ce *CombatEngine) sendDefenseAct(fighter, opponent Combatant, excludeOpponent, hideInvisible bool, render func(to Combatant) string) {
+	if occupants := cbGetRoomCombatants(fighter.GetRoom()); len(occupants) > 0 {
+		for _, receiver := range occupants {
+			if receiver == nil || receiver == fighter || receiver.GetPosition() <= PosSleeping {
+				continue
+			}
+			if excludeOpponent && receiver == opponent {
+				continue
+			}
+			if hideInvisible && !cbCanSee(receiver, fighter) {
+				continue
+			}
+			sendCombatMessage(receiver, render(receiver))
 		}
-		if !cbCanSee(receiver, fighter) {
-			continue
-		}
-		sendCombatMessage(receiver, render(receiver))
-		observed = true
+		return
 	}
-	if !observed && ce.BroadcastFunc != nil {
+	if ce.BroadcastFunc != nil {
 		// Test and embedding fallback when the game-layer room lookup is absent.
-		ce.BroadcastFunc(fighter.GetRoom(), render(nil), []Combatant{fighter})
+		excluded := []Combatant{fighter}
+		if excludeOpponent {
+			excluded = append(excluded, opponent)
+		}
+		ce.BroadcastFunc(fighter.GetRoom(), render(nil), excluded)
 	}
 }
 
