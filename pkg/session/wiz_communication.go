@@ -161,9 +161,7 @@ func cmdForceText(s *Session, argument string) error {
 		s.Send("Okay.\r\n")
 		// src/act.wizard.c:1884-1885: before visiting any room target.
 		game.MudLog(fmt.Sprintf("(GC) %s forced room %d to %s", s.player.Name, s.player.GetRoom(), forceCmd), game.MudlogNormal, max(s.player.GetLevel()+1, s.player.GetInvisLevel()), true)
-		for _, target := range forceTargets(s, true) {
-			forceSessionCommand(s, target, forceCmd, true)
-		}
+		forceRoom(s, forceCmd)
 		return nil
 	}
 	if s.player.GetLevel() >= LVL_GRGOD && strings.EqualFold(targetName, "all") {
@@ -297,6 +295,45 @@ func forceTargets(s *Session, sameRoom bool) []*Session {
 		targets = append(targets, target)
 	}
 	return targets
+}
+
+// forceRoom runs do_force's "room" loop over every lower-level body in the
+// room (players and mobiles) in C's world[ch->in_room].people order.
+func forceRoom(s *Session, forceCmd string) {
+	chars := s.manager.world.GetAllCharsInRoom(s.player.GetRoom())
+	s.manager.mu.RLock()
+	byPlayer := make(map[*game.Player]*Session, len(s.manager.sessions))
+	for _, target := range s.manager.sessions {
+		if target.player != nil {
+			byPlayer[target.player] = target
+		}
+	}
+	s.manager.mu.RUnlock()
+
+	for _, c := range chars {
+		switch body := c.(type) {
+		case *game.Player:
+			if body == nil || body.GetLevel() >= s.player.GetLevel() {
+				continue
+			}
+			if target, ok := byPlayer[body]; ok {
+				forceSessionCommand(s, target, forceCmd, true)
+			}
+		case *game.MobInstance:
+			if body == nil || body.GetLevel() >= s.player.GetLevel() {
+				continue
+			}
+			targetSession := s.manager.combatSession(body)
+			var privateSink func(string)
+			if targetSession != nil {
+				privateSink = func(text string) { targetSession.Send(text) }
+			}
+			game.ActWithPrivateSink(s.manager.world, true, s.player, body, nil, nil, fmt.Sprintf("$n has forced you to '%s'.", forceCmd), "", game.ToVict, body, privateSink)
+			if result := s.manager.executeCharacterCommand(body, targetSession, forceCmd); result == game.CharacterCommandUnsupported {
+				slog.Warn("forced character command unsupported", "target", body.GetName(), "command", forceCmd)
+			}
+		}
+	}
 }
 
 // forceAll is do_force's "all" branch (src/act.wizard.c:1894-1906): "Okay.",
