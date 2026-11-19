@@ -9,85 +9,72 @@ Earlier pieces this builds on:
 `docs/research/port-completion-survey-2026-11-05.md` (the inventory) and
 `docs/briefs/PLAN-2026-11-07-done-measurement-tooling.md` (the tools).
 
-## Where we are (2026-11-17)
+## Where we are (2026-11-19)
 
-Measured at `origin/main` `c23a0f630`. Sections 1 to 8 are the plan as
+Measured at `origin/main` `415c45118`. Sections 1 to 8 are the plan as
 written on 11-10 and settled on 11-11; this section is progress against it.
+It replaces the 11-17 status.
 
-**Phase 0 is done** (lists frozen 11-11). **Phase 1 is most of the way
-through.** Phase 2 started early through L5. Phases 3 and 4 haven't started.
+**Phases 0 to 2 are done or nearly done.** Phase 3 hasn't started.
 
 | List | Frozen 11-11 | Open now | What's left |
 |---|---|---|---|
-| L1. Uncovered C sites | 739 | 0 by the frozen method; **234 of 571** by the strict method | Luna's Phase C queue (below) |
-| L2. Known divergences | 58 | 3 of the frozen 58, plus 15 found since | see below |
-| L3. Blocked proof units | 62 | 18 blocked rows with no divergence pin (25 more are pinned to an L2 issue) | 7 shop rows wait on the R1a ruling |
-| L4. Harness blind spots | 11 | 1 | DP-1496, the oracle's wall-clock read (Zach) |
-| L5. Duplicate and invented code | 5 | 0 | done; cohort written up (PF-125) |
-| L6. Unverified research claims | 14 | 14 | untouched; research work, not port work |
+| L1. Uncovered C sites | 739 | strict queue worked through (571 of 571); recount pending | a fresh strict recount to confirm 0 |
+| L2. Known divergences | 58 | 0 of the frozen 58; 2 found since | DP-1589 (map-order loops), DP-1584 (`tipster`, `turn_undead`) |
+| L3. Blocked proof units | 62 | shop rows excluded under R1a; other rows wait on the recount | recount the non-shop blocked rows |
+| L4. Harness blind spots | 11 | 1 new | DP-1592, a board prompt race under full load; DP-1496 is ruled post-v1.0 (below) |
+| L5. Duplicate and invented code | 5 | 0 | done; the function index now guards new cases |
+| L6. Unverified research claims | 14 | 14 | not part of the stopping rule; can start any time |
 
-**L1, strict.** On 11-16 L1 reached 0 by the frozen method, but that method
-counts a site as settled when any manifest citation range covers its line.
-Zach ruled that cited isn't witnessed and asked for a strict count. It found
-160 sites nobody had witnessed, plus 411 "proven" by a unit test without
-showing the oracle can't reach them (PF-124, PF-126). Together that is a queue
-of 571 (`docs/research/l1-phasec-queue-2026-11-16.tsv`). Merged so far:
-Luna's batches 1 to 12 (through queue order 243) and Hydrogen's bottom-up
-batch (orders 550 to 571). Luna's batches 13 to 15 (#2779, #2780, #2782,
-orders 247 to 315) are open and not yet reviewed. By Luna's count they leave
-**234 sites** (orders 316 to 549). Most of the queue settles as witnessed or
-C-unreachable; Luna counts 8 real divergences so far, each filed and pinned.
+**L1.** Luna's Phase C batches 1 to 27 and Hydrogen's bottom-up batch cover
+all 571 queue orders (`docs/research/l1-phasec-queue-2026-11-16.tsv`). Each
+site settled as witnessed by a C-first scenario, C-unreachable by call path,
+or a pinned divergence. The 11-17 count of 234 open sites is now 0 by Luna's
+reports, but nobody has recounted it the strict way since. That recount is
+the next L1 step.
 
-**L2.** Of the frozen 58, only DP-1413, DP-1455 and DP-1485 remain (the
-Mickey and Mallory specs, and `evillead`). Zach parked the Mickey and Mallory
-content for a post-launch review. New finds join the list, as the rule says.
-Fifteen are open, most found by Phase C: the `users` table (DP-1554, DP-1555,
-DP-1556, and DP-1561/1563, which are duplicates), score and look (DP-1551,
-DP-1552, DP-1553), mounts (DP-1565, DP-1568), switched bodies (DP-1567),
-gossip (DP-1564, DP-1566), chill touch (DP-1562), the mail notice (DP-1546)
-and a latent jail-guard path (DP-1537).
+**L2.** DP-1413, DP-1455 and DP-1485 (Mickey, Mallory, `evillead`) are
+fixed. The 15 found by Phase C are fixed or closed. Later finds, all fixed:
+switched-body output (DP-1585), shutdown's leave line (DP-1586), `damage()`'s
+memory and hunter hooks for every damage path (DP-1590) and `force room`
+forcing mobs (DP-1591). Two are open: DP-1589, other commands that walk the
+session map in Go's random order where C walks `descriptor_list`, and the
+last two unassigned specials on DP-1584.
+
+**Rulings, both 2026-11-18.**
+
+1. **Shop R1a.** The standing text from
+   `docs/briefs/PROPOSAL-2026-11-14-shop-r1a.md` is in R1a word for word
+   (#2806). The five shop and bank rows that depend on C undefined behavior
+   are excluded under it.
+2. **DP-1496.** The oracle clock seam lands after v1.0.0 and doesn't block
+   the tag. Rows derived from `time(0)`, such as `identify`'s age line, stay
+   unit-proven. The completion report lists this as a known harness limit.
+
+Nothing on L1 to L5 is waiting on Zach.
+
+**A new harness flake (DP-1592).** `board-alias-full-depth` can fail under
+full-census load: the string editor's `> ` prompt lands inside a step on one
+engine and after it on the other, and the direction flips between attempts.
+Run alone, it passes on both main and the batch. Until the harness waits for
+that prompt, a release census can go red on this row for no real reason.
 
 **The four numbers.**
 
 | # | Number | Now | Measured on |
 |---|---|---|---|
-| 1 | Bytes | 0 FAIL in the last full combined census | `2026-11-14/dp1531-guard-combined` at `cedba288c`, CLEAN. 322 commits have landed since, each PR with its own targeted census |
-| 2 | Behavior | not measured on a full census since 11-10 | the 11-14 combined runs had no `--draw-parity`. Targeted PR censuses since carry it, with 0 draw divergence |
-| 3 | Reach | not remeasured | waits on the next full census with a dump |
-| 4 | Sensitivity | **51.7%** (95% interval 39.3 to 63.8%) | a fresh sample of 60 across all six printing packages (PF-123). 18 of the 27 catchable misses are repaired. The bar is a lower bound of 80%, so this is the number furthest from done |
-
-**Other progress since 11-10.** The census normalizer no longer trims
-trailing spaces, which exposed 31 real divergences, now fixed (PF-122). The
-one-player Go store (DP-1477), lost output on long pulses (DP-1439,
-DP-1515), mid-fight draw order (DP-1507) and the object-index fixtures
-(DP-1517) are fixed, and so are the pkg/telnet flaky tests (DP-1550).
-
-**Waiting on Zach:**
-
-1. The shop R1a proposal (`docs/briefs/PROPOSAL-2026-11-14-shop-r1a.md`):
-   one standing ruling for five shop branches that depend on C undefined
-   behavior.
-2. DP-1496: what the oracle should do about `identify` reading the wall clock.
-
-**Who's working.** The roster is down to Luna (Phase C, long runs), Sol (for
-work that needs hard reasoning) and Claude (review, census, merge). DeepSeek
-is out until about 11-25, and Hydrogen and GLM are out of weekly budget. At
-about 20 sites a PR, the strict L1 queue is roughly 12 more of Luna's PRs.
+| 1 | Bytes | 0 real FAIL | full census `2026-11-19/claude-integ-1119-full` at `e43569bc8` (main plus the DP-1585/1586/1584/1590/1591 batch): 2,377 scenarios, one FAIL, the DP-1592 flake, which passes alone on both commits |
+| 2 | Behavior | 0 draw divergence | the same run, with `--draw-parity` |
+| 3 | Reach | not remeasured | waits on a full census with a coverage dump |
+| 4 | Sensitivity | **70.0%** (95% interval 57.5 to 80.1%) | mutation sample 2, 42 of 60 killed (PF-129). Of 14 survivors, 4 were repaired, 1 is a divergence and 9 are unreachable. The bar is a lower bound of 80% |
 
 **What's left, in order:**
 
-1. Finish the Phase C queue (Luna).
-2. Fix the 15 new L2 divergences by class: `users` first, then mounts, then
-   the singles. These change production code, so Sol, or Luna once Phase C is
-   done.
-3. Repair the 9 remaining catchable mutation misses, then draw a fresh sample
-   (Phase 3, step 2). The second sample will probably still fall short of
-   80%: the first one says the corpus needs many more scenarios that check
-   literal text.
-4. Zach's two rulings, which close L3 and L4.
-5. Phase 2's function index. L5 is closed, but the inventory that would find
-   more duplicates hasn't been built.
-6. Phase 3: draw-site inventory, the fresh sample, 24 hours of random play,
+1. The strict L1 recount, then the non-shop L3 rows it turns up.
+2. DP-1589, the last two specials on DP-1584, and the DP-1592 harness flake.
+3. Sensitivity, now the gap to close. The corpus needs more scenarios that
+   check literal text; then draw a fresh sample.
+4. Phase 3: draw-site inventory, 24 hours of random play, the test audit,
    then the release census with `--draw-parity`.
 
 ## 1. What "done" means
