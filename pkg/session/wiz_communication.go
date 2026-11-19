@@ -167,12 +167,7 @@ func cmdForceText(s *Session, argument string) error {
 		return nil
 	}
 	if s.player.GetLevel() >= LVL_GRGOD && strings.EqualFold(targetName, "all") {
-		s.Send("Okay.\r\n")
-		// src/act.wizard.c:1896-1897: before visiting any descriptor.
-		game.MudLog(fmt.Sprintf("(GC) %s forced all to %s", s.player.Name, forceCmd), game.MudlogNormal, max(s.player.GetLevel()+1, s.player.GetInvisLevel()), true)
-		for _, target := range forceTargets(s, false) {
-			forceSessionCommand(s, target, forceCmd, true)
-		}
+		forceAll(s, forceCmd)
 		return nil
 	}
 
@@ -269,6 +264,19 @@ func forceTargets(s *Session, sameRoom bool) []*Session {
 		targets = append(targets, target)
 	}
 	return targets
+}
+
+// forceAll is do_force's "all" branch (src/act.wizard.c:1894-1906): "Okay.",
+// the mudlog, then the notice and command_interpreter() for each lower-level
+// playing descriptor. do_shutdown reaches it as do_force(ch, "all save")
+// (src/act.wizard.c:1113).
+func forceAll(s *Session, forceCmd string) {
+	s.Send("Okay.\r\n")
+	// src/act.wizard.c:1896-1897: before visiting any descriptor.
+	game.MudLog(fmt.Sprintf("(GC) %s forced all to %s", s.player.Name, forceCmd), game.MudlogNormal, max(s.player.GetLevel()+1, s.player.GetInvisLevel()), true)
+	for _, target := range forceTargets(s, false) {
+		forceSessionCommand(s, target, forceCmd, true)
+	}
 }
 
 // forceSessionCommand mirrors command_interpreter(vict, to_force). The C
