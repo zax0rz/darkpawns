@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_follow	follow	follow.entry-gate	D1	command	unit-green	TestFollowRegistrationUsesCEntryGate	interpreter.c:450; comm.c:910-947	The registered C row is POS_RESTING with no minimum level.
-do_follow	follow	follow.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:450; comm.c:910-947	The shared command-interpreter POS_RESTING rejection is proven by the fade position-gate vehicle.
+do_follow	follow	follow.entry-gate	D1	command	unit-green	TestFollowRegistrationUsesCEntryGate	interpreter.c:450	The registered C row is POS_RESTING with no minimum level.
+do_follow	follow	follow.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:450	The shared command-interpreter POS_RESTING rejection is proven by the fade position-gate vehicle.
 do_follow	follow	follow.no-argument	D1	command	oracle-green-multiseed	follow-depth@1,2,3,5,8	act.movement.c:892-901	Bare follow emits the exact prompt.
 do_follow	follow	follow.target-not-found	D1	command	oracle-green-multiseed	follow-depth@1,2,3,5,8	act.movement.c:894-898; config.c:93	An unresolved visible room target emits C's NOPERSON bytes.
 do_follow	follow	follow.fill-word-target	D1	command	oracle-green-multiseed	follow-depth@1,2,3,5,8	interpreter.c:853-867,1265-1280; act.movement.c:892-898	C one_argument skips leading fill words and lowercases the selected target token.

@@ -35,7 +35,7 @@ The next truly unmanifested command in source registration order is `kiss` at
 The authoritative path is `src/interpreter.c:528` →
 `src/act.offensive.c:587-634` (`ACMD(do_kick)`) →
 `src/fight.c:1023-1092` (`skill_message` through `damage`) and the shared
-`src/comm.c:910-947` command-position gate. The handler first checks
+`src/interpreter.c:909-947` command-position gate. The handler first checks
 `GET_SKILL(ch, SKILL_KICK)`, parses one target token with `one_argument`, and
 resolves a visible room target. With no target token it uses the direct
 `FIGHTING(ch)` pointer; otherwise it emits `Kick who?`. It then rejects self

@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	nuzzle	nuzzle.entry-gate	D1	command	unit-green	TestNuzzleRegistrationUsesCEntryGateAndRecord	interpreter.c:584; act.social.c:102-112; lib/misc/socials:540-548	The registered C row is POS_RESTING with no command minimum; the social record preserves hide 1, victim-position minimum 5, and all eight authored messages (R1/R2/R5e).
-do_action	nuzzle	nuzzle.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:584; comm.c:910-947	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle (R2/R5b/R5c).
+do_action	nuzzle	nuzzle.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:584	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle (R2/R5b/R5c).
 do_action	nuzzle	nuzzle.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT emote refusal runs before target parsing and is owned by the existing social boundary (R1/R5b/R5c).
 do_action	nuzzle	nuzzle.no-argument	D2	command	oracle-green-multiseed	nuzzle-depth@1,2,3,5,8	act.social.c:119-130; lib/misc/socials:540-548	No argument emits the exact Nuzzle who?? actor prompt and the authored # room branch (R1/R3/R5e).
 do_action	nuzzle	nuzzle.target-success	D3	audience	oracle-green-multiseed	nuzzle-depth@1,2,3,5,8	act.social.c:145-151; lib/misc/socials:540-548	A visible player at or above POS_RESTING receives the exact actor, observer, and victim nuzzle messages (R1/R3/R5e).

@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_goto	goto	goto.entry-gate	D1	command	unit-green	TestGotoRegistrationUsesCEntryGate	interpreter.c:467; interpreter.c:883-947	The registered C row requires LVL_IMMORT and admits POS_SLEEPING.
-do_goto	goto	goto.position-gate	D1	command	unit-green	TestGotoRegistrationUsesCEntryGate	interpreter.c:467; comm.c:910-947	The command registry preserves the C sleeping-position entry gate.
+do_goto	goto	goto.position-gate	D1	command	unit-green	TestGotoRegistrationUsesCEntryGate	interpreter.c:467	The command registry preserves the C sleeping-position entry gate.
 do_goto	goto	goto.no-argument	D1	command	oracle-green-multiseed	goto-depth@1,2,3,5,8	act.wizard.c:184-196	Empty C one_argument input emits the exact room-supply refusal.
 do_goto	goto	goto.numeric-invalid	D1	command	oracle-green-multiseed	goto-depth@1,2,3,5,8	act.wizard.c:195-202	A numeric target is validated through real_room before movement.
 do_goto	goto	goto.target-not-found	D1	command	oracle-green-multiseed	goto-depth@1,2,3,5,8	act.wizard.c:202-216	Unresolved visible character/object lookup emits C's creature-or-object refusal.

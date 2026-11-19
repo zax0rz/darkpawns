@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_action	love	love.entry-gate	D1	command	unit-green	TestLoveRegistrationUsesCEntryGate	interpreter.c:545; comm.c:910-947; act.social.c:102-151	The registered C row is POS_RESTING with no command minimum; the focused test pins the entry gate and all eight authored messages (R1/R2/R5e).
-do_action	love	love.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:545; comm.c:910-947	The shared POS_RESTING dispatcher rejection is owned by the existing fade position-gate vehicle (R2/R5b/R5c).
+do_action	love	love.entry-gate	D1	command	unit-green	TestLoveRegistrationUsesCEntryGate	interpreter.c:545; act.social.c:102-151	The registered C row is POS_RESTING with no command minimum; the focused test pins the entry gate and all eight authored messages (R1/R2/R5e).
+do_action	love	love.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:545	The shared POS_RESTING dispatcher rejection is owned by the existing fade position-gate vehicle (R2/R5b/R5c).
 do_action	love	love.no-argument	D2	audience	oracle-green-multiseed	love-depth@1,2,3,5,8	act.social.c:102-127; lib/misc/socials:470-478	No argument emits the exact actor and room pair across the seed matrix; the social has no RNG branch (R1/R3/R5e).
 do_action	love	love.target-success	D3	audience	oracle-green-multiseed	love-depth@1,2,3,5,8	act.social.c:128-151; lib/misc/socials:470-478	A visible player target receives C's exact actor, room, and victim lines (R1/R3/R5e).
 do_action	love	love.target-audience	D3	audience	oracle-green-multiseed	love-depth@1,2,3,5,8	act.social.c:145-151; comm.c:2392-2555	Separate observer and target peers prove the TO_NOTVICT and TO_VICT topology and substitutions (R1/R3/R5e).

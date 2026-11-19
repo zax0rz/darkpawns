@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_serpent_kick	serpent	serpent.entry-gate	D1	command	unit-green	TestSerpentRegistrationUsesCEntryGate	interpreter.c:685;comm.c:910-947	The registered command is POS_FIGHTING with minimum level 1, and the registry preserves that C entry gate (R1/R2/R5e).
+do_serpent_kick	serpent	serpent.entry-gate	D1	command	unit-green	TestSerpentRegistrationUsesCEntryGate	interpreter.c:685	The registered command is POS_FIGHTING with minimum level 1, and the registry preserves that C entry gate (R1/R2/R5e).
 do_serpent_kick	serpent	serpent.no-skill	D1	command	oracle-green	serpent-gate-depth@1	new_cmds2.c:693-700	The skill refusal runs before one_argument and target lookup with exact C bytes (R1/R2/R5e).
 do_serpent_kick	serpent	serpent.no-argument-no-fighting	D1	command	oracle-green-multiseed	serpent-depth@1,2,3,5,8	new_cmds2.c:703-713	An empty argument with no fighting target reaches Kick who? rather than an invented not-here line (R1/R2/R5e).
 do_serpent_kick	serpent	serpent.missing-target	D1	command	oracle-green-multiseed	serpent-depth@1,2,3,5,8	new_cmds2.c:703-713	An unresolved explicit target falls through the same C fighting-target fallback and otherwise emits Kick who? (R1/R2/R5e).

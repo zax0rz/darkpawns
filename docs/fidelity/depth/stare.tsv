@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	stare	stare.entry-gate	D1	command	unit-green	TestStareRegistrationUsesCEntryGateAndRecord	interpreter.c:736; act.social.c:102-112; lib/misc/socials:844-852	The registered C row is POS_RESTING with no command minimum; the social record preserves level 0, hide 0, the POS_RESTING victim minimum, and all eight authored messages (R1/R2/R5e).
-do_action	stare	stare.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:736; comm.c:910-947	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle (R2/R5b/R5c).
+do_action	stare	stare.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:736	The shared POS_RESTING command-interpreter rejection is owned by the existing fade position-gate vehicle (R2/R5b/R5c).
 do_action	stare	stare.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT emote refusal runs before target parsing and is owned by the existing social boundary (R1/R5b/R5c).
 do_action	stare	stare.no-argument	D2	command	oracle-green-multiseed	stare-depth@1,2,3,5,8	act.social.c:119-127; lib/misc/socials:844-852	No argument emits the exact actor and room sky-stare lines from C's record (R1/R3/R5e).
 do_action	stare	stare.target-success	D3	audience	oracle-green-multiseed	stare-depth@1,2,3,5,8	act.social.c:145-151; lib/misc/socials:844-852	A visible player at or above POS_RESTING receives the exact actor, observer, and victim stare messages (R1/R3/R5e).

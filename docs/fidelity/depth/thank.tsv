@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	thank	thank.entry-gate	D1	command	unit-green	TestThankRegistrationUsesCEntryGateAndRecord	interpreter.c:765; act.social.c:102-112; lib/misc/socials:929-937	The registered C row is POS_RESTING with no command minimum; the target-capable social record preserves level 0, hide 5, the default zero victim-position minimum, and all eight authored slots (R1/R2/R5e).
-do_action	thank	thank.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:765; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing social position-gate vehicle (R5b/R5c).
+do_action	thank	thank.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:765	The shared POS_RESTING command rejection is owned by the existing social position-gate vehicle (R5b/R5c).
 do_action	thank	thank.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT refusal runs before target parsing and is owned by the social boundary (R5b/R5c).
 do_action	thank	thank.no-argument	D2	command	oracle-green-multiseed	thank-depth@1,2,3,5,8	act.social.c:119-130; lib/misc/socials:929-937	No argument emits the exact authored actor and silent room slots across the deterministic seed matrix (R1/R3/R5e).
 do_action	thank	thank.target-success	D3	audience	oracle-green-multiseed	thank-depth@1,2,3,5,8	act.social.c:141-151; lib/misc/socials:929-937	A visible target receives the exact actor and victim thank messages, and the distinct observer receives the TO_NOTVICT room line (R1/R3/R5e).

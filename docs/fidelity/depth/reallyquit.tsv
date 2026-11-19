@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_quit	reallyquit	reallyquit.entry-gate	D1	command	delegated	quit.entry-gate	interpreter.c:657; comm.c:910-947	The distinct SCMD_REALLY_QUIT row shares the POS_DEAD/level-0 dispatcher gate already proven for quit (R2/R5b/R5c).
+do_quit	reallyquit	reallyquit.entry-gate	D1	command	delegated	quit.entry-gate	interpreter.c:657	The distinct SCMD_REALLY_QUIT row shares the POS_DEAD/level-0 dispatcher gate already proven for quit (R2/R5b/R5c).
 do_quit	reallyquit	reallyquit.subcommand-split	D1	command	unit-green	TestReallyQuitIsNotABareAlias	interpreter.c:630,657; act.other.c:114-132	Go keeps separate quit and reallyquit registry entries, preserving C's subcommand distinction.
 do_quit	reallyquit	reallyquit.unsafe-logout	D2	command	oracle-green-multiseed	reallyquit-depth@1,2,3,5,8	act.other.c:123-181	Unlike quit, reallyquit bypasses the unsafe-room refusal and reaches exact goodbye/extraction bytes.
 do_quit	reallyquit	reallyquit.argument-ignored	D1	command	oracle-green-multiseed	reallyquit-depth@1,2,3,5,8	act.other.c:72-181	C do_quit does not parse its argument; trailing words do not alter the destructive logout path.

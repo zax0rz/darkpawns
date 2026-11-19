@@ -91,6 +91,8 @@ func faultPaths(t faultTrees, ff oraclediff.FaultFixture) (cPath, goPath string,
 		}
 		name := fmt.Sprintf("%d.shp", vnum/100)
 		return filepath.Join(t.oracleLib, "world", "shp", name), filepath.Join(t.goWorld, "shp", name), nil
+	case "fault-luaedit":
+		return filepath.Join(t.oracleLib, "scripts", "mob"), filepath.Join(t.goWorld, "scripts", "mob"), nil
 	}
 	return "", "", fmt.Errorf("fault fixture %v: unknown target", ff)
 }
@@ -202,6 +204,37 @@ func applyFaultVerb(t faultTrees, ff oraclediff.FaultFixture) error {
 			return err
 		}
 		return faultDirAt(cPath)
+	case "fault-luaedit":
+		cPath, goPath, err := faultPaths(t, ff)
+		if err != nil {
+			return err
+		}
+		switch ff.Target {
+		case "delete":
+			if os.Geteuid() == 0 {
+				return fmt.Errorf("fault-luaedit delete requires a non-root runner for the read-only parent boundary")
+			}
+			for _, path := range []string{filepath.Join(cPath, "assembler.lua"), filepath.Join(goPath, "assembler.lua")} {
+				if _, err := os.Stat(path); err != nil {
+					return fmt.Errorf("fault-luaedit delete requires the shipped assembler.lua at %s: %w", path, err)
+				}
+			}
+			for _, path := range []string{cPath, goPath} {
+				if err := os.Chmod(path, 0o555); err != nil {
+					return fmt.Errorf("fault-luaedit delete chmod %s: %w", path, err)
+				}
+			}
+			return nil
+		case "write":
+			for _, path := range []string{cPath, goPath} {
+				if err := faultFileAt(path); err != nil {
+					return err
+				}
+			}
+			return nil
+		default:
+			return fmt.Errorf("fault-luaedit: unknown target %q", ff.Target)
+		}
 	}
 	return fmt.Errorf("fault fixture %v: unknown verb", ff)
 }
@@ -252,6 +285,20 @@ func corruptMail(t faultTrees, mode mailFaultMode) error {
 		return nil
 	}
 	return fmt.Errorf("fault-corrupt-mail: unknown mode %d", mode)
+}
+
+// faultFileAt replaces one disposable directory with a regular file. A later
+// open of scripts/mob/<name>.lua then fails with ENOTDIR in both engines,
+// exercising the C fopen("w") and Go atomic-writer error branches without
+// uid-dependent permissions.
+func faultFileAt(path string) error {
+	if err := os.RemoveAll(path); err != nil {
+		return fmt.Errorf("fault-luaedit write remove %s: %w", path, err)
+	}
+	if err := os.WriteFile(path, []byte("blocked script directory\n"), 0o600); err != nil {
+		return fmt.Errorf("fault-luaedit write plant %s: %w", path, err)
+	}
+	return nil
 }
 
 // corruptBoard writes a crafted one-message board file per engine with the

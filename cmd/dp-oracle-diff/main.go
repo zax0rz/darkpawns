@@ -12,6 +12,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"math"
 	"net"
 	"os"
@@ -248,7 +249,20 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	if err != nil {
 		return fmt.Errorf("create work directory: %w", err)
 	}
-	defer func() { _ = os.RemoveAll(tmp) }()
+	defer func() {
+		// Some opt-in filesystem-failure scenarios make a disposable directory
+		// read-only. Restore directory write permission before removing scratch.
+		_ = filepath.WalkDir(tmp, func(path string, entry fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if entry.IsDir() {
+				_ = os.Chmod(path, 0o750)
+			}
+			return nil
+		})
+		_ = os.RemoveAll(tmp)
+	}()
 
 	// -draw-parity: each engine appends its RNG draws to its own file (the C
 	// seam reads DP_C_DRAW_LOG_FILE, the Go port DP_DRAW_LOG_FILE), so a

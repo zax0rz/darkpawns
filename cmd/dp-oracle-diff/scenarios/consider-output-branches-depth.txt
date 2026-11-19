@@ -101,13 +101,13 @@ Y
 
 [warmup]
 set player Consideractor level 1
-set player Consideractor hit 1000
 set player Consideractor maxhit 1000
+set player Consideractor hit 1000
 set player Consideractor str 18
 set player Consideractor damroll 0
 set player Considerpeer level 1
-set player Considerpeer hit 1000
 set player Considerpeer maxhit 1000
+set player Considerpeer hit 1000
 set player Considerpeer str 18
 set player Considerpeer damroll 0
 
@@ -121,6 +121,7 @@ send:actor consider Considerpeer
 set player Considerpeer damroll -12
 send:actor consider Considerpeer
 set player Considerpeer damroll 0
+set player Considerpeer maxhit 4000
 set player Considerpeer hit 3501
 send:actor consider Considerpeer
 set player Considerpeer hit 976

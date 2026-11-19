@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	hump	hump.entry-gate	D1	command	unit-green	TestHumpRegistrationUsesCEntryGate	interpreter.c:506; act.social.c:102-112; lib/misc/socials:1232-1240	The registered C row is POS_RESTING with no command minimum level; the social record has hide=0, minimum victim position POS_STANDING, and all eight authored messages.
-do_action	hump	hump.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:506; comm.c:910-947	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
+do_action	hump	hump.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:506	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
 do_action	hump	hump.no-argument	D2	audience	oracle-green-multiseed	hump-depth@1,2,3,5,8	act.social.c:119-127; lib/misc/socials:1232-1240	No argument emits the exact actor and ordinary room lines across the deterministic seed matrix.
 do_action	hump	hump.target-success	D3	audience	oracle-green-multiseed	hump-depth@1,2,3,5,8	act.social.c:145-151; lib/misc/socials:1232-1240	A visible standing target receives the exact actor and victim messages, and the distinct observer receives the TO_NOTVICT room line.
 do_action	hump	hump.target-audience	D3	audience	oracle-green-multiseed	hump-depth@1,2,3,5,8	act.social.c:145-151; comm.c:2392-2555; lib/misc/socials:1232-1240	The observer receives the room line while actor and victim are excluded by TO_NOTVICT; the victim receives the dedicated line.

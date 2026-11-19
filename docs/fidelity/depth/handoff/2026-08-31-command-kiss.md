@@ -36,7 +36,7 @@ The next truly unmanifested command in source registration order is `kyo` at
 The authoritative path is `src/interpreter.c:529` →
 `src/act.social.c:102-151` (`ACMD(do_action)`) →
 `src/comm.c:2392-2555` (`perform_act` and audience delivery), with the shared
-`src/comm.c:910-947` command-position gate before dispatch. The handler loads
+`src/interpreter.c:909-947` command-position gate before dispatch. The handler loads
 the `kiss` record from `lib/misc/socials:430-438`, checks the actor's
 `PLR_NOSHOUT` bit before argument parsing, and calls `one_argument` only when
 the record has a `char_found` message.

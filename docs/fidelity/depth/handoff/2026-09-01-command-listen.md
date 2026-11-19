@@ -19,7 +19,7 @@ The special-procedure inventory remains exhausted and the one blocked
 ## C call path and branch inventory
 
 The C registration is `{ "listen", POS_RESTING, do_action, 0, 0 }` in
-`src/interpreter.c:540`. `comm.c:910-947` applies the POS_RESTING and zero
+`src/interpreter.c:540`. `src/interpreter.c:909-947` applies the POS_RESTING and zero
 level gates before invoking `ACMD(do_action)` in `src/act.social.c:102-151`.
 The record at `lib/misc/socials:1386-1388` is self-only: it contains
 `You listen.`, `$n listens.`, and `#`, with no `char_found` message. C's

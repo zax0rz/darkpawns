@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_action	salute	salute.entry-gate	D1	command	unit-green	TestSaluteRegistrationUsesCEntryGate	interpreter.c:673; act.social.c:102-112	The registered C row permits every level at POS_RESTING and the focused test pins the parsed salute social metadata (R1/R2/R5e).
-do_action	salute	salute.position-gate	D1	command	delegated	ponder.position-gate	interpreter.c:673; comm.c:910-947	The shared POS_RESTING dispatcher rejection is already proven by the ponder position-gate vehicle (R5b/R5c).
+do_action	salute	salute.position-gate	D1	command	delegated	ponder.position-gate	interpreter.c:673	The shared POS_RESTING dispatcher rejection is already proven by the ponder position-gate vehicle (R5b/R5c).
 do_action	salute	salute.noshout	D1	shared	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT refusal is owned by the existing do_action social gate vehicle (R5b/R5c).
 do_action	salute	salute.no-argument	D3	audience	oracle-green-multiseed	salute-depth@1,2,3,5,8	act.social.c:119-127; lib/misc/socials:1262-1270	No argument emits the exact actor and observer messages from the salute record (R1/R3/R5e).
 do_action	salute	salute.one-argument	D2	command	oracle-green-multiseed	salute-depth@1,2,3,5,8	interpreter.c:1265-1283; act.social.c:119-123	C one_argument selects the first target token and ignores trailing words before target lookup (R1/R2/R5e).
