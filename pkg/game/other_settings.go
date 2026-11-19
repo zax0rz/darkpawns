@@ -68,7 +68,7 @@ func (w *World) doWimpy(ch *Player, me *MobInstance, cmd string, arg string) boo
 
 func (w *World) doDisplay(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if isPlayerNPC(ch, me) {
-		ch.SendMessage("Monsters don't need displays.  Go away.\r\n")
+		sendCommandBodyMessage(ch, me, "Monsters don't need displays.  Go away.\r\n")
 		return true
 	}
 
@@ -145,7 +145,7 @@ func (w *World) doGenWrite(ch *Player, me *MobInstance, cmd string, arg string) 
 	}
 
 	if isPlayerNPC(ch, me) {
-		ch.SendMessage("Monsters can't have ideas - Go away.\r\n")
+		sendCommandBodyMessage(ch, me, "Monsters can't have ideas - Go away.\r\n")
 		return true
 	}
 

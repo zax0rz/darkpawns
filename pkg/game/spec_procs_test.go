@@ -242,6 +242,8 @@ func TestSpecItohActPreservesCLineBreakBytesAndAudience(t *testing.T) {
 	}
 	t.Cleanup(w.StopAITicker)
 	actor := NewPlayer(1, "Itohactor", 1001)
+	actor.SetStat("INT", 11)
+	actor.SetStat("WIS", 11)
 	awake := NewPlayer(2, "Itohawake", 1001)
 	sleeper := NewPlayer(3, "Itohsleeper", 1001)
 	sleeper.SetPosition(combat.PosSleeping)
@@ -253,6 +255,7 @@ func TestSpecItohActPreservesCLineBreakBytesAndAudience(t *testing.T) {
 			t.Fatalf("AddPlayer %s: %v", player.Name, err)
 		}
 	}
+	actor.CopyBaseAttributes()
 	messages := make(map[string]string)
 	w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
 
@@ -261,11 +264,11 @@ func TestSpecItohActPreservesCLineBreakBytesAndAudience(t *testing.T) {
 	}
 	// C calls do_look after the arrival act (src/spec_procs3.c:606), so a
 	// standing arrival also receives the destination room look.
-	wantActorPrefix := "\r\nWith a blinding flash of light and a crack of thunder, you are teleported...\r\n"
+	wantActorPrefix := "You say 'itoh'\r\n\r\nWith a blinding flash of light and a crack of thunder, you are teleported...\r\n"
 	if got := messages[actor.Name]; !strings.HasPrefix(got, wantActorPrefix) || !strings.Contains(got, "Destination") {
 		t.Fatalf("actor bytes = %q, want teleport line plus destination look", got)
 	}
-	const wantDisappear = "\r\nWith a blinding flash of light and a crack of thunder, Itohactor disappears!\r\n\r\n\r\n"
+	const wantDisappear = "Itohactor says, 'itoh'\r\n\r\nWith a blinding flash of light and a crack of thunder, Itohactor disappears!\r\n\r\n\r\n"
 	if got := messages[awake.Name]; got != wantDisappear {
 		t.Fatalf("origin observer bytes = %q, want %q", got, wantDisappear)
 	}

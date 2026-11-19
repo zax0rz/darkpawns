@@ -937,7 +937,7 @@ const (
 // specMayor — mob spec: daily walk schedule (New Thalos mayor opens/closes bazaar).
 // Ported from src/spec_procs.c:823-924.
 func specMayor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" {
+	if w == nil || me == nil {
 		return false
 	}
 
@@ -949,23 +949,23 @@ func specMayor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	}
 	mayorMu.Unlock()
 
-	// Check if we should start a new path based on game hour
 	if st.path == "" || st.pos >= len(st.path) {
-		hour := timeInfo.Hours
-		switch hour {
+		switch timeInfo.Hours {
 		case 6:
 			mayorMu.Lock()
-			st.path = mayorOpenPath
-			st.pos = 0
+			st.path, st.pos = mayorOpenPath, 0
 			mayorMu.Unlock()
 		case 20:
 			mayorMu.Lock()
-			st.path = mayorClosePath
-			st.pos = 0
+			st.path, st.pos = mayorClosePath, 0
 			mayorMu.Unlock()
 		default:
 			return false
 		}
+	}
+
+	if cmd != "" || st.path == "" || me.GetPosition() < combat.PosSleeping || me.GetPosition() == combat.PosFighting {
+		return false
 	}
 
 	mayorMu.Lock()
@@ -978,35 +978,28 @@ func specMayor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	mayorMu.Unlock()
 
 	switch action {
-	case '0':
-		w.performMoveMob(me, 0, true) // perform_move(ch, path[i]-'0', 1) (src/spec_procs.c:862)
-	case '1':
-		w.performMoveMob(me, 1, true) // perform_move(ch, path[i]-'0', 1) (src/spec_procs.c:862)
-	case '2':
-		w.performMoveMob(me, 2, true) // perform_move(ch, path[i]-'0', 1) (src/spec_procs.c:862)
-	case '3':
-		w.performMoveMob(me, 3, true) // perform_move(ch, path[i]-'0', 1) (src/spec_procs.c:862)
+	case '0', '1', '2', '3':
+		w.performMoveMob(me, int(action-'0'), true)
 	case 'W':
-		me.SetPosition(8) // PosStanding
-		w.roomMessage(me.RoomVNum, me.GetName()+" awakens and groans loudly.")
+		me.SetPosition(combat.PosStanding)
+		Act(w, false, me, nil, nil, nil, "$n awakens and groans loudly.", "", ToRoom)
 	case 'S':
-		me.SetPosition(4) // PosSleeping
-		w.roomMessage(me.RoomVNum, me.GetName()+" lies down and instantly falls asleep.")
+		me.SetPosition(combat.PosSleeping)
+		Act(w, false, me, nil, nil, nil, "$n lies down and instantly falls asleep.", "", ToRoom)
 	case 'a':
-		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'Hello Honey!'")
-		w.roomMessage(me.RoomVNum, me.GetName()+" smirks.")
+		Act(w, false, me, nil, nil, nil, "$n says 'Hello Honey!'", "", ToRoom)
+		Act(w, false, me, nil, nil, nil, "$n smirks.", "", ToRoom)
 	case 'b':
-		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'What a view!  I must get something done about that dump!'")
+		Act(w, false, me, nil, nil, nil, "$n says 'What a view!  I must get something done about that dump!'", "", ToRoom)
 	case 'c':
-		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'Vandals!  Youngsters nowadays have no respect for anything!'")
+		Act(w, false, me, nil, nil, nil, "$n says 'Vandals!  Youngsters nowadays have no respect for anything!'", "", ToRoom)
 	case 'd':
-		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'Good day, citizens!'")
+		Act(w, false, me, nil, nil, nil, "$n says 'Good day, citizens!'", "", ToRoom)
 	case 'e':
-		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'I hereby declare the bazaar open!'")
+		Act(w, false, me, nil, nil, nil, "$n says 'I hereby declare the bazaar open!'", "", ToRoom)
 	case 'E':
-		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'I hereby declare Bourbon closed!'")
+		Act(w, false, me, nil, nil, nil, "$n says 'I hereby declare Bourbon closed!'", "", ToRoom)
 	case 'O':
-		// C unlocks with the gate key, then opens (src/spec_procs.c 'O').
 		w.mobGenDoor(me, "gate", scmdUnlock)
 		w.mobGenDoor(me, "gate", scmdOpen)
 	case 'C':
@@ -1014,12 +1007,12 @@ func specMayor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		w.mobGenDoor(me, "gate", scmdLock)
 	case '.':
 		mayorMu.Lock()
-		st.path = ""
-		st.pos = 0
+		st.path, st.pos = "", 0
 		mayorMu.Unlock()
 	}
-
-	return true
+	// C's SPECIAL(mayor) returns FALSE after every path action so normal
+	// mobile activity continues (src/spec_procs.c:849-924).
+	return false
 }
 
 // dragonBreathSpell returns the spell selected by SPECIAL(dragon_breath)'s
@@ -1157,27 +1150,52 @@ func specCuchi(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	return true
 }
 
-// mini_thief — mob spec: steals small items
+// miniThiefNumber pins the unassigned special's conditional C draws in direct-call tests.
+var miniThiefNumber = dprng.Number
+
+// mini_thief ports SPECIAL(mini_thief) (src/spec_procs.c:1072-1135).
 func specMiniThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() != combat.PosStanding || number(0, 3) != 0 {
+	if w == nil || me == nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || !me.IsNPC() || me.GetHP() < 0 {
 		return false
 	}
-	for _, p := range w.GetPlayersInRoom(me.RoomVNum) {
-		if !p.IsNPC() && number(0, 2) == 0 {
-			stealAmt := randRange(1, 20)
-			p.mu.Lock()
-			if p.Gold >= stealAmt {
-				p.Gold -= stealAmt
-				p.mu.Unlock()
-				w.roomMessage(me.RoomVNum, me.GetName()+" snatches some coins and giggles!")
-				sendToChar(p, "You notice your coin purse feels lighter...")
-			} else {
-				p.mu.Unlock()
-			}
+	if miniThiefNumber(0, 19) != 0 {
+		return false
+	}
+
+	var victim *Player
+	for _, player := range w.GetPlayersInRoom(me.GetRoom()) {
+		if player.IsNPC() || !CanSee(me, player) || player.GetLevel() >= LVL_IMMORT || player.GetLevel() < 5 {
+			continue
+		}
+		victim = player
+		break
+	}
+	if victim == nil {
+		return false
+	}
+
+	skillRoll := miniThiefNumber(1, 100)
+	if skillRoll < 35 {
+		amount := miniThiefNumber(10, 25)
+		gold := victim.GetGold()
+		if gold <= 2*amount {
+			amount = gold / 5
+		}
+		me.SetGold(me.GetGold() + amount)
+		victim.SetGold(victim.GetGold() - amount)
+		if skillRoll < 10 {
 			return true
 		}
+		sendBodyMessage(w, victim, fmt.Sprintf("You catch %s's hand coming out of your coin purse.\r\n", me.GetName()))
+		Act(w, false, me, victim, nil, nil, "$N catchs $n's hand leaving thier coin purse a little lighter.", "", ToRoom)
+		return true
 	}
-	return false
+	if skillRoll < 75 {
+		sendBodyMessage(w, victim, fmt.Sprintf("You catch %s's hand going into your coin purse.\r\n", me.GetName()))
+		Act(w, false, me, victim, nil, nil, "$N catchs $n's hand entering thier coin purse.", "", ToRoom)
+		return true
+	}
+	return true
 }
 
 func specUndeadKnight(w *World, me *MobInstance, cmd string, hatedVNum int, taunt func()) bool {
