@@ -43,65 +43,65 @@ Y
 [probe]
 goto 8004
 alias post write witness;body;@
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
-post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
+wait-prompt:command post
 write Final full header

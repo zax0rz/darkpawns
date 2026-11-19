@@ -100,12 +100,12 @@ func (c *WSConn) SetFirstByteWait(d time.Duration) { c.firstByteWait = d }
 // FirstByteWait returns the configured first-response wait duration.
 func (c *WSConn) FirstByteWait() time.Duration { return c.firstByteWait }
 
-// hasGameOutput ignores local echo and transport chrome when deciding whether
-// the first response arrived; neither is server game output.
-func (c *WSConn) hasGameOutput() bool {
+// gameOutputSnapshot returns the current buffered server output with local
+// echo and transport chrome removed.
+func (c *WSConn) gameOutputSnapshot() string {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.chrome.Replace(strings.TrimPrefix(c.buf.String(), c.pendingEcho)) != ""
+	return c.chrome.Replace(strings.TrimPrefix(c.buf.String(), c.pendingEcho))
 }
 
 // ReadUntilQuiescent returns after the client has written nothing for d.
@@ -115,12 +115,31 @@ func (c *WSConn) ReadUntilQuiescent(d time.Duration) (string, error) {
 		firstWait = max(d, c.firstByteWait)
 	}
 	c.awaitingResponse = false
-	firstDeadline := time.Now().Add(firstWait)
-	wait := time.Until(firstDeadline)
-	if c.hasGameOutput() {
-		wait = d
+	return c.readLoop(d, firstWait, "", 0)
+}
+
+// ReadUntilPrompt waits up to maxWait for suffix to appear at least minCount
+// times at the end of game output (after stripping ANSI escapes), then
+// switches to the trailing quiescence window d.
+func (c *WSConn) ReadUntilPrompt(d, maxWait time.Duration, suffix string, minCount int) (string, error) {
+	wait := max(d, maxWait)
+	if c.awaitingResponse {
+		wait = max(wait, c.firstByteWait)
 	}
-	timer := time.NewTimer(wait)
+	c.awaitingResponse = false
+	return c.readLoop(d, wait, suffix, minCount)
+}
+
+func (c *WSConn) readLoop(quiescence, maxWait time.Duration, suffix string, minCount int) (string, error) {
+	waitDeadline := time.Now().Add(maxWait)
+	nextWait := func() time.Duration {
+		snap := c.gameOutputSnapshot()
+		if snap != "" && promptSatisfied(snap, suffix, minCount) {
+			return quiescence
+		}
+		return max(time.Until(waitDeadline), 0)
+	}
+	timer := time.NewTimer(nextWait())
 	defer timer.Stop()
 	for {
 		select {
@@ -128,11 +147,7 @@ func (c *WSConn) ReadUntilQuiescent(d time.Duration) (string, error) {
 			if !timer.Stop() {
 				<-timer.C
 			}
-			wait = time.Until(firstDeadline)
-			if c.hasGameOutput() {
-				wait = d
-			}
-			timer.Reset(max(wait, 0))
+			timer.Reset(nextWait())
 		case <-c.done:
 			out := c.take()
 			if out == "" {
