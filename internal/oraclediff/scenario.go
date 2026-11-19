@@ -353,6 +353,10 @@ type AudienceProbeBlock struct {
 //	[peer-drop]         # close one named passive peer before [probe]
 //	peer
 //	[probe]             # sent to BOTH; this is the only diffed section
+//	                    # steps may prefix wait-prompt:[<N>:]command or
+//	                    # wait-prompt:[<N>:]editor to wait for N occurrences
+//	                    # of C's "> " or "] " prompt before starting trailing
+//	                    # quiescence (composes with send:<peer>, DP-1592)
 //	look
 //	look sign
 //	quit
@@ -839,9 +843,17 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	if sc.AllowSetupRefusal && !setupRefusalReasonSeen {
 		return Scenario{}, fmt.Errorf("scenario %q: allow-setup-refusal requires a \"# setup-refusal-reason:\" comment", name)
 	}
+	for _, step := range sc.Warmup {
+		if _, _, _, err := parsePromptWait(step); err != nil {
+			return Scenario{}, fmt.Errorf("scenario %q warmup %q: %w", name, step, err)
+		}
+	}
 	restartCount := 0
 	crashCount := 0
 	for _, step := range sc.Probe {
+		if _, _, _, err := parsePromptWait(step); err != nil {
+			return Scenario{}, fmt.Errorf("scenario %q probe %q: %w", name, step, err)
+		}
 		if step == ReloginStep || step == RestartStep || step == CrashStep {
 			if len(sc.ReloginOracle) == 0 || len(sc.ReloginPort) == 0 {
 				return Scenario{}, fmt.Errorf("scenario %q uses %s without both [relogin:oracle] and [relogin:port]", name, step)
@@ -1113,9 +1125,12 @@ func runAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 			}
 			output = transcript
 		default:
+			promptSuffix, promptCount, innerStep, err := parsePromptWait(step)
+			if err != nil {
+				return blocks, fmt.Errorf("probe step %d %q: %w", i+1, step, err)
+			}
 			var sendLine string
-			var err error
-			target, targetName, audience, sendLine, err = resolveAudienceProbeTarget(primary, peers, step)
+			target, targetName, audience, sendLine, err = resolveAudienceProbeTarget(primary, peers, innerStep)
 			if err != nil {
 				return blocks, fmt.Errorf("probe step %d %q: %w", i+1, step, err)
 			}
@@ -1123,11 +1138,16 @@ func runAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 				return blocks, fmt.Errorf("probe step %d send %q: %w", i+1, step, err)
 			}
 			restoreWait := extendPulseFirstByteWait(target, sendLine, opts.QuietMobs)
-			output, err = target.ReadUntilQuiescent(quiescence)
+			if promptSuffix != "" {
+				output, err = readConnUntilPrompt(target, quiescence, promptWaitMax, promptSuffix, promptCount)
+			} else {
+				output, err = target.ReadUntilQuiescent(quiescence)
+			}
 			restoreWait()
 			if err != nil && (!mayClose || !errors.Is(err, io.EOF)) {
 				return blocks, fmt.Errorf("probe step %d read actor after %q: %w\noutput so far:\n%s", i+1, step, err, output)
 			}
+			step = innerStep
 		}
 		blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: targetName, Output: output, Closed: connObservedClose(target)})
 
@@ -1219,6 +1239,45 @@ func readAudiencePeers(audience map[string]Conn, step string, stepIdx int, quies
 		out = append(out, AudienceProbeBlock{Command: step, Audience: name, Output: reads[i].output, Closed: reads[i].closed})
 	}
 	return out, nil
+}
+
+const (
+	promptWaitPrefix = "wait-prompt:"
+	promptWaitMax    = 5 * time.Second
+)
+
+// parsePromptWait parses an optional "wait-prompt:[<N>:]<kind> <step>" prefix.
+// Supported kinds match C's make_prompt terminators:
+//   - "command" -> "> " (normal command prompt, src/comm.c:1058+)
+//   - "editor"  -> "] " (string_add editor prompt, src/comm.c:1039-1040)
+func parsePromptWait(step string) (suffix string, minCount int, innerStep string, err error) {
+	if !strings.HasPrefix(step, promptWaitPrefix) {
+		return "", 0, step, nil
+	}
+	rest := strings.TrimPrefix(step, promptWaitPrefix)
+	spec, inner, ok := strings.Cut(rest, " ")
+	if !ok || strings.TrimSpace(inner) == "" {
+		return "", 0, "", fmt.Errorf("wait-prompt requires a command after %q", spec)
+	}
+	minCount = 1
+	kind := spec
+	if before, after, hasCount := strings.Cut(spec, ":"); hasCount {
+		n, convErr := strconv.Atoi(before)
+		if convErr != nil || n <= 0 {
+			return "", 0, "", fmt.Errorf("invalid wait-prompt count %q", before)
+		}
+		minCount = n
+		kind = after
+	}
+	switch kind {
+	case "command":
+		suffix = "> "
+	case "editor":
+		suffix = "] "
+	default:
+		return "", 0, "", fmt.Errorf("unknown wait-prompt kind %q (want command or editor)", kind)
+	}
+	return suffix, minCount, inner, nil
 }
 
 func resolveAudienceProbeTarget(primary Conn, peers map[string]Conn, step string) (target Conn, targetName string, audience map[string]Conn, sendLine string, err error) {

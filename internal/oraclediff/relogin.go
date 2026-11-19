@@ -50,6 +50,10 @@ func (c *ReloginConn) ReadUntilQuiescent(d time.Duration) (string, error) {
 	return c.current.ReadUntilQuiescent(d)
 }
 
+func (c *ReloginConn) ReadUntilPrompt(d, maxWait time.Duration, suffix string, minCount int) (string, error) {
+	return readConnUntilPrompt(c.current, d, maxWait, suffix, minCount)
+}
+
 func (c *ReloginConn) Close() error { return c.current.Close() }
 
 // ObservedClose forwards the current transport's server-close observation, so a

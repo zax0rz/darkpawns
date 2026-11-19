@@ -57,7 +57,7 @@ alias
 alias l
 alias alias look
 alias c alias;alias
-c
+wait-prompt:2:command c
 alias p say $1
 p hello world
 alias g say $*

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -61,6 +62,31 @@ type FirstByteWaiter interface {
 	SetFirstByteWait(d time.Duration)
 }
 
+// PromptWaiter is implemented by transports that wait until a target prompt
+// suffix has appeared at least minCount times (after stripping ANSI escapes)
+// before switching from maxWait to the trailing quiescence window. Used for
+// multi-pulse steps (such as complex aliases that enter and exit the string
+// editor across multiple MUD pulses) whose inter-pulse gaps can exceed the
+// global quiescence window under load (DP-1592).
+type PromptWaiter interface {
+	ReadUntilPrompt(quiescence, maxWait time.Duration, suffix string, minCount int) (string, error)
+}
+
+func promptSatisfied(raw, suffix string, minCount int) bool {
+	if suffix == "" || minCount <= 0 {
+		return true
+	}
+	clean := ansiEscape.ReplaceAllString(raw, "")
+	return strings.HasSuffix(clean, suffix) && strings.Count(clean, suffix) >= minCount
+}
+
+func readConnUntilPrompt(c Conn, quiescence, maxWait time.Duration, suffix string, minCount int) (string, error) {
+	if pw, ok := c.(PromptWaiter); ok {
+		return pw.ReadUntilPrompt(quiescence, maxWait, suffix, minCount)
+	}
+	return c.ReadUntilQuiescent(quiescence)
+}
+
 // SetFirstByteWait separates response latency after Send from trailing silence.
 // Reads without a preceding Send (passive peers and drains) keep plain quiescence. A zero
 // value preserves the legacy one-window reader for explicit timing controls.
@@ -85,17 +111,34 @@ func (c *TCPConn) Send(line string) error {
 // negotiation is transport framing, so it is consumed here and never reaches
 // the transcript normalizer.
 func (c *TCPConn) ReadUntilQuiescent(d time.Duration) (string, error) {
-	var out []byte
 	firstWait := d
 	if c.awaitingResponse {
 		firstWait = max(d, c.firstByteWait)
 	}
 	c.awaitingResponse = false
-	firstDeadline := time.Now().Add(firstWait)
+	return c.readLoop(d, firstWait, "", 0)
+}
+
+// ReadUntilPrompt waits up to maxWait for suffix to appear at least minCount
+// times at the end of output (after stripping ANSI escapes), then switches to
+// the trailing quiescence window d so any immediately trailing bytes are still
+// captured verbatim.
+func (c *TCPConn) ReadUntilPrompt(d, maxWait time.Duration, suffix string, minCount int) (string, error) {
+	wait := max(d, maxWait)
+	if c.awaitingResponse {
+		wait = max(wait, c.firstByteWait)
+	}
+	c.awaitingResponse = false
+	return c.readLoop(d, wait, suffix, minCount)
+}
+
+func (c *TCPConn) readLoop(quiescence, maxWait time.Duration, suffix string, minCount int) (string, error) {
+	var out []byte
+	waitDeadline := time.Now().Add(maxWait)
 	for {
-		deadline := firstDeadline
-		if len(out) > 0 {
-			deadline = time.Now().Add(d)
+		deadline := waitDeadline
+		if len(out) > 0 && promptSatisfied(string(out), suffix, minCount) {
+			deadline = time.Now().Add(quiescence)
 		}
 		if err := c.conn.SetReadDeadline(deadline); err != nil {
 			return string(out), err
