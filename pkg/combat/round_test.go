@@ -245,68 +245,6 @@ func TestCounterProcsSkipsNPCs(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// TestPerformGroupGain — individual group member exp
-// ---------------------------------------------------------------------------
-
-func TestPerformGroupGain_Basic(t *testing.T) {
-	var gainedExp int
-	var gainedName string
-	var alignSet bool
-
-	cb := defaultCombatCallbacks()
-	cb.GainExp = func(bodyname Combatant, amount int) {
-		name := bodyname.GetName()
-
-		gainedName = name
-		gainedExp = amount
-	}
-	cb.GetAlignment = func(bodyname Combatant) int {
-		name := bodyname.GetName()
-
-		if name == "Orc" {
-			return 900 // good-aligned victim triggers alignment shift
-		}
-		return 0
-	}
-	cb.SetAlignment = func(bodyname Combatant, val int) { alignSet = true }
-	SetCallbacks(cb)
-
-	ch := &mockCombatant{name: "Fighter", level: 10, room: 100, npc: false}
-	victim := &mockCombatant{name: "Orc", level: 8, npc: true}
-
-	PerformGroupGain(ch, victim, 200)
-	if got, want := strings.Join(ch.messages, ""), "You receive your share of experience -- 200 points.\r\n"; got != want {
-		t.Fatalf("group XP output = %q, want %q", got, want)
-	}
-
-	if gainedName != "Fighter" {
-		t.Errorf("expected exp assigned to Fighter, got %q", gainedName)
-	}
-	if gainedExp <= 0 {
-		t.Errorf("expected positive exp gain, got %d", gainedExp)
-	}
-	if !alignSet {
-		t.Error("expected alignment change when killing a good-aligned victim")
-	}
-}
-
-func TestPerformGroupGain_OneExpPoint(t *testing.T) {
-	cb := defaultCombatCallbacks()
-	cb.GainExp = func(bodyname Combatant, amount int) {}
-	cb.GetAlignment = func(bodyname Combatant) int { return 0 }
-	cb.SetAlignment = func(bodyname Combatant, val int) {}
-	SetCallbacks(cb)
-
-	ch := &mockCombatant{name: "Fighter", level: 99, room: 100, npc: false}
-	victim := &mockCombatant{name: "Rat", level: 1, npc: true}
-
-	// base=1, extreme level diff, level>20 penalty → should floor at 1
-	PerformGroupGain(ch, victim, 1)
-	if got, want := strings.Join(ch.messages, ""), "You receive your share of experience -- one measly little point!\r\n"; got != want {
-		t.Fatalf("one-point group XP output = %q, want %q", got, want)
-	}
-}
-
 // ---------------------------------------------------------------------------
 // Engine lifecycle tests
 // ---------------------------------------------------------------------------
@@ -710,29 +648,19 @@ func TestSendHitMessage(t *testing.T) {
 	engine := NewCombatEngine()
 	defer engine.Stop()
 
-	var attackerMsg, defenderMsg, roomMsg string
-	engine.BroadcastFunc = func(room int, msg string, excludedBodies []Combatant) {
-		roomMsg = msg
+	var gotDam, gotType int
+	var gotAtk, gotDef Combatant
+	engine.MessageFunc = func(attacker, defender Combatant, dam, attackType int) bool {
+		gotAtk, gotDef, gotDam, gotType = attacker, defender, dam, attackType
+		return true
 	}
 
-	attacker := &messagingCombatant{}
-	attacker.name = "Hero"
-	defender := &messagingCombatant{}
-	defender.name = "Orc"
+	attacker := &mockCombatant{name: "Hero"}
+	defender := &mockCombatant{name: "Orc"}
+	engine.sendHitMessage(attacker, defender, 15, 7)
 
-	attacker.sendFunc = func(msg string) { attackerMsg = msg }
-	defender.sendFunc = func(msg string) { defenderMsg = msg }
-
-	engine.sendHitMessage(attacker, defender, 15, 0)
-
-	if !strings.Contains(attackerMsg, "15") {
-		t.Errorf("expected damage number in attacker msg, got %q", attackerMsg)
-	}
-	if !strings.Contains(defenderMsg, "15") {
-		t.Errorf("expected damage number in defender msg, got %q", defenderMsg)
-	}
-	if !strings.Contains(roomMsg, "Hero") || !strings.Contains(roomMsg, "Orc") {
-		t.Errorf("expected both names in room msg, got %q", roomMsg)
+	if gotAtk != attacker || gotDef != defender || gotDam != 15 || gotType != 7 {
+		t.Errorf("MessageFunc got (%v, %v, %d, %d), want (Hero, Orc, 15, 7)", gotAtk, gotDef, gotDam, gotType)
 	}
 }
 
@@ -740,35 +668,19 @@ func TestSendMissMessage(t *testing.T) {
 	engine := NewCombatEngine()
 	defer engine.Stop()
 
-	var attackerMsg, defenderMsg string
-
-	attacker := &messagingCombatant{}
-	attacker.name = "Hero"
-	defender := &messagingCombatant{}
-	defender.name = "Orc"
-
-	attacker.sendFunc = func(msg string) { attackerMsg = msg }
-	defender.sendFunc = func(msg string) { defenderMsg = msg }
-
-	engine.sendMissMessage(attacker, defender, 0)
-
-	if !strings.Contains(attackerMsg, "miss") {
-		t.Errorf("expected 'miss' in attacker msg, got %q", attackerMsg)
+	var gotDam, gotType int
+	var gotAtk, gotDef Combatant
+	engine.MessageFunc = func(attacker, defender Combatant, dam, attackType int) bool {
+		gotAtk, gotDef, gotDam, gotType = attacker, defender, dam, attackType
+		return true
 	}
-	if !strings.Contains(defenderMsg, "miss") {
-		t.Errorf("expected 'miss' in defender msg, got %q", defenderMsg)
-	}
-}
 
-// messagingCombatant wraps mockCombatant with message capture capability.
-type messagingCombatant struct {
-	mockCombatant
-	sendFunc func(string)
-}
+	attacker := &mockCombatant{name: "Hero"}
+	defender := &mockCombatant{name: "Orc"}
+	engine.sendMissMessage(attacker, defender, 3)
 
-func (m *messagingCombatant) SendMessage(msg string) {
-	if m.sendFunc != nil {
-		m.sendFunc(msg)
+	if gotAtk != attacker || gotDef != defender || gotDam != 0 || gotType != 3 {
+		t.Errorf("MessageFunc got (%v, %v, %d, %d), want (Hero, Orc, 0, 3)", gotAtk, gotDef, gotDam, gotType)
 	}
 }
 

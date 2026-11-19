@@ -269,7 +269,7 @@ func TestMobBackstab_PositionMultiplier(t *testing.T) {
 			previous := combat.GetCallbacks()
 			combat.SetCallbacks(&combat.GameCallbacks{SkillMessage: func(dam int, _ combat.Combatant, _ combat.Combatant, _ int, _ int) bool { got = dam; return true }})
 			t.Cleanup(func() { combat.SetCallbacks(previous) })
-			w.mobBackstab(mob, player)
+			callLiveMobSkill(w, mob, "backstab", player)
 			if scaled := combat.ApplyPositionDamageMultiplier(12, tc.position); scaled != tc.want {
 				t.Fatalf("position multiplier = %d, want %d", scaled, tc.want)
 			}

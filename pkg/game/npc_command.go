@@ -8,7 +8,6 @@ import (
 	"unicode"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
-	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
 
@@ -19,75 +18,13 @@ import (
 // one; what matters is which commands run and what they show the room.
 //
 // The session-installed CharacterCommandExecFunc sends this real body through
-// the shared command interpreter and its ordered special() stages. When that
-// executor is absent, this legacy fallback retains the previously ported
-// say, tell, emote, give, stand and social behaviors. It does not claim generic
-// command parity.
+// the shared command interpreter and its ordered special() stages.
 func (w *World) NPCCommand(me *MobInstance, line string) {
-	if me == nil {
+	if me == nil || w.CharacterCommandExecFunc == nil {
 		return
 	}
-	if w.CharacterCommandExecFunc != nil {
-		if result := w.CharacterCommandExecFunc(me, line); result == CharacterCommandUnsupported {
-			slog.Warn("NPC command dispatch unsupported", "mob_vnum", me.GetVNum(), "line", line)
-		}
-		return
-	}
-	// if (!number(0,3)) REMOVE_BIT_AR(AFF_FLAGS(ch), AFF_HIDE): drawn for
-	// every command, before anything else (R3).
-	// #nosec G404 — game RNG, not cryptographic
-	if dprng.Number(0, 3) == 0 {
-		me.RemoveAffected(affHide)
-	}
-	line = strings.TrimLeft(line, " ")
-	if line == "" {
-		return
-	}
-	var word, rest string
-	if c := line[0]; !isASCIIAlpha(c) { // isalpha(*line)
-		word, rest = line[:1], line[1:]
-	} else {
-		word, rest = anyOneArg(line)
-	}
-	word = strings.ToLower(word)
-
-	position := me.GetPosition()
-	switch word {
-	case "say", "'":
-		if position >= combat.PosResting {
-			w.npcSay(me, rest)
-		}
-	case "tell":
-		if position >= combat.PosMortally {
-			w.npcTell(me, rest)
-		}
-	case "emote", ":":
-		if position >= combat.PosResting && me.GetLevel() >= 1 {
-			w.npcEmote(me, rest)
-		}
-	case "gossip":
-		w.mobGenComm(me, strings.TrimPrefix(rest, " "), "gossip")
-	case "shout":
-		w.mobGenComm(me, strings.TrimPrefix(rest, " "), "shout")
-	case "auction":
-		w.mobGenComm(me, strings.TrimPrefix(rest, " "), "auction")
-	case "give":
-		if position >= combat.PosResting {
-			w.npcGive(me, rest)
-		}
-	case "stand":
-		if position >= combat.PosResting {
-			w.npcStand(me)
-		}
-	default:
-		minimum, isSocial := socialMinPosition[word]
-		if !isSocial {
-			slog.Warn("NPC command not ported for mobiles; ignored", "mob_vnum", me.GetVNum(), "line", line)
-			return
-		}
-		if position >= minimum {
-			w.npcSocial(me, word, rest)
-		}
+	if result := w.CharacterCommandExecFunc(me, line); result == CharacterCommandUnsupported {
+		slog.Warn("NPC command dispatch unsupported", "mob_vnum", me.GetVNum(), "line", line)
 	}
 }
 
@@ -107,7 +44,7 @@ const (
 )
 
 func (w *World) NPCCommandDirect(me *MobInstance, commandName, argument string, subcmd ...int) CharacterCommandResult {
-	if w == nil || me == nil {
+	if w == nil || me == nil || w.CharacterCommandDirectExecFunc == nil {
 		return CharacterCommandUnsupported
 	}
 	commandName = strings.ToLower(strings.TrimSpace(commandName))
@@ -115,96 +52,30 @@ func (w *World) NPCCommandDirect(me *MobInstance, commandName, argument string, 
 	if len(subcmd) > 0 {
 		commandSubcmd = subcmd[0]
 	}
-	if w.CharacterCommandDirectExecFunc != nil {
-		if result := w.CharacterCommandDirectExecFunc(me, commandName, argument, commandSubcmd); result == CharacterCommandHandled {
-			return result
-		}
-	}
-	return w.npcCommandDirectFallback(me, commandName, argument)
+	return w.CharacterCommandDirectExecFunc(me, commandName, argument, commandSubcmd)
 }
 
-// npcCommandDirectFallback supplies the same actor command bodies when the
-// session-owned registry is not installed (focused game tests and standalone
-// worlds). It deliberately has no interpreter prelude.
-func (w *World) npcCommandDirectFallback(me *MobInstance, commandName, argument string) CharacterCommandResult {
-	switch commandName {
-	case "say", "'":
-		w.NPCSayCommand(me, argument)
-	case "tell":
-		w.NPCTellCommand(me, argument)
-	case "emote", ":":
-		w.NPCEmoteCommand(me, argument)
-	case "echo":
-		w.npcEcho(me, argument)
-	case "gecho":
-		w.npcGlobalEcho(me, argument)
-	case "gossip":
-		w.NPCGossipCommand(me, argument)
-	case "shout":
-		w.NPCShoutCommand(me, argument)
-	case "auction":
-		w.NPCAuctionCommand(me, argument)
-	case "stand":
-		w.doPositionCommand(me, positionCommandSpecs[0], nil)
-	case "sit":
-		w.doPositionCommand(me, positionCommandSpecs[1], nil)
-	case "rest":
-		w.doPositionCommand(me, positionCommandSpecs[2], nil)
-	case "sleep":
-		w.doPositionCommand(me, positionCommandSpecs[3], nil)
-	case "wake":
-		wakeBody(w, me, argument, nil)
-	case "flee":
-		w.DoFlee(me)
-	case "follow":
-		arg := extractArg(argument)
-		if target, found := w.resolveCharInRoomAt(me, me.GetRoomVNum(), arg); found && target.Combatant != nil {
-			followMobBody(w, me, target.Combatant)
-		}
-	case "give":
-		w.NPCGiveCommand(me, argument)
-	case "get":
-		return w.npcGetDirect(me, argument)
-	case "wear":
-		return w.npcWearDirect(me, argument)
-	case "rescue":
-		return w.npcRescueDirect(me, argument)
-	case "assist":
-		w.mobAssist(me, argument)
-	case "look":
-		if strings.TrimSpace(argument) != "" {
-			return CharacterCommandUnsupported
-		}
-		// C's direct do_look writes only to ch->desc (act.informative.c).
-		// MobInstance.SendMessage is silent without a switched descriptor and
-		// routes the rendered look to that descriptor when one is attached.
-		w.doLook(me, nil, "look", "")
-	case "behead":
-		return w.npcBeheadDirect(me, argument)
-	case "ride":
-		w.doRideMob(me, extractArg(argument))
-	case "dismount":
-		w.doDismountActor(me)
-	case "headbutt", "parry", "bash", "berserk", "charge", "disarm", "backstab":
-		return w.npcFighterCommand(me, commandName, argument)
-	default:
-		if _, social := socialMinPosition[commandName]; social {
-			w.NPCSocialCommand(me, commandName, argument)
-		} else {
-			return CharacterCommandUnsupported
-		}
-	}
-	return CharacterCommandHandled
-}
-
-// NPCSayCommand, NPCTellCommand, NPCEmoteCommand, NPCGiveCommand, and
+// NPCSayCommand, NPCTellCommand, NPCEmoteCommand, NPCGiveCommand,
+// NPCEchoCommand, NPCGechoCommand, NPCAssistCommand, NPCLookCommand, and
 // NPCSocialCommand adapt the existing mobile behavior to the shared command
 // registry. Each is registered against its C command entry by pkg/session.
 func (w *World) NPCSayCommand(me *MobInstance, arg string)         { w.npcSay(me, arg) }
 func (w *World) NPCTellCommand(me *MobInstance, arg string)        { w.npcTell(me, arg) }
 func (w *World) NPCEmoteCommand(me *MobInstance, arg string)       { w.npcEmote(me, arg) }
 func (w *World) NPCGiveCommand(me *MobInstance, arg string)        { w.npcGive(me, arg) }
+func (w *World) NPCEchoCommand(me *MobInstance, arg string)        { w.npcEcho(me, arg) }
+func (w *World) NPCGechoCommand(me *MobInstance, arg string)       { w.npcGlobalEcho(me, arg) }
+func (w *World) NPCAssistCommand(me *MobInstance, arg string)      { w.mobAssist(me, arg) }
 func (w *World) NPCSocialCommand(me *MobInstance, cmd, arg string) { w.npcSocial(me, cmd, arg) }
+
+// NPCLookCommand runs a bare direct look for a mobile body.
+func (w *World) NPCLookCommand(me *MobInstance, arg string) CharacterCommandResult {
+	if strings.TrimSpace(arg) != "" {
+		return CharacterCommandUnsupported
+	}
+	w.doLook(me, nil, "look", "")
+	return CharacterCommandHandled
+}
 
 // NPCGossipCommand, NPCShoutCommand, and NPCAuctionCommand adapt the NPC
 // do_gen_comm delivery (src/act.comm.c:1146-1298) to the shared command

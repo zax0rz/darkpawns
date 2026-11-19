@@ -178,9 +178,10 @@ func TestSpecDragonBreath_StandingRecovery(t *testing.T) {
 	player.SetFightingBody(mob)
 	lastMsg()
 	var commandName, commandArg string
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
+	liveDirect := w.CharacterCommandDirectExecFunc
+	w.CharacterCommandDirectExecFunc = func(body combat.Combatant, command string, argument string, subcmdVal int) CharacterCommandResult {
 		commandName, commandArg = command, argument
-		return CharacterCommandUnsupported
+		return liveDirect(body, command, argument, subcmdVal)
 	}
 
 	if !specDragonBreath(w, nil, mob, "", "") {

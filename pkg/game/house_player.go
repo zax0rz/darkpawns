@@ -57,11 +57,10 @@ func (w *World) doHouseGuest(ch *Player, houseIdx int, arg string) {
 
 	// C performs the player lookup before it enters the guest-list mutation;
 	// the callback consults World and must not run while World.mu is held.
-	if getPlayerIDByName == nil {
-		ch.SendMessage("No such player.\r\n")
-		return
+	id := int64(-1)
+	if getPlayerIDByName != nil {
+		id = getPlayerIDByName(arg)
 	}
-	id := getPlayerIDByName(arg)
 	if id < 0 {
 		ch.SendMessage("No such player.\r\n")
 		return
@@ -144,12 +143,10 @@ func (w *World) doHouseTransfer(ch *Player, houseIdx int, arg string) {
 		return
 	}
 
-	if getPlayerIDByName == nil {
-		ch.SendMessage("No such player.\r\n")
-		return
+	id := int64(-1)
+	if getPlayerIDByName != nil {
+		id = getPlayerIDByName(arg)
 	}
-
-	id := getPlayerIDByName(arg)
 	if id < 0 {
 		ch.SendMessage("No such player.\r\n")
 		return

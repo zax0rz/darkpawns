@@ -3,6 +3,7 @@ package game
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -243,25 +244,14 @@ func TestCombatBodyGroupRecipients(t *testing.T) {
 		p.SetAffect(affGroup, true)
 	}
 	leader.Level = 5
-	member.Level = 40
+	member.Level = 25
 	member.SetFollowingBody(leader)
-	cb := w.WireCombatCallbacks()
-	old := combat.GetCallbacks()
-	t.Cleanup(func() { combat.SetCallbacks(old) })
-	var recipients []combat.Combatant
-	var amounts []int
-	cb.GetExp = func(combat.Combatant) int { return 200 }
-	cb.GainExp = func(body combat.Combatant, n int) {
-		recipients = append(recipients, body)
-		amounts = append(amounts, n)
+	w.AwardMobKillXP(leader, victim, 200, 0, victim.GetLevel(), 0)
+	if leader.Exp <= 0 || member.Exp <= 0 {
+		t.Fatalf("expected both group members to gain XP: leader=%d member=%d", leader.Exp, member.Exp)
 	}
-	combat.SetCallbacks(cb)
-	combat.GroupGain(leader, victim)
-	if len(recipients) != 2 || recipients[0] != leader || recipients[1] != member {
-		t.Fatalf("recipients=%v", recipients)
-	}
-	if amounts[0] == amounts[1] {
-		t.Fatalf("member levels lost: shares=%v", amounts)
+	if leader.Exp == member.Exp {
+		t.Fatalf("member levels lost: leader=%d member=%d", leader.Exp, member.Exp)
 	}
 }
 
@@ -304,5 +294,44 @@ func TestCombatBodyNPCFollowing(t *testing.T) {
 	// guessing, so the name-taking API above is the live seam.
 	if got := cb.GetFollowing(follower); got != first && got != second {
 		t.Fatal("name-taking follow did not retain an actual NPC")
+	}
+}
+
+func TestAwardMobKillXP_OneExpPoint(t *testing.T) {
+	w, first, _ := callbackBodyFixture(t)
+	leader := NewPlayer(1, "Leader", 1001)
+	leader.SetLevel(10)
+	leader.SetInGroup(true)
+	leader.SetAffect(affGroup, true)
+	member := NewPlayer(2, "Member", 1001)
+	member.SetLevel(10)
+	member.SetInGroup(true)
+	member.SetAffect(affGroup, true)
+	member.SetFollowingBody(leader)
+	if err := w.AddPlayer(leader); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.AddPlayer(member); err != nil {
+		t.Fatal(err)
+	}
+
+	var leaderMsgs, memberMsgs []string
+	w.MessageSink = func(name string, msg []byte) {
+		switch name {
+		case "Leader":
+			leaderMsgs = append(leaderMsgs, string(msg))
+		case "Member":
+			memberMsgs = append(memberMsgs, string(msg))
+		}
+	}
+
+	w.AwardMobKillXP(leader, first, 1, 0, first.GetLevel(), 0)
+
+	const want = "You receive your share of experience -- one measly little point!\r\n"
+	if !slices.Contains(leaderMsgs, want) {
+		t.Errorf("leader messages = %q, want %q", leaderMsgs, want)
+	}
+	if !slices.Contains(memberMsgs, want) {
+		t.Errorf("member messages = %q, want %q", memberMsgs, want)
 	}
 }

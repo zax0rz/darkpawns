@@ -122,15 +122,11 @@ func mobName(me *MobInstance) string {
 	return me.GetShortDesc()
 }
 
-// rescuerNumber is the C number(1, 101) seam for focused rescuer tests. The
-// production value remains the process-wide deterministic game stream.
-var rescuerNumber = dprng.Number
-
 // ================================================================
 // normal_checker — Sees non-immortals, jumps and attacks them
 // ================================================================
 func specNormalChecker(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	// ch is nil during autonomous mob activity (mobileActivityForMob); in the
+	// ch is nil during autonomous mob activity (MobileActivity); in the
 	// original C (spec_procs2.c:162), ch IS the mob on that path, so these
 	// guards are about the mob's own state (me), not a triggering player's.
 	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
@@ -492,77 +488,6 @@ func mobRescueVictim(w *World, me *MobInstance, name string) combat.Combatant {
 		return nil
 	}
 	return t.Combatant
-}
-
-func mobDoRescueResolved(w *World, me *MobInstance, victim combat.Combatant) {
-	if victim == nil || victim == me || me.GetFightingBody() == victim {
-		return
-	}
-
-	var tmp combat.Combatant
-	for _, player := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if player.GetFightingBody() == victim {
-			tmp = player
-			break
-		}
-	}
-	if tmp == nil {
-		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
-			if mob.GetFightingBody() == victim {
-				tmp = mob
-				break
-			}
-		}
-	}
-	if tmp == nil {
-		return
-	}
-
-	// C always uses prob=100 for this special, but still consumes the
-	// number(1, 101) draw, where 101 is the complete-failure edge.
-	// #nosec G404 — game RNG, not cryptographic
-	if rescuerNumber(1, 101) > 100 {
-		return
-	}
-
-	// The only player-visible act() in the successful native branch is
-	// TO_NOTVICT. The TO_CHAR/TO_VICT recipients are both NPCs here.
-	Act(w, false, me, victim, nil, nil, "$n heroically rescues $N!", "", ToNotVict)
-
-	// stop_fighting() mutates the three characters even if a combat pair was
-	// not registered (the C list is pointer-based, while Go's engine is pair-
-	// based). Stop the engine's pairs first, then clear each pointer directly.
-	if stopper, ok := w.combatEngine.(interface{ StopCombat(combat.Combatant) }); ok {
-		stopper.StopCombat(victim)
-		stopper.StopCombat(tmp)
-		stopper.StopCombat(me)
-	}
-	victim.StopFighting()
-	tmp.StopFighting()
-	me.StopFighting()
-
-	me.SetFightingBody(tmp)
-	tmp.SetFightingBody(me)
-	// hit(vict, tmp_ch) (src/act.offensive.c:575) enrols the NPC victim inside
-	// damage(), because stop_fighting(vict) just cleared it; the player already
-	// faces me. Setting FIGHTING(vict) here would make the deferred entry treat
-	// the victim as already enrolled and skip its combat pair.
-
-	if w.combatEngine != nil {
-		if err := w.combatEngine.StartCombat(me, tmp); err != nil {
-			slog.Warn("rescuer combat entry failed", "mob", me.GetName(), "target", tmp.GetName(), "error", err)
-		}
-	}
-	if allyVictim, ok := victim.(*MobInstance); ok {
-		if err := w.mobHit(allyVictim, tmp); err != nil {
-			slog.Warn("rescuer ally hit failed", "mob", allyVictim.GetName(), "target", tmp.GetName(), "error", err)
-		}
-	}
-	// do_rescue's WAIT_STATE(vict, PULSE_VIOLENCE*2) writes ch->wait
-	// (src/act.offensive.c); SetWaitState takes rounds.
-	if waiter, ok := victim.(interface{ SetWaitState(int) }); ok {
-		waiter.SetWaitState(2)
-	}
 }
 
 // ================================================================

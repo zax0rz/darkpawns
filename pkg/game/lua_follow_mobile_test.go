@@ -27,6 +27,7 @@ func TestLuaFollowMobileLeaderResolvesKeywordInFollowerRoom(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(w.StopAITicker)
+	wireLiveNPCDispatchForTest(w)
 
 	observer := NewPlayer(1, "Observer", 1001)
 	observer.SetPosition(8)

@@ -151,11 +151,7 @@ func TestSpecStartRoomSendsBirthAndLookToSwitchedMobile(t *testing.T) {
 			switchedOutput.Write(message)
 		}
 	}
-	w.CharacterCommandDirectExecFunc = func(combat.Combatant, string, string, int) CharacterCommandResult {
-		// The session dispatcher has no generic NPC look command; C's direct
-		// do_look therefore continues through npcCommandDirectFallback.
-		return CharacterCommandUnsupported
-	}
+	wireLiveNPCDispatchForTest(w)
 
 	if !specStartRoomBody(w, NewbieStartRoom) {
 		t.Fatal("start_room declined with only the switched mortal mobile present")

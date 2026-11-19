@@ -26,6 +26,7 @@ func TestAttitudeLootCorpseOrder(t *testing.T) {
 	}
 	w.StopAITicker()
 	t.Cleanup(w.StopAITicker)
+	wireLiveNPCDispatchForTest(w)
 	victim := NewPlayer(1, "Dragonpeer", 1001)
 	observer := NewPlayer(2, "Observer", 1001)
 	for _, p := range []*Player{victim, observer} {
@@ -86,6 +87,7 @@ func TestAttitudeLootGetUsesTheDirectCorpseArgument(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(w.StopAITicker)
+	wireLiveNPCDispatchForTest(w)
 	victim := NewPlayer(1, "Dragonpeer", 1001)
 	if err := w.AddPlayer(victim); err != nil {
 		t.Fatal(err)
@@ -130,6 +132,7 @@ func TestAttitudeLootWearBeforeAlignmentRefusal(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(w.StopAITicker)
+	wireLiveNPCDispatchForTest(w)
 	killer := NewMob(&parser.Mob{VNum: 300, Keywords: "looter", ShortDesc: "a looter", Alignment: -500, Position: 8, DefaultPos: 8, Str: 11, Dex: 11, Int: 11, Wis: 11, Con: 11, Cha: 11, AC: 100}, 1001)
 	killer.ID = 300
 	observer := NewPlayer(1, "Observer", 1001)

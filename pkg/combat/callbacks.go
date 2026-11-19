@@ -702,61 +702,6 @@ func cbGetWimpyLev(name Combatant) int {
 }
 
 // ---------------------------------------------------------------------------
-// Group/Party helpers.
-// ---------------------------------------------------------------------------
-
-func cbGetFollowersInRoom(name Combatant, roomVNum int) int {
-	if cb := callbacks; cb != nil && cb.GetFollowersInRoom != nil {
-		return cb.GetFollowersInRoom(name, roomVNum)
-	}
-	return 0
-}
-
-func cbGetMasterInRoom(name Combatant, roomVNum int) bool {
-	if cb := callbacks; cb != nil && cb.GetMasterInRoom != nil {
-		return cb.GetMasterInRoom(name, roomVNum)
-	}
-	return false
-}
-
-func cbGetFellowFollowersInRoom(name Combatant, roomVNum int) bool {
-	if cb := callbacks; cb != nil && cb.GetFellowFollowersInRoom != nil {
-		return cb.GetFellowFollowersInRoom(name, roomVNum)
-	}
-	return false
-}
-
-func cbCountGroupMembers(leaderName Combatant, roomVNum int) int {
-	if cb := callbacks; cb != nil && cb.CountGroupMembers != nil {
-		return cb.CountGroupMembers(leaderName, roomVNum)
-	}
-	return 1
-}
-
-func cbApplyToGroupMembers(leaderName Combatant, roomVNum int, fn func(name Combatant)) {
-	if cb := callbacks; cb != nil && cb.ApplyToGroupMembers != nil {
-		cb.ApplyToGroupMembers(leaderName, roomVNum, fn)
-	}
-}
-
-// ---------------------------------------------------------------------------
-// Gold helpers.
-// ---------------------------------------------------------------------------
-
-func cbGetGold(name Combatant) int {
-	if cb := callbacks; cb != nil && cb.GetGold != nil {
-		return cb.GetGold(name)
-	}
-	return 0
-}
-
-func cbSetGold(name Combatant, gold int) {
-	if cb := callbacks; cb != nil && cb.SetGold != nil {
-		cb.SetGold(name, gold)
-	}
-}
-
-// ---------------------------------------------------------------------------
 // Item helpers.
 // ---------------------------------------------------------------------------
 

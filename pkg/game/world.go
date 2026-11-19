@@ -274,6 +274,11 @@ func (w *World) SetCombatEngine(ce CombatEngine) {
 	w.combatEngine = ce
 }
 
+// testWorldInit is nil in production; pkg/game tests set it from a *_test.go
+// init() so NewWorld wires the live Character* command handlers without
+// retaining a production fallback table (DP-1596).
+var testWorldInit func(*World)
+
 // NewWorld creates a new game world from parsed data.
 func NewWorld(parsed *parser.World) (*World, error) {
 	// C's boot_db stamps the compile-time string before it boots the world
@@ -429,6 +434,9 @@ func NewWorld(parsed *parser.World) (*World, error) {
 	}
 
 	w.spawner = NewSpawner(w)
+	if testWorldInit != nil {
+		testWorldInit(w)
+	}
 	return w, nil
 }
 

@@ -20,6 +20,7 @@ func TestSyntheticMoneyIsTakeable(t *testing.T) {
 	}
 	w.StopAITicker()
 	t.Cleanup(w.StopAITicker)
+	wireLiveNPCDispatchForTest(w)
 
 	for _, amount := range []int{1, 5, 250} {
 		money := w.createMoneyObject(amount)
@@ -48,6 +49,7 @@ func TestMobGetsCorpseGoldFromAttitudeLoot(t *testing.T) {
 	}
 	w.StopAITicker()
 	t.Cleanup(w.StopAITicker)
+	wireLiveNPCDispatchForTest(w)
 
 	victim := NewPlayer(1, "Goldpeer", 1001)
 	observer := NewPlayer(2, "Goldwatch", 1001)

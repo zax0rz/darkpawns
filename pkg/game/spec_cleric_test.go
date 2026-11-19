@@ -82,9 +82,10 @@ func TestSpecCleric_EntryGatesAndStand(t *testing.T) {
 
 	mob.SetPosition(combat.PosSitting)
 	var commandName, commandArg string
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
+	liveDirect := w.CharacterCommandDirectExecFunc
+	w.CharacterCommandDirectExecFunc = func(body combat.Combatant, command string, argument string, subcmdVal int) CharacterCommandResult {
 		commandName, commandArg = command, argument
-		return CharacterCommandUnsupported
+		return liveDirect(body, command, argument, subcmdVal)
 	}
 	draws := scriptClericRolls(t, 0, 1) // lspell=2, then the always-offensive full-health gate
 	if got := specCleric(w, nil, mob, "", ""); !got {

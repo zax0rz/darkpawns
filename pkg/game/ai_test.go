@@ -140,12 +140,16 @@ func TestWanderMobMovesWithinConstraints(t *testing.T) {
 // point after DP-908). A sentinel mob must stay put across many AI ticks.
 func TestRunMobAISentinelNeverWanders(t *testing.T) {
 	w := newWanderTestWorld(t)
-	mob := NewMob(&parser.Mob{Keywords: "guard", ShortDesc: "a cityguard", ActionFlags: []string{"SENTINEL"}}, 1)
+	w.mobs[1] = &parser.Mob{VNum: 1, Keywords: "guard", ShortDesc: "a cityguard", ActionFlags: []string{"SENTINEL"}}
+	mob, err := w.SpawnMobQuiet(1, 1)
+	if err != nil {
+		t.Fatalf("SpawnMobQuiet: %v", err)
+	}
 	mob.SetAlive(true)
 	mob.SetStatus("standing")
 
 	for i := range 500 {
-		w.runMobAI(mob)
+		w.MobileActivity()
 		if got := mob.GetRoom(); got != 1 {
 			t.Fatalf("SENTINEL mob moved to room %d after %d ticks", got, i+1)
 		}

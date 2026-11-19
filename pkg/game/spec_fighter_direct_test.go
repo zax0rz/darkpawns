@@ -17,9 +17,10 @@ func TestSpecFighterHeadbuttRefusesImmortalDirectTarget(t *testing.T) {
 
 	var commandName, commandArgument string
 	var commandSubcmd int
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, name, argument string, subcmd int) CharacterCommandResult {
+	liveDirect := w.CharacterCommandDirectExecFunc
+	w.CharacterCommandDirectExecFunc = func(body combat.Combatant, name string, argument string, subcmd int) CharacterCommandResult {
 		commandName, commandArgument, commandSubcmd = name, argument, subcmd
-		return CharacterCommandUnsupported
+		return liveDirect(body, name, argument, subcmd)
 	}
 
 	var seed uint32

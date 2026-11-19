@@ -290,7 +290,7 @@ func TestMobDisarmSetsVictimFlag(t *testing.T) {
 	for seed := uint32(1); seed < 5000; seed++ {
 		dprng.ResetStream(seed)
 		victim.SetPlrFlag(PlrCrash, false)
-		mobDisarm(w, me, victim)
+		callLiveMobSkill(w, me, "disarm", victim)
 		if _, stillWielded := victim.Equipment.GetItemInSlot(SlotWield); stillWielded {
 			continue // the roll declined to disarm; try the next seed
 		}

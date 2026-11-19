@@ -81,9 +81,10 @@ func TestSpecTeleportVictim_ScoffSpeechTeleportAndLandingLook(t *testing.T) {
 	}
 	lastMsg() // discard observer setup output
 	var commandName, commandArg string
-	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string, _ int) CharacterCommandResult {
+	liveDirect := w.CharacterCommandDirectExecFunc
+	w.CharacterCommandDirectExecFunc = func(body combat.Combatant, command string, argument string, subcmdVal int) CharacterCommandResult {
 		commandName, commandArg = command, argument
-		return CharacterCommandUnsupported
+		return liveDirect(body, command, argument, subcmdVal)
 	}
 
 	// With two rooms, seed 2 selects the second room in C's stable room order.

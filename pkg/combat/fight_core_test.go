@@ -83,108 +83,27 @@ func TestBackstabMult(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// IsInGroup — uses HasAffectStr, GetMasterInRoom, GetFellowFollowersInRoom
+// CalcXPShare
 // ---------------------------------------------------------------------------
 
-func TestIsInGroup(t *testing.T) {
-	orig := GetCallbacks()
-	defer SetCallbacks(orig)
-
-	ch := &mockCombatant{name: "Alice", npc: false, room: 100}
-
-	// No hooks wired → false
-	SetCallbacks(nil)
-	if IsInGroup(ch) {
-		t.Error("IsInGroup with nil hooks should return false")
-	}
-
-	// HasAffectStr true + GetMasterInRoom true → true
-	SetCallbacks(&GameCallbacks{
-		HasAffectStr: func(bodyname Combatant, aff string) bool {
-			name := bodyname.GetName()
-
-			return name == "Alice" && aff == AFF_STR_GROUP
-		},
-		GetMasterInRoom: func(bodyname Combatant, room int) bool {
-			name := bodyname.GetName()
-
-			return name == "Alice" && room == 100
-		},
-	})
-	if !IsInGroup(ch) {
-		t.Error("IsInGroup(Alice) should return true with master in room")
-	}
-
-	// HasAffectStr true + GetFellowFollowers true → true
-	SetCallbacks(&GameCallbacks{
-		HasAffectStr: func(bodyname Combatant, aff string) bool {
-			name := bodyname.GetName()
-
-			return name == "Alice" && aff == AFF_STR_GROUP
-		},
-		GetMasterInRoom: func(bodyname Combatant, room int) bool { return false },
-		GetFellowFollowersInRoom: func(bodyname Combatant, room int) bool {
-			name := bodyname.GetName()
-			return name == "Alice" && room == 100
-		},
-	})
-	if !IsInGroup(ch) {
-		t.Error("IsInGroup(Alice) should return true with fellow followers")
-	}
-
-	// HasAffectStr false → false
-	SetCallbacks(&GameCallbacks{
-		HasAffectStr: func(bodyname Combatant, aff string) bool { return false },
-	})
-	if IsInGroup(ch) {
-		t.Error("IsInGroup(Alice) should return false without group affect")
-	}
-}
-
-// ---------------------------------------------------------------------------
-// CalcLevelDiff
-// ---------------------------------------------------------------------------
-
-func TestCalcLevelDiff(t *testing.T) {
-	orig := GetCallbacks()
-	defer SetCallbacks(orig)
-
-	// Wire IsInGroup to return false for solo
-	SetCallbacks(&GameCallbacks{
-		HasAffectStr: func(bodyname Combatant, aff string) bool { return false },
-	})
-
-	ch := &mockCombatant{name: "ch", level: 10}
-	victim := &mockCombatant{name: "vic", level: 20}
-
-	// ch < victim: victim is higher → share increases (levelDiff negative, no reduction)
-	diff := CalcLevelDiff(ch, victim, 100)
-	if diff <= 0 {
-		t.Errorf("CalcLevelDiff(ch=10, victim=20) = %d, want positive", diff)
+func TestCalcXPShare(t *testing.T) {
+	// ch < victim: victim is higher → share unchanged (levelDiff negative, no reduction)
+	if diff := CalcXPShare(10, 20, 100, false, maxExpGain); diff <= 0 {
+		t.Errorf("CalcXPShare(ch=10, victim=20) = %d, want positive", diff)
 	}
 
 	// ch > victim: ch is higher → share decreases
-	ch2 := &mockCombatant{name: "ch2", level: 30}
-	victim2 := &mockCombatant{name: "vic2", level: 5}
-	diff2 := CalcLevelDiff(ch2, victim2, 100)
-	if diff2 >= 100 {
-		t.Errorf("CalcLevelDiff(ch=30, victim=5) = %d, want < 100", diff2)
+	if diff := CalcXPShare(30, 5, 100, false, maxExpGain); diff >= 100 {
+		t.Errorf("CalcXPShare(ch=30, victim=5) = %d, want < 100", diff)
 	}
 
-	// Same level: returns base (no adjustments for level diff)
-	ch3 := &mockCombatant{name: "ch3", level: 15}
-	victim3 := &mockCombatant{name: "vic3", level: 15}
-	diff3 := CalcLevelDiff(ch3, victim3, 100)
-	// At level 15, no level adjustment, no over-20 penalty → should be 100
-	if diff3 != 100 {
-		t.Errorf("CalcLevelDiff(same level 15) = %d, want 100", diff3)
+	// Same level 15: no level adjustment, no over-20 penalty → 100
+	if diff := CalcXPShare(15, 15, 100, false, maxExpGain); diff != 100 {
+		t.Errorf("CalcXPShare(same level 15) = %d, want 100", diff)
 	}
 
-	ch4 := &mockCombatant{name: "ch4", level: 30}
-	victim4 := &mockCombatant{name: "vic4", level: 10}
-	diff4 := CalcLevelDiff(ch4, victim4, 99)
-	if diff4 != 23 {
-		t.Errorf("CalcLevelDiff(ch=30, victim=10, base=99) = %d, want 23 per C truncation", diff4)
+	if diff := CalcXPShare(30, 10, 99, false, maxExpGain); diff != 23 {
+		t.Errorf("CalcXPShare(ch=30, victim=10, base=99) = %d, want 23 per C truncation", diff)
 	}
 }
 
@@ -273,38 +192,6 @@ func TestReplaceMessageTokens(t *testing.T) {
 	if got != "She hits Enemy." {
 		t.Errorf("female pronoun: got %q", got)
 	}
-}
-
-// ---------------------------------------------------------------------------
-// GroupGain — smoke test (no hooks wired)
-// ---------------------------------------------------------------------------
-
-func TestGroupGain_NoHooks(t *testing.T) {
-	orig := GetCallbacks()
-	defer SetCallbacks(orig)
-
-	ch := &mockCombatant{name: "Alice", npc: false, level: 10, room: 100}
-	victim := &mockCombatant{name: "Orc", npc: true, level: 8}
-
-	SetCallbacks(&GameCallbacks{
-		CountGroupMembers: func(bodyleaderName Combatant, roomVNum int) int { return 1 },
-		ApplyToGroupMembers: func(bodyleaderName Combatant, roomVNum int, fn func(Combatant)) {
-			fn(bodyleaderName)
-		},
-		GainExp: func(bodyname Combatant, amount int) {},
-		GetExp: func(bodyname Combatant) int {
-			name := bodyname.GetName()
-
-			if name == "Orc" {
-				return 200
-			}
-			return 0
-		},
-		GetAlignment: func(bodyname Combatant) int { return 0 },
-		SetAlignment: func(bodyname Combatant, val int) {},
-	})
-
-	GroupGain(ch, victim) // should not panic
 }
 
 // ---------------------------------------------------------------------------
@@ -400,25 +287,6 @@ func TestRawKill_NilGetRace(t *testing.T) {
 	if !madeCorpse {
 		t.Error("expected MakeCorpse to be called when GetRace is nil")
 	}
-}
-
-// TestGetExpNilGuard_GroupGain verifies GroupGain does not panic when GetExp is nil.
-func TestGetExpNilGuard_GroupGain(t *testing.T) {
-	orig := GetCallbacks()
-	defer SetCallbacks(orig)
-
-	SetCallbacks(&GameCallbacks{
-		CountGroupMembers: func(bodyleaderName Combatant, roomVNum int) int { return 1 },
-		ApplyToGroupMembers: func(bodyleaderName Combatant, roomVNum int, fn func(Combatant)) {
-			fn(bodyleaderName)
-		},
-	})
-
-	leader := &mockCombatant{name: "Leader", room: 100, level: 10}
-	victim := &mockCombatant{name: "Victim", room: 100, level: 5}
-
-	// Should not panic; with GetExp nil the base share becomes 0, then clamped to 1.
-	GroupGain(leader, victim)
 }
 
 // TestGetExpNilGuard_DieWithKiller verifies DieWithKiller does not panic when

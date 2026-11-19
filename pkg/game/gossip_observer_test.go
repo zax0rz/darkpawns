@@ -82,6 +82,7 @@ func TestGossipObserverOnlyPublicGossipAndIncludesNPC(t *testing.T) {
 
 func TestGossipObserverReceivesLuaBridge(t *testing.T) {
 	w, _, mob, _ := newNPCCommandWorld(t)
+	wireLiveNPCDispatchForTest(w)
 	var line string
 	w.SetGossipObserver(func(value string) { line = value })
 	NewWorldScriptableAdapter(w).Gossip(scripting.CharRef{NPC: true, ID: mob.GetID()}, "scripted gossip")

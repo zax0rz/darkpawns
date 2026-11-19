@@ -1355,49 +1355,22 @@ func (ce *CombatEngine) redirectAttacker(attacker, target Combatant) bool {
 	return true
 }
 
-// sendHitMessage sends hit messages to combatants and room.
-// If MessageFunc is set, it is called and the generic fallback is skipped.
+// sendHitMessage sends hit messages to combatants and room via MessageFunc.
+// Production always wires MessageFunc (cmd/server/main.go → SetCombatMessageFunc →
+// pkg/combat/messages.go DamMessage); when unset in isolated unit tests, no
+// invented fallback strings are emitted (R4/DP-1596).
 func (ce *CombatEngine) sendHitMessage(attacker, defender Combatant, damage, attackType int) {
 	if ce.MessageFunc != nil {
 		ce.MessageFunc(attacker, defender, damage, attackType)
-		return
-	}
-
-	attackerName := attacker.GetName()
-	defenderName := defender.GetName()
-	roomVNum := attacker.GetRoom()
-
-	// Message to attacker
-	sendCombatMessage(attacker, fmt.Sprintf("You hit %s for %d damage!\r\n", defenderName, damage))
-
-	// Message to defender
-	sendCombatMessage(defender, fmt.Sprintf("%s hits you for %d damage!\r\n", attackerName, damage))
-
-	// Message to room
-	if ce.BroadcastFunc != nil {
-		ce.BroadcastFunc(roomVNum,
-			fmt.Sprintf("%s hits %s!\r\n", attackerName, defenderName), []Combatant{attacker})
 	}
 }
 
-// sendMissMessage sends miss messages.
-// If MessageFunc is set, it is called and the generic fallback is skipped.
+// sendMissMessage sends miss messages via MessageFunc.
+// Production always wires MessageFunc; when unset in isolated unit tests, no
+// invented fallback strings are emitted (R4/DP-1596).
 func (ce *CombatEngine) sendMissMessage(attacker, defender Combatant, attackType int) {
 	if ce.MessageFunc != nil {
 		ce.MessageFunc(attacker, defender, 0, attackType)
-		return
-	}
-
-	attackerName := attacker.GetName()
-	defenderName := defender.GetName()
-	roomVNum := attacker.GetRoom()
-
-	sendCombatMessage(attacker, fmt.Sprintf("You miss %s!\r\n", defenderName))
-	sendCombatMessage(defender, fmt.Sprintf("%s misses you!\r\n", attackerName))
-
-	if ce.BroadcastFunc != nil {
-		ce.BroadcastFunc(roomVNum,
-			fmt.Sprintf("%s misses %s!\r\n", attackerName, defenderName), []Combatant{attacker})
 	}
 }
 

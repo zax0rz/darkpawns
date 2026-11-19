@@ -527,14 +527,14 @@ func TestSpecButler_CapacityFailurePreservesInventoryState(t *testing.T) {
 }
 
 func TestSpecButler_AutonomousRegisteredDispatch(t *testing.T) {
-	w, _, peer, mob, messages := newButlerTestWorld(t)
+	w, _, peer, _, messages := newButlerTestWorld(t)
 	setupButlerContainers(t, w)
 	obj := spawnButlerTestObject(t, w, 3005)
 	if GetMobSpec(8092) == nil {
 		t.Fatal("butler registration is missing")
 	}
 
-	w.MobileActivityForMob(mob)
+	w.MobileActivity()
 
 	if got := obj.Location.Kind; got != ObjInContainer {
 		t.Fatalf("autonomous object location = %v, want container", got)

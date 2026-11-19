@@ -40,6 +40,7 @@ func newSpecProcTestWorld(t *testing.T) (*World, *Player, func() string) {
 		t.Fatalf("NewWorld failed: %v", err)
 	}
 	t.Cleanup(func() { w.StopAITicker() })
+	wireLiveNPCDispatchForTest(w)
 
 	var out strings.Builder
 	w.MessageSink = func(_ string, msg []byte) { out.Write(msg) }
@@ -962,6 +963,7 @@ func TestSpecDump_ExpGoldLocked(t *testing.T) {
 		t.Fatalf("NewWorld failed: %v", err)
 	}
 	t.Cleanup(func() { w.StopAITicker() })
+	wireLiveNPCDispatchForTest(w)
 
 	var wg sync.WaitGroup
 	for i := 0; i < 10; i++ {
@@ -999,6 +1001,7 @@ func TestActMessageAudienceRouting(t *testing.T) {
 		t.Fatalf("NewWorld failed: %v", err)
 	}
 	t.Cleanup(func() { w.StopAITicker() })
+	wireLiveNPCDispatchForTest(w)
 
 	actor := NewPlayer(1, "Actor", 1001)
 	victim := NewPlayer(2, "Victim", 1001)
@@ -1116,7 +1119,7 @@ func TestSpecFighter_NativeSkills(t *testing.T) {
 	seed := fighterSeed(t, 1, 121, 50, 100, true)
 	dprng.ResetStream(seed)
 	startMobHP, startPlayerHP := mob.GetHP(), player.GetHP()
-	mobHeadbutt(w, mob, player)
+	callLiveMobSkill(w, mob, "headbutt", player)
 	if got := mob.GetMobWait(); got != 0 {
 		t.Errorf("headbutt changed GET_MOB_WAIT to %d", got)
 	}
@@ -1139,7 +1142,7 @@ func TestSpecFighter_NativeSkills(t *testing.T) {
 	mob.SetPosition(combat.PosFighting)
 	mob.SetMove(20)
 	dprng.ResetStream(1)
-	mobBash(w, mob, player)
+	callLiveMobSkill(w, mob, "bash", player)
 	if got := mob.GetMobWait(); got != 0 {
 		t.Errorf("bash changed GET_MOB_WAIT to %d", got)
 	}
@@ -1168,8 +1171,8 @@ func TestSpecFighter_NativeSkills(t *testing.T) {
 	seed = fighterSeed(t, 1, 101, 50, 100, true)
 	dprng.ResetStream(seed)
 	_ = lastMsg()
-	mobParry(w, mob, player)
-	if got := mob.GetWaitState(); got != 0 {
+	callLiveMobSkill(w, mob, "parry", player)
+	if got := mob.GetMobWait(); got != 0 {
 		t.Errorf("parry changed GET_MOB_WAIT to %d", got)
 	}
 	if parryEngine.markedName != player.Name || parryEngine.markedAction != "parry" {
@@ -1185,7 +1188,7 @@ func TestSpecFighter_NativeSkills(t *testing.T) {
 	mob.SetAffectFlags(0)
 	mob.CustomData = nil
 	dprng.ResetStream(1)
-	mobBerserk(mob)
+	callLiveMobSkill(w, mob, "berserk", nil)
 	if got, want := mob.GetWaitState(), 2*engine.PULSE_VIOLENCE; got != want {
 		t.Errorf("berserk ch->wait = %d, want %d pulses", got, want)
 	}
