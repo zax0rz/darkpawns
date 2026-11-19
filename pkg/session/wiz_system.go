@@ -59,34 +59,14 @@ func cmdShutdown(s *Session, args []string) error {
 	return nil
 }
 
-// forceAllSave mirrors do_shutdown's do_force(ch, "all save") continuation.
-// The command itself sends the C force notice and invokes the existing Go save
-// path for lower-level playing sessions; the process shutdown is then handed
-// to main through Manager.RequestShutdown.
+// forceAllSave is do_shutdown's do_force(ch, "all save") (src/act.wizard.c:1113).
 func (m *Manager) forceAllSave(caster *Session) {
 	if caster == nil || caster.player == nil {
 		return
 	}
-	caster.Send("Okay.\r\n")
-	game.MudLog(fmt.Sprintf("(GC) %s forced all to save", caster.player.GetName()), game.MudlogNormal, max(caster.player.GetLevel()+1, caster.player.GetInvisLevel()), true)
-
-	m.mu.RLock()
-	targets := make([]*Session, 0, len(m.sessions))
-	for _, target := range m.sessions {
-		if target == nil || target.player == nil || !target.authenticated || target == caster {
-			continue
-		}
-		if target.player.Level >= caster.player.Level {
-			continue
-		}
-		targets = append(targets, target)
-	}
-	m.mu.RUnlock()
-
-	for _, target := range targets {
-		game.Act(m.world, true, caster.player, target.player, nil, nil, "$n has forced you to 'save'.", "", game.ToVict)
-		m.world.ExecSave(target.player, nil)
-	}
+	// The shared force-all body runs each victim's save through the command
+	// interpreter, which takes C's number(0,3) hide draw (interpreter.c:889).
+	forceAll(caster, "save")
 }
 
 // ---------------------------------------------------------------------------

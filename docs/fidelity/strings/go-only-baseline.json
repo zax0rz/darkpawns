@@ -5,7 +5,7 @@
     "Cannot access manager state.": {
       "segment": "Cannot access manager state.",
       "file": "pkg/session/wiz_system.go",
-      "line": 215,
+      "line": 195,
       "sink": ".Send",
       "reason": "surface:no-c",
       "evidence": "DP-1581: defensive nil-manager guard in wizlock; unreachable by players in a live server",

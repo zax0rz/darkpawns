@@ -294,7 +294,7 @@ func GetTattooBonuses(tattoo int) []TattooBonus {
 
 // TattooAf applies or removes tattoo stat effects on a player.
 // Source: src/tattoo.c:104 (tattoo_af struct char_data *ch, bool add).
-// C calls affect_modify without bounds (src/tattoo.c:193-195). Abilities
+// C calls affect_modify for each populated slot (src/tattoo.c:183-185). Abilities
 // change only aff_abils; the next affect_total rebuilds from base and Tattoo.
 func TattooAf(p *Player, add bool) {
 	if p == nil || p.Tattoo == 0 {

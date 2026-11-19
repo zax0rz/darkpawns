@@ -1988,7 +1988,7 @@ func specKeySeller(w *World, ch *Player, me *MobInstance, cmd string, arg string
 // ================================================================
 // specCastleGuardEast — Blocks movement east into the castle.
 // Ported from SPECIAL(castle_guard_east) (src/spec_procs2.c:1934-1970).
-// Unlike down/up/north (src/spec_procs2.c:2134-2258, block without hit),
+// Unlike the down, up and north castle guards, which block without a hit,
 // east yells and hits, and snaps via one TO_ROOM line; it does not share
 // specCastleGuardActor's shape, so it keeps its own body (R5c).
 // ================================================================
