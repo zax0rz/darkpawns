@@ -71,7 +71,7 @@ func TestWhoWhereWiznetUseDescriptorOrderWhenTimestampsTie(t *testing.T) {
 		// 2. cmdWhoForBody must list Thirdgod before Secondgod before Firstgod.
 		whoOut := runWho(t, s1)
 		i3, i2, i1 := strings.Index(whoOut, "Thirdgod"), strings.Index(whoOut, "Secondgod"), strings.Index(whoOut, "Firstgod")
-		if i3 < 0 || i2 < 0 || i1 < 0 || !(i3 < i2 && i2 < i1) {
+		if i3 < 0 || i2 < 0 || i1 < 0 || i3 >= i2 || i2 >= i1 {
 			t.Fatalf("trial %d: cmdWhoForBody order wrong (indices 3=%d 2=%d 1=%d):\n%s", trial, i3, i2, i1, whoOut)
 		}
 
@@ -81,7 +81,7 @@ func TestWhoWhereWiznetUseDescriptorOrderWhenTimestampsTie(t *testing.T) {
 		}
 		whereOut := readSessionText(t, s1)
 		i3, i2, i1 = strings.Index(whereOut, "Thirdgod"), strings.Index(whereOut, "Secondgod"), strings.Index(whereOut, "Firstgod")
-		if i3 < 0 || i2 < 0 || i1 < 0 || !(i3 < i2 && i2 < i1) {
+		if i3 < 0 || i2 < 0 || i1 < 0 || i3 >= i2 || i2 >= i1 {
 			t.Fatalf("trial %d: cmdWhere order wrong (indices 3=%d 2=%d 1=%d):\n%s", trial, i3, i2, i1, whereOut)
 		}
 	}
@@ -132,7 +132,7 @@ func TestDrainInputPassUsesDescriptorOrder(t *testing.T) {
 		i3 := strings.Index(got, "Third says, 'three'")
 		i2 := strings.Index(got, "Second says, 'two'")
 		i1 := strings.Index(got, "First says, 'one'")
-		if i3 < 0 || i2 < 0 || i1 < 0 || !(i3 < i2 && i2 < i1) {
+		if i3 < 0 || i2 < 0 || i1 < 0 || i3 >= i2 || i2 >= i1 {
 			t.Fatalf("trial %d: drainInputPass order wrong (indices 3=%d 2=%d 1=%d):\nobs=%q\ns1=%q", trial, i3, i2, i1, got, got1)
 		}
 	}
