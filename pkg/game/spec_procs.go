@@ -817,16 +817,11 @@ func cityguardRoomCombatants(w *World, roomVNum int) []combat.Combatant {
 // mobHit mirrors C hit(): a mob special's swing consumes hit()'s draws and
 // runs damage()'s gates against the pre-enrolment state, enrolling both
 // sides at the damage point only when the damage is not refused
-// (fight.c:1318-1445). The fallback keeps focused spec tests useful when
-// they intentionally omit a combat engine; production worlds provide the
-// canonical initial-attack seam.
+// (fight.c:1318-1445). Production worlds always provide the canonical
+// initial-attack seam; a nil engine cannot reproduce hit(), so it errors.
 func (w *World) mobHit(attacker *MobInstance, defender combat.Combatant) error {
 	if w.combatEngine == nil {
-		player, ok := defender.(*Player)
-		if !ok {
-			return fmt.Errorf("mob special fallback cannot attack non-player %q", defender.GetName())
-		}
-		return attacker.Attack(player, w)
+		return fmt.Errorf("mob special without combat engine cannot attack %q", defender.GetName())
 	}
 	// A special that swings at a body C has flagged for extraction but not yet
 	// freed (src/handler.c:1194-1209) still runs hit(): the to-hit and damage

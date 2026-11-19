@@ -466,34 +466,6 @@ func (m *MobInstance) HasFlag(flag string) bool {
 	return false
 }
 
-// Attack makes the mob attack a player.
-func (m *MobInstance) Attack(player *Player, world *World) error {
-	// Simple attack implementation
-	damage := 10 // Default damage
-	player.TakeDamage(damage)
-
-	// Send messages
-	player.SendMessage(fmt.Sprintf("%s attacks you for %d damage!\n", m.GetShortDesc(), damage))
-
-	// Notify other players in the room
-	players := world.GetPlayersInRoom(m.RoomVNum)
-	for _, p := range players {
-		if p == player || !sendOk(p, false) {
-			continue
-		}
-		p.SendMessage(fmt.Sprintf("%s attacks %s!\n", m.GetShortDesc(), player.Name))
-	}
-
-	// Transition into the wounded band or POS_DEAD from the new HP, and run the
-	// death pipeline at POS_DEAD (HP <= -11) so this path can't leave a player
-	// stranded at negative HP with no death — fight.c update_pos (DP-1021).
-	if combat.UpdatePositionAfterDamage(player, world.WoundAct, world.StopFightingBody) == combat.PosDead {
-		world.HandleDeath(player, m, -1)
-	}
-
-	return nil
-}
-
 // Update runs the mob's AI update.
 func (m *MobInstance) Update(world *World) error {
 	// if m.Brain != nil {

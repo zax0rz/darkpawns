@@ -2484,8 +2484,6 @@ Sorry, I only serve the house owner.	src/spec_procs2.c:1888	buffered:sprintf	key
 I only sell keys, currently.	src/spec_procs2.c:1899	buffered:sprintf	key_seller
 You can't afford a key.	src/spec_procs2.c:1906	buffered:sprintf	key_seller
 You can buy a key for 10,000 gold coins.	src/spec_procs2.c:1925	buffered:sprintf	key_seller
-snaps to attention as you pass.	src/spec_procs2.c:1951	act	castle_guard_east
-yells, 'Stay outta there!'	src/spec_procs2.c:1954	act	castle_guard_east
 humiliates you and blocks your way.	src/spec_procs2.c:2047	act	no_move_west
 says 'I cannot let you pass.'	src/spec_procs2.c:2068	act	no_move_north
 default case reached in clerk special - tell a god	src/spec_procs3.c:96	send_to_char	clerk

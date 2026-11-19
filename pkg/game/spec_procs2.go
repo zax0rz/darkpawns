@@ -99,21 +99,6 @@ func isOwner(w *World, ch *Player, roomVNum int) bool {
 	return false
 }
 
-// guardCanAct returns false if the guard is asleep/dead or player is immortal.
-// ch is nil during autonomous AI ticks (no player is present to check).
-func guardCanAct(ch *Player, me *MobInstance) bool {
-	if me.GetPosition() <= combat.PosSleeping {
-		return false
-	}
-	if ch == nil {
-		return true
-	}
-	if !ch.IsNPC() && ch.GetLevel() >= LVL_IMMORT {
-		return false
-	}
-	return true
-}
-
 // isOwnerGrouped checks if a player is grouped with the house owner.
 func isOwnerGrouped(w *World, ch *Player, roomVNum int) bool {
 	if ch.GetFollowing() == "" {
@@ -2002,41 +1987,48 @@ func specKeySeller(w *World, ch *Player, me *MobInstance, cmd string, arg string
 
 // ================================================================
 // specCastleGuardEast — Blocks movement east into the castle.
-// C equivalent: castle_guard_east in spec_procs2.c:1934-1994
+// Ported from SPECIAL(castle_guard_east) (src/spec_procs2.c:1934-1970).
+// Unlike the down, up and north castle guards, which block without a hit,
+// east yells and hits, and snaps via one TO_ROOM line; it does not share
+// specCastleGuardActor's shape, so it keeps its own body (R5c).
 // ================================================================
 func specCastleGuardEast(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() || !guardCanAct(ch, me) {
+	if me == nil || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
-
-	if cmd == "east" && !isOwner(w, ch, me.GetRoomVNum()+2) {
-		if isOwnerGrouped(w, ch, me.GetRoomVNum()+2) {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s snaps to attention as %s passes.", me.GetShortDesc(), ch.GetName()))
-		} else {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s yells, 'Stay outta there!'", me.GetShortDesc()))
-			if err := me.Attack(ch, w); err != nil {
-				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
-			}
-			return true
+	if cmd != "" {
+		if ch == nil || ch.GetLevel() >= LVL_IMMORT {
+			return false
 		}
-	}
-
-	if cmd == "" && me.GetFightingBody() == nil {
-		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
-			if mob == me || !mob.IsFighting() || mob.GetFightingBody() == nil {
-				continue
-			}
-			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-				if pl == mob.GetFightingBody() && !pl.IsNPC() {
-					if err := me.Attack(pl, w); err != nil {
-						slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
-					}
-					return true
+		if cmd == "east" && !isOwner(w, ch, me.GetRoomVNum()+2) {
+			if isOwnerGrouped(w, ch, me.GetRoomVNum()+2) {
+				Act(w, false, me, nil, nil, nil, "$n snaps to attention as you pass.", "", ToRoom)
+			} else {
+				Act(w, false, me, nil, nil, nil, "$n yells, 'Stay outta there!'", "", ToRoom)
+				if err := w.mobHit(me, ch); err != nil {
+					slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
 				}
+				return true
 			}
 		}
+		return false
 	}
-
+	if me.GetFightingBody() != nil {
+		return false
+	}
+	for _, other := range w.GetMobsInRoom(me.GetRoomVNum()) {
+		if other == me || MobSpecAssign[other.GetVNum()] != "castle_guard_east" || !other.IsFighting() {
+			continue
+		}
+		target := other.GetFightingBody()
+		if target == nil || target == me {
+			continue
+		}
+		if err := w.mobHit(me, target); err != nil {
+			slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
+		}
+		return true
+	}
 	return false
 }
 

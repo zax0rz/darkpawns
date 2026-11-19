@@ -50,16 +50,16 @@ func TestSpecNormalChecker_NilChDoesNotPanic_AttacksNonImmortalPlayer(t *testing
 	player.Level = 10
 	mob := spawnTargetMob(t, w)
 	mob.SetPosition(combat.PosStanding)
-	startHP := 200
-	player.SetHP(startHP)
+	engine := &normalCheckerCombatEngine{}
+	w.SetCombatEngine(engine)
 
 	handled := specNormalChecker(w, nil, mob, "", "")
 
 	if !handled {
 		t.Error("expected specNormalChecker to notice and attack the player")
 	}
-	if player.GetHP() >= startHP {
-		t.Errorf("expected player to take damage from the mob's attack, HP stayed at %d", player.GetHP())
+	if len(engine.initialAttacks) != 1 || engine.initialAttacks[0] != [2]string{mob.GetName(), player.GetName()} {
+		t.Errorf("initial attacks = %#v, want one mob-to-player hit through the engine", engine.initialAttacks)
 	}
 }
 
@@ -181,8 +181,8 @@ func TestSpecRescuer_NilChDoesNotPanic_DefendsAllyAgainstAttacker(t *testing.T) 
 	ally.SetPosition(combat.PosStanding)
 	ally.SetFightingBody(player) // player is attacking the ally mob
 	player.SetFightingBody(ally)
-	startHP := 200
-	player.SetHP(startHP)
+	engine := &normalCheckerCombatEngine{}
+	w.SetCombatEngine(engine)
 	previousNumber := rescuerNumber
 	rescuerNumber = func(_, _ int) int { return 1 }
 	t.Cleanup(func() { rescuerNumber = previousNumber })
@@ -192,16 +192,15 @@ func TestSpecRescuer_NilChDoesNotPanic_DefendsAllyAgainstAttacker(t *testing.T) 
 	if !handled {
 		t.Error("expected specRescuer to rescue the ally mob")
 	}
-	if player.GetHP() >= startHP {
-		t.Errorf("expected the ally's synchronous hit to damage the player, HP stayed at %d", player.GetHP())
+	if len(engine.initialAttacks) == 0 {
+		t.Errorf("expected the ally's synchronous hit through the engine, got none")
 	}
 	if rescuer.GetFighting() != player.GetName() || player.GetFighting() != rescuer.GetName() {
 		t.Fatalf("expected rescue to interpose rescuer, got rescuer=%q player=%q", rescuer.GetFighting(), player.GetFighting())
 	}
-	// This fixture has no combat engine, so the ally's swing is the
-	// engineless fallback and nothing enrols it. C enrols the ally inside
-	// hit()'s damage() (src/act.offensive.c:575); that is pinned with a real
-	// engine by TestSpecRescuer_UsesCanonicalAllyHitAndWaitState.
+	// C enrols the ally inside hit()'s damage() (src/act.offensive.c:575);
+	// that is pinned with a real engine by
+	// TestSpecRescuer_UsesCanonicalAllyHitAndWaitState.
 }
 
 func TestSpecRescuer_UsesCanonicalAllyHitAndWaitState(t *testing.T) {

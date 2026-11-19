@@ -3715,128 +3715,127 @@ game	(MobInstance).SetFollowing	pkg/game/mob.go	420
 game	(MobInstance).GetFollowingSequence	pkg/game/mob.go	432			
 game	(MobInstance).GetFollowing	pkg/game/mob.go	439			
 game	(MobInstance).HasFlag	pkg/game/mob.go	450			
-game	(MobInstance).Attack	pkg/game/mob.go	470			
-game	(MobInstance).Update	pkg/game/mob.go	498			
-game	(MobInstance).GetLongDesc	pkg/game/mob.go	506			
-game	(MobInstance).TakeDamage	pkg/game/mob.go	518			
-game	(MobInstance).Heal	pkg/game/mob.go	533			
-game	(MobInstance).IsAlive	pkg/game/mob.go	543			
-game	(MobInstance).GetMana	pkg/game/mob.go	548			
-game	(MobInstance).SetMana	pkg/game/mob.go	555			
-game	(MobInstance).GetMaxMana	pkg/game/mob.go	562			
-game	(MobInstance).SetMaxMana	pkg/game/mob.go	569			
-game	(MobInstance).AddToInventory	pkg/game/mob.go	576			
-game	(MobInstance).InventorySnapshot	pkg/game/mob.go	586			
-game	(MobInstance).RemoveFromInventory	pkg/game/mob.go	593			
-game	(MobInstance).EquipItem	pkg/game/mob.go	607			
-game	(MobInstance).UnequipItem	pkg/game/mob.go	627			
-game	(MobInstance).GetAC	pkg/game/mob.go	649			
-game	(MobInstance).mobilePointTotalsLocked	pkg/game/mob.go	665	src/handler.c:affect_modify; src/handler.c:affect_modify_ar; src/handler.c:affect_total	src/handler.c:289-335	
-game	(MobInstance).GetLevel	pkg/game/mob.go	705			
-game	(MobInstance).SetLevel	pkg/game/mob.go	718			
-game	(MobInstance).ConfigureCreatedMobile	pkg/game/mob.go	727			
-game	(MobInstance).SetSexOverride	pkg/game/mob.go	771	src/spells.c:spell_mirror_image	src/spells.c:1150	
-game	(MobInstance).SetDamroll	pkg/game/mob.go	780	src/spec_procs2.c:carrion	src/spec_procs2.c:1743	
-game	(MobInstance).adjustHitroll	pkg/game/mob.go	788			
-game	(MobInstance).adjustDamroll	pkg/game/mob.go	803			
-game	(MobInstance).SetDamageDice	pkg/game/mob.go	813			
-game	(MobInstance).AddDamrollBonus	pkg/game/mob.go	823			
-game	(MobInstance).GetDamageRoll	pkg/game/mob.go	832			
-game	(MobInstance).GetTHAC0	pkg/game/mob.go	863			
-game	(MobInstance).GetHP	pkg/game/mob.go	873			
-game	(MobInstance).GetMaxHP	pkg/game/mob.go	880			
-game	(MobInstance).SetMaxHP	pkg/game/mob.go	887			
-game	(MobInstance).IsNPC	pkg/game/mob.go	894			
-game	(MobInstance).GetStatus	pkg/game/mob.go	899			
-game	(MobInstance).SetStatus	pkg/game/mob.go	906			
-game	(MobInstance).GetPosition	pkg/game/mob.go	918			
-game	actionFlagBits	pkg/game/mob.go	969			
-game	affectFlagBits	pkg/game/mob.go	997			
-game	positionStatus	pkg/game/mob.go	1015	src/act.informative.c:do_score; src/medit.c:medit_parse	src/act.informative.c:1355 | src/medit.c:1061	
-game	(MobInstance).SetPosition	pkg/game/mob.go	1041			
-game	(MobInstance).GetName	pkg/game/mob.go	1079			
-game	(MobInstance).SendMessage	pkg/game/mob.go	1090			
-game	(MobInstance).SendRaw	pkg/game/mob.go	1106			
-game	(MobInstance).GetWaitState	pkg/game/mob.go	1117			
-game	(MobInstance).SetWaitState	pkg/game/mob.go	1127			
-game	(MobInstance).SetWaitStatePulses	pkg/game/mob.go	1135			
-game	(MobInstance).getAmbushAction	pkg/game/mob.go	1144			
-game	(MobInstance).setAmbushAction	pkg/game/mob.go	1150			
-game	(MobInstance).clearAmbushAction	pkg/game/mob.go	1156			
-game	(MobInstance).DecrementWaitState	pkg/game/mob.go	1164			
-game	(MobInstance).GetMobWait	pkg/game/mob.go	1174			
-game	(MobInstance).SetMobWait	pkg/game/mob.go	1184			
-game	(MobInstance).SetFightingBody	pkg/game/mob.go	1192			
-game	(MobInstance).GetFightingBody	pkg/game/mob.go	1198			
-game	(MobInstance).StopFighting	pkg/game/mob.go	1205			
-game	mobStatusFromHP	pkg/game/mob.go	1218			
-game	(MobInstance).GetFighting	pkg/game/mob.go	1235			
-game	(MobInstance).GetClass	pkg/game/mob.go	1244			
-game	(MobInstance).GetStr	pkg/game/mob.go	1252			
-game	(MobInstance).GetDex	pkg/game/mob.go	1259			
-game	(MobInstance).GetInt	pkg/game/mob.go	1266			
-game	(MobInstance).GetWis	pkg/game/mob.go	1273			
-game	(MobInstance).GetCon	pkg/game/mob.go	1280			
-game	(MobInstance).GetCha	pkg/game/mob.go	1287			
-game	(MobInstance).GetHitroll	pkg/game/mob.go	1298	src/db.c:parse_simple_mob	src/db.c:1064	
-game	(MobInstance).GetDamroll	pkg/game/mob.go	1310	src/handler.c:affect_total	src/handler.c:337-372	
-game	(MobInstance).GetStrAdd	pkg/game/mob.go	1318			
-game	(MobInstance).GetVNum	pkg/game/mob.go	1326			
-game	(MobInstance).GetHealth	pkg/game/mob.go	1332			
-game	(MobInstance).GetExp	pkg/game/mob.go	1340			
-game	(MobInstance).SetHealth	pkg/game/mob.go	1352			
-game	(MobInstance).GetMaxHealth	pkg/game/mob.go	1358			
-game	(MobInstance).GetGold	pkg/game/mob.go	1364			
-game	(MobInstance).SetGold	pkg/game/mob.go	1371			
-game	(MobInstance).SpendGold	pkg/game/mob.go	1380			
-game	(MobInstance).updateGold	pkg/game/mob.go	1392			
-game	(MobInstance).IsAffected	pkg/game/mob.go	1403			
-game	(MobInstance).IsInGroup	pkg/game/mob.go	1412	src/utils.c:are_grouped; src/utils.c:is_intelligent	src/utils.c:655-674	
-game	(MobInstance).SetAffected	pkg/game/mob.go	1417			
-game	(MobInstance).RemoveAffected	pkg/game/mob.go	1424			
-game	(MobInstance).GetRoomVNum	pkg/game/mob.go	1430			
-game	(MobInstance).GetPrototype	pkg/game/mob.go	1436			
-game	(MobInstance).HasMobFlag	pkg/game/mob.go	1441			
-game	(MobInstance).SetMobFlag	pkg/game/mob.go	1451			
-game	(MobInstance).GetHunting	pkg/game/mob.go	1461			
-game	(MobInstance).IsHunting	pkg/game/mob.go	1468			
-game	(MobInstance).ClearHunting	pkg/game/mob.go	1475			
-game	(MobInstance).GetTarget	pkg/game/mob.go	1487			
-game	(MobInstance).SetTarget	pkg/game/mob.go	1494			
-game	(MobInstance).GetMemory	pkg/game/mob.go	1502			
-game	(MobInstance).ClearMemory	pkg/game/mob.go	1511			
-game	(MobInstance).GetMountRider	pkg/game/mob.go	1518			
-game	(MobInstance).SetMountRider	pkg/game/mob.go	1525			
-game	(MobInstance).SetAffectFlags	pkg/game/mob.go	1532			
-game	(MobInstance).GetHuntingID	pkg/game/mob.go	1539			
-game	(MobInstance).SetHuntingID	pkg/game/mob.go	1546			
-game	(MobInstance).GetAffects	pkg/game/mob.go	1553			
-game	(MobInstance).HasAffect	pkg/game/mob.go	1560			
-game	(MobInstance).ClearAffect	pkg/game/mob.go	1567			
-game	(MobInstance).GetMobFlags	pkg/game/mob.go	1574			
-game	(MobInstance).ClearMobFlag	pkg/game/mob.go	1581			
-game	(MobInstance).IsFighting	pkg/game/mob.go	1591			
-game	(MobInstance).GetAlignment	pkg/game/mob.go	1594			
-game	(MobInstance).alignmentLocked	pkg/game/mob.go	1598			
-game	(MobInstance).Proto	pkg/game/mob.go	1611			
-game	(MobInstance).SetProto	pkg/game/mob.go	1618			
-game	(MobInstance).SetName	pkg/game/mob.go	1623			
-game	(MobInstance).AddAffect	pkg/game/mob.go	1633			
-game	(MobInstance).JoinAffect	pkg/game/mob.go	1659	src/handler.c:affect_join	src/handler.c:476-495	
-game	(MobInstance).RemoveAffectRecord	pkg/game/mob.go	1696	src/handler.c:affect_remove	src/handler.c:428-438	
-game	(MobInstance).RemoveAffectBySpell	pkg/game/mob.go	1727	src/handler.c:affect_from_char	src/handler.c:449-456	
-game	(MobInstance).OrderedAffects	pkg/game/mob.go	1764	src/handler.c:master_affect_to_char	src/handler.c:391	
-game	(MobInstance).HitModifiers	pkg/game/mob.go	1793			
-game	(MobInstance).SetAlignment	pkg/game/mob.go	1804			
-game	(MobInstance).GetTalk	pkg/game/mob.go	1811	src/spec_procs.c:mickey	src/spec_procs.c:1328-1329	
-game	(MobInstance).SetTalk	pkg/game/mob.go	1821	src/spec_procs.c:mickey	src/spec_procs.c:1318-1320	
-game	(MobInstance).ResetTalk	pkg/game/mob.go	1832	src/spec_procs.c:mickey	src/spec_procs.c:1318-1320	
-game	(MobInstance).GetSavingThrow	pkg/game/mob.go	1839			
-game	(MobInstance).GetDamrollPoint	pkg/game/mob.go	1850			
-game	(MobInstance).damrollPointLocked	pkg/game/mob.go	1856			
-game	(MobInstance).SetFollowingBody	pkg/game/mob.go	1868			
-game	(MobInstance).CombatRetired	pkg/game/mob.go	1884			
-game	(MobInstance).SetCombatRetired	pkg/game/mob.go	1890			
+game	(MobInstance).Update	pkg/game/mob.go	470			
+game	(MobInstance).GetLongDesc	pkg/game/mob.go	478			
+game	(MobInstance).TakeDamage	pkg/game/mob.go	490			
+game	(MobInstance).Heal	pkg/game/mob.go	505			
+game	(MobInstance).IsAlive	pkg/game/mob.go	515			
+game	(MobInstance).GetMana	pkg/game/mob.go	520			
+game	(MobInstance).SetMana	pkg/game/mob.go	527			
+game	(MobInstance).GetMaxMana	pkg/game/mob.go	534			
+game	(MobInstance).SetMaxMana	pkg/game/mob.go	541			
+game	(MobInstance).AddToInventory	pkg/game/mob.go	548			
+game	(MobInstance).InventorySnapshot	pkg/game/mob.go	558			
+game	(MobInstance).RemoveFromInventory	pkg/game/mob.go	565			
+game	(MobInstance).EquipItem	pkg/game/mob.go	579			
+game	(MobInstance).UnequipItem	pkg/game/mob.go	599			
+game	(MobInstance).GetAC	pkg/game/mob.go	621			
+game	(MobInstance).mobilePointTotalsLocked	pkg/game/mob.go	637	src/handler.c:affect_modify; src/handler.c:affect_modify_ar; src/handler.c:affect_total	src/handler.c:289-335	
+game	(MobInstance).GetLevel	pkg/game/mob.go	677			
+game	(MobInstance).SetLevel	pkg/game/mob.go	690			
+game	(MobInstance).ConfigureCreatedMobile	pkg/game/mob.go	699			
+game	(MobInstance).SetSexOverride	pkg/game/mob.go	743	src/spells.c:spell_mirror_image	src/spells.c:1150	
+game	(MobInstance).SetDamroll	pkg/game/mob.go	752	src/spec_procs2.c:carrion	src/spec_procs2.c:1743	
+game	(MobInstance).adjustHitroll	pkg/game/mob.go	760			
+game	(MobInstance).adjustDamroll	pkg/game/mob.go	775			
+game	(MobInstance).SetDamageDice	pkg/game/mob.go	785			
+game	(MobInstance).AddDamrollBonus	pkg/game/mob.go	795			
+game	(MobInstance).GetDamageRoll	pkg/game/mob.go	804			
+game	(MobInstance).GetTHAC0	pkg/game/mob.go	835			
+game	(MobInstance).GetHP	pkg/game/mob.go	845			
+game	(MobInstance).GetMaxHP	pkg/game/mob.go	852			
+game	(MobInstance).SetMaxHP	pkg/game/mob.go	859			
+game	(MobInstance).IsNPC	pkg/game/mob.go	866			
+game	(MobInstance).GetStatus	pkg/game/mob.go	871			
+game	(MobInstance).SetStatus	pkg/game/mob.go	878			
+game	(MobInstance).GetPosition	pkg/game/mob.go	890			
+game	actionFlagBits	pkg/game/mob.go	941			
+game	affectFlagBits	pkg/game/mob.go	969			
+game	positionStatus	pkg/game/mob.go	987	src/act.informative.c:do_score; src/medit.c:medit_parse	src/act.informative.c:1355 | src/medit.c:1061	
+game	(MobInstance).SetPosition	pkg/game/mob.go	1013			
+game	(MobInstance).GetName	pkg/game/mob.go	1051			
+game	(MobInstance).SendMessage	pkg/game/mob.go	1062			
+game	(MobInstance).SendRaw	pkg/game/mob.go	1078			
+game	(MobInstance).GetWaitState	pkg/game/mob.go	1089			
+game	(MobInstance).SetWaitState	pkg/game/mob.go	1099			
+game	(MobInstance).SetWaitStatePulses	pkg/game/mob.go	1107			
+game	(MobInstance).getAmbushAction	pkg/game/mob.go	1116			
+game	(MobInstance).setAmbushAction	pkg/game/mob.go	1122			
+game	(MobInstance).clearAmbushAction	pkg/game/mob.go	1128			
+game	(MobInstance).DecrementWaitState	pkg/game/mob.go	1136			
+game	(MobInstance).GetMobWait	pkg/game/mob.go	1146			
+game	(MobInstance).SetMobWait	pkg/game/mob.go	1156			
+game	(MobInstance).SetFightingBody	pkg/game/mob.go	1164			
+game	(MobInstance).GetFightingBody	pkg/game/mob.go	1170			
+game	(MobInstance).StopFighting	pkg/game/mob.go	1177			
+game	mobStatusFromHP	pkg/game/mob.go	1190			
+game	(MobInstance).GetFighting	pkg/game/mob.go	1207			
+game	(MobInstance).GetClass	pkg/game/mob.go	1216			
+game	(MobInstance).GetStr	pkg/game/mob.go	1224			
+game	(MobInstance).GetDex	pkg/game/mob.go	1231			
+game	(MobInstance).GetInt	pkg/game/mob.go	1238			
+game	(MobInstance).GetWis	pkg/game/mob.go	1245			
+game	(MobInstance).GetCon	pkg/game/mob.go	1252			
+game	(MobInstance).GetCha	pkg/game/mob.go	1259			
+game	(MobInstance).GetHitroll	pkg/game/mob.go	1270	src/db.c:parse_simple_mob	src/db.c:1064	
+game	(MobInstance).GetDamroll	pkg/game/mob.go	1282	src/handler.c:affect_total	src/handler.c:337-372	
+game	(MobInstance).GetStrAdd	pkg/game/mob.go	1290			
+game	(MobInstance).GetVNum	pkg/game/mob.go	1298			
+game	(MobInstance).GetHealth	pkg/game/mob.go	1304			
+game	(MobInstance).GetExp	pkg/game/mob.go	1312			
+game	(MobInstance).SetHealth	pkg/game/mob.go	1324			
+game	(MobInstance).GetMaxHealth	pkg/game/mob.go	1330			
+game	(MobInstance).GetGold	pkg/game/mob.go	1336			
+game	(MobInstance).SetGold	pkg/game/mob.go	1343			
+game	(MobInstance).SpendGold	pkg/game/mob.go	1352			
+game	(MobInstance).updateGold	pkg/game/mob.go	1364			
+game	(MobInstance).IsAffected	pkg/game/mob.go	1375			
+game	(MobInstance).IsInGroup	pkg/game/mob.go	1384	src/utils.c:are_grouped; src/utils.c:is_intelligent	src/utils.c:655-674	
+game	(MobInstance).SetAffected	pkg/game/mob.go	1389			
+game	(MobInstance).RemoveAffected	pkg/game/mob.go	1396			
+game	(MobInstance).GetRoomVNum	pkg/game/mob.go	1402			
+game	(MobInstance).GetPrototype	pkg/game/mob.go	1408			
+game	(MobInstance).HasMobFlag	pkg/game/mob.go	1413			
+game	(MobInstance).SetMobFlag	pkg/game/mob.go	1423			
+game	(MobInstance).GetHunting	pkg/game/mob.go	1433			
+game	(MobInstance).IsHunting	pkg/game/mob.go	1440			
+game	(MobInstance).ClearHunting	pkg/game/mob.go	1447			
+game	(MobInstance).GetTarget	pkg/game/mob.go	1459			
+game	(MobInstance).SetTarget	pkg/game/mob.go	1466			
+game	(MobInstance).GetMemory	pkg/game/mob.go	1474			
+game	(MobInstance).ClearMemory	pkg/game/mob.go	1483			
+game	(MobInstance).GetMountRider	pkg/game/mob.go	1490			
+game	(MobInstance).SetMountRider	pkg/game/mob.go	1497			
+game	(MobInstance).SetAffectFlags	pkg/game/mob.go	1504			
+game	(MobInstance).GetHuntingID	pkg/game/mob.go	1511			
+game	(MobInstance).SetHuntingID	pkg/game/mob.go	1518			
+game	(MobInstance).GetAffects	pkg/game/mob.go	1525			
+game	(MobInstance).HasAffect	pkg/game/mob.go	1532			
+game	(MobInstance).ClearAffect	pkg/game/mob.go	1539			
+game	(MobInstance).GetMobFlags	pkg/game/mob.go	1546			
+game	(MobInstance).ClearMobFlag	pkg/game/mob.go	1553			
+game	(MobInstance).IsFighting	pkg/game/mob.go	1563			
+game	(MobInstance).GetAlignment	pkg/game/mob.go	1566			
+game	(MobInstance).alignmentLocked	pkg/game/mob.go	1570			
+game	(MobInstance).Proto	pkg/game/mob.go	1583			
+game	(MobInstance).SetProto	pkg/game/mob.go	1590			
+game	(MobInstance).SetName	pkg/game/mob.go	1595			
+game	(MobInstance).AddAffect	pkg/game/mob.go	1605			
+game	(MobInstance).JoinAffect	pkg/game/mob.go	1631	src/handler.c:affect_join	src/handler.c:476-495	
+game	(MobInstance).RemoveAffectRecord	pkg/game/mob.go	1668	src/handler.c:affect_remove	src/handler.c:428-438	
+game	(MobInstance).RemoveAffectBySpell	pkg/game/mob.go	1699	src/handler.c:affect_from_char	src/handler.c:449-456	
+game	(MobInstance).OrderedAffects	pkg/game/mob.go	1736	src/handler.c:master_affect_to_char	src/handler.c:391	
+game	(MobInstance).HitModifiers	pkg/game/mob.go	1765			
+game	(MobInstance).SetAlignment	pkg/game/mob.go	1776			
+game	(MobInstance).GetTalk	pkg/game/mob.go	1783	src/spec_procs.c:mickey	src/spec_procs.c:1328-1329	
+game	(MobInstance).SetTalk	pkg/game/mob.go	1793	src/spec_procs.c:mickey	src/spec_procs.c:1318-1320	
+game	(MobInstance).ResetTalk	pkg/game/mob.go	1804	src/spec_procs.c:mickey	src/spec_procs.c:1318-1320	
+game	(MobInstance).GetSavingThrow	pkg/game/mob.go	1811			
+game	(MobInstance).GetDamrollPoint	pkg/game/mob.go	1822			
+game	(MobInstance).damrollPointLocked	pkg/game/mob.go	1828			
+game	(MobInstance).SetFollowingBody	pkg/game/mob.go	1840			
+game	(MobInstance).CombatRetired	pkg/game/mob.go	1856			
+game	(MobInstance).SetCombatRetired	pkg/game/mob.go	1862			
 game	TestMobGetHitroll_DerivesCPointsHitrollFromFileTHAC0	pkg/game/mob_combat_stats_test.go	9			
 game	doorHuntWorld	pkg/game/mob_door_hunt_test.go	18			
 game	TestHuntVictimOpensClosedUnlockedDoor	pkg/game/mob_door_hunt_test.go	81			
@@ -3920,17 +3919,17 @@ game	(normalCheckerCombatEngine).GetCombatTarget	pkg/game/mobact_spec_procs_test
 game	TestSpecNormalChecker_UsesCanonicalSynchronousHit	pkg/game/mobact_spec_procs_test.go	132			
 game	TestSpecNormalChecker_SkipsWhenMobAlreadyFighting	pkg/game/mobact_spec_procs_test.go	151			
 game	TestSpecRescuer_NilChDoesNotPanic_DefendsAllyAgainstAttacker	pkg/game/mobact_spec_procs_test.go	163			
-game	TestSpecRescuer_UsesCanonicalAllyHitAndWaitState	pkg/game/mobact_spec_procs_test.go	207			
-game	TestSpecRescuer_EntryGates	pkg/game/mobact_spec_procs_test.go	265			
-game	TestSpecRescuer_SkipsWhenNoAllyBeingAttacked	pkg/game/mobact_spec_procs_test.go	293			
-game	TestSpecRemorter_NilChDoesNotPanic	pkg/game/mobact_spec_procs_test.go	316			
-game	TestSpecBreedKiller_NilChDoesNotPanic	pkg/game/mobact_spec_procs_test.go	326			
-game	TestSpecNeverDie_NilChDoesNotPanic_HealsToFull	pkg/game/mobact_spec_procs_test.go	340			
-game	TestSpecNeverDie_SkipsWhenAlreadyFull	pkg/game/mobact_spec_procs_test.go	356			
-game	TestSpecBrainEater_NilChDoesNotPanic	pkg/game/mobact_spec_procs_test.go	366			
-game	TestSpecTeleportVictim_NilChDoesNotPanic_SkipsWhenNotFighting	pkg/game/mobact_spec_procs_test.go	376			
-game	TestSpecCastleGuardDown_NilChDoesNotPanic	pkg/game/mobact_spec_procs_test.go	386			
-game	TestSpecRescuer_SkipsWhenRescuerAlreadyFighting	pkg/game/mobact_spec_procs_test.go	396			
+game	TestSpecRescuer_UsesCanonicalAllyHitAndWaitState	pkg/game/mobact_spec_procs_test.go	206			
+game	TestSpecRescuer_EntryGates	pkg/game/mobact_spec_procs_test.go	264			
+game	TestSpecRescuer_SkipsWhenNoAllyBeingAttacked	pkg/game/mobact_spec_procs_test.go	292			
+game	TestSpecRemorter_NilChDoesNotPanic	pkg/game/mobact_spec_procs_test.go	315			
+game	TestSpecBreedKiller_NilChDoesNotPanic	pkg/game/mobact_spec_procs_test.go	325			
+game	TestSpecNeverDie_NilChDoesNotPanic_HealsToFull	pkg/game/mobact_spec_procs_test.go	339			
+game	TestSpecNeverDie_SkipsWhenAlreadyFull	pkg/game/mobact_spec_procs_test.go	355			
+game	TestSpecBrainEater_NilChDoesNotPanic	pkg/game/mobact_spec_procs_test.go	365			
+game	TestSpecTeleportVictim_NilChDoesNotPanic_SkipsWhenNotFighting	pkg/game/mobact_spec_procs_test.go	375			
+game	TestSpecCastleGuardDown_NilChDoesNotPanic	pkg/game/mobact_spec_procs_test.go	385			
+game	TestSpecRescuer_SkipsWhenRescuerAlreadyFighting	pkg/game/mobact_spec_procs_test.go	395			
 game	captureMobactDraws	pkg/game/mobact_test.go	17			
 game	captureMobactDrawsWith	pkg/game/mobact_test.go	21			
 game	newMobactDrawTestWorld	pkg/game/mobact_test.go	33			
@@ -5705,6 +5704,12 @@ game	TestSpecCastleGuardDown_EntryGatesAndBlockAudience	pkg/game/spec_castle_gua
 game	TestSpecCastleGuardDown_AutonomousSecondGuardTarget	pkg/game/spec_castle_guard_down_test.go	129			
 game	TestSpecCastleGuardDown_AutonomousSecondGuardTargetsMob	pkg/game/spec_castle_guard_down_test.go	148			
 game	TestSpecCastleGuardDown_DoesNotTreatUnregisteredMobAsPeer	pkg/game/spec_castle_guard_down_test.go	183			
+game	(castleGuardEastCombatEngine).StartCombat	pkg/game/spec_castle_guard_east_test.go	15			
+game	(castleGuardEastCombatEngine).PerformInitialAttack	pkg/game/spec_castle_guard_east_test.go	20			
+game	(castleGuardEastCombatEngine).IsFighting	pkg/game/spec_castle_guard_east_test.go	25			
+game	(castleGuardEastCombatEngine).GetCombatTarget	pkg/game/spec_castle_guard_east_test.go	27			
+game	TestSpecCastleGuardEast_BlockAndHit	pkg/game/spec_castle_guard_east_test.go	35	src/spec_procs2.c:castle_guard_east	SPECIAL(castle_guard_east) | src/spec_procs2.c:1934-1970	
+game	TestSpecCastleGuardEast_AssistsOnlyEast	pkg/game/spec_castle_guard_east_test.go	87	src/spec_procs2.c:castle_guard_east	src/spec_procs2.c:1959-1968	
 game	(castleGuardNorthCombatEngine).StartCombat	pkg/game/spec_castle_guard_north_test.go	14			
 game	(castleGuardNorthCombatEngine).IsFighting	pkg/game/spec_castle_guard_north_test.go	19			
 game	(castleGuardNorthCombatEngine).GetCombatTarget	pkg/game/spec_castle_guard_north_test.go	21			
@@ -5982,96 +5987,95 @@ game	specFido	pkg/game/spec_procs.go	669
 game	specJanitor	pkg/game/spec_procs.go	697			
 game	specCityguard	pkg/game/spec_procs.go	723	src/spec_procs.c:cityguard	src/spec_procs.c:771-821	
 game	cityguardRoomCombatants	pkg/game/spec_procs.go	804			
-game	(World).mobHit	pkg/game/spec_procs.go	823	src/fight.c:hit	C hit( | mirrors C hit(	
-game	specMayor	pkg/game/spec_procs.go	890	src/spec_procs.c:mayor	src/spec_procs.c:823-924	
-game	dragonBreathSpell	pkg/game/spec_procs.go	979	src/spec_procs.c:dragon_breath	SPECIAL(dragon_breath) | src/spec_procs.c:937-954	
-game	specDragonBreath	pkg/game/spec_procs.go	998	src/spec_procs.c:dragon_breath	src/spec_procs.c:926-983	
-game	specCitizen	pkg/game/spec_procs.go	1037	src/spec_procs.c:citizen	src/spec_procs.c:986-1032	
-game	specCuchi	pkg/game/spec_procs.go	1080	src/spec_procs.c:cuchi	src/spec_procs.c:1034-1071	
-game	specMiniThief	pkg/game/spec_procs.go	1112			
-game	specUndeadKnight	pkg/game/spec_procs.go	1134			
-game	specBlackUndeadKnight	pkg/game/spec_procs.go	1154			
-game	specRedUndeadKnight	pkg/game/spec_procs.go	1175			
-game	specMickey	pkg/game/spec_procs.go	1199	src/spec_procs.c:mickey	SPECIAL(mickey) | src/spec_procs.c:1269-1371 | src/spec_procs.c:1274	
-game	specMallory	pkg/game/spec_procs.go	1294	src/spec_procs.c:mallory	SPECIAL(mallory) | src/spec_procs.c:1374-1422	
-game	newestMickey	pkg/game/spec_procs.go	1334	src/shop.c:list_detailed_shop	src/shop.c:1345-1350	src/spec_procs.c:1267 (range does not intersect a parsed C function body)
-game	init	pkg/game/spec_procs.go	1347			
+game	(World).mobHit	pkg/game/spec_procs.go	822	src/fight.c:hit	C hit( | mirrors C hit(	
+game	specMayor	pkg/game/spec_procs.go	885	src/spec_procs.c:mayor	src/spec_procs.c:823-924	
+game	dragonBreathSpell	pkg/game/spec_procs.go	974	src/spec_procs.c:dragon_breath	SPECIAL(dragon_breath) | src/spec_procs.c:937-954	
+game	specDragonBreath	pkg/game/spec_procs.go	993	src/spec_procs.c:dragon_breath	src/spec_procs.c:926-983	
+game	specCitizen	pkg/game/spec_procs.go	1032	src/spec_procs.c:citizen	src/spec_procs.c:986-1032	
+game	specCuchi	pkg/game/spec_procs.go	1075	src/spec_procs.c:cuchi	src/spec_procs.c:1034-1071	
+game	specMiniThief	pkg/game/spec_procs.go	1107			
+game	specUndeadKnight	pkg/game/spec_procs.go	1129			
+game	specBlackUndeadKnight	pkg/game/spec_procs.go	1149			
+game	specRedUndeadKnight	pkg/game/spec_procs.go	1170			
+game	specMickey	pkg/game/spec_procs.go	1194	src/spec_procs.c:mickey	SPECIAL(mickey) | src/spec_procs.c:1269-1371 | src/spec_procs.c:1274	
+game	specMallory	pkg/game/spec_procs.go	1289	src/spec_procs.c:mallory	SPECIAL(mallory) | src/spec_procs.c:1374-1422	
+game	newestMickey	pkg/game/spec_procs.go	1329	src/shop.c:list_detailed_shop	src/shop.c:1345-1350	src/spec_procs.c:1267 (range does not intersect a parsed C function body)
+game	init	pkg/game/spec_procs.go	1342			
 game	init	pkg/game/spec_procs2.go	18			
 game	isOwner	pkg/game/spec_procs2.go	82	src/spec_procs2.c:is_owner	C equivalent: is_owner(	
-game	guardCanAct	pkg/game/spec_procs2.go	104			
-game	isOwnerGrouped	pkg/game/spec_procs2.go	118			
-game	tellFromMob	pkg/game/spec_procs2.go	131			
-game	mobName	pkg/game/spec_procs2.go	136			
-game	specNormalChecker	pkg/game/spec_procs2.go	147			
-game	specWhirlpool	pkg/game/spec_procs2.go	180	src/spec_procs2.c:whirlpool	SPECIAL(whirlpool) | src/spec_procs2.c:244-275	
-game	specCouch	pkg/game/spec_procs2.go	204			
-game	applyStableHorseState	pkg/game/spec_procs2.go	256	src/spec_procs2.c:stableboy	src/spec_procs2.c:348-360	
-game	specStableboy	pkg/game/spec_procs2.go	269			
-game	specStableboyBuy	pkg/game/spec_procs2.go	353			
-game	specTipster	pkg/game/spec_procs2.go	394	src/spec_assign.c:assign_mobiles; src/spec_procs2.c:tipster	SPECIAL(tipster) | src/spec_assign.c:110 | src/spec_procs2.c:464-520	
-game	specRescuer	pkg/game/spec_procs2.go	451	src/spec_procs2.c:rescuer	SPECIAL(rescuer) | src/spec_procs2.c:523	
-game	mobRescuerIsReciprocallyFighting	pkg/game/spec_procs2.go	487	src/spec_procs2.c:rescuer	src/spec_procs2.c:528-529	
-game	mobRescueVictim	pkg/game/spec_procs2.go	500	src/handler.c:get_char_room_vis; src/interpreter.c:one_argument; src/spec_procs2.c:rescuer	SPECIAL(rescuer) | src/handler.c:1277-1300 | src/interpreter.c:1267	
-game	mobDoRescueResolved	pkg/game/spec_procs2.go	512			
-game	specPissedalchemist	pkg/game/spec_procs2.go	587	src/spec_procs2.c:pissedalchemist	src/spec_procs2.c:546-590	
-game	specRemorter	pkg/game/spec_procs2.go	623			
-game	remorterTell	pkg/game/spec_procs2.go	664	src/act.comm.c:do_tell; src/spec_procs2.c:remorter	C do_tell( | SPECIAL(remorter)	
-game	remortPlayer	pkg/game/spec_procs2.go	671	src/spec_procs2.c:remorter	SPECIAL(remorter) | src/spec_procs2.c:728-840	
-game	clearRemortAffects	pkg/game/spec_procs2.go	727			
-game	remorterClass	pkg/game/spec_procs2.go	772			
-game	firstRemortAdjust	pkg/game/spec_procs2.go	802			
-game	secondRemortAdjust	pkg/game/spec_procs2.go	832			
-game	setRemortSkills	pkg/game/spec_procs2.go	885			
-game	specAssassin	pkg/game/spec_procs2.go	929	src/spec_procs2.c:assassin; src/spec_procs2.c:give_tat	src/spec_procs2.c:845-928	
-game	twoAssassinArguments	pkg/game/spec_procs2.go	1005			
-game	assassinRoster	pkg/game/spec_procs2.go	1016			
-game	findAssassinRosterMember	pkg/game/spec_procs2.go	1027			
-game	assassinMemberKeywords	pkg/game/spec_procs2.go	1045			
-game	memberLevel	pkg/game/spec_procs2.go	1056			
-game	memberName	pkg/game/spec_procs2.go	1067			
-game	findVisibleAssassinVictim	pkg/game/spec_procs2.go	1074			
-game	sendTattooList	pkg/game/spec_procs2.go	1103			
-game	parseTattooChoice	pkg/game/spec_procs2.go	1111			
-game	specTattoo1	pkg/game/spec_procs2.go	1133			
-game	giveTattoo	pkg/game/spec_procs2.go	1171			
-game	specTattoo2	pkg/game/spec_procs2.go	1197			
-game	specTattoo3	pkg/game/spec_procs2.go	1246			
-game	identifierValCost	pkg/game/spec_procs2.go	1286	src/spec_procs2.c:val_cost	src/spec_procs2.c:1179-1191	
-game	specIdentifier	pkg/game/spec_procs2.go	1308	src/spec_procs2.c:identifier	src/spec_procs2.c:1193-1280	
-game	specEviltrade	pkg/game/spec_procs2.go	1372			
-game	specTattoo4	pkg/game/spec_procs2.go	1415			
-game	specEvilLead	pkg/game/spec_procs2.go	1456	src/spec_procs2.c:evillead	SPECIAL(evillead) | src/spec_procs2.c:1342-1388	
-game	specLittleBoy	pkg/game/spec_procs2.go	1465	src/spec_procs2.c:little_boy	SPECIAL(little_boy) | src/spec_procs2.c:1391-1403	
-game	specIra	pkg/game/spec_procs2.go	1481	src/spec_procs2.c:ira	SPECIAL(ira) | src/spec_procs2.c:1405-1425	
-game	specTakeToJail	pkg/game/spec_procs2.go	1501			
-game	cOrderedRoomCombatants	pkg/game/spec_procs2.go	1568			
-game	specJail	pkg/game/spec_procs2.go	1583	src/spec_procs2.c:jail	src/spec_procs2.c:1470-1493	
-game	specMedusa	pkg/game/spec_procs2.go	1612			
-game	specEqThiefKenderSteal	pkg/game/spec_procs2.go	1660	src/spec_procs2.c:npc_kender_steal	mirrors npc_kender_steal( | src/spec_procs2.c:1583-1611	
-game	specEqThief	pkg/game/spec_procs2.go	1686			
-game	specPortalRoom	pkg/game/spec_procs2.go	1723	src/spec_procs2.c:portal_room	SPECIAL(portal_room) | src/spec_procs2.c:1648-1677	
-game	specBreedKiller	pkg/game/spec_procs2.go	1749			
-game	isNightbreed	pkg/game/spec_procs2.go	1821			
-game	specCarrion	pkg/game/spec_procs2.go	1842	src/spec_assign.c:assign_rooms; src/spec_procs2.c:carrion	SPECIAL(carrion) | src/spec_assign.c:587 | src/spec_procs2.c:1726-1754	
-game	specBatRoom	pkg/game/spec_procs2.go	1854	src/spec_procs2.c:bat_room	SPECIAL(bat_room) | src/spec_procs2.c:1756-1768	
-game	specBat	pkg/game/spec_procs2.go	1877	src/spec_procs2.c:bat	SPECIAL(bat) | src/spec_procs2.c:1770-1821	
-game	noMoveGuardLegacy	pkg/game/spec_procs2.go	1922	src/spec_procs2.c:no_move_east	src/spec_procs2.c:1823-1842	
-game	specNoMoveEast	pkg/game/spec_procs2.go	1941			
-game	specKeySeller	pkg/game/spec_procs2.go	1956	src/spec_procs2.c:key_seller	c:key_seller ( | spec_procs2.c:key_seller (	
-game	specCastleGuardEast	pkg/game/spec_procs2.go	2007			
-game	specMindflayer	pkg/game/spec_procs2.go	2046			
-game	specBackstabber	pkg/game/spec_procs2.go	2087			
-game	specTeleporter	pkg/game/spec_procs2.go	2107			
-game	specNoMoveWest	pkg/game/spec_procs2.go	2124			
-game	specNoMoveNorth	pkg/game/spec_procs2.go	2138			
-game	specNeverDie	pkg/game/spec_procs2.go	2153			
-game	specNoMoveSouth	pkg/game/spec_procs2.go	2176			
-game	specChosenGuard	pkg/game/spec_procs2.go	2191			
-game	specCastleGuard	pkg/game/spec_procs2.go	2217			
-game	specCastleGuardDown	pkg/game/spec_procs2.go	2270			
-game	specCastleGuardUp	pkg/game/spec_procs2.go	2284			
-game	specCastleGuardNorth	pkg/game/spec_procs2.go	2297			
-game	specWallGuardNS	pkg/game/spec_procs2.go	2321			
+game	isOwnerGrouped	pkg/game/spec_procs2.go	103			
+game	tellFromMob	pkg/game/spec_procs2.go	116			
+game	mobName	pkg/game/spec_procs2.go	121			
+game	specNormalChecker	pkg/game/spec_procs2.go	132			
+game	specWhirlpool	pkg/game/spec_procs2.go	165	src/spec_procs2.c:whirlpool	SPECIAL(whirlpool) | src/spec_procs2.c:244-275	
+game	specCouch	pkg/game/spec_procs2.go	189			
+game	applyStableHorseState	pkg/game/spec_procs2.go	241	src/spec_procs2.c:stableboy	src/spec_procs2.c:348-360	
+game	specStableboy	pkg/game/spec_procs2.go	254			
+game	specStableboyBuy	pkg/game/spec_procs2.go	338			
+game	specTipster	pkg/game/spec_procs2.go	379	src/spec_assign.c:assign_mobiles; src/spec_procs2.c:tipster	SPECIAL(tipster) | src/spec_assign.c:110 | src/spec_procs2.c:464-520	
+game	specRescuer	pkg/game/spec_procs2.go	436	src/spec_procs2.c:rescuer	SPECIAL(rescuer) | src/spec_procs2.c:523	
+game	mobRescuerIsReciprocallyFighting	pkg/game/spec_procs2.go	472	src/spec_procs2.c:rescuer	src/spec_procs2.c:528-529	
+game	mobRescueVictim	pkg/game/spec_procs2.go	485	src/handler.c:get_char_room_vis; src/interpreter.c:one_argument; src/spec_procs2.c:rescuer	SPECIAL(rescuer) | src/handler.c:1277-1300 | src/interpreter.c:1267	
+game	mobDoRescueResolved	pkg/game/spec_procs2.go	497			
+game	specPissedalchemist	pkg/game/spec_procs2.go	572	src/spec_procs2.c:pissedalchemist	src/spec_procs2.c:546-590	
+game	specRemorter	pkg/game/spec_procs2.go	608			
+game	remorterTell	pkg/game/spec_procs2.go	649	src/act.comm.c:do_tell; src/spec_procs2.c:remorter	C do_tell( | SPECIAL(remorter)	
+game	remortPlayer	pkg/game/spec_procs2.go	656	src/spec_procs2.c:remorter	SPECIAL(remorter) | src/spec_procs2.c:728-840	
+game	clearRemortAffects	pkg/game/spec_procs2.go	712			
+game	remorterClass	pkg/game/spec_procs2.go	757			
+game	firstRemortAdjust	pkg/game/spec_procs2.go	787			
+game	secondRemortAdjust	pkg/game/spec_procs2.go	817			
+game	setRemortSkills	pkg/game/spec_procs2.go	870			
+game	specAssassin	pkg/game/spec_procs2.go	914	src/spec_procs2.c:assassin; src/spec_procs2.c:give_tat	src/spec_procs2.c:845-928	
+game	twoAssassinArguments	pkg/game/spec_procs2.go	990			
+game	assassinRoster	pkg/game/spec_procs2.go	1001			
+game	findAssassinRosterMember	pkg/game/spec_procs2.go	1012			
+game	assassinMemberKeywords	pkg/game/spec_procs2.go	1030			
+game	memberLevel	pkg/game/spec_procs2.go	1041			
+game	memberName	pkg/game/spec_procs2.go	1052			
+game	findVisibleAssassinVictim	pkg/game/spec_procs2.go	1059			
+game	sendTattooList	pkg/game/spec_procs2.go	1088			
+game	parseTattooChoice	pkg/game/spec_procs2.go	1096			
+game	specTattoo1	pkg/game/spec_procs2.go	1118			
+game	giveTattoo	pkg/game/spec_procs2.go	1156			
+game	specTattoo2	pkg/game/spec_procs2.go	1182			
+game	specTattoo3	pkg/game/spec_procs2.go	1231			
+game	identifierValCost	pkg/game/spec_procs2.go	1271	src/spec_procs2.c:val_cost	src/spec_procs2.c:1179-1191	
+game	specIdentifier	pkg/game/spec_procs2.go	1293	src/spec_procs2.c:identifier	src/spec_procs2.c:1193-1280	
+game	specEviltrade	pkg/game/spec_procs2.go	1357			
+game	specTattoo4	pkg/game/spec_procs2.go	1400			
+game	specEvilLead	pkg/game/spec_procs2.go	1441	src/spec_procs2.c:evillead	SPECIAL(evillead) | src/spec_procs2.c:1342-1388	
+game	specLittleBoy	pkg/game/spec_procs2.go	1450	src/spec_procs2.c:little_boy	SPECIAL(little_boy) | src/spec_procs2.c:1391-1403	
+game	specIra	pkg/game/spec_procs2.go	1466	src/spec_procs2.c:ira	SPECIAL(ira) | src/spec_procs2.c:1405-1425	
+game	specTakeToJail	pkg/game/spec_procs2.go	1486			
+game	cOrderedRoomCombatants	pkg/game/spec_procs2.go	1553			
+game	specJail	pkg/game/spec_procs2.go	1568	src/spec_procs2.c:jail	src/spec_procs2.c:1470-1493	
+game	specMedusa	pkg/game/spec_procs2.go	1597			
+game	specEqThiefKenderSteal	pkg/game/spec_procs2.go	1645	src/spec_procs2.c:npc_kender_steal	mirrors npc_kender_steal( | src/spec_procs2.c:1583-1611	
+game	specEqThief	pkg/game/spec_procs2.go	1671			
+game	specPortalRoom	pkg/game/spec_procs2.go	1708	src/spec_procs2.c:portal_room	SPECIAL(portal_room) | src/spec_procs2.c:1648-1677	
+game	specBreedKiller	pkg/game/spec_procs2.go	1734			
+game	isNightbreed	pkg/game/spec_procs2.go	1806			
+game	specCarrion	pkg/game/spec_procs2.go	1827	src/spec_assign.c:assign_rooms; src/spec_procs2.c:carrion	SPECIAL(carrion) | src/spec_assign.c:587 | src/spec_procs2.c:1726-1754	
+game	specBatRoom	pkg/game/spec_procs2.go	1839	src/spec_procs2.c:bat_room	SPECIAL(bat_room) | src/spec_procs2.c:1756-1768	
+game	specBat	pkg/game/spec_procs2.go	1862	src/spec_procs2.c:bat	SPECIAL(bat) | src/spec_procs2.c:1770-1821	
+game	noMoveGuardLegacy	pkg/game/spec_procs2.go	1907	src/spec_procs2.c:no_move_east	src/spec_procs2.c:1823-1842	
+game	specNoMoveEast	pkg/game/spec_procs2.go	1926			
+game	specKeySeller	pkg/game/spec_procs2.go	1941	src/spec_procs2.c:key_seller	c:key_seller ( | spec_procs2.c:key_seller (	
+game	specCastleGuardEast	pkg/game/spec_procs2.go	1995	src/spec_procs2.c:castle_guard_east	SPECIAL(castle_guard_east) | src/spec_procs2.c:1934-1970	
+game	specMindflayer	pkg/game/spec_procs2.go	2038			
+game	specBackstabber	pkg/game/spec_procs2.go	2079			
+game	specTeleporter	pkg/game/spec_procs2.go	2099			
+game	specNoMoveWest	pkg/game/spec_procs2.go	2116			
+game	specNoMoveNorth	pkg/game/spec_procs2.go	2130			
+game	specNeverDie	pkg/game/spec_procs2.go	2145			
+game	specNoMoveSouth	pkg/game/spec_procs2.go	2168			
+game	specChosenGuard	pkg/game/spec_procs2.go	2183			
+game	specCastleGuard	pkg/game/spec_procs2.go	2209			
+game	specCastleGuardDown	pkg/game/spec_procs2.go	2262			
+game	specCastleGuardUp	pkg/game/spec_procs2.go	2276			
+game	specCastleGuardNorth	pkg/game/spec_procs2.go	2289			
+game	specWallGuardNS	pkg/game/spec_procs2.go	2313			
 game	mobHasAffect	pkg/game/spec_procs3.go	22			
 game	castClericSpell	pkg/game/spec_procs3.go	35			
 game	init	pkg/game/spec_procs3.go	47			

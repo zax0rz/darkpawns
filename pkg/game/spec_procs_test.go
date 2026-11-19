@@ -771,6 +771,8 @@ func TestSpecCleric_Golden(t *testing.T) {
 func TestSpecCityguard_Golden(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
 	guard := newSpecProcTestMob(t, w, 1001, 10)
+	engine := &cityguardTestCombatEngine{}
+	w.SetCombatEngine(engine)
 
 	if got := specCityguard(w, player, guard, "look", ""); got {
 		t.Error("specCityguard should return false for non-empty cmd")
@@ -782,11 +784,10 @@ func TestSpecCityguard_Golden(t *testing.T) {
 	}
 
 	player.SetPlrFlag(PlrOutlaw, true)
-	beforeHP := player.GetHP()
 	_ = lastMsg()
 	specCityguard(w, nil, guard, "", "")
-	if player.GetHP() >= beforeHP {
-		t.Error("specCityguard should damage an outlaw")
+	if len(engine.initialAttacks) != 1 {
+		t.Error("specCityguard should hit an outlaw through the engine")
 	}
 	if msg := lastMsg(); !strings.Contains(msg, "OUTLAWS") {
 		t.Errorf("expected outlaw warning message, got %q", msg)
@@ -807,11 +808,10 @@ func TestSpecCityguard_Golden(t *testing.T) {
 	}
 	evildoer.SetFightingBody(victim)
 	victim.SetFightingBody(evildoer)
-	beforeHP = evildoer.GetHP()
 	_ = lastMsg()
 	specCityguard(w, nil, guard, "", "")
-	if evildoer.GetHP() >= beforeHP {
-		t.Error("specCityguard should damage an evil attacker")
+	if len(engine.initialAttacks) != 2 {
+		t.Error("specCityguard should hit an evil attacker through the engine")
 	}
 	if msg := lastMsg(); !strings.Contains(msg, "You just pissed me off") {
 		t.Errorf("expected protect message, got %q", msg)
