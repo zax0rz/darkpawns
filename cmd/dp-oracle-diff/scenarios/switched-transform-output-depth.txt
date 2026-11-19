@@ -1,0 +1,44 @@
+# C-first witness for DP-1585: do_transform sends through the switched body's
+# descriptor (src/act.other.c:1415-1420), even though the Go bridge carries the
+# original player separately from that body.
+# depth-case: transform.switched-body-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Switchedoutput
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchedoutput
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+switch horse
+
+[probe]
+transform

@@ -1,0 +1,45 @@
+# C-first witness for DP-1585: do_display's NPC refusal is sent to the switched
+# body's descriptor (src/act.other.c:1024-1034); prompt is the same C command.
+# depth-case: display.switched-body-refusal
+# depth-case: prompt.switched-body-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Switchedoutput
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchedoutput
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+switch horse
+
+[probe]
+display
+prompt

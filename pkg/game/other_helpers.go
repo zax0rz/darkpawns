@@ -76,6 +76,20 @@ func isPlayerNPC(ch *Player, me *MobInstance) bool {
 	return me != nil
 }
 
+// sendCommandBodyMessage delivers legacy command output to its active body.
+// Those bridges carry the descriptor owner and the command body separately:
+// when the body is a switched mobile, C writes through that mobile's
+// descriptor, not to the descriptorless original player.
+func sendCommandBodyMessage(ch *Player, me *MobInstance, msg string) {
+	if me != nil {
+		me.SendMessage(msg)
+		return
+	}
+	if ch != nil {
+		ch.SendMessage(msg)
+	}
+}
+
 // actToRoom is a legacy preformatted-message adapter to canonical Act.
 func actToRoom(w *World, roomVNum int, format string, excludeName string) {
 	format = legacyActFormat(format)
