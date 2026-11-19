@@ -95,12 +95,12 @@ func TestLogHuntingStartGates(t *testing.T) {
 		}
 		cb := w.WireCombatCallbacks()
 
-		cb.RangedHunt(hunter, other)
+		cb.DamageAttackerHunt(hunter, other)
 		if got := output.String(); got != "" {
 			t.Fatalf("a mobile victim logged %q", got)
 		}
 
-		cb.RangedHunt(hunter, prey)
+		cb.DamageAttackerHunt(hunter, prey)
 		want := "[ " + hunter.GetName() + " started hunting Prey ]\r\n"
 		if got := output.String(); got != want {
 			t.Fatalf("observer = %q, want %q", got, want)

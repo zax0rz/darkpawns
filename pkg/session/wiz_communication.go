@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 
 	"github.com/zax0rz/darkpawns/pkg/common"
@@ -161,9 +162,7 @@ func cmdForceText(s *Session, argument string) error {
 		s.Send("Okay.\r\n")
 		// src/act.wizard.c:1884-1885: before visiting any room target.
 		game.MudLog(fmt.Sprintf("(GC) %s forced room %d to %s", s.player.Name, s.player.GetRoom(), forceCmd), game.MudlogNormal, max(s.player.GetLevel()+1, s.player.GetInvisLevel()), true)
-		for _, target := range forceTargets(s, true) {
-			forceSessionCommand(s, target, forceCmd, true)
-		}
+		forceRoom(s, forceCmd)
 		return nil
 	}
 	if s.player.GetLevel() >= LVL_GRGOD && strings.EqualFold(targetName, "all") {
@@ -205,20 +204,35 @@ func cmdForceText(s *Session, argument string) error {
 		if resolved.Player != nil {
 			game.Act(s.manager.world, true, s.player, resolved.Player, nil, nil, fmt.Sprintf("$n has forced you to '%s'.", forceCmd), "", game.ToVict)
 		} else if targetActor, ok := body.(game.Actor); ok {
-			var privateSink func(string)
-			if targetSession != nil {
-				privateSink = func(text string) { targetSession.Send(text) }
-			}
-			game.ActWithPrivateSink(s.manager.world, true, s.player, targetActor, nil, nil, fmt.Sprintf("$n has forced you to '%s'.", forceCmd), "", game.ToVict, targetActor, privateSink)
+			forceMobNotice(s, targetActor, targetSession, forceCmd)
 		}
 	}
 	game.MudLog(fmt.Sprintf("(GC) %s forced %s to %s", s.player.Name, body.GetName(), forceCmd), game.MudlogNormal, max(s.player.GetLevel()+1, s.player.GetInvisLevel()), true)
 	if resolved.Player != nil {
 		forceSessionCommand(s, targetSession, forceCmd, false)
-	} else if result := s.manager.executeCharacterCommand(body, targetSession, forceCmd); result == game.CharacterCommandUnsupported {
-		slog.Warn("forced character command unsupported", "target", body.GetName(), "command", forceCmd)
+	} else {
+		forceMobCommand(s, body, targetSession, forceCmd)
 	}
 	return nil
+}
+
+// forceMobNotice is do_force's act(buf1, TRUE, ch, NULL, vict, TO_VICT) for a
+// mobile, reaching a switched descriptor when one is attached
+// (src/act.wizard.c:1875,1890).
+func forceMobNotice(s *Session, body game.Actor, targetSession *Session, forceCmd string) {
+	var privateSink func(string)
+	if targetSession != nil {
+		privateSink = func(text string) { targetSession.Send(text) }
+	}
+	game.ActWithPrivateSink(s.manager.world, true, s.player, body, nil, nil, fmt.Sprintf("$n has forced you to '%s'.", forceCmd), "", game.ToVict, body, privateSink)
+}
+
+// forceMobCommand is do_force's command_interpreter(vict, to_force) for a
+// mobile (src/act.wizard.c:1880,1891).
+func forceMobCommand(s *Session, body combat.Combatant, targetSession *Session, forceCmd string) {
+	if result := s.manager.executeCharacterCommand(body, targetSession, forceCmd); result == game.CharacterCommandUnsupported {
+		slog.Warn("forced character command unsupported", "target", body.GetName(), "command", forceCmd)
+	}
 }
 
 func findForceSession(s *Session, name string) *Session {
@@ -297,6 +311,39 @@ func forceTargets(s *Session, sameRoom bool) []*Session {
 		targets = append(targets, target)
 	}
 	return targets
+}
+
+// forceRoom runs do_force's "room" loop over every lower-level body in the
+// room (players and mobiles) in C's world[ch->in_room].people order.
+func forceRoom(s *Session, forceCmd string) {
+	chars := s.manager.world.GetAllCharsInRoom(s.player.GetRoom())
+	s.manager.mu.RLock()
+	byPlayer := make(map[*game.Player]*Session, len(s.manager.sessions))
+	for _, target := range s.manager.sessions {
+		if target.player != nil {
+			byPlayer[target.player] = target
+		}
+	}
+	s.manager.mu.RUnlock()
+
+	for _, c := range chars {
+		switch body := c.(type) {
+		case *game.Player:
+			if body == nil || body.GetLevel() >= s.player.GetLevel() {
+				continue
+			}
+			if target, ok := byPlayer[body]; ok {
+				forceSessionCommand(s, target, forceCmd, true)
+			}
+		case *game.MobInstance:
+			if body == nil || body.GetLevel() >= s.player.GetLevel() {
+				continue
+			}
+			targetSession := s.manager.combatSession(body)
+			forceMobNotice(s, body, targetSession, forceCmd)
+			forceMobCommand(s, body, targetSession, forceCmd)
+		}
+	}
 }
 
 // forceAll is do_force's "all" branch (src/act.wizard.c:1894-1906): "Okay.",

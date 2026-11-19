@@ -221,6 +221,8 @@ src/act.wizard.c:do_echo	pkg/session/comm_cmds.go	cmdEmote	primary
 src/act.wizard.c:do_force	pkg/session/wiz_communication.go	cmdForce	primary
 src/act.wizard.c:do_force	pkg/session/wiz_communication.go	cmdForceText	split
 src/act.wizard.c:do_force	pkg/session/wiz_communication.go	forceAll	split
+src/act.wizard.c:do_force	pkg/session/wiz_communication.go	forceMobCommand	split
+src/act.wizard.c:do_force	pkg/session/wiz_communication.go	forceMobNotice	split
 src/act.wizard.c:do_idlist	pkg/session/idlist.go	writeObjectIDList	primary
 src/act.wizard.c:do_invis	pkg/game/invis.go	(World).DoInvis	primary
 src/act.wizard.c:do_load	pkg/common/catoi.go	AtoiC	primary

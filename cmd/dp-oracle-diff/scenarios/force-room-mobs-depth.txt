@@ -1,0 +1,76 @@
+# depth-case: force.room-includes-mobs
+# C-first witness for DP-1591: force room walks world[ch->in_room].people and
+# forces every lower-level body, including mobiles (src/act.wizard.c:1882-1893).
+# Room 8105 holds an implementor, a level-1 mortal peer, and a lower-level mob
+# (#10, zombie, loaded after the peer so world[8105].people visits zombie then
+# peer). `force room say hi` makes both the zombie and the peer speak in exact
+# room-people order under --draw-parity.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+ForceMobGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ForceMobGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ForceMobPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ForceMobPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport ForceMobPeer 8105
+load mob 10
+
+[probe]
+force room say hi
