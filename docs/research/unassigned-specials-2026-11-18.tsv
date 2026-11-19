@@ -1,26 +1,26 @@
 name	c_lines	faithful	first_difference	unit_test	notes
-alien_elevator	src/spec_procs3.c:401-424	no	Go swaps both rooms 19551/19599 unconditionally; C moves only ch->in_room occupants and checks EX_CLOSED on EAST exit	-	unassigned (no ASSIGNROOM); filed in Linear DP follow-up
+alien_elevator	src/spec_procs3.c:401-424	yes	-	TestSpecAlienElevatorMovesOnlyOpenEastRoom	C checks the caller room east exit for EX_CLOSED and moves only that room’s people (src/spec_procs3.c:401-424; src/handler.c:503-553). Unit/revert proof pins the closed-door no-op, local-only transfer, and direct line (R1/R3/R5e/R5g/R5h).
 bat	src/spec_procs2.c:1770-1821	yes	-	TestSpecBat_Arms	fixed #2824; unassigned
 bat_room	src/spec_procs2.c:1756-1768	yes	-	TestSpecBatRoom_WakesSleeping	fixed #2824; unassigned
 black_undead_knight	src/spec_procs.c:1147-1205	yes	-	TestUndeadKnightTauntTexts	shared specUndeadKnight shape; unassigned
-brass_dragon	src/spec_procs.c:1740-1757	no	Go omits C GET_LEVEL>=LVL_IMMORT||HUNTING gate 1746-1747	-	unassigned; filed
+brass_dragon	src/spec_procs.c:1740-1757	yes	-	TestSpecBrassDragonUsesMoverRoomAndImmortalGate	C gates movement on the mover’s level and HUNTING state, then checks ch->in_room (src/spec_procs.c:1740-1757). Unit/revert proof pins the mover-room check and immortal pass-through (R1/R5e/R5g/R5h).
 castle_guard_east	src/spec_procs2.c:1934-1970	yes	-	TestSpecCastleGuardEast_BlockAndHit;TestSpecCastleGuardEast_AssistsOnlyEast	fixed #2830; unassigned (declared src/spec_assign.c:138, no ASSIGNMOB)
-conductor	src/spec_procs.c:1612-1739	no	first difference not yet pinned – triage in Linear DP follow-up	-	unassigned; filed
+conductor	src/spec_procs.c:1612-1739	yes	-	TestSpecConductorAsksTicketOnAutonomousPulse;TestSpecConductorFightLinesThroughAct	C runs on the autonomous pulse, asks the first ticket question, records talk state, and keeps its fight lines on act(TO_ROOM) (src/spec_procs.c:1612-1739). Unit/revert proof pins the first ticket stage and pulse-only gate (R1/R3/R5e/R5g/R5h).
 couch	src/spec_procs2.c:282-313	yes	-	TestSpecCouch_ExactGate;TestSpecCouch_LookerRoom;TestSpecCouch_ExtractsCouch	fixed #2824; unassigned (no ASSIGNOBJ)
-elemental_room	src/spec_procs.c:2021-2068	no	first difference not yet pinned – triage in Linear DP follow-up	-	unassigned; filed
-elevator	src/spec_procs.c:1981-2019	no	first difference not yet pinned – triage in Linear DP follow-up	-	unassigned; filed
-enter_circle	src/spec_procs.c:1920-1979	no	first difference not yet pinned – triage in Linear DP follow-up	-	unassigned; filed
+elemental_room	src/spec_procs.c:2021-2068	yes	-	TestSpecElementalRoomAffectsEveryMortalOccupant	C visits every room character, sends the sector line, subtracts 100 hit points below immortal level, and sends immortals the ignore line (src/spec_procs.c:2021-2068). Unit/revert proof pins mortal damage and both audiences (R1/R3/R5e/R5g/R5h).
+elevator	src/spec_procs.c:1981-2019	yes	-	TestSpecElevatorMovesOnlyFirstTwoCharacters;TestSpecElevatorThroughAct	C consumes the exact rune say, emits do_say before portal text, then transfers only the first two portal occupants in C list order (src/spec_procs.c:1981-2019). Unit/revert proof pins the say output and two-character cap (R1/R2/R3/R5e/R5g/R5h).
+enter_circle	src/spec_procs.c:1920-1979	yes	-	TestSpecEnterCircleCountsPlayersAndConsumesOtherLook;TestEnterCircleLookBytesMatchC	C’s MobCountInRoom counts all character-list entries, and non-circle look delegates to do_look while returning TRUE (src/spec_procs.c:1911-1979). Unit/revert proof pins player occupancy, consumed look, and the literal tail (R1/R2/R5e/R5g/R5h).
 evillead	src/spec_procs2.c:1342-1388	yes	-	TestSpecEvilLead_NeverHandles	fixed #2822/#2828 (C obj NULL so always FALSE); unassigned
 eviltrade	src/spec_procs2.c:1139-1192	yes	-	TestSpecEviltradeTellArgumentsMatchC	mirrors C incl. fetch+weird tell; unassigned
 fearface	src/spec_procs.c:2171-2202	no	Go is no-op stub; C stares/flees (count loop UB) – Zach ruling 2026-11-10: change nothing	-	unassigned; do not fix without new ruling
-hisc	src/spec_procs3.c:894-903	no	Go drops C cleric delegation for non-south (src/spec_procs3.c:903)	-	unassigned (ASSIGNMOB commented src/spec_assign.c:382); filed
+hisc	src/spec_procs3.c:894-903	yes	-	TestSpecHiscDelegatesAutonomousPulseToCleric	C delegates south to no_move_south and every other call to cleric with a NULL argument; cleric stands a resting mobile before its pulse work (src/spec_procs3.c:894-903; src/spec_procs.c:1425-1456). Unit/revert proof pins the delegated stand transition (R1/R3/R5e/R5g/R5h).
 ira	src/spec_procs2.c:1405-1425	yes	-	TestSpecIra_ExclaimAndHit	fixed #2824; unassigned
-itoh	src/spec_procs3.c:583-610	no	Go specItoh omits C do_say before teleport (src/spec_procs3.c:593)	-	unassigned; filed
+itoh	src/spec_procs3.c:583-610	yes	-	TestSpecItohActPreservesCLineBreakBytesAndAudience	C calls do_say before teleport, room acts, and destination look (src/spec_procs3.c:583-610). Unit/revert proof pins the consumed say bytes and origin/destination audiences (R1/R5e/R5g/R5h).
 little_boy	src/spec_procs2.c:1391-1403	yes	-	TestSpecLittleBoy_Exclaim	fixed #2824; unassigned
 mallory	src/spec_procs.c:1374-1422	yes	-	TestSpecMallory_FightingBarks;TestSpecMallory_Revenge	fixed #2822 (DP-1413/DP-1455); unassigned
-mayor	src/spec_procs.c:823-924	no	first difference not yet pinned – triage in Linear DP follow-up	-	unassigned; filed
+mayor	src/spec_procs.c:823-924	yes	-	TestSpecMayorWakesAndFallsThroughToMobileActivity	C starts the scheduled path before its command gate, emits acts for path steps, and returns FALSE after each action (src/spec_procs.c:823-924). Unit/revert proof pins the wake step and fall-through (R1/R3/R5e/R5g/R5h).
 mickey	src/spec_procs.c:1269-1371	yes	-	TestSpecMickey_ApproachBeats;TestSpecMickey_ApproachPeaceful	fixed #2822 (DP-1455); unassigned
-mini_thief	src/spec_procs.c:1072-1135	no	Go probabilities/messages/gates diverge from C pickpocket bands 1072-1135	-	unassigned; filed
+mini_thief	src/spec_procs.c:1072-1135	yes	-	TestSpecMiniThiefUsesCChanceAndAmountBands	C gates on awake mobile pulses, draws 1-in-20 then the 1-100 skill bands, and transfers 10-25 gold on either caught or uncaught success (src/spec_procs.c:1072-1135). Unit/revert proof pins the draw ranges and exact successful transfer (R1/R3/R5e/R5g/R5h).
 no_move_down	src/spec_procs3.c:316-345	yes	-	shared noMoveGuardLegacy shape with assigned siblings; unassigned
 no_move_north	src/spec_procs2.c:2054-2073	yes	-	shared noMoveGuardLegacy shape; unassigned (declared src/spec_assign.c:143)
 portal_room	src/spec_procs2.c:1648-1677	yes	-	TestSpecPortalRoom_Teleport	fixed #2824; unassigned

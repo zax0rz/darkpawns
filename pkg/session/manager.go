@@ -2588,6 +2588,13 @@ func (m *Manager) shutdownGracefully(timeout time.Duration, notify bool) {
 	for name, s := range m.sessions {
 		sessions[name] = s
 	}
+	if !notify {
+		// Command shutdown has no post-loop output pass for per-session leave
+		// events. Suppress cleanup's leave broadcast while closing those sessions.
+		for _, s := range sessions {
+			s.leaveBroadcastHandled = true
+		}
+	}
 	m.mu.Unlock()
 
 	if len(sessions) == 0 {

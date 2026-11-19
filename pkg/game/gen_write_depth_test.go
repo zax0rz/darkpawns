@@ -8,16 +8,31 @@ import (
 	"time"
 )
 
-// TestDoGenWriteNPCGate pins the handler-level NPC early return from
-// src/act.other.c:1103-1106. The dispatcher normally invokes this handler for
-// mob commands as well as player commands, so the C message is part of the
-// shared call path even though the depth vehicle uses a player.
+// TestDoGenWriteNPCGate pins the handler-level NPC refusal from
+// src/act.other.c:1103-1106. A switched mobile must receive this through its
+// descriptor; the detached original player must receive nothing.
 func TestDoGenWriteNPCGate(t *testing.T) {
 	w, ch, lastMsg := newDonateTestWorld(t)
+	mob := &MobInstance{world: w}
+	var bodyOutput string
+	w.MobileDescriptorOwner = func(body *MobInstance) *Player {
+		if body == mob {
+			return ch
+		}
+		return nil
+	}
+	w.MobileMessageSink = func(body *MobInstance, message []byte) {
+		if body == mob {
+			bodyOutput += string(message)
+		}
+	}
 
-	w.doGenWrite(ch, &MobInstance{}, "bug", "ignored report")
-	if got, want := lastMsg(), "Monsters can't have ideas - Go away.\r\n"; got != want {
-		t.Fatalf("NPC response = %q, want %q", got, want)
+	w.doGenWrite(ch, mob, "bug", "ignored report")
+	if got, want := bodyOutput, "Monsters can't have ideas - Go away.\r\n"; got != want {
+		t.Fatalf("switched NPC response = %q, want %q", got, want)
+	}
+	if got := lastMsg(); got != "" {
+		t.Fatalf("descriptorless owner received NPC response %q", got)
 	}
 }
 

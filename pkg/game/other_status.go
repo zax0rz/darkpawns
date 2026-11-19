@@ -121,7 +121,7 @@ func (w *World) doTransform(ch *Player, me *MobInstance, cmd string, arg string)
 		// carries no PLR flags, so it reaches the untransformable refusal
 		// (only a flagged switching god reaches the werewolf/vampire arms,
 		// which the old bridge delivered here instead).
-		ch.SendMessage("You aren't transformable!\n\r")
+		sendCommandBodyMessage(ch, me, "You aren't transformable!\n\r")
 		return true
 	}
 	return w.doTransformAt(ch, TimeWeatherSnapshot())

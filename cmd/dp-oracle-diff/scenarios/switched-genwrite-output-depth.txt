@@ -1,0 +1,50 @@
+# C-first witness for DP-1585: do_gen_write refuses a switched mobile through
+# its body descriptor before touching the report file (src/act.other.c:1074-1107).
+# bug, typo, idea and todo share this implementation and refusal path.
+# depth-case: bug.switched-body-refusal
+# depth-case: typo.switched-body-refusal
+# depth-case: idea.switched-body-refusal
+# depth-case: todo.switched-body-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Switchedoutput
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchedoutput
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+switch horse
+
+[probe]
+bug report
+typo report
+idea report
+todo report
