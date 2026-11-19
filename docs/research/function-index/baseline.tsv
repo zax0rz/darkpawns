@@ -220,6 +220,7 @@ src/act.wizard.c:do_dns	pkg/game/dns.go	(World).ExecDns	primary
 src/act.wizard.c:do_echo	pkg/session/comm_cmds.go	cmdEmote	primary
 src/act.wizard.c:do_force	pkg/session/wiz_communication.go	cmdForce	primary
 src/act.wizard.c:do_force	pkg/session/wiz_communication.go	cmdForceText	split
+src/act.wizard.c:do_force	pkg/session/wiz_communication.go	forceAll	split
 src/act.wizard.c:do_idlist	pkg/session/idlist.go	writeObjectIDList	primary
 src/act.wizard.c:do_invis	pkg/game/invis.go	(World).DoInvis	primary
 src/act.wizard.c:do_load	pkg/common/catoi.go	AtoiC	primary
@@ -234,6 +235,8 @@ src/act.wizard.c:do_set	pkg/game/mobile_equipment.go	sbyteValue	split
 src/act.wizard.c:do_set	pkg/session/wiz_set.go	cmdSetText	split
 src/act.wizard.c:do_sethunt	pkg/session/wiz_zone.go	cmdSethunt	primary
 src/act.wizard.c:do_show	pkg/session/wiz_info.go	showZoneHooks	primary
+src/act.wizard.c:do_shutdown	pkg/session/wiz_communication.go	forceAll	split
+src/act.wizard.c:do_shutdown	pkg/session/wiz_system.go	(Manager).forceAllSave	split
 src/act.wizard.c:do_stat_character	pkg/session/wiz_stats.go	(Session).sendStatAffectLines	primary
 src/act.wizard.c:do_stat_character	pkg/session/wiz_stats.go	(Session).statColorGates	split
 src/act.wizard.c:do_stat_character	pkg/session/wiz_stats.go	wizardFollowerListOutput	split

@@ -1,0 +1,58 @@
+# depth-case: switched.itemmagic.wand-empty-charges
+# C-first witness for mobileWandUse zero-charge room act ("Nothing seems to happen.").
+# A mobile holding an empty wand (val[2] == 0) runs `use wand zombie` via `force`.
+# Because mag_objectmagic compares wear_pos+1 with WEAR_HOLD (17), a held wand
+# (wear_pos == 17, equipd == 18) enters the non-WEAR_HOLD wand branch and emits
+# "It seems powerless." to the mobile and "Nothing seems to happen." to the room.
+# C path: src/act.other.c:920-974; src/spell_parser.c:558-577,724-774.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+WandMobGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+WandMobGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load mob 10
+oedit 8053
+D
+12
+2
+0
+29
+q
+y
+load obj 8053
+give wand zombie
+force zombie hold wand
+
+[probe]
+force zombie use wand zombie

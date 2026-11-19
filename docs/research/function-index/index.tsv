@@ -10827,16 +10827,17 @@ session	cmdSendText	pkg/session/wiz_communication.go	83	src/interpreter.c:half_c
 session	splitSendArgs	pkg/session/wiz_communication.go	117			
 session	cmdForce	pkg/session/wiz_communication.go	141	src/act.wizard.c:do_force	src/act.wizard.c:1856-1906	
 session	cmdForceText	pkg/session/wiz_communication.go	147	src/act.wizard.c:do_force	src/act.wizard.c:1863-1880	
-session	findForceSession	pkg/session/wiz_communication.go	229			
-session	forceTargets	pkg/session/wiz_communication.go	250			
-session	forceSessionCommand	pkg/session/wiz_communication.go	276	src/interpreter.c:command_interpreter	mirrors command_interpreter(	
-session	cmdWiznet	pkg/session/wiz_communication.go	296			
-session	cmdWiznetText	pkg/session/wiz_communication.go	303	src/act.wizard.c:do_wiznet	ports do_wiznet( | src/act.wizard.c:1912-2034	
-session	wiznetEmotePrefix	pkg/session/wiz_communication.go	391			
-session	wiznetHalfChop	pkg/session/wiz_communication.go	398			
-session	wiznetSessions	pkg/session/wiz_communication.go	410			
-session	wiznetRecipientEligible	pkg/session/wiz_communication.go	423			
-session	wiznetList	pkg/session/wiz_communication.go	443			
+session	findForceSession	pkg/session/wiz_communication.go	224			
+session	forceTargets	pkg/session/wiz_communication.go	245			
+session	forceAll	pkg/session/wiz_communication.go	273	src/act.wizard.c:do_force; src/act.wizard.c:do_shutdown	src/act.wizard.c:1113 | src/act.wizard.c:1894-1906	
+session	forceSessionCommand	pkg/session/wiz_communication.go	284	src/interpreter.c:command_interpreter	mirrors command_interpreter(	
+session	cmdWiznet	pkg/session/wiz_communication.go	304			
+session	cmdWiznetText	pkg/session/wiz_communication.go	311	src/act.wizard.c:do_wiznet	ports do_wiznet( | src/act.wizard.c:1912-2034	
+session	wiznetEmotePrefix	pkg/session/wiz_communication.go	399			
+session	wiznetHalfChop	pkg/session/wiz_communication.go	406			
+session	wiznetSessions	pkg/session/wiz_communication.go	418			
+session	wiznetRecipientEligible	pkg/session/wiz_communication.go	431			
+session	wiznetList	pkg/session/wiz_communication.go	451			
 session	cmdShow	pkg/session/wiz_info.go	44			
 session	showErrantRooms	pkg/session/wiz_info.go	281			
 session	showFlaggedRooms	pkg/session/wiz_info.go	298			
@@ -11013,33 +11014,33 @@ session	TestCmdWhereSearchesMobsAndObjectsMatchC	pkg/session/wiz_stats_test.go	3
 session	TestStatCharacterAffectFlagsAndSpellLinesMatchC	pkg/session/wiz_stats_test.go	352			
 session	shutdownPlanFor	pkg/session/wiz_system.go	21			
 session	cmdShutdown	pkg/session/wiz_system.go	45			
-session	(Manager).forceAllSave	pkg/session/wiz_system.go	66			
-session	cmdSnoop	pkg/session/wiz_system.go	95			
-session	stopSnooping	pkg/session/wiz_system.go	165			
-session	cmdReload	pkg/session/wiz_system.go	179			
-session	cmdWizlock	pkg/session/wiz_system.go	213			
-session	cmdDc	pkg/session/wiz_system.go	247			
-session	parseDCNumber	pkg/session/wiz_system.go	282			
-session	cmdDate	pkg/session/wiz_system.go	287			
-session	cmdUptime	pkg/session/wiz_system.go	302			
-session	sendUptime	pkg/session/wiz_system.go	312			
-session	cmdLast	pkg/session/wiz_system.go	330			
-session	classAbbrevOr	pkg/session/wiz_system.go	366			
-session	ctime	pkg/session/wiz_system.go	375			
-session	wizutilDispatch	pkg/session/wiz_system.go	409	src/act.wizard.c:do_wizutil	port of do_wizutil (	
-session	wizutilMudlogLevel	pkg/session/wiz_system.go	573			
-session	broadcastToRoomExcept	pkg/session/wiz_system.go	580			
-session	hmhr	pkg/session/wiz_system.go	589			
-session	wizutilAuthed	pkg/session/wiz_system.go	604			
-session	cmdReroll	pkg/session/wiz_system.go	613			
-session	cmdUnaffect	pkg/session/wiz_system.go	628			
-session	cmdFreeze	pkg/session/wiz_system.go	642			
-session	cmdThaw	pkg/session/wiz_system.go	657			
-session	cmdPardon	pkg/session/wiz_system.go	672			
-session	cmdNotitle	pkg/session/wiz_system.go	690			
-session	cmdMute	pkg/session/wiz_system.go	710			
-session	cmdTick	pkg/session/wiz_system.go	723			
-session	cmdNewbie	pkg/session/wiz_system.go	734	src/act.wizard.c:do_newbie	c do_newbie(	
+session	(Manager).forceAllSave	pkg/session/wiz_system.go	63	src/act.wizard.c:do_shutdown	src/act.wizard.c:1113	
+session	cmdSnoop	pkg/session/wiz_system.go	75			
+session	stopSnooping	pkg/session/wiz_system.go	145			
+session	cmdReload	pkg/session/wiz_system.go	159			
+session	cmdWizlock	pkg/session/wiz_system.go	193			
+session	cmdDc	pkg/session/wiz_system.go	227			
+session	parseDCNumber	pkg/session/wiz_system.go	262			
+session	cmdDate	pkg/session/wiz_system.go	267			
+session	cmdUptime	pkg/session/wiz_system.go	282			
+session	sendUptime	pkg/session/wiz_system.go	292			
+session	cmdLast	pkg/session/wiz_system.go	310			
+session	classAbbrevOr	pkg/session/wiz_system.go	346			
+session	ctime	pkg/session/wiz_system.go	355			
+session	wizutilDispatch	pkg/session/wiz_system.go	389	src/act.wizard.c:do_wizutil	port of do_wizutil (	
+session	wizutilMudlogLevel	pkg/session/wiz_system.go	553			
+session	broadcastToRoomExcept	pkg/session/wiz_system.go	560			
+session	hmhr	pkg/session/wiz_system.go	569			
+session	wizutilAuthed	pkg/session/wiz_system.go	584			
+session	cmdReroll	pkg/session/wiz_system.go	593			
+session	cmdUnaffect	pkg/session/wiz_system.go	608			
+session	cmdFreeze	pkg/session/wiz_system.go	622			
+session	cmdThaw	pkg/session/wiz_system.go	637			
+session	cmdPardon	pkg/session/wiz_system.go	652			
+session	cmdNotitle	pkg/session/wiz_system.go	670			
+session	cmdMute	pkg/session/wiz_system.go	690			
+session	cmdTick	pkg/session/wiz_system.go	703			
+session	cmdNewbie	pkg/session/wiz_system.go	714	src/act.wizard.c:do_newbie	c do_newbie(	
 session	cmdAdmobs	pkg/session/wiz_zone.go	19	src/olc.c:adjust_mobs	C adjust_mobs( | mirrors C adjust_mobs( | src/olc.c:279-307	
 session	cmdZreset	pkg/session/wiz_zone.go	25			
 session	zresetZoneIndex	pkg/session/wiz_zone.go	80			
