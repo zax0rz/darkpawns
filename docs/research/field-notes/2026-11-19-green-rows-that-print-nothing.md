@@ -55,3 +55,28 @@ The `!Fireball!`-style placeholders are C's own text
 C prints any non-empty entry when an affect of that type expires
 (`src/magic.c:449-451`), so each one is either reachable or not, and each
 needs its own answer. They are uncited, not invented.
+
+## A second case: a citation copied 1,487 times
+
+The same day turned up a second, separate instance of evidence that looks
+right and isn't. On main, 226 files under `docs/` cite `comm.c:910-947`,
+1,487 times in all, mostly as the second half of a position-gate cite such
+as `interpreter.c:419; comm.c:910-947`. Those lines of `src/comm.c` are the
+body of `record_usage()` (declared at `src/comm.c:903`), which counts open
+sockets and writes a usage line to the log. They have nothing to do with the
+command interpreter or any position check. `src/comm.c` has not changed
+since 2026-04-23, so the cite was wrong from its first appearance in the doh
+social row (#842, 2026-08-30) and was then copied into each new manifest.
+
+The rows themselves were not wrong: the interpreter cite next to it is the
+real gate, and the scenarios witness it. What failed is the same thing as in
+the consider example. Each row was reviewed by itself, and a cite that looks
+like a C line range reads as checked. Nobody opened the lines. Luna's batch-one
+PR (#2861, open as of this note) removes the cite from every manifest; what
+is left after it are historical research TSVs, which record what the
+manifests said at the time.
+
+The check that would have caught it is cheap: for every distinct cite in the
+manifests, open the range once and confirm it contains the code the note
+names. A cite repeated across hundreds of rows is checked once, not once per
+row.
