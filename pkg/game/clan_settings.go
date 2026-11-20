@@ -107,7 +107,7 @@ func (w *World) doClanRanks(ch *Player, arg string) {
 		return
 	}
 
-	if !isClanNumber(arg) {
+	if !CIsNumber(arg) {
 		ch.SendMessage("Set the ranks to what?\r\n")
 		return
 	}
@@ -212,7 +212,7 @@ func (w *World) doClanTitles(ch *Player, arg string) {
 		}
 		a1, a2 := halfChop(arg)
 		arg = a2
-		if !isClanNumber(a1) {
+		if !CIsNumber(a1) {
 			ch.SendMessage("You need to specify a clan number.\r\n")
 			return
 		}
@@ -227,7 +227,7 @@ func (w *World) doClanTitles(ch *Player, arg string) {
 
 	a1, a2 := halfChop(arg)
 
-	if !isClanNumber(a1) {
+	if !CIsNumber(a1) {
 		ch.SendMessage("You need to specify a rank number.\r\n")
 		return
 	}
@@ -328,7 +328,7 @@ func (w *World) doClanSP(ch *Player, arg string, priv int) {
 		return
 	}
 
-	if !isClanNumber(arg) {
+	if !CIsNumber(arg) {
 		ch.SendMessage("Set the privilege to what?\r\n")
 		return
 	}
