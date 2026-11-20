@@ -1,0 +1,74 @@
+# C-first witness for the switched-mobile compare and sharpen lanes.
+# A level-40 God loads two carried slash weapons, hands both to the level-9
+# clone, switches into it, and exercises the two arms the utility scenario
+# could not reach (switched-body-utility-skills-depth runs compare/sharpen on
+# an empty inventory, witnessing only the gate refusals).
+#
+# compare: C do_compare (src/new_cmds.c:1952-2104). prob = 20+level = 29 for
+# the level-9 clone (no SKILL_APPRAISE); percent = number(1,101) always draws,
+# and a failed check draws number(-3,3) noise into diff (new_cmds.c:2060-2065).
+# The short sword (8037, score val1*(val2+1)/2 = 3) against the bone katana
+# (18310, score 66) lands in the "much better" arm at any noise, printing
+# "a short sword looks much better than ..." — CAP() capitalizes the buffer
+# (new_cmds.c:2087-2089). improve_skill is an NPC no-op before its own RNG
+# (act.other.c:1704-1707), so the made-check branch draws nothing.
+#
+# sharpen: C do_sharpen (src/new_cmds.c:2743-2796). A mobile's GET_SKILL is 0,
+# so percent = number(1,101) never beats prob and the failure arm always
+# prints stc "You damage it trying to sharpen it!", acts "$n damages $p trying
+# to sharpen it!" TO_ROOM, sets APPLY_DAMROLL -1, and no-ops improve_skill.
+# The short sword passes the weapon-type gate (val3 = TYPE_SLASH - TYPE_HIT =
+# 3), carries no ITEM_MAGIC and no affects (lib/world/obj/80.obj:290-298).
+#
+# give: the clone vnum already exists in the world, so spawn-mob's
+# max-existing check may not place one at 8105; teleport finds it worldwide
+# (get_char_vis) and moves it before the room-scoped gives
+# (give_find_vict -> get_char_room_vis, src/handler.c:1277). The immortal
+# giver is exempt from perform_give's MOB_OKGIVE gate
+# (src/act.item.c:674-679).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8105 80
+
+[setup:oracle]
+Switchedcs
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchedcs
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport clone 8105
+load obj 8037
+load obj 18310
+give short clone
+give katana clone
+switch clone
+
+[probe]
+compare short katana
+sharpen short

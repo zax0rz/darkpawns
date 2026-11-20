@@ -1015,8 +1015,9 @@ func (bs *BoardSystem) FinalizeBoardWrite(magic int, ch BoardPlayer) {
 		delete(bs.writerSlots, ch.GetName())
 	}
 	if err := bs.saveBoard(boardType); err != nil {
+		// C's Board_save_board logs server-side (src/boards.c:451 perror) and
+		// tells the player nothing; match it.
 		slog.Error("board save failed", "board", boardType, "error", err)
-		ch.SendMessage("The board could not be saved.\r\n")
 		return
 	}
 }

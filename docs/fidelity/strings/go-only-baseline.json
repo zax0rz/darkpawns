@@ -1,6 +1,6 @@
 {
   "description": "Known Go player-facing strings with no C source and no world-data source. make string-census fails when a new one appears; each reason starts unreviewed and is settled by a human (data-driven text, transport framing, deliberate post-C addition, or a bug).",
-  "generated": "2026-11-18",
+  "generated": "2026-11-20",
   "segments": {
     "Cannot access manager state.": {
       "segment": "Cannot access manager state.",
@@ -14,7 +14,7 @@
     "Nice try.": {
       "segment": "Nice try.",
       "file": "pkg/game/spec_procs4.go",
-      "line": 455,
+      "line": 488,
       "sink": "sendToChar",
       "reason": "divergence:approved",
       "evidence": "DP-1373, approved by Zach 2026-09-30: C src/spec_procs.c:2081-2126 grants Serapis/Orodreth level 40 and Frontline 39 on \"pray immortality\" (a name-based backdoor). The port refuses those names with this line instead and changes nothing.",
@@ -23,7 +23,7 @@
     "No parsed world available.": {
       "segment": "No parsed world available.",
       "file": "pkg/session/wiz_zone.go",
-      "line": 210,
+      "line": 194,
       "sink": ".Send",
       "reason": "surface:no-c",
       "evidence": "DP-1581: defensive nil-parsed-world guard in rlist/olist/mlist; unreachable by players in a live server",
@@ -32,7 +32,7 @@
     "Parsed world data not available.": {
       "segment": "Parsed world data not available.",
       "file": "pkg/session/wiz_stats.go",
-      "line": 1252,
+      "line": 1244,
       "sink": ".Send",
       "reason": "surface:no-c",
       "evidence": "DP-1581: defensive nil-parsed-world guard in vnum; unreachable by players in a live server",
@@ -41,7 +41,7 @@
     "Room data not found.": {
       "segment": "Room data not found.",
       "file": "pkg/session/wiz_stats.go",
-      "line": 665,
+      "line": 661,
       "sink": ".Send",
       "reason": "surface:no-c",
       "evidence": "DP-1581: defensive nil-room guard in stat room; unreachable by players in a live server",
@@ -59,7 +59,7 @@
     "Usage: checkload { obj | mob } \u003cnumber\u003e": {
       "segment": "Usage: checkload { obj | mob } \u003cnumber\u003e",
       "file": "pkg/session/wiz_info.go",
-      "line": 521,
+      "line": 505,
       "sink": ".Send",
       "reason": "census:composed",
       "evidence": "src/act.wizard.c:3825 \"Usage: checkload { obj | mob } \u003cnumber\u003e\\r\\n\" — C holds it in a local const char* usage, invisible to the census sink lexer",
@@ -68,7 +68,7 @@
     "World not available.": {
       "segment": "World not available.",
       "file": "pkg/session/wiz_stats.go",
-      "line": 1246,
+      "line": 1238,
       "sink": ".Send",
       "reason": "surface:no-c",
       "evidence": "DP-1581: defensive nil-world guard in stat/vnum; unreachable by players in a live server",
@@ -77,7 +77,7 @@
     "points around the room.": {
       "segment": "points around the room.",
       "file": "pkg/game/skill_actor_utility.go",
-      "line": 196,
+      "line": 197,
       "sink": "Act",
       "reason": "census:composed",
       "evidence": "src/new_cmds.c:2533 to_room = \"$n points around the room.\" — do_point assigns to_room on several branches and acts it at :2557, so the census sink lexer cannot resolve it; the actor line is witnessed by switched-body-utility-skills-depth, which has no room observer for the bare point",
