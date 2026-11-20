@@ -1,0 +1,57 @@
+# C-first corpse decay room acts (src/limits.c:585-635). Fourteen trainee
+# corpses expire together: max_npc_corpse_time is 5 hours (src/config.c:85),
+# and each point_update tick past that draws number(0,6) once per corpse - maggots on 0,
+# ants on 3-4, earth on 5-6 (src/limits.c:604-634). The room keeps the God
+# so the people-guard at src/limits.c:602 passes (R3/R5i).
+# depth-case: mob.corpse-decay-room-acts
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 none
+spawn-mob 16303 1 8105 80
+spawn-mob 16303 2 8105 80
+spawn-mob 16303 3 8105 80
+[setup:oracle]
+Qwpulse
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Qwpulse
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+kill 1.trainee
+kill 2.trainee
+kill 3.trainee
+~dpclock pulse 30
+tick
+tick
+tick
+tick
+tick
+tick
+tick

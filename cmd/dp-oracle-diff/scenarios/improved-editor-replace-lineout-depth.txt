@@ -1,0 +1,50 @@
+# C-first improved-editor /e out-of-range abort (src/improved-edit.c:401-421).
+# REDIT's description editor (the proven vehicle from
+# improved-editor-edit-overflow-depth) holds a two-line buffer, and /e9
+# addresses a line beyond it, so PARSE_EDIT walks past the buffer and prints
+# the abort. @ aborts the room edit so nothing persists.
+# depth-case: tedit.edit-out-of-range
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Editqwp
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Editqwp
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+
+[probe]
+redit
+2
+/c
+line one
+line two
+/e9 x
+@

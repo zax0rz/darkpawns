@@ -1,0 +1,111 @@
+# C-first spell_summon backfire (src/spells.c:293-307). ROOM_NOMAGIC on the
+# victim's room (bit 7, src/structs.h:63) is one of the failing summon
+# conditions, and do_cast has no NOMAGIC gate, so the cast proceeds and the
+# 10% backfire teleports the caster to the victim. The victim sits in 8106
+# (also NOMAGIC); the caster stays in 8105. Twelve casts sample the 1-in-10
+# draw (R3).
+# C path: src/spell_parser.c:1404-1405; src/spells.c:270-310.
+# depth-case: spell.summon.backfire
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 7 on
+set-room-flag 8106 7 on
+spawn-mob 16303 1 8106 163
+replace-room-exits 8106 none
+
+[setup:oracle]
+Qwertyui
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Qwertyui
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Xkcdqwp]
+Xkcdqwp
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Xkcdqwp]
+Xkcdqwp
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Xkcdqwp 8105
+load obj 64
+drop circle
+set player Xkcdqwp class mage
+skillset Xkcdqwp 'summon' 100
+set player Xkcdqwp maxmana 9000
+set player Xkcdqwp mana 9000
+set player Xkcdqwp level 34
+set mob trainee level 10
+
+[probe:Xkcdqwp]
+inv
+look
+cast 'summon' trainee
+~dpclock pulse 20
+cast 'summon' trainee
+~dpclock pulse 20
+cast 'summon' trainee
+~dpclock pulse 20
+cast 'summon' trainee
+~dpclock pulse 20
+cast 'summon' trainee
+~dpclock pulse 20
+cast 'summon' trainee
+~dpclock pulse 20
+cast 'summon' trainee
+~dpclock pulse 20
+cast 'summon' trainee
+~dpclock pulse 20
+cast 'summon' trainee
+~dpclock pulse 20
+cast 'summon' trainee
+~dpclock pulse 20
+cast 'summon' trainee
+~dpclock pulse 20
+cast 'summon' trainee

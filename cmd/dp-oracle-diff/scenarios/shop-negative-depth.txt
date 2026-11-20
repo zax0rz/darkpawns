@@ -1,0 +1,49 @@
+# C-first shopping_buy/shopping_sell negative-count refusals
+# (src/shop.c:485-491, :744-750). The keeper at room 12135 stocks the
+# standard shop; both negative counts refuse through the keeper's do_tell
+# before any stock or price work.
+# C path: src/interpreter.c (buy/sell rows); src/shop.c:478-491, :740-750.
+# depth-case: shops.buy-negative-count
+# depth-case: shops.sell-negative-count
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12102 1 12135 121
+give-object 12102 12102 100000 121
+replace-room-exits 12135 none
+
+[setup:oracle]
+Negbuy
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Negbuy
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12135
+
+[probe]
+buy -1 x
+sell -1 x

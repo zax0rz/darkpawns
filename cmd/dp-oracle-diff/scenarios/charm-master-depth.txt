@@ -1,0 +1,88 @@
+# C-first charmed-caster master refusal (src/spell_parser.c:873-877).
+# PC-on-PC charm is gated on IS_OUTLAW (src/spells.c:439-441), so the outlaw
+# primary charms the peer first; the newly charmed peer then aims a harmless
+# spell at their own master, and the AFF_CHARM + master gate refuses before
+# target resolution (src/spell_parser.c:873-877).
+# C path: do_cast -> cast_spell -> spell_charm (src/spells.c:407-471).
+# depth-case: cast.charmed-master-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Chone
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Chone
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:caster]
+Chtwo
+Y
+casterpass
+casterpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:caster]
+Chtwo
+y
+casterpass
+casterpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Chtwo 8105
+set player Chone class mage
+set player Chone maxmana 5000
+set player Chone mana 5000
+skillset Chone 'charm person' 100
+set player Chone outlaw on
+set player Chtwo class mage
+set player Chtwo maxmana 5000
+set player Chtwo mana 5000
+skillset Chtwo 'bless' 100
+set player Chtwo level 34
+
+[probe]
+set player Chtwo level 1
+cast 'charm person' Chtwo
+~dpclock pulse 40
+set player Chtwo level 34
+send:caster cast 'bless' Chone

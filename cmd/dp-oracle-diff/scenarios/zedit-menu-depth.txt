@@ -1,0 +1,43 @@
+# C-first zedit main menu with reset_mode 1 (src/zedit.c:578-592). Zone 13
+# ships reset mode 1 (lib/world/zon/13.zon header "1399 45 1"), so the
+# builder's menu prints the reset-when-empty line for room 1300. The God
+# clears the LVL_BUILDER gate (src/interpreter.c:846).
+# depth-case: zedit.menu-reset-when-empty
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Zedqwp
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zedqwp
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+
+[probe]
+zedit 1300

@@ -1,0 +1,45 @@
+# C-first mp_sound mime line (src/mobprog.c:576-578). Vnum 8079's sound is
+# unconditional inside mp_sound, so the mobile-activity sound gate
+# (src/mobact.c:143-147, 1-in-16 per pass) is the only draw; two 2,000-pulse
+# windows sample it. One spawned mime is the only ambient sound source in a
+# sealed room (R5i).
+# depth-case: mob.mp-sound-mime-box
+
+[fixture]
+quiet-mobs
+replace-room-exits 8162 none
+spawn-mob 8079 1 8162 80
+
+[setup:oracle]
+Zzqxvwp
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zzqxvwp
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+look
+~dpclock pulse 2000
+~dpclock pulse 2000
+look
