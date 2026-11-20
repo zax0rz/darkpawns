@@ -90,3 +90,8 @@ perform_alias	pkg/game/aliases.go:338	none (ExpandAlias has no C-citing doc comm
 perform_complex_alias	pkg/game/aliases.go:371	"the direct Go equivalent of C's perform_complex_alias" (no name() form)
 find_name	pkg/db/player.go:348	none ((DB).GetPlayer has no C-citing doc comment)
 _parse_name	pkg/validation/validation.go:24	none (IsCharacterCreationNameSyntax has no C cite; parseEntryName cites "src/interpreter.c:853-876", which is fill_word, not _parse_name)
+string_write	pkg/session/tedit.go:173	none (startTextEdit has no C-citing doc comment)
+playing_string_cleanup	pkg/game/mail.go:591	none (body comment cites "modify.c:218-227", no src/)
+exdesc_string_cleanup	pkg/session/menu.go:269	none (the description-editor abort arm has no C cite)
+count_pages	pkg/session/pager.go:74	none (paginate's file-header cites "src/modify.c:346-527" at pager.go:8, which is page_string's range, not count_pages)
+paginate_string	pkg/session/pager.go:74	none (same pager.go:8 header covers page_string only)
