@@ -1,0 +1,76 @@
+# A connected peer enters REDIT and drops its descriptor; close_socket invokes
+# cleanup_olc and the remaining room witness sees C's stop-use act.
+# C: src/comm.c:2107-2119; src/olc.c:447-518 (especially 514).
+# depth-case: redit.disconnect-cleanup-room-output
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Reditwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Reditwitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Reditpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Reditpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Reditpeer 8004
+set player Reditpeer level 38
+send:peer redit 8105
+
+[peer-drop]
+peer
+
+[probe]
+look

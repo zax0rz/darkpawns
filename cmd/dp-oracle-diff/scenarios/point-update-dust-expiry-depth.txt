@@ -1,0 +1,113 @@
+# C-first Disintegration creates the real dust object with its five-hour timer;
+# five hourly point_update calls later, the room receives the dust-expiry line.
+# C: src/fight.c:267-270,433-478; src/limits.c:560-571.
+# depth-case: point-update.dust-expiry-room-output
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+Dustactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dustactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Dustvictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Dustvictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Dustwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Dustwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Dustvictim 8105
+teleport Dustwatch 8105
+set player Dustactor class mage
+skillset Dustactor 'disintegration' 100
+set player Dustactor maxmana 5000
+set player Dustactor mana 5000
+set player Dustactor align 1000
+set player Dustvictim align 0
+set player Dustvictim class mage
+set player Dustvictim level 20
+set player Dustvictim maxhit 1
+set player Dustvictim hit -10
+set player Dustactor level 34
+
+[probe]
+cast 'disintegration' Dustvictim
+~dpclock pulse 3150

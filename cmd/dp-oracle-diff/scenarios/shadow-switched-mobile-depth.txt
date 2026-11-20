@@ -1,0 +1,103 @@
+# C-first switched mobile reaches do_follow's quiet-success branch and routes
+# the private line through its attached descriptor.
+# C: src/act.wizard.c:1175-1201; src/act.movement.c:927-948.
+# depth-case: shadow.switched-mobile-success-quiet-audience
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8105 80
+
+[setup:oracle]
+Shadowmobile
+Y
+shadowpass
+shadowpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shadowmobile
+y
+shadowpass
+shadowpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Shadowtarget
+Y
+shadowpass
+shadowpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Shadowtarget
+y
+shadowpass
+shadowpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Shadowobserver
+Y
+shadowpass
+shadowpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Shadowobserver
+y
+shadowpass
+shadowpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Shadowtarget 8105
+teleport Shadowobserver 8105
+set mob clone level 40
+switch clone
+
+[probe]
+shadow Shadowtarget
