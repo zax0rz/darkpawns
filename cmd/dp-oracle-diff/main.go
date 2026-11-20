@@ -998,10 +998,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		fmt.Printf("hollow-prompt-step\tblock=%d\tcommand=%s\n", hs.block, hs.command)
 	}
 
-	var probeSetupRefusals []oraclediff.ProbeSetupRefusalHit
-	if scenario.ProbeSetupRefusalReason == "" {
-		probeSetupRefusals = oraclediff.CheckProbeSetupRefusals(oracleBlocks)
-	}
+	probeSetupRefusals := oraclediff.CheckProbeSetupRefusals(oracleBlocks)
 	fmt.Printf("probe-setup-refusals\tcount=%d\n", len(probeSetupRefusals))
 	for _, hit := range probeSetupRefusals {
 		fmt.Printf("probe-setup-refusal\tstep=%d\tcmd=%q\tline=%q\tcite=%s\n", hit.StepIndex, hit.Step, hit.Line, hit.Cite)
