@@ -261,4 +261,3 @@ real_zone	src/olc.c:366	ported-other-name	pkg/game/world_zone.go:92	(World).GetZ
 olc_add_to_save_list	src/olc.c:382	ported-other-name	pkg/session/olc_registry.go:232	olcSaveList.Mark(kind, zone) adds the zone to the save list (olc_registry.go:232, pkg/olc/save_list.go:30).	-
 olc_remove_from_save_list	src/olc.c:399	ported-other-name	pkg/session/olc_registry.go:236	olcSaveList.Remove(kind, zone) (olc_registry.go:236, pkg/olc/save_list.go:43).	-
 do_tedit	src/tedit.c:34	ported-other-name	pkg/session/tedit.go:120	cmdTedit resolves the lib/text file and opens startFileEdit with C's "Edit file below:\r\n\r\n" flow (tedit.go:120-227).	-
-tedit_setup	src/tedit.c:120	ported-other-name	pkg/session/tedit.go:173	startTextEdit wires the file editor state (path, storage, save/abort) — C's tedit setup.	-
