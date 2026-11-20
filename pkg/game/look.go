@@ -662,7 +662,7 @@ func (w *World) appendCharacterLook(result *ObservationResult, ch combat.Combata
 		player := target.Player
 		raceLine := func() string {
 			if player.IsAffected(affFleshAlter) {
-				return fmt.Sprintf("%s is %s, but %s hand is a %s!", persName(player, ch), PCRaceTypes[player.GetRace()], hshr(player), fleshAlterWeapon(player.GetLevel()))
+				return fmt.Sprintf("%s is %s, but %s hand is a %s!", persName(player, ch), PCRaceTypes[player.GetRace()], hshr(player), FleshAlterWeapon(player.GetLevel()))
 			}
 			return fmt.Sprintf("%s is %s.", persName(player, ch), PCRaceTypes[player.GetRace()])
 		}

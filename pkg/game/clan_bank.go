@@ -41,7 +41,7 @@ func (w *World) doClanBank(ch *Player, arg string, action int) {
 		return
 	}
 
-	if !isClanNumber(arg) {
+	if !CIsNumber(arg) {
 		switch action {
 		case CBDeposit:
 			ch.SendMessage("Deposit what?\r\n")

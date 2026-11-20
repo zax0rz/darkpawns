@@ -6,9 +6,11 @@ import (
 )
 
 // TestCIsNameTable pins C's isname() (src/handler.c:81-111): the typed word must
-// equal a whole keyword word, never a prefix. Revert proof: the removed isName()
-// matched prefixes, so "d"/"door" and "doo"/"door" returned true; every false
-// row below fails against it.
+// equal a whole keyword word up to a non-alpha boundary, never a prefix inside
+// an alphabetic run; punctuation inside a keyword is part of it, so a typed
+// word ending at the punctuation matches (handler.c:89-92). Revert proof: the
+// removed isName() matched prefixes, so "d"/"door" and "doo"/"door" returned
+// true; every false row below fails against it.
 func TestCIsNameTable(t *testing.T) {
 	cases := []struct {
 		name, nameList string
@@ -23,9 +25,13 @@ func TestCIsNameTable(t *testing.T) {
 		{"do", "door dark", false},    // prefix in a list
 		{"", "door", false},           // empty typed word
 		{"door", "", false},           // empty list
-		{"D", "D'haran", true},        // apostrophe splits the run: "D"
+		{"D", "D'haran", true},        // typed word ends at the apostrophe boundary
 		{"haran", "D'haran", true},    // apostrophe splits the run: "haran"
-		{"D'haran", "D'haran", false}, // the whole token is not a letter-run
+		{"D'haran", "D'haran", true},  // punctuation-aligned full keyword: C's walk matches byte-for-byte (handler.c:89-92)
+		{"d'haran", "D'haran", true},  // case-insensitive across the apostrophe
+		{"tako", "tako-ethreina", true},  // hyphen boundary (constants.c:1304-class keywords)
+		{"tako-ethreina", "tako-ethreina", true}, // fully aligned hyphenated keyword
+		{"ethreina", "tako-ethreina", true},      // second letter-run
 		{"corpse", "corpse", true},    // janitor literal
 		{"corp", "corpse", false},     // prefix of the literal
 		{"Door", "door", true},        // case-insensitive

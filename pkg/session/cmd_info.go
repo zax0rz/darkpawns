@@ -407,7 +407,7 @@ func cmdScore(s *Session) error {
 	}
 	// AFF_FLESH_ALTER = bit 16
 	if p.IsAffected(game.AffFleshAlter) {
-		fmt.Fprintf(&buf, "Your hand is a %s!\r\n", fleshAlterWeapon(p.GetLevel()))
+		fmt.Fprintf(&buf, "Your hand is a %s!\r\n", game.FleshAlterWeapon(p.GetLevel()))
 	}
 
 	// 19. Spell affects list (from C lines 1371-1397)
@@ -595,7 +595,7 @@ func cmdScoreMob(s *Session, mob *game.MobInstance) error {
 		buf.WriteString("You're mounted.\r\n")
 	}
 	if mob.IsAffected(game.AffFleshAlter) {
-		fmt.Fprintf(&buf, "Your hand is a %s!\r\n", fleshAlterWeapon(mob.GetLevel()))
+		fmt.Fprintf(&buf, "Your hand is a %s!\r\n", game.FleshAlterWeapon(mob.GetLevel()))
 	}
 
 	var visibleAffects []string
@@ -677,33 +677,6 @@ func scoreActiveAffectCBitvector(engineFlags uint64) uint64 {
 }
 
 // fleshAlterWeapon mirrors flesh_alter_weapon() in src/new_cmds.c:1836-1870.
-func fleshAlterWeapon(level int) string {
-	switch {
-	case level <= 3:
-		return "studded wooden club"
-	case level <= 6:
-		return "razor-sharp dagger"
-	case level <= 9:
-		return "steel-shafted axe"
-	case level <= 12:
-		return "studded steel mace"
-	case level <= 15:
-		return "battle flail"
-	case level <= 18:
-		return "steel-shafted battle axe"
-	case level <= 21:
-		return "double-headed battle axe"
-	case level <= 24:
-		return "studded morning-star"
-	case level <= 27:
-		return "gleaming broad sword"
-	case level <= 29:
-		return "gleaming long sword"
-	default:
-		return "gleaming scythe"
-	}
-}
-
 func scoreManaLabel(class int) string {
 	if class == game.ClassPsionic || class == game.ClassMystic {
 		return "Mind/Psi"

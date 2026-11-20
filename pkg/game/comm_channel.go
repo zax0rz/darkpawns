@@ -369,7 +369,7 @@ func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) boo
 
 	if strings.HasPrefix(arg, "#") {
 		rankText, remainder := halfChop(arg[1:])
-		if !isClanNumber(rankText) {
+		if !CIsNumber(rankText) {
 			ch.SendMessage("Try entering in a number.\r\n")
 			return true
 		}
@@ -449,7 +449,7 @@ func (w *World) NPCDoCTell(me *MobInstance, arg string) {
 	}
 	if strings.HasPrefix(arg, "#") {
 		rankText, remainder := halfChop(arg[1:])
-		if !isClanNumber(rankText) {
+		if !CIsNumber(rankText) {
 			me.SendMessage("Try entering in a number.\r\n")
 			return
 		}
