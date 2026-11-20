@@ -327,3 +327,60 @@ ASSIGNMOB	src/spec_assign.c:45	ported-other-name	pkg/game/spec_assign.go:17	MobS
 ASSIGNOBJ	src/spec_assign.c:57	ported-other-name	pkg/game/spec_assign.go:352	the object assignment map binds vnums to special names, e.g. 4001/4002: "moon_gate" (spec_assign.go:352-353) — C's obj_index func binding.	-
 ASSIGNROOM	src/spec_assign.c:68	ported-other-name	pkg/game/spec_assign.go:20	the room assignment map lives alongside ("This is the lookup table only", spec_assign.go:7) — C's world[rnum].func binding.	-
 assign_objects	src/spec_assign.c:516	ported-other-name	pkg/game/spec_assign.go:352	the object-specials map section mirrors assign_objects' ASSIGNOBJ rows one-for-one (4001-4002 moon_gate, 8064+ gen_board, 14415 horn, spec_assign.go:352-370).	-
+sort_spells	src/spec_procs.c:86	ported-other-name	pkg/game/practice.go:139	the practice list sorts entries by rawName ("sort.SliceStable(entries, ... rawName < rawName)", practice.go:139) = C's strcmp bubble sort of spell_sort_info feeding guild's listing (consumer spec_procs.c:177).	-
+snake	src/spec_procs.c:330	ported-other-name	pkg/game/spec_procs.go:270	specSnake, registered "snake" (spec_procs.go:1418); C range in the DP-1448 table (actor_specials_table_test.go: "snake": "src/spec_procs.c:330-346").	-
+summoner	src/spec_procs.c:349	ported-other-name	pkg/game/spec_procs.go:343	specSummoner, registered "summoner" (spec_procs.go:1419).	-
+thief	src/spec_procs.c:389	ported-other-name	pkg/game/spec_procs.go:390	specThief, registered "thief" (spec_procs.go:1420-1421); C range "src/spec_procs.c:389-406" in the DP-1448 table.	-
+magic_user	src/spec_procs.c:409	ported-other-name	pkg/game/spec_procs.go:439	specMagicUser, registered "magic_user" (spec_procs.go:1421); C range "src/spec_procs.c:409-503" in the DP-1448 table.	-
+puff	src/spec_procs.c:611	ported-other-name	pkg/game/spec_procs.go:645	specPuff, registered "puff" (spec_procs.go:1425; MobSpecAssign 1: "puff", spec_assign.go:21).	-
+fido	src/spec_procs.c:724	ported-other-name	pkg/game/spec_procs.go:723	specFido, registered "fido" (spec_procs.go:1426); C range "src/spec_procs.c:724-747" in the DP-1448 table.	-
+janitor	src/spec_procs.c:750	ported-other-name	pkg/game/spec_procs.go:751	specJanitor, registered "janitor" (spec_procs.go:1427).	-
+black_undead_knight	src/spec_procs.c:1147	ported-other-name	pkg/game/spec_procs.go:1221	specBlackUndeadKnight over the shared specUndeadKnight body (:1201), registered "black_undead_knight" (spec_procs.go:1434).	-
+red_undead_knight	src/spec_procs.c:1208	ported-other-name	pkg/game/spec_procs.go:1242	specRedUndeadKnight over the shared body, registered "red_undead_knight" (spec_procs.go:1435).	-
+conductor	src/spec_procs.c:1612	ported-other-name	pkg/game/spec_procs4.go:50	specConductor, registered "conductor" (spec_procs4.go:28); C range "src/spec_procs.c:1612-1738" in the DP-1448 table.	-
+brass_dragon	src/spec_procs.c:1740	ported-other-name	pkg/game/spec_procs4.go:139	specBrassDragon, registered "brass_dragon" (spec_procs4.go:29).	-
+jailguard	src/spec_procs.c:1781	ported-other-name	pkg/game/spec_procs4.go:177	specJailGuard, registered "jailguard" (spec_procs4.go:31); the actor lane is specJailGuardActor (actor_specials_guards.go:244).	-
+dracula	src/spec_procs.c:1798	ported-other-name	pkg/game/spec_procs4.go:202	specDracula, registered "dracula" (spec_procs4.go:32); C range "src/spec_procs.c:1798-1834" in the DP-1448 table.	-
+pet_shops	src/spec_procs.c:1844	ported-other-name	pkg/game/spec_procs4.go:243	specPetShops, registered "pet_shops" (spec_procs4.go:33); command set {list, buy} classified at actor_specials.go:311-313.	-
+MobCountInRoom	src/spec_procs.c:1910	inlined	pkg/game/spec_procs4.go:336	the room-population count folds into specEnterCircle's checks — C's callers are enter_circle's two count guards (spec_procs.c:1938,1966).	-
+enter_circle	src/spec_procs.c:1920	ported-other-name	pkg/game/spec_procs4.go:336	specEnterCircle, registered "enter_circle" (spec_procs4.go:34).	-
+elevator	src/spec_procs.c:1981	ported-other-name	pkg/game/spec_procs4.go:387	specElevator, registered "elevator" (spec_procs4.go:35).	-
+pray_for_items	src/spec_procs.c:2068	ported-other-name	pkg/game/spec_procs4.go:472	specPrayForItems, registered "pray_for_items" (spec_procs4.go:37).	-
+suck_in	src/spec_procs.c:2279	ported-other-name	pkg/game/spec_procs4.go:595	specSuckIn, registered "suck_in" (spec_procs4.go:41).	-
+oro_quarters_room	src/spec_procs.c:2302	ported-other-name	pkg/game/spec_procs4.go:616	specOroQuartersRoom, registered "oro_quarters_room" (spec_procs4.go:42; assigned 18397, spec_assign.go:390).	-
+oro_study_room	src/spec_procs.c:2321	ported-other-name	pkg/game/spec_procs4.go:635	specOroStudyRoom, registered "oro_study_room" (spec_procs4.go:43; assigned 18399, spec_assign.go:389).	-
+bank	src/spec_procs.c:2345	ported-other-name	pkg/game/spec_procs4.go:654	specBank, registered "bank" (spec_procs4.go:44); the balance/deposit/withdraw intercept set is classified at actor_specials.go:317-319 (object hosts 8034, 18224).	-
+do_first_remort_adjust	src/spec_procs2.c:104	ported-other-name	pkg/game/spec_procs2.go:712	firstRemortAdjust (spec_procs2.go:712), called from the remort flow at :609.	-
+do_second_remort_adjust	src/spec_procs2.c:120	ported-other-name	pkg/game/spec_procs2.go:742	secondRemortAdjust(ch, stat) at spec_procs2.go:610 = C's nested call shape (spec_procs2.c:771).	-
+normal_checker	src/spec_procs2.c:162	ported-other-name	pkg/game/spec_procs2.go:128	specNormalChecker, registered "normal_checker" (spec_procs2.go:20); C range "src/spec_procs2.c:162-187" in the DP-1448 table.	-
+ninelives	src/spec_procs2.c:190	c-unreachable	-	spec_assign.c only declares it (spec_assign.c:114); no ASSIGNMOB for ninelives exists in the 235 assignments, and Go registers no "ninelives" special.	-
+couch	src/spec_procs2.c:282	ported-other-name	pkg/game/spec_procs2.go:185	specCouch, registered "couch" (spec_procs2.go:22).	-
+find_remort_class	src/spec_procs2.c:652	ported-other-name	pkg/game/spec_procs2.go:682	remerterClass(class, race) returns the post-remort class by the same race switch (spec_procs2.go:682, used at remortPlayer :583).	-
+tattoo1	src/spec_procs2.c:945	ported-other-name	pkg/game/spec_procs2.go:1043	specTattoo1, registered "tattoo1" (spec_procs2.go:31).	-
+tattoo2	src/spec_procs2.c:1010	ported-other-name	pkg/game/spec_procs2.go:1107	specTattoo2, registered "tattoo2" (spec_procs2.go:32).	-
+tattoo3	src/spec_procs2.c:1075	ported-other-name	pkg/game/spec_procs2.go:1156	specTattoo3, registered "tattoo3" (spec_procs2.go:35).	-
+eviltrade	src/spec_procs2.c:1139	ported-other-name	pkg/game/spec_procs2.go:1282	specEviltrade, registered "eviltrade" (spec_procs2.go:36).	-
+tattoo4	src/spec_procs2.c:1282	ported-other-name	pkg/game/spec_procs2.go:1325	specTattoo4, registered "tattoo4" (spec_procs2.go:38).	-
+take_to_jail	src/spec_procs2.c:1427	ported-other-name	pkg/game/spec_procs2.go:1411	specTakeToJail, registered "take_to_jail" (spec_procs2.go:44); C range "src/spec_procs2.c:1427-1468" in the DP-1448 table.	-
+medusa	src/spec_procs2.c:1552	ported-other-name	pkg/game/spec_procs2.go:1522	specMedusa, registered "medusa" (spec_procs2.go:46).	-
+eq_thief	src/spec_procs2.c:1613	ported-other-name	pkg/game/spec_procs2.go:1596	specEqThief (with the kender steal arm at :1570), registered "eq_thief" (spec_procs2.go:47); C range "src/spec_procs2.c:1613-1646" in the DP-1448 table.	-
+castle_guard_east	src/spec_procs2.c:1934	ported-other-name	pkg/game/spec_procs2.go:1920	specCastleGuardEast, registered "castle_guard_east" (spec_procs2.go:59); the actor lane is specCastleGuardActor (actor_specials_guards.go:110).	-
+mindflayer	src/spec_procs2.c:1972	ported-other-name	pkg/game/spec_procs2.go:1963	specMindflayer, registered "mindflayer" (spec_procs2.go:60); C range "src/spec_procs2.c:1972-2001" in the DP-1448 table.	-
+teleporter	src/spec_procs2.c:2019	ported-other-name	pkg/game/spec_procs2.go:2024	specTeleporter, registered "teleporter" (spec_procs2.go:62); C range "src/spec_procs2.c:2019-2031" in the DP-1448 table.	-
+no_move_west	src/spec_procs2.c:2033	ported-other-name	pkg/game/spec_procs2.go:2041	specNoMoveWest, registered "no_move_west" (spec_procs2.go:63); actor lane specNoMoveWestActor (actor_specials_guards.go:73).	-
+no_move_north	src/spec_procs2.c:2054	ported-other-name	pkg/game/spec_procs2.go:2055	specNoMoveNorth, registered "no_move_north" (spec_procs2.go:64); actor lane specNoMoveNorthActor (actor_specials_guards.go:92).	-
+no_move_south	src/spec_procs2.c:2092	ported-other-name	pkg/game/spec_procs2.go:2093	specNoMoveSouth, registered "no_move_south" (spec_procs2.go:68); actor lane specNoMoveSouthActor (actor_specials_guards.go:82).	-
+castle_guard_up	src/spec_procs2.c:2176	ported-other-name	pkg/game/spec_procs2.go:2201	specCastleGuardUp, registered "castle_guard_up" (spec_procs2.go:71); actor lane specCastleGuardUpActor (actor_specials_guards.go:174).	-
+castle_guard_north	src/spec_procs2.c:2218	ported-other-name	pkg/game/spec_procs2.go:2214	specCastleGuardNorth, registered "castle_guard_north" (spec_procs2.go:72); actor lane specCastleGuardNorthActor (actor_specials_guards.go:179).	-
+butler	src/spec_procs3.c:144	ported-other-name	pkg/game/spec_procs3.go:416	specButler, registered "butler" (spec_procs3.go:49); C range "src/spec_procs3.c:144-196" in the DP-1448 table.	-
+con_seller	src/spec_procs3.c:239	ported-other-name	pkg/game/spec_procs3.go:841	specConSeller (spec_procs3.go:548), registered "con_seller" (spec_procs3.go:52); the CAN_SEE mirror is conSellerCanSee (spec_procs3.go:630).	-
+no_move_down	src/spec_procs3.c:316	ported-other-name	pkg/game/spec_procs3.go:299	specNoMoveDown, registered "no_move_down" (spec_procs3.go:53).	-
+npc_regen	src/spec_procs3.c:339	inlined	pkg/game/spec_procs3.go:684	the regen arithmetic folds into specTroll's pulse arm (newHP := me.GetHP() + me.GetLevel()*regenRate, spec_procs3.go:684-685) — C's callers are troll's two regen branches (spec_procs3.c:354,361).	-
+troll	src/spec_procs3.c:347	ported-other-name	pkg/game/spec_procs3.go:676	specTroll, registered "troll" (spec_procs3.go:54); C range "src/spec_procs3.c:347-370" in the DP-1448 table.	-
+alien_elevator	src/spec_procs3.c:401	ported-other-name	pkg/game/spec_procs3.go:741	specAlienElevator, registered "alien_elevator" (spec_procs3.go:56).	-
+portal_to_temple	src/spec_procs3.c:515	ported-other-name	pkg/game/spec_procs3.go:904	specPortalToTemple, registered "portal_to_temple" (spec_procs3.go:59).	-
+itoh	src/spec_procs3.c:583	ported-other-name	pkg/game/spec_procs3.go:967	specItoh, registered "itoh" (spec_procs3.go:61).	-
+mirror	src/spec_procs3.c:612	c-unreachable	-	assign_objects only declares it (spec_assign.c:526); no ASSIGNOBJ binds mirror, and Go registers no "mirror" special (the mirror_image spell is unrelated).	-
+hisc	src/spec_procs3.c:894	ported-other-name	pkg/game/spec_procs3.go:1243	specHisc, registered "hisc" (spec_procs3.go:66).	-
+recruiter	src/spec_procs3.c:905	ported-other-name	pkg/game/spec_procs3.go:1253	specRecruiter, registered "recruiter" (spec_procs3.go:67).	-
+elements_load_cylinders	src/spec_procs3.c:1058	ported-other-name	pkg/game/spec_procs3.go:1289	specElementsLoadCylinders, registered "elements_load_cylinders" (spec_procs3.go:70).	-
