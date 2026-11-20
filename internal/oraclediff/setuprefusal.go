@@ -204,6 +204,7 @@ var probeSetupVerbs = map[string]bool{
 	"peace":    true,
 	"restore":  true,
 	"purge":    true,
+	"give":     true,
 }
 
 // IsProbeSetupCommand reports whether a [probe] step invokes an immortal/OLC

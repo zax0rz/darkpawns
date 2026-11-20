@@ -42,10 +42,6 @@ var showFields = []struct {
 }
 
 func cmdShow(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) == 0 {
 		// C (act.wizard.c:2271-2277) prints the rows this character may use,
 		// five per line, then one trailing CRLF; a shown count that is a
@@ -351,10 +347,6 @@ func showReagentListing() string {
 
 // cmdDark — stop all combat in the room (LVL_IMMORT)
 func cmdDark(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	roomVNum := s.player.GetRoom()
 	// C walks the room list and stops every fighting character. A fighter is
 	// told about the peace before the command's actor/room messages; fighting
@@ -395,10 +387,6 @@ func cmdDark(s *Session, args []string) error {
 
 // cmdSyslog — toggle system logging level (LVL_IMMORT)
 func cmdSyslog(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) == 0 {
 		s.Send(fmt.Sprintf("Your syslog is currently %s.\r\n", syslogLevel(s.player.GetFlags())))
 		return nil
@@ -477,10 +465,6 @@ func cmdIdlist(s *Session, args []string) error {
 
 // cmdCheckload — check zone load info for a mob/obj (LVL_IMMORT)
 func cmdCheckload(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	const usage = "Usage: checkload { obj | mob } <number>\r\n"
 	if len(args) < 2 || args[1] == "" || args[1][0] < '0' || args[1][0] > '9' {
 		s.Send(usage)
@@ -694,10 +678,6 @@ func mustCheckloadObjectPercent(w *game.World, vnum int) float64 {
 // cmdPoofset — set poof in/out messages (LVL_IMMORT)
 // Original: act.wizard.c do_poofset() (1711).
 func cmdPoofsetText(s *Session, direction, message string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	// C do_poofset: with an argument, str_dup it into the poof slot; with no
 	// argument, clear the slot. Either way it replies with the global OK
 	// ("Okay.\r\n", config.c:92) — never an invented set/cleared message.
