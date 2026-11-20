@@ -164,14 +164,14 @@ func main() {
 
 func run() int {
 	var (
-		scenarioName  = flag.String("scenario", "look-start-room", "scenario name from scenarios/<name>.txt")
-		seed          = flag.String("seed", "1", "shared deterministic DP_SEED value")
-		showOracle    = flag.Bool("show-oracle", false, "print normalized C blocks even when both implementations match")
-		dumpOracle    = flag.String("dump-oracle", "", "write each run's normalized C blocks to <dir>/<scenario>.txt")
-		showGoLog     = flag.Bool("show-go-log", false, "print the Go port server log after the report (debugging aid)")
-		firstByteWait = flag.Duration("first-byte-wait", 2*time.Second, "maximum wait for the first response byte after issuing a command; 0 uses the quiescence window")
-		quiescence    = flag.Duration("quiescence", 300*time.Millisecond, "silence interval that marks the end of an output burst")
-		bootTimeout   = flag.Duration("boot-timeout", 30*time.Second, "maximum wait for each telnet listener")
+		scenarioName      = flag.String("scenario", "look-start-room", "scenario name from scenarios/<name>.txt")
+		seed              = flag.String("seed", "1", "shared deterministic DP_SEED value")
+		showOracle        = flag.Bool("show-oracle", false, "print normalized C blocks even when both implementations match")
+		dumpOracle        = flag.String("dump-oracle", "", "write each run's normalized C blocks to <dir>/<scenario>.txt")
+		showGoLog         = flag.Bool("show-go-log", false, "print the Go port server log after the report (debugging aid)")
+		firstByteWait     = flag.Duration("first-byte-wait", 2*time.Second, "maximum wait for the first response byte after issuing a command; 0 uses the quiescence window")
+		quiescence        = flag.Duration("quiescence", 300*time.Millisecond, "silence interval that marks the end of an output burst")
+		bootTimeout       = flag.Duration("boot-timeout", 30*time.Second, "maximum wait for each telnet listener")
 		drawParity        = flag.Bool("draw-parity", false, "also compare the C oracle's and the Go port's RNG draw streams (needs a reference oracle built with the DP draw-log seam); a draw-only mismatch exits 5")
 		goTransport       = flag.String("go-transport", envOr("DP_ORACLE_GO_TRANSPORT", "telnet"), "how the Go port is driven: telnet, or ws (the /play browser client, run headless under node); default from DP_ORACLE_GO_TRANSPORT")
 		enforceProbeSetup = flag.Bool("enforce-probe-setup-refusals", enforceProbeSetupRefusals, "fail the run if any setup-shaped [probe] step receives a C refusal without # probe-setup-refusal-reason:")
