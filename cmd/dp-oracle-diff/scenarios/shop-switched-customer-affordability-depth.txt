@@ -1,0 +1,53 @@
+# C-first switched-mobile customer reaches SPECIAL(shop_keeper)'s partial-buy
+# affordability refusal with its own connected descriptor.
+# C: src/shop.c:471-570 (the bought < buynum branch and do_tell).
+# depth-case: obj.npc-shop-keeper-switched-customer-affordability
+
+[fixture]
+empty-players
+quiet-mobs
+quiet-zone 121
+spawn-mob 12102 1 12135 121
+give-object 12102 12102 100000 121
+give-object 12102 12102 100000 121
+give-object 12102 12102 100000 121
+replace-room-exits 12135 none
+
+[setup:oracle]
+Shopswitchbuy
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopswitchbuy
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12135
+load mob 1
+set mob Puff level 1
+set mob Puff gold 28
+set mob Puff cha 10
+switch Puff
+
+[probe]
+buy 2 gold
