@@ -9,6 +9,7 @@
 # depth-case: dismount.room-audience
 # depth-case: dismount.argument-ignored
 # depth-case: dismount.pair-state
+# depth-case: dismount.stand-as-dismount
 
 [fixture]
 empty-players
@@ -77,6 +78,8 @@ goto 8162
 teleport Roommate 8162
 
 [probe]
+ride horse
+stand
 ride horse
 dismount nowhere
 dismount

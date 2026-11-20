@@ -984,7 +984,7 @@ const FaultControlPrefix = "~fault"
 
 // parseFaultFixture recognizes the opt-in fault verbs:
 //
-//	fault-dir <logical>                     (object_idlist | mail)
+//	fault-dir <logical>                     (object_idlist | mail | misc/bugs)
 //	fault-corrupt-mail <unaligned|bad-header>
 //	fault-board <object-vnum> <malformation>
 //	fault-crash-file <player>
@@ -995,7 +995,7 @@ func parseFaultFixture(fields []string) (FaultFixture, bool) {
 	}
 	switch strings.ToLower(fields[0]) {
 	case "fault-dir":
-		if len(fields) == 2 && (fields[1] == "object_idlist" || fields[1] == "mail") {
+		if len(fields) == 2 && (fields[1] == "object_idlist" || fields[1] == "mail" || fields[1] == "misc/bugs") {
 			return FaultFixture{Verb: "fault-dir", Target: fields[1]}, true
 		}
 	case "fault-corrupt-mail":

@@ -1,0 +1,74 @@
+# C-first witness for no_move_east when an NPC body issues the command
+# (src/spec_procs2.c:1823-1842). A switched horse supplies an NPC command actor;
+# Silk supplies the separate room special and the observer captures TO_NOTVICT.
+# depth-case: mob.spec-no-move-east-actor
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14410 99 8162 80
+spawn-mob 8021 99 8162 80
+
+[setup:oracle]
+Eastactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Eastactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Eastpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Eastpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Eastpeer 8162
+switch horse
+
+[probe]
+east
