@@ -21,7 +21,16 @@
 # depth-case: skillset.player-only-ordinal
 # depth-case: skillset.atoi-leading-digits
 # depth-case: skillset.atoi-first-token
-# probe-setup-refusal-reason: Tests `do_skillset` syntax, target, skill-name, range, and NPC refusal branches.
+# probe-setup-refusal-reason: "skillset": witnesses do_skillset's no-argument syntax refusal (src/modify.c:265)
+# probe-setup-refusal-reason: "skillset Nobody": witnesses do_skillset's target lookup printing NOPERSON (src/modify.c:283, src/config.c:93)
+# probe-setup-refusal-reason: "skillset Skillsettarget": witnesses do_skillset's missing skill name (src/modify.c:290)
+# probe-setup-refusal-reason: "skillset Skillsettarget backstab 75": witnesses do_skillset's unquoted skill name (src/modify.c:294)
+# probe-setup-refusal-reason: "skillset Skillsettarget 'backstab": witnesses do_skillset's unterminated quote (src/modify.c:294)
+# probe-setup-refusal-reason: "skillset Skillsettarget 'zzznotaskill' 75": witnesses do_skillset's unknown skill (src/modify.c:309)
+# probe-setup-refusal-reason: "skillset Skillsettarget 'backstab'": witnesses do_skillset's missing learned value (src/modify.c:316)
+# probe-setup-refusal-reason: "skillset Skillsettarget 'backstab' -1": witnesses do_skillset's learned value below 0 (src/modify.c:321)
+# probe-setup-refusal-reason: "skillset Skillsettarget 'backstab' 101": witnesses do_skillset's learned value above 100 (src/modify.c:325)
+# probe-setup-refusal-reason: "skillset 1.orc 'backstab' 75": witnesses do_skillset's NPC target refusal (src/modify.c:329)
 
 [fixture]
 empty-players

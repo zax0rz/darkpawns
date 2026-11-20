@@ -9,7 +9,9 @@
 # depth-case: set.file-missing
 # depth-case: set.file-password
 # depth-case: set.file-saved
-# probe-setup-refusal-reason: Tests `do_set player` missing-player and lower-level file-access refusal branches.
+# probe-setup-refusal-reason: "set player Nobody level 1": witnesses do_set's player-branch lookup miss (src/act.wizard.c:2635)
+# probe-setup-refusal-reason: "set file Nobody level 1": witnesses do_set's file-mode player lookup miss (src/act.wizard.c:2635)
+# probe-setup-refusal-reason: "set file Setpeer level 40": witnesses do_set's refusal to set a level at/above the lowered actor (src/act.wizard.c:2661)
 
 [fixture]
 quiet-mobs

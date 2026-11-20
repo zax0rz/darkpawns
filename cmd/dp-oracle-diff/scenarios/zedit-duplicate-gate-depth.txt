@@ -2,7 +2,7 @@
 # descriptor owns the editor. This reaches do_olc's duplicate scan.
 # C path: src/olc.c:150-159.
 # depth-case: zedit.duplicate-gate-cleanup
-# probe-setup-refusal-reason: Tests `do_olc` duplicate-editor refusal when a second descriptor enters `zedit` on an already-edited room.
+# probe-setup-refusal-reason: "send:peer zedit 8162": witnesses do_olc's duplicate-editor refusal naming the holding descriptor (src/olc.c:157)
 
 [fixture]
 empty-players

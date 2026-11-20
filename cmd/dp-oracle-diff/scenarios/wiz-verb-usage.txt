@@ -12,7 +12,7 @@
 # The Go wrappers formerly printed invented Usage strings for vnum/stat/goto
 # ("Usage: vnum <mob|obj|room> ...", "Usage: stat ...", "Goto where? ...");
 # fixed to C verbatim. `last` was already faithful.
-# probe-setup-refusal-reason: Tests no-argument `goto` usage refusal ("You must supply a room number or name.").
+# probe-setup-refusal-reason: "goto": witnesses do_goto's no-argument usage refusal (src/act.wizard.c:195)
 
 [fixture]
 empty-players

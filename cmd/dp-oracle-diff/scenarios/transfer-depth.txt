@@ -16,7 +16,10 @@
 # depth-case: transfer.self-refusal
 # depth-case: transfer.lower-level-refusal
 # depth-case: transfer.all-level-refusal
-# probe-setup-refusal-reason: Tests `do_trans` missing-target and argument refusal branches.
+# probe-setup-refusal-reason: "transfer Nobody": witnesses do_trans's target lookup printing NOPERSON (src/act.wizard.c:321, src/config.c:93)
+# probe-setup-refusal-reason: "transfer Transferwizard": witnesses do_trans's self-transfer refusal (src/act.wizard.c:323)
+# probe-setup-refusal-reason: "send:low transfer Transferpeer": witnesses do_trans's target-above-actor refusal for the level-33 low peer (src/act.wizard.c:326)
+# probe-setup-refusal-reason: "send:low transfer all": witnesses do_trans's 'all' refusal below LVL_GRGOD (src/act.wizard.c:343)
 
 [fixture]
 empty-players

@@ -226,9 +226,9 @@ var errDivergence = errors.New("normalized divergence detected")
 var errDrawDivergence = errors.New("rng draw streams diverge")
 
 // enforceProbeSetupRefusals controls whether DP-1597's in-probe setup refusal
-// check fails the run or runs report-only. Enabled after DP-1599 settled all
-// remaining refused setup steps and annotated intentional refusal tests with
-// "# probe-setup-refusal-reason:".
+// check fails the run or runs report-only. Every intentional refusal in a
+// setup-shaped [probe] step must be named explicitly via
+// `# probe-setup-refusal-reason: "<step>": <why>`.
 const enforceProbeSetupRefusals = true
 
 func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Duration, oracleBin, seed string, showOracle bool, dumpOracle string, showGoLog bool, goTransport string, drawParity bool, enforceProbeSetup bool) error {
@@ -998,10 +998,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		fmt.Printf("hollow-prompt-step\tblock=%d\tcommand=%s\n", hs.block, hs.command)
 	}
 
-	var probeSetupRefusals []oraclediff.ProbeSetupRefusalHit
-	if scenario.ProbeSetupRefusalReason == "" {
-		probeSetupRefusals = oraclediff.CheckProbeSetupRefusals(oracleBlocks)
-	}
+	probeSetupRefusals := oraclediff.CheckProbeSetupRefusalsForScenario(oracleBlocks, scenario.ProbeSetupRefusalReasons)
 	fmt.Printf("probe-setup-refusals\tcount=%d\n", len(probeSetupRefusals))
 	for _, hit := range probeSetupRefusals {
 		fmt.Printf("probe-setup-refusal\tstep=%d\tcmd=%q\tline=%q\tcite=%s\n", hit.StepIndex, hit.Step, hit.Line, hit.Cite)

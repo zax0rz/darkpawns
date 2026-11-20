@@ -1,5 +1,5 @@
+# probe-setup-refusal-reason: "give ZZZ givevic": witnesses do_give's not-carried refusal after fill-word stripping (src/act.item.c:1647)
 # depth-case: give.fill-word-parse
-# probe-setup-refusal-reason: Tests `do_give` fill-word stripping on an uncarried item ("You don't seem to have a zzz.").
 
 [fixture]
 quiet-mobs

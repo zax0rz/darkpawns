@@ -207,15 +207,107 @@ func TestCheckProbeSetupRefusals(t *testing.T) {
 
 func TestParseScenarioProbeSetupRefusalReason(t *testing.T) {
 	sc, err := ParseScenario("opted-out", strings.NewReader(
-		"# probe-setup-refusal-reason: intentionally tests level-30 load refusal\n[probe]\nload obj 4399\n"))
+		"# probe-setup-refusal-reason: \"load obj 4399\": intentionally tests level-30 load refusal\n"+
+			"# probe-setup-refusal-reason: \"send:low transfer all\": tests LVL_GRGOD gate\n"+
+			"[probe]\nload obj 4399\nsend:low transfer all\n"))
 	if err != nil {
 		t.Fatalf("valid probe-setup-refusal-reason failed to parse: %v", err)
 	}
-	if sc.ProbeSetupRefusalReason != "intentionally tests level-30 load refusal" {
-		t.Fatalf("ProbeSetupRefusalReason = %q", sc.ProbeSetupRefusalReason)
+	if got := sc.ProbeSetupRefusalReasons["load obj 4399"]; got != "intentionally tests level-30 load refusal" {
+		t.Fatalf("ProbeSetupRefusalReasons[load obj 4399] = %q", got)
 	}
-	if _, err := ParseScenario("empty-reason", strings.NewReader(
-		"# probe-setup-refusal-reason:\n[probe]\nload obj 4399\n")); err == nil || !strings.Contains(err.Error(), "empty probe-setup-refusal-reason") {
-		t.Fatalf("empty probe-setup-refusal-reason must fail, got %v", err)
+	if got := sc.ProbeSetupRefusalReasons["send:low transfer all"]; got != "tests LVL_GRGOD gate" {
+		t.Fatalf("ProbeSetupRefusalReasons[send:low transfer all] = %q", got)
+	}
+
+	// Named step passes; unnamed refusal in the same file still fails.
+	blocks := []AudienceProbeBlock{
+		{Command: "load obj 4399", Audience: "actor", Output: "Huh?!?\r\n"},
+		{Command: "send:low transfer all", Audience: "low", Output: "You are not godly enough to do that!\r\n"},
+	}
+	if hits := CheckProbeSetupRefusalsForScenario(blocks, sc.ProbeSetupRefusalReasons); len(hits) != 0 {
+		t.Fatalf("named steps should pass, got %+v", hits)
+	}
+	blocksWithStray := []AudienceProbeBlock{
+		{Command: "load obj 4399", Audience: "actor", Output: "Huh?!?\r\n"},
+		{Command: "send:low transfer all", Audience: "low", Output: "You are not godly enough to do that!\r\n"},
+		{Command: "load obj 3000", Audience: "actor", Output: "Huh?!?\r\n"},
+	}
+	hits := CheckProbeSetupRefusalsForScenario(blocksWithStray, sc.ProbeSetupRefusalReasons)
+	if len(hits) != 1 || hits[0].Step != "load obj 3000" {
+		t.Fatalf("unnamed refusal in same file must fail, got %+v", hits)
+	}
+
+	// Whitespace inside the quoted step is trimmed on both the reason key and
+	// the compared step, so a sloppily padded step name still opts out.
+	ws, err := ParseScenario("padded-step", strings.NewReader(
+		"# probe-setup-refusal-reason: \"  load obj 4399  \": padded key\n[probe]\nload obj 4399\n"))
+	if err != nil {
+		t.Fatalf("padded step key failed to parse: %v", err)
+	}
+	if hits := CheckProbeSetupRefusalsForScenario(blocks, ws.ProbeSetupRefusalReasons); len(hits) != 0 {
+		t.Fatalf("padded named step should pass, got %+v", hits)
+	}
+
+	// Reasons may contain colons; only the first colon after the quoted step
+	// is the separator (real reasons cite C lines like src/x.c:1498).
+	colon, err := ParseScenario("colon-reason", strings.NewReader(
+		"# probe-setup-refusal-reason: \"load obj 4399\": witnesses do_load (src/act.wizard.c:1274)\n[probe]\nload obj 4399\n"))
+	if err != nil {
+		t.Fatalf("colon-bearing reason failed to parse: %v", err)
+	}
+	if got := colon.ProbeSetupRefusalReasons["load obj 4399"]; got != "witnesses do_load (src/act.wizard.c:1274)" {
+		t.Fatalf("colon-bearing reason = %q", got)
+	}
+
+	// Empty reason fails (both bare and after a quoted step).
+	for _, tc := range []struct {
+		name string
+		src  string
+		want string
+	}{
+		{
+			name: "bare-empty",
+			src:  "# probe-setup-refusal-reason:\n[probe]\nload obj 4399\n",
+			want: "empty probe-setup-refusal-reason",
+		},
+		{
+			name: "empty-reason-after-step",
+			src:  "# probe-setup-refusal-reason: \"load obj 4399\":\n[probe]\nload obj 4399\n",
+			want: "empty probe-setup-refusal-reason",
+		},
+		{
+			name: "empty-step",
+			src:  "# probe-setup-refusal-reason: \"\": some reason\n[probe]\nload obj 4399\n",
+			want: "empty step in probe-setup-refusal-reason",
+		},
+		{
+			name: "old-whole-file-form",
+			src:  "# probe-setup-refusal-reason: intentionally tests level-30 load refusal\n[probe]\nload obj 4399\n",
+			want: "must name step",
+		},
+		{
+			name: "old-whole-file-form-with-colon",
+			src:  "# probe-setup-refusal-reason: Note: tests level-30 load refusal\n[probe]\nload obj 4399\n",
+			want: "must name step",
+		},
+		{
+			name: "missing-colon-separator",
+			src:  "# probe-setup-refusal-reason: \"load obj 4399\" missing colon\n[probe]\nload obj 4399\n",
+			want: `expected ": <why>"`,
+		},
+		{
+			name: "duplicate-step",
+			src: "# probe-setup-refusal-reason: \"load obj 4399\": first\n" +
+				"# probe-setup-refusal-reason: \"load obj 4399\": second\n[probe]\nload obj 4399\n",
+			want: "duplicate probe-setup-refusal-reason",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := ParseScenario(tc.name, strings.NewReader(tc.src))
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("ParseScenario(%s) err = %v, want substring %q", tc.name, err, tc.want)
+			}
+		})
 	}
 }
