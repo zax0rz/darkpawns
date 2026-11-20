@@ -1,7 +1,8 @@
 # C-first switched mobile reaches do_action's minimum-victim-position refusal.
-# Hug requires a standing target; the sleeping trainee guard takes the refusal
-# through TO_CHAR to the descriptor on the switched body.
-# C: src/act.social.c:102-151; lib/misc/socials (hug min victim position).
+# A second God forces the switched clone to hug a sleeping player, so the
+# mobile actor's TO_CHAR refusal is visible on the clone's attached descriptor.
+# C: src/act.wizard.c:1862-1880; src/act.social.c:121-143;
+# lib/misc/socials:410-418
 # depth-case: social.switched-mobile-sleeping-victim
 
 [fixture]
@@ -38,10 +39,69 @@ Y
 <ENTER>
 1
 
+[setup:oracle:forcer]
+Socialforce
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:forcer]
+Socialforce
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Socialsleep
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:sleeper]
+Socialsleep
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 goto 8162
-force guard sleep
+teleport Socialforce 8162
+teleport Socialsleep 8162
+advance Socialforce 34
+force Socialsleep sleep
 switch clone
 
 [probe]
-hug guard
+send:forcer force clone hug Socialsleep
