@@ -5486,7 +5486,7 @@ game	pointDirection	pkg/game/skill_special.go	661
 game	DoGroinrip	pkg/game/skill_special.go	671			
 game	DoReview	pkg/game/skill_special.go	752	src/new_cmds.c:do_review	C: do_review(	
 game	DoPalm	pkg/game/skill_special.go	765	src/act.item.c:perform_get_from_room; src/new_cmds.c:do_palm	src/act.item.c:269-283 | src/new_cmds.c:2108-2123 | src/new_cmds.c:2122	
-game	fleshAlterWeapon	pkg/game/skill_special.go	783	src/new_cmds.c:flesh_alter_weapon	mirrors flesh_alter_weapon( | src/new_cmds.c:1836-1870	
+game	FleshAlterWeapon	pkg/game/skill_special.go	785	src/new_cmds.c:flesh_alter_weapon	mirrors flesh_alter_weapon( | src/new_cmds.c:1836-1870	
 game	fleshAlteredType	pkg/game/skill_special.go	812	src/new_cmds.c:flesh_altered_type	mirrors flesh_altered_type( | src/new_cmds.c:1783-1826	src/fight.c:82 (range does not intersect a parsed C function body)
 game	DoFleshAlter	pkg/game/skill_special.go	832			
 game	DoSneak	pkg/game/skill_stealth.go	21	src/act.other.c:do_sneak	src/act.other.c:214-244	
@@ -8400,7 +8400,8 @@ session	cmdScoreMob	pkg/session/cmd_info.go	528
 session	scoreMobPositionText	pkg/session/cmd_info.go	627			
 session	scoreAffectHasNode	pkg/session/cmd_info.go	654			
 session	scoreActiveAffectCBitvector	pkg/session/cmd_info.go	670			
-session	fleshAlterWeapon	pkg/session/cmd_info.go	681	src/new_cmds.c:flesh_alter_weapon	mirrors flesh_alter_weapon( | src/new_cmds.c:1836-1870	
+session	FleshAlterWeapon	pkg/session/cmd_info.go	681	src/new_cmds.c:flesh_alter_weapon	mirrors flesh_alter_weapon( | src/new_cmds.c:1836-1870	
+session	scoreManaLabel	pkg/session/cmd_info.go	680	src/new_cmds.c:flesh_alter_weapon	mirrors flesh_alter_weapon's caller band (score/stat hand line, do_flesh_alter) | src/new_cmds.c:1836-1870	
 session	scoreManaLabel	pkg/session/cmd_info.go	708			
 session	articleFor	pkg/session/cmd_info.go	716			
 session	parseUsersArgs	pkg/session/cmd_info.go	741			

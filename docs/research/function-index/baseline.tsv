@@ -790,8 +790,8 @@ src/new_cmds.c:do_strike	pkg/command/skill_commands.go	CmdStrike	primary
 src/new_cmds.c:do_strike	pkg/game/damage_stubs.go	(World).DoStrikeDamage	split
 src/new_cmds.c:do_strike	pkg/game/skill_advanced.go	DoStrike	split
 src/new_cmds.c:do_whois	pkg/session/cmd_info.go	cmdWhois	primary
-src/new_cmds.c:flesh_alter_weapon	pkg/game/skill_special.go	fleshAlterWeapon	primary
-src/new_cmds.c:flesh_alter_weapon	pkg/session/cmd_info.go	fleshAlterWeapon	duplicate
+src/new_cmds.c:flesh_alter_weapon	pkg/game/skill_special.go	FleshAlterWeapon	primary
+src/new_cmds.c:flesh_alter_weapon	pkg/session/cmd_info.go	scoreManaLabel	duplicate
 src/new_cmds.c:flesh_altered_type	pkg/game/skill_special.go	fleshAlteredType	primary
 src/new_cmds.c:full_moon	pkg/game/weather.go	fullMoon	primary
 src/new_cmds.c:full_moon	pkg/game/weather.go	fullMoonForWorld	split

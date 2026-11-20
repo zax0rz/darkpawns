@@ -268,7 +268,6 @@ func (m *ClanManager) GetClanByIndex(idx int) *Clan {
 // ---------------------------------------------------------------------------
 // halfChop in act_comm.go, atoi in act_item.go, isNumber in spec_procs4.go
 
-
 // capClanName mirrors C's CAP macro (src/utils.h:166): uppercase only the
 // first byte and preserve the remainder exactly.
 func capClanName(s string) string {

@@ -16,25 +16,25 @@ func TestCIsNameTable(t *testing.T) {
 		name, nameList string
 		want           bool
 	}{
-		{"door", "door", true},        // exact match
-		{"d", "door", false},          // prefix is NOT a match (the bug)
-		{"doo", "door", false},        // prefix is NOT a match
-		{"doors", "door", false},      // longer than the word
-		{"door", "door dark", true},   // whole word in a list
-		{"dark", "door dark", true},   // whole word in a list
-		{"do", "door dark", false},    // prefix in a list
-		{"", "door", false},           // empty typed word
-		{"door", "", false},           // empty list
-		{"D", "D'haran", true},        // typed word ends at the apostrophe boundary
-		{"haran", "D'haran", true},    // apostrophe splits the run: "haran"
-		{"D'haran", "D'haran", true},  // punctuation-aligned full keyword: C's walk matches byte-for-byte (handler.c:89-92)
-		{"d'haran", "D'haran", true},  // case-insensitive across the apostrophe
-		{"tako", "tako-ethreina", true},  // hyphen boundary (constants.c:1304-class keywords)
+		{"door", "door", true},                   // exact match
+		{"d", "door", false},                     // prefix is NOT a match (the bug)
+		{"doo", "door", false},                   // prefix is NOT a match
+		{"doors", "door", false},                 // longer than the word
+		{"door", "door dark", true},              // whole word in a list
+		{"dark", "door dark", true},              // whole word in a list
+		{"do", "door dark", false},               // prefix in a list
+		{"", "door", false},                      // empty typed word
+		{"door", "", false},                      // empty list
+		{"D", "D'haran", true},                   // typed word ends at the apostrophe boundary
+		{"haran", "D'haran", true},               // apostrophe splits the run: "haran"
+		{"D'haran", "D'haran", true},             // punctuation-aligned full keyword: C's walk matches byte-for-byte (handler.c:89-92)
+		{"d'haran", "D'haran", true},             // case-insensitive across the apostrophe
+		{"tako", "tako-ethreina", true},          // hyphen boundary (constants.c:1304-class keywords)
 		{"tako-ethreina", "tako-ethreina", true}, // fully aligned hyphenated keyword
 		{"ethreina", "tako-ethreina", true},      // second letter-run
-		{"corpse", "corpse", true},    // janitor literal
-		{"corp", "corpse", false},     // prefix of the literal
-		{"Door", "door", true},        // case-insensitive
+		{"corpse", "corpse", true},               // janitor literal
+		{"corp", "corpse", false},                // prefix of the literal
+		{"Door", "door", true},                   // case-insensitive
 	}
 	for _, tc := range cases {
 		if got := cIsName(tc.name, tc.nameList); got != tc.want {
