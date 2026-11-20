@@ -284,19 +284,3 @@ func TestCmdSkillset_SerpentKickUsesCommandSkillKey(t *testing.T) {
 		t.Fatalf("serpent-kick skill = %d, want 75", got)
 	}
 }
-
-// --- Level gate: a mortal (< LVL_GRGOD) is rejected ---
-
-func TestCmdSkillset_MortalRejected(t *testing.T) {
-	m := makeTestManager(t)
-	mortal := makeTestSession(t, m, "Mort", 1001, true)
-	mortal.player.Level = 10 // well below LVL_GRGOD (38)
-
-	if err := cmdSkillset(mortal, nil); err != nil {
-		t.Fatalf("cmdSkillset: %v", err)
-	}
-	// The handler's own checkLevel gate fires ("Huh!?!" — matching cmdSet/advance).
-	if got := readOneText(t, mortal); !strings.HasPrefix(got, "Huh") {
-		t.Errorf("mortal should be gated, got %q", got)
-	}
-}

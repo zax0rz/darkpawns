@@ -16,10 +16,6 @@ import (
 )
 
 func cmdStat(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) == 0 {
 		s.Send("Stats on who or what?\r\n")
 		return nil
@@ -1226,10 +1222,6 @@ var wizardCApplyTypeNames = [...]string{
 
 // cmdVnum — find vnums by keyword (LVL_IMMORT)
 func cmdVnum(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) < 2 {
 		s.Send("Usage: vnum { obj | mob } <name>\r\n")
 		return nil
@@ -1291,10 +1283,6 @@ func cmdVnum(s *Session, args []string) error {
 
 // cmdVstat — detailed vnum info for prototypes (LVL_IMMORT)
 func cmdVstat(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) < 2 {
 		s.Send("Usage: vstat { obj | mob } <number>\r\n")
 		return nil

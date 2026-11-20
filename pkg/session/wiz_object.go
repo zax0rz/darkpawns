@@ -24,10 +24,6 @@ var loadMessages = [...]string{
 }
 
 func cmdLoad(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	kind, rest := game.OneArgument(strings.Join(args, " "))
 	value, _ := game.OneArgument(rest)
 	if kind == "" {
@@ -199,10 +195,6 @@ func sendLoadNarration(s *Session, roomVNum int, roomCreation, actorCreation str
 // purge — remove all mobs/objects from room (LVL_IMMORT)
 // ---------------------------------------------------------------------------
 func cmdPurge(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	roomVNum := s.player.GetRoom()
 	if len(args) >= 1 && args[0] != "" {
 		// C's one_argument() supplies only the first token to both character

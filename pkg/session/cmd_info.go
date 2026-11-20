@@ -807,11 +807,6 @@ func usersHost(s *Session) string {
 // descriptors are selected by the same -p/-d branches as C; retained
 // linkless characters are absent from descriptor_list and therefore omitted.
 func cmdUsers(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.sendText("Huh?!?")
-		return nil
-	}
-
 	opts, ok := parseUsersArgs(args)
 	if !ok {
 		s.Send(usersFormat)
