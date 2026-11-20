@@ -22,8 +22,9 @@ social implementation and did not execute the sampled `npcSocial` literal. The
 retained run `/home/zach/Archives/darkpawns/oracle-runs/2026-11-20/luna-r1-repair2-mutant-row12`
 is CLEAN with draw divergent 0. The corrected fixture has a second God force
 the switched clone to hug a sleeping player; C sends the refusal through
-`TO_CHAR` to the clone's attached descriptor (`src/act.wizard.c:1862-1880`,
-`src/act.social.c:121-143`, `lib/misc/socials:410-418`). The corrected baseline
+`TO_CHAR` to the clone's attached descriptor (`src/act.wizard.c:1189-1200` for
+switch binding and `1862-1880` for force, `src/act.social.c:132-143`,
+`src/comm.c:2503-2510`, `lib/misc/socials:410-418`). The corrected baseline
 and mutant proof below now exercise the sampled path.
 
 The other witnesses are C-first depth cases. Their source traces are recorded
@@ -31,8 +32,9 @@ in the scenario headers: tedit disconnect cleanup (`src/comm.c:2107-2119`,
 `src/olc.c:447-518`); switched immortal visibility (`src/act.other.c:557-585`,
 `src/act.wizard.c:1622-1635`, `src/fight.c:108-121`, `src/structs.h:248,311,329`,
 `src/mobact.c:121`); switched mountain scrounge (`src/new_cmds2.c:64-130`,
-`src/act.wizard.c:1189-1203`, `src/db.c:104,1281`); and switched mobile tag
-against a player (`src/new_cmds.c:2198-2264`, `src/act.wizard.c:1189-1203`).
+`src/act.wizard.c:1189-1203,1584-1618`, `src/db.c:104,1281`); and switched
+mobile tag against a player (`src/new_cmds.c:2198-2264`,
+`src/act.wizard.c:1189-1203`).
 
 ## Revert proofs
 

@@ -1,8 +1,8 @@
 # C-first switched mobile reaches do_action's minimum-victim-position refusal.
 # A second God forces the switched clone to hug a sleeping player, so the
 # mobile actor's TO_CHAR refusal is visible on the clone's attached descriptor.
-# C: src/act.wizard.c:1862-1880; src/act.social.c:121-143;
-# lib/misc/socials:410-418
+# C: src/act.wizard.c:1189-1200 (switch); src/act.wizard.c:1862-1880 (force);
+# src/act.social.c:132-143; src/comm.c:2503-2510; lib/misc/socials:410-418.
 # depth-case: social.switched-mobile-sleeping-victim
 
 [fixture]
