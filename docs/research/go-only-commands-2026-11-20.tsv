@@ -8,14 +8,7 @@ name	go_registration	go_handler	who_can_reach_it	ending
 # aliases and slice-registered names), C-prefix resolution over commandOrder,
 # and the socials path (C do_action row AND a lib/misc/socials record).
 # RESULT: Go-only typed names = ZERO (see rows below).
-map	pkg/session/map_cmds.go:296	cmdMapBody	god was wrong in the stale comment: C registers map at src/interpreter.c:548; Go matches	comment-stale-cite
-ignore	—	—	mortal	handler and registration absent since the DP-1339 removal batch (cmd/dp-oracle-diff/scenarios/command-go-only-removed.txt types it, expecting Huh?!?); the comment name is stale	comment-stale-cite
-autoloot	pkg/game/combat_wire.go:809 (preference bit PrfAutoLoot, not a command registration)	toggle argument	mortal	not a command name: no cmd_info row, no registration. Survives only as a string preference on Go's cmdToggle (commands.go:618); C's do_toggle (src/act.other.c:1142) takes no string arguments and C knows no autoloot/autogold/autosplit. Argument-surface divergence, not a name — Decision for Zach
-# Reverse diff: C command rows Go does not resolve at all. Each gets a DP- issue.
-chide	—	—	mortal	C do_action row (src/interpreter.c) with no lib/misc/socials record: C resolves and prints "That action is not supported." (src/act.social.c do_action); Go's socials gate requires a socials record, so Go prints Huh?!? (src/interpreter.c:916).	reverse-gap	DP-1611
-embrace	—	—	mortal	Same class as chide: C row, no socials record, C prints "That action is not supported.", Go prints Huh?!?.	reverse-gap	DP-1612
-goose	—	—	mortal	Same class: C row, no socials record.	reverse-gap	DP-1613
-noogie	—	—	mortal	Same class: C row, no socials record.	reverse-gap	DP-1614
-ren	—	—	mortal	Same class: C row, no socials record.	reverse-gap	DP-1615
-steam	—	—	mortal	Same class: C row, no socials record.	reverse-gap	DP-1616
-stimpy	—	—	mortal	Same class: C row, no socials record.	reverse-gap	DP-1617
+map	pkg/session/map_cmds.go:296	cmdMapBody	mortal	stale comment was wrong: C registers map at src/interpreter.c:548; Go matches	comment-stale-cite
+ignore	—	—	mortal	no registration or handler anywhere in Go; removed in the DP-1339 batch (command-go-only-removed.txt types it, expecting Huh?!?)	comment-stale-cite
+autoloot	—	—	mortal	stale comment name; internal C flag lookup, no typed surface. Go's cmdToggle (pkg/session/act_informative.go:185) ignores its arguments like C's do_toggle (src/act.informative.c:2500), and prfFlagMap (pkg/game/combat_wire.go:786) is the internal lookup for cb.HasPrfFlag — combat checks PRF_AUTOLOOT after a kill exactly as src/fight.c:1708 does. C owns the preference: PRF_AUTOLOOT (src/structs.h:298), shown in do_toggle (src/act.informative.c:2558), set by `auto loot`/`auto gold` (do_auto, src/act.other.c:1300-1375; src/interpreter.c:340)	comment-stale-cite
+reverse-diff-empty	—	—	—	The first audit draft reported seven reverse gaps (chide/embrace/goose/noogie/ren/steam/stimpy) claiming C prints That action is not supported.; Claude's review refuted it — all seven have lib/misc/socials records (embrace:201, ren:630, steam:854, stimpy:859, chide:1406, noogie:1441, goose:1456), boot_social_messages loads them (src/act.social.c:75-98, 220-273), and the seven existing depth scenarios print the socials CLEAN with draw parity on 2026-11-20 (run claude-2910-socials). Method error: the blank-line record parser used an over-strict `name hide minpos$` regex and skipped records whose header line has trailing whitespace. Reverse diff: EMPTY — refuted-by-census
