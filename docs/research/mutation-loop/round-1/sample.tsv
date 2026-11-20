@@ -66,7 +66,7 @@ i	package	func	file	func_line	lit_line	source_offset	old_byte	new_byte	literal	c
 64	pkg/session	*Session.startRedit	pkg/session/redit.go	151	187	5274	n	Q	"""$n starts using OLC."""	c-reachable	C do_olc prints this text at src/olc.c:275.
 65	pkg/game	*World.PostmasterReceiveMail	pkg/game/mail.go	565	583	16256	N	Q	"""$N gives $n a piece of mail."""	c-reachable	C postmaster prints this text at src/mail.c:594.
 66	pkg/game	*World.HcontrolPayHouse	pkg/game/house_control.go	257	295	7729	P	Q	"""Payment recorded.\r\n"""	c-reachable	C hcontrol_pay_house prints this text at src/house.c:574.
-67	pkg/game	CharacterUngroup	pkg/game/movement_actor_commands.go	197	208	7390	s	Q	"""%s has disbanded the group.\r\n"""	c-reachable	C do_group prints this text at src/act.other.c:757.
+67	pkg/game	CharacterUngroup	pkg/game/movement_actor_commands.go	197	208	7390	s	Q	"""%s has disbanded the group.\r\n"""	c-reachable	C do_ungroup prints this text at src/act.other.c:757.
 68	pkg/game	specTakeToJail	pkg/game/spec_procs2.go	1411	1466	49812	n	Q	"""$n says, 'You just pissed me off, $N!'"""	c-reachable	C take_to_jail prints this text at src/spec_procs2.c:1462.
 69	pkg/game	*World.GainExp	pkg/game/limits_exp.go	149	200	5502	Y	Q	"""You advance to level %d!\r\n"""	c-reachable	C gain_exp prints this text at src/limits.c:312.
 70	pkg/boards	*BoardSystem.ShowBoard	pkg/boards/boards.go	690	714	22718	T	Q	"""The board is empty.\r\n"""	c-reachable	C gen_board prints this text at src/boards.c:299.
