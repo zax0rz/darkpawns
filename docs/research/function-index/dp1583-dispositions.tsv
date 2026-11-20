@@ -384,3 +384,31 @@ mirror	src/spec_procs3.c:612	c-unreachable	-	assign_objects only declares it (sp
 hisc	src/spec_procs3.c:894	ported-other-name	pkg/game/spec_procs3.go:1243	specHisc, registered "hisc" (spec_procs3.go:66).	-
 recruiter	src/spec_procs3.c:905	ported-other-name	pkg/game/spec_procs3.go:1253	specRecruiter, registered "recruiter" (spec_procs3.go:67).	-
 elements_load_cylinders	src/spec_procs3.c:1058	ported-other-name	pkg/game/spec_procs3.go:1289	specElementsLoadCylinders, registered "elements_load_cylinders" (spec_procs3.go:70).	-
+skill_name	src/spell_parser.c:347	ported-other-name	pkg/spells/skill_catalog_names.go:221	GetSpellName returns the spells[] display name or "" for reserved slots (skill_catalog_names.go:221-231).	-
+cast_spell	src/spell_parser.c:827	ported-other-name	pkg/spells/call_magic.go:31	CallMagic routes a cast through the routine dispatch (call_magic.go:31-47) — C's cast_spell -> routine table.	-
+do_cast	src/spell_parser.c:916	ported-other-name	pkg/session/cast_cmds.go:188	cmdCast (cast_cmds.go:188-196) resolves the spell name and gates — C's do_cast command flow.	-
+spell_level	src/spell_parser.c:1117	ported-other-name	pkg/game/class_spells.go:353	ClassSkillMinLevel mirrors C's spell_info[num].min_level[class] — its doc comment spells out spello()'s LVL_IMMORT default and unused_spell()'s LVL_IMPL+1 raise (class_spells.go:347-352).	-
+mag_assign_spells	src/spell_parser.c:1225	ported-other-name	pkg/game/class_spells.go:19	ClassSpells is the per-class assignment table (class_spells.go:19+; init_spell_levels counterpart named at :373).	-
+spell_create_water	src/spells.c:87	ported-other-name	pkg/spells/affect_spells.go:2358	castCreateWater fills/converts the container — the same LIQ_SLIME conversion and weight add C does (weight add at affect_spells.go:2406 = spells.c:109).	-
+spell_enchant_weapon	src/spells.c:621	ported-other-name	pkg/spells/affect_spells.go:2216	castEnchantWeapon — the weapon enchant arm.	-
+spell_lycanthropy	src/spells.c:662	ported-other-name	pkg/spells/affect_spells.go:1896	castLycanthropy — the AFF_WEREWOLF grant arm.	-
+spell_sobriety	src/spells.c:688	ported-other-name	pkg/spells/affect_spells.go:1758	castSobriety — the drunk/full/thirst reset arm.	-
+spell_vampirism	src/spells.c:766	ported-other-name	pkg/spells/affect_spells.go:1941	castVampirism — the AFF_VAMPIRE grant arm.	-
+spell_detect_poison	src/spells.c:794	ported-other-name	pkg/spells/affect_spells.go:1828	castDetectPoison — the poisoned-object/room scan arm.	-
+spell_enchant_armor	src/spells.c:836	ported-other-name	pkg/spells/affect_spells.go:2291	castEnchantArmor — the armor enchant arm.	-
+spell_mental_lapse	src/spells.c:960	ported-other-name	pkg/spells/affect_spells.go:2157	castMentalLapse.	-
+spell_calliope	src/spells.c:983	ported-other-name	pkg/spells/affect_spells.go:1882	castCalliope.	-
+spell_coc	src/spells.c:1012	ported-other-name	pkg/spells/affect_spells.go:2034	castCoC draws the circle — "You draw a magic circle on the ground." (affect_spells.go:2079,2084 = spells.c:1022-1023) and the timer level/2 + number(-2,1) (:2071 = spells.c:1020).	-
+MIN	src/utils.c:84	go-native	pkg/game/item_consumable.go:109	Go's builtin min() replaces the macro (item_consumable.go:109, used in do_drink's clamp).	-
+str_dup	src/utils.c:96	go-native	-	Go strings are immutable values; assignment replaces strdup everywhere (no str_dup exists under pkg/).	-
+str_cmp	src/utils.c:107	go-native	pkg/session/act_informative.go:57	strings.EqualFold is the case-insensitive compare (act_informative.go:57).	-
+touch	src/utils.c:194	go-native	cmd/server/main.go:1166	os.OpenFile(markerPath, os.O_CREATE|os.O_WRONLY, ...) creates the .fastboot/.killscript markers (main.go:1166).	-
+sprinttype	src/utils.c:269	ported-other-name	pkg/session/oedit.go:432	oeditSprintBit(SprintbitArray) renders type/flag names from ordered tables (oedit.go:423-432; olc.RoomFlagNames etc.) — C's name-array indexing.	-
+real_time_passed	src/utils.c:285	go-native	pkg/session/session_idle.go:16	Go's time.Time arithmetic replaces the timeval math (time.Until/time.Now at session_idle.go:16,25).	-
+get_line	src/utils.c:507	go-native	pkg/game/help.go:53	bufio.Scanner reads lines (help.go:53; same pattern in the socials and DNS parsers).	-
+get_rider_in_room	src/utils.c:634	ported-other-name	pkg/game/follow.go:376	(World).GetRider returns the room-matched rider of a mount (follow.go:376).	-
+riding_mount	src/utils.c:645	ported-other-name	pkg/game/movement_commands.go:139	actorIsMounted plus mobHasRider/GetRider (follow.go:368,376) check the rider/mount pair.	-
+get_char_by_id	src/utils.c:690	ported-other-name	pkg/game/world.go:1243	(World).GetMobByID (:1243) and GetPlayerByID (:487) look bodies up by instance id.	-
+circle_check	src/utils.c:876	ported-other-name	pkg/game/world_movement.go:181	consumeRoomSummoningCircle scans the room for spells.CocVnum and decrements its timer (world_movement.go:181-187) = C's COC_VNUM loop.	-
+ok_to_damage	src/utils.c:896	ported-other-name	pkg/game/damage_gate.go:21	(World).DamageRefused is the damage-permission gate (damage_gate.go:21).	-
+check_dead	src/utils.c:948	ported-other-name	pkg/combat/fight_core.go:423	TakeDamageWithDeath runs the damage-then-death branch (fight_core.go:423) — C's post-hit check_dead -> die path.	-
