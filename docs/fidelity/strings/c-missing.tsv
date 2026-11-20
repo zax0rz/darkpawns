@@ -305,6 +305,7 @@ Skills/Spells for the class '	src/act.informative.c:2716	buffered:sprintf	do_ski
 : you can't take that!	src/act.item.c:172	act	can_take_obj
 : you can't hold any more items.	src/act.item.c:203	act	perform_get_from_container
 is closed.	src/act.item.c:228	act	get_from_container
+seems to be empty.	src/act.item.c:259	act	get_from_container
 hands full.	src/act.item.c:687	act	perform_give
 seems to have	src/act.item.c:687	act	perform_give
 : you can't carry that many items!	src/act.item.c:1722	act	perform_remove
@@ -489,6 +490,8 @@ unsuccessfuly tried to steal from	src/act.other.c:534	buffered:sprintf	do_steal
 [---H ---M ---V] [-- --]	src/act.other.c:669	buffered:sprintf	print_group
 You can only quaff potions.	src/act.other.c:953	send_to_char	do_use
 You can only recite scrolls.	src/act.other.c:959	send_to_char	do_use
+Monsters don't need displays. Go away.	src/act.other.c:1030	send_to_char	do_display
+Monsters can't have ideas - Go away.	src/act.other.c:1107	send_to_char	do_gen_write
 You have the following autos set:	src/act.other.c:1308	buffered:sprintf	do_auto
 Your skill in	src/act.other.c:1721	buffered:sprintf	improve_skill
 improves.	src/act.other.c:1721	buffered:sprintf	improve_skill
@@ -766,6 +769,7 @@ Connection attempt denied from [	src/comm.c:1573	buffered:sprintf	new_descriptor
 New connection from [	src/comm.c:1580	buffered:sprintf	new_descriptor
 **OVERFLOW**	src/comm.c:1628	buffered:strcat	process_output
 Line too long. Truncated to:	src/comm.c:1988	buffered:sprintf	process_input
+has lost	src/comm.c:2131	act	close_socket
 Closing link to:	src/comm.c:2132	buffered:sprintf	close_socket
 Losing player:	src/comm.c:2136	buffered:sprintf	close_socket
 Timed out... goodbye.	src/comm.c:2183	SEND_TO_Q	check_idle_passwords
@@ -1401,6 +1405,7 @@ House already exists.	src/house.c:410	send_to_char	hcontrol_build_house
 There is no exit	src/house.c:426	buffered:sprintf	hcontrol_build_house
 from room	src/house.c:426	buffered:sprintf	hcontrol_build_house
 A house's exit must be a two-way door.	src/house.c:436	send_to_char	hcontrol_build_house
+Unknown player '	src/house.c:447	buffered:sprintf	hcontrol_build_house
 House built. Mazel tov!	src/house.c:469	send_to_char	hcontrol_build_house
 Payment for house	src/house.c:569	buffered:sprintf	hcontrol_pay_house
 collected by	src/house.c:569	buffered:sprintf	hcontrol_pay_house
@@ -1945,7 +1950,6 @@ You're too busy to be sharpening anything!	src/new_cmds.c:2771	send_to_char	do_s
 sharpens	src/new_cmds.c:2781	act	do_sharpen
 to perfection.	src/new_cmds.c:2781	act	do_sharpen
 You sharpen it to perfection!	src/new_cmds.c:2782	send_to_char	do_sharpen
-trying to sharpen it!	src/new_cmds.c:2788	act	do_sharpen
 You damage it trying to sharpen it!	src/new_cmds.c:2789	send_to_char	do_sharpen
 You can't seem to find anything edible.	src/new_cmds2.c:73	send_to_char	do_scrounge
 You need to be in the wilderness to scrounge!	src/new_cmds2.c:112	send_to_char	do_scrounge
@@ -1962,6 +1966,10 @@ Disarm who?	src/new_cmds2.c:209	send_to_char	do_disarm
 Just try removing your weapon instead.	src/new_cmds2.c:214	send_to_char	do_disarm
 doesn't have anything to disarm.	src/new_cmds2.c:219	act	do_disarm
 You can't disarm them if you aren't fighting them!	src/new_cmds2.c:225	send_to_char	do_disarm
+You disarm	src/new_cmds2.c:233	act	do_disarm
+goes flying!	src/new_cmds2.c:233	act	do_disarm
+You try to disarm	src/new_cmds2.c:244	act	do_disarm
+but fail, tumbling to the ground in the process!	src/new_cmds2.c:244	act	do_disarm
 Link your mind to whose?	src/new_cmds2.c:262	send_to_char	do_mindlink
 You wish you could.	src/new_cmds2.c:266	send_to_char	do_mindlink
 stares at you blankly.	src/new_cmds2.c:273	act	do_mindlink
@@ -2368,20 +2376,10 @@ wonders where she left that darn wand.	src/spec_procs.c:672	act	puff
 does female stuff.	src/spec_procs.c:686	act	puff
 contemplates the meaning of life.	src/spec_procs.c:691	act	puff
 rocks out to some funky beats.	src/spec_procs.c:702	act	puff
-awakens and groans loudly.	src/spec_procs.c:867	act	mayor
-lies down and instantly falls asleep.	src/spec_procs.c:872	act	mayor
-says 'Hello Honey!'	src/spec_procs.c:876	act	mayor
-says 'What a view! I must get something done about that dump!'	src/spec_procs.c:881	act	mayor
-says 'Vandals! Youngsters nowadays have no respect for anything!'	src/spec_procs.c:886	act	mayor
-says 'Good day, citizens!'	src/spec_procs.c:892	act	mayor
-says 'I hereby declare the bazaar open!'	src/spec_procs.c:896	act	mayor
-says 'I hereby declare Bourbon closed!'	src/spec_procs.c:901	act	mayor
 's hand coming out of your coin purse.	src/spec_procs.c:1113	buffered:sprintf	mini_thief
 You catch	src/spec_procs.c:1113	buffered:sprintf	mini_thief
-'s hand leaving thier coin purse a little lighter.	src/spec_procs.c:1115	buffered:sprintf	mini_thief
 's hand going into your coin purse.	src/spec_procs.c:1123	buffered:sprintf	mini_thief
 You catch	src/spec_procs.c:1123	buffered:sprintf	mini_thief
-'s hand entering thier coin purse.	src/spec_procs.c:1125	buffered:sprintf	mini_thief
 sees the knight dressed in red and gives a battle cry!	src/spec_procs.c:1197	act	black_undead_knight
 sees the knight dressed in black and gives a battle cry!	src/spec_procs.c:1256	act	red_undead_knight
 shouts, 'I said give me your ticket!'	src/spec_procs.c:1643	act	conductor
@@ -2389,19 +2387,13 @@ asks, 'Why are you so stupid?'	src/spec_procs.c:1647	act	conductor
 shouts 'Get off my train you trash!'	src/spec_procs.c:1651	act	conductor
 shouts 'Security! Help me with this piece of garbage!'	src/spec_procs.c:1655	act	conductor
 asks, 'Why wouldn't you just give me your ticket?'	src/spec_procs.c:1660	act	conductor
-, do you have your ticket?'	src/spec_procs.c:1700	act	conductor
-asks, 'Pardon me	src/spec_procs.c:1700	act	conductor
-asks, 'I said, do you have your ticket?'	src/spec_procs.c:1709	act	conductor
-, I'll let ya off this time, but don't do it again'.	src/spec_procs.c:1717	act	conductor
-says, 'Ok	src/spec_procs.c:1717	act	conductor
-says, 'Well then...'.	src/spec_procs.c:1727	act	conductor
-screams, 'GET THE HELL OFF MY TRAIN!!!'	src/spec_procs.c:1728	act	conductor
 A small sign on a chain around the neck says 'My name is	src/spec_procs.c:1888	buffered:sprintf	pet_shops
 Your skin blackens as fire burns you alive...	src/spec_procs.c:2035	send_to_char	elemental_room
 Your skin is pummeled by the forces of earth, breaking your bones...	src/spec_procs.c:2038	send_to_char	elemental_room
 Your flesh is peeled from your bones as the forcesof air pummel you...	src/spec_procs.c:2041	send_to_char	elemental_room
 You struggle for air as your lungs fill with water...	src/spec_procs.c:2044	send_to_char	elemental_room
 The forces of nature slowly rip you apart...	src/spec_procs.c:2047	send_to_char	elemental_room
+You are DYING!	src/spec_procs.c:2050	send_to_char	elemental_room
 You ignore the elements that barrage you.	src/spec_procs.c:2061	send_to_char	elemental_room
 Welcome back	src/spec_procs.c:2089	send_to_char	pray_for_items
 You feel the power pulse through your veins again!	src/spec_procs.c:2092	send_to_char	pray_for_items
@@ -2505,6 +2497,7 @@ stares at	src/spec_procs3.c:303	act	con_seller
 falls, stunned.	src/spec_procs3.c:305	act	con_seller
 ? This is not a shawade. Try it again. This time with fewing.	src/spec_procs3.c:380	buffered:sprintf	quan_lo
 What was that,	src/spec_procs3.c:380	buffered:sprintf	quan_lo
+The room starts to move!	src/spec_procs3.c:418	send_to_char	alien_elevator
 You hear a loud howling in the distance.	src/spec_procs3.c:438	send_to_zone	werewolf
 falls to the ground, screaming in agony!	src/spec_procs3.c:497	act	field_object
 , consuming the undead!	src/spec_procs3.c:555	act	turn_undead

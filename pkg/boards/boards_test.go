@@ -602,7 +602,7 @@ func TestBoardSystem_LoadTruncatedFile(t *testing.T) {
 	}
 }
 
-func TestBoardSystem_SaveFailureNotifiesPlayer(t *testing.T) {
+func TestBoardSystem_SaveFailureMatchesC(t *testing.T) {
 	blocker := filepath.Join(t.TempDir(), "not-a-directory")
 	if err := os.WriteFile(blocker, []byte("blocker"), 0o600); err != nil {
 		t.Fatal(err)
@@ -621,8 +621,10 @@ func TestBoardSystem_SaveFailureNotifiesPlayer(t *testing.T) {
 	if strings.Contains(ch.lastMessage(), "Message written.") {
 		t.Fatalf("player told 'Message written.' despite save failure, got %q", ch.lastMessage())
 	}
-	if !strings.Contains(ch.lastMessage(), "saved") {
-		t.Fatalf("expected save failure notice, got %q", ch.lastMessage())
+	// C's Board_save_board logs server-side (src/boards.c:451 perror) and
+	// prints nothing to the player; Go must not invent a notice.
+	if strings.Contains(ch.lastMessage(), "saved") {
+		t.Fatalf("player told %q; C prints nothing on save failure (src/boards.c:451)", ch.lastMessage())
 	}
 
 	remover := newMockBoardPlayer("Ivy", 10, 8001)

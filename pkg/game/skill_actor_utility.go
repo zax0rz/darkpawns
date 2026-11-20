@@ -7,6 +7,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // CharacterUtilitySkill routes the mobile body of the utility/stealth skills
@@ -232,30 +233,51 @@ func characterCompare(ctx CharacterCommandContext, mob *MobInstance, rawArg stri
 		return CharacterCommandHandled
 	}
 	// Mobiles have skill 0 -> prob = 20 + level (src/new_cmds.c:1964).
-	prob := 20 + mob.GetLevel()
-	// #nosec G404 — game RNG, not cryptographic
-	percent := dprng.Number(1, 101)
-	if percent > prob {
-		sendBodyMessage(ctx.World, mob, "You can't quite tell which is better.\r\n")
+	// C's armor-slot gate (new_cmds.c:2050-2055): different wear slots refuse
+	// before any RNG draw.
+	if obj1.GetTypeFlag() == ITEM_ARMOR && armorWearSlot(obj1) != armorWearSlot(obj2) {
+		sendBodyMessage(ctx.World, mob, "You can only compare the same types of armor!\r\n")
 		return CharacterCommandHandled
 	}
-	diff := compareObjectScore(obj1) - compareObjectScore(obj2)
-	switch {
-	case diff == 0:
-		sendBodyMessage(ctx.World, mob, fmt.Sprintf("%s and %s look about the same.\r\n", CapitalizeSentence(obj1.GetShortDesc()), obj2.GetShortDesc()))
-	case diff > 0:
-		sendBodyMessage(ctx.World, mob, fmt.Sprintf("%s looks better than %s.\r\n", CapitalizeSentence(obj1.GetShortDesc()), obj2.GetShortDesc()))
-	default:
-		sendBodyMessage(ctx.World, mob, fmt.Sprintf("%s looks better than %s.\r\n", CapitalizeSentence(obj2.GetShortDesc()), obj1.GetShortDesc()))
-	}
-	return CharacterCommandHandled
-}
 
-func compareObjectScore(obj *ObjectInstance) int {
-	if obj.GetTypeFlag() == ITEM_ARMOR {
-		return obj.GetValue(0)
+	prob := 20 + mob.GetLevel()
+	// C percent = number(1,101). A failed draw adds number(-3,3) noise to diff;
+	// a made draw improves SKILL_COMPARE, but C's improve_skill returns on NPCs
+	// before its own RNG (act.other.c:1704-1707), so the mob lane draws nothing
+	// here.
+	// #nosec G404 — game RNG, not cryptographic
+	percent := dprng.Number(1, 101)
+	diff := 0
+	if obj1.GetTypeFlag() == ITEM_WEAPON {
+		diff = int((((float64(obj1.GetValue(2)) + 1) / 2.0) * float64(obj1.GetValue(1))) -
+			(((float64(obj2.GetValue(2)) + 1) / 2.0) * float64(obj2.GetValue(1))))
+	} else {
+		diff = int(((float64(obj1.GetValue(0)) + 1) / 2.0) - ((float64(obj2.GetValue(0)) + 1) / 2.0))
 	}
-	return (obj.GetValue(1) * (obj.GetValue(2) + 1)) / 2
+	if percent > prob {
+		// #nosec G404 — game RNG, not cryptographic
+		diff += dprng.Number(-3, 3)
+	}
+
+	var msg string
+	switch {
+	case diff < -5:
+		msg = fmt.Sprintf("%s looks much worse than %s.\r\n", obj1.GetShortDesc(), obj2.GetShortDesc())
+	case diff < -3:
+		msg = fmt.Sprintf("%s looks a little worse than %s.\r\n", obj1.GetShortDesc(), obj2.GetShortDesc())
+	case diff < 0:
+		msg = fmt.Sprintf("%s looks slightly worse than %s.\r\n", obj1.GetShortDesc(), obj2.GetShortDesc())
+	case diff == 0:
+		msg = "They look just about the same.\r\n"
+	case diff < 3:
+		msg = fmt.Sprintf("%s looks slightly better than %s.\r\n", obj1.GetShortDesc(), obj2.GetShortDesc())
+	case diff < 5:
+		msg = fmt.Sprintf("%s looks a little better than %s.\r\n", obj1.GetShortDesc(), obj2.GetShortDesc())
+	default:
+		msg = fmt.Sprintf("%s looks much better than %s.\r\n", obj1.GetShortDesc(), obj2.GetShortDesc())
+	}
+	sendBodyMessage(ctx.World, mob, cap(msg))
+	return CharacterCommandHandled
 }
 
 func characterSharpen(ctx CharacterCommandContext, mob *MobInstance, rawArg string) CharacterCommandResult {
@@ -287,9 +309,15 @@ func characterSharpen(ctx CharacterCommandContext, mob *MobInstance, rawArg stri
 		sendBodyMessage(ctx.World, mob, "You're too busy to be sharpening anything!\r\n")
 		return CharacterCommandHandled
 	}
+	// C draws number(1,101) against GET_SKILL (0 for mobiles), so a mobile
+	// always lands in the failure arm: APPLY_DAMROLL -1, the TO_ROOM act, and
+	// stc's char line (new_cmds.c:2789-2795). improve_skill returns on NPCs
+	// before its own RNG (act.other.c:1704-1707), so no second draw.
 	// #nosec G404 — game RNG, not cryptographic
 	_ = dprng.Number(1, 101)
-	sendBodyMessage(ctx.World, mob, "You fail to sharpen it.\r\n")
+	obj.SetAffectsOverride([]parser.ObjAffect{{Location: ApplyDamroll, Modifier: -1}})
+	Act(ctx.World, false, mob, nil, obj, nil, "$n damages $p trying to sharpen it!", "", ToRoom)
+	sendBodyMessage(ctx.World, mob, "You damage it trying to sharpen it!\r\n")
 	return CharacterCommandHandled
 }
 
