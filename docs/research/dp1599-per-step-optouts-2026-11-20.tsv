@@ -146,7 +146,7 @@ give-resolve-depth	give bread guard	A guard trainee doesn't seem to be intereste
 give-resolve-depth	give bread 2.guard	A guard trainee doesn't seem to be interested in a loaf of bread.	src/act.item.c:676	intended	
 give-resolve-depth	give bread 3.guard	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
 give-weight-depth	give sword Givepeer	He can't carry that much weight.	src/act.item.c:692	intended	
-isnumber-give	give 12abc Fentresspeer	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	fixed	not intended: Fentresspeer spawned in room 8099, actor in 1204; the give step never reached the is_number object path. Fixed by teleporting Fentresspeer 1204 in warmup; C now prints the intended not-carried line. Refusal verified in run dp1599-per-step-optouts attempt1.
+isnumber-give	give 12abc Fentresspeer	You don't seem to have a 12abc.	src/act.item.c:1647	intended	not intended as NOPERSON: Fentresspeer spawned in room 8099, actor in 1204, so the step never reached the is_number object path. Fixed by teleporting Fentresspeer 1204 in warmup; C now refuses the intended not-carried line and the step carries a per-step opt-out. First seen refusing NOPERSON in run dp1599-per-step-optouts attempt1; fixed and re-witnessed in dp1599-per-step-optouts-r2 attempt1.
 isnumber-give	give -5 coins Fentresspeer	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
 object-give-nobody	give sword nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
 shops-identifier	give	Give what to who?	src/act.item.c:776	intended	
