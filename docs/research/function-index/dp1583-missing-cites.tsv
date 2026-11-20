@@ -15,3 +15,26 @@ do_coins	pkg/session/cmd_info.go:88	none ("cmdCoins" has no C-citing doc comment
 do_not_here	pkg/session/cmd_misc.go:166	none (no doc comment; the registration comment cites "act.other.c:208" without src/)
 find_action	pkg/game/act_social.go:47	"DoAction implements do_action() from act.social.c." (no colon or src/ form)
 boot_social_messages	pkg/game/socials.go:37	none ("parseSocials" has no C-citing doc comment)
+do_send	pkg/session/wiz_communication.go:69	none (banner "send — send message to another character (LVL_GOD)")
+do_at	pkg/session/wiz_movement.go:103	none (no doc comment)
+do_goto	pkg/session/wiz_movement.go:12	none (no doc comment)
+do_teleport	pkg/session/wiz_movement.go:289	stale banner "load — load a mob or object (LVL_IMMORT)" (belongs to cmdLoad); no C cite
+do_vnum	pkg/session/wiz_stats.go:1228	none ("cmdVnum — find vnums by keyword (LVL_IMMORT)")
+do_stat	pkg/session/wiz_stats.go:18	none (no doc comment)
+do_shutdown	pkg/session/wiz_system.go:45	none (no doc comment on cmdShutdown or shutdownPlanFor; cmdShutdowStub cites "src/act.wizard.c:" split across comment lines, which the index cannot resolve)
+do_snoop	pkg/session/wiz_system.go:75	none (banner "snoop — spy on player input (LVL_GOD)")
+do_return	pkg/session/wiz_player.go:163	"Expected behavior (from original C):" (names no C function)
+random_load_msg	pkg/session/wiz_object.go:188	none (no doc comment on sendLoadNarration or the loadMessages table)
+do_vstat	pkg/session/wiz_stats.go:1293	none ("cmdVstat — detailed vnum info for prototypes (LVL_IMMORT)")
+do_purge	pkg/session/wiz_object.go:201	none (banner "purge — remove all mobs/objects from room (LVL_IMMORT)")
+do_gecho	pkg/session/wiz_communication.go:14	none (no doc comment)
+do_dc	pkg/session/wiz_system.go:227	none ("cmdDc — disconnect a player (LVL_IMMORT+1)")
+do_wizlock	pkg/session/wiz_system.go:193	stale banner "cmdStat — inspect a character, room, or object (LVL_IMMORT)" (belongs to cmdStat); no C cite
+do_date	pkg/session/wiz_system.go:267	stale banner "cmdHome — teleport to home room (LVL_IMMORT)" (belongs to cmdHome); no C cite
+do_last	pkg/session/wiz_system.go:310	"Source: act.wizard.c:1834-1854" (no src/ prefix, so the index cannot resolve it)
+do_zreset	pkg/session/wiz_zone.go:25	none (no doc comment)
+do_syslog	pkg/session/wiz_info.go:397	none ("cmdSyslog — toggle system logging level (LVL_IMMORT)")
+do_dark	pkg/session/wiz_info.go:353	none ("cmdDark — stop all combat in the room (LVL_IMMORT)")
+do_home	pkg/session/wiz_movement.go:472	stale banner "heal — fully heal target (LVL_IMMORT)" (belongs to cmdHeal); no C cite
+do_tick	pkg/session/wiz_system.go:703	none ("cmdTick — advance world ticks (LVL_IMMORT)")
+do_zlist	pkg/session/wiz_zone.go:93	"Original: act.wizard.c do_zlist()" (no colon or src/ form)
