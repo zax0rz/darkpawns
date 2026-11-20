@@ -1,0 +1,108 @@
+# C carries the mounted mobile into the death room, then calls
+# death_cry(mount) before extraction (act.movement.c:296-300). The rider hears
+# the mount's room cry; a peer left in the source room hears the adjacent cry.
+# depth-case: movement.death-trap-mount-deathcry
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 0
+replace-room-exits 8161 south 8162 0
+set-room-flag 8161 1 on
+spawn-mob 8021 1 8162 80
+
+[setup:oracle]
+Trapmountgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Trapmountgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Traprider]
+Traprider
+Y
+riderpass
+riderpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Traprider]
+Traprider
+y
+riderpass
+riderpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Trapwatch]
+Trapwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Trapwatch]
+Trapwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Traprider 8162
+teleport Trapwatch 8162
+
+[probe:Traprider]
+ride horse
+north
+
+[probe:Trapwatch]
+look

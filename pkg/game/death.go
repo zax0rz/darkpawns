@@ -829,12 +829,12 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	// the sequence (src/fight.c:554-561), not after the corpse.
 }
 
-// deathCry is fight.c death_cry (558-577): the room hears $n's cry (TO_ROOM,
+// deathCry is fight.c death_cry (506-529): the room hears $n's cry (TO_ROOM,
 // so not the victim) and adjacent rooms hear "someone's".
-func (w *World) deathCry(player *Player) {
-	Act(w, false, player, nil, nil, nil,
+func (w *World) deathCry(ch Actor) {
+	Act(w, false, ch, nil, nil, nil,
 		"Your blood freezes as you hear $n's death cry.", "", ToRoom)
-	if room := w.GetRoomInWorld(player.GetRoom()); room != nil {
+	if room := w.GetRoomInWorld(ch.GetRoom()); room != nil {
 		for _, dir := range dirs {
 			// CAN_GO (src/utils.h:565-567): C's death_cry repoints ch into
 			// adjacent rooms through CAN_GO, so a closed door muffles the
@@ -896,8 +896,9 @@ func (w *World) deathTrapMount(player *Player) {
 		return
 	}
 
-	w.roomMessage(roomVNum,
-		fmt.Sprintf("The sound of a death cry is heard as %s enters the room!\r\n", mount.GetShortDesc()))
+	// C calls death_cry(mount), so the rider and adjacent rooms hear the
+	// mount's death cry through the same act path as any other dying body.
+	w.deathCry(mount)
 
 	// Extract the mount using the shared delayed-extraction helper. It remains
 	// in world lists until the next heartbeat, then the pending pass removes its

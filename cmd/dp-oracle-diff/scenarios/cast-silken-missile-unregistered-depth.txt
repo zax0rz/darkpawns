@@ -1,0 +1,72 @@
+# C-first command proof: silken missile has a dead C body but no dispatch
+# entry. Both the registered cast command and the port reject the name.
+# C lookup path: interpreter.c:373 -> spell_parser.c:978-988.
+# depth-case: cast.unregistered-silken-missile
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Silkcastgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Silkcastgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Silkcast]
+Silkcast
+Y
+silkpass
+silkpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Silkcast]
+Silkcast
+y
+silkpass
+silkpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Silkcast 8105
+set player Silkcast class mage
+
+[probe:Silkcast]
+cast 'silken missile'

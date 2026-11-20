@@ -58,7 +58,7 @@ type ObjectInstance struct {
 
 	// Instance-level overrides for enchantment spells.
 	// When non-nil, these override the prototype values.
-	// Source: src/spells.c spell_enchant_weapon/armor, spell_silken_missile.
+	// Source: src/spells.c spell_enchant_weapon/armor.
 	ExtraFlagsOverride [4]int
 	// extraFlagsOverridden says ExtraFlagsOverride holds this object's own
 	// extra flags. C's read_object copies the prototype's flags into each
