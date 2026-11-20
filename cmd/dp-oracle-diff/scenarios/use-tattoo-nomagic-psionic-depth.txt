@@ -1,0 +1,75 @@
+# depth-case: use.tattoo-nomagic-psionic-direct
+# C-first witness for the direct tattoo call_magic route: use tattoo selects
+# the eye, tattoo.c:73-75 calls SPELL_GREATPERCEPT, and call_magic emits the
+# psionic ROOM_NOMAGIC line at src/spell_parser.c:419-428.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 7 on
+
+[setup:oracle]
+Nomaggod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nomaggod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Willnpsi]
+Willnpsi
+Y
+psipass
+psipass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Willnpsi]
+Willnpsi
+y
+psipass
+psipass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Willnpsi 8162
+set player Willnpsi class i
+set player Willnpsi level 30
+set player Willnpsi tattoo 6
+
+[probe:Willnpsi]
+use tattoo

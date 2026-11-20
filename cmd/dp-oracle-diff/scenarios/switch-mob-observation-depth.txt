@@ -19,7 +19,9 @@
 # depth-case: gold.switched-body
 # depth-case: consider.switched-body
 # depth-case: commands.switched-body-level
+# depth-case: commands.target-not-found-switched-body
 # depth-case: socials.switched-body-level
+# depth-case: socials.target-not-found-switched-body
 # depth-case: map.switched-body-room-and-level
 # depth-case: review.switched-body-level
 # depth-case: weather.switched-body-room
@@ -93,8 +95,10 @@ weather
 consider satan
 commands
 <ENTER>
+commands nonsense
 socials
 <ENTER>
+socials nonsense
 map
 review
 who
