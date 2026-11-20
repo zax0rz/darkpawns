@@ -1434,7 +1434,7 @@ func cmdWhere(s *Session, args []string) error {
 		}
 	}
 	// C's do_where prints only the header when nobody matches
-	// (src/act.informative.c:2244-2268); there is no empty-list line, so
+	// (src/act.informative.c:2244-2268); there is no empty-list line.
 	s.sendText(out.String())
 	return nil
 }
