@@ -1,0 +1,71 @@
+# C-first wizhelp refusal: the immortal actor is lower-level than the visible
+# target, so do_commands returns before rendering the target's listing.
+# depth-case: commands.wizhelp-target-above-level
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Topwizard
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Topwizard
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Lowwizard]
+Lowwizard
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Lowwizard]
+Lowwizard
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Lowwizard 8162
+set Lowwizard level 31
+
+[probe:Lowwizard]
+wizhelp Topwizard

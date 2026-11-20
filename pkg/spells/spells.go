@@ -113,7 +113,6 @@ const (
 	SpellConjureElemental = 105
 	SpellControlWeather   = 11
 	SpellMentalLapse      = 90
-	SpellSilkenMissile    = 200 // DP original — not in C spell_parser spello table
 
 	// Additional missing spell constants from C
 	SpellArmor        = 1  /* Reserved Skill[] DO NOT CHANGE */
@@ -181,8 +180,7 @@ const (
 	ItemStaff = 4
 
 	// Object VNUMs used by spells
-	CocVnum     = 64
-	MissileVnum = 3
+	CocVnum = 64
 
 	// Room flag bits (from src/structs.h)
 	RoomPeaceful = 4

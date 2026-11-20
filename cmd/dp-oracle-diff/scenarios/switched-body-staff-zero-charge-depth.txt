@@ -1,0 +1,80 @@
+# C-first switched mobile staff refusal. One warmup use spends staff 8054's
+# sole charge; the probed second use reaches the zero-charge TO_ROOM bytes.
+# depth-case: use.mobile-staff-empty-charge-room-output
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 69 1 8105 80
+set-mob-flag 69 SENTINEL
+
+[setup:oracle]
+Bodyuser
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bodyuser
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Staffwatch]
+Staffwatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Staffwatch]
+Staffwatch
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Staffwatch 8105
+set mob clone level 1
+load obj 8054
+give staff clone
+switch clone
+hold staff
+use staff
+~dpclock pulse 20
+
+[probe]
+use staff

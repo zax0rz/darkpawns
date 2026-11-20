@@ -19,6 +19,8 @@
 - Every kill requires the sampled Go mutation in the diff and the original C transcript line in that scenario. Full per-row offsets, class evidence, witness lines, and run paths are in `probes.tsv`.
 - All 33 survivors were checked in isolation when a covering scenario existed: 27 singleton runs were `CLEAN`; six rows had no covering scenario. Seven additional singleton runs reproduced kills to settle attribution (rows 0, 18, 31, 37, 74, 78, 92). Row 0 is therefore a kill: `spec-proc-butler` prints the C line `The Servant gets a loaf of bread.` while Go drops the subject. Row 44 is a survivor: its singleton was `CLEAN`, and the matching `Huh?!?` output is present in both engines; the full-run clan-status witness belongs to row 92.
 - Row 76's frozen class remains `c-reachable`, but its post-census audit finds the C function has no call site. This correction does not rewrite the frozen class or denominator; see `CLASSIFICATION-CORRECTIONS.md`.
+- Row 28's frozen class also remains unchanged in the sampled TSV; Zach's DP-1610 audit reclassifies its `doClanQuit` guard as `go-only-in-game` because C `do_clan_quit` reaches an R1a out-of-bounds write before printing different bytes. It leaves the repair list; the frozen mutation result and 61/94 denominator do not change.
+- Row 19's frozen class remains unchanged in the sampled TSV; the post-census correction is `go-only-in-game` because the exact mutation targets a defensive second Go gold check that C's single precheck and serial command loop cannot reach. It leaves the repair list. Keep the Go check for concurrent gold changes; its removal is a separate question. The frozen mutation result and 61/94 denominator do not change.
 
 ## Follow-up
 
@@ -26,7 +28,7 @@ The corrected bar is not met. Repair the catchable survivors in batches of about
 
 ## Decisions for Zach
 
-No new decision is requested. Existing open decisions are listed in [`../DECISIONS.md`](../DECISIONS.md).
+DP-1610 asks Zach to rule on the R1a handling of C `do_clan_quit`'s `clan_num == -1` write. Row 28 is reclassified as `go-only-in-game` and omitted from repairs; no `doClanQuit` code change is included before that ruling. Other open decisions are listed in [`../DECISIONS.md`](../DECISIONS.md).
 
 ## For Claude
 

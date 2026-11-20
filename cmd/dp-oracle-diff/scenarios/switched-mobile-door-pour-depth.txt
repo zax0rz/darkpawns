@@ -1,0 +1,48 @@
+# depth-case: door.no-key-switched-mobile
+# depth-case: pour.cant-find-switched-mobile
+# C runs do_gen_door against the switched body; a closed, unlocked gate with
+# no key reaches src/act.movement.c:631-633. The following pour reaches
+# do_pour's missing-inventory-object branch at src/act.item.c:1175-1178.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8021 1 8162 80
+replace-room-exits 8162 north 8161 1 gate
+
+[setup:oracle]
+Switchutil
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchutil
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+close gate
+switch horse
+
+[probe]
+lock gate
+pour xyzzy

@@ -1,0 +1,77 @@
+# C-first switched mobile branch: clone is AFF_WEREWOLF and eats a live player
+# corpse while a same-room peer observes the $n/$p room act.
+# depth-case: eat.werewolf-corpse-mobile-room-output
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 80
+set-mob-aff 69 134217728
+replace-room-exits 8105 none
+
+[setup:oracle]
+Corpseuser
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Corpseuser
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Wolfwatch]
+Wolfwatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Wolfwatch]
+Wolfwatch
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Wolfwatch 8105
+set mob clone level 1
+kill trainee
+switch clone
+
+[probe]
+eat corpse
