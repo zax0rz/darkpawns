@@ -11,4 +11,4 @@
 - Per-package filtered population: `pkg/boards` 4, `pkg/combat` 5, `pkg/command` 26, `pkg/game` 269, `pkg/session` 82, `pkg/spells` 2.
 - Per-package sample: `pkg/boards` 3, `pkg/combat` 0, `pkg/command` 3, `pkg/game` 71, `pkg/session` 21, `pkg/spells` 2.
 
-This commit freezes the draw before classification. Classes and evidence are added in the next commit, before any census.
+The pre-classification `sample.tsv` SHA-256 in draw commit `81a00960d` is `825131727db89e9161ca6009e9346e4d98ed942d5bd958ebeab92d25b4c8dbac`. The next commit adds classification evidence before any census. The classified sample has 88 `c-reachable`, 6 `c-unreachable`, and 6 `go-only-in-game` rows; no `go-only-surface`, `ask-zach`, or `harness-blind` rows.
