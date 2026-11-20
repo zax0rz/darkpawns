@@ -90,3 +90,14 @@ func TestDoOpenRejectsKeywordPrefix(t *testing.T) {
 		t.Fatalf("open d opened the door on a prefix match: %q", got)
 	}
 }
+
+// C's LOWER compares bytes; two distinct non-ASCII bytes never match
+// (src/utils.h:161, src/handler.c:100).
+func TestCIsNameHighBytesCompareBytewise(t *testing.T) {
+	if cIsName("\xe9", "\xe8") {
+		t.Fatal(`cIsName("\xe9", "\xe8") = true; C LOWER compares bytes`)
+	}
+	if !cIsName("\xe9", "\xe9 sword") {
+		t.Fatal(`cIsName("\xe9", "\xe9 sword") = false; identical bytes match in C`)
+	}
+}

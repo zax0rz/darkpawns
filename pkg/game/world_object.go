@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"sort"
-	"strings"
 )
 
 // SpawnObjectToPlayerInventoryI mirrors read_object() followed by obj_to_char()
@@ -351,7 +350,7 @@ func cIsName(name, nameList string) bool {
 			if n == len(nameList) {
 				return false
 			}
-			if a == len(name) || nameList[n] == ' ' || !strings.EqualFold(name[a:a+1], nameList[n:n+1]) {
+			if a == len(name) || nameList[n] == ' ' || lowerByte(name[a]) != lowerByte(nameList[n]) { // C LOWER (utils.h:161), byte-wise
 				break
 			}
 			a++
