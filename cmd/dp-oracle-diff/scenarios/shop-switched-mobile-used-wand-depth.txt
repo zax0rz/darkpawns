@@ -1,6 +1,6 @@
 # C-first switched shop customer reaches trade_with's dead-wand refusal at a
 # keeper whose shop accepts wands.
-# C: src/shop.c:268-293,594-631; src/act.wizard.c:1175-1201.
+# C: src/shop.c:268-293,594-631; src/shop.h:197; src/act.wizard.c:1175-1201.
 # depth-case: shops.audit.switched-mobile-used-up-wand-refusal
 
 [fixture]

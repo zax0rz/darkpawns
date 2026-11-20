@@ -1,6 +1,6 @@
 # C-first Disintegration creates the real dust object with its five-hour timer;
 # five hourly point_update calls later, the room receives the dust-expiry line.
-# C: src/fight.c:267-270,433-478; src/limits.c:560-571.
+# C: src/fight.c:267-270,433-478; src/limits.c:560-571; src/config.c:85.
 # depth-case: point-update.dust-expiry-room-output
 
 [fixture]

@@ -1,6 +1,6 @@
 # C-first ordinary weapon hit reaches damage()'s POS_DEAD message outside a
 # skill-message caller; the victim descriptor receives the unique death line.
-# C: src/act.offensive.c:153-190; src/fight.c:1534-1584.
+# C: src/act.offensive.c:101-131; src/fight.c:1314-1325,1560-1584,1763-1770,1880-1885.
 # depth-case: death.normal-hit-position-message
 
 [fixture]
