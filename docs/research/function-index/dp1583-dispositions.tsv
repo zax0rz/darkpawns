@@ -267,3 +267,50 @@ copy_mobile	src/medit.c:141	inlined	pkg/session/medit.go:171	the working copy is
 init_mobile	src/medit.c:183	ported-other-name	pkg/session/medit.go:200	newMeditMob carries C's init values: HP 1d1, damage 1d1, weight 200, height 198, ISNPC (medit.go:213-217 = medit.c:184-200).	-
 medit_save_to_disk	src/medit.c:336	ported-other-name	pkg/session/medit.go:1007	saveMeditZone writes "%d.mob" under lib/world/mob (medit.go:1045 = medit.c:341).	-
 medit_string_cleanup	src/medit.c:1123	ported-other-name	pkg/session/medit.go:954	the mob string editors finish through the textEditState onComplete arm applying save/abort to the field (medit.go:954+).	-
+lua_act	src/scripts.c:80	ported-other-name	pkg/scripting/engine.go:740	binding "act" in the registration table (engine.go:740) -> bridgeAct (bindings_bridge.go:58); the table covers all lua_* globals by name.	-
+lua_action	src/scripts.c:122	ported-other-name	pkg/scripting/engine.go:744	binding "action" (engine.go:744) -> bridgeAction (bindings_bridge.go:114).	-
+lua_aff_flagged	src/scripts.c:142	ported-other-name	pkg/scripting/engine.go:793	binding "aff_flagged" (engine.go:793) -> bridgeAffFlagged (bindings_bridge.go:430).	-
+lua_aff_flags	src/scripts.c:165	ported-other-name	pkg/scripting/engine.go:802	binding "aff_flags" (engine.go:802) -> bridgeAffFlags (bindings_bridge.go:441).	-
+lua_cansee	src/scripts.c:221	ported-other-name	pkg/scripting/engine.go:791	binding "cansee" (engine.go:791) -> bridgeCanSee (bindings_bridge.go:393).	-
+lua_echo	src/scripts.c:342	ported-other-name	pkg/scripting/engine.go:817	binding "echo" (engine.go:817) -> bridgeEcho (bindings_bridge.go:743): same room/outdoor/zone dispatch as scripts.c:353-371 (spot-checked).	-
+lua_emote	src/scripts.c:385	ported-other-name	pkg/scripting/engine.go:743	binding "emote" (engine.go:743) -> bridgeEmote (bindings_bridge.go:103).	-
+lua_equip_char	src/scripts.c:403	ported-other-name	pkg/scripting/engine.go:815	binding "equip_char" (engine.go:815) -> bridgeEquipChar (bindings_bridge.go:711; bridge.go:195 comments obj_from_char + equip_char).	-
+lua_exit_flags	src/scripts.c:427	ported-other-name	pkg/scripting/engine.go:813	binding "exit_flags" (engine.go:813) -> bridgeExitFlags (bindings_bridge.go:543).	-
+lua_exit_flagged	src/scripts.c:456	ported-other-name	pkg/scripting/engine.go:812	binding "exit_flagged" (engine.go:812) -> bridgeExitFlagged (bindings_bridge.go:525).	-
+lua_extchar	src/scripts.c:480	ported-other-name	pkg/scripting/engine.go:748	binding "extchar" (engine.go:748) -> bridgeExtChar (bindings_bridge.go:610).	-
+lua_extobj	src/scripts.c:496	ported-other-name	pkg/scripting/engine.go:747	binding "extobj" (engine.go:747) -> bridgeExtObj (bindings_bridge.go:154).	-
+lua_extra	src/scripts.c:512	ported-other-name	pkg/scripting/engine.go:820	binding "extra" (engine.go:820) -> bridgeExtra (bindings_bridge.go:728).	-
+lua_follow	src/scripts.c:542	ported-other-name	pkg/scripting/engine.go:803	binding "follow" (engine.go:803) -> bridgeFollow (bindings_bridge.go:796).	-
+lua_gossip	src/scripts.c:571	ported-other-name	pkg/scripting/engine.go:742	binding "gossip" (engine.go:742) -> bridgeGossip (bindings_bridge.go:769).	-
+lua_inworld	src/scripts.c:589	ported-other-name	pkg/scripting/engine.go:800	binding "inworld" (engine.go:800) -> bridgeInWorld (bindings_bridge.go:357).	-
+lua_ishunt	src/scripts.c:676	ported-other-name	pkg/scripting/engine.go:807	binding "ishunt" (engine.go:807) -> bridgeIsHunt (bindings_bridge.go:126).	-
+lua_isnpc	src/scripts.c:697	ported-other-name	pkg/scripting/engine.go:792	binding "isnpc" (engine.go:792) -> bridgeIsNPC (bindings_bridge.go:338).	-
+lua_load_room	src/scripts.c:758	ported-other-name	pkg/scripting/engine.go:799	binding "load_room" (engine.go:799) -> bridgeLoadRoom (bindings_bridge.go:573).	-
+lua_log	src/scripts.c:780	ported-other-name	pkg/scripting/engine.go:766	binding "log" (engine.go:766) -> bridgeLog (bindings_bridge.go:143).	-
+lua_mload	src/scripts.c:795	ported-other-name	pkg/scripting/engine.go:746	binding "mload" (engine.go:746) -> bridgeMLoad (bindings_bridge.go:593).	-
+lua_mob_flagged	src/scripts.c:820	ported-other-name	pkg/scripting/engine.go:801	binding "mob_flagged" (engine.go:801) -> bridgeMobFlagged (bindings_bridge.go:467): same true/nil + "[Lua] Invalid argument passed to lua_mob_flagged." mudlog (spot-checked).	-
+lua_mob_flags	src/scripts.c:843	ported-other-name	pkg/scripting/engine.go:811	binding "mob_flags" (engine.go:811) -> actFlagsBinding("mob_flags"), the shared SET_BIT_AR arm for plr/mob flags (bindings_bridge.go:477-479).	-
+lua_mount	src/scripts.c:871	ported-other-name	pkg/scripting/engine.go:804	binding "mount" (engine.go:804) -> bridgeMount (bindings_bridge.go:896).	-
+lua_obj_extra	src/scripts.c:923	ported-other-name	pkg/scripting/engine.go:788	binding "obj_extra" (engine.go:788) -> bridgeObjExtra (bindings_bridge.go:508).	-
+lua_obj_flagged	src/scripts.c:951	ported-other-name	pkg/scripting/engine.go:810	binding "obj_flagged" (engine.go:810) -> bridgeObjFlagged (bindings_bridge.go:497).	-
+lua_oload	src/scripts.c:974	ported-other-name	pkg/scripting/engine.go:745	binding "oload" (engine.go:745) -> bridgeOLoad (bindings_bridge.go:166): same char/vnum/location shape with "room"/"char" arms (spot-checked).	-
+lua_objfrom	src/scripts.c:1013	ported-other-name	pkg/scripting/engine.go:786	binding "objfrom" (engine.go:786) -> bridgeObjFrom (bindings_bridge.go:652).	-
+lua_obj_list	src/scripts.c:1040	ported-other-name	pkg/scripting/engine.go:795	binding "obj_list" (engine.go:795) -> bridgeObjList (bindings_bridge.go:624).	-
+lua_objto	src/scripts.c:1128	ported-other-name	pkg/scripting/engine.go:787	binding "objto" (engine.go:787) -> bridgeObjTo (bindings_bridge.go:669).	-
+lua_plr_flagged	src/scripts.c:1174	ported-other-name	pkg/scripting/engine.go:790	binding "plr_flagged" (engine.go:790) -> bridgePlrFlagged (bindings_bridge.go:456).	-
+lua_plr_flags	src/scripts.c:1197	ported-other-name	pkg/scripting/engine.go:794	binding "plr_flags" (engine.go:794) -> actFlagsBinding("plr_flags") (bindings_bridge.go:477).	-
+lua_raw_kill	src/scripts.c:1225	ported-other-name	pkg/scripting/engine.go:767	binding "raw_kill" (engine.go:767) -> bridgeRawKill (bindings_bridge.go:285).	-
+lua_round	src/scripts.c:1260	ported-other-name	pkg/scripting/engine.go:783	binding "round" (engine.go:783) -> luaRound4, C's Lua-4 rounding.	-
+lua_say	src/scripts.c:1271	ported-other-name	pkg/scripting/engine.go:741	binding "say" (engine.go:741) -> bridgeSay (bindings_bridge.go:78): string arg + me ref -> do_say/Say, same invalid-arg mudlog (spot-checked).	-
+lua_save_char	src/scripts.c:1292	ported-other-name	pkg/scripting/engine.go:768	binding "save_char" (engine.go:768) -> bridgeSaveChar (bindings_bridge.go:198).	-
+lua_save_obj	src/scripts.c:1309	ported-other-name	pkg/scripting/engine.go:769	binding "save_obj" (engine.go:769) -> bridgeSaveObj (bindings_bridge.go:212, comment cites scripts.c:1309-1323).	-
+lua_save_room	src/scripts.c:1325	ported-other-name	pkg/scripting/engine.go:776	binding "save_room" (engine.go:776) -> bridgeSaveRoom (bindings_bridge.go:237, comment cites table_to_room scripts.c:2096-2109).	-
+lua_set_hunt	src/scripts.c:1341	ported-other-name	pkg/scripting/engine.go:806	binding "set_hunt" (engine.go:806) -> bridgeSetHunt (bindings_bridge.go:811).	-
+lua_social	src/scripts.c:1399	ported-other-name	pkg/scripting/engine.go:809	binding "social" (engine.go:809) -> bridgeSocial (bindings_bridge.go:780).	-
+lua_spell	src/scripts.c:1428	ported-other-name	pkg/scripting/engine.go:778	binding "spell" (engine.go:778) -> bridgeSpell (bindings_bridge.go:832).	-
+lua_tport	src/scripts.c:1518	ported-other-name	pkg/scripting/engine.go:779	binding "tport" (engine.go:779) -> bridgeTport (bindings_bridge.go:265): same invalid-room mudlog and char_from/char_to + globals resave (spot-checked).	-
+lua_tell	src/scripts.c:1564	ported-other-name	pkg/scripting/engine.go:789	binding "tell" (engine.go:789) -> bridgeTell (bindings_bridge.go:90, comment cites scripts.c:1564-1589).	-
+lua_unaffect	src/scripts.c:1591	ported-other-name	pkg/scripting/engine.go:814	binding "unaffect" (engine.go:814) -> bridgeUnaffect (bindings_bridge.go:883).	-
+table_to_obj	src/scripts.c:2053	inlined	pkg/scripting/bridge.go:118	the object write-back folds table_to_obj into the bridge's ApplyObj path ("ApplyObj is table_to_obj", bridge.go:118; ObjWrite comment cites scripts.c:2054-2094 at :90).	-
+table_to_room	src/scripts.c:2095	inlined	pkg/scripting/bindings_bridge.go:235	the room write-back folds table_to_room into bridgeSaveRoom's apply (bindings_bridge.go:235 citing scripts.c:2096-2109).	-
+clear_stack	src/scripts.c:2111	go-native	pkg/scripting/engine.go:635	gopher-lua manages its own LState stack; the port's only stack hygiene is L.SetTop after a file returns (engine.go:635).	-
