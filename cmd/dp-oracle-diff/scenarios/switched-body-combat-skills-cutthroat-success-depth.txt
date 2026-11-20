@@ -5,6 +5,9 @@
 # src/act.wizard.c:1584-1618; src/db.c:104,1281; src/utils.h:343.
 
 # depth-case: cutthroat.switched-mobile-restored-skill-and-hit
+# depth-case: cutthroat.switched-mobile-low-level-player
+# depth-case: switched-object-handling.give-no-victim
+# depth-case: point.switched-mobile-character-no-weapon
 
 [fixture]
 empty-players
@@ -42,8 +45,68 @@ Y
 <ENTER>
 1
 
+[setup:oracle:peer]
+SwitchSkillpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+SwitchSkillpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+SwitchSkillwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+SwitchSkillwatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 goto 8105
+set player SwitchSkillpeer level 10
+set player SwitchSkillwatch level 10
+teleport SwitchSkillpeer 8105
+teleport SwitchSkillwatch 8105
 set mob clone level 39
 set mob trainee maxhit 5000
 set mob trainee hit 5000
@@ -55,3 +118,8 @@ switch clone
 
 [probe]
 cutthroat trainee
+give bread
+~dpclock pulse 20
+cutthroat SwitchSkillpeer
+remove dagger
+point SwitchSkillpeer
