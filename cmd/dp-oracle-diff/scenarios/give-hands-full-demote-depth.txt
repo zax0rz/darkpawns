@@ -5,6 +5,7 @@
 # carrying six items at level 39 (cap 5+39>>1 = 24), then demoted to level 1
 # (cap 5). The next give hits perform_give's hands-full gate, "$N seems to have
 # $S hands full." (src/act.item.c:687-689). Go cached the level-39 capacity and
+# probe-setup-refusal-reason: "give sword Demoted": witnesses perform_give's carry-count gate after demotion recomputes CAN_CARRY_N (src/act.item.c:687)
 # let the transfer through (retained sol-dp1511-item-witness-r3).
 
 [fixture]

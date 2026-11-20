@@ -1,3 +1,4 @@
+# probe-setup-refusal-reason: "give ZZZ givevic": witnesses do_give's not-carried refusal after fill-word stripping (src/act.item.c:1647)
 # depth-case: give.fill-word-parse
 
 [fixture]

@@ -11,6 +11,14 @@
 # depth-case: give.alldot-empty
 # Three clients: giver (Giver), recipient (Givevic), bystander (Giveobs), all
 # co-located. Proves the actor / TO_VICT / TO_NOTVICT audiences on a successful
+# probe-setup-refusal-reason: "give": witnesses do_give's no-argument usage refusal (src/act.item.c:776)
+# probe-setup-refusal-reason: "give bread givevic": witnesses do_give's not-carried refusal for an individual item (src/act.item.c:1647)
+# probe-setup-refusal-reason: "give bread": witnesses do_give's missing-victim refusal (src/act.item.c:715)
+# probe-setup-refusal-reason: "give bread nobody": witnesses do_give's NOPERSON refusal for an unresolvable victim (src/config.c:93)
+# probe-setup-refusal-reason: "give bread giver": witnesses do_give's self-target refusal (src/act.item.c:725)
+# probe-setup-refusal-reason: "give 5 sword givevic": witnesses do_give's numbered-item refusal, only coins take an amount (src/act.item.c:791)
+# probe-setup-refusal-reason: "give all givevic": witnesses do_give's all-dot refusal when holding nothing (src/act.item.c:819)
+# probe-setup-refusal-reason: "give all. givevic": witnesses do_give's all-dot-empty refusal (src/act.item.c:815)
 # give. Items come from the starting backpack.
 
 [fixture]

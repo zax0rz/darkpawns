@@ -4,6 +4,8 @@
 # has the descriptor, so every send_to_char/act directed at it reaches the
 # player. This matrix runs each actor-lane command once with a valid argument
 # and once with an invalid one; C's transcript shows the miss messages the
+# probe-setup-refusal-reason: "give sword Victimpeer": witnesses do_give's not-carried miss delivered to the switched mobile descriptor (src/act.item.c:1647)
+# probe-setup-refusal-reason: "give sword Nobody": witnesses do_give's NOPERSON miss delivered to the switched mobile descriptor (src/config.c:93)
 # descriptor-less actor lanes drop.
 
 [fixture]

@@ -7,6 +7,12 @@
 # finder C give_find_vict uses (src/act.item.c:717). "me"/"self" answer with
 # the giver, "0.<name>" is the player-only pass, and "N.<name>" counts visible
 # matches. Two identical trainee guards make the ordinal observable without an
+# probe-setup-refusal-reason: "give bread me": witnesses do_give's self-target refusal for 'me' (src/act.item.c:725)
+# probe-setup-refusal-reason: "give bread self": witnesses do_give's self-target refusal for 'self' (src/act.item.c:725)
+# probe-setup-refusal-reason: "give bread 0.giveres": witnesses do_give's self-target refusal for the player-only 0. prefix (src/act.item.c:725)
+# probe-setup-refusal-reason: "give bread guard": witnesses perform_give's MOB_OKGIVE gate, $N doesn't seem to be interested in $p (src/act.item.c:676)
+# probe-setup-refusal-reason: "give bread 2.guard": witnesses the second-guard ordinal hitting perform_give's MOB_OKGIVE gate (src/act.item.c:676)
+# probe-setup-refusal-reason: "give bread 3.guard": witnesses the exhausted ordinal, no third guard answers get_char_room_vis, NOPERSON (src/config.c:93)
 # ordering variable: whichever guard N picks, the bytes are the same.
 
 [fixture]

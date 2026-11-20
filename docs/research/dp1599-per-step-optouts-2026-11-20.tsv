@@ -119,3 +119,41 @@ zedit-duplicate-gate-depth	send:peer zedit 8162	That room is currently being edi
 zedit-entry-depth	zedit nope	Specify a new zone number.	src/olc.c:138	intended	
 zedit-entry-depth	zedit 999999	Sorry, there is no zone for that number!	src/olc.c:172	intended	
 switched-body-cutthroat-player-gates-depth	give bread	To who?	src/act.item.c:715	intended	
+act-obj-sweep	give	Give what to who?	src/act.item.c:776	intended	
+carry-limit-gates-depth	give sword Fullpeer	Fullpeer seems to have his hands full.	src/act.item.c:687	intended	
+give-basic	give	Give what to who?	src/act.item.c:776	intended	
+give-basic	give bread givevic	You don't seem to have a bread.	src/act.item.c:1647	intended	
+give-basic	give bread	To who?	src/act.item.c:715	intended	
+give-basic	give bread nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+give-basic	give bread giver	What's the point of that?	src/act.item.c:725	intended	
+give-basic	give 5 sword givevic	You can't give more than one item at a time.	src/act.item.c:791	intended	
+give-basic	give all givevic	You don't seem to be holding anything.	src/act.item.c:819	intended	
+give-basic	give all. givevic	All of what?	src/act.item.c:815	intended	
+give-fillword	give ZZZ givevic	You don't seem to have a zzz.	src/act.item.c:1647	intended	
+give-gold-overflow-depth	give 3000000000 coins Givevictim	Heh heh heh ... we are jolly funny today, eh?	src/act.item.c:740	intended	
+give-gold	give 0 coins givevic	Heh heh heh ... we are jolly funny today, eh?	src/act.item.c:740	intended	
+give-gold	give 5 coins givevic	You don't have that many coins!	src/act.item.c:438	intended	
+give-hands-full-demote-depth	give sword Demoted	Demoted seems to have his hands full.	src/act.item.c:687	intended	
+give-invisible-depth	give bread guard	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+give-invisible-depth	give 5 coins guard	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+give-invisible-depth	give bread me	What's the point of that?	src/act.item.c:725	intended	
+give-invisible-depth	give bread nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+give-nodrop-depth	send:giver give amulet Nodropvictim	You can't let go of the amulet of darkness!!  Yeech!	src/act.item.c:682	intended	
+give-resolve-depth	give bread me	What's the point of that?	src/act.item.c:725	intended	
+give-resolve-depth	give bread self	What's the point of that?	src/act.item.c:725	intended	
+give-resolve-depth	give bread 0.giveres	What's the point of that?	src/act.item.c:725	intended	
+give-resolve-depth	give bread guard	A guard trainee doesn't seem to be interested in a loaf of bread.	src/act.item.c:676	intended	
+give-resolve-depth	give bread 2.guard	A guard trainee doesn't seem to be interested in a loaf of bread.	src/act.item.c:676	intended	
+give-resolve-depth	give bread 3.guard	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+give-weight-depth	give sword Givepeer	He can't carry that much weight.	src/act.item.c:692	intended	
+isnumber-give	give 12abc Fentresspeer	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	fixed	not intended: Fentresspeer spawned in room 8099, actor in 1204; the give step never reached the is_number object path. Fixed by teleporting Fentresspeer 1204 in warmup; C now prints the intended not-carried line. Refusal verified in run dp1599-per-step-optouts attempt1.
+isnumber-give	give -5 coins Fentresspeer	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+object-give-nobody	give sword nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+shops-identifier	give	Give what to who?	src/act.item.c:776	intended	
+shops-identifier	give bread	To who?	src/act.item.c:715	intended	
+shops-identifier	give bread nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+spec-proc-identifier	give	Give what to who?	src/act.item.c:776	intended	
+spec-proc-identifier	give bread	To who?	src/act.item.c:715	intended	
+spec-proc-identifier	give bread nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+switched-body-command-matrix-depth	give sword Victimpeer	You don't seem to have a sword.	src/act.item.c:1647	intended	
+switched-body-command-matrix-depth	give sword Nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	

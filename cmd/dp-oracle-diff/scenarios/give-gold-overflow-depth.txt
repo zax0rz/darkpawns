@@ -2,6 +2,7 @@
 # C do_give reads a coin amount with atoi (src/act.item.c do_give ->
 # perform_give_gold). glibc atoi is (int)strtol, so "3000000000" wraps to
 # -1294967296, which is <= 0, and perform_give_gold prints
+# probe-setup-refusal-reason: "give 3000000000 coins Givevictim": witnesses perform_give_gold's refusal after atoi overflow wraps the amount nonpositive (src/act.item.c:740)
 # "Heh heh heh ... we are jolly funny today, eh?".
 
 [fixture]

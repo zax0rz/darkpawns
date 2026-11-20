@@ -5,6 +5,7 @@
 # do_give/do_drop (src/act.item.c:777,587) treat "12abc" as an object name, not
 # an amount. Pre-fix Go used fmt.Sscanf, so "12abc" and "-5" were read as a gold
 # amount. The peer occupies the target slot so the object branch resolves a
+# probe-setup-refusal-reason: "give -5 coins Fentresspeer": witnesses C's is_number('-5') being false: do_give takes the object branch and resolves 'coins' as the victim name, which NOPERSONs (src/config.c:93); the named refusal is the point of give.number-is-digits
 # victim; C then reports the missing object.
 
 [fixture]
@@ -68,6 +69,7 @@ Y
 1
 
 [warmup]
+teleport Fentresspeer 1204
 holylight
 
 [probe]

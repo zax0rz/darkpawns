@@ -4,6 +4,7 @@
 # str_app[STRENGTH_APPLY_INDEX].carry_w (src/utils.h:448); a STR-3 recipient
 # (carry_w 10) cannot take the weight-8 confessor's sword (vnum 5805) on top of
 # a held item. The God gives it; the diagnostic's first divergent block was
+# probe-setup-refusal-reason: "give sword Givepeer": witnesses perform_give's weight gate, $E can't carry that much weight (src/act.item.c:692)
 # C "He can't carry that much weight." vs Go "He can't carry any more.".
 
 [fixture]

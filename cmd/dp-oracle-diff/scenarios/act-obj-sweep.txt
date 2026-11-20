@@ -10,6 +10,7 @@
 # Probes chosen for stable message paths, not RNG.
 #
 # Result 2026-07-23: 13/14 GREEN. One quarantined below — `give <item>
+# probe-setup-refusal-reason: "give": witnesses do_give's no-argument usage refusal (src/act.item.c:776)
 # <missing-person>` diverges (DP-1200, NOPERSON class); un-quarantine at fix.
 
 [fixture]

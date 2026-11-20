@@ -7,6 +7,9 @@
 # C-first vehicle for SPECIAL(identifier), src/spec_procs2.c:1193-1280. The
 # real registered Ferrenx identifier is mob vnum 8087 in room 8116; C attaches
 # no script to it (DP-1333). Bread is moved to
+# probe-setup-refusal-reason: "give": witnesses the identifier special-proc's bare-give entry gate resolving to do_give's no-argument usage (src/act.item.c:776)
+# probe-setup-refusal-reason: "give bread": witnesses the identifier special-proc's missing-victim give reaching do_give's To who? (src/act.item.c:715)
+# probe-setup-refusal-reason: "give bread nobody": witnesses do_give's NOPERSON refusal for an unresolvable victim (src/config.c:93)
 # the actor during drained warmup so value lookup sees ch->carrying.
 
 [fixture]

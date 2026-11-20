@@ -3,6 +3,7 @@
 # A Human Warrior from hometown K recalls to room 8004 while carrying starter
 # sword #8037. No mob fixture is installed, so "nobody" cannot resolve to a
 # recipient. do_give reaches the shared NOPERSON constant in src/config.c:93,
+# probe-setup-refusal-reason: "give sword nobody": witnesses do_give's NOPERSON refusal with no recipient in the world (DP-1200 gate, src/config.c:93)
 # so C and Go must both emit exactly "No-one by that name here." (R1, R4, R5a).
 
 [fixture]
