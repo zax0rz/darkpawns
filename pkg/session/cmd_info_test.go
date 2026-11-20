@@ -618,8 +618,8 @@ func TestFleshAlterWeaponMatchesCLevelBands(t *testing.T) {
 		{30, "gleaming scythe"},
 		{40, "gleaming scythe"},
 	} {
-		if got := fleshAlterWeapon(tc.level); got != tc.want {
-			t.Errorf("fleshAlterWeapon(%d) = %q, want %q", tc.level, got, tc.want)
+		if got := game.FleshAlterWeapon(tc.level); got != tc.want {
+			t.Errorf("game.FleshAlterWeapon(%d) = %q, want %q", tc.level, got, tc.want)
 		}
 	}
 }

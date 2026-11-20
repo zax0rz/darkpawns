@@ -94,7 +94,7 @@ func CharacterFleshAlter(ctx CharacterCommandContext, _ []string) CharacterComma
 		mob.SetWaitState(2)
 		return CharacterCommandHandled
 	}
-	weapon := fleshAlterWeapon(mob.GetLevel())
+	weapon := FleshAlterWeapon(mob.GetLevel())
 	if mob.IsAffected(affFleshAlter) {
 		mob.RemoveAffected(affFleshAlter)
 		mob.adjustHitroll(-((mob.GetLevel() / 3) + 1))

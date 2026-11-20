@@ -780,7 +780,9 @@ func DoPalm(ch *Player, objName string, world *World) SkillResult {
 }
 
 // fleshAlterWeapon mirrors flesh_alter_weapon() in src/new_cmds.c:1836-1870.
-func fleshAlterWeapon(level int) string {
+// FleshAlterWeapon is flesh_alter_weapon (src/new_cmds.c:1836-1881): the
+// do_flesh_alter hand-shape and the score/stat hand line share it.
+func FleshAlterWeapon(level int) string {
 	switch {
 	case level <= 3:
 		return "studded wooden club"
@@ -852,7 +854,7 @@ func DoFleshAlter(ch *Player) SkillResult {
 		}
 	}
 
-	weapon := fleshAlterWeapon(ch.GetLevel())
+	weapon := FleshAlterWeapon(ch.GetLevel())
 	if ch.IsAffected(affFleshAlter) {
 		ch.SetAffect(affFleshAlter, false)
 		ch.AdjustHitroll(-((ch.GetLevel() / 3) + 1))

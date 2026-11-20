@@ -1,0 +1,82 @@
+# C-first isname punctuation keyword match (src/handler.c:81-111) through
+# do_steal's equipped-item scan (src/act.other.c:394, 405-412). The castle
+# servants of room 2849 (mob 2718, fifteen zone-authored copies) wear obj 2745
+# "shirt cut-off" via zone 27's own E resets (lib/world/zon/27.zon:253-262).
+# The level-23 thief steals "cut-off": C's isname walk aligns the typed word
+# byte-for-byte across the hyphen and matches at the trailing space, so the
+# awake-victim refusal "Steal the equipment now?  Impossible!" fires
+# (act.other.c:407-411, before any roll). This is the cIsName caller the
+# DP-1582 audit found divergent when the helper split keywords into alpha-runs
+# ("cut" / "off" would both miss the whole hyphenated token).
+# depth-case: steal.punct-keyword-match
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 2718 1 2849 27
+equip-object 2718 2745 1 5 27
+
+[setup:oracle]
+Zedqwp
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zedqwp
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:thief]
+Xkcdqwp
+Y
+thiefpass
+thiefpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:thief]
+Xkcdqwp
+y
+thiefpass
+thiefpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 2849
+teleport Xkcdqwp 2849
+set player Xkcdqwp level 23
+skillset Xkcdqwp 'steal' 100
+
+[probe:thief]
+steal cut-off servant

@@ -9,7 +9,7 @@ import (
 func (w *World) doClanRename(ch *Player, arg string) {
 	arg1, arg2 := halfChop(arg)
 
-	if !isClanNumber(arg1) {
+	if !CIsNumber(arg1) {
 		ch.SendMessage("You need to specify a clan number.\r\n")
 		return
 	}

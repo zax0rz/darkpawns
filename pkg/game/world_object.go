@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"sort"
-	"strings"
 )
 
 // SpawnObjectToPlayerInventoryI mirrors read_object() followed by obj_to_char()
@@ -328,30 +327,43 @@ func CFName(name string) string {
 	return name[:end]
 }
 
-// cIsName is the single Go port of C's isname() (src/handler.c:81-111). Every
-// space-or-non-alpha-separated letter-run in nameList is compared to the whole
-// name case-insensitively: isname matches a WHOLE keyword word, never a prefix,
-// so cIsName("d", "door") is false and cIsName("door", "door") is true. This is
-// the matcher for find_door, do_steal's worn-item scan, janitor, turn_undead,
-// mirror, horn and moon_gate. The abbreviation matcher for generic_find /
-// get_obj_in_list_vis sites is isnameWithAbbrevs (C isname_with_abbrevs).
+// cIsName is the single Go port of C's isname() (src/handler.c:81-111), a
+// character-for-character transliteration of C's loop: the typed name must
+// align one-for-one (case-insensitive) with a keyword until the typed name is
+// exhausted, and the keyword's next byte must be a non-alpha boundary (its
+// NUL, a space, or punctuation). A prefix inside an alphabetic run does not
+// match ("d" against "door" is false), but a typed word ending at punctuation
+// inside a keyword does ("d'haran" against "D'haran breast plate armor",
+// "tako" against "tako-ethreina"), because the punctuation is part of the
+// keyword. This is the matcher for find_door, do_steal's worn-item scan,
+// janitor, turn_undead, mirror, horn and moon_gate. The abbreviation matcher
+// for generic_find / get_obj_in_list_vis sites is isnameWithAbbrevs (C
+// isname_with_abbrevs).
 func cIsName(name, nameList string) bool {
-	if name == "" {
-		return false
+	n := 0
+	for {
+		a := 0
+		for {
+			if a == len(name) && (n == len(nameList) || !isASCIIAlpha(nameList[n])) {
+				return true
+			}
+			if n == len(nameList) {
+				return false
+			}
+			if a == len(name) || nameList[n] == ' ' || lowerByte(name[a]) != lowerByte(nameList[n]) { // C LOWER (utils.h:161), byte-wise
+				break
+			}
+			a++
+			n++
+		}
+		for n < len(nameList) && isASCIIAlpha(nameList[n]) {
+			n++
+		}
+		if n == len(nameList) {
+			return false
+		}
+		n++
 	}
-	for offset := 0; offset < len(nameList); {
-		for offset < len(nameList) && !isASCIIAlpha(nameList[offset]) {
-			offset++
-		}
-		start := offset
-		for offset < len(nameList) && isASCIIAlpha(nameList[offset]) {
-			offset++
-		}
-		if offset > start && strings.EqualFold(name, nameList[start:offset]) {
-			return true
-		}
-	}
-	return false
 }
 
 // GetMobPrototype returns a mob prototype by VNum.
