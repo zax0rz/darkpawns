@@ -28,8 +28,8 @@ It is CLEAN: 1/1 passed, draw divergent 0.
 
 Rows 3 and 18 are recorded in `CLASSIFICATION-CORRECTIONS.md`. Their frozen
 sample classes and the measured Round 1 result remain unchanged. The existing
-singleton runs are `/home/zach/Archives/darkpawns/oracle-runs/2026-11-19/luna-r1-isolate-3`
-and `/home/zach/Archives/darkpawns/oracle-runs/2026-11-19/luna-r1-isolate-18`.
+singleton runs are `/home/zach/Archives/darkpawns/oracle-runs/2026-11-19/luna-mutloop-r1-isolate-3`
+and `/home/zach/Archives/darkpawns/oracle-runs/2026-11-19/luna-mutloop-r1-isolate-18`.
 
 ## Revert proofs
 

@@ -1,0 +1,101 @@
+i	package	func	file	func_line	lit_line	source_offset	old_byte	new_byte	literal	class	class_evidence
+0	pkg/game	*World.doVisible	pkg/game/other_character.go	13	49	1395	Y	Q	"""You are already visible.\r\n"""	c-reachable	C do_visible prints this text at src/act.other.c:590.
+1	pkg/game	CharacterKujiKiri	pkg/game/skill_kuji_kiri_actor.go	14	87	3112	n	Q	"""$n interlaces $s fingers and slowly fades from view."""	c-reachable	C do_kuji_kiri prints this text at src/new_cmds.c:1701.
+2	pkg/game	*World.shopNpcBuy	pkg/game/shop_npc.go	285	360	11959	s	Q	"""%s You can only afford %d."""	c-reachable	C shopping_buy prints this text at src/shop.c:562.
+3	pkg/game	HandleMailInput	pkg/game/mail.go	591	639	17925	S	Q	"""String too long - Truncated.\r\n"""	c-reachable	C string_add prints this text at src/modify.c:134.
+4	pkg/game	*World.DoEat	pkg/game/item_consumable.go	188	275	8571	T	Q	"""There's nothing left now.\r\n"""	c-reachable	C do_eat prints this text at src/act.item.c:1152.
+5	pkg/game	specOroStudyRoom	pkg/game/spec_procs4.go	635	645	20432	A	Q	"""A strong force jolts $n in $s attempt to leave north."""	c-reachable	C oro_study_room prints this text at src/spec_procs.c:2328.
+6	pkg/game	*World.doRaceSay	pkg/game/comm_say.go	5	85	2191	O	Q	"""Ok.\n\r"""	c-reachable	C do_race_say prints this text at src/act.comm.c:751.
+7	pkg/game	specElementalRoom	pkg/game/spec_procs4.go	420	431	12930	Y	Q	"""You ignore the elements that barrage you.\n\r"""	c-unreachable	C elemental_room contains the sampled line at src/spec_procs.c:2061, but src/spec_assign.c:576 only declares the special; a full-session search found no assignment.
+8	pkg/game	*World.PlanAmbush	pkg/game/ambush.go	19	20	647	Y	Q	"""You crouch in the shadows and plan your ambush...\r\n"""	c-reachable	C do_ambush prints this text at src/act.offensive.c:1500.
+9	pkg/game	*World.npcEmote	pkg/game/npc_command.go	173	176	7434	Y	Q	"""Yes.. but what?"""	c-reachable	C do_echo prints this text at src/act.wizard.c:135.
+10	pkg/game	characterMobOKPick	pkg/game/act_movement.go	1042	1053	32580	Y	Q	"""You'll need to hold a set of lockpicks before you can pick a lock!\r\n"""	c-reachable	C ok_pick prints this text at src/act.movement.c:547.
+11	pkg/session	wizutilDispatch	pkg/session/wiz_system.go	389	535	18120	A	Q	"""All spells removed.\r\n"""	c-reachable	C do_wizutil prints this text at src/act.wizard.c:2205.
+12	pkg/game	*World.npcSocial	pkg/game/npc_command.go	407	457	17619	N	Q	"""$N is not in a proper position for that."""	c-reachable	C do_action prints this text at src/act.social.c:141.
+13	pkg/game	specElementsGaleruColumnMoves	pkg/game/actor_specials_rooms.go	663	692	25020	n	Q	"""$n is struck by four beams of colored light and slowly vanishes!"""	c-reachable	C elements_galeru_column prints this text at src/spec_procs3.c:1173.
+14	pkg/session	forceMobNotice	pkg/session/wiz_communication.go	215	220	7263	n	Q	"""$n has forced you to '%s'."""	c-reachable	C do_force prints this text at src/act.wizard.c:1864.
+15	pkg/game	specGuildGuardActor	pkg/game/actor_specials_guards.go	268	305	13670	T	Q	"""The guard humiliates you, and blocks your way.\r\n"""	c-reachable	C guild_guard prints this text at src/spec_procs.c:574.
+16	pkg/game	*World.doPut	pkg/game/item_container.go	29	102	2912	Y	Q	"""You aren't carrying %s %s.\r\n"""	c-reachable	C do_put prints this text at src/act.item.c:118.
+17	pkg/game	*World.neutralRescue	pkg/game/damage_before_message.go	49	62	2304	n	Q	"""$n is startled as $N is saved by the powers of the gods!"""	c-reachable	C damage prints this text at src/fight.c:1510.
+18	pkg/session	cmdSetText	pkg/session/wiz_set.go	116	173	5657	T	Q	"""That can only be done to a beast!\r\n"""	c-reachable	C do_set prints this text at src/act.wizard.c:2698.
+19	pkg/game	*World.doDisplay	pkg/game/other_settings.go	69	88	2754	O	Q	"""Okay.\r\n"""	c-reachable	C do_set prints this text at src/act.wizard.c:2718.
+20	pkg/game	*World.decayCorpse	pkg/game/limits_condition.go	476	481	12390	p	Q	"""$p decays in your hands, and the contents fall to the ground."""	c-reachable	C point_update prints this text at src/limits.c:599.
+21	pkg/session	*Session.cancelTextEdit	pkg/session/tedit.go	404	428	14409	n	Q	"""$n stops using OLC."""	c-reachable	C cleanup_olc prints this text at src/olc.c:514.
+22	pkg/game	*World.getCheckMoney	pkg/game/item_transfer.go	41	61	1961	T	Q	"""There were %d coins.\r\n"""	c-reachable	C get_check_money prints this text at src/act.item.c:187.
+23	pkg/game	mobApparition	pkg/game/character_command.go	200	207	7553	Y	Q	"""You feel a strange presence as $n appears, seemingly from nowhere."""	c-reachable	C appear prints this text at src/fight.c:119.
+24	pkg/game	CharacterScrounge	pkg/game/skill_actor_waits.go	18	64	1768	Y	Q	"""You find $p."""	c-reachable	C do_scrounge prints this text at src/new_cmds2.c:122.
+25	pkg/game	specCastleGuard	pkg/game/spec_procs2.go	2134	2154	76528	n	Q	"""$n states, 'Thou shalt not pass.'"""	c-reachable	C castle_guard_down prints the sampled line at src/spec_procs2.c:2159; that special is assigned to mobs at src/spec_assign.c:453-456.
+26	pkg/game	characterTag	pkg/game/skill_actor_combat_next.go	774	811	30993	n	Q	"""$n taps you and screams, 'TAG! You're it!'"""	c-reachable	C do_tag prints this text at src/new_cmds.c:2260.
+27	pkg/game	*World.pourOut	pkg/game/item_consumable.go	449	464	14667	E	Q	"""Error, please tell a god.\r\n"""	c-reachable	C do_pour prints this text at src/act.item.c:1251.
+28	pkg/command	CmdListSkills	pkg/command/skill_commands.go	2214	2262	74604	A	Q	"""║                    Available Skills                         ║\r\n"""	go-only-in-game	Go CmdListSkills emits this header at pkg/command/skill_commands.go:2262; C do_skills (src/act.informative.c:2689) prints a different class report, and the C command table exposes practice at src/interpreter.c:618.
+29	pkg/session	cmdStat	pkg/session/wiz_stats.go	18	43	924	N	Q	"""No such mobile around.\r\n"""	c-reachable	C do_stat prints this text at src/act.wizard.c:1016.
+30	pkg/command	CmdNeckbreak	pkg/command/skill_commands.go	792	805	24851	Y	Q	"""You can't do this and wield a weapon at the same time!\r\n"""	c-reachable	C do_neckbreak prints this text at src/act.offensive.c:1309.
+31	pkg/game	DoInsult	pkg/game/act_social.go	144	148	4996	I	Q	"""I'm sure you don't want to insult *everybody*...\r\n"""	c-reachable	C do_insult prints this text at src/act.social.c:197.
+32	pkg/game	specNewbieZoneEntrance	pkg/game/spec_procs4.go	582	588	18573	N	Q	"""Nah, you're too much of a badass to go in there!"""	c-reachable	C newbie_zone_entrance prints this text at src/spec_procs.c:2269.
+33	pkg/game	*World.performGive	pkg/game/item_transfer.go	453	455	14306	Y	Q	"""You can't let go of $p!!  Yeech!"""	c-reachable	C perform_give prints this text at src/act.item.c:682.
+34	pkg/game	characterCompare	pkg/game/skill_actor_utility.go	200	249	9378	s	Q	"""%s looks better than %s.\r\n"""	go-only-in-game	Go characterCompare emits this exact phrase at pkg/game/skill_actor_utility.go:247; C do_compare at src/new_cmds.c:1952 emits only about-the-same or slightly/a-little/much-better variants at src/new_cmds.c:2079-2091.
+35	pkg/session	cmdWhere	pkg/session/cmd_info.go	1390	1404	41590	C	Q	"""Couldn't find any such thing.\r\n"""	c-reachable	C do_where prints this text at src/act.informative.c:2305.
+36	pkg/game	CharacterShadow	pkg/game/movement_actor_commands.go	114	172	6181	Y	Q	"""You now follow $N."""	c-reachable	C do_follow prints this text at src/act.movement.c:944.
+37	pkg/session	cmdReload	pkg/session/wiz_system.go	159	165	4247	U	Q	"""Unknown reload option.\r\n"""	c-reachable	C do_reboot prints this text at src/db.c:242.
+38	pkg/game	*World.DoDonate	pkg/game/item_donate.go	252	270	8981	S	Q	"""Sorry, you can't donate anything right now.\r\n"""	c-reachable	C do_drop prints this text at src/act.item.c:570.
+39	pkg/game	appendPlayerEquipment	pkg/game/look.go	1267	1274	44919	N	Q	"""\r\n$N is using:"""	c-reachable	C look_at_char prints this text at src/act.informative.c:451.
+40	pkg/game	specMortician	pkg/game/spec_procs3.go	1165	1197	40918	T	Q	"""The Mortician dumps your corpse on the ground."""	c-reachable	C mortician prints this text at src/spec_procs3.c:842.
+41	pkg/game	*World.decayDustPile	pkg/game/limits_condition.go	462	470	12024	T	Q	"""The pile of dust is blown away by a draft of wind.\r\n"""	c-reachable	C point_update prints this text at src/limits.c:569.
+42	pkg/session	cmdHome	pkg/session/wiz_movement.go	472	505	16355	Y	Q	"""You feel your soul wrenched as you are pulled into a different reality.\r\n"""	c-reachable	C do_home prints this text at src/act.wizard.c:3255.
+43	pkg/combat	DeathCry	pkg/combat/fight_core.go	298	310	10652	Y	Q	"""Your blood freezes as you hear someone's death cry."""	c-reachable	C death_cry prints this text at src/fight.c:524.
+44	pkg/session	cmdUngroup	pkg/session/cmd_group.go	126	191	6998	N	Q	"""$N has been kicked out of $n's group!"""	c-reachable	C do_group prints this text at src/act.other.c:735.
+45	pkg/session	*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	261	386	16394	N	Q	"""None"""	c-reachable	C do_stat_character prints this text at src/act.wizard.c:903.
+46	pkg/game	*World.emitMobSkillSurvival	pkg/game/spec_fighter.go	118	122	5017	n	Q	"""$n is mortally wounded, and will die soon, if not aided."""	c-reachable	C damage prints this text at src/fight.c:1564.
+47	pkg/game	*World.dnsDeleteLocked	pkg/game/dns.go	54	57	1347	D	Q	"""Delete what?\r\n"""	c-reachable	C do_dns prints this text at src/act.wizard.c:3127.
+48	pkg/game	*World.performGiveGold	pkg/game/item_transfer.go	547	549	18173	H	Q	"""Heh heh heh ... we are jolly funny today, eh?\r\n"""	c-reachable	C perform_give_gold prints this text at src/act.item.c:740.
+49	pkg/game	*World.DoSay	pkg/game/directed_speech.go	82	112	3163	s	Q	"""states"""	c-reachable	C do_say prints this text at src/act.comm.c:794.
+50	pkg/game	*World.npcGrabDirect	pkg/game/npc_command_items.go	179	198	6599	Y	Q	"""You can't hold that.\r\n"""	c-reachable	C do_grab prints this text at src/act.item.c:1705.
+51	pkg/game	*World.awardSoloMobKillXP	pkg/game/party.go	291	296	10721	Y	Q	"""You receive %d experience points.\r\n"""	c-reachable	C damage prints this text at src/fight.c:1646.
+52	pkg/session	cmdAdvance	pkg/session/wiz_player.go	219	276	8794	Y	Q	"""You are momentarily enveloped by darkness!\r\n"""	c-reachable	C do_advance prints this text at src/act.wizard.c:1541.
+53	pkg/game	specBeholder	pkg/game/spec_procs_missing.go	164	171	6820	A	Q	"""A ray of light shoots out from one of $n's eyestalks, breaking your concentration!"""	c-reachable	C beholder prints this text at src/new_cmds2.c:336.
+54	pkg/game	*World.npcGive	pkg/game/npc_command.go	288	300	12319	T	Q	"""To who?"""	c-reachable	C give_find_vict prints this text at src/act.item.c:715.
+55	pkg/session	cmdGoto	pkg/session/wiz_movement.go	12	14	233	H	Q	"""Huh?!?"""	c-reachable	C command_interpreter prints this text at src/interpreter.c:916.
+56	pkg/command	CmdRescue	pkg/command/skill_commands.go	482	495	14424	W	Q	"""Whom do you want to rescue?\r\n"""	c-reachable	C do_rescue prints this text at src/act.offensive.c:517.
+57	pkg/game	specMallory	pkg/game/spec_procs.go	1361	1381	46959	n	Q	"""$n shouts, 'You stupid biiitch!'"""	c-unreachable	C mallory contains the sampled line at src/spec_procs.c:1408, but src/spec_assign.c:103 only declares the special; a full-session search found no assignment.
+58	pkg/game	*World.shopNpcSell	pkg/game/shop_npc.go	386	432	14867	s	Q	"""%s I can only afford to buy %d of those."""	c-reachable	C shopping_sell prints this text at src/shop.c:787.
+59	pkg/game	characterCutthroat	pkg/game/skill_actor_combat.go	390	425	13647	A	Q	"""Ancient forces protect $N from your wrath!"""	c-reachable	C do_cutthroat prints this text at src/new_cmds.c:601.
+60	pkg/session	cmdTransfer	pkg/session/wiz_movement.go	368	370	11448	H	Q	"""Huh?!?"""	c-reachable	C do_wiznet prints this text at src/act.wizard.c:1924.
+61	pkg/session	*Session.reconnectSwitched	pkg/session/reconnect.go	214	224	8764	M	Q	"""\r\nMultiple login detected -- disconnecting.\r\n"""	c-reachable	C perform_dupe_check prints this text at src/interpreter.c:1550.
+62	pkg/game	*World.doRecall	pkg/game/other_utility.go	107	124	4583	Y	Q	"""You can't recall from this magickal place.\r\n"""	c-reachable	C do_recall prints this text at src/act.other.c:1739.
+63	pkg/game	*World.doRide	pkg/game/other_mount.go	14	26	597	G	Q	"""Go outside if you want to ride!\r\n"""	c-reachable	C do_ride prints this text at src/act.other.c:1556.
+64	pkg/session	*Session.startRedit	pkg/session/redit.go	151	187	5274	n	Q	"""$n starts using OLC."""	c-reachable	C do_olc prints this text at src/olc.c:275.
+65	pkg/game	*World.PostmasterReceiveMail	pkg/game/mail.go	565	583	16256	N	Q	"""$N gives $n a piece of mail."""	c-reachable	C postmaster prints this text at src/mail.c:594.
+66	pkg/game	*World.HcontrolPayHouse	pkg/game/house_control.go	257	295	7729	P	Q	"""Payment recorded.\r\n"""	c-reachable	C hcontrol_pay_house prints this text at src/house.c:574.
+67	pkg/game	CharacterUngroup	pkg/game/movement_actor_commands.go	197	208	7390	s	Q	"""%s has disbanded the group.\r\n"""	c-reachable	C do_ungroup prints this text at src/act.other.c:757.
+68	pkg/game	specTakeToJail	pkg/game/spec_procs2.go	1411	1466	49812	n	Q	"""$n says, 'You just pissed me off, $N!'"""	c-reachable	C take_to_jail prints this text at src/spec_procs2.c:1462.
+69	pkg/game	*World.GainExp	pkg/game/limits_exp.go	149	200	5502	Y	Q	"""You advance to level %d!\r\n"""	c-reachable	C gain_exp prints this text at src/limits.c:312.
+70	pkg/boards	*BoardSystem.ShowBoard	pkg/boards/boards.go	690	714	22718	T	Q	"""The board is empty.\r\n"""	c-reachable	C gen_board prints this text at src/boards.c:299.
+71	pkg/game	loadNightGateForWorld	pkg/game/weather.go	682	704	22082	A	Q	"""A shimmering portal of blue light suddenly appears in the darkness!"""	c-reachable	C load_night_gate prints this text at src/gate.c:191.
+72	pkg/game	characterPoint	pkg/game/skill_actor_utility.go	153	171	5930	n	Q	"""$n points at $N."""	c-reachable	C do_point prints this text at src/new_cmds.c:2552.
+73	pkg/session	*Session.finishFileEditStart	pkg/session/tedit.go	225	229	7778	n	Q	"""$n begins editing a scroll."""	c-reachable	C general_file_edit prints this text at src/file-edit.c:171.
+74	pkg/session	*Session.cancelRoomEdit	pkg/session/redit.go	243	261	7158	n	Q	"""$n stops using OLC."""	c-reachable	C cleanup_olc prints this text at src/olc.c:514.
+75	pkg/command	CmdKick	pkg/command/skill_commands.go	363	394	11599	K	Q	"""Kick who?\r\n"""	c-reachable	C do_kick prints this text at src/act.offensive.c:606.
+76	pkg/game	*World.shopNpcSellingObject	pkg/game/shop_npc.go	161	184	5956	s	Q	"""%s I don't buy used up wands or staves!"""	c-reachable	C get_selling_obj prints this text at src/shop.c:619.
+77	pkg/game	*World.performPut	pkg/game/item_container.go	10	20	576	n	Q	"""$n puts $p in $P."""	c-reachable	C perform_put prints this text at src/act.item.c:62.
+78	pkg/game	specNoMoveDown	pkg/game/spec_procs3.go	299	306	9983	s	Q	"""%s blocks your way down."""	c-unreachable	C no_move_down has only the corresponding blocks-your-way output at src/spec_procs3.c:329-330; src/spec_assign.c:151 only declares it and a full-session search found no assignment, so the sampled Go path has no C runtime counterpart.
+79	pkg/session	cmdNotitle	pkg/session/wiz_system.go	670	676	22794	Y	Q	"""Yes, but for whom?!?\r\n"""	c-reachable	C do_wizutil prints this text at src/act.wizard.c:2091.
+80	pkg/game	*World.WireCombatCallbacks::func@350	pkg/game/combat_wire.go	350	386	10365	n	Q	"""$n grabs $N by the collar, and quickly beats $M into submission.\r\nJerking $M to $S feet, $n carts $N off to jail."""	c-reachable	C damage prints this text at src/fight.c:1387.
+81	pkg/game	characterSharpen	pkg/game/skill_actor_utility.go	261	269	10058	S	Q	"""Sharpen what?\r\n"""	c-reachable	C do_sharpen prints this text at src/new_cmds.c:2753.
+82	pkg/game	*World.doClanMoney	pkg/game/clan_economy.go	5	25	476	S	Q	"""Set it to how much?\r\n"""	c-reachable	C do_clan_money prints this text at src/clan.c:1025.
+83	pkg/game	*World.AddFollowerForSpell	pkg/game/world_movement.go	234	245	7443	Y	Q	"""You now follow $N."""	c-reachable	C add_follower_quiet prints this text at src/utils.c:494.
+84	pkg/command	CmdStrike	pkg/command/skill_commands.go	1001	1057	33150	N	Q	"""$N is just such a good friend, you simply can't strike $M."""	c-reachable	C do_strike prints this text at src/new_cmds.c:1466.
+85	pkg/game	CharacterRoll	pkg/game/character_command.go	126	133	4946	Y	Q	"""You roll %d (1-%d).\r\n"""	c-reachable	C do_roll prints this text at src/act.other.c:1942.
+86	pkg/game	*World.canTakeObj	pkg/game/item_transfer.go	11	34	1102	p	Q	"""$p: you can't take that!"""	c-reachable	C can_take_obj prints this text at src/act.item.c:172.
+87	pkg/game	*World.doHouseTransfer	pkg/game/house_player.go	140	142	3487	T	Q	"""Transfer your house to whom?\r\n"""	c-reachable	C do_house prints this text at src/house.c:686.
+88	pkg/session	cmdZlist	pkg/session/wiz_zone.go	93	95	2762	H	Q	"""Huh?!?"""	c-reachable	C command_interpreter prints this text at src/interpreter.c:916.
+89	pkg/game	*World.performGetFromRoom	pkg/game/item_transfer.go	154	167	5966	Y	Q	"""You get $p."""	c-reachable	C perform_get_from_room prints this text at src/act.item.c:277.
+90	pkg/game	*World.npcPerformPut	pkg/game/npc_command_items.go	145	154	5067	Y	Q	"""You put $p in $P."""	c-reachable	C perform_put prints this text at src/act.item.c:61.
+91	pkg/game	specElementsGuardianBody	pkg/game/actor_specials_rooms.go	304	331	11808	s	Q	""" screams loudly, attacking """	c-reachable	C elements_guardian prints this text at src/spec_procs3.c:1272.
+92	pkg/combat	emitDamagePositionMessage	pkg/combat/fight_core.go	719	726	26422	Y	Q	"""You are dead!  Sorry...\r\n"""	c-reachable	C damage prints this text at src/fight.c:1583.
+93	pkg/command	CmdDragonKick	pkg/command/skill_commands.go	555	568	16453	A	Q	"""Aren't we funny today...\r\n"""	c-reachable	C do_dragon_kick prints this text at src/act.offensive.c:661.
+94	pkg/game	postmaster	pkg/game/postmaster.go	9	20	616	S	Q	"""Sorry, the mail system is having technical difficulties.\r\n"""	c-reachable	C postmaster prints this text at src/mail.c:485.
+95	pkg/game	addFollowerMobToBody	pkg/game/follow.go	82	87	3261	n	Q	"""$n starts following you."""	c-reachable	C add_follower_quiet prints this text at src/utils.c:496.
+96	pkg/combat	EmitDeathPositionMessage	pkg/combat/fight_core.go	368	369	13205	Y	Q	"""You are dead!  Sorry...\r\n"""	c-reachable	C damage prints this text at src/fight.c:1583.
+97	pkg/game	*World.Hcontrol	pkg/game/house_control.go	334	338	8790	H	Q	"""Huh?!?\r\n"""	c-reachable	C command_interpreter prints this text at src/interpreter.c:916.
+98	pkg/game	specElementsLoadCylinders	pkg/game/spec_procs3.go	1289	1350	45967	A	Q	"""A %s cylinder of light extends upwards from the pillar."""	c-reachable	C elements_load_cylinders prints this text at src/spec_procs3.c:1100.
+99	pkg/command	sendSkillResult::func@1635	pkg/command/skill_commands.go	1635	1644	56205	n	Q	"""$n falls to $s knees, clutching $s groin and throwing up\r\neverywhere!"""	c-reachable	C do_groinrip prints this text at src/new_cmds.c:2643.
