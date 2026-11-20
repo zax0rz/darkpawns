@@ -10,10 +10,6 @@ import (
 )
 
 func cmdGoto(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	dest, ok := findGotoRoom(s, strings.Join(args, " "))
 	if !ok {
 		return nil
@@ -101,10 +97,6 @@ func gotoRoomAllowed(s *Session, roomVNum int) (int, bool) {
 }
 
 func cmdAt(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GRGOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) == 0 {
 		s.Send("You must supply a room number or a name.\r\n")
 		return nil
@@ -287,10 +279,6 @@ func parseLeadingInt(value string) (int, bool) {
 // load — load a mob or object (LVL_IMMORT)
 // ---------------------------------------------------------------------------
 func cmdTeleport(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	raw := strings.Join(args, " ")
 	targetName, remainder := game.OneArgument(raw)
 	if targetName == "" {
@@ -366,11 +354,6 @@ func cmdTeleport(s *Session, args []string) error {
 // actor's current room. The C "all" branch is available only to GRGOD and
 // iterates connected characters below the actor's level in descriptor order.
 func cmdTransfer(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT+1) {
-		s.Send("Huh?!?")
-		return nil
-	}
-
 	targetName, _ := game.OneArgument(strings.Join(args, " "))
 	if targetName == "" {
 		s.Send("Whom do you wish to transfer?\r\n")
@@ -470,10 +453,6 @@ func transferCharacter(s *Session, target game.Actor, disappearAct string, moveM
 // heal — fully heal target (LVL_IMMORT)
 // ---------------------------------------------------------------------------
 func cmdHome(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	raw := strings.Join(args, " ")
 	first, _ := game.OneArgument(raw)
 	if first != "" && isLeadingDigit(first) {

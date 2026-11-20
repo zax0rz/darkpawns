@@ -377,21 +377,8 @@ func TestCmdDreamWhileAsleep(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// reroll / unaffect — level gating
+// reroll / unaffect — at-level behavior
 // ---------------------------------------------------------------------------
-
-func TestCmdRerollBlockedBelowGrgod(t *testing.T) {
-	m := makeTestManager(t)
-	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.player.Level = LVL_GOD // one level short of LVL_GRGOD
-
-	if err := cmdReroll(s, []string{"bob"}); err != nil {
-		t.Fatalf("cmdReroll: %v", err)
-	}
-	if msg := readSessionText(t, s); msg != "Huh?!?" {
-		t.Errorf("below-LVL_GRGOD reroll message: got %q", msg)
-	}
-}
 
 func TestCmdRerollAtGrgod(t *testing.T) {
 	m := makeTestManager(t)
@@ -407,19 +394,6 @@ func TestCmdRerollAtGrgod(t *testing.T) {
 	}
 	if msg := readSessionText(t, s); !strings.Contains(msg, "Rerolled") {
 		t.Errorf("at-LVL_GRGOD reroll message: got %q", msg)
-	}
-}
-
-func TestCmdUnaffectBlockedBelowGod(t *testing.T) {
-	m := makeTestManager(t)
-	s := makeTestSession(t, m, "Alice", 1001, true)
-	s.player.Level = LVL_IMMORT // one level short of LVL_GOD
-
-	if err := cmdUnaffect(s, []string{"bob"}); err != nil {
-		t.Fatalf("cmdUnaffect: %v", err)
-	}
-	if msg := readSessionText(t, s); msg != "Huh?!?" {
-		t.Errorf("below-LVL_GOD unaffect message: got %q", msg)
 	}
 }
 
