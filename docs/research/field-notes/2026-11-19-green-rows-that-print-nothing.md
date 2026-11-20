@@ -80,3 +80,31 @@ The check that would have caught it is cheap: for every distinct cite in the
 manifests, open the range once and confirm it contains the code the note
 names. A cite repeated across hundreds of rows is checked once, not once per
 row.
+
+## A third case: the spell that was never cast
+
+Reviewing Neon's L3 PR (#2866) the same evening, Neon pointed out that one
+"proven" potion cell, Identify, was witnessed by a scenario that printed
+`You don't seem to have a powder.` Following that up found 47 more.
+
+Six of the OLC spell-matrix scenarios, all added in 351418e87 (2026-10-18),
+set the caster to level 30 and then have that caster run `load obj 4399`.
+At level 30, C answers `Huh?!?`. The potion or scroll is never created, the
+`quaff` or `recite` step is refused, and both engines print the same refusal.
+The rows went green, and the matrix marked each spell's potion or scroll
+cell proven. Only each scenario's first batch, loaded during warmup at a
+higher level, ever fired. The retained C blocks show it plainly (for
+example `claude-rev-2865-full/census-dump/spellmatrix-potion-olc-02-depth.txt`):
+three `Huh?!?` replies to `load`, then three refusals.
+
+This is the consider example again, a step larger. The green was real, both
+engines agreed, but what they agreed on was a refusal, and the spell bodies
+the rows claim were never run. The scenarios' own comments say the caster
+"remains level 30 for item use," which is true and is also why the setup
+failed. A month of full censuses passed them, and so did the review of
+every PR that cited them.
+
+The check is the same as before: read the C block for the line the row
+names. Here a cheaper check also works: a setup step that gets `Huh?!?` in
+the C transcript means the scenario didn't set up what it says. DP-1597 asks
+for both the repair and a proposed harness check for that reply.
