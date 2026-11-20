@@ -1,0 +1,57 @@
+# depth-case: score.notrack-live-unreachable
+# C do_score prints Equipment spells affecting you for !IS_NPC(ch) from
+# AFF_FLAGS(ch) (src/act.informative.c:1416-1452). OLC oedit allows adding
+# APPLY_SPELL (29, src/structs.h:528) with AFF_NOTRACK (15, src/structs.h:325;
+# src/oedit.c:639-655,1404-1408); wearing the object calls SET_BIT_AR(AFF_FLAGS(ch), 15)
+# (src/handler.c:240-256), and do_score prints affected_names[15] ("no track",
+# src/constants.c:662).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Scorent
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scorent
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+oedit 4301
+E
+1
+29
+15
+0
+q
+y
+load obj 4301
+wear stars
+
+[probe]
+score
+remove stars
+score
