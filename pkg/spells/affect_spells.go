@@ -1441,8 +1441,6 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 		castCreateWater(level, ch, ovict, world)
 	case SpellIdentify:
 		castIdentify(level, ch, cvict, ovict, world)
-	case SpellSilkenMissile:
-		castSilkenMissile(level, ch, ovict, world)
 	case SpellWordOfRecall:
 		castWordOfRecall(level, ch, cvict, world)
 	case SpellTeleport:
@@ -2083,73 +2081,6 @@ func castCoC(level int, ch interface{}, world interface{}) {
 	if acter, ok := world.(roomActer); ok {
 		acter.SpellActToRoom(ch, nil, "$n draws a magic circle on the ground.", false)
 	}
-}
-
-// castSilkenMissile — converts armor/clothing into a missile arrow.
-// C source: spells.c:883-912. MISSILE VNUM=3.
-func castSilkenMissile(level int, ch, ovict interface{}, world interface{}) {
-	_ = level
-	if ovict == nil {
-		return
-	}
-
-	type typeFlagger interface{ GetTypeFlag() int }
-	tf, ok := ovict.(typeFlagger)
-	if !ok {
-		sendSpellActToCaster("You can't make anything useful from $p.\r\n", ch, nil, ovict, world)
-		return
-	}
-
-	objType := tf.GetTypeFlag()
-	if objType != 11 && objType != 9 { // ITEM_WORN=11, ITEM_ARMOR=9
-		sendSpellActToCaster("You can't make anything useful from $p.\r\n", ch, nil, ovict, world)
-		return
-	}
-
-	type spawner interface {
-		SpawnObject(int, int) (interface{}, error)
-		AddItemToRoom(interface{}, int)
-		ExtractObject(interface{}, int)
-	}
-	type roomGetter interface{ GetRoomVNum() int }
-	type inventoryAdder interface{ AddItemToInventory(interface{}) error }
-
-	s, ok := world.(spawner)
-	if !ok {
-		slog.Warn("spell_silken_missile: world does not support object operations")
-		return
-	}
-
-	// Get caster's room
-	rg, _ := ch.(roomGetter)
-	roomVNum := 0
-	if rg != nil {
-		roomVNum = rg.GetRoomVNum()
-	}
-
-	// Spawn missile arrow
-	missile, err := s.SpawnObject(MissileVnum, roomVNum)
-	if err != nil {
-		slog.Error("spell_silken_missile: failed to spawn missile", "error", err, "vnum", MissileVnum)
-		sendToCaster(ch, "Error, please tell a god.\r\n")
-		return
-	}
-
-	// Give missile to caster (try inventory, fall back to room)
-	added := false
-	if ia, ok := ch.(inventoryAdder); ok {
-		if err := ia.AddItemToInventory(missile); err == nil {
-			added = true
-		}
-	}
-	if !added && roomVNum > 0 {
-		s.AddItemToRoom(missile, roomVNum)
-	}
-
-	// Extract source object
-	s.ExtractObject(ovict, roomVNum)
-
-	sendToCaster(ch, "You create an arrow from it.\r\n")
 }
 
 // castMentalLapse — clears mob hunting target. Partial implementation.
