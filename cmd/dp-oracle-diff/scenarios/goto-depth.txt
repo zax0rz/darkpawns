@@ -12,7 +12,10 @@
 # depth-case: goto.object-unavailable
 # depth-case: goto.player-target
 # depth-case: goto.one-argument
-# probe-setup-refusal-reason: Tests `do_goto` no-argument and target-resolution refusal branches.
+# probe-setup-refusal-reason: "goto": witnesses do_goto/find_target_room's no-argument usage refusal (src/act.wizard.c:195)
+# probe-setup-refusal-reason: "goto 999999": witnesses do_goto's numeric room miss (src/act.wizard.c:201)
+# probe-setup-refusal-reason: "goto Nobody": witnesses do_goto's name-resolution miss (src/act.wizard.c:214)
+# probe-setup-refusal-reason: "goto bread": witnesses do_goto's refusal of an object carried by the actor (src/act.wizard.c:210); this step text appears twice in the probe (steps 5 and 7) and only step 7's refusal is intended -- step 5 must succeed as the teleport to the bread's room
 
 [fixture]
 empty-players

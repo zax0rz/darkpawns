@@ -8,7 +8,12 @@
 # depth-case: force.equal-level-target
 # depth-case: force.self-alias
 # depth-case: force.me-alias
-# probe-setup-refusal-reason: Tests `do_force` argument, missing-target, and equal-level self-force ("No, no, no!") refusal branches.
+# probe-setup-refusal-reason: "force": witnesses do_force's no-argument usage refusal (src/act.wizard.c:1867)
+# probe-setup-refusal-reason: "force Nobody whoami": witnesses do_force's target lookup printing NOPERSON (src/act.wizard.c:1870, src/config.c:93)
+# probe-setup-refusal-reason: "force Forcegates": witnesses do_force's victim-but-no-command usage refusal (src/act.wizard.c:1867)
+# probe-setup-refusal-reason: "force Forcegates whoami": witnesses do_force's equal-level self-force refusal (src/act.wizard.c:1872)
+# probe-setup-refusal-reason: "force self whoami": witnesses do_force's 'self' resolving to the actor, equal-level refusal (src/act.wizard.c:1872)
+# probe-setup-refusal-reason: "force me whoami": witnesses do_force's 'me' resolving to the actor, equal-level refusal (src/act.wizard.c:1872)
 
 [fixture]
 empty-players

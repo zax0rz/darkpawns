@@ -1,8 +1,10 @@
 package oraclediff
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -253,8 +255,8 @@ func isProbeSenderBlock(step string, block AudienceProbeBlock) bool {
 // CheckProbeSetupRefusals scans the sender block of every setup-shaped [probe]
 // step against the same DP-1456/DP-1511 refusal inventory used by
 // checkWarmupRefusals (DP-1597). There are no name-based exemptions; scenarios
-// that intentionally test a refusal on one of these commands opt out explicitly
-// via "# probe-setup-refusal-reason: <why>".
+// that intentionally test a refusal on one of these commands opt out each step
+// explicitly via "# probe-setup-refusal-reason: \"<step>\": <why>".
 func CheckProbeSetupRefusals(blocks []AudienceProbeBlock) []ProbeSetupRefusalHit {
 	var hits []ProbeSetupRefusalHit
 	stepIndex := 0
@@ -276,6 +278,58 @@ func CheckProbeSetupRefusals(blocks []AudienceProbeBlock) []ProbeSetupRefusalHit
 		}
 	}
 	return hits
+}
+
+// CheckProbeSetupRefusalsForScenario runs CheckProbeSetupRefusals and drops
+// only hits whose exact trimmed step text is explicitly named in reasons. Any
+// unnamed refusal in the same scenario is still returned.
+func CheckProbeSetupRefusalsForScenario(blocks []AudienceProbeBlock, reasons map[string]string) []ProbeSetupRefusalHit {
+	raw := CheckProbeSetupRefusals(blocks)
+	if len(raw) == 0 || len(reasons) == 0 {
+		return raw
+	}
+	var filtered []ProbeSetupRefusalHit
+	for _, hit := range raw {
+		if _, ok := reasons[strings.TrimSpace(hit.Step)]; ok {
+			continue
+		}
+		filtered = append(filtered, hit)
+	}
+	return filtered
+}
+
+// parseProbeSetupRefusalReason parses the payload after
+// "# probe-setup-refusal-reason:" in the form `"<step>": <why>`.
+func parseProbeSetupRefusalReason(raw string) (string, string, error) {
+	rest := strings.TrimSpace(raw)
+	if rest == "" {
+		return "", "", errors.New("empty probe-setup-refusal-reason")
+	}
+	if !strings.HasPrefix(rest, `"`) {
+		return "", "", errors.New(`invalid probe-setup-refusal-reason: must name step as "<step>": <why>`)
+	}
+	quoted, err := strconv.QuotedPrefix(rest)
+	if err != nil {
+		return "", "", fmt.Errorf("invalid probe-setup-refusal-reason quoted step: %w", err)
+	}
+	step, err := strconv.Unquote(quoted)
+	if err != nil {
+		return "", "", fmt.Errorf("invalid probe-setup-refusal-reason quoted step: %w", err)
+	}
+	step = strings.TrimSpace(step)
+	if step == "" {
+		return "", "", errors.New("empty step in probe-setup-refusal-reason")
+	}
+	after := strings.TrimSpace(rest[len(quoted):])
+	reason, ok := strings.CutPrefix(after, ":")
+	if !ok {
+		return "", "", errors.New(`invalid probe-setup-refusal-reason: expected ": <why>" after quoted step`)
+	}
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		return "", "", errors.New("empty probe-setup-refusal-reason")
+	}
+	return step, reason, nil
 }
 
 // Substitutions are non-empty and never cross a line. C's MAX_STRING_LENGTH

@@ -16,7 +16,8 @@
 # depth-case: sysfile.no-argument
 # depth-case: wnewbie.no-argument
 # depth-case: zlist.no-argument
-# probe-setup-refusal-reason: Tests no-argument `transfer` usage refusal ("Whom do you wish to transfer?").
+# probe-setup-refusal-reason: "transfer": witnesses do_trans's no-argument usage refusal (src/act.wizard.c:318)
+# probe-setup-refusal-reason: "teleport": witnesses do_teleport's no-argument usage refusal (src/act.wizard.c:373)
 
 [fixture]
 empty-players

@@ -1,0 +1,159 @@
+scenario	step	refusal_line	c_cite	disposition	notes
+advance-depth	advance	Advance who?	src/act.wizard.c:1498	intended	
+advance-depth	advance nobody	That player is not here.	src/act.wizard.c:1494	intended	
+advance-depth	advance Advancepeer	That's not a level!	src/act.wizard.c:1514	intended	
+advance-depth	advance Advancepeer not-a-level	That's not a level!	src/act.wizard.c:1514	intended	
+advance-depth	advance Advancepeer 0	That's not a level!	src/act.wizard.c:1514	intended	
+advance-depth	advance Advancepeer 41	40 is the highest possible level.	src/act.wizard.c:1518	intended	
+advance-depth	advance 1.orc 2	NO!  Not on NPC's.	src/act.wizard.c:1510	intended	
+advance-depth	advance Advancepeer 2	They are already at that level.	src/act.wizard.c:1527	intended	step text appears twice in probe (steps 8 and 9); only step 9 refusal intended, step 8 must succeed as the promotion
+force-gates	force	Whom do you wish to force do what?	src/act.wizard.c:1867	intended	
+force-gates	force Nobody whoami	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+force-gates	force Forcegates	Whom do you wish to force do what?	src/act.wizard.c:1867	intended	
+force-gates	force Forcegates whoami	No, no, no!	src/act.wizard.c:1872	intended	
+force-gates	force self whoami	No, no, no!	src/act.wizard.c:1872	intended	
+force-gates	force me whoami	No, no, no!	src/act.wizard.c:1872	intended	
+god-batch2	teleport	Whom do you wish to teleport?	src/act.wizard.c:373	intended	
+god-batch2	advance	Advance who?	src/act.wizard.c:1498	intended	
+godset-vehicle	set Mordecai position 3	Can't set that!	src/act.wizard.c:3048	intended	
+goto-depth	goto	You must supply a room number or name.	src/act.wizard.c:195	intended	
+goto-depth	goto 999999	No room exists with that number.	src/act.wizard.c:201	intended	
+goto-depth	goto Nobody	No such creature or object around.	src/act.wizard.c:214	intended	
+goto-depth	goto bread	That object is not available.	src/act.wizard.c:210	intended	step text appears twice in probe (steps 5 and 7); only step 7 refusal intended, step 5 must succeed as teleport to the bread room
+goto-godroom-depth	goto 8161	You are not godly enough to use that room!	src/act.wizard.c:221	intended	
+goto-private-depth	goto 8161	There's a private conversation going on in that room.	src/act.wizard.c:226	intended	
+load-depth	load mob	Mob name not found.	src/act.wizard.c:1274	intended	
+load-depth	load mob 999999	There is no monster with that number.	src/act.wizard.c:1300	intended	
+load-depth	load obj 999999	There is no object with that number.	src/act.wizard.c:1324	intended	
+load-depth	load mob nobody	Mob name not found.	src/act.wizard.c:1274	intended	
+load-depth	load obj nobody	Object name not found.	src/act.wizard.c:1285	intended	
+load-depth-gates	load obj 8055	That is beyond your godly powers...	src/act.wizard.c:1363	intended	
+load-depth-gates	load obj 81	You're not godly enough to load that!	src/act.wizard.c:1307	intended	
+load-depth-gates	load obj 82	You're not godly enough to load that!	src/act.wizard.c:1307	intended	
+load-depth-gates	load obj 8095	You're not godly enough to load that!	src/act.wizard.c:1307	intended	
+medit-entry-depth	medit	Specify a mobile VNUM to edit.	src/olc.c:113	intended	
+medit-entry-depth	medit abc	Yikes!  Stop that, someone will get hurt!	src/olc.c:143	intended	
+medit-entry-depth	medit 999999	Sorry, there is no zone for that number!	src/olc.c:172	intended	
+mortal-batch13	sethunt	Huh?!?	src/interpreter.c:916	intended	
+mortal-batch13	skillset	Huh?!?	src/interpreter.c:916	intended	
+mortal-batch13	zreset	Huh?!?	src/interpreter.c:916	intended	
+mortal-batch14	set	Huh?!?	src/interpreter.c:916	intended	
+mortal-batch16	purge	Huh?!?	src/interpreter.c:916	intended	
+mortal-batch16	zreset	Huh?!?	src/interpreter.c:916	intended	
+mortal-batch19	purge	Huh?!?	src/interpreter.c:916	intended	
+mortal-batch19	set	Huh?!?	src/interpreter.c:916	intended	
+mortal-batch19	sethunt	Huh?!?	src/interpreter.c:916	intended	
+mortal-batch19	skillset	Huh?!?	src/interpreter.c:916	intended	
+mortal-batch20	purge	Huh?!?	src/interpreter.c:916	intended	
+mortal-batch20	set	Huh?!?	src/interpreter.c:916	intended	
+mortal-batch20	sethunt	Huh?!?	src/interpreter.c:916	intended	
+mortal-batch20	skillset	Huh?!?	src/interpreter.c:916	intended	
+oedit-entry-depth	oedit	Specify a object VNUM to edit.	src/olc.c:113	intended	
+oedit-entry-depth	oedit nope	Yikes!  Stop that, someone will get hurt!	src/olc.c:143	intended	
+oedit-entry-depth	oedit 999999	Sorry, there is no zone for that number!	src/olc.c:172	intended	
+purge-low-level-depth	purge	Huh?!?	src/interpreter.c:916	intended	
+redit-duplicate-gate-depth	send:peer redit 8162	That room is currently being edited by Reditadmin.	src/olc.c:157	intended	
+redit-entry-depth	redit nope	Yikes!  Stop that, someone will get hurt!	src/olc.c:143	intended	
+redit-entry-depth	redit 999999	Sorry, there is no zone for that number!	src/olc.c:172	intended	
+restore-depth	restore Nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+sedit-entry-depth	sedit	Specify a shop VNUM to edit.	src/olc.c:113	intended	
+sedit-entry-depth	sedit nope	Yikes!  Stop that, someone will get hurt!	src/olc.c:143	intended	
+sedit-entry-depth	sedit 999	Sorry, there is no zone for that number!	src/olc.c:172	intended	
+set-depth	set	Usage: set <victim> <field> <value>	src/act.wizard.c:2626	intended	
+set-depth	set Nobody gold 1	There is no such creature.	src/act.wizard.c:2643	intended	
+set-depth	set Settarget junk 1	Can't set that!	src/act.wizard.c:3048	intended	
+set-depth	send:bounded set Sethigh brief on	Maybe that's not such a great idea...	src/act.wizard.c:2678	intended	
+set-exceptions-depth	set Setexceptiontarget nohassle on	You aren't godly enough for that!	src/act.wizard.c:2845	intended	
+set-exceptions-depth	set Setexceptiontarget nohassle off	You aren't godly enough for that!	src/act.wizard.c:2845	intended	
+set-exceptions-depth	set Setexceptions frozen on	Better not -- could be a long winter!	src/act.wizard.c:2859	intended	
+set-exceptions-depth	set Setexceptions frozen off	Better not -- could be a long winter!	src/act.wizard.c:2859	intended	
+set-extended-depth	set Setalltarget loadroom 999999	That room does not exist!	src/act.wizard.c:2958	intended	
+set-extended-depth	set Setalltarget passwd secret	You must use set file with this command.	src/act.wizard.c:2975	intended	
+set-extended-depth	set mob cleaner brief on	You can't do that to a beast!	src/act.wizard.c:2693	intended	
+set-extended-depth	set Setalltarget brief maybe	Value must be on or off.	src/act.wizard.c:2709	intended	
+set-extended-depth	set Setalltarget sex other	Must be 'male', 'female', or 'neutral'.	src/act.wizard.c:2818	intended	
+set-extended-depth	set Setalltarget drunk tipsy	Must be 'off' or a value from 0 to 48.	src/act.wizard.c:2881	intended	
+set-extended-depth	set Setalltarget level 59	You can't do that.	src/act.wizard.c:2899	intended	
+set-extended-depth	set Setalltarget room 999999	No room exists with that number.	src/act.wizard.c:201	intended	
+set-extended-depth	set Setalltarget class other	That is not a class.	src/act.wizard.c:2936	intended	
+set-extended-depth	set Setalltarget race other	That is not a race.	src/act.wizard.c:3007	intended	
+set-gate-depth	set Setvictim str 12	You are not godly enough for that!	src/act.wizard.c:2688	intended	
+sethunt-depth	sethunt	Who do you wish to hunt?	src/act.wizard.c:3455	intended	
+sethunt-depth	sethunt Nobody Nobody	No-one by that name around.	src/act.wizard.c:3457	intended	
+sethunt-depth	sethunt Sethuntvictim Nobody	Who shall be the hunter?	src/act.wizard.c:3459	intended	
+sethunt-depth	sethunt Sethuntvictim Sethuntvictim	Yeah right.	src/act.wizard.c:3461	intended	
+sethunt-depth	sethunt Sethuntvictim Sethuntadmin	PCs can't be made to hunt.	src/act.wizard.c:3463	intended	
+sethunt-depth	sethunt Sethunthigh cleaner	Cant hunt higher than your level.	src/act.wizard.c:3466	intended	
+set-target-vis-depth	set player Vispeer level 32	There is no such player.	src/act.wizard.c:2635	intended	
+set-target-vis-depth	set Vispeer level 32	There is no such creature.	src/act.wizard.c:2643	intended	
+skillset-depth	skillset	Syntax: skillset <name> '<skill>' <value>	src/modify.c:265	intended	
+skillset-depth	skillset Nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+skillset-depth	skillset Skillsettarget	Skill name expected.	src/modify.c:290	intended	
+skillset-depth	skillset Skillsettarget backstab 75	Skill must be enclosed in: ''	src/modify.c:294	intended	
+skillset-depth	skillset Skillsettarget 'backstab	Skill must be enclosed in: ''	src/modify.c:294	intended	
+skillset-depth	skillset Skillsettarget 'zzznotaskill' 75	Unrecognized skill.	src/modify.c:309	intended	
+skillset-depth	skillset Skillsettarget 'backstab'	Learned value expected.	src/modify.c:316	intended	
+skillset-depth	skillset Skillsettarget 'backstab' -1	Minimum value for learned is 0.	src/modify.c:321	intended	
+skillset-depth	skillset Skillsettarget 'backstab' 101	Max value for learned is 100.	src/modify.c:325	intended	
+skillset-depth	skillset 1.orc 'backstab' 75	You can't set NPC skills.	src/modify.c:329	intended	
+teleport-depth	teleport Nobody 8162	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+teleport-depth	teleport Teleportwizard 8162	Use 'goto' to teleport yourself.	src/act.wizard.c:377	intended	
+teleport-depth	teleport Teleportpeer	Where do you wish to send this person?	src/act.wizard.c:381	intended	
+teleport-depth	teleport Teleportpeer 999999	No room exists with that number.	src/act.wizard.c:201	intended	
+teleport-depth	send:actor teleport Teleportpeerhigh 8161	Maybe you shouldn't do that.	src/act.wizard.c:379	intended	
+transfer-depth	transfer Nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+transfer-depth	transfer Transferwizard	That doesn't make much sense, does it?	src/act.wizard.c:323	intended	
+transfer-depth	send:low transfer Transferpeer	Go transfer someone your own size.	src/act.wizard.c:326	intended	
+transfer-depth	send:low transfer all	I think not.	src/act.wizard.c:343	intended	
+use-mob-wand-empty-depth	force zombie use wand zombie	Nothing seems to happen.	src/config.c:94	intended	
+wizard-file-output-depth	set player Nobody level 1	There is no such player.	src/act.wizard.c:2635	intended	
+wizard-file-output-depth	set file Nobody level 1	There is no such player.	src/act.wizard.c:2635	intended	
+wizard-file-output-depth	set file Setpeer level 40	Sorry, you can't do that.	src/act.wizard.c:2661	intended	
+wizard-low-level-huh-depth	send:low goto 8162	Huh?!?	src/interpreter.c:916	intended	
+wizard-residual-depth	transfer	Whom do you wish to transfer?	src/act.wizard.c:318	intended	
+wizard-residual-depth	teleport	Whom do you wish to teleport?	src/act.wizard.c:373	intended	
+wiz-load-negative-depth	load obj 99999999999999999999	A NEGATIVE number??	src/act.wizard.c:1295	intended	
+wiz-verb-usage2	force	Whom do you wish to force do what?	src/act.wizard.c:1867	intended	
+wiz-verb-usage	goto	You must supply a room number or name.	src/act.wizard.c:195	intended	
+zedit-duplicate-gate-depth	send:peer zedit 8162	That room is currently being edited by Zeditadmin.	src/olc.c:157	intended	
+zedit-entry-depth	zedit nope	Specify a new zone number.	src/olc.c:138	intended	
+zedit-entry-depth	zedit 999999	Sorry, there is no zone for that number!	src/olc.c:172	intended	
+switched-body-cutthroat-player-gates-depth	give bread	To who?	src/act.item.c:715	intended	
+act-obj-sweep	give	Give what to who?	src/act.item.c:776	intended	
+carry-limit-gates-depth	give sword Fullpeer	Fullpeer seems to have his hands full.	src/act.item.c:687	intended	
+give-basic	give	Give what to who?	src/act.item.c:776	intended	
+give-basic	give bread givevic	You don't seem to have a bread.	src/act.item.c:1647	intended	
+give-basic	give bread	To who?	src/act.item.c:715	intended	
+give-basic	give bread nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+give-basic	give bread giver	What's the point of that?	src/act.item.c:725	intended	
+give-basic	give 5 sword givevic	You can't give more than one item at a time.	src/act.item.c:791	intended	
+give-basic	give all givevic	You don't seem to be holding anything.	src/act.item.c:819	intended	
+give-basic	give all. givevic	All of what?	src/act.item.c:815	intended	
+give-fillword	give ZZZ givevic	You don't seem to have a zzz.	src/act.item.c:1647	intended	
+give-gold-overflow-depth	give 3000000000 coins Givevictim	Heh heh heh ... we are jolly funny today, eh?	src/act.item.c:740	intended	
+give-gold	give 0 coins givevic	Heh heh heh ... we are jolly funny today, eh?	src/act.item.c:740	intended	
+give-gold	give 5 coins givevic	You don't have that many coins!	src/act.item.c:438	intended	
+give-hands-full-demote-depth	give sword Demoted	Demoted seems to have his hands full.	src/act.item.c:687	intended	
+give-invisible-depth	give bread guard	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+give-invisible-depth	give 5 coins guard	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+give-invisible-depth	give bread me	What's the point of that?	src/act.item.c:725	intended	
+give-invisible-depth	give bread nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+give-nodrop-depth	send:giver give amulet Nodropvictim	You can't let go of the amulet of darkness!!  Yeech!	src/act.item.c:682	intended	
+give-resolve-depth	give bread me	What's the point of that?	src/act.item.c:725	intended	
+give-resolve-depth	give bread self	What's the point of that?	src/act.item.c:725	intended	
+give-resolve-depth	give bread 0.giveres	What's the point of that?	src/act.item.c:725	intended	
+give-resolve-depth	give bread guard	A guard trainee doesn't seem to be interested in a loaf of bread.	src/act.item.c:676	intended	
+give-resolve-depth	give bread 2.guard	A guard trainee doesn't seem to be interested in a loaf of bread.	src/act.item.c:676	intended	
+give-resolve-depth	give bread 3.guard	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+give-weight-depth	give sword Givepeer	He can't carry that much weight.	src/act.item.c:692	intended	
+isnumber-give	give 12abc Fentresspeer	You don't seem to have a 12abc.	src/act.item.c:1647	intended	not intended as NOPERSON: Fentresspeer spawned in room 8099, actor in 1204, so the step never reached the is_number object path. Fixed by teleporting Fentresspeer 1204 in warmup; C now refuses the intended not-carried line and the step carries a per-step opt-out. First seen refusing NOPERSON in run dp1599-per-step-optouts attempt1; fixed and re-witnessed in dp1599-per-step-optouts-r2 attempt1.
+isnumber-give	give -5 coins Fentresspeer	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+object-give-nobody	give sword nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+shops-identifier	give	Give what to who?	src/act.item.c:776	intended	
+shops-identifier	give bread	To who?	src/act.item.c:715	intended	
+shops-identifier	give bread nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+spec-proc-identifier	give	Give what to who?	src/act.item.c:776	intended	
+spec-proc-identifier	give bread	To who?	src/act.item.c:715	intended	
+spec-proc-identifier	give bread nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	
+switched-body-command-matrix-depth	give sword Victimpeer	You don't seem to have a sword.	src/act.item.c:1647	intended	
+switched-body-command-matrix-depth	give sword Nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)	intended	

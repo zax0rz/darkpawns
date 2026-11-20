@@ -112,11 +112,12 @@ type Scenario struct {
 	// verbatim in SetupRefusalReason.
 	AllowSetupRefusal  bool
 	SetupRefusalReason string
-	// ProbeSetupRefusalReason opts setup-shaped [probe] commands out of the
-	// DP-1597 probe setup-refusal check when a scenario intentionally tests a
-	// refusal on one of those commands. Parsed from
-	// "# probe-setup-refusal-reason: <why>".
-	ProbeSetupRefusalReason string
+	// ProbeSetupRefusalReasons maps exact setup-shaped [probe] step text to
+	// its documented reason for intentionally expecting a C refusal (DP-1597).
+	// Parsed from one or more "# probe-setup-refusal-reason: \"<step>\": <why>"
+	// lines. Whole-file opt-outs are rejected at parse time so a scenario that
+	// tests one intentional refusal cannot hide an unrelated broken setup step.
+	ProbeSetupRefusalReasons map[string]string
 }
 
 // PeerSetup describes a passive client that remains connected while the
@@ -405,12 +406,18 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				sc.SetupRefusalReason = reason
 				setupRefusalReasonSeen = true
 			}
-			if reason, ok := strings.CutPrefix(line, "# probe-setup-refusal-reason:"); ok {
-				reason = strings.TrimSpace(reason)
-				if reason == "" {
-					return Scenario{}, fmt.Errorf("scenario %q line %d: empty probe-setup-refusal-reason", name, lineNo)
+			if raw, ok := strings.CutPrefix(line, "# probe-setup-refusal-reason:"); ok {
+				step, reason, err := parseProbeSetupRefusalReason(raw)
+				if err != nil {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: %w", name, lineNo, err)
 				}
-				sc.ProbeSetupRefusalReason = reason
+				if sc.ProbeSetupRefusalReasons == nil {
+					sc.ProbeSetupRefusalReasons = make(map[string]string)
+				}
+				if _, dup := sc.ProbeSetupRefusalReasons[step]; dup {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: duplicate probe-setup-refusal-reason for step %q", name, lineNo, step)
+				}
+				sc.ProbeSetupRefusalReasons[step] = reason
 			}
 			continue
 		}

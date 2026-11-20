@@ -18,7 +18,11 @@
 # The mob-success probes need oracle seam 7e08d59 (num_moblim pinned to its
 # 32-bit value 0): before it, every successful 'load mob' dereferenced the
 # NULL MobLimits table on 64-bit and killed the C server.
-# probe-setup-refusal-reason: Tests `do_load` argument, kind, and numeric vnum error refusal branches.
+# probe-setup-refusal-reason: "load mob": witnesses do_load's mob keyword lookup refusal with no argument (src/act.wizard.c:1274)
+# probe-setup-refusal-reason: "load mob 999999": witnesses do_load's numeric monster-vnum miss (src/act.wizard.c:1300)
+# probe-setup-refusal-reason: "load obj 999999": witnesses do_load's numeric object-vnum miss (src/act.wizard.c:1324)
+# probe-setup-refusal-reason: "load mob nobody": witnesses do_load's mob keyword miss (src/act.wizard.c:1274)
+# probe-setup-refusal-reason: "load obj nobody": witnesses do_load's object keyword miss (src/act.wizard.c:1285)
 
 [fixture]
 empty-players

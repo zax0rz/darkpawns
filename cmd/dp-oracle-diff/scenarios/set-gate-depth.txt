@@ -3,7 +3,7 @@
 # fields are not. The same command also exposes the level acknowledgement.
 
 # depth-case: set.per-field-level-gate
-# probe-setup-refusal-reason: Tests `do_set` per-field `LVL_GRGOD` privilege refusal ("You are not godly enough for that!").
+# probe-setup-refusal-reason: "set Setvictim str 12": witnesses do_set's str LVL_GRGOD gate with the actor at LVL_GOD (src/act.wizard.c:2688)
 
 [fixture]
 empty-players

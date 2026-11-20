@@ -1,7 +1,7 @@
 # depth-case: say.stupid-gate
 # God set field vehicle: prove C's stat field and its unknown-field behavior,
 # then exercise the communication stupid gate with WIS 0.
-# probe-setup-refusal-reason: Tests `do_set` unknown-field refusal (`set Mordecai position 3` -> "Can't set that!").
+# probe-setup-refusal-reason: "set Mordecai position 3": witnesses do_set's unknown-field refusal for 'position' (src/act.wizard.c:3048)
 
 [fixture]
 empty-players

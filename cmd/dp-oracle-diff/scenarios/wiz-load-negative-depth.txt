@@ -1,7 +1,7 @@
 # depth-case: wiz.load-negative-vnum
 # C do_load (src/act.wizard.c:1293-1295): a negative number answers
 # "A NEGATIVE number??" before any vnum lookup.
-# probe-setup-refusal-reason: Tests `do_load` negative/overflow vnum refusal ("A NEGATIVE number??").
+# probe-setup-refusal-reason: "load obj 99999999999999999999": witnesses do_load's negative-vnum refusal after atoi overflow wraps (src/act.wizard.c:1295)
 
 [fixture]
 empty-players
