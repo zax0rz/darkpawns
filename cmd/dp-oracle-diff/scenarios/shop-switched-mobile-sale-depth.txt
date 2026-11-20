@@ -12,8 +12,8 @@ spawn-mob 12102 1 12135 121
 give-object 12102 12102 100000 121
 spawn-mob 12220 1 12135 122
 mob-script 12220 oracle/trade.lua 512
-spawn-mob 70 1 12135 121
-give-object 70 12102 3 121
+spawn-mob 69 1 12135 121
+give-object 69 12102 3 121
 replace-room-exits 12135 none
 
 [lua-script mob/oracle/trade.lua]
@@ -39,10 +39,10 @@ testpassword
 
 [warmup]
 goto 12135
-set mob satan cha 10
+set mob clone cha 10
 set mob Hansen gold 15
-force satan say gear
-switch satan
+force clone say gear
+switch clone
 
 [probe]
 sell 3 gold
