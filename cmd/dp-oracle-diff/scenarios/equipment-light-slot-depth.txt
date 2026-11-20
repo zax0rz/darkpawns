@@ -1,0 +1,51 @@
+# depth-case: equipment.saved-light-slot
+# Shipped zone 42 equips a mobile with obj #4212 (an icy prism, non-rare light)
+# in WEAR_LIGHT (slot 0) via reset_zone (src/db.c:2211; lib/world/zon/42.zon:53).
+# Under quiet-mobs, spawn-mob + equip-object at wear position 0 reproduces the
+# exact E-command WEAR_LIGHT load in room 8162. Switching into Sostratos and
+# running equipment executes do_equipment (src/act.informative.c:1470-1495) and
+# prints C's where[0] ("<used as light>      ", src/constants.c:728).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4102 1 8162 80
+equip-object 4102 4212 999 0 80
+force-load 4212
+
+[setup:oracle]
+Lighteq
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lighteq
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+look sostratos
+switch sostratos
+equipment
+return

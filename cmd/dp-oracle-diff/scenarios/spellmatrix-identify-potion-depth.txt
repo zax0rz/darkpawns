@@ -1,0 +1,86 @@
+# depth-case: spell.identify.matrix-potion-olc
+# Direct live CAST_POTION route for SPELL_IDENTIFY (60).
+# ItemBuilder (LVL_IMPL) configures potion #4399 via oedit with level 20 and
+# spell value[1]=60 (SPELL_IDENTIFY), loads it, and gives it to ItemMage (level 30).
+# ItemMage quaffs the potion, exercising do_use -> mag_objectmagic(CAST_POTION) ->
+# call_magic(ch, ch, NULL, SPELL_IDENTIFY, ...) -> spell_identify
+# (src/act.other.c:897-924; src/spell_parser.c:699-718; src/spells.c:476-605).
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+ItemBuilder
+Y
+buildpass
+buildpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ItemBuilder
+y
+buildpass
+buildpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ItemMage
+Y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ItemMage
+y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport ItemMage 8162
+set player ItemMage level 30
+oedit 4399
+D
+20
+60
+0
+0
+q
+y
+load obj 4399
+give powder ItemMage
+
+[probe]
+send:peer quaff powder
