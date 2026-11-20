@@ -37,7 +37,7 @@ exact row 41 one-byte mutation, that same test fails in
 player line. The exact mutant worktree is
 `/home/zach/wt/luna-r2-b2-mutant-row41`.
 
-## Row 19 unresolved site audit
+## Row 19 post-census correction
 
 The exact row 19 mutation changes the second `doSplit` insufficient-gold
 literal after the actor lock (`pkg/game/other_economy.go:73-76`). The retained
@@ -46,5 +46,7 @@ the earlier precheck at lines 41-43, which remains unmutated. C
 `do_split` (`src/act.other.c:836-841`) has only that precheck, and C's
 `game_loop` processes descriptor commands serially (`src/comm.c:594-634`).
 This is a live C-output witness but not a revert proof for the sampled Go
-literal. The row's post-census classification is pending Zach's decision; no
-`doSplit` code is changed in this batch.
+literal. Its post-census class is `go-only-in-game`, so it leaves the repair
+list while the frozen TSV and denominator remain unchanged. Keep the second Go
+check because it guards against concurrent gold changes; removing it is a
+separate question. No `doSplit` code is changed in this batch.
