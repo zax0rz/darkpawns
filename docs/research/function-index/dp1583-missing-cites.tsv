@@ -45,3 +45,6 @@ Board_remove_msg	pkg/boards/boards.go:809	none ("RemoveMsg removes a message fro
 Board_save_board	pkg/boards/boards.go:241	none ("saveBoard writes one board's data to its save file.")
 Board_load_board	pkg/boards/boards.go:160	none ("loadBoard reads one board's data from its save file.")
 Board_reset_board	pkg/boards/boards.go:556	none ("resetBoard clears all messages on a board and deletes its save file.")
+write_to_output	pkg/session/session_send.go:307	none ("func (s *Session) Send(message string)"; the flush-frame comments cite comm.c:1624-1640 inline, no src/)
+write_compressed	pkg/telnet/listener.go:965	none ("writeLocked writes data assuming the caller already holds tc.wmu."; enableCompression's comment names C's COMPRESS_START bytes without a src/ cite)
+perform_socket_write	pkg/telnet/listener.go:965	none (same writeLocked comment)
