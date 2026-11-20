@@ -1,0 +1,51 @@
+# C-first do_mold renamed-keyword witness (src/new_cmds.c:88-91).
+# do_mold rebuilds obj->name as "<name> _<GET_NAME>_ mold_item". The rename
+# itself prints no name bytes, but an immortal `stat` of the molded object
+# prints the full alias list verbatim in the stat header
+# (src/act.wizard.c:520-524), so the Aliases line witnesses the construction
+# bytes, and `get mold_item` proves the renamed keyword still resolves.
+# C path: src/new_cmds.c:55-105; src/act.wizard.c:515-527.
+# depth-case: mold.renamed-aliases-stat
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Moldstatactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Moldstatactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+load obj 1003
+
+[probe]
+mold clay blob A lumpy blob
+stat blob
+drop blob
+get mold_item
+inventory

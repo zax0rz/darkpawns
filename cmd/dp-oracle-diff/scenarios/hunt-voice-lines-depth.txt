@@ -1,0 +1,114 @@
+# C-first hunt_victim voice lines (src/graph.c:369-393, cases 6 and 10).
+# Twenty Skarash bodies (vnum 14203, MOB_HUNTER set by do_sethunt,
+# src/act.wizard.c:3450-3472) hunt the descriptor owner from 8106, whose only
+# replaced exit is an open south exit into 8105 with ROOM_TUNNEL set
+# (src/structs.h:64). find_first_step ignores room flags, so the BFS keeps
+# returning south, while do_simple_move refuses the occupied-tunnel
+# destination before moving ("There isn't enough room there!",
+# src/act.movement.c:142-147), so the hunters never arrive. Every
+# mobile_activity pass (twice per pass per body, src/mobact.c:76-81) falls to
+# the can_speak voice draw number(0,150) (src/graph.c:354).
+# Case 10 tells "Where is that little wimp," directly; case 6 gossips "flees
+# like a rabbit..." behind its extra number(0,20) gate (src/graph.c:375-377).
+# Twenty hunters multiply the voice draws per window so the rare case-6
+# selection fires its gate within one retained run.
+# The long pulse windows sample both lines on the shared stream (R3).
+# C path: src/mobact.c:76-81, :127-147; src/graph.c:262-404; src/utils.c:675-680.
+# depth-case: mob.hunt-case-6-rabbit-flee
+# depth-case: mob.hunt-case-10-little-wimp
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 8 on
+replace-room-exits 8106 south 8105 0
+
+[setup:oracle]
+Huntvoice
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Huntvoice
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8106
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+load mob 14203
+goto 8105
+sethunt Huntvoice 1.skarash
+sethunt Huntvoice 2.skarash
+sethunt Huntvoice 3.skarash
+sethunt Huntvoice 4.skarash
+sethunt Huntvoice 5.skarash
+sethunt Huntvoice 6.skarash
+sethunt Huntvoice 7.skarash
+sethunt Huntvoice 8.skarash
+sethunt Huntvoice 9.skarash
+sethunt Huntvoice 10.skarash
+sethunt Huntvoice 11.skarash
+sethunt Huntvoice 12.skarash
+sethunt Huntvoice 13.skarash
+sethunt Huntvoice 14.skarash
+sethunt Huntvoice 15.skarash
+sethunt Huntvoice 16.skarash
+sethunt Huntvoice 17.skarash
+sethunt Huntvoice 18.skarash
+sethunt Huntvoice 19.skarash
+sethunt Huntvoice 20.skarash
+
+[probe]
+~dpclock pulse 2000
+~dpclock pulse 2000
+~dpclock pulse 2000
+~dpclock pulse 2000
+~dpclock pulse 2000
+~dpclock pulse 2000
+~dpclock pulse 2000
+~dpclock pulse 2000
+~dpclock pulse 2000
+~dpclock pulse 2000
+~dpclock pulse 2000
+~dpclock pulse 2000
+~dpclock pulse 2000
+~dpclock pulse 2000
+~dpclock pulse 2000
+~dpclock pulse 2000

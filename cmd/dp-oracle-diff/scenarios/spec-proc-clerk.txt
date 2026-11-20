@@ -73,7 +73,7 @@ set ClerkActor gold 1000
 list
 buy junk
 buy citizenship
-set ClerkActor gold 3000
+set ClerkActor gold 5000
 buy citizenship
 buy citizenship
 gold
