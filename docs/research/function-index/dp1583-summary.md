@@ -1,10 +1,15 @@
 # DP-1583 dispositions — checkpoint batch (act.comm.c → boards.c)
 
-Status: **checkpoint (50 of 413 rows)**, awaiting Claude's spot-check before
-the remaining C files are settled. Companion tables:
+Status: **checkpoint accepted; continuing with the remaining files.** Counts
+below cover the accepted 50-row batch and are extended as later batches land.
+Companion tables:
 [`dp1583-dispositions.tsv`](dp1583-dispositions.tsv) and
 [`dp1583-missing-cites.tsv`](dp1583-missing-cites.tsv). This run is docs-only:
 no Go code, no manifests, no rulebook edits.
+
+**What `ported-other-name` means:** a Go function does this C function's job.
+It does **not** mean the port is faithful — that is what depth coverage (R5h,
+the oracle) settles; "44 ported" is not "44 proven".
 
 ## Counts per disposition (checkpoint batch)
 
@@ -22,6 +27,16 @@ no Go code, no manifests, no rulebook edits.
 Missing-cites rows: **46** (one per `ported-other-name` Go function whose doc
 comment carries no machine-resolvable C citation — `do_qcomm` contributes two,
 `cmdQsay` and `cmdQecho`).
+
+## Missing-cite forms (checkpoint batch)
+
+| form | rows |
+|---|---:|
+| no C reference of any kind in the doc comment | 28 |
+| C named in prose the index cannot resolve (no `src/` prefix, or no `C name()` / `file.c:name()` form) | 14 |
+| banner names a different function (stale copy-paste: `cmdTeleport`, `cmdWizlock`, `cmdDate`, `cmdHome`) | 4 |
+
+Zach decides the cleanup after all 413 rows are in; nothing is edited now.
 
 ## Files covered
 
