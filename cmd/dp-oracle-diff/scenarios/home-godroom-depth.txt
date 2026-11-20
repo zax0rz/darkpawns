@@ -1,0 +1,43 @@
+# C-first do_home god-room gate. The ordinary IMMORT is below LVL_GRGOD and
+# the disposable room flag makes the load-room restriction reachable.
+# depth-case: home.god-room-loadroom-gate
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8161 10 on
+
+[setup:oracle]
+Datedepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Datedepth
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set Datedepth level 31
+
+[probe]
+home 8161
