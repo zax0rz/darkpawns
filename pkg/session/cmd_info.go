@@ -1407,7 +1407,6 @@ func cmdWhere(s *Session, args []string) error {
 
 	var out strings.Builder
 	out.WriteString("Players\n-------\n")
-	found := false
 	for _, sess := range sessions {
 		if sess.player == nil || !sess.isConPlaying() {
 			continue
@@ -1433,11 +1432,9 @@ func cmdWhere(s *Session, args []string) error {
 		} else {
 			fmt.Fprintf(&out, "%-20s - [%5d] %s\n", owner.Name, room.VNum, room.Name)
 		}
-		found = true
 	}
-	if !found {
-		out.WriteString("No-one visible.\n")
-	}
+	// C's do_where prints only the header when nobody matches
+	// (src/act.informative.c:2244-2268); there is no empty-list line, so
 	s.sendText(out.String())
 	return nil
 }

@@ -3,20 +3,20 @@
 go files scanned	347
 c files scanned	66
 data files scanned	653
-go candidates (literal at a sink)	2166
+go candidates (literal at a sink)	2117
 c candidates (literal in a sink call)	5547
-go segments	2155
+go segments	2142
 c segments	4902
 go-only segments	13
-c-missing segments	2849
+c-missing segments	2842
 data-sourced segments	26
-unresolved go sink arguments	765
+unresolved go sink arguments	764
 
 [go sink table]
-Act	697	pkg/game Act(): the act()-style primitive (427 call sites)
+Act	700	pkg/game Act(): the act()-style primitive (427 call sites)
 BroadcastToRoom	0	SessionManager.BroadcastToRoom, socket-level room broadcast (22 call sites)
-Send	555	Session.Send and wrapper sessions (679 call sites)
-SendMessage	744	Player/MobInstance.SendMessage (599 call sites)
+Send	516	Session.Send and wrapper sessions (679 call sites)
+SendMessage	734	Player/MobInstance.SendMessage (599 call sites)
 SendToAll	0	World.SendToAll and SessionManager.SendToAll (10 call sites)
 SendToChar	5	act.go:744 SendToChar(): C send_to_char, a direct descriptor write with no SENDOK gate; callers supply their own line ending
 SendToOutdoor	0	SessionManager.SendToOutdoor, weather broadcast
@@ -29,8 +29,8 @@ channelSend	2	pkg/game/out_of_band.go channelSend(): the sender's own channel ec
 communicationSend	34	directed_speech.go:56: one-line Act(ToChar|ToSleep) wrapper
 movementSendToChar	27	movement_commands.go:12: one-line Act(ToChar|ToSleep) wrapper
 sendPromptText	3	Session.sendPromptText: prompt bytes are player-facing
-sendText	9	Session.sendText, group and mail text (73 call sites)
-sendToChar	57	spec_procs.go:85 sendToChar(): one-line SendMessage wrapper
+sendText	8	Session.sendText, group and mail text (73 call sites)
+sendToChar	55	spec_procs.go:85 sendToChar(): one-line SendMessage wrapper
 
 [c sink table]
 SEND_TO_Q	72	comm.h:66 macro: write_to_output(desc, "%s", messg) (118 call sites)
@@ -51,8 +51,8 @@ strncpy	1	buffer append, bounded (29 call sites)
 write_to_output	72	descriptor output queue (107 call sites)
 
 [go candidates by package]
-pkg/game	1554
-pkg/session	602
+pkg/game	1545
+pkg/session	562
 pkg/spells	10
 
 [c candidates by file]
@@ -130,17 +130,17 @@ pkg/session/wiz_zone.go	2
 src/act.comm.c	20
 src/act.display.c	6
 src/act.informative.c	273
-src/act.item.c	8
+src/act.item.c	9
 src/act.movement.c	43
 src/act.offensive.c	104
-src/act.other.c	38
+src/act.other.c	40
 src/act.social.c	9
 src/act.wizard.c	145
 src/ban.c	15
 src/boards.c	32
 src/clan.c	17
 src/class.c	32
-src/comm.c	27
+src/comm.c	28
 src/constants.c	455
 src/db.c	20
 src/dream.c	14
@@ -149,7 +149,7 @@ src/file-edit.c	8
 src/gate.c	2
 src/graph.c	13
 src/handler.c	30
-src/house.c	15
+src/house.c	16
 src/ident.c	5
 src/improved-edit.c	58
 src/interpreter.c	87
@@ -160,8 +160,8 @@ src/medit.c	51
 src/mobact.c	2
 src/mobprog.c	20
 src/modify.c	21
-src/new_cmds.c	209
-src/new_cmds2.c	51
+src/new_cmds.c	208
+src/new_cmds2.c	55
 src/objsave.c	47
 src/oc.c	9
 src/oedit.c	81
@@ -172,9 +172,9 @@ src/scripts.c	20
 src/sedit.c	62
 src/shop.c	42
 src/spec_assign.c	3
-src/spec_procs.c	73
+src/spec_procs.c	57
 src/spec_procs2.c	59
-src/spec_procs3.c	57
+src/spec_procs3.c	58
 src/spell_parser.c	51
 src/spells.c	123
 src/tattoo.c	1
