@@ -181,7 +181,6 @@ send:builder 1
 send:builder 79
 send:builder q
 send:builder y
-load obj 8053
 get wand0802
 hold wand0802
 use wand0802 ItemPeer
@@ -202,7 +201,6 @@ send:builder 1
 send:builder 81
 send:builder q
 send:builder y
-load obj 8053
 get wand0803
 hold wand0803
 use wand0803 ItemPeer
@@ -223,7 +221,6 @@ send:builder 1
 send:builder 82
 send:builder q
 send:builder y
-load obj 8053
 get wand0804
 hold wand0804
 use wand0804 ItemPeer
@@ -244,7 +241,6 @@ send:builder 1
 send:builder 84
 send:builder q
 send:builder y
-load obj 8053
 get wand0805
 hold wand0805
 use wand0805 ItemPeer

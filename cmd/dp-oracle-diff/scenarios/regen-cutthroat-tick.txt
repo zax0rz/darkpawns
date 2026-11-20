@@ -122,6 +122,5 @@ set player CutTickGod room 8105
 [probe]
 send:attacker cutthroat CutTickVictim
 ~dpclock pulse 25
-peace
 ~dpclock hour 1
 send:victim score

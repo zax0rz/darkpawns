@@ -6,6 +6,7 @@
 # depth-case: sedit.nonnumeric-argument
 # depth-case: sedit.unknown-zone
 # depth-case: sedit.interactive-olc
+# probe-setup-refusal-reason: Tests `do_olc` `sedit` missing, non-numeric, and unknown-zone vnum entry refusals.
 
 [fixture]
 empty-players

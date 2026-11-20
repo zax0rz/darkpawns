@@ -183,7 +183,6 @@ send:builder 1
 send:builder 45
 send:builder q
 send:builder y
-load obj 8054
 get staff0702
 hold staff0702
 use staff0702
@@ -204,7 +203,6 @@ send:builder 1
 send:builder 46
 send:builder q
 send:builder y
-load obj 8054
 get staff0703
 hold staff0703
 use staff0703
@@ -225,7 +223,6 @@ send:builder 1
 send:builder 47
 send:builder q
 send:builder y
-load obj 8054
 get staff0704
 hold staff0704
 use staff0704
@@ -246,7 +243,6 @@ send:builder 1
 send:builder 48
 send:builder q
 send:builder y
-load obj 8054
 get staff0705
 hold staff0705
 use staff0705

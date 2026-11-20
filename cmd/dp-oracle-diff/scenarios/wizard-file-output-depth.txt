@@ -9,6 +9,7 @@
 # depth-case: set.file-missing
 # depth-case: set.file-password
 # depth-case: set.file-saved
+# probe-setup-refusal-reason: Tests `do_set player` missing-player and lower-level file-access refusal branches.
 
 [fixture]
 quiet-mobs

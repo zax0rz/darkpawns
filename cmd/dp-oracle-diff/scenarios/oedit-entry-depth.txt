@@ -3,6 +3,7 @@
 # depth-case: oedit.nonnumeric-argument
 # depth-case: oedit.unknown-zone
 # depth-case: oedit.interactive-olc
+# probe-setup-refusal-reason: Tests `do_olc` `oedit` missing, non-numeric, and unknown-zone vnum entry refusals.
 
 [fixture]
 empty-players

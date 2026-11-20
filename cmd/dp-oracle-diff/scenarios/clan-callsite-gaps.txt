@@ -270,9 +270,9 @@ force Clanmate clan promote Clanapply
 force Clanimmlow clan expel Clanapply Wolves
 force Clanimmlow clan demote Clanapply Wolves
 
-force Clangod clan expel Nobody Missing
-force Clangod clan demote Nobody Missing
-force Clangod clan promote Nobody Missing
+clan expel Nobody Missing
+clan demote Nobody Missing
+clan promote Nobody Missing
 
 clan set privilege expel 2 Wolves
 force Clanapply clan expel Nobody
@@ -284,9 +284,9 @@ clan set privilege promote 2 Wolves
 force Clanapply clan promote Nobody
 clan set privilege promote 1 Wolves
 
-force Clangod clan expel Nobody Wolves
-force Clangod clan demote Nobody Wolves
-force Clangod clan promote Nobody Wolves
+clan expel Nobody Wolves
+clan demote Nobody Wolves
+clan promote Nobody Wolves
 force Clanapply clan expel Clanother
 force Clanapply clan demote Clanother
 force Clanapply clan promote Clanother
@@ -295,14 +295,14 @@ force Clanapply clan promote Clanother
 # successful change, top-rank, and mortal-over-rank outputs through C dispatch.
 force Clanother clan quit
 force Clanother clan apply Wolves
-force Clangod clan promote Clanother Wolves
-force Clangod clan enroll Clanother Wolves
-force Clangod clan demote Clanother Wolves
-force Clangod clan promote Clanother Wolves
-force Clangod clan demote Clanother Wolves
-force Clangod clan promote Clanother Wolves
-force Clangod clan promote Clanother Wolves
-force Clangod clan promote Clanother Wolves
+clan promote Clanother Wolves
+clan enroll Clanother Wolves
+clan demote Clanother Wolves
+clan promote Clanother Wolves
+clan demote Clanother Wolves
+clan promote Clanother Wolves
+clan promote Clanother Wolves
+clan promote Clanother Wolves
 force Clanapply clan expel Clanother
 force Clanapply clan demote Clanother
 force Clanapply clan promote Clanother

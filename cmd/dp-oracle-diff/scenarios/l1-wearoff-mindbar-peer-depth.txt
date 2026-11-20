@@ -77,7 +77,6 @@ set Targetmb hit 5000
 [probe]
 cast 'mind bar' Targetmb
 ~dpclock pulse 20
-peace
 ~dpclock pulse 610
 send:victim time
 ~dpclock pulse 630

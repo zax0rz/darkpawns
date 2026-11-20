@@ -1,6 +1,7 @@
 # Mortal no-arg batch (batch 13).
 # Fixes: bearhug audit (\n\r), serpent audit + CanUseSkill added.
 # Faithful greens: insult, send, sethunt, show, skillset, wnewbie, zreset, wiznet.
+# probe-setup-refusal-reason: Tests mortal authorization refusals (`Huh?!?`) for immortal commands (`sethunt`, `skillset`, etc.).
 
 [fixture]
 quiet-mobs

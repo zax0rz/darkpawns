@@ -12,6 +12,7 @@
 # - dc      (do_dc)      — no-arg → "Usage: DC <connection number> (type USERS
 #                          for a list)". The Go cmdDc printed an invented
 #                          "Usage: dc <playername|all>"; fixed to C verbatim.
+# probe-setup-refusal-reason: Tests no-argument `force` usage refusal ("Whom do you wish to force do what?").
 
 [fixture]
 empty-players

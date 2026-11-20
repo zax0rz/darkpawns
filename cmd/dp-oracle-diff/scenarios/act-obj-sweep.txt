@@ -11,6 +11,7 @@
 #
 # Result 2026-07-23: 13/14 GREEN. One quarantined below — `give <item>
 # <missing-person>` diverges (DP-1200, NOPERSON class); un-quarantine at fix.
+# probe-setup-refusal-reason: Tests bare no-argument `give` usage refusal ("Give what to who?") in the act.obj command sweep.
 
 [fixture]
 quiet-mobs

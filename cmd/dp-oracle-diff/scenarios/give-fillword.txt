@@ -1,4 +1,6 @@
 # depth-case: give.fill-word-parse
+# probe-setup-refusal-reason: Tests `do_give` fill-word stripping on an uncarried item ("You don't seem to have a zzz.").
+
 [fixture]
 quiet-mobs
 [setup:oracle]

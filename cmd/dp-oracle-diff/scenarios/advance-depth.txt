@@ -15,6 +15,7 @@
 # same room to exercise get_char_vis -> IS_NPC without autonomous movement.
 # C promotion uses gain_exp_regardless()/advance_level(); demotion resets with
 # do_start(), then restores real abilities. The peer captures TO_VICT text.
+# probe-setup-refusal-reason: Tests `do_advance` argument, target, level, and privilege refusal branches directly in [probe].
 
 [fixture]
 empty-players
