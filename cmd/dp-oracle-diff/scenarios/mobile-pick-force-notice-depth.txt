@@ -1,0 +1,113 @@
+# depth-case: door.pick-no-lockpicks
+# A mortal peer without lockpicks reaches ok_pick's missing-picks message; a
+# second peer switches into an NPC that a level-34 God then forces, exposing
+# the descriptor-bound force notification (src/act.movement.c:539-554;
+# src/act.wizard.c:1864-1880).
+# depth-case: force.switched-mobile-notice
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8040 163
+
+[setup:oracle]
+Lockwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lockwitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Switchpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Switchpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:pickpeer]
+Pickpeer
+Y
+pickpass
+pickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:pickpeer]
+Pickpeer
+y
+pickpass
+pickpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8040
+teleport Switchpeer 8040
+teleport Pickpeer 8040
+advance Switchpeer 39
+load obj 8010
+give bread Switchpeer
+load obj 8027
+give lockpicks Switchpeer
+close gate
+lock gate
+set Lockwitness level 34
+
+[probe]
+send:pickpeer pick gate
+send:peer switch trainee
+force trainee sit
