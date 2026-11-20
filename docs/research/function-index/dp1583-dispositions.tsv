@@ -323,3 +323,7 @@ add_to_list	src/shop.c:1027	inlined	pkg/parser/shop.go:99	parseShopRecord's fiel
 end_read_list	src/shop.c:1052	inlined	pkg/parser/shop.go:99	the -1 terminator check folds into parseShopRecord's per-line loop (pkg/parser/shop.go:99+).	-
 read_list	src/shop.c:1077	inlined	pkg/parser/shop.go:99	the "v1 v2 ... -1" lines parse into slices inside parseShopRecord (pkg/parser/shop.go:99+).	-
 read_type_list	src/shop.c:1101	inlined	pkg/parser/shop.go:99	same for buy-type lists inside parseShopRecord (pkg/parser/shop.go:99+).	-
+ASSIGNMOB	src/spec_assign.c:45	ported-other-name	pkg/game/spec_assign.go:17	MobSpecAssign is the vnum->special-name table ("Source: assign_mobiles() in spec_assign.c", spec_assign.go:16-17; e.g. 1: "puff" at :19) — C's mob_index[rnum].func = fname binding, data-driven.	-
+ASSIGNOBJ	src/spec_assign.c:57	ported-other-name	pkg/game/spec_assign.go:352	the object assignment map binds vnums to special names, e.g. 4001/4002: "moon_gate" (spec_assign.go:352-353) — C's obj_index func binding.	-
+ASSIGNROOM	src/spec_assign.c:68	ported-other-name	pkg/game/spec_assign.go:20	the room assignment map lives alongside ("This is the lookup table only", spec_assign.go:7) — C's world[rnum].func binding.	-
+assign_objects	src/spec_assign.c:516	ported-other-name	pkg/game/spec_assign.go:352	the object-specials map section mirrors assign_objects' ASSIGNOBJ rows one-for-one (4001-4002 moon_gate, 8064+ gen_board, 14415 horn, spec_assign.go:352-370).	-
