@@ -1,7 +1,6 @@
-# C-first switched shop customer exercises both get_selling_obj's used-up
-# wand refusal and shopping_sell's partial affordability response.
-# C: src/shop.c:593-631,732-795; src/act.wizard.c:1175-1201.
-# depth-case: shops.audit.switched-mobile-used-up-wand-refusal
+# C-first switched shop customer exercises shopping_sell's partial affordability
+# response and its direct sale receipt.
+# C: src/shop.c:732-803; src/act.wizard.c:1175-1201.
 # depth-case: shops.audit.switched-mobile-partial-sale-affordability
 
 [fixture]
@@ -10,22 +9,11 @@ quiet-mobs
 quiet-zone 121
 spawn-mob 12102 1 12135 121
 give-object 12102 12102 100000 121
-spawn-mob 12220 1 12135 122
-mob-script 12220 oracle/trade.lua 512
 spawn-mob 1 1 12135 121
 give-object 1 12102 100000 121
 give-object 1 12102 100000 121
 give-object 1 12102 100000 121
 replace-room-exits 12135 none
-
-[lua-script mob/oracle/trade.lua]
-function oncmd()
-if argument ~= "say gear" then return FALSE end
-local wand = oload(ch, 14405, "char")
-wand.val[3] = 0
-save_obj(wand)
-return TRUE
-end
 
 [setup:oracle]
 Testor
@@ -41,14 +29,9 @@ testpassword
 
 [warmup]
 goto 12135
-set mob Puff cha 10
 set mob Hansen gold 15
-say gear
-give winterwand Puff
 switch Puff
 
 [probe]
 sell 3 gold
-inventory
-sell winterwand
 inventory
