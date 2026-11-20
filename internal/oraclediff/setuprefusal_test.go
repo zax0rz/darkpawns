@@ -228,9 +228,11 @@ func TestParseScenarioProbeSetupRefusalReason(t *testing.T) {
 	if hits := CheckProbeSetupRefusalsForScenario(blocks, sc.ProbeSetupRefusalReasons); len(hits) != 0 {
 		t.Fatalf("named steps should pass, got %+v", hits)
 	}
-	blocksWithStray := append(blocks, AudienceProbeBlock{
-		Command: "load obj 3000", Audience: "actor", Output: "Huh?!?\r\n",
-	})
+	blocksWithStray := []AudienceProbeBlock{
+		{Command: "load obj 4399", Audience: "actor", Output: "Huh?!?\r\n"},
+		{Command: "send:low transfer all", Audience: "low", Output: "You are not godly enough to do that!\r\n"},
+		{Command: "load obj 3000", Audience: "actor", Output: "Huh?!?\r\n"},
+	}
 	hits := CheckProbeSetupRefusalsForScenario(blocksWithStray, sc.ProbeSetupRefusalReasons)
 	if len(hits) != 1 || hits[0].Step != "load obj 3000" {
 		t.Fatalf("unnamed refusal in same file must fail, got %+v", hits)
