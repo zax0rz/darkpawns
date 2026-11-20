@@ -10,6 +10,7 @@
 # depth-case: teleport.same-level-refusal
 # depth-case: teleport.success-audience
 # depth-case: teleport.two-argument
+# probe-setup-refusal-reason: Tests `do_teleport` missing-target, self-target, and invalid-room refusal branches.
 
 [fixture]
 empty-players

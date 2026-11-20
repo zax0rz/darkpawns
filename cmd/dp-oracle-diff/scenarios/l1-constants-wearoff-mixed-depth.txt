@@ -84,11 +84,9 @@ load obj 4819
 [probe]
 cast 'smokescreen' Targetmix
 ~dpclock pulse 20
-peace
 ~dpclock pulse 610
 cast 'flame strike' Targetmix
 ~dpclock pulse 20
-peace
 ~dpclock pulse 610
 send:victim time
 cast 'metalskin' Constmix

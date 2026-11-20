@@ -85,19 +85,15 @@ cast 'charm person' Targetwo
 ~dpclock pulse 630
 cast 'blindness' Targetwo
 ~dpclock pulse 20
-peace
 ~dpclock pulse 630
 cast 'curse' Targetwo
 ~dpclock pulse 20
-peace
 ~dpclock pulse 630
 cast 'poison' Targetwo
 ~dpclock pulse 20
-peace
 ~dpclock pulse 630
 cast 'chill touch' Targetwo
 ~dpclock pulse 20
-peace
 ~dpclock pulse 630
 send:victim time
 cast 'sleep' Targetwo

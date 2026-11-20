@@ -1,5 +1,6 @@
 # God-harness wiz-verb no-arg batch (batch 2).
 # Deferred: ban (table display), invis/wizlock (invis-prompt-prefix contamination).
+# probe-setup-refusal-reason: Tests no-argument usage refusals for immortal wizard verbs (`teleport`, etc.) in the god no-arg batch.
 
 [fixture]
 empty-players

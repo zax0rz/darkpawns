@@ -21,6 +21,7 @@
 # depth-case: skillset.player-only-ordinal
 # depth-case: skillset.atoi-leading-digits
 # depth-case: skillset.atoi-first-token
+# probe-setup-refusal-reason: Tests `do_skillset` syntax, target, skill-name, range, and NPC refusal branches.
 
 [fixture]
 empty-players

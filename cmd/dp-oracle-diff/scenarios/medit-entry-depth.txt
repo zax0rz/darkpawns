@@ -6,6 +6,7 @@
 # depth-case: medit.no-argument
 # depth-case: medit.nonnumeric-argument
 # depth-case: medit.unknown-zone
+# probe-setup-refusal-reason: Tests `do_olc` `medit` missing, non-numeric, and unknown-zone vnum entry refusals.
 
 [fixture]
 empty-players

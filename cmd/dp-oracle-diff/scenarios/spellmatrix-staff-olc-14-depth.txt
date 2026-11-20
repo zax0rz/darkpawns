@@ -213,7 +213,6 @@ send:builder 1
 send:builder 89
 send:builder q
 send:builder y
-load obj 8054
 send:builder goto 3001
 get staff1403
 hold staff1403
@@ -236,7 +235,6 @@ send:builder 1
 send:builder 90
 send:builder q
 send:builder y
-load obj 8054
 send:builder goto 3001
 get staff1404
 hold staff1404
@@ -259,7 +257,6 @@ send:builder 1
 send:builder 93
 send:builder q
 send:builder y
-load obj 8054
 send:builder goto 3001
 get staff1405
 hold staff1405

@@ -2,6 +2,7 @@
 # A level-31 immortal is below LVL_GRGOD and receives C's god-room refusal.
 
 # depth-case: goto.god-room-gate
+# probe-setup-refusal-reason: Tests `do_goto` `ROOM_GODROOM` level-gate refusal ("You are not godly enough to use that room!").
 
 [fixture]
 empty-players

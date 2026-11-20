@@ -1,6 +1,7 @@
 # depth-case: say.stupid-gate
 # God set field vehicle: prove C's stat field and its unknown-field behavior,
 # then exercise the communication stupid gate with WIS 0.
+# probe-setup-refusal-reason: Tests `do_set` unknown-field refusal (`set Mordecai position 3` -> "Can't set that!").
 
 [fixture]
 empty-players

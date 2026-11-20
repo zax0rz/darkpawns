@@ -143,9 +143,6 @@ send:ridepeer ride horse
 
 [probe]
 send:mover down
-teleport Watchpeer 8105
 send:mover up
-teleport Watchpeer 8106
 send:ridepeer down
-teleport Watchpeer 8105
 send:ridepeer up

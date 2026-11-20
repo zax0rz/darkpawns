@@ -1,6 +1,7 @@
 # depth-case: wiz.load-negative-vnum
 # C do_load (src/act.wizard.c:1293-1295): a negative number answers
 # "A NEGATIVE number??" before any vnum lookup.
+# probe-setup-refusal-reason: Tests `do_load` negative/overflow vnum refusal ("A NEGATIVE number??").
 
 [fixture]
 empty-players

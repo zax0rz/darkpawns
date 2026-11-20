@@ -12,6 +12,7 @@
 # Three clients: giver (Giver), recipient (Givevic), bystander (Giveobs), all
 # co-located. Proves the actor / TO_VICT / TO_NOTVICT audiences on a successful
 # give. Items come from the starting backpack.
+# probe-setup-refusal-reason: Tests `do_give` no-argument, missing-item, missing-victim, and unknown-victim refusal branches.
 
 [fixture]
 quiet-mobs

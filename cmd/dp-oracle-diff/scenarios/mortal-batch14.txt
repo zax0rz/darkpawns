@@ -1,6 +1,7 @@
 # Mortal no-arg batch (batch 14).
 # Targeting fresh never-probed: kill, load, map, mold, mount, nosummon,
 # olist, players, review, search, set, turn.
+# probe-setup-refusal-reason: Tests mortal authorization refusal (`Huh?!?`) for the immortal `set` command.
 
 [fixture]
 quiet-mobs

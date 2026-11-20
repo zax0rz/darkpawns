@@ -12,6 +12,7 @@
 # depth-case: goto.object-unavailable
 # depth-case: goto.player-target
 # depth-case: goto.one-argument
+# probe-setup-refusal-reason: Tests `do_goto` no-argument and target-resolution refusal branches.
 
 [fixture]
 empty-players

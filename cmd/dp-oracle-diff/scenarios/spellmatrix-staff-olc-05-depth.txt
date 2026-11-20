@@ -213,7 +213,6 @@ send:builder 1
 send:builder 33
 send:builder q
 send:builder y
-load obj 8054
 send:builder goto 3001
 get staff0503
 hold staff0503
@@ -221,29 +220,6 @@ use staff0503
 ~dpclock pulse 20
 remove staff0503
 drop staff0503
-score
-send:peer score
-send:observer score
-look
-send:builder goto 8162
-send:builder oedit 8054
-send:builder 1
-send:builder staff0504
-send:builder D
-send:builder 20
-send:builder 1
-send:builder 1
-send:builder 34
-send:builder q
-send:builder y
-load obj 8054
-send:builder goto 3001
-get staff0504
-hold staff0504
-use staff0504
-~dpclock pulse 20
-remove staff0504
-drop staff0504
 score
 send:peer score
 send:observer score
@@ -259,7 +235,6 @@ send:builder 1
 send:builder 35
 send:builder q
 send:builder y
-load obj 8054
 send:builder goto 3001
 get staff0505
 hold staff0505
@@ -267,6 +242,28 @@ use staff0505
 ~dpclock pulse 20
 remove staff0505
 drop staff0505
+score
+send:peer score
+send:observer score
+look
+send:builder goto 8162
+send:builder oedit 8054
+send:builder 1
+send:builder staff0504
+send:builder D
+send:builder 20
+send:builder 1
+send:builder 1
+send:builder 34
+send:builder q
+send:builder y
+send:builder goto 3001
+get staff0504
+hold staff0504
+use staff0504
+~dpclock pulse 20
+remove staff0504
+drop staff0504
 score
 send:peer score
 send:observer score

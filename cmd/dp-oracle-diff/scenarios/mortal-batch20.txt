@@ -1,6 +1,7 @@
 # Mortal no-arg batch (batch 20).
 # Trying commands whose scenarios may be on unmerged branches — probing
 # fresh on main to get them credited.
+# probe-setup-refusal-reason: Tests mortal authorization refusals (`Huh?!?`) for immortal commands (`purge`, etc.).
 
 [fixture]
 quiet-mobs

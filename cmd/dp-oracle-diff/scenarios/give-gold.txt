@@ -1,5 +1,7 @@
 # depth-case: give.gold-zero
 # depth-case: give.gold-insufficient
+# probe-setup-refusal-reason: Tests `perform_give_gold` zero-coin and insufficient-gold refusal branches.
+
 [fixture]
 quiet-mobs
 [setup:oracle]

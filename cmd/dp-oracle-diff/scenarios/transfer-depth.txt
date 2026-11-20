@@ -16,6 +16,7 @@
 # depth-case: transfer.self-refusal
 # depth-case: transfer.lower-level-refusal
 # depth-case: transfer.all-level-refusal
+# probe-setup-refusal-reason: Tests `do_trans` missing-target and argument refusal branches.
 
 [fixture]
 empty-players

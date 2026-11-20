@@ -5,6 +5,7 @@
 # do_get's pre-gate prints "Your arms are already full!" (src/act.item.c:356-358)
 # when the getter is at that limit, and perform_give prints "$N seems to have $S
 # hands full." (src/act.item.c:686-688) when the victim is.
+# probe-setup-refusal-reason: Tests `perform_give` item-count carry-limit refusal ("seems to have his hands full.").
 
 [fixture]
 empty-players

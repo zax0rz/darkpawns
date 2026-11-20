@@ -6,6 +6,7 @@
 # depth-case: set.nohassle.authority
 # depth-case: set.frozen.self
 # depth-case: set.frozen.other
+# probe-setup-refusal-reason: Tests `do_set` field-specific `nohassle`/`frozen` privilege refusal branches.
 
 [fixture]
 empty-players

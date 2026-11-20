@@ -28,6 +28,7 @@
 # depth-case: set.race-invalid
 # depth-case: set.loadroom-missing-room
 # depth-case: set.loadroom-invalid-text
+# probe-setup-refusal-reason: Tests `do_set` invalid room/value/target refusal branches across extended set fields.
 
 [fixture]
 empty-players

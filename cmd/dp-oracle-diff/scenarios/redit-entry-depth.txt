@@ -3,6 +3,7 @@
 # depth-case: redit.unknown-zone
 # depth-case: redit.no-argument-current-room
 # depth-case: redit.interactive-olc
+# probe-setup-refusal-reason: Tests `do_olc` `redit` non-numeric and unknown-zone entry refusals.
 
 [fixture]
 empty-players
