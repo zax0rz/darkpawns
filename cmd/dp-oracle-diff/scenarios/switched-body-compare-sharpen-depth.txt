@@ -20,7 +20,11 @@
 # The short sword passes the weapon-type gate (val3 = TYPE_SLASH - TYPE_HIT =
 # 3), carries no ITEM_MAGIC and no affects (lib/world/obj/80.obj:290-298).
 #
-# give: the immortal giver is exempt from perform_give's MOB_OKGIVE gate
+# give: the clone vnum already exists in the world, so spawn-mob's
+# max-existing check may not place one at 8105; teleport finds it worldwide
+# (get_char_vis) and moves it before the room-scoped gives
+# (give_find_vict -> get_char_room_vis, src/handler.c:1277). The immortal
+# giver is exempt from perform_give's MOB_OKGIVE gate
 # (src/act.item.c:674-679).
 
 [fixture]
@@ -58,6 +62,7 @@ Y
 
 [warmup]
 goto 8105
+teleport clone 8105
 load obj 8037
 load obj 18310
 give short clone
