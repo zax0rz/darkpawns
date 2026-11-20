@@ -2,7 +2,8 @@
 # vehicle's observer sat outside the body's room, so only the mudlog line was
 # witnessed; this variant moves both the body's first session and the observer
 # into 8105 before the second login, so the TO_ROOM takeover act reaches the
-# connected observer. C path: src/interpreter.c:1528-1563, :1640-1649.
+# connected observer; a real God primary drives the warmup movement. C path:
+# src/interpreter.c:1528-1563, :1640-1649.
 # depth-case: entry.reconnect-usurp-room-act
 
 [fixture]
@@ -11,8 +12,32 @@ no-settle
 quiet-mobs
 
 [setup:oracle]
+Zedqwp
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
 
 [setup:port]
+Zedqwp
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
 
 [setup:oracle:login]
 
