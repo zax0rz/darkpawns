@@ -78,10 +78,12 @@ func mustParseCommandOrder(raw string) []orderEntry {
 //     can resolve to DIFFERENT commands (e.g. `go` → gossip for a mortal, goto
 //     for an immortal).
 //
-// Go-only commands (ignore, map, autoloot, …) are not in the C table, so a
-// prefix that only matches them misses here; the caller falls back to the
-// exact-match registry, which is the only way Go-only names resolve (R4 —
-// abbreviations are C surface; Go-only names are not).
+// A typed name that C's table does not hold never reaches the registry: the
+// prefix scan above misses, the registry holds no Go-only names (audited
+// 2026-11-20, docs/research/go-only-commands-2026-11-20.tsv — every
+// registered name, alias included, is a C cmd_info row), and the socials
+// branch below is gated by C command rows. So resolution ends at Huh?!?,
+// exactly C's answer to an unknown name (interpreter.c:916, R4).
 //
 // Returns ("", false) when no reachable entry matches.
 func resolveCommandPrefix(typed string, level int) (string, bool) {
