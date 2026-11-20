@@ -4,3 +4,11 @@ do_qcomm	pkg/session/act_comm.go:62	"(act.comm.c do_qcomm/SCMD_QECHO, LVL_IMMORT
 do_lines	pkg/session/display_cmds.go:347	"cmdLines implements do_lines from act.display.c"
 IB_Seperator	pkg/session/display_cmds.go:50	none ("infobarSeparator draws the separator line in the infobar.")
 IB_HitPointsStr	pkg/session/display_cmds.go:55	none ("infobarHitPointsStr draws the \"Hit Pts:\" label.")
+diag_char_to_char	pkg/game/look.go:1127	none (function has no doc comment)
+list_one_char	pkg/game/look.go:1363	none (inline comments cite "act.informative.c:511-526"/"act.informative.c:546-611", no src/ prefix)
+list_one_char	pkg/game/look.go:1397	none (same inline-comment style, no src/ prefix)
+do_abils	pkg/session/cmd_info.go:56	none (cDisplayAbility helper cites "handler.c:352-366", no src/ prefix)
+do_levels	pkg/session/cmd_info.go:15	none ("cmdLevels" has no C-citing doc comment)
+sort_commands	pkg/session/c_command_list.go:44	none (inline comment cites "act.informative.c:2609", no src/ prefix)
+do_commands	pkg/session/act_informative.go:52	none ("cmdCommands — list all commands available at the player's level."; cmdSocials cites "act.informative.c do_commands/SCMD_SOCIALS" without src/)
+do_coins	pkg/session/cmd_info.go:88	none ("cmdCoins" has no C-citing doc comment)
