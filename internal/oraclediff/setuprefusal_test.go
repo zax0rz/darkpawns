@@ -185,6 +185,24 @@ func TestCheckProbeSetupRefusals(t *testing.T) {
 	if got := CheckProbeSetupRefusals(clean); len(got) != 0 {
 		t.Fatalf("clean builder-loaded probe flagged: %+v", got)
 	}
+
+	// Refused in-probe give (DP-1599: fixed scenarios depend on send:builder give).
+	giveRefused := []AudienceProbeBlock{
+		{Command: "send:builder give powder ItemMage", Audience: "builder", Output: "You don't seem to have a powder.\r\n"},
+		{Command: "send:builder give powder ItemMage", Audience: "primary", Output: ""},
+		{Command: "give bread Stealactor", Audience: "actor", Output: "Stealactor seems to have his hands full.\r\n"},
+		{Command: "give bread Stealactor", Audience: "peer", Output: ""},
+	}
+	giveHits := CheckProbeSetupRefusals(giveRefused)
+	if len(giveHits) != 2 {
+		t.Fatalf("got %d give hits, want 2: %+v", len(giveHits), giveHits)
+	}
+	if giveHits[0].Step != "send:builder give powder ItemMage" || giveHits[0].Line != "You don't seem to have a powder." {
+		t.Fatalf("giveHits[0] = %+v", giveHits[0])
+	}
+	if giveHits[1].Step != "give bread Stealactor" || giveHits[1].Line != "Stealactor seems to have his hands full." {
+		t.Fatalf("giveHits[1] = %+v", giveHits[1])
+	}
 }
 
 func TestParseScenarioProbeSetupRefusalReason(t *testing.T) {
