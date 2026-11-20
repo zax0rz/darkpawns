@@ -172,8 +172,9 @@ func run() int {
 		firstByteWait = flag.Duration("first-byte-wait", 2*time.Second, "maximum wait for the first response byte after issuing a command; 0 uses the quiescence window")
 		quiescence    = flag.Duration("quiescence", 300*time.Millisecond, "silence interval that marks the end of an output burst")
 		bootTimeout   = flag.Duration("boot-timeout", 30*time.Second, "maximum wait for each telnet listener")
-		drawParity    = flag.Bool("draw-parity", false, "also compare the C oracle's and the Go port's RNG draw streams (needs a reference oracle built with the DP draw-log seam); a draw-only mismatch exits 5")
-		goTransport   = flag.String("go-transport", envOr("DP_ORACLE_GO_TRANSPORT", "telnet"), "how the Go port is driven: telnet, or ws (the /play browser client, run headless under node); default from DP_ORACLE_GO_TRANSPORT")
+		drawParity        = flag.Bool("draw-parity", false, "also compare the C oracle's and the Go port's RNG draw streams (needs a reference oracle built with the DP draw-log seam); a draw-only mismatch exits 5")
+		goTransport       = flag.String("go-transport", envOr("DP_ORACLE_GO_TRANSPORT", "telnet"), "how the Go port is driven: telnet, or ws (the /play browser client, run headless under node); default from DP_ORACLE_GO_TRANSPORT")
+		enforceProbeSetup = flag.Bool("enforce-probe-setup-refusals", enforceProbeSetupRefusals, "fail the run if any setup-shaped [probe] step receives a C refusal without # probe-setup-refusal-reason:")
 	)
 	flag.Parse()
 	if _, err := strconv.ParseUint(*seed, 10, 64); err != nil {
@@ -194,7 +195,7 @@ func run() int {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff: -go-transport must be telnet or ws")
 		return 1
 	}
-	if err := execute(*scenarioName, *quiescence, *firstByteWait, *bootTimeout, oracleBin, *seed, *showOracle, *dumpOracle, *showGoLog, *goTransport, *drawParity); err != nil {
+	if err := execute(*scenarioName, *quiescence, *firstByteWait, *bootTimeout, oracleBin, *seed, *showOracle, *dumpOracle, *showGoLog, *goTransport, *drawParity, *enforceProbeSetup); err != nil {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff:", err)
 		if errors.Is(err, errDivergence) {
 			return 3
@@ -224,7 +225,13 @@ var errDivergence = errors.New("normalized divergence detected")
 // divergence, because a coincidence-green transcript is a different finding.
 var errDrawDivergence = errors.New("rng draw streams diverge")
 
-func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Duration, oracleBin, seed string, showOracle bool, dumpOracle string, showGoLog bool, goTransport string, drawParity bool) error {
+// enforceProbeSetupRefusals controls whether DP-1597's in-probe setup refusal
+// check fails the run or runs report-only. Flip this single constant to true
+// once DP-1599's remaining hits are settled (or annotated with
+// "# probe-setup-refusal-reason:").
+const enforceProbeSetupRefusals = false
+
+func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Duration, oracleBin, seed string, showOracle bool, dumpOracle string, showGoLog bool, goTransport string, drawParity bool, enforceProbeSetup bool) error {
 	if firstByteWait < 0 {
 		return errors.New("first-byte-wait must be nonnegative")
 	}
@@ -989,6 +996,19 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	fmt.Printf("hollow-prompt-steps\tcount=%d\n", len(hollowSteps))
 	for _, hs := range hollowSteps {
 		fmt.Printf("hollow-prompt-step\tblock=%d\tcommand=%s\n", hs.block, hs.command)
+	}
+
+	var probeSetupRefusals []oraclediff.ProbeSetupRefusalHit
+	if scenario.ProbeSetupRefusalReason == "" {
+		probeSetupRefusals = oraclediff.CheckProbeSetupRefusals(oracleBlocks)
+	}
+	fmt.Printf("probe-setup-refusals\tcount=%d\n", len(probeSetupRefusals))
+	for _, hit := range probeSetupRefusals {
+		fmt.Printf("probe-setup-refusal\tstep=%d\tcmd=%q\tline=%q\tcite=%s\n", hit.StepIndex, hit.Step, hit.Line, hit.Cite)
+	}
+	if enforceProbeSetup && len(probeSetupRefusals) > 0 {
+		h := probeSetupRefusals[0]
+		return fmt.Errorf("probe-setup-refused: probe step %d %q engine=c: %s (%s)", h.StepIndex, h.Step, h.Line, h.Cite)
 	}
 
 	// Per-block divergence fingerprints: the regression driver pins the SHAPE of
