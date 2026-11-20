@@ -4,7 +4,7 @@
 # src/modify.c:262-263,282-283; src/handler.c:1284-1286; src/interpreter.c:403,751;
 # src/new_cmds.c:599-603; src/act.item.c:795-799,709-716;
 # src/act.wizard.c:1193-1201,1599-1612; src/db.c:104,1281.
-# probe-setup-refusal-reason: Tests `do_give` missing-victim refusal ("To who?") delivered to a switched mobile descriptor.
+# probe-setup-refusal-reason: "give bread": witnesses do_give's missing-victim refusal delivered to a switched mobile descriptor (src/act.item.c:715)
 
 # depth-case: cutthroat.switched-mobile-low-level-player
 # depth-case: switched-object-handling.give-no-victim

@@ -3,7 +3,7 @@
 # LVL_IMMORT+1 table gate must stop before do_purge and emit Huh?!?.
 
 # depth-case: purge.low-level-authorization
-# probe-setup-refusal-reason: Tests `command_interpreter` level-gate refusal (`Huh?!?`) when a low-level immortal invokes `purge`.
+# probe-setup-refusal-reason: "purge": witnesses the interpreter's below-level table gate refusing purge below LVL_IMMORT+1 (src/interpreter.c:916)
 
 [fixture]
 empty-players

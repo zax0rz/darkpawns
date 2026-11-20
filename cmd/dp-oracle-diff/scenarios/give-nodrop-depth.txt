@@ -4,7 +4,6 @@
 # Yeech!" (src/act.item.c:680-685). The God (LVL_IMMORT, exempt) loads the
 # cursed amulet vnum 2111 (ITEM_NODROP) and hands it to a mortal peer, who then
 # tries to give it on and is refused.
-# probe-setup-refusal-reason: Tests `perform_give` `ITEM_NODROP` refusal ("You can't let go of ...!!  Yeech!").
 
 [fixture]
 empty-players

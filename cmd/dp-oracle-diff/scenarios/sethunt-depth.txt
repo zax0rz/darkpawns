@@ -13,7 +13,12 @@
 # depth-case: sethunt.high-victim
 # depth-case: sethunt.success
 # depth-case: sethunt.hunter-state
-# probe-setup-refusal-reason: Tests `do_sethunt` missing-argument, target-resolution, and level-gate refusal branches.
+# probe-setup-refusal-reason: "sethunt": witnesses do_sethunt's no-argument usage refusal (src/act.wizard.c:3455)
+# probe-setup-refusal-reason: "sethunt Nobody Nobody": witnesses do_sethunt's victim lookup miss (src/act.wizard.c:3457)
+# probe-setup-refusal-reason: "sethunt Sethuntvictim Nobody": witnesses do_sethunt's hunter lookup miss (src/act.wizard.c:3459)
+# probe-setup-refusal-reason: "sethunt Sethuntvictim Sethuntvictim": witnesses do_sethunt's hunter-equals-victim refusal (src/act.wizard.c:3461)
+# probe-setup-refusal-reason: "sethunt Sethuntvictim Sethuntadmin": witnesses do_sethunt's PC-hunter gate (src/act.wizard.c:3463)
+# probe-setup-refusal-reason: "sethunt Sethunthigh cleaner": witnesses do_sethunt's higher-level-victim gate (src/act.wizard.c:3466)
 
 [fixture]
 empty-players

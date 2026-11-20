@@ -13,7 +13,10 @@
 # depth-case: set.level
 # depth-case: set.same-level-refusal
 # depth-case: set.field-prefix
-# probe-setup-refusal-reason: Tests `do_set` usage, target, field, and privilege refusal branches.
+# probe-setup-refusal-reason: "set": witnesses do_set's no-argument usage refusal (src/act.wizard.c:2626)
+# probe-setup-refusal-reason: "set Nobody gold 1": witnesses do_set's creature lookup miss (src/act.wizard.c:2643)
+# probe-setup-refusal-reason: "set Settarget junk 1": witnesses do_set's unknown-field refusal (src/act.wizard.c:3048)
+# probe-setup-refusal-reason: "send:bounded set Sethigh brief on": witnesses do_set's higher-level-target refusal for the bounded actor (src/act.wizard.c:2678)
 
 [fixture]
 empty-players

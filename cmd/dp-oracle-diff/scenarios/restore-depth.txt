@@ -10,7 +10,7 @@
 # depth-case: restore.success
 # depth-case: restore.one-argument
 # depth-case: restore.actor-only
-# probe-setup-refusal-reason: Tests `do_restore` missing-target `NOPERSON` refusal ("No-one by that name here.").
+# probe-setup-refusal-reason: "restore Nobody": witnesses do_restore's target lookup printing NOPERSON (src/act.wizard.c:1593, src/config.c:93)
 
 [fixture]
 empty-players

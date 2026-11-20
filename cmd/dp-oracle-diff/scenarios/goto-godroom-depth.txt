@@ -2,7 +2,7 @@
 # A level-31 immortal is below LVL_GRGOD and receives C's god-room refusal.
 
 # depth-case: goto.god-room-gate
-# probe-setup-refusal-reason: Tests `do_goto` `ROOM_GODROOM` level-gate refusal ("You are not godly enough to use that room!").
+# probe-setup-refusal-reason: "goto 8161": witnesses do_goto's ROOM_GODROOM LVL_GRGOD gate (src/act.wizard.c:221)
 
 [fixture]
 empty-players

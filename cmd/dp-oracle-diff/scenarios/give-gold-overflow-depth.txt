@@ -3,7 +3,6 @@
 # perform_give_gold). glibc atoi is (int)strtol, so "3000000000" wraps to
 # -1294967296, which is <= 0, and perform_give_gold prints
 # "Heh heh heh ... we are jolly funny today, eh?".
-# probe-setup-refusal-reason: Tests `perform_give_gold` 32-bit `atoi` overflow wrap refusal on 3000000000 coins.
 
 [fixture]
 empty-players

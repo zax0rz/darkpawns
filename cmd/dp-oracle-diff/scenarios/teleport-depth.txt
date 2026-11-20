@@ -10,7 +10,11 @@
 # depth-case: teleport.same-level-refusal
 # depth-case: teleport.success-audience
 # depth-case: teleport.two-argument
-# probe-setup-refusal-reason: Tests `do_teleport` missing-target, self-target, and invalid-room refusal branches.
+# probe-setup-refusal-reason: "teleport Nobody 8162": witnesses do_teleport's target lookup printing NOPERSON (src/act.wizard.c:375, src/config.c:93)
+# probe-setup-refusal-reason: "teleport Teleportwizard 8162": witnesses do_teleport's self-target refusal (src/act.wizard.c:377)
+# probe-setup-refusal-reason: "teleport Teleportpeer": witnesses do_teleport's missing-destination refusal (src/act.wizard.c:381)
+# probe-setup-refusal-reason: "teleport Teleportpeer 999999": witnesses do_teleport's room lookup miss (src/act.wizard.c:201)
+# probe-setup-refusal-reason: "send:actor teleport Teleportpeerhigh 8161": witnesses do_teleport's higher-level-target refusal (src/act.wizard.c:379)
 
 [fixture]
 empty-players

@@ -236,6 +236,28 @@ func TestParseScenarioProbeSetupRefusalReason(t *testing.T) {
 		t.Fatalf("unnamed refusal in same file must fail, got %+v", hits)
 	}
 
+	// Whitespace inside the quoted step is trimmed on both the reason key and
+	// the compared step, so a sloppily padded step name still opts out.
+	ws, err := ParseScenario("padded-step", strings.NewReader(
+		"# probe-setup-refusal-reason: \"  load obj 4399  \": padded key\n[probe]\nload obj 4399\n"))
+	if err != nil {
+		t.Fatalf("padded step key failed to parse: %v", err)
+	}
+	if hits := CheckProbeSetupRefusalsForScenario(blocks, ws.ProbeSetupRefusalReasons); len(hits) != 0 {
+		t.Fatalf("padded named step should pass, got %+v", hits)
+	}
+
+	// Reasons may contain colons; only the first colon after the quoted step
+	// is the separator (real reasons cite C lines like src/x.c:1498).
+	colon, err := ParseScenario("colon-reason", strings.NewReader(
+		"# probe-setup-refusal-reason: \"load obj 4399\": witnesses do_load (src/act.wizard.c:1274)\n[probe]\nload obj 4399\n"))
+	if err != nil {
+		t.Fatalf("colon-bearing reason failed to parse: %v", err)
+	}
+	if got := colon.ProbeSetupRefusalReasons["load obj 4399"]; got != "witnesses do_load (src/act.wizard.c:1274)" {
+		t.Fatalf("colon-bearing reason = %q", got)
+	}
+
 	// Empty reason fails (both bare and after a quoted step).
 	for _, tc := range []struct {
 		name string

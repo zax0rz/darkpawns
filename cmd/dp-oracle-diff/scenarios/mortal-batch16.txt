@@ -1,7 +1,8 @@
 # Mortal no-arg batch (batch 16).
 # 11 faithful greens. Deferred: roll (RNG format), split (group-membership).
 # afk deferred (prompt-prefix contamination).
-# probe-setup-refusal-reason: Tests mortal authorization refusals (`Huh?!?`) for immortal commands (`purge`, etc.).
+# probe-setup-refusal-reason: "purge": witnesses the interpreter's below-level table gate refusing purge for a mortal (src/interpreter.c:916)
+# probe-setup-refusal-reason: "zreset": witnesses the interpreter's below-level table gate refusing zreset for a mortal (src/interpreter.c:916)
 
 [fixture]
 quiet-mobs

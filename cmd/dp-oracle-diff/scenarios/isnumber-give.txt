@@ -6,7 +6,6 @@
 # an amount. Pre-fix Go used fmt.Sscanf, so "12abc" and "-5" were read as a gold
 # amount. The peer occupies the target slot so the object branch resolves a
 # victim; C then reports the missing object.
-# probe-setup-refusal-reason: Tests `do_give` non-numeric `is_number()` refusal paths (`give 12abc`, `give -5`).
 
 [fixture]
 empty-players

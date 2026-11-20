@@ -8,7 +8,6 @@
 # the giver, "0.<name>" is the player-only pass, and "N.<name>" counts visible
 # matches. Two identical trainee guards make the ordinal observable without an
 # ordering variable: whichever guard N picks, the bytes are the same.
-# probe-setup-refusal-reason: Tests `do_give` self-target ("What's the point of that?") and target-resolution refusal branches.
 
 [fixture]
 quiet-mobs

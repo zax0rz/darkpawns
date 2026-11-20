@@ -4,7 +4,6 @@
 # sword #8037. No mob fixture is installed, so "nobody" cannot resolve to a
 # recipient. do_give reaches the shared NOPERSON constant in src/config.c:93,
 # so C and Go must both emit exactly "No-one by that name here." (R1, R4, R5a).
-# probe-setup-refusal-reason: Tests `do_give` missing-recipient `NOPERSON` refusal ("No-one by that name here.").
 
 [fixture]
 quiet-mobs

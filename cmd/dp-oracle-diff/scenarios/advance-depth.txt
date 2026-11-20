@@ -15,7 +15,14 @@
 # same room to exercise get_char_vis -> IS_NPC without autonomous movement.
 # C promotion uses gain_exp_regardless()/advance_level(); demotion resets with
 # do_start(), then restores real abilities. The peer captures TO_VICT text.
-# probe-setup-refusal-reason: Tests `do_advance` argument, target, level, and privilege refusal branches directly in [probe].
+# probe-setup-refusal-reason: "advance": witnesses do_advance's no-argument usage refusal (src/act.wizard.c:1498)
+# probe-setup-refusal-reason: "advance nobody": witnesses do_advance's in-room player target lookup missing on 'nobody' (src/act.wizard.c:1494)
+# probe-setup-refusal-reason: "advance Advancepeer": witnesses do_advance's missing-level refusal (src/act.wizard.c:1514)
+# probe-setup-refusal-reason: "advance Advancepeer not-a-level": witnesses do_advance's nonnumeric-level refusal (src/act.wizard.c:1514)
+# probe-setup-refusal-reason: "advance Advancepeer 0": witnesses do_advance's zero-level refusal (src/act.wizard.c:1514)
+# probe-setup-refusal-reason: "advance Advancepeer 41": witnesses do_advance's LVL_IMPL ceiling, 40 is the highest possible level (src/act.wizard.c:1518)
+# probe-setup-refusal-reason: "advance 1.orc 2": witnesses do_advance's NPC-target refusal (src/act.wizard.c:1510)
+# probe-setup-refusal-reason: "advance Advancepeer 2": witnesses do_advance's already-at-level refusal once step 8 promotes the peer to 2 (src/act.wizard.c:1527); this step text appears twice in the probe (steps 8 and 9) and only step 9's refusal is intended -- step 8 must succeed as the promotion
 
 [fixture]
 empty-players

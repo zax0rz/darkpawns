@@ -4,7 +4,10 @@
 
 # depth-case: load.object-cost-gate
 # depth-case: load.object-limit-gates
-# probe-setup-refusal-reason: Tests `do_load` object-cost and `LVL_GRGOD` privilege refusal gates.
+# probe-setup-refusal-reason: "load obj 8055": witnesses do_load's object-cost cap refusal at level 34 (src/act.wizard.c:1363)
+# probe-setup-refusal-reason: "load obj 81": witnesses do_load's LEVEL_GRGOD object-limit refusal (src/act.wizard.c:1307)
+# probe-setup-refusal-reason: "load obj 82": witnesses do_load's LEVEL_GRGOD object-limit refusal (src/act.wizard.c:1307)
+# probe-setup-refusal-reason: "load obj 8095": witnesses do_load's LEVEL_GRGOD object-limit refusal (src/act.wizard.c:1307)
 
 [fixture]
 empty-players

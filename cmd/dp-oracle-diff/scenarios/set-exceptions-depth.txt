@@ -6,7 +6,10 @@
 # depth-case: set.nohassle.authority
 # depth-case: set.frozen.self
 # depth-case: set.frozen.other
-# probe-setup-refusal-reason: Tests `do_set` field-specific `nohassle`/`frozen` privilege refusal branches.
+# probe-setup-refusal-reason: "set Setexceptiontarget nohassle on": witnesses do_set's nohassle LVL_GRGOD gate (src/act.wizard.c:2845)
+# probe-setup-refusal-reason: "set Setexceptiontarget nohassle off": witnesses do_set's nohassle LVL_GRGOD gate (src/act.wizard.c:2845)
+# probe-setup-refusal-reason: "set Setexceptions frozen on": witnesses do_set's frozen self-guard (src/act.wizard.c:2859)
+# probe-setup-refusal-reason: "set Setexceptions frozen off": witnesses do_set's frozen self-guard (src/act.wizard.c:2859)
 
 [fixture]
 empty-players

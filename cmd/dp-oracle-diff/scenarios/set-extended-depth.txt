@@ -28,7 +28,16 @@
 # depth-case: set.race-invalid
 # depth-case: set.loadroom-missing-room
 # depth-case: set.loadroom-invalid-text
-# probe-setup-refusal-reason: Tests `do_set` invalid room/value/target refusal branches across extended set fields.
+# probe-setup-refusal-reason: "set Setalltarget loadroom 999999": witnesses do_set's loadroom real_room miss (src/act.wizard.c:2958)
+# probe-setup-refusal-reason: "set Setalltarget passwd secret": witnesses do_set's passwd field requiring set file (src/act.wizard.c:2975)
+# probe-setup-refusal-reason: "set mob cleaner brief on": witnesses do_set's binary field refused on an NPC target (src/act.wizard.c:2693)
+# probe-setup-refusal-reason: "set Setalltarget brief maybe": witnesses do_set's binary value validation (src/act.wizard.c:2709)
+# probe-setup-refusal-reason: "set Setalltarget sex other": witnesses do_set's sex value validation (src/act.wizard.c:2818)
+# probe-setup-refusal-reason: "set Setalltarget drunk tipsy": witnesses do_set's drunk value validation (src/act.wizard.c:2881)
+# probe-setup-refusal-reason: "set Setalltarget level 59": witnesses do_set's level-above-actor refusal (src/act.wizard.c:2899)
+# probe-setup-refusal-reason: "set Setalltarget room 999999": witnesses do_set's room real_room miss (src/act.wizard.c:201)
+# probe-setup-refusal-reason: "set Setalltarget class other": witnesses do_set's class lookup miss (src/act.wizard.c:2936)
+# probe-setup-refusal-reason: "set Setalltarget race other": witnesses do_set's race lookup miss (src/act.wizard.c:3007)
 
 [fixture]
 empty-players

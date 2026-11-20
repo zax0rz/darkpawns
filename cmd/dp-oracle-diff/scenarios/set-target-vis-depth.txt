@@ -4,7 +4,8 @@
 # CAN_SEE-gated, so an invisible target answers "There is no such player." /
 # "There is no such creature." and no field is written. The wizard
 # target-resolution batch.
-# probe-setup-refusal-reason: Tests `do_set` `CAN_SEE` invisible-target refusals ("There is no such player.").
+# probe-setup-refusal-reason: "set player Vispeer level 32": witnesses do_set's get_player_vis CAN_SEE gate on the invisible target (src/act.wizard.c:2635)
+# probe-setup-refusal-reason: "set Vispeer level 32": witnesses do_set's get_char_vis CAN_SEE gate on the invisible target (src/act.wizard.c:2643)
 
 [fixture]
 empty-players

@@ -5,7 +5,6 @@
 # player. This matrix runs each actor-lane command once with a valid argument
 # and once with an invalid one; C's transcript shows the miss messages the
 # descriptor-less actor lanes drop.
-# probe-setup-refusal-reason: Tests `give` miss messages ("You don't seem to have a sword.") delivered to a switched mobile descriptor.
 
 [fixture]
 empty-players

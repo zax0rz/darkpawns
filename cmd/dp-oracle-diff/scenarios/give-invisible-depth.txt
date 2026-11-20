@@ -5,7 +5,6 @@
 # coins alike. The prober is the second client (a mortal); the first client is
 # the implementor, whose vision would mask the gate. Old Go's hand-written
 # room lookups had no visibility check and resolved the invisible guard.
-# probe-setup-refusal-reason: Tests `do_give` `CAN_SEE` refusal ("No-one by that name here.") for items and coins to an invisible target.
 
 [fixture]
 quiet-mobs

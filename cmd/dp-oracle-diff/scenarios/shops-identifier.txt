@@ -2,7 +2,6 @@
 # real registered Ferrenx identifier is mob vnum 8087 in room 8116; C attaches
 # no script to it (DP-1333). Bread is moved to
 # the actor during drained warmup so value lookup sees ch->carrying.
-# probe-setup-refusal-reason: Tests `SPECIAL(identifier)` bare/missing-argument `give` entry-gate refusals.
 
 [fixture]
 empty-players
