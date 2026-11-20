@@ -1,0 +1,110 @@
+# C-first ordinary weapon hit reaches damage()'s POS_DEAD message outside a
+# skill-message caller; the victim descriptor receives the unique death line.
+# C: src/act.offensive.c:101-131; src/fight.c:1314-1325,1560-1584,1763-1770,1880-1885.
+# depth-case: death.normal-hit-position-message
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+Deathactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Deathactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Deathvictim
+Y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Deathvictim
+y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Deathwatch
+Y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Deathwatch
+y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Deathvictim 8105
+teleport Deathwatch 8105
+set player Deathactor class warrior
+set player Deathvictim class warrior
+set player Deathvictim level 1
+set player Deathvictim outlaw on
+set player Deathvictim maxhit 1
+set player Deathvictim hit -10
+force Deathvictim sleep
+load obj 8025
+wield flail
+
+[probe]
+hit Deathvictim
