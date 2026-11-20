@@ -65,7 +65,7 @@ Y
 1
 
 [setup:oracle:observer]
-Dustwatch
+Dustview
 Y
 watchpass
 watchpass
@@ -79,7 +79,7 @@ Y
 1
 
 [setup:port:observer]
-Dustwatch
+Dustview
 y
 watchpass
 watchpass
@@ -95,7 +95,7 @@ Y
 [warmup]
 goto 8105
 teleport Dustvictim 8105
-teleport Dustwatch 8105
+teleport Dustview 8105
 set player Dustactor class mage
 skillset Dustactor 'disintegration' 100
 set player Dustactor maxmana 5000

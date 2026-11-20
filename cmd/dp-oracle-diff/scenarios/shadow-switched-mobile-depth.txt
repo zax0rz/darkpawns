@@ -6,7 +6,7 @@
 [fixture]
 empty-players
 quiet-mobs
-spawn-mob 69 1 8105 80
+spawn-mob 70 1 8105 80
 
 [setup:oracle]
 Shadowmobile
@@ -96,8 +96,7 @@ Y
 goto 8105
 teleport Shadowtarget 8105
 teleport Shadowobserver 8105
-set mob clone level 40
-switch clone
+switch satan
 
 [probe]
 shadow Shadowtarget

@@ -97,7 +97,6 @@ goto 8105
 teleport Deathvictim 8105
 teleport Deathwatch 8105
 set player Deathactor class warrior
-set player Deathactor level 40
 set player Deathvictim class warrior
 set player Deathvictim level 1
 set player Deathvictim outlaw on
