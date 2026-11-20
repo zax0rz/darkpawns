@@ -1100,10 +1100,11 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	// table order wins), level-filter DURING the scan (law 3 — load-bearing: a
 	// mortal typing `go` must resolve to gossip, not the earlier goto which is
 	// immortal-gated). First prefix match wins; typed-longer-than-entry never
-	// matches. Go-only commands are not in the C table, so a prefix that only
-	// matches them misses here and falls through to the exact-match registry
-	// below — the only way Go-only names resolve (R4). Position/frozen gating
-	// stays in commandGateRejected, post-resolution; not duplicated here.
+	// matches. The exact-match registry below holds no Go-only names (audited
+	// 2026-11-20, docs/research/go-only-commands-2026-11-20.tsv), so a prefix
+	// that only matches a non-C name ends at Huh?!? like C (interpreter.c:916,
+	// R4). Position/frozen gating stays in commandGateRejected,
+	// post-resolution; not duplicated here.
 	// Resolution filters by the body level before choosing a prefix, matching
 	// src/interpreter.c:910-916. The context has already captured the body.
 	resolved := resolveCharacterCommand(cmd, commandLevel(ctx))
