@@ -5,6 +5,10 @@
 # 100; switching into him must execute rin as that body.
 # depth-case: kuji-kiri.shared-dummy-skill-restore
 # depth-case: kuji-kiri.switched-mobile-rin-success
+# C do_kuji_kiri's ZAI room message is observed by a separate peer; the
+# switched actor's private message cannot witness this TO_ROOM literal.
+# C path: src/act.wizard.c:1599-1601 -> src/new_cmds.c:1694-1702.
+# depth-case: zai.switched-mobile-room-output
 
 [fixture]
 empty-players
@@ -41,10 +45,48 @@ Y
 <ENTER>
 1
 
+[setup:oracle:observer]
+Kujiwatcher
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Kujiwatcher
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 goto 8162
 restore satan
+teleport Kujiwatcher 8162
+set player Kujiwatcher class mage
+set player Kujiwatcher level 31
+set player Kujiwatcher maxmana 5000
+set player Kujiwatcher mana 5000
+skillset Kujiwatcher 'detect invisibility' 100
+send:observer cast 'detect invisibility'
+~dpclock pulse 40
 switch satan
 
 [probe]
+zai
+~dpclock pulse 40
 rin

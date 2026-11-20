@@ -1,0 +1,47 @@
+# depth-case: mob.guild-guard-mobile-actor-block
+# A God switches into a spawned NPC beside the guild guard.  The NPC actor's
+# north command reaches SPECIAL(guild_guard)'s NPC branch and prints the
+# private block message on the switched descriptor (src/spec_procs.c:569-608;
+# src/class.c:275-290).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8017 1 8015 80
+spawn-mob 16303 1 8015 80
+replace-room-exits 8015 none
+
+[setup:oracle]
+Guardmobile
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Guardmobile
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8015
+
+[probe]
+switch trainee
+north
