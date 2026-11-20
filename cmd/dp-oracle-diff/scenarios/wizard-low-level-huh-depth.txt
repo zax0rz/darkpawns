@@ -2,6 +2,7 @@
 # and zlist below their minimum levels in interpreter.c:912-916; wiznet is
 # registered for everyone but its own immortal/chosen guard emits Huh?!? in
 # act.wizard.c:1923-1925. A level-1 peer attempts each command.
+# probe-setup-refusal-reason: this scenario intentionally compares the Huh?!? refusal for level-1 attempts at hidden commands.
 #
 # depth-case: goto.low-level-hidden-command
 # depth-case: hcontrol.low-level-hidden-command
