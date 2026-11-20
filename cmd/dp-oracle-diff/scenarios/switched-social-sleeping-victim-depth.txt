@@ -1,0 +1,47 @@
+# C-first switched mobile reaches do_action's minimum-victim-position refusal.
+# Hug requires a standing target; the sleeping trainee guard takes the refusal
+# through TO_CHAR to the descriptor on the switched body.
+# C: src/act.social.c:102-151; lib/misc/socials (hug min victim position).
+# depth-case: social.switched-mobile-sleeping-victim
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8162 80
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Socialswitch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Socialswitch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+force guard sleep
+switch clone
+
+[probe]
+hug guard

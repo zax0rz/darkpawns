@@ -1,0 +1,86 @@
+# C-first high-level mobile appearance through perform_immort_vis. The clone
+# has both HIDE and INVISIBLE, so visible clears both and C's appear() takes its
+# immortal room-message branch.
+# C: src/act.other.c:557-585; src/act.wizard.c:1622-1635; src/fight.c:108-121;
+# src/structs.h:248,311,329; src/mobact.c:121.
+# depth-case: visible.switched-immortal-mobile-appearance
+
+[fixture]
+empty-players
+quiet-mobs
+set-mob-flag 69 SENTINEL
+spawn-mob 69 1 8105 80
+set-mob-aff 69 524290
+
+[setup:oracle]
+Visibleswitch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Visibleswitch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Visiblewatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Visiblewatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Visiblewatch 8105
+set player Visibleswitch class mage
+set player Visiblewatch class mage
+set player Visiblewatch level 31
+set player Visiblewatch maxmana 5000
+set player Visiblewatch mana 5000
+skillset Visiblewatch 'detect invisibility' 100
+send:observer cast 'detect invisibility' Visibleswitch
+set mob clone level 31
+
+[probe]
+switch clone
+visible
+look
