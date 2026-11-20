@@ -10,6 +10,7 @@
 # depth-case: restore.success
 # depth-case: restore.one-argument
 # depth-case: restore.actor-only
+# probe-setup-refusal-reason: Tests `do_restore` missing-target `NOPERSON` refusal ("No-one by that name here.").
 
 [fixture]
 empty-players

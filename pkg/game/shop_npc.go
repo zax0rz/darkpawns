@@ -373,17 +373,24 @@ func (w *World) shopNpcBuy(shop *Shop, keeper, customer *MobInstance, arg string
 	// head of the buyer's carried list, which obj_to_char front-inserted. With
 	// an empty carried list C would pass a NULL name into strchr() (undefined
 	// behaviour, R1a); the port simply omits the act there.
+	receipt, hasReceipt := "", false
 	if carried := customer.InventorySnapshot(); len(carried) > 0 {
-		times := shopNpcTimesMessage(carried[0], "", bought)
-		Act(w, false, customer, nil, nil, nil, "$n buys "+times+".", "", ToRoom)
+		receipt = shopNpcTimesMessage(carried[0], "", bought)
+		hasReceipt = true
+		Act(w, false, customer, nil, nil, nil, "$n buys "+receipt+".", "", ToRoom)
 	}
-	// C then tells the keeper and sends "You now have %s.\n\r" to the buyer;
-	// neither reaches a descriptor-less pet.
+	// C's do_tell shop message comes first (src/shop.c:579-580); then
+	// send_to_char writes the receipt to the switched customer's descriptor
+	// (src/shop.c:581-582). Ordinary mobile customers have no descriptor, so
+	// SendMessage keeps that path silent.
 	w.shopNpcTell(keeper, fmt.Sprintf(shop.Messages[ShopMessageBuy], customer.GetName(), goldamt))
+	if hasReceipt {
+		customer.SendMessage("You now have " + receipt + ".\n\r")
+	}
 }
 
 // shopNpcSell ports shopping_sell (src/shop.c:732-812) for a mobile actor.
-func (w *World) shopNpcSell(shop *Shop, keeper, customer *MobInstance, arg string) {
+func (w *World) shopNpcSell(shop *Shop, keeper, customer *MobInstance, arg string, privateOutput func(string)) {
 	if !w.shopNpcIsOK(shop, keeper, customer) {
 		return
 	}
@@ -435,13 +442,16 @@ func (w *World) shopNpcSell(shop *Shop, keeper, customer *MobInstance, arg strin
 		}
 	}
 	customer.updateGold(func(coins int) (int, bool) { return coins + goldamt, true })
+	times := shopNpcTimesMessage(nil, shortd, sold)
 	if sold > 0 {
-		times := shopNpcTimesMessage(nil, shortd, sold)
 		Act(w, false, customer, nil, nil, nil, "$n sells "+times+".", "", ToRoom)
 	}
-	// C then tells the keeper and sends "The shopkeeper now has %s.\\n\\r" to
-	// the seller; neither reaches a descriptor-less pet.
+	// C: shopping_sell sends the keeper tell, then direct send_to_char at
+	// src/shop.c:800-803. A switched mobile has a descriptor, while a pet does not.
 	w.shopNpcTell(keeper, fmt.Sprintf(shop.Messages[ShopMessageSell], customer.GetName(), goldamt))
+	if privateOutput != nil {
+		privateOutput(fmt.Sprintf("The shopkeeper now has %s.\n\r", times))
+	}
 	w.RebalanceShopBank(shop.VNum, keeper)
 }
 

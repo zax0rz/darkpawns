@@ -168,7 +168,6 @@ set player ItemMage level 30
 
 
 [probe]
-get powder
 quaff powder
 ~dpclock pulse 20
 score
@@ -183,8 +182,8 @@ send:builder 21
 send:builder 23
 send:builder q
 send:builder y
-load obj 4399
-get powder
+send:builder load obj 4399
+send:builder give powder ItemMage
 quaff powder
 ~dpclock pulse 20
 score
@@ -199,8 +198,8 @@ send:builder 32
 send:builder 38
 send:builder q
 send:builder y
-load obj 4399
-get powder
+send:builder load obj 4399
+send:builder give powder ItemMage
 quaff powder
 ~dpclock pulse 20
 score
@@ -215,8 +214,11 @@ send:builder 45
 send:builder 47
 send:builder q
 send:builder y
-load obj 4399
-get powder
+send:peer follow ItemMage
+group self
+group ItemPeer
+send:builder load obj 4399
+send:builder give powder ItemMage
 quaff powder
 ~dpclock pulse 20
 score

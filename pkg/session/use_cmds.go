@@ -112,23 +112,7 @@ func cmdRecite(s *Session, args []string) error {
 	// spells resolve (spell_parser.c:683).
 	s.player.SetWaitState(1) // C: WAIT_STATE(ch, PULSE_VIOLENCE)
 
-	// Remove scroll (C extract_obj after the cast loop; a held item leaves
-	// the equipment slot on the way out).
-	if fromHold {
-		s.player.Equipment.UnequipItem(item, s.player.Inventory)
-		s.markDirty(VarEquipment)
-	}
-	s.player.Inventory.RemoveItem(item)
-	// C's mag_objectmagic consumes the item with extract_obj
-	// (spell_parser.c:697): a carried item leaves through obj_from_char and
-	// sets PLR_CRASH (handler.c:596-598, 1016-1017); a held one leaves
-	// through unequip_char, which does not.
-	if !fromHold {
-		s.player.MarkCrashNeeded()
-	}
-	s.markDirty(VarInventory)
-
-	// Cast each spell on the scroll
+	// Cast each spell on the scroll before extracting it (src/spell_parser.c:685-697).
 	spellArgument, _ := game.OneArgument(targetName)
 	for _, spellNum := range spellNumbers {
 		if spellNum <= 0 {
@@ -138,6 +122,28 @@ func cmdRecite(s *Session, args []string) error {
 			break
 		}
 	}
+
+	// Remove scroll (C extract_obj after the cast loop, src/spell_parser.c:696-697;
+	// a held item leaves the equipment slot on the way out).
+	if fromHold {
+		s.player.Equipment.UnequipItem(item, s.player.Inventory)
+		s.markDirty(VarEquipment)
+	}
+	s.player.Inventory.RemoveItem(item)
+	// C's mag_objectmagic consumes the item with extract_obj
+	// (src/spell_parser.c:697): a carried item leaves through obj_from_char and
+	// sets PLR_CRASH (src/handler.c:596-598, 1016-1017); a held one leaves
+	// through unequip_char, which does not.
+	if !fromHold {
+		s.player.MarkCrashNeeded()
+	}
+	// DP-1598: unlink from global object_list (src/handler.c:1029-1035) without
+	// re-entering the inventory branch's PLR_CRASH mark for held items.
+	if s.manager != nil && s.manager.world != nil {
+		item.Location = game.LocNowhere()
+		s.manager.world.ExtractObject(item, s.player.RoomVNum)
+	}
+	s.markDirty(VarInventory)
 
 	return nil
 }

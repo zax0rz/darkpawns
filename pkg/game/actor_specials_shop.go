@@ -68,7 +68,7 @@ func specShopKeeperActor(w *World, ctx CharacterSpecialContext, me *MobInstance,
 		w.shopNpcBuy(shop, me, customer, arg)
 		return SpecialHandled
 	case "sell":
-		w.shopNpcSell(shop, me, customer, arg)
+		w.shopNpcSell(shop, me, customer, arg, ctx.PrivateOutput)
 		return SpecialHandled
 	case "value":
 		w.shopNpcValue(shop, me, customer, arg)

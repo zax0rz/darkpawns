@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_kuji_kiri	zai	zai.switched-mobile-room-output	D3	audience	oracle-green	switched-body-kuji-kiri-restored-skill-depth@1	new_cmds.c:1694-1702; new_cmds.c:1735-1738; act.wizard.c:1599-1601	A restored mobile uses the ZAI success path; a separate room peer witnesses the exact C TO_ROOM fade message that the switched actor's private transcript cannot show (R1/R3/R5e).

@@ -2,6 +2,7 @@
 # the editor. Reaches do_olc's duplicate scan through a non-ZEDIT editor: C's
 # one refusal prints the holder's plain character name (src/olc.c:150-159).
 # depth-case: redit.duplicate-gate-cleanup
+# probe-setup-refusal-reason: Tests `do_olc` duplicate-editor refusal when a second descriptor enters `redit` on an already-edited room.
 
 [fixture]
 empty-players

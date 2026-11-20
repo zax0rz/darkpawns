@@ -1,0 +1,37 @@
+# C-first switched shop customer exercises shopping_sell's partial affordability
+# response and its direct sale receipt.
+# C: src/shop.c:732-803; src/act.wizard.c:1175-1201.
+# depth-case: shops.audit.switched-mobile-partial-sale-affordability
+
+[fixture]
+seed-player
+quiet-mobs
+quiet-zone 121
+spawn-mob 12102 1 12135 121
+give-object 12102 12102 100000 121
+spawn-mob 1 1 12135 121
+give-object 1 12102 100000 121
+give-object 1 12102 100000 121
+give-object 1 12102 100000 121
+replace-room-exits 12135 none
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 12135
+set mob Hansen gold 15
+switch Puff
+
+[probe]
+sell 3 gold
+inventory

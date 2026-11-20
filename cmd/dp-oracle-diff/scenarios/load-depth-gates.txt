@@ -4,6 +4,7 @@
 
 # depth-case: load.object-cost-gate
 # depth-case: load.object-limit-gates
+# probe-setup-refusal-reason: Tests `do_load` object-cost and `LVL_GRGOD` privilege refusal gates.
 
 [fixture]
 empty-players

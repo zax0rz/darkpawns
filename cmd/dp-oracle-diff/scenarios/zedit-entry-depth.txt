@@ -3,6 +3,7 @@
 # depth-case: zedit.unknown-zone
 # depth-case: zedit.no-argument-current-room
 # depth-case: zedit.interactive-olc
+# probe-setup-refusal-reason: Tests `do_olc` `zedit` non-numeric and unknown-zone entry refusals.
 
 [fixture]
 empty-players

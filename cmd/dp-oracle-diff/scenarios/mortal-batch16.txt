@@ -1,6 +1,7 @@
 # Mortal no-arg batch (batch 16).
 # 11 faithful greens. Deferred: roll (RNG format), split (group-membership).
 # afk deferred (prompt-prefix contamination).
+# probe-setup-refusal-reason: Tests mortal authorization refusals (`Huh?!?`) for immortal commands (`purge`, etc.).
 
 [fixture]
 quiet-mobs

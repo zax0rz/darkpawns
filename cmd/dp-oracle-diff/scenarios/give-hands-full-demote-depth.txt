@@ -6,6 +6,7 @@
 # (cap 5). The next give hits perform_give's hands-full gate, "$N seems to have
 # $S hands full." (src/act.item.c:687-689). Go cached the level-39 capacity and
 # let the transfer through (retained sol-dp1511-item-witness-r3).
+# probe-setup-refusal-reason: Tests `perform_give` hands-full refusal after demoting the recipient lowers `CAN_CARRY_N`.
 
 [fixture]
 empty-players

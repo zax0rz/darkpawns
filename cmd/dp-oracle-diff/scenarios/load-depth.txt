@@ -18,6 +18,7 @@
 # The mob-success probes need oracle seam 7e08d59 (num_moblim pinned to its
 # 32-bit value 0): before it, every successful 'load mob' dereferenced the
 # NULL MobLimits table on 64-bit and killed the C server.
+# probe-setup-refusal-reason: Tests `do_load` argument, kind, and numeric vnum error refusal branches.
 
 [fixture]
 empty-players

@@ -8,6 +8,7 @@
 # depth-case: force.equal-level-target
 # depth-case: force.self-alias
 # depth-case: force.me-alias
+# probe-setup-refusal-reason: Tests `do_force` argument, missing-target, and equal-level self-force ("No, no, no!") refusal branches.
 
 [fixture]
 empty-players

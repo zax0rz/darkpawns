@@ -1,0 +1,22 @@
+# Round 1 classification corrections
+
+- Row 67: corrected the C function name from `do_group` to `do_ungroup`; `src/act.other.c:757` is unchanged. The class remains `c-reachable`. This citation-only correction was recorded after census registration and before reading any census results.
+
+- Row 27: the frozen sample class is `c-reachable`; the post-census correction is `c-unreachable after all`. The only C print is the failure arm of `read_object(20, VIRTUAL)` (`src/act.item.c:1249-1253`); that call returns NULL only when `real_object(20)` misses (`src/db.c:1937-1942`). The shipped `lib/world/obj/index` loads `0.obj`, which defines object `#20` (`lib/world/obj/0.obj:126-129`), so the arm cannot fire with the shipped world. The correction does not rewrite the frozen class or denominator.
+- Row 38: the frozen sample class is `c-reachable`; the post-census correction is `c-unreachable after all`. `RDR` starts at 0 (`src/act.item.c:537-539`); draw 0 changes only the mode to junk, draws 1-2 resolve room 8053, and draw 3 resolves room 18204 (`src/act.item.c:551-567`). The refusal checks `RDR == NOWHERE` (`src/act.item.c:568-571`). Neither configured room is missing (`src/config.c:159-160`; `lib/world/wld/80.wld:1086`; `lib/world/wld/182.wld:104`), so the refusal cannot fire. Repair batch 3 corrects the stale `donate-basic.txt` header to describe draw 0 as junk mode.
+- Row 65: the frozen sample class is `c-reachable`; the post-census correction is `c-unreachable after all` on the reference oracle. The positive receive act is inside the `has_mail` branch (`src/mail.c:567-573,593-594`), while the reference's `store_mail` returns before `index_mail` when its 64-bit structure sizes fail the `BLOCK_SIZE` check (`src/mail.c:285-289,304-305`; PF-066, already recorded in `docs/fidelity/depth/mail.tsv`). The port keeps the approved 32-bit-original mail behavior. The correction preserves the frozen sample class and denominator.
+- Row 82: the frozen sample class is `c-reachable`; the post-census correction is `c-unreachable after all`. `do_clan_set` passes the remainder after `dues`/`appfee` to `do_clan_money` (`src/clan.c:1523-1531`); an empty remainder returns through the earlier clan-format gate (`src/clan.c:996-998`). For immortal calls, `do_clan_money` copies the clan token back into `arg` before the `Set it to how much?` check (`src/clan.c:1011-1026`), and non-immortal calls do not clear it. The sampled empty-amount print therefore has no command path. The frozen class and denominator stay unchanged.
+
+## Repair batch 1 corrections
+
+The Round 1 sample and measured denominator remain frozen. These post-census
+audits identify two sampled Go literals whose matching C branches are
+unreachable from their player-facing callers.
+
+| Row | Frozen class | Post-census finding | C branch cite | Basis |
+|---:|---|---|---|---|
+| 3 | c-reachable | c-unreachable after caller audit | `src/modify.c:131-139` (9 lines) | The mutated Go literal belongs to the first-line mail overflow branch. C mail uses `string_write(..., MAX_MAIL_SIZE, ...)` (`src/mail.c:544`, `src/mail.h:47`) while each accepted input line is bounded by `MAX_INPUT_LENGTH` (`src/structs.h:644`); the first-line guard cannot be reached through mail. C's later-line overflow branch emits different text. |
+| 18 | c-reachable | c-unreachable after field-table audit | `src/act.wizard.c:2696-2700` (5 lines) | This refusal requires a PC target and a selected field without the `PC` bit. Every C `do_set` field is either `PC` or `BOTH`; the existing audit is recorded at `docs/fidelity/depth/wizard.tsv:209`. |
+
+These corrections do not rewrite the frozen sample classifications, kills, or
+Round 1 headline.

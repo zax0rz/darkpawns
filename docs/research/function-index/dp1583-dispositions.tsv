@@ -194,9 +194,9 @@ Crash_rent_deadline	src/objsave.c:1013	c-unreachable	-	its sole caller is Crash_
 Crash_report_unrentables	src/objsave.c:1029	c-unreachable	-	callers are Crash_report_rent (:1041-1042) and Crash_offer_rent (:1079) only — both receptionist-side.	-
 Crash_report_rent	src/objsave.c:1049	c-unreachable	-	its only live caller is Crash_offer_rent (:1088; :1064-1065 are its own recursion).	-
 Crash_offer_rent	src/objsave.c:1071	c-unreachable	-	its only caller is gen_receptionist (objsave.c:1155); gen_receptionist is called only by receptionist (:1201) and cryogenicist (:1207).	-
-gen_receptionist	src/objsave.c:1123	c-unreachable	-	called only by receptionist and cryogenicist (objsave.c:1201,1207); spec_assign.c declares both (:89-90) but no ASSIGNMOB assigns them, and lib/world has no reference.	-
-receptionist	src/objsave.c:1199	c-unreachable	-	a SPECIAL never assigned: spec_assign.c declares it (:89) but the 235 ASSIGNMOB calls include none for receptionist, and grep of lib/world finds no reference.	-
-cryogenicist	src/objsave.c:1205	c-unreachable	-	same: declared at spec_assign.c:90, never ASSIGNMOB'd, absent from lib/world.	-
+gen_receptionist	src/objsave.c:1123	c-unreachable	-	called only by receptionist and cryogenicist (objsave.c:1201,1207); spec_assign.c declares both (:89-90) but no ASSIGNMOB assigns them, and no world or script file binds them (mobs 182 and 212 are named receptionist, but specials bind only through ASSIGNMOB).	-
+receptionist	src/objsave.c:1199	c-unreachable	-	a SPECIAL never assigned: spec_assign.c declares it (:89) but the 235 ASSIGNMOB calls include none for receptionist, and no world or script file binds it (mobs 182 and 212 only carry the name).	-
+cryogenicist	src/objsave.c:1205	c-unreachable	-	same: declared at spec_assign.c:90, never ASSIGNMOB'd, and no world or script file binds it.	-
 redit_setup_new	src/redit.c:64	ported-other-name	pkg/session/redit.go:151	startRedit's miss arm seeds C's defaults "An unfinished room" / "You are in an unfinished room.\n" (redit.go:156-158 = redit.c:69-74).	-
 redit_setup_existing	src/redit.c:77	ported-other-name	pkg/session/redit.go:151	the same startRedit clones the existing room via SnapshotRoom into the edit state (redit.go:151-175) — C's load-and-copy.	-
 redit_save_internally	src/redit.c:143	ported-other-name	pkg/session/redit.go:266	finishReditLocked's save arm installs the edited room and persists the zone (redit.go:266, zone write via saveReditZone at :111).	-

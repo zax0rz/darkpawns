@@ -3,6 +3,7 @@
 # fields are not. The same command also exposes the level acknowledgement.
 
 # depth-case: set.per-field-level-gate
+# probe-setup-refusal-reason: Tests `do_set` per-field `LVL_GRGOD` privilege refusal ("You are not godly enough for that!").
 
 [fixture]
 empty-players

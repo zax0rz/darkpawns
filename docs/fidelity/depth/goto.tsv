@@ -13,3 +13,4 @@ do_goto	goto	goto.player-target	D3	audience	oracle-green-multiseed	goto-depth@1,
 do_goto	goto	goto.one-argument	D2	command	oracle-green-multiseed	goto-depth@1,2,3,5,8	interpreter.c:1265-1283; act.wizard.c:184-196	C one_argument skips leading fill words and ignores trailing words.
 do_goto	goto	goto.private-room-gate	D1	command	oracle-green-multiseed	goto-private-depth@1,2,3,5,8	act.wizard.c:218-239	A sub-GRGOD wizard is barred from an occupied ROOM_PRIVATE destination.
 do_goto	goto	goto.god-room-gate	D1	command	oracle-green-multiseed	goto-godroom-depth@1,2,3,5,8	act.wizard.c:218-239	A sub-GRGOD wizard is barred from a ROOM_GODROOM destination.
+command_interpreter	goto	goto.low-level-hidden-command	D1	command	oracle-green	wizard-low-level-huh-depth@1	src/interpreter.c:467,912-916	A level-1 caller is below do_goto's LVL_IMMORT command gate, so the command table does not dispatch the handler and C emits Huh?!? (R1/R2/R5e/R5g/R5h).

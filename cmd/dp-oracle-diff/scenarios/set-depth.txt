@@ -13,6 +13,7 @@
 # depth-case: set.level
 # depth-case: set.same-level-refusal
 # depth-case: set.field-prefix
+# probe-setup-refusal-reason: Tests `do_set` usage, target, field, and privilege refusal branches.
 
 [fixture]
 empty-players

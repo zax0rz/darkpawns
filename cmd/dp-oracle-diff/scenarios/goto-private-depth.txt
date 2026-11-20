@@ -3,6 +3,7 @@
 # required because C checks people->next_in_room.
 
 # depth-case: goto.private-room-gate
+# probe-setup-refusal-reason: Tests `do_goto` `ROOM_PRIVATE` occupancy refusal ("There's a private conversation going on in that room.").
 
 [fixture]
 empty-players

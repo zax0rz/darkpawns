@@ -1,0 +1,84 @@
+# depth-case: door.pick-no-lockpicks
+# The peer reaches level 39 and receives lockpicks, then switches into the
+# below-immortal NPC body. Its empty hold slot reaches ok_pick's missing-picks
+# message; a level-34 God then forces it, exposing the descriptor-bound notice
+# (src/act.movement.c:539-554; src/act.wizard.c:1864-1880).
+# depth-case: force.switched-mobile-notice
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8040 163
+
+[setup:oracle]
+Lockwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lockwitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Switchpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Switchpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8040
+teleport Switchpeer 8040
+advance Switchpeer 39
+load obj 8010
+give bread Switchpeer
+load obj 8027
+give lockpicks Switchpeer
+close gate
+lock gate
+set Lockwitness level 34
+
+[probe]
+send:peer switch trainee
+send:peer pick gate
+force trainee sit

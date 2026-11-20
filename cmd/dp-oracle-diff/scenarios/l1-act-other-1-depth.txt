@@ -155,12 +155,6 @@ load obj 8010
 give bread Stealactor
 load obj 8010
 give bread Stealactor
-load obj 8010
-give bread Stealactor
-load obj 8010
-give bread Stealactor
-load obj 8010
-give bread Stealactor
 set Stealactor outlaw on
 send:actor steal necklace Stealpc
 ~dpclock pulse 20

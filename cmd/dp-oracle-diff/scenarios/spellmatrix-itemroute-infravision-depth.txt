@@ -166,8 +166,8 @@ send:builder 0
 send:builder 0
 send:builder q
 send:builder y
-load obj 4404
-get book
+send:builder load obj 4404
+send:builder give book ItemMage
 recite book ItemPeer
 ~dpclock pulse 20
 score
@@ -181,8 +181,8 @@ send:builder 1
 send:builder 50
 send:builder q
 send:builder y
-load obj 8053
-get wand
+send:builder load obj 8053
+send:builder give wand ItemMage
 hold wand
 use wand ItemView
 ~dpclock pulse 20
@@ -198,8 +198,8 @@ send:builder 1
 send:builder 50
 send:builder q
 send:builder y
-load obj 8054
-get staff
+send:builder load obj 8054
+send:builder give staff ItemMage
 hold staff
 use staff
 ~dpclock pulse 20

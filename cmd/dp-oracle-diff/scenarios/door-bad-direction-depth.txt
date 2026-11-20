@@ -4,6 +4,7 @@
 # second token as the direction once generic_find misses the keyword.
 
 [fixture]
+empty-players
 quiet-mobs
 replace-room-exits 8162 north 8161 1 gate
 
@@ -35,7 +36,9 @@ Y
 <ENTER>
 1
 
-[probe]
+[warmup]
 goto 8162
+
+[probe]
 open foo sideways
 close foo sideways

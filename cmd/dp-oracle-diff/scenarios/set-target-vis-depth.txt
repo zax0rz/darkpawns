@@ -4,6 +4,7 @@
 # CAN_SEE-gated, so an invisible target answers "There is no such player." /
 # "There is no such creature." and no field is written. The wizard
 # target-resolution batch.
+# probe-setup-refusal-reason: Tests `do_set` `CAN_SEE` invisible-target refusals ("There is no such player.").
 
 [fixture]
 empty-players

@@ -16,6 +16,7 @@
 # depth-case: sysfile.no-argument
 # depth-case: wnewbie.no-argument
 # depth-case: zlist.no-argument
+# probe-setup-refusal-reason: Tests no-argument `transfer` usage refusal ("Whom do you wish to transfer?").
 
 [fixture]
 empty-players

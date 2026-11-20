@@ -13,6 +13,7 @@
 # depth-case: sethunt.high-victim
 # depth-case: sethunt.success
 # depth-case: sethunt.hunter-state
+# probe-setup-refusal-reason: Tests `do_sethunt` missing-argument, target-resolution, and level-gate refusal branches.
 
 [fixture]
 empty-players

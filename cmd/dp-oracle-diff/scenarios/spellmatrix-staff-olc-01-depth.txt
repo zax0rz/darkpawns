@@ -172,7 +172,6 @@ set player ItemMage level 30
 
 [probe]
 send:builder teleport ItemView 3001
-load obj 8054
 send:builder goto 3001
 get staff0101
 hold staff0101
@@ -196,7 +195,6 @@ send:builder 1
 send:builder 4
 send:builder q
 send:builder y
-load obj 8054
 send:builder goto 3001
 get staff0102
 hold staff0102
@@ -219,7 +217,6 @@ send:builder 1
 send:builder 5
 send:builder q
 send:builder y
-load obj 8054
 send:builder goto 3001
 get staff0103
 hold staff0103
@@ -242,7 +239,6 @@ send:builder 1
 send:builder 6
 send:builder q
 send:builder y
-load obj 8054
 send:builder goto 3001
 get staff0104
 hold staff0104
@@ -265,7 +261,6 @@ send:builder 1
 send:builder 7
 send:builder q
 send:builder y
-load obj 8054
 send:builder goto 3001
 get staff0105
 hold staff0105

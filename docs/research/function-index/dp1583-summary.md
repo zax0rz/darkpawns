@@ -76,10 +76,9 @@ Zach's call after review; nothing was edited.
   lua_* globals; table_to_obj/table_to_room fold into the bridge write-backs;
   clear_stack is gopher-lua's stack. **Five spot-checks against the C bodies
   passed**: lua_say, lua_oload, lua_mob_flagged, lua_tport, lua_echo (same arg
-  shapes, dispatch arms, and "[Lua] Invalid…" mudlog strings). One observation:
-  `bridgeOLoad` matches the location case-insensitively (`equalFoldASCII`)
-  where C uses `str_cmp` (case-sensitive) — a script passing "ROOM" would load
-  in Go but not C; noted for Zach below.
+  shapes, dispatch arms, and "[Lua] Invalid…" mudlog strings). `bridgeOLoad`
+  matches the location case-insensitively (`equalFoldASCII`), as C does:
+  `str_cmp` lowercases both sides (`src/utils.c:112`).
 - **objsave.c:** the live rent path (rentsave → extract_norents →
   extract_objs → load) ports through pkg/game/quit.go
   RentOut/extractNorents/ExtractRentedObjects with the rent-code storage in
@@ -105,8 +104,5 @@ Zach's call after review; nothing was edited.
   accepted divergence, or intentional absence.
 - **The date_record non-port** (DP-1603) has an in-code rationale but no cited
   ruling — decide whether to bless it (add the DP- id) or close the gap.
-- **oload case-sensitivity observation:** `bridgeOLoad` uses a case-insensitive
-  location match where C's `lua_oload` uses `str_cmp`. Cosmetic-but-real
-  binding divergence; decide whether to normalize.
 - **Missing-cites cleanup (95 rows)**: bulk normalization pass vs folding into
   each function's next depth pass.
