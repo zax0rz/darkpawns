@@ -158,3 +158,20 @@ recharger	src/new_cmds2.c:415	ported-other-name	pkg/game/spec_procs_missing.go:4
 no_get	src/new_cmds2.c:552	ported-other-name	pkg/game/spec_procs_missing.go:17	specNoGet strikes on get/palm/take (gate at :12 = new_cmds2.c:559) with "$n strikes at $N's hand!"/"$n strikes at your hand!" (:34-35 = :563-566).	-
 black_horn	src/new_cmds2.c:624	c-unreachable	-	assign_objects only forward-declares it (spec_assign.c:523); no ASSIGNOBJ binds it (the sole horn assignment is ASSIGNOBJ(14415, horn)), and grep finds no black_horn anywhere under lib/world.	-
 zen_master	src/new_cmds2.c:658	ported-other-name	pkg/game/spec_procs_missing.go:238	specZenMaster (assigned to mob 18219, pkg/game/spec_assign.go:226) rolls number(0,20) and touches — "$n touches $N on the arm."/"$n touches you lightly on the arm." then says 'You have violence, but not thought.' (spec_procs_missing.go:264-265,269 = new_cmds2.c:674-679).	-
+oc_get_node	src/oc.c:41	go-native	pkg/game/item_views.go:192	DoInventory's clumping allocates group structs inline (groups[key] = &group{line: text, count: 1, item: item}, item_views.go:192) — no node allocator exists.	-
+oc_add_front	src/oc.c:58	go-native	pkg/game/item_views.go:193	clump order is an insertion-order slice (order = append(order, key), item_views.go:193), replacing the front-linked list.	-
+oc_onlist	src/oc.c:64	ported-other-name	pkg/game/item_views.go:189	the clump match bumps the existing group's count (existing.count++, item_views.go:189) = C's vnum/extras/text/weight match + count++ (oc.c:71-77).	-
+oc_dispose_list	src/oc.c:172	go-native	pkg/game/item_views.go:177	the groups map is per-call local state (item_views.go:177) and dies with the frame — no dispose pass.	-
+write_poofs	src/poof.c:18	ported-other-name	pkg/game/save.go:153	poofs persist through the save pipeline: playerToSaveData carries PoofIn/PoofOut (save.go:153,184-185) into the JSON store, replacing C's per-player POOF_FILE with its 120-char truncation.	-
+read_poofs	src/poof.c:78	ported-other-name	pkg/game/save.go:297	the load side restores PoofIn/PoofOut from the saved record (save.go:297-298) — C's POOF_FILE read.	-
+queue_init	src/queue.c:40	go-native	pkg/events/queue.go:89	NewEventQueue (queue.go:89) constructs the pulse queue, created at pkg/game/world.go:388.	-
+queue_enq	src/queue.c:51	go-native	pkg/events/queue.go:105	EventQueue.Create enqueues by pulse time into a container/heap (Less by When, queue.go:54) — C's queue_enq(event_q, new_event, when + pulse) (src/events.c:59).	-
+queue_deq	src/queue.c:96	go-native	pkg/events/queue.go:136	EventQueue.Cancel removes an enqueued event by id (queue.go:136) = C's queue_deq via q_el (src/events.c:73).	-
+queue_head	src/queue.c:122	go-native	pkg/events/queue.go:54	the head is the heap's earliest When (queue.go:53-55); no peek-list function exists.	-
+queue_key	src/queue.c:142	go-native	pkg/events/queue.go:54	the key is the entry's When field compared in the heap Less (queue.go:54).	-
+queue_elmt_key	src/queue.c:156	go-native	pkg/events/queue.go:54	same: entries carry When directly, so no key accessor exists.	-
+queue_free	src/queue.c:163	go-native	pkg/events/queue.go:89	the heap is garbage-collected with the EventQueue.	-
+prng_seed	src/random.c:20	ported-other-name	pkg/dprng/cmwc.go:30	Generator.Seed runs C's xorshift loop verbatim (13/17/5 shifts over Q[1024], cmwc.go:31-36 = random.c:37-44) and deliberately leaves carry/index untouched like cmwc_seed.	-
+prng_next	src/random.c:26	ported-other-name	pkg/dprng/cmwc.go:44	Generator.Next is cmwc_next verbatim: a=123471786, c=362436, i=1023, r=0xfffffffe, the x<c increment (cmwc.go:44-61 = random.c:48-64); the server draws through dprng.Number (e.g. pkg/game/act_informative.go:128).	-
+cmwc_seed	src/random.c:44	ported-other-name	pkg/dprng/cmwc.go:30	same Seed implementation as prng_seed's target (cmwc.go:30-37).	-
+cmwc_next	src/random.c:57	ported-other-name	pkg/dprng/cmwc.go:44	same Next implementation (cmwc.go:44-61); Uniform keeps C's float32 2.328306437e-10 scale (cmwc.go:66-68 = random.c:31-33).	-
