@@ -1,0 +1,53 @@
+# C-first switched-body mountain success: mountain food is vnum 31 and uniquely
+# reaches the "You find" output in do_scrounge. Restore supplies the shared
+# mobile skill; after the output, the pulse pad drains WAIT_STATE before look.
+# C: src/new_cmds2.c:64-130; src/act.wizard.c:1189-1203,1584-1618;
+# src/db.c:104,1281.
+# depth-case: switched.scrounge.mountain-find
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8105 5
+set-mob-flag 69 SENTINEL
+spawn-mob 69 1 8105 80
+
+[setup:oracle]
+Scroungemountain
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scroungemountain
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport clone 8105
+set mob clone level 31
+restore clone
+switch clone
+
+[probe]
+scrounge
+~dpclock pulse 40
+look

@@ -1,0 +1,77 @@
+# C-first disconnect path: a connected peer enters the live TEDIT editor, then
+# close_socket runs cleanup_olc and sends the room act to the remaining actor.
+# C: src/comm.c:2107-2119; src/olc.c:447-518 (especially line 514).
+# depth-case: tedit.disconnect-cleanup-room-output
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Teditdisconnect
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Teditdisconnect
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Teditpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Teditpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Teditpeer 8004
+set player Teditpeer level 38
+force Teditpeer tedit news
+
+[peer-drop]
+peer
+
+[probe]
+~dpclock pulse 1
+look
