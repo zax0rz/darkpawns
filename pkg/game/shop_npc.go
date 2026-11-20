@@ -379,9 +379,10 @@ func (w *World) shopNpcBuy(shop *Shop, keeper, customer *MobInstance, arg string
 		hasReceipt = true
 		Act(w, false, customer, nil, nil, nil, "$n buys "+receipt+".", "", ToRoom)
 	}
-	// C's do_tell shop message comes first; then send_to_char writes the receipt
-	// to the switched customer's descriptor (src/shop.c:582-584). Ordinary
-	// mobile customers have no descriptor, so SendMessage keeps that path silent.
+	// C's do_tell shop message comes first (src/shop.c:579-580); then
+	// send_to_char writes the receipt to the switched customer's descriptor
+	// (src/shop.c:581-582). Ordinary mobile customers have no descriptor, so
+	// SendMessage keeps that path silent.
 	w.shopNpcTell(keeper, fmt.Sprintf(shop.Messages[ShopMessageBuy], customer.GetName(), goldamt))
 	if hasReceipt {
 		customer.SendMessage("You now have " + receipt + ".\n\r")
