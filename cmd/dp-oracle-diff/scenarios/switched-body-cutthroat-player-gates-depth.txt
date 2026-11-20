@@ -1,8 +1,9 @@
 # C-first switched-body command-gate witnesses for cutthroat, give, and point.
-# The owner’s trained value is zero; do_restore restores the shared dummy_mob
-# skill record before the descriptor switches into clone. src/interpreter.c:403,751;
+# The owner's cutthroat is set to zero through self; do_restore restores the
+# shared dummy_mob skill record before the descriptor switches into clone.
+# src/modify.c:262-263,282-283; src/handler.c:1284-1286; src/interpreter.c:403,751;
 # src/new_cmds.c:599-603; src/act.item.c:795-799,709-716;
-# src/act.wizard.c:1175-1201,1599-1612; src/db.c:104,1281.
+# src/act.wizard.c:1193-1201,1599-1612; src/db.c:104,1281.
 
 # depth-case: cutthroat.switched-mobile-low-level-player
 # depth-case: switched-object-handling.give-no-victim
@@ -106,7 +107,7 @@ set player SwitchSkillwatch level 10
 teleport SwitchSkillpeer 8105
 teleport SwitchSkillwatch 8105
 set mob clone level 39
-skillset SwitchSkill 'cutthroat' 0
+skillset self 'cutthroat' 0
 goto 8162
 restore clone
 switch clone
