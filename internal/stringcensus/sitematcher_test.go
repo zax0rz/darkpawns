@@ -63,3 +63,29 @@ func TestSiteMatcherMatchesFragmentsInOrder(t *testing.T) {
 		t.Fatalf("hits = %v, want none: the lines are in the wrong order", lines)
 	}
 }
+
+func TestSiteMatcherResprintfTemplateFirstSegment(t *testing.T) {
+	t.Parallel()
+	// The say_spell targetless template's ONLY segment carries the stored
+	// conversion, so the trie cannot anchor the fragment; the matcher must
+	// still complete it against substituted output (DP-2892).
+	site := CSite{
+		File: "src/spell_parser.c", Line: 317,
+		Fragments: [][]string{{"utters the words, '%s'."}},
+	}
+	m := NewSiteMatcher([]CSite{site})
+	visited := 0
+	m.ScanBlock("Zedqwp utters the words, 'oabrahpdeito'.\n", func(site, line int) {
+		visited++
+	})
+	if visited != 1 {
+		t.Fatalf("template fragment visited %d times, want 1", visited)
+	}
+	visited = 0
+	m.ScanBlock("Zedqwp chants in a language nobody wrote down.\n", func(site, line int) {
+		visited++
+	})
+	if visited != 0 {
+		t.Fatalf("unrelated line visited %d times, want 0", visited)
+	}
+}
