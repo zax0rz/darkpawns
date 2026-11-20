@@ -1,0 +1,78 @@
+# C-first SPELL_TRANSPARENCY wear-off (src/constants.c:1304, slot 85).
+# The b2-uncastable exclusion is mortal-scope: no spell_level grant and no
+# item carrier blocks mortals, but do_cast's min_level gate compares against
+# the spello default LVL_IMMORT (src/spell_parser.c:963, 1150-1152;
+# LVL_IMMORT=31, src/structs.h:620), so a level-40 immortal with skillset
+# transparency casts it at themselves (TAR_SELF_ONLY, src/spell_parser.c:
+# 1501-1502). mag_affects types the affect 85 (src/magic.c:879) with
+# duration 12 + level/4 = 22 hours (src/magic.c:1071-1077), and affect_update
+# prints spell_wear_off_msg[85] verbatim at expiry (src/magic.c:449-453).
+# Twenty-three hourly ticks walk the duration to zero.
+# C path: src/interpreter.c (cast row); src/spell_parser.c:1501-1502,
+# :970-976; src/magic.c:863-879, :1071-1082, :430-457.
+# depth-case: constants.spell-wearoff-transparency
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Qwertyui
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Qwertyui
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Qwertyui 'transparency' 100
+set player Qwertyui maxmana 9000
+set player Qwertyui mana 9000
+
+[probe]
+cast 'transparency'
+~dpclock pulse 20
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
