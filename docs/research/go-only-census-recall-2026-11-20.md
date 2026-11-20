@@ -74,6 +74,16 @@ the sweep brief (Round 1 rows 55/60/88/97, Round 2 rows 70/84; deleted in
   (`censusbuild.go` direction 1). Demonstrated by hand for r2-43. No current
   row is suppressed *only* by C5; it becomes operative the moment C2/C4 fixes
   land for lines like the arrow text.
+- **C6 — C-side variable-assignment gap (false positives, found in Job 2).**
+  `cextract.go` takes only the literals inside a sink call's argument list.
+  C text assigned to a variable first — `to_char = "You point around the
+  room."` (src/new_cmds.c:2534) or `const char *usage = "Usage: checkload …"`
+  (src/act.wizard.c:3825) — never becomes a C candidate, so the Go literal
+  that mirrors it is reported Go-only. Both rows currently in `go-only.tsv`
+  ("points around the room.", "Usage: checkload { obj | mob } <number>") are
+  this class: the bytes match C exactly and need no code change. Fix belongs
+  with the C extractor (track `to_char`/`to_room`/`usage`-style locals), same
+  owner decision as C2.
 - **C0 — already listed.** r2-35 shows the census working as designed when the
   text is extractable: listed, queued, ratcheted.
 
@@ -84,7 +94,9 @@ Mutation-loop `go-only-in-game` finds vs the census Go-only list:
 - Census list today: 14 rows in `go-only.tsv`, 9 unique segments — all in the
   four scanned packages, all via listed sinks, all ≥ 8 runes, none
   C-contained, none data-sourced. (The ratchet reports "9 known go-only
-  segments, 0 unreviewed".)
+  segments, 0 unreviewed".) At least 2 of the 14 ("points around the room.",
+  "Usage: checkload { obj | mob } <number>") are C6 false positives: C prints
+  the identical bytes via variable-assigned literals.
 - Mutation finds in code today: 8 rows. The census lists 1 of them (r2-35,
   already queued before the loop sampled it) and misses 7.
 - Historical finds (6 dead `Huh?!?` guards) were missed by C3 and are now
