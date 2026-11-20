@@ -197,3 +197,18 @@ Crash_offer_rent	src/objsave.c:1071	c-unreachable	-	its only caller is gen_recep
 gen_receptionist	src/objsave.c:1123	c-unreachable	-	called only by receptionist and cryogenicist (objsave.c:1201,1207); spec_assign.c declares both (:89-90) but no ASSIGNMOB assigns them, and lib/world has no reference.	-
 receptionist	src/objsave.c:1199	c-unreachable	-	a SPECIAL never assigned: spec_assign.c declares it (:89) but the 235 ASSIGNMOB calls include none for receptionist, and grep of lib/world finds no reference.	-
 cryogenicist	src/objsave.c:1205	c-unreachable	-	same: declared at spec_assign.c:90, never ASSIGNMOB'd, absent from lib/world.	-
+redit_setup_new	src/redit.c:64	ported-other-name	pkg/session/redit.go:151	startRedit's miss arm seeds C's defaults "An unfinished room" / "You are in an unfinished room.\n" (redit.go:156-158 = redit.c:69-74).	-
+redit_setup_existing	src/redit.c:77	ported-other-name	pkg/session/redit.go:151	the same startRedit clones the existing room via SnapshotRoom into the edit state (redit.go:151-175) — C's load-and-copy.	-
+redit_save_internally	src/redit.c:143	ported-other-name	pkg/session/redit.go:266	finishReditLocked's save arm installs the edited room and persists the zone (redit.go:266, zone write via saveReditZone at :111).	-
+redit_save_to_disk	src/redit.c:282	ported-other-name	pkg/session/redit.go:1124	saveReditZoneLocked writes "wld/%d.wld" (redit.go:1124 = redit.c:287 "%s/%d.wld").	-
+free_room	src/redit.c:398	go-native	-	GC frees room structs; no per-room free exists under pkg/.	-
+redit_disp_extradesc_menu	src/redit.c:439	ported-other-name	pkg/session/redit.go:996	the extra-desc menu prints C's "%s1%s) Keyword: %s%s\r\n" rows (redit.go:996 = redit.c:441) from reditDisplayExtraMenuLocked (:980).	-
+redit_disp_exit_menu	src/redit.c:464	ported-other-name	pkg/session/redit.go:938	reditDisplayExitMenuLocked renders the exit rows ("Exit to :", "Door name :") with C's door-status words "No door"/"Is a door"/"Pickproof" (redit.go:942-946 = redit.c:470-473).	-
+redit_disp_exit_flag_menu	src/redit.c:502	ported-other-name	pkg/session/redit.go:969	reditDisplayExitFlagLocked lists olc.ExitDoorFlagNames (redit.go:969-975) — C's door-flag option list.	-
+redit_disp_flag_menu	src/redit.c:515	ported-other-name	pkg/session/redit.go:902	reditDisplayFlagsLocked lists olc.RoomFlagNames as "%2d) %-20.20s" rows (redit.go:902-915).	-
+redit_disp_sector_menu	src/redit.c:541	ported-other-name	pkg/session/redit.go:918	reditDisplaySectorLocked lists olc.SectorNames as "%2d) %-20.20s" (redit.go:927-928 = redit.c:543-545).	-
+redit_disp_script_flags	src/redit.c:559	ported-other-name	pkg/session/redit.go:1009	reditDisplayScriptFlagsLocked lists olc.RoomScriptFlagNames (redit.go:1009+) — C's script-flag list.	-
+redit_disp_script_menu	src/redit.c:584	ported-other-name	pkg/session/redit.go:1029	reditDisplayScriptMenuLocked refuses unsaved rooms with C's line "Cannot assign a script until the room is saved at least once." (redit.go:1032 = redit.c:586-588).	-
+redit_disp_menu	src/redit.c:612	ported-other-name	pkg/session/redit.go:865	the main menu renders C's header "-- Room number : [%s%d%s]      Room zone: [%s%d%s]" (redit.go:865 = redit.c:614).	-
+redit_parse	src/redit.c:673	ported-other-name	pkg/session/redit.go:338	parseReditLocked dispatches the numbered choices; entry mudlogs C's "OLC: %s edits room %d" (redit.go:320 = redit.c:676).	-
+redit_string_cleanup	src/redit.c:1065	ported-other-name	pkg/session/redit.go:765	finishReditStringLocked applies save/abort to the room field buffers — C's cleanup switch for the room string editor.	-
