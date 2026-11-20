@@ -1,0 +1,89 @@
+scenario	baseline_steps	with_give_steps	first_step	first_reply	first_cite
+act-obj-sweep	0	1	give	Give what to who?	src/act.item.c:776
+advance-depth	8	8	advance	Advance who?	src/act.wizard.c:1498
+carry-limit-gates-depth	0	1	give sword Fullpeer	Fullpeer seems to have his hands full.	src/act.item.c:687
+clan-callsite-gaps	14	14	force Clangod clan expel Nobody Missing	No, no, no!	src/act.wizard.c:1872
+door-bad-direction-depth	1	1	goto 8162	Huh?!?	src/interpreter.c:916
+force-gates	6	6	force	Whom do you wish to force do what?	src/act.wizard.c:1867
+give-basic	0	8	give	Give what to who?	src/act.item.c:776
+give-fillword	0	1	give ZZZ givevic	You don't seem to have a zzz.	src/act.item.c:1647
+give-gold	0	2	give 0 coins givevic	Heh heh heh ... we are jolly funny today, eh?	src/act.item.c:740
+give-gold-overflow-depth	0	1	give 3000000000 coins Givevictim	Heh heh heh ... we are jolly funny today, eh?	src/act.item.c:740
+give-hands-full-demote-depth	0	1	give sword Demoted	Demoted seems to have his hands full.	src/act.item.c:687
+give-invisible-depth	0	4	give bread guard	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)
+give-nodrop-depth	0	1	send:giver give amulet Nodropvictim	You can't let go of the amulet of darkness!!  Yeech!	src/act.item.c:682
+give-resolve-depth	0	6	give bread me	What's the point of that?	src/act.item.c:725
+give-weight-depth	0	1	give sword Givepeer	He can't carry that much weight.	src/act.item.c:692
+god-batch2	2	2	teleport	Whom do you wish to teleport?	src/act.wizard.c:373
+godset-vehicle	1	1	set Mordecai position 3	Can't set that!	src/act.wizard.c:3048
+goto-depth	4	4	goto	You must supply a room number or name.	src/act.wizard.c:195
+goto-godroom-depth	1	1	goto 8161	You are not godly enough to use that room!	src/act.wizard.c:221
+goto-private-depth	1	1	goto 8161	There's a private conversation going on in that room.	src/act.wizard.c:226
+isnumber-give	0	2	give 12abc Fentresspeer	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)
+l1-act-other-1-depth	0	3	give bread Stealactor	Stealactor seems to have his hands full.	src/act.item.c:687
+l1-constants-wearoff-mixed-depth	2	2	peace	Huh?!?	src/interpreter.c:916
+l1-wearoff-1-depth	4	4	peace	Huh?!?	src/interpreter.c:916
+l1-wearoff-mindbar-peer-depth	1	1	peace	Huh?!?	src/interpreter.c:916
+load-depth	5	5	load mob	Mob name not found.	src/act.wizard.c:1274
+load-depth-gates	4	4	load obj 8055	That is beyond your godly powers...	src/act.wizard.c:1363
+medit-entry-depth	3	3	medit	Specify a mobile VNUM to edit.	src/olc.c:113
+mortal-batch13	3	3	sethunt	Huh?!?	src/interpreter.c:916
+mortal-batch14	1	1	set	Huh?!?	src/interpreter.c:916
+mortal-batch16	2	2	purge	Huh?!?	src/interpreter.c:916
+mortal-batch19	4	4	purge	Huh?!?	src/interpreter.c:916
+mortal-batch20	4	4	purge	Huh?!?	src/interpreter.c:916
+movement-arrival-aspect-depth	3	3	teleport Watchpeer 8105	Huh?!?	src/interpreter.c:916
+object-give-nobody	0	1	give sword nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)
+oedit-entry-depth	3	3	oedit	Specify a object VNUM to edit.	src/olc.c:113
+purge-low-level-depth	1	1	purge	Huh?!?	src/interpreter.c:916
+redit-duplicate-gate-depth	1	1	send:peer redit 8162	That room is currently being edited by Reditadmin.	src/olc.c:157
+redit-entry-depth	2	2	redit nope	Yikes!  Stop that, someone will get hurt!	src/olc.c:143
+regen-cutthroat-tick	1	1	peace	Huh?!?	src/interpreter.c:916
+restore-depth	1	1	restore Nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)
+sedit-entry-depth	3	3	sedit	Specify a shop VNUM to edit.	src/olc.c:113
+set-depth	4	4	set	Usage: set <victim> <field> <value>	src/act.wizard.c:2626
+set-exceptions-depth	4	4	set Setexceptiontarget nohassle on	You aren't godly enough for that!	src/act.wizard.c:2845
+set-extended-depth	10	10	set Setalltarget loadroom 999999	That room does not exist!	src/act.wizard.c:2958
+set-gate-depth	1	1	set Setvictim str 12	You are not godly enough for that!	src/act.wizard.c:2688
+set-target-vis-depth	2	2	set player Vispeer level 32	There is no such player.	src/act.wizard.c:2635
+sethunt-depth	6	6	sethunt	Who do you wish to hunt?	src/act.wizard.c:3455
+shops-identifier	0	3	give	Give what to who?	src/act.item.c:776
+skillset-depth	10	10	skillset	Syntax: skillset <name> '<skill>' <value>	src/modify.c:265
+spec-proc-identifier	0	3	give	Give what to who?	src/act.item.c:776
+spellmatrix-itemroute-infravision-depth	3	3	load obj 4404	Huh?!?	src/interpreter.c:916
+spellmatrix-staff-olc-01-depth	5	5	load obj 8054	Huh?!?	src/interpreter.c:916
+spellmatrix-staff-olc-02-depth	3	3	load obj 8054	Huh?!?	src/interpreter.c:916
+spellmatrix-staff-olc-04-depth	3	3	load obj 8054	Huh?!?	src/interpreter.c:916
+spellmatrix-staff-olc-05-depth	2	2	load obj 8054	Huh?!?	src/interpreter.c:916
+spellmatrix-staff-olc-06-depth	3	3	load obj 8054	Huh?!?	src/interpreter.c:916
+spellmatrix-staff-olc-07-depth	4	4	load obj 8054	Huh?!?	src/interpreter.c:916
+spellmatrix-staff-olc-08-depth	3	3	load obj 8054	Huh?!?	src/interpreter.c:916
+spellmatrix-staff-olc-10-depth	3	3	load obj 8054	Huh?!?	src/interpreter.c:916
+spellmatrix-staff-olc-11-depth	3	3	load obj 8054	Huh?!?	src/interpreter.c:916
+spellmatrix-staff-olc-12-depth	3	3	load obj 8054	Huh?!?	src/interpreter.c:916
+spellmatrix-staff-olc-13-depth	3	3	load obj 8054	Huh?!?	src/interpreter.c:916
+spellmatrix-staff-olc-14-depth	3	3	load obj 8054	Huh?!?	src/interpreter.c:916
+spellmatrix-staff-olc-15-depth	3	3	load obj 8054	Huh?!?	src/interpreter.c:916
+spellmatrix-staff-olc-16-depth	3	3	load obj 8054	Huh?!?	src/interpreter.c:916
+spellmatrix-wand-olc-01-depth	4	4	load obj 8053	Huh?!?	src/interpreter.c:916
+spellmatrix-wand-olc-02-depth	4	4	load obj 8053	Huh?!?	src/interpreter.c:916
+spellmatrix-wand-olc-03-depth	4	4	load obj 8053	Huh?!?	src/interpreter.c:916
+spellmatrix-wand-olc-04-depth	4	4	load obj 8053	Huh?!?	src/interpreter.c:916
+spellmatrix-wand-olc-05-depth	4	4	load obj 8053	Huh?!?	src/interpreter.c:916
+spellmatrix-wand-olc-06-depth	4	4	load obj 8053	Huh?!?	src/interpreter.c:916
+spellmatrix-wand-olc-07-depth	4	4	load obj 8053	Huh?!?	src/interpreter.c:916
+spellmatrix-wand-olc-08-depth	4	4	load obj 8053	Huh?!?	src/interpreter.c:916
+spellmatrix-wand-olc-09-depth	4	4	load obj 8053	Huh?!?	src/interpreter.c:916
+spellmatrix-wand-olc-10-depth	4	4	load obj 8053	Huh?!?	src/interpreter.c:916
+spellmatrix-wand-olc-11-depth	2	2	load obj 8053	Huh?!?	src/interpreter.c:916
+switched-body-command-matrix-depth	0	2	give sword Victimpeer	You don't seem to have a sword.	src/act.item.c:1647
+teleport-depth	5	5	teleport Nobody 8162	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)
+transfer-depth	4	4	transfer Nobody	No-one by that name here.	src/config.c:93 (NOPERSON, via src/act.wizard.c:375)
+use-mob-wand-empty-depth	1	1	force zombie use wand zombie	Nothing seems to happen.	src/config.c:94
+wiz-load-negative-depth	1	1	load obj 99999999999999999999	A NEGATIVE number??	src/act.wizard.c:1295
+wiz-verb-usage	1	1	goto	You must supply a room number or name.	src/act.wizard.c:195
+wiz-verb-usage2	1	1	force	Whom do you wish to force do what?	src/act.wizard.c:1867
+wizard-file-output-depth	3	3	set player Nobody level 1	There is no such player.	src/act.wizard.c:2635
+wizard-residual-depth	2	2	transfer	Whom do you wish to transfer?	src/act.wizard.c:318
+zedit-duplicate-gate-depth	1	1	send:peer zedit 8162	That room is currently being edited by Zeditadmin.	src/olc.c:157
+zedit-entry-depth	2	2	zedit nope	Specify a new zone number.	src/olc.c:138
