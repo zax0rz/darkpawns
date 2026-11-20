@@ -1,8 +1,8 @@
 # depth-case: door.pick-no-lockpicks
-# A mortal peer without lockpicks reaches ok_pick's missing-picks message; a
-# second peer switches into an NPC that a level-34 God then forces, exposing
-# the descriptor-bound force notification (src/act.movement.c:539-554;
-# src/act.wizard.c:1864-1880).
+# The peer reaches level 39 and receives lockpicks, then switches into the
+# below-immortal NPC body. Its empty hold slot reaches ok_pick's missing-picks
+# message; a level-34 God then forces it, exposing the descriptor-bound notice
+# (src/act.movement.c:539-554; src/act.wizard.c:1864-1880).
 # depth-case: force.switched-mobile-notice
 
 [fixture]

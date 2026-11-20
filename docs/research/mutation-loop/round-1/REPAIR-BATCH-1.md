@@ -4,7 +4,8 @@ Repair commit: `c2fab6011273f637abd74ce9b56ed25a077787f8`.
 
 ## C-first witnesses
 
-The exact-commit targeted census is
+The targeted census ran against behavior witness commit
+`c2fab6011273f637abd74ce9b56ed25a077787f8` (the exact Go SHA recorded in its manifest):
 `/home/zach/Archives/darkpawns/oracle-runs/2026-11-19/luna-r1-repair1-final-witnesses-v2`.
 It is CLEAN: 3/3 scenarios passed, draw divergent 0.
 
@@ -17,6 +18,11 @@ It is CLEAN: 3/3 scenarios passed, draw divergent 0.
 
 The captured C and Go blocks match each line. The same run also covers all three
 changed scenarios with draw parity enabled.
+
+After correcting the fixture header, a fresh census of that scenario used the
+frozen working-tree inputs recorded at `bbcf262a0` in
+`/home/zach/Archives/darkpawns/oracle-runs/2026-11-19/luna-r1-repair1-solreview-header`.
+It is CLEAN: 1/1 passed, draw divergent 0.
 
 ## Classification corrections
 
