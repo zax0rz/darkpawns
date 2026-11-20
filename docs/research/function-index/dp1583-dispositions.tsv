@@ -243,3 +243,22 @@ oedit_disp_val3_menu	src/oedit.c:798	ported-other-name	pkg/session/oedit.go:942	
 oedit_disp_val4_menu	src/oedit.c:835	ported-other-name	pkg/session/oedit.go:943	oeditShowVal4MenuLocked -> index 3 of the same matrix.	-
 round_float	src/oedit.c:1005	ported-other-name	pkg/session/oedit.go:512	oeditRoundFloat is "oedit.c's round_float in single precision: the int cast" (oedit.go:509-512), used for the load-percent arm (:1139).	-
 oedit_string_cleanup	src/oedit.c:1555	ported-other-name	pkg/session/oedit.go:1449	the object string editors finish through textEditState onComplete arms applying save/abort to the field (startOeditExtraDescEditorLocked, oedit.go:1435-1450), routed via finishTextEditLocked; an inline comment cites oedit_string_cleanup (oedit.go:1423).	-
+zedit_setup	src/zedit.c:58	ported-other-name	pkg/session/zedit.go:159	startZedit opens the editor and zeditShowMenuLocked renders C's header "Room number: %s%d%s        Room zone: %s%d" with the Z/L/T rows (zedit.go:323-327 = zedit.c:567-576).	-
+zedit_save_internally	src/zedit.c:308	ported-other-name	pkg/session/zedit.go:197	finishZeditLocked's save arm answers C's "Saving zone info in memory." (zedit.go:538 = zedit.c:310).	-
+zedit_save_to_disk	src/zedit.c:358	ported-other-name	pkg/session/zedit.go:936	saveZeditZone writes the zone file (zedit.go:936-951).	-
+add_cmd_to_list	src/zedit.c:451	ported-other-name	pkg/session/zedit.go:669	the new-command arm applies olc.OpAddZoneCommand at the chosen position (zedit.go:663-671) — C's ordered insert.	-
+remove_cmd_from_list	src/zedit.c:479	ported-other-name	pkg/session/zedit.go:686	the delete arm applies olc.OpRemoveZoneCommand at the index (zedit.go:684-687).	-
+new_command	src/zedit.c:506	ported-other-name	pkg/session/zedit.go:668	new commands are created blank as &parser.ZoneCommand{Command: "N"} (zedit.go:668) = C's new_command seed.	-
+delete_command	src/zedit.c:528	ported-other-name	pkg/session/zedit.go:681	parseZeditDeleteLocked removes the chosen command (zedit.go:681-692).	-
+start_change_command	src/zedit.c:545	ported-other-name	pkg/session/zedit.go:696	parseZeditChangeLocked selects the command to edit and shows the command-type menu (zedit.go:696+).	-
+zedit_disp_menu	src/zedit.c:565	ported-other-name	pkg/session/zedit.go:316	zeditShowMenuLocked renders C's menu rows verbatim — "%sZ%s) Zone name   : %s%s", "%sL%s) Lifespan    : %s%d minutes", "%sT%s) Top of zone : %s%d" (zedit.go:324-327 = zedit.c:568-576).	-
+zedit_disp_comtype	src/zedit.c:709	ported-other-name	pkg/session/zedit.go:432	zeditShowCommandTypeLocked renders C's two-column command list "%sM%s) Load Mobile to room              %sO%s) Load Object to room" etc. (zedit.go:435+ = zedit.c:712-720).	-
+zedit_disp_arg1	src/zedit.c:729	ported-other-name	pkg/session/zedit.go:448	zeditShowArg1Locked prompts per command type — C's arg1 menus.	-
+zedit_disp_arg2	src/zedit.c:768	ported-other-name	pkg/session/zedit.go:467	zeditShowArg2Locked — C's arg2 menus.	-
+zedit_disp_arg3	src/zedit.c:806	ported-other-name	pkg/session/zedit.go:490	zeditShowArg3Locked — C's arg3 menus.	-
+zedit_parse	src/zedit.c:862	ported-other-name	pkg/session/zedit.go:529	parseZeditLocked dispatches the menu letters and answers C's "Invalid choice!\r\n" (zedit.go:543 = zedit.c:875).	-
+real_zone	src/olc.c:366	ported-other-name	pkg/game/world_zone.go:92	(World).GetZone(number) looks the zone up by number (world_zone.go:92) — C's binary search over zone_table.	-
+olc_add_to_save_list	src/olc.c:382	ported-other-name	pkg/session/olc_registry.go:232	olcSaveList.Mark(kind, zone) adds the zone to the save list (olc_registry.go:232, pkg/olc/save_list.go:30).	-
+olc_remove_from_save_list	src/olc.c:399	ported-other-name	pkg/session/olc_registry.go:236	olcSaveList.Remove(kind, zone) (olc_registry.go:236, pkg/olc/save_list.go:43).	-
+do_tedit	src/tedit.c:34	ported-other-name	pkg/session/tedit.go:120	cmdTedit resolves the lib/text file and opens startFileEdit with C's "Edit file below:\r\n\r\n" flow (tedit.go:120-227).	-
+tedit_setup	src/tedit.c:120	ported-other-name	pkg/session/tedit.go:173	startTextEdit wires the file editor state (path, storage, save/abort) — C's tedit setup.	-
