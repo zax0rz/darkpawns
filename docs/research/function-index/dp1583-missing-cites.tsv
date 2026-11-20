@@ -12,3 +12,6 @@ do_levels	pkg/session/cmd_info.go:15	none ("cmdLevels" has no C-citing doc comme
 sort_commands	pkg/session/c_command_list.go:44	none (inline comment cites "act.informative.c:2609", no src/ prefix)
 do_commands	pkg/session/act_informative.go:52	none ("cmdCommands — list all commands available at the player's level."; cmdSocials cites "act.informative.c do_commands/SCMD_SOCIALS" without src/)
 do_coins	pkg/session/cmd_info.go:88	none ("cmdCoins" has no C-citing doc comment)
+do_not_here	pkg/session/cmd_misc.go:166	none (no doc comment; the registration comment cites "act.other.c:208" without src/)
+find_action	pkg/game/act_social.go:47	"DoAction implements do_action() from act.social.c." (no colon or src/ form)
+boot_social_messages	pkg/game/socials.go:37	none ("parseSocials" has no C-citing doc comment)
