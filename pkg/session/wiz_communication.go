@@ -16,10 +16,6 @@ func cmdGecho(s *Session, args []string) error {
 }
 
 func cmdGechoText(s *Session, msg string) error {
-	if !checkLevel(s, LVL_GOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if msg == "" {
 		s.Send("That must be a mistake...\r\n")
 		return nil
@@ -42,10 +38,6 @@ func cmdGechoText(s *Session, msg string) error {
 // echo — echo message to room (LVL_IMMORT)
 // ---------------------------------------------------------------------------
 func cmdEcho(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) == 0 {
 		s.Send("Yes.. but what?")
 		return nil
@@ -75,10 +67,6 @@ func cmdSend(s *Session, args []string) error {
 // the message is the remaining text after skip_spaces, including internal and
 // trailing whitespace.
 func cmdSendText(s *Session, args []string, rawArgs string) error {
-	if !checkLevel(s, LVL_GOD) {
-		s.Send("Huh?!?\r\n")
-		return nil
-	}
 	targetName, msg, hasTarget := splitSendArgs(args, rawArgs)
 	if !hasTarget {
 		s.Send("Send what to who?\r\n")
@@ -139,10 +127,6 @@ func cmdForce(s *Session, args []string) error {
 // cmdForceText retains half_chop's command remainder for the producer and
 // nested producer paths (src/act.wizard.c:1863-1880), including internal/trailing spaces.
 func cmdForceText(s *Session, argument string) error {
-	if !checkLevel(s, LVL_GOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	targetName, forceCmd := wiznetHalfChop(argument)
 	if targetName == "" || forceCmd == "" {
 		s.Send("Whom do you wish to force do what?\r\n")

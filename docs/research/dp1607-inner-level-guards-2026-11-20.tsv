@@ -1,0 +1,62 @@
+handler	go_site	command	inner_level	dispatcher_level	c_check	verdict	notes
+cmdQechoText	pkg/session/act_comm.go:69	qecho	31 (LVL_IMMORT)	31 (C interpreter.c:627)	none (src/act.comm.c:1301-1352)	dead	delete; only reached via executeCommandRaw/cmdQecho after commandGateRejected
+cmdUsers	pkg/session/cmd_info.go:810	users	31 (LVL_IMMORT)	31 (C interpreter.c:797)	none (src/act.informative.c:1948-2113)	dead	delete; only reached via dispatcher
+cmdGechoText	pkg/session/wiz_communication.go:19	gecho	34 (LVL_GOD)	34 (C interpreter.c:462)	none (src/act.wizard.c:1690-1708)	dead	delete; only reached via executeCommandRaw/cmdGecho after commandGateRejected
+cmdEcho	pkg/session/wiz_communication.go:45	echo	31 (LVL_IMMORT)	31 (C interpreter.c:428)	none (src/act.wizard.c:130-154)	dead	delete; only reached via dispatcher
+cmdSendText	pkg/session/wiz_communication.go:78	send	34 (LVL_GOD)	34 (C interpreter.c:681)	none (src/act.wizard.c:157-179)	dead	delete; only reached via executeCommandRaw/cmdSend after commandGateRejected
+cmdForceText	pkg/session/wiz_communication.go:142	force	34 (LVL_GOD)	34 (C interpreter.c:438)	none (src/act.wizard.c:1856-1908)	dead	delete; only reached via executeCommandRaw/cmdForce after commandGateRejected
+cmdShow	pkg/session/wiz_info.go:45	show	31 (LVL_IMMORT)	31 (C interpreter.c:694)	none (src/act.wizard.c:2234-2506)	dead	delete; entry guard repeats dispatcher (subcommand guard at :92 is live)
+cmdDark	pkg/session/wiz_info.go:354	dark	31 (LVL_IMMORT)	31 (C interpreter.c:408)	none (src/act.wizard.c:3214-3236)	dead	delete; only reached via dispatcher
+cmdSyslog	pkg/session/wiz_info.go:398	syslog	31 (LVL_IMMORT)	31 (C interpreter.c:753)	none (src/act.wizard.c:3079-3102)	dead	delete; only reached via dispatcher
+cmdCheckload	pkg/session/wiz_info.go:480	checkload	31 (LVL_IMMORT)	31 (C interpreter.c:381)	none (src/act.wizard.c:3819-3863)	dead	delete; only reached via dispatcher
+cmdPoofsetText	pkg/session/wiz_info.go:697	poofin,poofout	31 (LVL_IMMORT)	31 (C interpreter.c:613-614)	none (src/act.wizard.c:1711-1732)	dead	delete; only reached via executeCommandRaw/cmdPoofin/cmdPoofout after commandGateRejected
+cmdGoto	pkg/session/wiz_movement.go:13	goto	31 (LVL_IMMORT)	31 (C interpreter.c:467)	none (src/act.wizard.c:275-305)	dead	delete; DP-1607 mutation row 55
+cmdAt	pkg/session/wiz_movement.go:104	at	38 (LVL_GRGOD)	38 (C interpreter.c:323)	none (src/act.wizard.c:242-272)	dead	delete; only reached via dispatcher
+cmdTeleport	pkg/session/wiz_movement.go:290	teleport	34 (LVL_GOD)	34 (C interpreter.c:763)	none (src/act.wizard.c:365-391)	dead	delete; only reached via dispatcher
+cmdTransfer	pkg/session/wiz_movement.go:369	transfer	32 (LVL_IMMORT+1)	32 (C interpreter.c:784)	none (src/act.wizard.c:309-361)	dead	delete; DP-1607 mutation row 60 (subcommand 'all' guard at :386 is live)
+cmdHome	pkg/session/wiz_movement.go:473	home	31 (LVL_IMMORT)	31 (C interpreter.c:500)	none (src/act.wizard.c:3238-3302)	dead	delete; only reached via dispatcher
+cmdLoad	pkg/session/wiz_object.go:27	load	31 (LVL_IMMORT)	31 (C interpreter.c:544)	none (src/act.wizard.c:1248-1379)	dead	delete; entry guard repeats dispatcher (item/cost guards at :97,:102 are live)
+cmdPurge	pkg/session/wiz_object.go:202	purge	31 (LVL_IMMORT)	32 (C interpreter.c:624)	none (src/act.wizard.c:1423-1476)	dead	delete; inner level below dispatcher level
+cmdRestore	pkg/session/wiz_player.go:20	restore	33 (LVL_GOD-1)	33 (C interpreter.c:651)	none (src/act.wizard.c:1584-1619)	dead	delete; only reached via dispatcher
+cmdInvis	pkg/session/wiz_player.go:208	invis	31 (LVL_IMMORT)	31 (C interpreter.c:519)	none (src/act.wizard.c:1663-1687)	dead	delete; only reached via dispatcher
+cmdAdvance	pkg/session/wiz_player.go:220	advance	38 (LVL_GRGOD)	38 (C interpreter.c:324)	none (src/act.wizard.c:1480-1580)	dead	delete; recursive call at :297 only runs after cmdAdvance already passed dispatcher
+cmdSkillset	pkg/session/wiz_player.go:358	skillset	38 (LVL_GRGOD)	38 (C interpreter.c:704)	none (src/modify.c:255-341)	dead	delete; printed 'Huh!?!'
+cmdStat	pkg/session/wiz_stats.go:19	stat	31 (LVL_IMMORT)	31 (C interpreter.c:738)	none (src/act.wizard.c:995-1071)	dead	delete; only reached via dispatcher
+cmdVnum	pkg/session/wiz_stats.go:1229	vnum	31 (LVL_IMMORT)	31 (C interpreter.c:803)	none (src/act.wizard.c:395-410)	dead	delete; only reached via dispatcher
+cmdVstat	pkg/session/wiz_stats.go:1294	vstat	31 (LVL_IMMORT)	31 (C interpreter.c:804)	none (src/act.wizard.c:1382-1417)	dead	delete; only reached via dispatcher
+cmdDate	pkg/session/wiz_system.go:268	date	31 (LVL_IMMORT)	31 (C interpreter.c:406)	none (src/act.wizard.c:1802-1830)	dead	delete; only reached via dispatcher
+cmdUptime	pkg/session/wiz_system.go:283	uptime	31 (LVL_IMMORT)	31 (C interpreter.c:795)	none (src/act.wizard.c:1802-1830)	dead	delete; only reached via dispatcher
+cmdLast	pkg/session/wiz_system.go:311	last	33 (LVL_GOD-1)	33 (C interpreter.c:535)	none (src/act.wizard.c:1834-1853)	dead	delete; only reached via dispatcher
+cmdReroll	pkg/session/wiz_system.go:594	reroll	38 (LVL_GRGOD)	38 (C interpreter.c:649)	src/act.wizard.c:2083 checks < LVL_IMMORT && !PLR_CHOSEN (below 38)	dead	delete; inner check at 38 repeats dispatcher and is not C's <31 check
+cmdUnaffect	pkg/session/wiz_system.go:609	unaffect	34 (LVL_GOD)	34 (C interpreter.c:794)	src/act.wizard.c:2083 checks < LVL_IMMORT && !PLR_CHOSEN (below 34)	dead	delete; inner check at 34 repeats dispatcher and is not C's <31 check
+cmdFreeze	pkg/session/wiz_system.go:623	freeze	38 (LVL_GRGOD)	38 (C interpreter.c:452)	src/act.wizard.c:2083 checks < LVL_IMMORT && !PLR_CHOSEN (below 38)	dead	delete; inner check at 38 repeats dispatcher and is not C's <31 check
+cmdThaw	pkg/session/wiz_system.go:638	thaw	38 (LVL_GRGOD)	38 (C interpreter.c:768)	src/act.wizard.c:2083 checks < LVL_IMMORT && !PLR_CHOSEN (below 38)	dead	delete; inner check at 38 repeats dispatcher and is not C's <31 check
+cmdNotitle	pkg/session/wiz_system.go:671	notitle	34 (LVL_GOD)	34 (C interpreter.c:580)	src/act.wizard.c:2083 checks < LVL_IMMORT && !PLR_CHOSEN (below 34)	dead	delete; inner check at 34 repeats dispatcher and is not C's <31 check
+cmdNewbie	pkg/session/wiz_system.go:715	wnewbie	31 (LVL_IMMORT)	31 (C interpreter.c:835)	none (src/act.wizard.c:3516-3542)	dead	delete; only reached via dispatcher
+cmdZreset	pkg/session/wiz_zone.go:26	zreset	31 (LVL_IMMORT)	31 (C interpreter.c:848)	none (src/act.wizard.c:2035-2070)	dead	delete; only reached via dispatcher
+cmdZlist	pkg/session/wiz_zone.go:94	zlist	31 (LVL_IMMORT)	31 (C interpreter.c:847)	none (src/act.wizard.c:3545-3572)	dead	delete; DP-1607 mutation row 88
+cmdRlist	pkg/session/wiz_zone.go:122	rlist	31 (LVL_IMMORT)	31 (C interpreter.c:661)	none (src/act.wizard.c:3336-3373)	dead	delete; only reached via dispatcher
+cmdOlist	pkg/session/wiz_zone.go:167	olist	31 (LVL_IMMORT)	31 (C interpreter.c:591)	none (src/act.wizard.c:3304-3334)	dead	delete; only reached via dispatcher
+cmdSysfile	pkg/session/wiz_zone.go:247	sysfile	34 (LVL_GOD)	34 (C interpreter.c:752)	none (src/act.wizard.c:3412-3442)	dead	delete; only reached via dispatcher
+cmdSethunt	pkg/session/wiz_zone.go:295	sethunt	38 (LVL_GRGOD)	38 (C interpreter.c:683)	none (src/act.wizard.c:3444-3474)	dead	delete; only reached via dispatcher
+World.Hcontrol	pkg/game/house_control.go:337	hcontrol	38 (LVL_GRGOD)	38 (C interpreter.c:491)	none (src/house.c:580-598)	dead	delete; DP-1607 mutation row 97
+cmdOrgasm	pkg/session/cmd_combat_special.go:145	orgasm	31 (LVL_IMMORT)	31 (C interpreter.c:587)	src/new_cmds.c:671-673 (< LEVEL_IMMORT -> 'Come again?\n\r')	keep (in C)	C handler has identical check and message; not Go-only invention
+doGenTog	pkg/game/other_settings.go:299	nowiz	31 (LVL_IMMORT) && !PLR_CHOSEN	31 (C interpreter.c:582)	src/act.other.c:1200-1203 (< LVL_IMMORT && !PLR_CHOSEN -> 'Huh?!?\r\n')	keep (in C)	C handler has identical check and message; not Go-only invention
+cmdWiznetText	pkg/session/wiz_communication.go:366	wiznet,;	31 (LVL_IMMORT) && !PLR_CHOSEN	0 (C interpreter.c:830-831)	src/act.wizard.c:1923-1924 (< LVL_IMMORT && !PLR_CHOSEN -> 'Huh?!?')	live-and-in-C	keep; allows PLR_CHOSEN mortals while rejecting ordinary mortals
+cmdPardon	pkg/session/wiz_system.go:653	pardon	31 (LVL_IMMORT) && !PLR_CHOSEN	1 (C interpreter.c:601)	src/act.wizard.c:2083-2084 (< LVL_IMMORT && !PLR_CHOSEN -> 'Huh?!?\r\n')	live-and-in-C	keep; allows PLR_CHOSEN mortals
+cmdMute	pkg/session/wiz_system.go:691	mute	31 (LVL_IMMORT) && !PLR_CHOSEN	1 (C interpreter.c:559)	src/act.wizard.c:2083-2084 (< LVL_IMMORT && !PLR_CHOSEN -> 'Huh?!?\r\n')	live-and-in-C	keep; allows PLR_CHOSEN mortals
+mobWizutilBody	pkg/session/wizutil_body.go:20	mute,pardon	31 (LVL_IMMORT)	1 (C interpreter.c:559,601)	src/act.wizard.c:2083-2084 (< LVL_IMMORT && !PLR_CHOSEN; NPC cannot be PLR_CHOSEN)	live-and-in-C	keep; actor lane for mute/pardon
+cmdQuiStub	pkg/session/cmd_inventory.go:26	qui	31 (LVL_IMMORT)	0 (C interpreter.c:629)	src/act.other.c:114-116 (< LVL_IMMORT -> 'You have to type quit--no less, to quit!')	live-and-in-C	keep
+cmdMapForBody	pkg/session/map_cmds.go:188	map	31 (LVL_IMMORT)	0 (C interpreter.c:548)	src/mapcode.c:152-154 (< LVL_IMMORT -> 'Type HELP MAP to see a map of town.\r\n')	live-and-in-C	keep
+cmdShow	pkg/session/wiz_info.go:92	show	per-field 31/34/39	31 (C interpreter.c:694)	src/act.wizard.c:2290-2294 (< fields[l].level -> 'You are not godly enough for that!\r\n')	live-and-in-C	keep; per-subcommand gate
+cmdTedit	pkg/session/tedit.go:136,166	tedit	per-file up to 40 (LVL_IMPL)	38 (C interpreter.c:764)	src/tedit.c:92-95 (< fields[l].level -> 'You are not godly enough for that!\r\n')	live-and-in-C	keep; per-file gate
+cmdPageText	pkg/session/comm_cmds.go:175	page	> 34 (LVL_GOD) for 'all'	31 (C interpreter.c:598)	src/act.comm.c:1121-1126 (<= LVL_GOD -> 'You will never be godly enough to do that!\r\n')	live-and-in-C	keep; 'page all' gate
+do_luaedit	pkg/session/luaedit.go:68	luaedit	36 (LVL_HIGOD)	31 (C interpreter.c:546)	src/luaedit.c:51 (< subcmd selects view vs edit)	live-and-in-C	keep; view vs edit gate
+cmdForceText	pkg/session/wiz_communication.go:154,161	force	38 (LVL_GRGOD) for room/all	34 (C interpreter.c:438)	src/act.wizard.c:1868 (< LVL_GRGOD skips room/all)	live-and-in-C	keep; room/all gate
+cmdTransfer	pkg/session/wiz_movement.go:386	transfer	38 (LVL_GRGOD) for all	32 (C interpreter.c:784)	src/act.wizard.c:342 (< LVL_GRGOD rejects transfer all)	live-and-in-C	keep; transfer all gate
+cmdDig	pkg/session/wiz_movement.go:163	dig	35 (LVL_GOD+1)	31 (C interpreter.c:413)	src/new_cmds2.c:844 (< LVL_SET_BUILD restricts to own OLC zone)	live-and-in-C	keep; cross-zone dig gate
+cmdLoad	pkg/session/wiz_object.go:97,102	load	per-vnum/cost limits	31 (C interpreter.c:544)	src/act.wizard.c:1306,1329,1336 (MobLimits/ObjLimits/cost switch)	live-and-in-C	keep; per-vnum and cost gates
+cmdSwitch	pkg/session/wiz_player.go:132	switch	40 (LVL_IMPL) for PC target	32 (C interpreter.c:751)	src/act.wizard.c:1191 (< LVL_IMPL rejects switching into PC)	live-and-in-C	keep; PC switch gate
+DoChannel	pkg/game/comm_channel.go:157	gossip,auction,grats,holler,shout	level_can_shout (3)	0 or 1 (C interpreter.c:339,468,473,498,690)	src/act.comm.c:1215 (< level_can_shout)	live-and-in-C	keep; channel minimum level
+mobGenCommBody	pkg/game/comm_channel.go:253	gossip,auction,grats,holler,shout	level_can_shout (3)	0 or 1 (C interpreter.c:339,468,473,498,690)	src/act.comm.c:1215 (< level_can_shout)	live-and-in-C	keep; NPC channel minimum level
+doClanCreate,doClanDestroy,doClanTitles,resolveClanForImmortal	pkg/game/clan_admin.go:49,121;pkg/game/clan_settings.go:198,209;pkg/game/clans.go:464,472	clan	31 (LVL_IMMORT) / 34 (LVL_GOD)	1 (C interpreter.c:383)	src/clan.c:168,257,297,304,1396,1407 (< LVL_IMMORT / < LVL_CLAN_GOD)	live-and-in-C	keep; clan subcommand gates
