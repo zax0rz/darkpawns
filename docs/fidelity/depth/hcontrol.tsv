@@ -35,3 +35,4 @@ do_hcontrol	destroy	hcontrol.destroy-unknown-house	D2	command	oracle-green-multi
 do_hcontrol	destroy	hcontrol.destroy-invalid-vnum	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:522-526	C atoi maps a nonnumeric vnum to zero and preserves the unknown-house branch.
 do_hcontrol	destroy	hcontrol.destroy-success	D3	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:528-557	Destroy clears the house record and room flags, then emits House deleted.
 do_hcontrol	show	hcontrol.show-after-destroy	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:334-337	The final empty listing matches the C table state after deletion.
+command_interpreter	hcontrol	hcontrol.low-level-hidden-command	D1	command	oracle-green	wizard-low-level-huh-depth@1	src/interpreter.c:491,912-916	A level-1 caller is below do_hcontrol's LVL_GRGOD command gate; C emits Huh?!? from the interpreter without entering house.c (R1/R2/R5e/R5g/R5h).
