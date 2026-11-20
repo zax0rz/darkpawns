@@ -74,6 +74,7 @@ Y
 goto 8162
 teleport PotionQuaffer 8162
 send:victim get flask
+send:victim hold flask
 set player PotionBlinder class mage
 skillset PotionBlinder 'blindness' 100
 set player PotionBlinder maxmana 5000
