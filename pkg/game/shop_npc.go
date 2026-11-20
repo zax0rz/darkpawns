@@ -383,7 +383,7 @@ func (w *World) shopNpcBuy(shop *Shop, keeper, customer *MobInstance, arg string
 }
 
 // shopNpcSell ports shopping_sell (src/shop.c:732-812) for a mobile actor.
-func (w *World) shopNpcSell(shop *Shop, keeper, customer *MobInstance, arg string) {
+func (w *World) shopNpcSell(shop *Shop, keeper, customer *MobInstance, arg string, privateOutput func(string)) {
 	if !w.shopNpcIsOK(shop, keeper, customer) {
 		return
 	}
@@ -435,13 +435,16 @@ func (w *World) shopNpcSell(shop *Shop, keeper, customer *MobInstance, arg strin
 		}
 	}
 	customer.updateGold(func(coins int) (int, bool) { return coins + goldamt, true })
+	times := shopNpcTimesMessage(nil, shortd, sold)
 	if sold > 0 {
-		times := shopNpcTimesMessage(nil, shortd, sold)
 		Act(w, false, customer, nil, nil, nil, "$n sells "+times+".", "", ToRoom)
 	}
-	// C then tells the keeper and sends "The shopkeeper now has %s.\\n\\r" to
-	// the seller; neither reaches a descriptor-less pet.
+	// C: shopping_sell sends the keeper tell, then direct send_to_char at
+	// src/shop.c:800-803. A switched mobile has a descriptor, while a pet does not.
 	w.shopNpcTell(keeper, fmt.Sprintf(shop.Messages[ShopMessageSell], customer.GetName(), goldamt))
+	if privateOutput != nil {
+		privateOutput(fmt.Sprintf("The shopkeeper now has %s.\n\r", times))
+	}
 	w.RebalanceShopBank(shop.VNum, keeper)
 }
 

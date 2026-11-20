@@ -1,6 +1,7 @@
 package game
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -123,15 +124,25 @@ func TestShopNPCGodLevelPaysAndPrefixSale(t *testing.T) {
 	if err := w.MoveObjectToMobInventoryFront(obj, keeper); err != nil {
 		t.Fatal(err)
 	}
-	ctx := CharacterSpecialContext{Actor: customer}
+	var privateOutput strings.Builder
+	ctx := CharacterSpecialContext{
+		Actor: customer,
+		PrivateOutput: func(message string) {
+			privateOutput.WriteString(message)
+		},
+	}
 	if got := DispatchCharacterSpecial("shop_keeper", w, ctx, keeper, "buy", "2 apple"); got != SpecialHandled {
 		t.Fatalf("buy dispatch=%v", got)
 	}
 	if customer.GetGold() != 60 || keeper.GetGold() != 1040 || len(customer.InventorySnapshot()) != 2 {
 		t.Fatalf("NPC buy: coins=%d keeper=%d items=%d", customer.GetGold(), keeper.GetGold(), len(customer.InventorySnapshot()))
 	}
+	privateOutput.Reset()
 	if got := DispatchCharacterSpecial("shop_keeper", w, ctx, keeper, "sell", "ap"); got != SpecialHandled {
 		t.Fatalf("sale dispatch=%v", got)
+	}
+	if got, want := privateOutput.String(), "The shopkeeper now has an apple.\n\r"; got != want {
+		t.Fatalf("switched customer sale receipt = %q, want %q", got, want)
 	}
 	if customer.GetGold() != 80 || keeper.GetGold() != 1020 || len(customer.InventorySnapshot()) != 1 {
 		t.Fatalf("NPC prefix sale: coins=%d keeper=%d items=%d", customer.GetGold(), keeper.GetGold(), len(customer.InventorySnapshot()))
