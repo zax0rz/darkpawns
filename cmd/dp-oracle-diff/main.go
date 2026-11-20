@@ -226,10 +226,10 @@ var errDivergence = errors.New("normalized divergence detected")
 var errDrawDivergence = errors.New("rng draw streams diverge")
 
 // enforceProbeSetupRefusals controls whether DP-1597's in-probe setup refusal
-// check fails the run or runs report-only. Flip this single constant to true
-// once DP-1599's remaining hits are settled (or annotated with
-// "# probe-setup-refusal-reason:").
-const enforceProbeSetupRefusals = false
+// check fails the run or runs report-only. Enabled after DP-1599 settled all
+// remaining refused setup steps and annotated intentional refusal tests with
+// "# probe-setup-refusal-reason:".
+const enforceProbeSetupRefusals = true
 
 func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Duration, oracleBin, seed string, showOracle bool, dumpOracle string, showGoLog bool, goTransport string, drawParity bool, enforceProbeSetup bool) error {
 	if firstByteWait < 0 {

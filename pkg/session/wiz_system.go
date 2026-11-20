@@ -265,10 +265,6 @@ func parseDCNumber(value string) (int, bool) {
 
 // cmdHome — teleport to home room (LVL_IMMORT)
 func cmdDate(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	now := time.Now()
 	// C dispatches date with SCMD_DATE, so do_date ignores its argument;
 	// uptime is a separate command-table entry using SCMD_UPTIME.
@@ -280,10 +276,6 @@ func cmdDate(s *Session, args []string) error {
 // Source: src/interpreter.c do_date/SCMD_UPTIME, gated at LVL_IMMORT.
 // C (act.wizard.c) prints "Up since <boot_time>: N day(s), H:MM".
 func cmdUptime(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	sendUptime(s, time.Now())
 	return nil
 }
@@ -308,10 +300,6 @@ func sendUptime(s *Session, now time.Time) {
 // Source: act.wizard.c:1834-1854; the command-table gate is
 // LVL_GOD-1/POS_DEAD (interpreter.c:535).
 func cmdLast(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GOD-1) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) == 0 {
 		s.Send("For whom do you wish to search?\r\n")
 		return nil
@@ -591,10 +579,6 @@ func wizutilAuthed(s *Session) bool {
 // cmdReroll — standalone "reroll <player>" command.
 // Source: src/interpreter.c do_wizutil/SCMD_REROLL, gated at LVL_GRGOD.
 func cmdReroll(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GRGOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) == 0 {
 		s.Send("Yes, but for whom?!?\r\n")
 		return nil
@@ -606,10 +590,6 @@ func cmdReroll(s *Session, args []string) error {
 // cmdUnaffect — standalone "unaffect <player>" command.
 // Source: src/interpreter.c do_wizutil/SCMD_UNAFFECT, gated at LVL_GOD.
 func cmdUnaffect(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) == 0 {
 		s.Send("Yes, but for whom?!?\r\n")
 		return nil
@@ -620,10 +600,6 @@ func cmdUnaffect(s *Session, args []string) error {
 // cmdFreeze — standalone "freeze <player>" command.
 // Source: src/interpreter.c do_wizutil/SCMD_FREEZE, gated at LVL_FREEZE (=LVL_GRGOD=38).
 func cmdFreeze(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GRGOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) == 0 {
 		s.Send("Yes, but for whom?!?\r\n")
 		return nil
@@ -635,10 +611,6 @@ func cmdFreeze(s *Session, args []string) error {
 // cmdThaw — standalone "thaw <player>" command.
 // Source: src/interpreter.c do_wizutil/SCMD_THAW, gated at LVL_FREEZE (=LVL_GRGOD=38).
 func cmdThaw(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GRGOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) == 0 {
 		s.Send("Yes, but for whom?!?\r\n")
 		return nil
@@ -668,10 +640,6 @@ func cmdPardon(s *Session, args []string) error {
 // cmdNotitle — standalone "notitle <player>" command.
 // Source: src/interpreter.c do_wizutil/SCMD_NOTITLE, gated at LVL_GOD.
 func cmdNotitle(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) == 0 {
 		s.Send("Yes, but for whom?!?\r\n")
 		return nil
@@ -712,10 +680,6 @@ func cmdTick(s *Session, args []string) error {
 // cmdNewbie — give newbie equipment to a character (LVL_IMMORT)
 // Original: act.wizard.c do_newbie() — gives starter items: tunic, bread, skin, club
 func cmdNewbie(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	targetName, _ := game.OneArgument(strings.Join(args, " "))
 	if targetName == "" {
 		s.Send("Whom do you wish to newbie?\r\n")
