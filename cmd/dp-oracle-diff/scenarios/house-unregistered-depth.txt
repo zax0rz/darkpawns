@@ -1,0 +1,46 @@
+# C-first unregistered ROOM_HOUSE refusal (src/house.c:610-618).
+# Room 1002 ("Serapis's House", lib/world/wld/10.wld) ships with the ROOM_HOUSE
+# bit (room flag value 2560), but with the census's fresh player store every
+# house_control record is skipped at boot because its owner no longer exists
+# (src/house.c:296-299), so find_house returns -1 and bare do_house prints the
+# screwed-up refusal before the owner gate (src/house.c:615-618).
+# C path: interpreter.c (house row); src/house.c:598-618, :290-310.
+# depth-case: house.unregistered-room
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Housewalk
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Housewalk
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 1002
+
+[probe]
+house guest anybody
