@@ -22,6 +22,10 @@ type SiteMatcher struct {
 	// index this slice.
 	texts []string
 	trie  *patternTrie
+	// wildcardRefs are fragments whose FIRST segment carries a stored
+	// conversion (a %%-escaped re-sprintf template): no literal prefix exists
+	// for the trie to anchor, so every line considers them directly (DP-2892).
+	wildcardRefs []fragRef
 	// hit and present are per-line scratch; visited marks results for the block
 	// being scanned and is reset by the caller between blocks.
 	hit     []bool
@@ -52,6 +56,9 @@ func NewSiteMatcher(sites []CSite) *SiteMatcher {
 				continue
 			}
 			first := fragment[0]
+			if len(segmentPieces(first)) > 1 {
+				m.wildcardRefs = append(m.wildcardRefs, fragRef{site: i, fragment: fi})
+			}
 			m.refs[first] = append(m.refs[first], fragRef{site: i, fragment: fi})
 			if !seen[first] {
 				seen[first] = true
@@ -97,6 +104,20 @@ func (m *SiteMatcher) ScanBlock(block string, visit func(site, line int)) {
 					st.done = true
 					visit(ref.site, lineNo+1)
 				}
+			}
+		}
+		for _, ref := range m.wildcardRefs {
+			st := &m.state[ref.site]
+			if st.done || ref.fragment != st.cursor {
+				continue
+			}
+			if !LineContainsSegments(line, m.sites[ref.site].Fragments[ref.fragment]) {
+				continue
+			}
+			st.cursor++
+			if st.cursor == len(m.sites[ref.site].Fragments) {
+				st.done = true
+				visit(ref.site, lineNo+1)
 			}
 		}
 		for _, id := range m.present {
