@@ -212,3 +212,27 @@ redit_disp_script_menu	src/redit.c:584	ported-other-name	pkg/session/redit.go:10
 redit_disp_menu	src/redit.c:612	ported-other-name	pkg/session/redit.go:865	the main menu renders C's header "-- Room number : [%s%d%s]      Room zone: [%s%d%s]" (redit.go:865 = redit.c:614).	-
 redit_parse	src/redit.c:673	ported-other-name	pkg/session/redit.go:338	parseReditLocked dispatches the numbered choices; entry mudlogs C's "OLC: %s edits room %d" (redit.go:320 = redit.c:676).	-
 redit_string_cleanup	src/redit.c:1065	ported-other-name	pkg/session/redit.go:765	finishReditStringLocked applies save/abort to the room field buffers — C's cleanup switch for the room string editor.	-
+sedit_setup_existing	src/sedit.c:133	ported-other-name	pkg/session/sedit.go:159	startSedit loads the live shop via SnapshotShop and converts it to the working proto (sedit.go:159-163) — C's load-and-copy.	-
+copy_shop	src/sedit.c:143	inlined	pkg/session/sedit.go:209	seditShopProto builds the working copy field-by-field into a fresh parser.ShopProto (sedit.go:209-229) — Go has no separate copy function.	-
+copy_list	src/sedit.c:181	inlined	pkg/session/sedit.go:209	the product list copies as a fresh slice inside seditShopProto's conversion (sedit.go:209-229).	-
+copy_type_list	src/sedit.c:208	inlined	pkg/session/sedit.go:209	same conversion copies the buy-type list into the working proto (sedit.go:209-229).	-
+sedit_remove_from_type_list	src/sedit.c:235	ported-other-name	pkg/session/sedit.go:557	the delete-type arm calls seditRemoveBuyType and refreshes the namelist menu (sedit.go:557-559).	-
+sedit_add_to_type_list	src/sedit.c:262	ported-other-name	pkg/session/sedit.go:552	the new-type arm applies the OLC clamp, asks "Enter namelist (return for none) :-" and enters the namelist mode (sedit.go:552-555 = sedit.c:262-284's flow).	-
+sedit_add_to_int_list	src/sedit.c:285	ported-other-name	pkg/session/sedit.go:746	seditAddProductLocked appends the product vnum (sedit.go:746), driven by the seditNewProduct arm (:562-565).	-
+sedit_remove_from_int_list	src/sedit.c:307	ported-other-name	pkg/session/sedit.go:562	the products menu's delete arm removes the chosen product entry (parseSeditMainMenuLocked, sedit.go:562+).	-
+free_shop_strings	src/sedit.c:333	go-native	-	GC frees shop strings; no per-string free exists.	-
+free_type_list	src/sedit.c:368	go-native	-	GC frees the type list with the shop struct.	-
+free_shop	src/sedit.c:381	go-native	-	GC frees the shop struct.	-
+real_shop	src/sedit.c:391	ported-other-name	pkg/game/shop.go:71	(ShopManager).GetShopByVNum looks the shop up by vnum (shop.go:71) — C's binary search over shop_index.	-
+sedit_modify_string	src/sedit.c:404	ported-other-name	pkg/session/sedit.go:549	the namelist prompt "Enter namelist (return for none) :-\r\n| " (sedit.go:549 = sedit.c:410-415) collects the replacement into the shop state.	-
+sedit_save_internally	src/sedit.c:422	ported-other-name	pkg/session/sedit.go:253	finishSeditLocked's save arm installs the edited shop and persists the zone (sedit.go:253, zone write via saveSeditZone at :129).	-
+sedit_save_to_disk	src/sedit.c:469	ported-other-name	pkg/session/sedit.go:816	saveSeditZone writes the C .shp format (sedit.go:815-828), logging C's "SYSERR: OLC: Cannot open shop file!" on failure (:131 = sedit.c:474).	-
+sedit_products_menu	src/sedit.c:558	ported-other-name	pkg/session/sedit.go:361	seditShowProductsMenuLocked prints C's "##     VNUM     Product" header (sedit.go:365 = sedit.c:560).	-
+sedit_compact_rooms_menu	src/sedit.c:588	ported-other-name	pkg/session/sedit.go:378	seditShowCompactRoomsMenuLocked renders the compact room rows "%2d - [%s%5d%s]  | " (sedit.go:378-395 = sedit.c:590-616).	-
+sedit_rooms_menu	src/sedit.c:619	ported-other-name	pkg/session/sedit.go:396	seditShowRoomsMenuLocked prints C's cleared header "##     VNUM     Room" (sedit.go:400 = sedit.c:621).	-
+sedit_namelist_menu	src/sedit.c:649	ported-other-name	pkg/session/sedit.go:413	seditShowNamelistMenuLocked prints C's "##              Type   Namelist" header (sedit.go:417 = sedit.c:651).	-
+sedit_shop_flags_menu	src/sedit.c:677	ported-other-name	pkg/session/sedit.go:431	seditShowShopFlagsMenuLocked lists the shop flags as "%2d) %-20.20s" rows (sedit.go:431-446 = sedit.c:679-700).	-
+sedit_no_trade_menu	src/sedit.c:703	ported-other-name	pkg/session/sedit.go:447	seditShowNoTradeMenuLocked lists the no-trade item types (sedit.go:447-462 = sedit.c:705-726).	-
+sedit_types_menu	src/sedit.c:729	ported-other-name	pkg/session/sedit.go:463	seditShowTypesMenuLocked lists the buy types (sedit.go:463-477 = sedit.c:731-753).	-
+sedit_disp_menu	src/sedit.c:756	ported-other-name	pkg/session/sedit.go:306	seditShowMenuLocked opens with C's header "-- Shop Number : [%s%d%s]" (sedit.go:325 = sedit.c:758).	-
+sedit_parse	src/sedit.c:817	ported-other-name	pkg/session/sedit.go:486	parseSeditLocked dispatches the menu choices and re-prompts with C's "Field must be numerical, try again : " (sedit.go:494 = sedit.c:822).	-
