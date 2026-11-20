@@ -17,10 +17,6 @@ import (
 // restore — fully restore target (LVL_IMMORT)
 // ---------------------------------------------------------------------------
 func cmdRestore(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GOD-1) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	// C do_restore uses one_argument: fill words are skipped and trailing input
 	// is ignored. Its visible lookup includes both players and NPCs.
 	targetName, _ := game.OneArgument(strings.Join(args, " "))
@@ -205,10 +201,6 @@ func (m *Manager) returnSwitch(s *Session) error {
 // invis — toggle invisibility (LVL_IMMORT)
 // ---------------------------------------------------------------------------
 func cmdInvis(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	s.manager.world.DoInvis(s.player, strings.Join(args, " "))
 	return nil
 }
@@ -217,10 +209,6 @@ func cmdInvis(s *Session, args []string) error {
 // gecho — broadcast to all players (LVL_GOD)
 // ---------------------------------------------------------------------------
 func cmdAdvance(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GRGOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) == 0 {
 		s.Send("Advance who?\r\n")
 		return nil
@@ -355,11 +343,6 @@ func parseAdvanceLevel(args []string) (int, bool) {
 // writes the log line and never broadcasts (modify.c:334). SET_SKILL maps to
 // Player.SetSkill keyed by the canonical lowercased spells[] display name.
 func cmdSkillset(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GRGOD) {
-		s.Send("Huh!?!")
-		return nil
-	}
-
 	// Step 1: no argument → print syntax + the full skill list.
 	if len(args) == 0 {
 		s.Send("Syntax: skillset <name> '<skill>' <value>\r\n")

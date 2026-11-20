@@ -66,10 +66,6 @@ func cmdQecho(s *Session, args []string) error {
 }
 
 func cmdQechoText(s *Session, msg string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if blocked := qcommGuard(s); blocked {
 		return nil
 	}

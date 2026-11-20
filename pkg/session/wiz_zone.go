@@ -23,10 +23,6 @@ func cmdAdmobs(s *Session) error {
 }
 
 func cmdZreset(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	arg, _ := game.OneArgument(strings.Join(args, " "))
 	if arg == "" {
 		s.Send("You must specify a zone.\r\n")
@@ -91,10 +87,6 @@ func zresetZoneIndex(zones []*parser.Zone, zoneNumber int) int {
 const zlistReadLimit = 8192 - 5 // C fread bound: MAX_STRING_LENGTH - 5 (src/structs.h:643)
 
 func cmdZlist(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	arg, _ := game.OneArgument(strings.Join(args, " "))
 	zoneNum := mlistAtoi(arg)
 	if arg == "" {
@@ -119,10 +111,6 @@ func cmdZlist(s *Session, args []string) error {
 // argument is a numeric zone selector, not a room-name keyword. C atoi accepts
 // a signed decimal prefix, and the final list is paged through the descriptor.
 func cmdRlist(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	pw := s.GetWorld().GetParsedWorld()
 	if pw == nil {
 		s.Send("No parsed world available.")
@@ -164,10 +152,6 @@ func cmdRlist(s *Session, args []string) error {
 // that range in index order, and pages the buffer. An empty range prints only
 // C's "Sorry, there are no objs in that zone." line.
 func cmdOlist(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	pw := s.GetWorld().GetParsedWorld()
 	if pw == nil {
 		s.Send("Sorry, there are no objs in that zone.\r\n")
@@ -244,10 +228,6 @@ func mlistAtoi(value string) int {
 // cmdSysfile — show system file (bugs/ideas/todo/typos) (LVL_GOD)
 // Original: act.wizard.c do_sysfile() — reads file content and pages it
 func cmdSysfile(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	arg, _ := game.OneArgument(strings.Join(args, " "))
 	if arg == "" {
 		s.Send("That isn't a file!\r\n")
@@ -292,10 +272,6 @@ func sysfileName(arg string) (string, bool) {
 // cmdSethunt — set hunt target for a mob (LVL_GRGOD)
 // Original: act.wizard.c do_sethunt() — sets a mob to hunt a visible character
 func cmdSethunt(s *Session, args []string) error {
-	if !checkLevel(s, LVL_GRGOD) {
-		s.Send("Huh?!?")
-		return nil
-	}
 	if len(args) == 0 {
 		s.Send("Who do you wish to hunt?\n\r")
 		return nil
