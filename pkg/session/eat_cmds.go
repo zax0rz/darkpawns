@@ -119,6 +119,12 @@ func cmdQuaff(s *Session, args []string) error {
 	if !fromHold {
 		s.player.MarkCrashNeeded()
 	}
+	// DP-1598: unlink from global object_list (src/spell_parser.c:717-718; src/handler.c:1029-1035)
+	// without re-entering the inventory branch's PLR_CRASH mark for held items.
+	if s.manager != nil && s.manager.world != nil {
+		item.Location = game.LocNowhere()
+		s.manager.world.ExtractObject(item, s.player.RoomVNum)
+	}
 	s.markDirty(VarInventory)
 
 	return nil
