@@ -1,0 +1,126 @@
+# C-first SPELL_SLOW wear-off (src/constants.c:1317, slot 98). The existing
+# b2-uncastable exclusion reasons from mortal casting (no spell_level grant,
+# no item carrier), but do_cast's min_level gate is satisfied by any immortal
+# (spello default LVL_IMMORT, src/spell_parser.c:1150; LVL_IMMORT=31,
+# src/structs.h:620), so a level-34 immortal caster casts it at the God primary
+# (whose own ticking keeps the holder's stream alive): mag_affects types the affect 98 (src/magic.c:879) with
+# duration = caster level (src/magic.c:1049-1050), and affect_update prints
+# spell_wear_off_msg[98] verbatim at expiry (src/magic.c:449-453).
+# Forty-one hourly ticks walk the 40-hour duration to zero.
+# C path: src/interpreter.c (cast row); src/spell_parser.c:1420-1421,
+# :970-976; src/magic.c:863-879, :1049-1055, :430-457.
+# depth-case: constants.spell-wearoff-slow
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Qwertyui
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Qwertyui
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Slowedcaster]
+Xkcdqwp
+Y
+slowpass
+slowpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Slowedcaster]
+Xkcdqwp
+y
+slowpass
+slowpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Xkcdqwp 8105
+set player Xkcdqwp class mage
+set player Xkcdqwp level 34
+skillset Xkcdqwp 'slow' 100
+set player Xkcdqwp maxmana 9000
+set player Xkcdqwp mana 9000
+
+[probe]
+send:slowedcaster cast 'slow' Qwertyui
+~dpclock pulse 20
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick

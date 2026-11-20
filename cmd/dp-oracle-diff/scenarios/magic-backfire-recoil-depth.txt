@@ -134,3 +134,19 @@ cast 'disintegration' BackfireVictim
 cast 'ray of disruption' BackfireVictim
 ~dpclock pulse 20
 cast 'psiblast' BackfireVictim
+cast 'ray of disruption' BackfireVictim
+~dpclock pulse 20
+cast 'ray of disruption' BackfireVictim
+~dpclock pulse 20
+cast 'ray of disruption' BackfireVictim
+~dpclock pulse 20
+cast 'ray of disruption' BackfireVictim
+~dpclock pulse 20
+cast 'ray of disruption' BackfireVictim
+~dpclock pulse 20
+cast 'ray of disruption' BackfireVictim
+~dpclock pulse 20
+cast 'ray of disruption' BackfireVictim
+~dpclock pulse 20
+cast 'ray of disruption' BackfireVictim
+~dpclock pulse 20

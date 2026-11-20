@@ -1,0 +1,54 @@
+# C-first do_behead rename (src/new_cmds.c:222-350). The trainee dies of a
+# set -10 hit, leaving the standard corpse container; a wielded slash weapon
+# (obj 12120, value[3] = 3) passes the behead arm, and the corpse's keyword
+# list gains "headless beheaded" (src/new_cmds.c:343). An immortal stat of
+# the corpse prints the renamed keywords verbatim in the Aliases field
+# (src/act.wizard.c:520-524), witnessing the construction bytes.
+# depth-case: behead.renamed-corpse-keywords
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 none
+spawn-mob 16303 1 8105 163
+
+[setup:oracle]
+Qbhead
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Qbhead
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load obj 12120
+wield cutlass
+
+
+[probe]
+kill trainee
+~dpclock pulse 20
+look
+behead trainee
+stat trainee

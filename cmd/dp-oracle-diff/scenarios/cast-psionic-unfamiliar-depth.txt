@@ -1,0 +1,83 @@
+# C-first do_cast zero-skill psionic refusal (src/spell_parser.c:970-976).
+# A mortal psionic cannot use the literal cast command at all
+# (src/spell_parser.c:926-931), so the "You are unfamiliar with that power."
+# arm needs an immortal psionic: the 926 gate requires
+# GET_LEVEL(ch) < LVL_IMMORT (src/structs.h:620). The descriptor-owned actor
+# is the second created player, so init_char leaves every skill at zero
+# (src/db.c:3058-3066) and do_set level assigns GET_LEVEL without granting
+# skills (src/act.wizard.c:2896-2901). At level 32 the min_level gate
+# (spello default LVL_IMMORT, src/spell_parser.c:1150) is passed and the
+# zero-skill refusal fires before any target or RNG work. The first-created
+# God is only the cast target.
+# C path: src/interpreter.c (cast row); src/spell_parser.c:918-976.
+# depth-case: will.unfamiliar-power
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Castpeek
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Castpeek
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Castunfam]
+Castunfam
+Y
+psipass
+psipass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Castunfam]
+Castunfam
+y
+psipass
+psipass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Castunfam 8105
+set player Castunfam class i
+set player Castunfam level 32
+
+[probe:Castunfam]
+cast 'flame arrow' Castpeek
+will 'flame arrow'

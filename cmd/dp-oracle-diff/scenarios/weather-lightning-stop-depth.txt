@@ -1,0 +1,76 @@
+# C-first weather_change lightning-stop transition (src/weather.c:218-225).
+# The frozen clock and month-16 pressure threshold from
+# weather-lightning-start-depth, pumped across many more mud hours so the
+# sky reaches SKY_LIGHTNING and a later roll lands case 6 (The lightning
+# stops., src/weather.c:223).
+# depth-case: weather.sky-lightning-stop
+
+[fixture]
+quiet-mobs
+seed-player
+fixed-time 1771235235
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8001
+
+[probe]
+weather
+~dpclock pulse 630
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+~dpclock pulse 630

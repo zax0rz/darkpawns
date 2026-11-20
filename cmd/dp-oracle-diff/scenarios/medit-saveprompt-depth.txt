@@ -1,0 +1,47 @@
+# C-first medit save-prompt re-ask (src/medit.c:748-751). A valid level edit
+# sets OLC_VAL, so q asks MEDIT_CONFIRM_SAVESTRING
+# (src/medit.c:779-781); the non-y/n answer z hits the default arm, which
+# prints Invalid choice! and re-asks "Do you wish to save the mobile? : "
+# (src/medit.c:750) before n finally cleans up.
+# C path: src/interpreter.c (medit row); src/medit.c:730-752.
+# depth-case: medit.save-prompt-reask
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Zedqwp
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zedqwp
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+medit 18305
+6
+14
+q
+z
+n

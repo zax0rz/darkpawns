@@ -1,0 +1,81 @@
+# C-first actor-low-health mindlink refusal (src/new_cmds2.c:284-288).
+# The GET_HIT(ch) < 100 gate refuses before the target-mana gate and before
+# any draw. The target is a normal NPC trainee (a PC target would return at
+# the earlier blank-stare refusal, src/new_cmds2.c:266-272) with full mana,
+# so the actor's health is the first failing condition. The actor keeps
+# skillset mindlink so the earlier zero-skill gate is passed.
+# C path: src/new_cmds2.c:258-314.
+# depth-case: mindlink.actor-low-health
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 163
+
+[setup:oracle]
+Mindlinklow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mindlinklow
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Mindlinkloww
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Mindlinkloww
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Mindlinkloww 8105
+skillset Mindlinklow 'mindlink' 100
+set mob trainee maxmana 500
+set mob trainee mana 500
+set player Mindlinklow maxhit 99
+set player Mindlinklow hit 90
+
+[probe]
+mindlink trainee
