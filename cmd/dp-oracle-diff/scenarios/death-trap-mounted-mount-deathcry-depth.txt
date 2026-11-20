@@ -8,11 +8,13 @@ empty-players
 quiet-mobs
 replace-room-exits 8162 north 8161 0
 replace-room-exits 8161 south 8162 0
+set-room-flag 8162 3 off
+set-room-flag 8161 3 off
 set-room-flag 8161 1 on
 spawn-mob 8021 1 8162 80
 
 [setup:oracle]
-Trapmountgod
+Rootportal
 Y
 oraclepass
 oraclepass
@@ -26,38 +28,10 @@ Y
 1
 
 [setup:port]
-Trapmountgod
+Rootportal
 y
 oraclepass
 oraclepass
-N
-M
-H
-W
-K
-Y
-<ENTER>
-1
-
-[setup:oracle:Traprider]
-Traprider
-Y
-riderpass
-riderpass
-N
-M
-H
-W
-K
-Y
-<ENTER>
-1
-
-[setup:port:Traprider]
-Traprider
-y
-riderpass
-riderpass
 N
 M
 H
@@ -97,12 +71,9 @@ Y
 
 [warmup]
 goto 8162
-teleport Traprider 8162
-teleport Trapwatch 8162
-
-[probe:Traprider]
+teleport Trapwatch 8161
 ride horse
-north
+set Rootportal level 1
 
-[probe:Trapwatch]
-look
+[probe]
+north

@@ -8,7 +8,7 @@ empty-players
 quiet-mobs
 
 [setup:oracle]
-Silkcastgod
+Spelladmin
 Y
 oraclepass
 oraclepass
@@ -22,7 +22,7 @@ Y
 1
 
 [setup:port]
-Silkcastgod
+Spelladmin
 y
 oraclepass
 oraclepass
