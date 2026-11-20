@@ -92,3 +92,29 @@ Two data points from the same day, both for the send-back count above.
 Claude's review of the next batch (#2712) looked at this exact question for `backstab`. It found the only `subcmd=1` caller, then judged it "not this route" without tracing where the Go call goes. That's the R5e failure in the reviewer: verify the call path, don't infer it.
 
 What caught it was a census run for a different purpose: Hydrogen's full census for removing the trim (DP-1544). Its two unexplained FAILs were bisected to #2700 in four targeted runs. A targeted census that matches the PR's own topic can't see a regression in a caller the PR didn't know it had. A full census on a later commit did.
+
+## Addendum, 2026-11-19: what the human would have seen
+
+Three findings in one day were all green evidence that a reader of the raw
+bytes would likely have questioned:
+- a consider row witnessed by a transcript that printed nothing (PF-132);
+- a C cite to `record_usage()` copied 1,487 times (PF-133);
+- 47 spell cells proven on scenarios whose `load` got `Huh?!?` (PF-134).
+
+Each passed agent review, Claude's review, CI and a month of full censuses.
+On PF-134, Zach said that working in the loop he would have caught it as it
+happened. That claim is untested. It's plausible, because the refusal sits in
+plain text a few lines from the step that caused it.
+
+This is Bainbridge's irony in the port's own data. Lifting the human out of
+per-PR review removed the one reader who looks at the bytes, not at the
+verdict.
+
+The repair being tried keeps the human on the loop but turns what he would
+have noticed into checks:
+- read the C line a row names;
+- check each distinct cite range once;
+- flag a refused setup step (DP-1597).
+
+Whether those checks are a fair substitute for the human glance is open
+evidence, not a result.
