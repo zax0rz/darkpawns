@@ -168,7 +168,6 @@ set player ItemMage level 30
 
 
 [probe]
-get book
 recite book ItemPeer
 ~dpclock pulse 20
 score
@@ -183,8 +182,8 @@ send:builder 16
 send:builder 23
 send:builder q
 send:builder y
-load obj 4404
-get book
+send:builder load obj 4404
+send:builder give book ItemMage
 recite book ItemPeer
 ~dpclock pulse 20
 score
@@ -199,8 +198,8 @@ send:builder 33
 send:builder 38
 send:builder q
 send:builder y
-load obj 4404
-get book
+send:builder load obj 4404
+send:builder give book ItemMage
 recite book ItemPeer
 ~dpclock pulse 20
 score
@@ -215,8 +214,11 @@ send:builder 47
 send:builder 48
 send:builder q
 send:builder y
-load obj 4404
-get book
+send:peer follow ItemMage
+group self
+group ItemPeer
+send:builder load obj 4404
+send:builder give book ItemMage
 recite book ItemPeer
 ~dpclock pulse 20
 score

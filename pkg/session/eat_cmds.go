@@ -78,8 +78,14 @@ func cmdQuaff(s *Session, args []string) error {
 		return nil
 	}
 
-	// Quaff message
-	s.Send(fmt.Sprintf("You quaff %s.", item.GetShortDesc()))
+	// Quaff message — C uses act("You quaff $p.", FALSE, ch, obj, NULL, TO_CHAR)
+	// (src/spell_parser.c:705), where OBJS(obj, ch) expands to "something" when
+	// !CAN_SEE_OBJ(ch, obj) (e.g. a blind drinker quaffing a held potion).
+	quaffName := "something"
+	if game.CanSeeObject(s.player, item) {
+		quaffName = item.GetShortDesc()
+	}
+	s.Send(fmt.Sprintf("You quaff %s.", quaffName))
 	if item.Prototype != nil && item.Prototype.ActionDesc != "" {
 		game.Act(s.manager.world, false, s.player, nil, item, nil,
 			item.Prototype.ActionDesc, "", game.ToRoom)
@@ -118,6 +124,12 @@ func cmdQuaff(s *Session, args []string) error {
 	// through unequip_char, which does not.
 	if !fromHold {
 		s.player.MarkCrashNeeded()
+	}
+	// DP-1598: unlink from global object_list (src/spell_parser.c:717-718; src/handler.c:1029-1035)
+	// without re-entering the inventory branch's PLR_CRASH mark for held items.
+	if s.manager != nil && s.manager.world != nil {
+		item.Location = game.LocNowhere()
+		s.manager.world.ExtractObject(item, s.player.RoomVNum)
 	}
 	s.markDirty(VarInventory)
 
