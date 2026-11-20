@@ -1,0 +1,21 @@
+name	go_registration	go_handler	who_can_reach_it	ending
+# Go-only command-name audit (R2/R4), 2026-11-20, DP-1339 follow-up.
+# C list: 508 active cmd_info[] rows in src/interpreter.c (the commented-out
+# rolleyes row excluded). command_gates.tsv agrees with it (508 rows; C's
+# "whod  " row normalized to "whod").
+# Go list: every name a typed line can resolve — the exact-match registry
+# (pkg/session registerCommand/registerActorCommand, including variadic
+# aliases and slice-registered names), C-prefix resolution over commandOrder,
+# and the socials path (C do_action row AND a lib/misc/socials record).
+# RESULT: Go-only typed names = ZERO (see rows below).
+map	pkg/session/map_cmds.go:296	cmdMapBody	god was wrong in the stale comment: C registers map at src/interpreter.c:548; Go matches	comment-stale-cite
+ignore	—	—	mortal	handler and registration absent since the DP-1339 removal batch (cmd/dp-oracle-diff/scenarios/command-go-only-removed.txt types it, expecting Huh?!?); the comment name is stale	comment-stale-cite
+autoloot	pkg/game/combat_wire.go:809 (preference bit PrfAutoLoot, not a command registration)	toggle argument	mortal	not a command name: no cmd_info row, no registration. Survives only as a string preference on Go's cmdToggle (commands.go:618); C's do_toggle (src/act.other.c:1142) takes no string arguments and C knows no autoloot/autogold/autosplit. Argument-surface divergence, not a name — Decision for Zach
+# Reverse diff: C command rows Go does not resolve at all. Each gets a DP- issue.
+chide	—	—	mortal	C do_action row (src/interpreter.c) with no lib/misc/socials record: C resolves and prints "That action is not supported." (src/act.social.c do_action); Go's socials gate requires a socials record, so Go prints Huh?!? (src/interpreter.c:916).	reverse-gap	DP-1611
+embrace	—	—	mortal	Same class as chide: C row, no socials record, C prints "That action is not supported.", Go prints Huh?!?.	reverse-gap	DP-1612
+goose	—	—	mortal	Same class: C row, no socials record.	reverse-gap	DP-1613
+noogie	—	—	mortal	Same class: C row, no socials record.	reverse-gap	DP-1614
+ren	—	—	mortal	Same class: C row, no socials record.	reverse-gap	DP-1615
+steam	—	—	mortal	Same class: C row, no socials record.	reverse-gap	DP-1616
+stimpy	—	—	mortal	Same class: C row, no socials record.	reverse-gap	DP-1617
