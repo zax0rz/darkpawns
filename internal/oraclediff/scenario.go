@@ -112,6 +112,11 @@ type Scenario struct {
 	// verbatim in SetupRefusalReason.
 	AllowSetupRefusal  bool
 	SetupRefusalReason string
+	// ProbeSetupRefusalReason opts setup-shaped [probe] commands out of the
+	// DP-1597 probe setup-refusal check when a scenario intentionally tests a
+	// refusal on one of those commands. Parsed from
+	// "# probe-setup-refusal-reason: <why>".
+	ProbeSetupRefusalReason string
 }
 
 // PeerSetup describes a passive client that remains connected while the
@@ -399,6 +404,13 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				}
 				sc.SetupRefusalReason = reason
 				setupRefusalReasonSeen = true
+			}
+			if reason, ok := strings.CutPrefix(line, "# probe-setup-refusal-reason:"); ok {
+				reason = strings.TrimSpace(reason)
+				if reason == "" {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: empty probe-setup-refusal-reason", name, lineNo)
+				}
+				sc.ProbeSetupRefusalReason = reason
 			}
 			continue
 		}

@@ -50,10 +50,13 @@ main() {
 		# later scheduling tuning.
 		local elapsed=$(( $(date +%s) - started_at ))
 		local hollow=0
+		local probe_setup_refusals=0
 		if [[ -n "${attempt_log:-}" && -f "$attempt_log" ]]; then
 			hollow=$(awk -F '[=\t]' '/^hollow-prompt-steps\tcount=/ { val = $3 } END { print (val == "" ? 0 : val) }' "$attempt_log")
+			probe_setup_refusals=$(awk -F '[=\t]' '/^probe-setup-refusals\tcount=/ { val = $3 } END { print (val == "" ? 0 : val) }' "$attempt_log")
 		fi
 		printf '%s\n' "$hollow" >"$result_dir/$scenario.hollow"
+		printf '%s\n' "$probe_setup_refusals" >"$result_dir/$scenario.probe_setup_refusals"
 		if [[ -n "$status" ]]; then
 			printf '%s\t%s\t%s\t%s\n' "$kind" "$scenario" "$elapsed" "$status" >"$result_dir/$scenario"
 		else

@@ -149,3 +149,55 @@ func TestMatchingSetupRefusalWholeLineOnly(t *testing.T) {
 		}
 	}
 }
+
+func TestCheckProbeSetupRefusals(t *testing.T) {
+	// Reproduces the DP-1597 failure shape (level-30 actor running load obj 4399
+	// inside [probe]) and also verifies full DP-1456/DP-1511 inventory matching
+	// beyond Huh?!?.
+	blocks := []AudienceProbeBlock{
+		{Command: "load obj 4399", Audience: "actor", Output: "Huh?!?\r\n"},
+		{Command: "load obj 4399", Audience: "builder", Output: ""},
+		{Command: "send:builder load obj 4399", Audience: "builder", Output: "You create some northern devil ginseng powder.\r\n"},
+		{Command: "send:builder load obj 4399", Audience: "primary", Output: "ItemBuilder has created some northern devil ginseng powder!\r\n"},
+		{Command: "goto 999999", Audience: "actor", Output: "No room exists with that number.\r\n"},
+		{Command: "goto 999999", Audience: "builder", Output: ""},
+		{Command: "quaff powder", Audience: "actor", Output: "You quaff some northern devil ginseng powder.\r\n"},
+		{Command: "quaff powder", Audience: "builder", Output: ""},
+	}
+	hits := CheckProbeSetupRefusals(blocks)
+	if len(hits) != 2 {
+		t.Fatalf("got %d hits, want 2: %+v", len(hits), hits)
+	}
+	if hits[0].Step != "load obj 4399" || hits[0].Line != "Huh?!?" {
+		t.Fatalf("hit[0] = %+v, want load obj 4399 / Huh?!?", hits[0])
+	}
+	if hits[1].Step != "goto 999999" || hits[1].Line != "No room exists with that number." {
+		t.Fatalf("hit[1] = %+v, want goto 999999 / No room exists with that number.", hits[1])
+	}
+
+	// Clean builder-loaded probe stays quiet.
+	clean := []AudienceProbeBlock{
+		{Command: "send:builder load obj 4399", Audience: "builder", Output: "You create some northern devil ginseng powder.\r\n"},
+		{Command: "send:builder load obj 4399", Audience: "primary", Output: ""},
+		{Command: "send:builder give powder ItemMage", Audience: "builder", Output: "Ok.\r\n"},
+		{Command: "send:builder give powder ItemMage", Audience: "primary", Output: ""},
+	}
+	if got := CheckProbeSetupRefusals(clean); len(got) != 0 {
+		t.Fatalf("clean builder-loaded probe flagged: %+v", got)
+	}
+}
+
+func TestParseScenarioProbeSetupRefusalReason(t *testing.T) {
+	sc, err := ParseScenario("opted-out", strings.NewReader(
+		"# probe-setup-refusal-reason: intentionally tests level-30 load refusal\n[probe]\nload obj 4399\n"))
+	if err != nil {
+		t.Fatalf("valid probe-setup-refusal-reason failed to parse: %v", err)
+	}
+	if sc.ProbeSetupRefusalReason != "intentionally tests level-30 load refusal" {
+		t.Fatalf("ProbeSetupRefusalReason = %q", sc.ProbeSetupRefusalReason)
+	}
+	if _, err := ParseScenario("empty-reason", strings.NewReader(
+		"# probe-setup-refusal-reason:\n[probe]\nload obj 4399\n")); err == nil || !strings.Contains(err.Error(), "empty probe-setup-refusal-reason") {
+		t.Fatalf("empty probe-setup-refusal-reason must fail, got %v", err)
+	}
+}

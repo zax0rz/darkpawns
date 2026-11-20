@@ -176,6 +176,107 @@ func checkWarmupRefusals(steps []string, blocks []AudienceProbeBlock, peers int,
 	return nil
 }
 
+// ProbeSetupRefusalHit records one setup-shaped [probe] step whose sender
+// output matched the DP-1456/DP-1511 setup refusal inventory (DP-1597).
+type ProbeSetupRefusalHit struct {
+	StepIndex int
+	Step      string
+	Line      string
+	Cite      string
+}
+
+var probeSetupVerbs = map[string]bool{
+	"oedit":    true,
+	"medit":    true,
+	"redit":    true,
+	"zedit":    true,
+	"sedit":    true,
+	"zreset":   true,
+	"goto":     true,
+	"teleport": true,
+	"transfer": true,
+	"trans":    true,
+	"set":      true,
+	"skillset": true,
+	"advance":  true,
+	"force":    true,
+	"sethunt":  true,
+	"peace":    true,
+	"restore":  true,
+	"purge":    true,
+}
+
+// IsProbeSetupCommand reports whether a [probe] step invokes an immortal/OLC
+// setup command (ignoring an optional "send:<peer> " prefix).
+func IsProbeSetupCommand(step string) bool {
+	s := strings.TrimSpace(step)
+	if strings.HasPrefix(s, "send:") {
+		if sp := strings.IndexAny(s, " \t"); sp >= 0 {
+			s = strings.TrimSpace(s[sp+1:])
+		} else {
+			return false
+		}
+	}
+	fields := strings.Fields(s)
+	if len(fields) == 0 {
+		return false
+	}
+	verb := strings.ToLower(fields[0])
+	if verb == "load" {
+		if len(fields) >= 2 {
+			kind := strings.ToLower(fields[1])
+			return kind == "obj" || kind == "mob"
+		}
+		return false
+	}
+	return probeSetupVerbs[verb]
+}
+
+// isProbeSenderBlock reports whether block is the sender's output block for
+// step (primary/actor for plain commands, or the named peer for send:<peer>).
+func isProbeSenderBlock(step string, block AudienceProbeBlock) bool {
+	if block.Audience == "" {
+		return true
+	}
+	s := strings.TrimSpace(step)
+	if rest, ok := strings.CutPrefix(s, "send:"); ok {
+		peer := rest
+		if sp := strings.IndexAny(rest, " \t"); sp >= 0 {
+			peer = rest[:sp]
+		}
+		return block.Audience == peer
+	}
+	return block.Audience == "actor" || block.Audience == "primary"
+}
+
+// CheckProbeSetupRefusals scans the sender block of every setup-shaped [probe]
+// step against the same DP-1456/DP-1511 refusal inventory used by
+// checkWarmupRefusals (DP-1597). There are no name-based exemptions; scenarios
+// that intentionally test a refusal on one of these commands opt out explicitly
+// via "# probe-setup-refusal-reason: <why>".
+func CheckProbeSetupRefusals(blocks []AudienceProbeBlock) []ProbeSetupRefusalHit {
+	var hits []ProbeSetupRefusalHit
+	stepIndex := 0
+	for _, b := range blocks {
+		if !isProbeSenderBlock(b.Command, b) {
+			continue
+		}
+		stepIndex++
+		if !IsProbeSetupCommand(b.Command) {
+			continue
+		}
+		if line, cite := matchingSetupRefusal(b.Output); line != "" {
+			hits = append(hits, ProbeSetupRefusalHit{
+				StepIndex: stepIndex,
+				Step:      b.Command,
+				Line:      line,
+				Cite:      cite,
+			})
+		}
+	}
+	return hits
+}
+
 // Substitutions are non-empty and never cross a line. C's MAX_STRING_LENGTH
 // (src/structs.h:643) bounds the whole line through refusalMatcher.maxLen
 // rather than counted regex repeats: chunked {0,1000} repeats compiled each
