@@ -1,0 +1,2 @@
+c_function	c_site	disposition	go_site	evidence	dp_issue
+do_qcomm	src/act.comm.c:1301	ported-other-name	pkg/session/act_comm.go:34	cmdQsay (with cmdQecho at pkg/session/act_comm.go:62 for SCMD_QECHO) shares C's strings verbatim: "You aren't even part of the quest!" (act.comm.c:1307 = act_comm.go:99), "You cannot quest-say!", the "&WYou quest-say, '%s'&n" broadcast (act.comm.c:1334 = act_comm.go:53) and the empty-argument chide.	-
