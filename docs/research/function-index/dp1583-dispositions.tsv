@@ -314,3 +314,12 @@ lua_unaffect	src/scripts.c:1591	ported-other-name	pkg/scripting/engine.go:814	bi
 table_to_obj	src/scripts.c:2053	inlined	pkg/scripting/bridge.go:118	the object write-back folds table_to_obj into the bridge's ApplyObj path ("ApplyObj is table_to_obj", bridge.go:118; ObjWrite comment cites scripts.c:2054-2094 at :90).	-
 table_to_room	src/scripts.c:2095	inlined	pkg/scripting/bindings_bridge.go:235	the room write-back folds table_to_room into bridgeSaveRoom's apply (bindings_bridge.go:235 citing scripts.c:2096-2109).	-
 clear_stack	src/scripts.c:2111	go-native	pkg/scripting/engine.go:635	gopher-lua manages its own LState stack; the port's only stack hygiene is L.SetTop after a file returns (engine.go:635).	-
+same_obj	src/shop.c:292	ported-other-name	pkg/game/shop_stock.go:209	SameShopObject compares vnum, cost, extra flags and affect location/modifier (shop_stock.go:209-228) = C's same_obj field set.	-
+shop_producing	src/shop.c:321	ported-other-name	pkg/session/shop_cmds.go:152	shopObjectIsProduced iterates the product vnums and SameShopObject-compares against a prototype instance (shop_cmds.go:152-162) = C's SHOP_PRODUCT loop.	-
+slide_obj	src/shop.c:653	ported-other-name	pkg/game/shop_stock.go:148	slideShopObject(WithKeeper)Locked repositions a restocked object in the keeper's inventory (shop_stock.go:148-155).	-
+sort_keeper_objs	src/shop.c:704	ported-other-name	pkg/game/shop_stock.go:119	sortShopInventoryLocked re-sorts the keeper's stock (shop_stock.go:119), driven from ResetShopStockSort (:45).	-
+list_object	src/shop.c:844	ported-other-name	pkg/session/shop_cmds.go:254	shopListLine keeps C's "Unlimited"/count column, the drinkcon " of <drink>" suffix and CAP, and "(partially used)" (shop_cmds.go:256-271, comment citing shop.c:858-862).	-
+add_to_list	src/shop.c:1027	inlined	pkg/parser/shop.go:99	parseShopRecord's field reads build the product/buy-type/room slices directly (pkg/parser/shop.go:99+) — no separate list-append helper.	-
+end_read_list	src/shop.c:1052	inlined	pkg/parser/shop.go:99	the -1 terminator check folds into parseShopRecord's per-line loop (pkg/parser/shop.go:99+).	-
+read_list	src/shop.c:1077	inlined	pkg/parser/shop.go:99	the "v1 v2 ... -1" lines parse into slices inside parseShopRecord (pkg/parser/shop.go:99+).	-
+read_type_list	src/shop.c:1101	inlined	pkg/parser/shop.go:99	same for buy-type lists inside parseShopRecord (pkg/parser/shop.go:99+).	-
