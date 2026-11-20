@@ -261,3 +261,9 @@ real_zone	src/olc.c:366	ported-other-name	pkg/game/world_zone.go:92	(World).GetZ
 olc_add_to_save_list	src/olc.c:382	ported-other-name	pkg/session/olc_registry.go:232	olcSaveList.Mark(kind, zone) adds the zone to the save list (olc_registry.go:232, pkg/olc/save_list.go:30).	-
 olc_remove_from_save_list	src/olc.c:399	ported-other-name	pkg/session/olc_registry.go:236	olcSaveList.Remove(kind, zone) (olc_registry.go:236, pkg/olc/save_list.go:43).	-
 do_tedit	src/tedit.c:34	ported-other-name	pkg/session/tedit.go:120	cmdTedit resolves the lib/text file and opens startFileEdit with C's "Edit file below:\r\n\r\n" flow (tedit.go:120-227).	-
+medit_setup_new	src/medit.c:101	ported-other-name	pkg/session/medit.go:169	startMedit's miss arm builds newMeditMob with C's seed strings — "mob unfinished", "the unfinished mob", "An unfinished mob stands here.\r\n", "It looks, err, unfinished.\r\n" (medit.go:200-218 = medit.c:106-115).	-
+medit_setup_existing	src/medit.c:126	ported-other-name	pkg/session/medit.go:171	the same startMedit clones the live mob via SnapshotMob into the edit state (medit.go:171-175).	-
+copy_mobile	src/medit.c:141	inlined	pkg/session/medit.go:171	the working copy is the SnapshotMob clone handed to meditState — no separate deep-copy function exists.	-
+init_mobile	src/medit.c:183	ported-other-name	pkg/session/medit.go:200	newMeditMob carries C's init values: HP 1d1, damage 1d1, weight 200, height 198, ISNPC (medit.go:213-217 = medit.c:184-200).	-
+medit_save_to_disk	src/medit.c:336	ported-other-name	pkg/session/medit.go:1007	saveMeditZone writes "%d.mob" under lib/world/mob (medit.go:1045 = medit.c:341).	-
+medit_string_cleanup	src/medit.c:1123	ported-other-name	pkg/session/medit.go:954	the mob string editors finish through the textEditState onComplete arm applying save/abort to the field (medit.go:954+).	-
