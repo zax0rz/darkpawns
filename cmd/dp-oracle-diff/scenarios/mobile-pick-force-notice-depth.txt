@@ -66,38 +66,9 @@ Y
 <ENTER>
 1
 
-[setup:oracle:pickpeer]
-Pickpeer
-Y
-pickpass
-pickpass
-N
-M
-H
-W
-K
-Y
-<ENTER>
-1
-
-[setup:port:pickpeer]
-Pickpeer
-y
-pickpass
-pickpass
-N
-M
-H
-W
-K
-Y
-<ENTER>
-1
-
 [warmup]
 goto 8040
 teleport Switchpeer 8040
-teleport Pickpeer 8040
 advance Switchpeer 39
 load obj 8010
 give bread Switchpeer
@@ -108,6 +79,6 @@ lock gate
 set Lockwitness level 34
 
 [probe]
-send:pickpeer pick gate
 send:peer switch trainee
+send:peer pick gate
 force trainee sit
