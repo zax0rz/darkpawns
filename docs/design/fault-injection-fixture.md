@@ -23,7 +23,7 @@ All verbs live in the `[fixture]` section (applied after tree copy, before boot)
 
 | Verb | Effect |
 |---|---|
-| `fault-dir <logical-path>` | Replace the path with a directory in **both** trees. `fopen(..., "r"/"r+b"/"w")` and `os.Open`/`os.Create` all fail (`EISDIR`), deterministically, regardless of the runner's uid (chmod-000 depends on not being root). |
+| `fault-dir <logical-path>` | Replace the path with a directory in **both** trees. Supported logical paths include `object_idlist`, `mail`, `misc/bugs`, and `zone-N`. `fopen(..., "r"/"r+b"/"w")` and `os.Open`/`os.Create` all fail (`EISDIR`), deterministically, regardless of the runner's uid (chmod-000 depends on not being root). |
 | `fault-corrupt-mail unaligned` | Plant a 1-byte mail file in both trees: the block scan ends off `BLOCK_SIZE`, failing the alignment check at boot. |
 | `fault-corrupt-mail bad-header` | Plant a full-size block whose `block_type` is neither HEADER nor DELETED: the *next* `receive` reads it, fails the header check, and disables mail mid-session. |
 | `fault-board <vnum> <malformation>` | Write a structurally valid board file (C layout: `int` count, then per message `board_msginfo{slot_num, level, heading_len, message_len}` + heading bytes + message bytes — `src/boards.c:495-530`, `pkg/boards/boards.go:190-221`) with one malformation: `empty-message-valid-slot` (message_len 0, slot in range), `empty-message-huge-slot` (message_len 0, slot `99999`), or `nul-heading` (heading_len 1, single NUL). |

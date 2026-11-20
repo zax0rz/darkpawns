@@ -1,0 +1,41 @@
+# C-first witness for do_gen_write's report-file open-failure branch
+# (src/act.other.c:1122-1125). Replacing misc/bugs with a directory makes both
+# fopen("a") and os.OpenFile fail deterministically, while the other report
+# paths remain untouched.
+# depth-case: gen-write.open-failure
+
+[fixture]
+empty-players
+quiet-mobs
+fault-dir misc/bugs
+
+[setup:oracle]
+Bugwriter
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bugwriter
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+bug report-open-failure
