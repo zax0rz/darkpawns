@@ -23,3 +23,10 @@ been made for these rows.
 
 - **Round 2 row 28 / DP-1610:** classify the sampled Go `doClanQuit` membership guard as `go-only-in-game` and omit it from repairs. C's `do_clan_quit` (`src/clan.c:612-647`) has no membership guard; with `clan_num == -1`, it writes `clan[-1]` and prints “You've quit your clan.” This is an R1a undefined-behavior case. Do not change `doClanQuit` until Zach rules on DP-1610. The identical “You aren't in a clan!” text in C `do_clan_members` is a different path.
 | 3 | 88 | `c-reachable` (frozen) | `HandleNoteInput` emits the sampled first-line truncation warning only when one input line exceeds the 1,000-byte note buffer (`src/act.comm.c:1022`; `src/modify.c:127-138`). C reads each command into a 256-byte line buffer (`src/structs.h:644`), so the note path cannot pass such a line to `string_add`; Go accepts a 1,024-byte line (`pkg/telnet/listener.go:569-572`) and can reach the branch. | Zach: decide whether to correct this to `go-only-in-game` and align the note input path to C line framing, or classify it `c-unreachable after all`. Preserve the frozen class and denominator until ruled; do not edit Go or the harness in this proof batch. |
+
+## Round 4 population sweep classifications
+
+| Sweep row | Class | Evidence | Follow-up |
+|---:|---|---|---|
+| 148 | `ask-zach` | Go prints `(null)` for a nil clan plan; C passes `clan[i].plan` to `%s` in `do_clan_info` (`src/clan.c:774`), where the null argument has undefined behavior. | Decide whether to classify the host reference's observed bytes as `c-reachable` or keep this Go result `ask-zach`. The row stays in the denominator during the sweep. |
+| 472 | `ask-zach` | The `all.` token is a Go remove-all parser prefix nested in an output expression (`pkg/game/npc_command_items.go:251`); C has no corresponding player-facing literal. | Decide whether this collector false positive remains `ask-zach` in the denominator or gets a correction. The frozen class stays unchanged during the sweep. |
