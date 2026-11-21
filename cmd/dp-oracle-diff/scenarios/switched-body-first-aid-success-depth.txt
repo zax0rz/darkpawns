@@ -1,0 +1,108 @@
+# C-first switched-mobile do_first_aid success branch. Restoring the level-39
+# NPC writes 100 into C's shared dummy_mob skill table; level 39 also forces
+# the success arm. The downed player and room peer prove private and audience
+# bytes (src/new_cmds2.c:139-187; src/act.wizard.c:1584-1601).
+# depth-case: aid.switched-mobile-success-room-output
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-mob 69 1 8162 80
+
+[setup:oracle]
+Aidowner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Aidowner
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Aidvictim]
+Aidvictim
+Y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Aidvictim]
+Aidvictim
+y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Aidwatch]
+Aidwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Aidwatch]
+Aidwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Aidvictim 8162
+teleport Aidwatch 8162
+set mob clone level 39
+set Aidvictim level 1
+set Aidvictim hit 0
+restore clone
+switch clone
+
+[probe]
+aid Aidvictim

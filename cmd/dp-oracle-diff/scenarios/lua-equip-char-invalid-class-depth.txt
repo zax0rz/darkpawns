@@ -1,0 +1,55 @@
+# C-first Lua equip_char bridge reaches handler.c:715's invalid-class act.
+# The disposable mobile oncmd loads a mage-barred object onto the player and
+# calls equip_char(player, object); normal do_wear has its own call path.
+# depth-case: equipment.lua-equip-char-invalid-class-output
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 1 8162 122
+mob-script 12220 oracle/equipcharinvalid.lua 512
+
+[lua-script mob/oracle/equipcharinvalid.lua]
+function oncmd()
+if (argument ~= "say equip") then
+return FALSE
+end
+local skirt = oload(ch, 4705, "char")
+equip_char(ch, skirt)
+return TRUE
+end
+
+[setup:oracle]
+Equipowner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Equipowner
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set player Equipowner class mage
+
+[probe]
+say equip

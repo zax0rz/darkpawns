@@ -1,0 +1,136 @@
+# C-first ordinary-magic call_magic ROOM_NOMAGIC gate. An immortal operator
+# sets up a level-30 Mage peer, who casts at a valid target in a non-peaceful
+# room. C emits the private magic-fizzle line and room act (src/spell_parser.c:414-428).
+# depth-case: cast.magic-fizzles-in-nomagic-room
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+set-room-flag 8105 7 on
+
+[setup:oracle]
+Nomaggod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nomaggod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Nomagcaster]
+Nomagcaster
+Y
+casterpass
+casterpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Nomagcaster]
+Nomagcaster
+y
+casterpass
+casterpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Nomagvictim]
+Nomagvictim
+Y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Nomagvictim]
+Nomagvictim
+y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Nomagwatch]
+Nomagwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Nomagwatch]
+Nomagwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Nomagcaster 8105
+teleport Nomagvictim 8105
+teleport Nomagwatch 8105
+set player Nomagcaster class mage
+skillset Nomagcaster 'flame arrow' 100
+set player Nomagcaster maxmana 5000
+set player Nomagcaster mana 5000
+set player Nomagcaster level 30
+
+[probe:Nomagcaster]
+cast 'flame arrow' Nomagvictim

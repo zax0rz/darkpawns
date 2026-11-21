@@ -1,0 +1,103 @@
+# C-first switched mobile witnesses do_bite's NPC TO_VICT act. The connected
+# immortal switches into the mobile body and bites a live same-room player, so
+# C's $n line is delivered to a descriptor (src/new_cmds.c:1202-1239).
+# depth-case: bite.switched-mobile-player-victim-act
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-mob 69 1 8162 80
+
+[setup:oracle]
+Biteowner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Biteowner
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Bitevictim]
+Bitevictim
+Y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Bitevictim]
+Bitevictim
+y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Bitewatch]
+Bitewatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Bitewatch]
+Bitewatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Bitevictim 8162
+teleport Bitewatch 8162
+switch clone
+
+[probe]
+bite Bitevictim
