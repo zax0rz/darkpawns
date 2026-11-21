@@ -3,6 +3,7 @@
 # from damage() (src/fight.c:1601-1610). One safe exit reaches do_simple_move,
 # which fails for zero movement; do_flee then broadcasts the failure line to
 # the origin room (src/act.offensive.c:392-412; src/act.movement.c:172-177).
+# The forced hit is a probe step so the C transcript captures that line.
 
 [fixture]
 empty-players
@@ -104,4 +105,6 @@ set player Exfleer hit 4
 set player Exfleer move 0
 set mob trainee hitroll 100
 set mob trainee damroll -20
+
+[probe]
 force trainee hit Exfleer
