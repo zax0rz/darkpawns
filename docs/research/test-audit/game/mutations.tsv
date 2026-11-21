@@ -8,3 +8,6 @@ TestConsumables_InstanceIsolation	pkg/game/object.go	-	SetValue leaks val into o
 TestNewbieHometownRoom	pkg/game/death.go	-	Kir-Oshi start room 18201 -> 8162	n/a (R spot-check)	red	yes
 TestDoTellEligibilityAndDelivery	pkg/game/directed_speech.go	-	tell not-found literal "No-one" -> "No one" (directed_speech.go:207; the NoPersonHere constant sits on another path and mutating it stays green — recorded)	n/a (R spot-check)	red	yes
 TestTimeWeatherSnapshotTracksCanonicalClock	pkg/game/weather.go	-	TimeWeatherSnapshot drops the Weather half of the snapshot	n/a (R spot-check)	red	yes
+TestDoYank_Success_FemalePronouns	pkg/game/other_mount.go	307	yank format "to $S feet." -> "to $S foot."	n/a (R spot-check)	red	yes
+TestSearchHelpPrefixAndFirstMatch	pkg/game/help.go	SearchHelp first-match backtrack traces FORWARDS to the last match instead	n/a (R spot-check)	red	yes
+TestLoadHelpFilesRealDataParity	pkg/game/help.go	oneWord quoted-span branch disabled (quoted keywords split into words)	n/a (R spot-check)	red	yes

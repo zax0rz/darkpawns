@@ -118,3 +118,17 @@ swapped — red), TestDoTellEligibilityAndDelivery (not-found byte — red,
 after recording that the NoPersonHere constant is not this path's source),
 TestTimeWeatherSnapshotTracksCanonicalClock (snapshot loses the weather
 half — red).
+
+## Post-oracle redo, batch 4 (tests 151–200, T489–T538; 2026-07-16)
+
+Marks: R 50 / F 0 / C 0 / D 0. The batch is three tight families plus
+singles: the skillmsg reroute family (bash/headbutt/kick/trip ×5 — one
+shared contract per shape, all citing src/fight.c:1023-1035 skill_message,
+verified this session), the first-player-god bootstrap (citing
+src/db.c:3016-3024, verified), the help loader/search family, yank's gates
+(src/act.other.c:1620+ verified: no-arg, NOPERSON, self "That's wierd.",
+non-follower "That probably wouldn't be appreciated.", already-up mounted/
+unmounted, sleeping), plus give's NOPERSON and the gen-tog clan gate.
+
+R spot-checks: yank pronoun byte red; help first-match backtrack reversed
+red; quoted-keyword parse disabled red.
