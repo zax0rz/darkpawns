@@ -1,16 +1,17 @@
 # depth-case: flee.simple-move-failure
-# Damage drops a mortal below the default wimp threshold, so C calls do_flee
-# from damage() (src/fight.c:1601-1610). One safe exit reaches do_simple_move,
-# which fails for zero movement; do_flee then broadcasts the failure line to
-# the origin room (src/act.offensive.c:392-412; src/act.movement.c:172-177).
-# The forced hit is a probe step so the C transcript captures that line.
+# This C-first witness exercises the mobile command path to do_flee, which
+# reaches World.DoFlee rather than the player's session cmdFlee. One safe exit
+# reaches do_simple_move, then fails because the tunnel destination already
+# has a PC (src/act.offensive.c:360-415; src/act.movement.c:180-185;
+# ROOM_TUNNEL is bit 8 at src/structs.h:64).
 
 [fixture]
 empty-players
 quiet-mobs
 set-room-flag 8162 4 off
+set-room-flag 8161 8 on
 replace-room-exits 8162 west 8161 0
-spawn-mob 16303 1 8162 80
+spawn-mob 16303 80 8162 163
 
 [setup:oracle]
 Fleegod
@@ -99,12 +100,12 @@ Y
 [warmup]
 goto 8162
 teleport Exfleer 8162
-teleport Exorigin 8162
-set player Exfleer maxhit 50
-set player Exfleer hit 4
-set player Exfleer move 0
+teleport Exorigin 8161
+set player Exfleer maxhit 5000
+set player Exfleer hit 5000
 set mob trainee hitroll 100
 set mob trainee damroll -20
+force trainee hit Exfleer
 
 [probe]
-force trainee hit Exfleer
+force trainee flee
