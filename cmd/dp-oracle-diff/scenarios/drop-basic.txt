@@ -14,7 +14,7 @@
 [fixture]
 quiet-mobs
 # Existing resets can already load this object, so allow another instance.
-spawn-obj 2111 80 8162 80
+spawn-obj 2111 80 8162 21
 
 [setup:oracle]
 Dropper
