@@ -69,8 +69,8 @@ Y
 1
 
 [warmup]
-goto 8162
 teleport Thinksee 8162
+goto 8162
 
 [probe]
 think hello world
