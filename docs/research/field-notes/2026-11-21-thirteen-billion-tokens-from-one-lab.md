@@ -19,3 +19,22 @@ Every result is checked against the C oracle, whichever model produced it, so ch
 - collect the other labs' totals the same way.
 
 Until then it's a reported figure, not a verified one.
+
+## A method that doesn't need a clean split (added the same day)
+
+Provider dashboards count every use on the account, and some don't show subscription usage at all; Anthropic's subscription has no per-project view. So Dark Pawns' share can't be carved out of a provider total. Report a range instead:
+
+- **Upper bound:** the provider's account total for the period.
+- **Lower bound:** tokens from agent logs whose session ran inside the Dark Pawns checkout or its worktrees. Claude Code logs carry per-message usage, the model, and the working directory. OpenClaw, Codex and other harness logs may do the same, and checking that is the next step.
+
+**Claude's lower bound (PF-156).** The Claude Code logs for this project cover 2026-08-14 to 2026-11-21; older transcripts were pruned. They hold 23,209 messages:
+
+| | Tokens |
+|---|---:|
+| cache reads | 8.91 B |
+| cache writes | 0.13 B |
+| output | 0.02 B |
+| uncached input | about 0 |
+| **total** | **9.06 B** |
+
+By model, claude-opus-5-5 accounts for 7.25 B. **98% of the total is cache reads:** the same long context re-read each turn. Raw token totals mostly measure context length times turns, not work. Any figure in the paper should report output tokens and cache reads as separate columns, and should say which one a headline number is.
