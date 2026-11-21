@@ -138,3 +138,21 @@ care than its age suggests.
 
 Coverage: 74.4% → 74.4%.
 
+ HEAD
+
+## Batch 4 results (later tests 1–100, all 2026-07)
+
+Marks: R 100, F 0, C 0, D 0.
+
+The first post-oracle month is the strongest layer yet: DP-1115 quit/reallyquit
+semantics with captured-save persistence proofs, the cast-command draw-order
+suite (concentration/dice/save stream arithmetic, draw-free gates, incantation
+audiences), do_who/do_help/do_time byte pins with C line cites, the
+command-surface oracles (golden gate/order hashes, prefix-resolution laws from
+interpreter.c:909-912, draw parity), whisper/page/recite audience bytes
+(including BEL \x07\x07 and LFCR shapes), and the social gate-table fallback.
+No fixes needed anywhere in the batch. No J10 divergences.
+
+Attribution: codex 24, glm 7, unknown 69 (the July QA/sprint branches by
+BRENDA69 and zach without trailers).
+ 1daa6607f (test(session): audit batch 4 — post-oracle July tests 1–100, all R)
