@@ -201,3 +201,19 @@ checkload/alias/date, eat/use hold-priority) plus the pager parity suite
 (parallel renderLineCount oracle), input-timing (comm.c FIFO/one-per-pulse/
 unit conversion), flee/retreat XP formulas, and the DP_FRESH_MUD God latch.
 All assertive; no fixes, no J10 divergences.
+
+### Ledger update (2026-11-21, review hold follow-up)
+
+Per-row evidence: every T246–T345 row's evidence cell now names what was
+checked for that test — the modify.c:266-279 skillset list terminator bytes,
+the pager boundary arithmetic, the do_set/do_force acknowledgement bytes, the
+input-drain timing invariants, or the Go call it drives. Test file/line
+columns are backfilled.
+
+All-R spot-checks (random draw, seed 20261105, from T246–T345): T262
+TestCmdSkillset_ValueExpected (wiz_player.go:411 "Learned value expected."
+→ "...expected?"), T333 TestCmdAtPreservesNestedMovementLocation
+(wiz_movement.go: unconditional SetRoom(dest) appended — the stranded-at-temp-
+room bug), T265 TestCmdTitleSetThenClear (informative_cmds.go:40 ack format
+dropped its period). All three went red and were restored byte for byte
+(mutations.tsv).
