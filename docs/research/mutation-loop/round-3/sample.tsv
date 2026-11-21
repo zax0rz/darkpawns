@@ -6,15 +6,15 @@ i	package	func	file	func_line	lit_line	source_offset	mutation_offset	old_byte	ne
 4	game	*World.mobGenDoor	pkg/game/act_movement.go	1243	1378	43329	43330	d	Q	"""door."""	c-reachable	C do_gen_door builds the fallback text ending in “door.” at src/act.movement.c:514-517.
 5	game	*World.butlerPerformPut	pkg/game/spec_procs3.go	403	411	13266	13268	n	Q	"""$n puts $p in $P."""	c-reachable	C perform_put emits this act at src/act.item.c:62.
 6	command	CmdHeadbutt	pkg/command/skill_commands.go	220	249	7136	7137	H	Q	"""Headbutt who?\r\n"""	c-reachable	C do_headbutt emits this prompt at src/new_cmds.c:402.
-7	game	*World.performImmortVis	pkg/game/invis.go	40	43	1089	1090	Y	Q	"""You are already fully visible.\r\n"""	c-reachable	C do_invis emits this refusal at src/act.wizard.c:1629.
+7	game	*World.performImmortVis	pkg/game/invis.go	40	43	1089	1090	Y	Q	"""You are already fully visible.\r\n"""	c-reachable	C perform_immort_vis emits this refusal at src/act.wizard.c:1629.
 8	game	*WorldScriptableAdapter.Echo	pkg/game/world_bridge.go	971	1015	29585	29586	T	Q	"""That must be a mistake...\r\n"""	c-reachable	C do_gecho emits the same text at src/act.wizard.c:1697; the script echo callback routes through it.
 9	session	cmdList	pkg/session/shop_cmds.go	277	341	10758	10759	C	Q	"""Currently, there is nothing for sale.\r\n"""	c-reachable	C shopping_list emits this empty-shop line at src/shop.c:918.
-10	session	*Session.startSedit	pkg/session/sedit.go	159	185	5141	5143	n	Q	"""$n starts using OLC."""	c-reachable	C sedit emits the OLC start act at src/olc.c:275.
+10	session	*Session.startSedit	pkg/session/sedit.go	159	185	5141	5143	n	Q	"""$n starts using OLC."""	c-reachable	C do_olc emits this room act when an editor starts at src/olc.c:275.
 11	game	*World.PostmasterSendMail	pkg/game/mail.go	514	529	14412	14414	n	Q	"""$n tells you, 'A stamp costs %d coins.'\r\n$n tells you, '...which I see you can't afford.'"""	c-reachable	C postmaster_send_mail emits this stamp/affordability text at src/mail.c:523-524.
 12	game	specTattoo2	pkg/game/spec_procs2.go	1107	1134	37568	37569	W	Q	"""Without more coins, I can give no wisdom."""	c-reachable	C tattoo2 emits this refusal at src/spec_procs2.c:1062.
 13	game	*World.resolveCharacterAmbush	pkg/game/skill_actor_ambush.go	67	73	2369	2370	Y	Q	"""You seem to have lost your prey.\r\n"""	c-reachable	C do_ambush emits this lost-prey line at src/act.offensive.c:1413.
 14	game	specTurnUndead	pkg/game/spec_procs3.go	927	940	31545	31546	A	Q	"""A ray of flame bursts out of the object, consuming the undead!"""	go-only-in-game	Go specTurnUndead emits “the object” at pkg/game/spec_procs3.go:940; C SPECIAL(turn_undead) uses “$p” at src/spec_procs3.c:555-556, so C cannot print the sampled Go wording. The C special is declared at src/spec_assign.c:525 but has no assignment. Go-only in-game; DP-1596 follow-up.
-15	game	*World.characterMobPeek	pkg/game/npc_command_utility.go	228	230	7645	7646	Y	Q	"""You're not a thief!\r\n"""	c-reachable	C do_steal emits this refusal at src/act.other.c:1676.
+15	game	*World.characterMobPeek	pkg/game/npc_command_utility.go	228	230	7645	7646	Y	Q	"""You're not a thief!\r\n"""	c-reachable	C do_peek emits this refusal at src/act.other.c:1676.
 16	session	findGotoRoom	pkg/session/wiz_movement.go	45	73	2142	2143	T	Q	"""That object is not available.\r\n"""	c-reachable	C do_goto emits this unavailable-object line at src/act.wizard.c:210.
 17	session	cmdThink	pkg/session/comm_cmds.go	109	125	4644	4645	Y	Q	"""You think . o O ( %s )"""	c-reachable	C do_think emits this format string at src/act.comm.c:1380.
 18	game	*World.doRoll	pkg/game/other_utility.go	429	438	13783	13784	Y	Q	"""You roll %d (1-%d).\r\n"""	c-reachable	C do_roll emits the matching positive-number line with unsigned format verbs at src/act.other.c:1942.
@@ -24,7 +24,7 @@ i	package	func	file	func_line	lit_line	source_offset	mutation_offset	old_byte	ne
 22	game	specTattoo4	pkg/game/spec_procs2.go	1325	1346	44725	44726	Y	Q	"""You don't have enough gold, get outta here!"""	c-reachable	C tattoo4 emits this exact refusal at src/spec_procs2.c:1330.
 23	session	cmdLast	pkg/session/wiz_system.go	302	326	9150	9154	d	Q	"""[%5d] [%2d %s] %-12s : %-18s : %-20s\r\n"""	c-reachable	C do_last emits this report format at src/act.wizard.c:1848-1852; the last command is registered in src/interpreter.c:535.
 24	game	*World.appendCharacterLook	pkg/game/look.go	660	700	24166	24167	Y	Q	"""You see nothing special about $M."""	c-reachable	C show_char_to_char_1 emits this look text at src/act.informative.c:397.
-25	game	*World.ExecuteWordOfRecall	pkg/game/other_utility.go	180	203	7164	7166	n	Q	"""$n disappears."""	c-reachable	C spell_word_of_recall emits this room act at src/spells.c:148.
+25	game	*World.ExecuteWordOfRecall	pkg/game/other_utility.go	180	203	7164	7166	n	Q	"""$n disappears."""	c-reachable	C spell_recall emits this room act at src/spells.c:148.
 26	game	*World.GainExpRegardless	pkg/game/limits_exp.go	228	268	7364	7365	Y	Q	"""You rise a level!\r\n"""	c-reachable	C gain_exp emits this level-up line at src/limits.c:354.
 27	session	sendUptime	pkg/session/wiz_system.go	284	294	8041	8042	d	Q	"""day"""	c-reachable	C do_date includes “day” in its uptime output at src/act.wizard.c:1825-1826.
 28	game	performGetFromContainerMobile	pkg/game/item_transfer_actor.go	214	230	7316	7318	n	Q	"""$n gets $p from $P."""	c-reachable	C perform_get_from_container emits this act at src/act.item.c:209.
@@ -45,33 +45,33 @@ i	package	func	file	func_line	lit_line	source_offset	mutation_offset	old_byte	ne
 43	session	cmdAt	pkg/session/wiz_movement.go	99	109	3081	3082	W	Q	"""What do you want to do there?\r\n"""	c-reachable	C do_at emits this missing-destination prompt at src/act.wizard.c:254.
 44	session	cmdHelpTextForBody	pkg/session/cmd_info.go	1466	1498	45182	45183	T	Q	"""There is no help on: %s\r\n"""	c-reachable	C do_help emits this missing-help line at src/act.informative.c:1606.
 45	game	*World.DoRemove	pkg/game/item_equipment.go	535	555	15446	15447	Y	Q	"""You're not using anything.\r\n"""	c-reachable	C do_remove emits this empty-equipment line at src/act.item.c:1756.
-46	session	*Session.finishTextEditLocked	pkg/session/tedit.go	330	390	13024	13026	n	Q	"""$n stops editing some scrolls."""	c-reachable	C OLC text-editor completion emits this act at src/file-edit.c:63.
-47	session	cmdPlayers	pkg/session/gen_ps_cmds.go	306	334	10349	10350	A	Q	"""A list of registered players:\r\n"""	c-reachable	C do_players emits this registered-player header at src/act.informative.c:2182.
+46	session	*Session.finishTextEditLocked	pkg/session/tedit.go	330	390	13024	13026	n	Q	"""$n stops editing some scrolls."""	c-reachable	C tedit_string_cleanup emits this abort act at src/file-edit.c:63.
+47	session	cmdPlayers	pkg/session/gen_ps_cmds.go	306	334	10349	10350	A	Q	"""A list of registered players:\r\n"""	c-reachable	C do_gen_ps emits this registered-player header at src/act.informative.c:2182.
 48	game	*World.doDismountActor	pkg/game/other_mount.go	157	166	5305	5306	Y	Q	"""Your rider dismounts, whew!\r\n"""	c-reachable	C do_dismount emits this rider message at src/act.other.c:1614.
-49	game	*World.GroupSay	pkg/game/out_of_band.go	61	66	2638	2639	B	Q	"""But you are not the member of a group!\r\n"""	c-reachable	C do_group_say emits this non-member refusal at src/act.comm.c:832.
+49	game	*World.GroupSay	pkg/game/out_of_band.go	61	66	2638	2639	B	Q	"""But you are not the member of a group!\r\n"""	c-reachable	C do_gsay emits this non-member refusal at src/act.comm.c:832.
 50	game	*World.ExecBan	pkg/game/act_other_bridge.go	142	144	5750	5751	B	Q	"""Ban system not initialized.\r\n"""	go-only-in-game	Go ExecBan has a nil-system fallback at pkg/game/act_other_bridge.go:142-147. C do_ban at src/ban.c:132-205 has no corresponding fallback; an empty list is reported as “No sites are banned.” Go-only in-game; DP-1596 follow-up.
 51	game	specIdentifier	pkg/game/spec_procs2.go	1218	1270	42060	42061	Y	Q	"""You touch $n gently on the forehead."""	c-reachable	C identifier emits this act at src/spec_procs2.c:1269.
 52	session	cmdSell	pkg/session/shop_cmds.go	489	492	16463	16464	S	Q	"""Sorry, but you cannot do that here!\r\n"""	c-reachable	C do_not_here emits this no-shop refusal at src/act.other.c:210.
 53	game	*World.awardGroupKillGold	pkg/game/party.go	319	343	12086	12088	n	Q	"""$n loots some gold from the corpse of %s."""	c-reachable	C perform_group_gain emits this corpse-loot act at src/fight.c:761.
 54	game	*World.doClanWho	pkg/game/clan_membership.go	262	264	6649	6650	Y	Q	"""You do not belong to a clan!\r\n"""	c-reachable	C do_clan_who emits this non-member line at src/clan.c:555.
-55	session	*Session.performDupeCheck	pkg/session/reconnect.go	31	98	4147	4152	M	Q	"""\r\nMultiple login detected -- disconnecting.\r\n"""	c-reachable	C duplicate-login handling emits this notice at src/interpreter.c:1550-1551.
+55	session	*Session.performDupeCheck	pkg/session/reconnect.go	31	98	4147	4152	M	Q	"""\r\nMultiple login detected -- disconnecting.\r\n"""	c-reachable	C perform_dupe_check emits this duplicate-login notice at src/interpreter.c:1550-1551.
 56	command	CmdBehead	pkg/command/skill_commands.go	1526	1537	53406	53407	B	Q	"""Behead who?\r\n"""	c-reachable	C do_behead emits this prompt at src/new_cmds.c:242.
-57	game	*World.GroupSayBody	pkg/game/out_of_band.go	106	116	4162	4163	B	Q	"""But you are not the member of a group!\r\n"""	c-reachable	C do_group_say emits this non-member refusal at src/act.comm.c:832.
+57	game	*World.GroupSayBody	pkg/game/out_of_band.go	106	116	4162	4163	B	Q	"""But you are not the member of a group!\r\n"""	c-reachable	C do_gsay emits this non-member refusal at src/act.comm.c:832.
 58	game	specNoGet	pkg/game/spec_procs_missing.go	17	33	962	964	n	Q	"""$n strikes at $N's hand!"""	c-reachable	C no_get emits this hand-strike act at src/new_cmds2.c:567.
 59	game	*World.HuntItems	pkg/game/hunt_items.go	29	51	1703	1705	I	Q	""" I must have """	c-reachable	C hunt_items emits this message fragment at src/new_cmds2.c:804.
 60	game	*World.GroupCommand	pkg/game/group.go	62	91	2788	2789	E	Q	"""Everyone following you here is already in your group.\r\n"""	c-reachable	C do_group emits this already-grouped refusal at src/act.other.c:714-715.
 61	game	*World.performDropGold	pkg/game/item_transfer.go	347	349	11294	11295	H	Q	"""Heh heh heh.. we are jolly funny today, eh?\r\n"""	c-reachable	C perform_drop_gold emits this nonpositive-amount refusal at src/act.item.c:436.
 62	game	DoAction	pkg/game/act_social.go	47	115	3876	3878	N	Q	"""$N is not in a proper position for that."""	c-reachable	C do_action emits this posture refusal at src/act.social.c:141.
 63	game	specBlackUndeadKnight::func@1222	pkg/game/spec_procs.go	1222	1229	40839	40841	n	Q	"""$n says, 'You dirty rotten scoundrel.  I'm gonna make you very sorry.'"""	c-unreachable	C SPECIAL(black_undead_knight) contains the sampled line at src/spec_procs.c:1167-1169, but src/spec_assign.c:108-109 only declares the knight specials; a full-file search finds no ASSIGNMOB for either.
-64	session	*Manager.closeIdleDescriptor	pkg/session/idle_close.go	12	35	905	907	n	Q	"""$n has lost $s link."""	c-reachable	C idle-descriptor close handling emits this act at src/comm.c:2131.
+64	session	*Manager.closeIdleDescriptor	pkg/session/idle_close.go	12	35	905	907	n	Q	"""$n has lost $s link."""	c-reachable	C close_socket emits this link-loss act at src/comm.c:2131.
 65	game	*World.shopNpcIsOK	pkg/game/shop_npc.go	38	62	2398	2400	G	Q	""" Get out of here before I call the guards!"""	c-reachable	C shop_is_ok formats the refusal with MSG_NO_SELL_ALIGN at src/shop.c:90; the exact suffix is defined in src/shop.h:195.
 66	session	cmdTeleport	pkg/session/wiz_movement.go	281	311	8972	8973	O	Q	"""Okay.\r\n"""	c-reachable	C do_teleport sends the OK acknowledgement at src/act.wizard.c:365-383.
-67	game	drinkForMobile	pkg/game/item_consumable_actor.go	27	116	3788	3790	n	Q	"""$n chokes and utters some strange sounds."""	c-reachable	C mobile drink handling emits this choke act at src/act.item.c:1011.
-68	game	sendTattooList	pkg/game/spec_procs2.go	1013	1017	33612	33615	d	Q	"""[%d] - (%d) tattoo %s : %s\r\n"""	c-reachable	C tattoo-list output uses this format at src/spec_procs2.c:958.
+67	game	drinkForMobile	pkg/game/item_consumable_actor.go	27	116	3788	3790	n	Q	"""$n chokes and utters some strange sounds."""	c-reachable	C do_drink emits this mobile choke act at src/act.item.c:1011.
+68	game	sendTattooList	pkg/game/spec_procs2.go	1013	1017	33612	33615	d	Q	"""[%d] - (%d) tattoo %s : %s\r\n"""	c-reachable	C SPECIAL(tattoo1) emits this list format at src/spec_procs2.c:958.
 69	game	specPortalToTemple	pkg/game/spec_procs3.go	904	915	30439	30440	W	Q	"""With a blinding flash of light and a crack of thunder, you are teleported..."""	c-reachable	C portal_to_temple emits this text at src/spec_procs3.c:529-530 and is assigned to a room in src/spec_assign.c:615.
 70	game	*World.performDispose	pkg/game/item_donate.go	74	86	2106	2109	I	Q	"""  It vanishes in a puff of smoke!"""	c-reachable	C perform_drop expands VANISH to this exact line at src/act.item.c:477-478.
 71	game	*World.giveFindVict	pkg/game/item_transfer.go	528	530	17652	17653	T	Q	"""To who?\r\n"""	c-reachable	C give_find_vict emits this missing-recipient prompt at src/act.item.c:715.
-72	combat	ApplyMountedHitTail	pkg/combat/fight_core.go	379	393	14116	14117	Y	Q	"""You hit the ground with a thud.\r\n"""	c-reachable	C mounted-hit handling emits this fall message at src/fight.c:1555.
+72	combat	ApplyMountedHitTail	pkg/combat/fight_core.go	379	393	14116	14117	Y	Q	"""You hit the ground with a thud.\r\n"""	c-reachable	C hit emits this mounted-hit fall message at src/fight.c:1555.
 73	game	*World.doGet	pkg/game/item_transfer.go	237	287	9462	9463	Y	Q	"""You can't seem to find any %ss here.\r\n"""	c-reachable	C do_get emits this missing-object format at src/act.item.c:421.
 74	game	*World.doClanPromote	pkg/game/clan_membership.go	146	189	4609	4610	Y	Q	"""You cannot promote someone over the top rank!\r\n"""	c-reachable	C do_clan_sp with CP_PROMOTE emits this top-rank refusal at src/clan.c:535.
 75	game	*World.DoInventory	pkg/game/item_views.go	154	159	4584	4585	Y	Q	"""You are carrying:\r\n"""	c-reachable	C do_inventory emits this header at src/act.informative.c:1462.
@@ -81,12 +81,12 @@ i	package	func	file	func_line	lit_line	source_offset	mutation_offset	old_byte	ne
 79	game	*World.performTell	pkg/game/directed_speech.go	332	340	9667	9669	E	Q	"""$E is AFK right now, $E may not hear you."""	c-reachable	C do_tell emits this AFK refusal at src/act.comm.c:882.
 80	game	*World.doGiveCoins	pkg/game/item_transfer.go	572	586	19557	19558	Y	Q	"""You don't have that many coins!\r\n"""	c-reachable	C perform_give_gold emits this insufficient-coins refusal at src/act.item.c:745.
 81	command	CmdTag	pkg/command/skill_commands.go	1676	1696	57850	57851	Y	Q	"""You tag $N, but $E tags you right back!\r\n"""	c-reachable	C do_tag emits this reciprocal-tag act at src/new_cmds.c:2242.
-82	game	*World.DoSpecComm	pkg/game/directed_speech.go	355	394	11626	11628	n	Q	"""$n %s you, '%s'"""	c-reachable	C do_gen_comm builds this act at src/act.comm.c:1007.
+82	game	*World.DoSpecComm	pkg/game/directed_speech.go	355	394	11626	11628	n	Q	"""$n %s you, '%s'"""	c-reachable	C do_spec_comm builds this act at src/act.comm.c:1007.
 83	session	cmdSysfile	pkg/session/wiz_zone.go	230	233	6917	6918	T	Q	"""That isn't a file!\r\n"""	c-reachable	C do_sysfile emits this invalid-file line at src/act.wizard.c:3425.
 84	game	mobileWandPoint	pkg/game/skill_actor_itemmagic.go	218	227	7195	7197	n	Q	"""$n points $p at $mself."""	c-reachable	C mag_objectmagic emits this wand act at src/spell_parser.c:616.
 85	session	cmdAdmobs	pkg/session/wiz_zone.go	19	21	490	491	O	Q	"""Okay.\r\n"""	c-reachable	C adjust_mobs emits the OK acknowledgement at src/olc.c:305.
 86	game	*World.DoWield	pkg/game/item_equipment.go	464	476	13283	13284	Y	Q	"""Your flesh is altered, you can't wield anything!\r\n"""	c-reachable	C do_wield emits this flesh-altered refusal at src/act.item.c:1488.
-87	session	cmdVersionForLevel	pkg/session/gen_ps_cmds.go	273	277	8435	8436	C	Q	"""Compile Time: """	c-reachable	C do_who emits this compile-time field at src/act.informative.c:2173.
+87	session	cmdVersionForLevel	pkg/session/gen_ps_cmds.go	273	277	8435	8436	C	Q	"""Compile Time: """	c-reachable	C do_gen_ps emits this compile-time field at src/act.informative.c:2173.
 88	game	HandleNoteInput	pkg/game/note_write.go	48	91	3141	3142	S	Q	"""String too long - Truncated.\r\n"""	c-reachable	C string_add emits this truncation warning at src/modify.c:134.
 89	game	specWerewolf	pkg/game/spec_procs3.go	786	806	26864	26866	n	Q	"""$n rips apart $N's leg with $s fangs!"""	c-reachable	C werewolf emits this act at src/spec_procs3.c:444.
 90	game	*World.doClanExpel	pkg/game/clan_membership.go	91	122	3005	3006	T	Q	"""They're not in your clan.\r\n"""	c-reachable	C do_clan_sp with CP_EXPEL emits this nonmember refusal at src/clan.c:422.
