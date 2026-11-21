@@ -19,7 +19,7 @@
 empty-players
 quiet-mobs
 add-obj-index 132.obj
-replace-room-exits 8162 north 8161 3
+replace-room-exits 8162 north 8161 1
 spawn-mob 69 1 8162 80
 spawn-mob 70 1 8162 80
 equip-object 70 1010 999 16 80
@@ -99,6 +99,10 @@ load obj 8053
 give wand satan
 load obj 13301
 give goblet satan
+
+[warmup]
+goto 8162
+close door north
 
 [probe]
 switch satan
