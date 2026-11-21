@@ -8,7 +8,7 @@
 [fixture]
 quiet-mobs
 # Existing zone resets can already load this mobile, so allow another instance.
-spawn-mob 19119 80 8162 80
+spawn-mob 19119 80 8162 191
 
 [setup:oracle]
 Looker
