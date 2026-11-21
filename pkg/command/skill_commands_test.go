@@ -502,6 +502,11 @@ func TestCmdBerserk_Executes(t *testing.T) {
 	if err := CmdBerserk(session, nil); err != nil {
 		t.Fatalf("CmdBerserk: %v", err)
 	}
+	// C do_berserk's unskilled gate (new_cmds.c:2142). An err==nil-only check
+	// stayed green when CmdBerserk was mutated to a no-op (mutations.tsv).
+	if got := joinMessages(session.messages); got != "You're about as berserk as you're gonna get.\r\n" {
+		t.Errorf("unskilled berserk output = %q", got)
+	}
 }
 
 func TestCmdDetect_NoPlayer(t *testing.T) {
@@ -518,6 +523,11 @@ func TestCmdDetect_Executes(t *testing.T) {
 	if err := CmdDetect(session, nil); err != nil {
 		t.Fatalf("CmdDetect: %v", err)
 	}
+	// C do_detect's unskilled non-elf gate (new_cmds2.c:506). err==nil alone
+	// stayed green under a no-op CmdDetect mutation (mutations.tsv).
+	if got := joinMessages(session.messages); got != "Yeah, right.\r\n" {
+		t.Errorf("unskilled detect output = %q", got)
+	}
 }
 
 func TestCmdScrounge_NoPlayer(t *testing.T) {
@@ -533,6 +543,11 @@ func TestCmdScrounge_Executes(t *testing.T) {
 
 	if err := CmdScrounge(session, nil); err != nil {
 		t.Fatalf("CmdScrounge: %v", err)
+	}
+	// C do_scrounge's unskilled gate (new_cmds2.c:73). err==nil alone stayed
+	// green under a no-op CmdScrounge mutation (mutations.tsv).
+	if got := joinMessages(session.messages); got != "You can't seem to find anything edible.\r\n" {
+		t.Errorf("unskilled scrounge output = %q", got)
 	}
 }
 
@@ -1079,6 +1094,12 @@ func TestCmdKujiKiri_Executes(t *testing.T) {
 	if err := handler(session, nil); err != nil {
 		t.Fatalf("CmdKujiKiri: %v", err)
 	}
+	// C do_kuji_kiri's non-ninja gate (new_cmds.c:1561) — the fixture's class
+	// is not ninja. err==nil alone stayed green under a no-op mutation
+	// of the CmdKujiKiri closure (mutations.tsv).
+	if got := joinMessages(session.messages); got != "You know nothing of kuji-kiri!\r\n" {
+		t.Errorf("non-ninja kuji-kiri output = %q", got)
+	}
 }
 
 func TestCmdKujiKiri_NoPlayer(t *testing.T) {
@@ -1112,6 +1133,11 @@ func TestCmdPoint_Executes(t *testing.T) {
 	session.player.SetPosition(combat.PosStanding)
 	if err := CmdPoint(session, []string{"north"}); err != nil {
 		t.Fatalf("CmdPoint: %v", err)
+	}
+	// C do_point's ismove branch (new_cmds.c:2527). err==nil alone stayed green
+	// under a no-op CmdPoint mutation (mutations.tsv).
+	if got := joinMessages(session.messages); got != "You point north.\r\n" {
+		t.Errorf("point north output = %q", got)
 	}
 }
 
