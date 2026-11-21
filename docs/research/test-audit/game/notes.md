@@ -299,3 +299,12 @@ branch of src/graph.c:187-258, every draw pinned through the trackNumber
 seam for R3 parity), mob door/hunt, spec mob-tell argument contracts,
 actor-specials room specials, horse movement, room-light accounting,
 raw-kill affects, version, npc command, and house build.
+
+## Batch 20 results (post-oracle tests 1301–1400, 2026-10-23..11-19)
+
+Marks: R 100 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-20`.)
+
+The recent era: party mixed-group, the h6 resource audit, vulnerable races,
+room broadcast awake gates, player physical checks, and two dense contract
+families — the spec mob-tell arguments (each spec's tell arguments pinned to
+its src/graph.c line) and the raw-kill sequence guards.
