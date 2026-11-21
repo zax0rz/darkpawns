@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -300,6 +301,24 @@ func TestSetCommandExecFunc(t *testing.T) {
 	// asserted that instead — J8, the fixture supplied the asserted behavior.
 	if m.world.CommandExecFunc(game.NewPlayer(2, "Nobody", 1001), "look") {
 		t.Error("wired callback should return false for a body with no session")
+	}
+
+	// The wired closure must also dispatch: its live callers are combat's
+	// PerformCommand (pkg/game/combat_wire.go:745-752) and World.executeCommand
+	// (pkg/game/damage_stubs.go:390-395). Register a session, invoke the
+	// callback with an observable command, and require a true return plus the
+	// command's output — a review mutation that returns false after a
+	// successful lookup leaves this assertion red while the no-session check
+	// above stays green.
+	s := makeTestSession(t, m, "Alice", 1001, true)
+	m.mu.Lock()
+	m.sessions["alice"] = s
+	m.mu.Unlock()
+	if !m.world.CommandExecFunc(s.player, "whoami") {
+		t.Error("wired callback should return true after dispatching to a registered session")
+	}
+	if got := drainSendChannel(t, s); !strings.Contains(got, "Alice") {
+		t.Errorf("dispatched command produced no observable output: %q", got)
 	}
 }
 

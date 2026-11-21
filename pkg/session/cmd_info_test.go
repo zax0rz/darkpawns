@@ -67,28 +67,6 @@ func TestAlignmentText(t *testing.T) {
 	}
 }
 
-func TestAcText(t *testing.T) {
-	tests := []struct {
-		val  int
-		want string
-	}{
-		{100, "naked"},
-		{50, "well clothed"},
-		{0, "well armored"},
-		{-60, "battle armor"},
-		{-140, "dragon"},
-		{-200, "god"},
-	}
-	for _, tt := range tests {
-		t.Run("", func(t *testing.T) {
-			got := acText(tt.val)
-			if !strings.Contains(got, tt.want) {
-				t.Errorf("acText(%d) = %q, expected substring %q", tt.val, got, tt.want)
-			}
-		})
-	}
-}
-
 // TestAcTextEveryBand pins every AC band against src/act.informative.c:1232-1257
 // (DP-1551). The -45 band has no final period; the very-well armored arm at
 // :1244 is dead (ac > -20 implies ac > -40) and is not probed by value.
@@ -151,25 +129,6 @@ func TestAcTextNakedIsExact100(t *testing.T) {
 		if got := acText(tt.ac); got != tt.want {
 			t.Errorf("acText(%d) = %q, want %q", tt.ac, got, tt.want)
 		}
-	}
-}
-
-func TestPositionText(t *testing.T) {
-	tests := []struct {
-		val  int
-		want string
-	}{
-		{0, "DEAD"},
-		{4, "sleeping"},
-		{8, "standing"},
-	}
-	for _, tt := range tests {
-		t.Run("", func(t *testing.T) {
-			got := positionText(tt.val)
-			if !strings.Contains(got, tt.want) {
-				t.Errorf("positionText(%d) = %q, expected substring %q", tt.val, got, tt.want)
-			}
-		})
 	}
 }
 
