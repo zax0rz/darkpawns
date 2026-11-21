@@ -1,0 +1,5 @@
+test	file	line	mutation	result(green|red)	restored(yes)
+TestCmdBash_FightingTargetFallback	pkg/command/skill_commands.go	CmdBash, after `if ch == nil { return nil }`: inserted `return nil` (whole command no-op)	green (pre-fix test could not catch a dead handler)	yes
+TestCmdBash_FightingTargetFallback	pkg/command/skill_commands.go	same no-op mutation against the fixed test (positive POS_SITTING assertion, src/act.offensive.c:493)	red (fixed test fails: target still standing)	yes
+TestKillPayout_PlayerDeath_Idempotent	pkg/game/death.go	handlePlayerDeath: removed the queued-extract early return (`if player.GetFlags()&extractMask != 0 { return }`)	green (pre-fix test made only one death call)	yes
+TestKillPayout_PlayerDeath_Idempotent	pkg/game/death.go	same mutation against the fixed test (second HandleDeath must not punish again)	red (fixed test fails: 'lost 262 more exp' — double punishment)	yes

@@ -792,9 +792,15 @@ func TestKillPayout_PlayerDeath_Idempotent(t *testing.T) {
 		t.Errorf("expected EXP loss from first death: loss=%d", loss1)
 	}
 
-	// After respawn, victim is healed. Verify first death was processed correctly.
-	// The idempotent guard (dying atomic.Bool) prevents double-death within
-	// the same death sequence from concurrent goroutines.
+	// The name's contract: re-invoking death must not punish twice. The first
+	// raw_kill only queues extraction (src/fight.c:534-577), so the body still
+	// carries its death state; the queued-extract guard must refuse the
+	// second call (pkg/game/death.go handlePlayerDeath, DP-943).
+	expAfterFirst := victim.GetExp()
+	ktw.world.HandleDeath(victim, killer, game.TypeSlash)
+	if loss2 := expAfterFirst - victim.GetExp(); loss2 != 0 {
+		t.Errorf("expected idempotent death, got double punishment: lost %d more exp", loss2)
+	}
 }
 
 // ---------------------------------------------------------------------------

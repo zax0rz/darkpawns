@@ -1125,8 +1125,6 @@ command	TestKillPayout_Trip_AwardsXP	pkg/command/kill_payout_test.go	847
 command	TestKillPayout_Headbutt_AwardsXP	pkg/command/kill_payout_test.go	878			
 command	TestKillPayout_Circle_AwardsXP	pkg/command/kill_payout_test.go	909			
 command	TestKillPayout_Charge_AwardsXP	pkg/command/kill_payout_test.go	942			
-command	LoggingMiddleware	pkg/command/middleware.go	11			
-command	WhitelistMiddleware	pkg/command/middleware.go	38			
 command	TestSendSkillResultMindlinkFailureOrder	pkg/command/mindlink_depth_test.go	16			
 command	TestMindlinkDrainedLineAfterRoomHasNoTerminator	pkg/command/mindlink_terminator_test.go	13	src/new_cmds2.c:do_mindlink	src/new_cmds2.c:314	
 command	TestCmdNeckbreakUsesCTargetBoundary	pkg/command/neckbreak_depth_test.go	10			

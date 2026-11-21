@@ -44,5 +44,60 @@ firmer guess than the partition).
 
 ## Batches
 
-- Batch 1: the 37 pre-oracle tests.
+- Batch 1: the 37 pre-oracle tests. DONE (this PR).
 - Later batches: remaining 136, oldest first, ~50–100 per batch.
+
+## Batch 1 results (37 pre-oracle tests)
+
+Marks: R 32, F 2, C 0, D 3.
+Against prediction (R 24 / F 7 / C 4 / D 2): fewer weak tests than feared, but
+the D marks became a finding the prediction missed — the entire `pkg/command`
+middleware layer (`Middleware`, `Registry.Use`, `LoggingMiddleware`,
+`WhitelistMiddleware`) had **zero production callers** (grep of pkg/, cmd/,
+internal/ on 2026-11-20). Their tests protected dead code:
+- D `TestMiddleware_Logging` (J2+J7): asserts nothing at all.
+- D `TestMiddleware_Whitelist` (J7): no caller.
+- D `TestRegistry_Middleware` (J7): `Use`/chain has no caller.
+
+Deleting the tests tripped `make deadcode-ratchet` (the deleted tests were the
+only thing marking those functions reachable). The ratchet's own remedy —
+"wire, delete, or baseline" — so this PR also deletes the dead production code:
+`pkg/command/middleware.go`, the `Middleware` type, `Registry.Use`, the
+`middleware` field and the wrap loop in `Register`. It updates
+`docs/architecture/ARCHITECTURE.md` (whose middleware section was already stale —
+it documented a `RateLimitMiddleware` that never existed) and drops the two dead
+rows from `docs/research/function-index/index.tsv` (regenerating wholesale
+produced 414 lines of unrelated drift; the check's ratchet passes either way).
+No census: the removed functions were unreachable, so no oracle scenario can
+observe the change (proved by the ratchet report plus the caller grep, R5h — no
+scenario exists that could fail on it).
+
+F fixes (both proven by mutation, see mutations.tsv):
+- `TestCmdBash_FightingTargetFallback` (J9): negative-only assertion; a no-op
+  `CmdBash` stayed green. Fixed with a positive knockdown assertion
+  (target `PosSitting`, src/act.offensive.c:493). The fixture also had to move
+  above C's level-10 player-protection gate (src/fight.c:1345-1356) and gain
+  move points (src/act.offensive.c:423) — the original fixture could never land
+  a bash, another reason the negative check was hollow.
+- `TestKillPayout_PlayerDeath_Idempotent` (J3): the second death invocation the
+  name promises was never made. Fixed to call `HandleDeath` again and assert no
+  double punishment (queued-extract guard, pkg/game/death.go handlePlayerDeath;
+  the test's own "after respawn" comment was wrong — raw_kill only queues
+  extraction, src/fight.c:534-577).
+
+Cited-value checks that passed: 240 XP row reproduces C `calc_level_diff`
+(src/fight.c:660-685) by hand; exp/37 loss matches src/fight.c:589;
+`Bash who?`/`Backstab who?` match src/act.offensive.c:446/:181;
+PULSE_VIOLENCE 20 matches src/structs.h:628-634. No J10 divergences found in
+this batch (both earlier audits found exactly one each — not this time).
+
+Attribution (git only): 5 introducing commits. 4 by git author BRENDA69
+(agent unknown — no prefix/trailer): PR #19, #84, #113, #182. 1 by zach with
+Co-Authored-By Claude Opus 4.8 (agent claude): PR #37.
+
+Coverage: 68.4% before → 66.6% after the test deletions → 67.8% after deleting
+the dead production code. The func-level coverprofile diff after the test
+deletions showed the only newly-uncovered functions were the three dead ones;
+after the production removal the denominator shrank to live code only, and no
+remaining statement lost a test — behavior coverage only got stricter (two
+contracts gained real assertions).

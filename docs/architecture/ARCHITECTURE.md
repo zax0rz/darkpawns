@@ -247,22 +247,15 @@ Handlers subscribe by event type string.
 ### Generation tracking
 `SnapshotManager.generation` (`atomic.Uint64`) increments on each publish, enabling stale-snapshot detection for readers that hold references across yields.
 
-## Middleware Pipeline
+## Command Dispatch
 
-`command.Registry` supports a decorator-style middleware chain: each registered handler is wrapped through all registered middleware at lookup time, outermost first.
-
-```go
-type Middleware func(Handler) Handler
-
-cmdRegistry.Use(LoggingMiddleware())
-cmdRegistry.Use(RateLimitMiddleware(250 * time.Millisecond))
-```
-
-**Built-in middleware (pkg/command/middleware.go):**
-- **LoggingMiddleware** — logs command name, duration, and error status at slog.Debug level
-- **RateLimitMiddleware** — enforces minimum interval between commands per session
-
-**Status:** Functions exist, `Registry.Use()` is implemented. No middleware is currently wired onto the registry. Intended for production — logging middleware adds noise during active development.
+`command.Registry` dispatches each registered handler directly: `Register`
+stores the handler on the entry, and `Execute`/`ExecuteContext` resolve the
+name (case-insensitive, aliases included) and invoke it. There is no
+middleware layer — an early `Middleware`/`Use` design was removed in the 2026-11-20
+test audit because nothing wired it (see
+`docs/research/test-audit/command/`). Cross-cutting concerns (logging,
+rate limiting) belong at the session or server layer.
 
 ## Persistence
 
