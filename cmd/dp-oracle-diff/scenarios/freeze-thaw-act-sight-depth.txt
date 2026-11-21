@@ -99,9 +99,12 @@ Y
 1
 
 [warmup]
+# The actor stays in the lit start room: do_wizutil resolves its target
+# through the sight-gated char lookup, and standing in the darkened room
+# blinds it ("There is no such player.", R5j). The freeze act's audience is
+# the victim's room, so the delivery is unaffected.
 teleport Freezsee 8162
 teleport Freezvic 8162
-goto 8162
 
 [probe]
 freeze Freezvic
