@@ -146,3 +146,14 @@ identities (BRENDA69, zach@karl-havoc.labz0rz.com, zach@mac-mini.local):
 101 rows in this ledger attribute to `OpenClaw (multi-model orchestrator)`,
 model blank (the excavation file names no model for any of these commits).
 The orchestrator model is glm-5-turbo (wording corrected from glm-5-flash).
+
+## Batch 3 ledger fix (2026-11-21, review of #2933)
+
+- T101–T144 regenerated from the recovered rows (they are the batch-3 tests
+  101–144 of the pre-oracle list; the earlier T446–T489 numbering was a
+  workaround for the failed append, now folded into audit order).
+- Verified before push: 145 rows, ids T001–T145 contiguous, 18 columns each.
+- Carried in from the #2932 review: the 64 pkg/command rows from reek's
+  coverage autofix lane (PR #414, zach@mac-mini.local) now read `OpenClaw
+  (Reek coverage lane), Claude Opus 4.8 per trailer`. The session ledger has
+  no rows from that lane (checked: zero reek-cover commits).
