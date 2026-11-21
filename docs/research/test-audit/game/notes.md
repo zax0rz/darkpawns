@@ -289,3 +289,13 @@ The November era: the actor-specials guard family (no_move north/east/south/
 west with C exact bytes against src/spec_procs2.c:2033-2111), turn and
 npc-movement depth, the actor specials table, say_spell act routing,
 combat-round specials, mobprogs depth, and spec entry gates.
+
+## Batch 19 results (post-oracle tests 1201–1300, 2026-11-18..11-20)
+
+Marks: R 100 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-19`.)
+
+The November 18–20 era: the do_track port family (one test per gate and
+branch of src/graph.c:187-258, every draw pinned through the trackNumber
+seam for R3 parity), mob door/hunt, spec mob-tell argument contracts,
+actor-specials room specials, horse movement, room-light accounting,
+raw-kill affects, version, npc command, and house build.
