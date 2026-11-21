@@ -239,3 +239,13 @@ generated reports as stale.
 R-mutation spot checks were not required because this batch contained F/C
 marks. The detached mutation tree was restored byte-for-byte after each of the
 three proofs.
+
+## Batch 9 — T689–T738 (special procedures)
+
+This batch audits the 50 remaining spec-procedure tests from the GLM draft. Its IDs follow the merged T639–T688 rows in the current ledger. Results: **43 R, 5 F, 2 C, 0 D**. All 50 introductions are post-oracle (2026-08-28/29). The five F tests were strengthened in this batch; the partial Puff table was folded into its full 0–90 partition, and the game-local atoi test was folded into `pkg/common/catoi_test.go:TestAtoiCMatchesC` with the unique wraparound case retained.
+
+Junk annotations: J1=1 (backstab damage expectation reuses independently tested formula helpers), J3=5 (Puff gates, assassin refusal/hire routing, cleric blindness threshold and weather gate), J4=2 (the two folds), J7=8 (four citizen and four cleric tests use the `citizenNumber`/`clericNumber` seams), and J8=1 (normal-checker target is observed through a test combat engine). Every non-R row traces to git author Zach without a model trailer and is `unknown` under PF-152/PF-153, despite GLM branch names.
+
+All five F rows have detached mutations on exact base `ffc5dbde9`: the original test stayed green, the corrected test failed, and the mutation tree was restored byte-for-byte after every proof. Baseline and final package coverage were **64.5% / 64.5%** (`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game`); the C folds did not reduce coverage. All 11 required gates passed on the final rebased base `4999da772`; no census was needed because this batch changes tests and research records only.
+
+The clearest weak examples here are the Puff gate test, which could not see an extra RNG draw; the assassin success test, whose aggregate sink allowed a private line to reach the victim and still pass; and the cleric threshold test, whose old blind roll never entered the disputed cast branch. Each green gap is documented in `mutations.tsv`.

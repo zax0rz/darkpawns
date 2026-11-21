@@ -110,11 +110,22 @@ func TestSpecAssassinRoomHireGatesAndSuccess(t *testing.T) {
 	}
 
 	victim.SetLevel(5)
+	observer := NewPlayer(3, "AssassinObserver", 1001)
+	if err := w.AddPlayer(observer); err != nil {
+		t.Fatalf("AddPlayer observer: %v", err)
+	}
+	messages := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
 	if !specAssassin(w, actor, nil, "hire", "street VictimTarget") {
 		t.Fatal("successful hire should be consumed")
 	}
-	if got := lastMessage(); !strings.Contains(got, "We cannot contact you if the job succeeds or not...security, you know.\r\n") || !strings.Contains(got, "AssassinActor hires a street urchin for a job.\r\n") {
-		t.Fatalf("success output = %q", got)
+	if got, want := messages[actor.Name], "We cannot contact you if the job succeeds or not...security, you know.\r\n"; got != want {
+		t.Errorf("actor success output = %q, want %q", got, want)
+	}
+	for _, recipient := range []*Player{victim, observer} {
+		if got, want := messages[recipient.Name], "AssassinActor hires a street urchin for a job.\r\n"; got != want {
+			t.Errorf("%s room output = %q, want %q", recipient.Name, got, want)
+		}
 	}
 	if actor.GetGold() != 0 {
 		t.Errorf("gold after hire = %d, want 0", actor.GetGold())
@@ -158,17 +169,29 @@ func TestSpecAssassinRejectsInvisibleVictim(t *testing.T) {
 }
 
 func TestSpecAssassinRejectsPlayerRosterMember(t *testing.T) {
-	w, actor, _, lastMessage := newAssassinTestWorld(t)
+	w, actor, _, _ := newAssassinTestWorld(t)
 	rosterPlayer := NewPlayer(2, "RosterTarget", 1002)
 	if err := w.AddPlayer(rosterPlayer); err != nil {
 		t.Fatalf("AddPlayer roster player: %v", err)
 	}
+	actor.SetGold(1000)
+	messages := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
+	mobsBefore := len(w.GetMobsInRoom(actor.GetRoomVNum()))
 
 	if !specAssassin(w, actor, nil, "hire", "RosterTarget") {
 		t.Fatal("player roster rejection should be consumed")
 	}
-	got := lastMessage()
-	if !strings.Contains(got, "GET THE HELL OUT OF THAT ROOM, NOW !!!\r\n") || !strings.Contains(got, "You can't hire players.\r\n") {
-		t.Fatalf("player roster output = %q", got)
+	if got, want := messages[rosterPlayer.Name], "GET THE HELL OUT OF THAT ROOM, NOW !!!\r\n"; got != want {
+		t.Fatalf("roster player's warning = %q, want %q", got, want)
+	}
+	if got, want := messages[actor.Name], "You can't hire players.\r\n"; got != want {
+		t.Fatalf("actor refusal = %q, want %q", got, want)
+	}
+	if got := actor.GetGold(); got != 1000 {
+		t.Fatalf("gold after player-roster rejection = %d, want 1000", got)
+	}
+	if got := len(w.GetMobsInRoom(actor.GetRoomVNum())); got != mobsBefore {
+		t.Fatalf("hired mobs after player-roster rejection = %d, want %d", got, mobsBefore)
 	}
 }
