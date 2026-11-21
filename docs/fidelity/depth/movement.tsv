@@ -8,7 +8,7 @@ do_simple_move	north/east/south/west/up/down	movement.charm-master-room-gate	D1	
 do_simple_move	north/east/south/west/up/down	movement.boat-required	D2	command	oracle-green	movement-water-boat	act.movement.c:122-129	No-swim destination rejects actor without a boat.
 do_simple_move	north/east/south/west/up/down	movement.boat-success	D2	command	oracle-green	movement-water-boat	act.movement.c:122-129	Inventory boat unlocks the identical exit.
 do_simple_move	north/east/south/west/up/down	movement.water-movement-cost	D4	state	unit-green	TestDoMoveMovementCostAndImmortalExemption	act.movement.c:131-133	Canonical DoMove deducts truncated average of source and destination sector costs.
-do_simple_move	north/east/south/west/up/down	movement.exhausted-actor	D2	command	oracle-green	l1-act-movement-2-depth	act.movement.c:166-173	Mortal lacking movement remains in origin and receives "You are too exhausted.".
+do_simple_move	north/east/south/west/up/down	movement.exhausted-actor	D2	command	oracle-green	l1-act-movement-2-depth	act.movement.c:172-177	Mortal lacking movement remains in origin and receives "You are too exhausted.".
 do_simple_move	north/east/south/west/up/down	movement.exhausted-follower-wording	D2	state	unit-green	TestMovementFailureMessagesAndMountGate	act.movement.c:168-171	Recursive follower gets the distinct exhausted-to-follow bytes.
 do_simple_move	north/east/south/west/up/down	movement.immortal-cost-exemption	D4	state	unit-green	TestDoMoveMovementCostAndImmortalExemption	act.movement.c:212-213	Immortal with zero movement still moves and pays nothing.
 do_simple_move	north/east/south/west/up/down	movement.tunnel-full	D2	command	oracle-green	movement-tunnel	act.movement.c:176-180	Occupied tunnel rejects entry.

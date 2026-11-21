@@ -2,7 +2,7 @@ handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_drop	drop	drop.no-arg	D1	command	oracle-green	drop-basic	act.item.c:558-560	Empty arg yields "What do you want to drop?".
 do_drop	drop	drop.indiv-not-carried	D2	command	oracle-green	drop-basic	act.item.c:625-627	get_obj_in_list_vis miss yields "You don't seem to have a/an X.".
 do_drop	drop	drop.indiv-success	D3	command	oracle-green	drop-basic	act.item.c:470-490	Actor "You drop $p." and room "$n drops $p.".
-do_drop	drop	drop.all-empty	D2	command	oracle-green	drop-basic	act.item.c:601-603	"drop all" with empty inventory yields "You don't seem to be carrying anything.".
+do_drop	drop	drop.all-empty	D2	command	oracle-green	drop-basic	act.item.c:617-620	"drop all" with empty inventory yields "You don't seem to be carrying anything.".
 do_drop	drop	drop.all-success	D2	command	oracle-green	drop-basic	act.item.c:604-612	"drop all" drops the whole inventory in order.
 do_drop	drop	drop.alldot-empty	D1	command	oracle-green	drop-basic	act.item.c:615-617	"drop all." yields "What do you want to drop all of?".
 do_drop	drop	drop.alldot-none	D2	command	oracle-green	drop-basic	act.item.c:630-632	"drop all.X" with no match yields "You don't seem to have any Xss.".
