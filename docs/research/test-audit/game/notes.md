@@ -322,3 +322,11 @@ refusal — the spells.c:189-194 test this L1 work knows, mirror-image
 create-mobile, counterproc damage).
 
 Running total: 1,796 R / 3 F / 0 C / 1 D of 1,991.
+
+## Batch 22 results (post-oracle tests 1501–1600, 2026-11-19..11-21)
+
+Marks: R 100 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-22`.)
+
+The newest layer: switched actor commands, extra-desc writes, string_add
+overflow, live-list saves, note writes, the DP-1552 look gate, wound act
+depth, real level, death paths, clan atoi.
