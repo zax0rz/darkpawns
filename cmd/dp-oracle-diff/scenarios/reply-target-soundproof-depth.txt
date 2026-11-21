@@ -5,6 +5,7 @@
 # C source: src/act.comm.c:934-970.
 
 [fixture]
+empty-players
 quiet-mobs
 set-room-flag 8163 5 on
 

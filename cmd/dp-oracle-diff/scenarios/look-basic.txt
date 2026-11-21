@@ -68,10 +68,6 @@ Y
 <ENTER>
 1
 
-[warmup]
-set player Looker room 8162
-set player Lookpeer room 8162
-
 [probe]
 look
 look north
