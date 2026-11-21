@@ -190,3 +190,14 @@ boring!"), T181 TestCmdHitCharmedMasterUsesActPronouns (combat_cmds.go:109
 "good friend" → "dear friend"). All three went red and were restored byte
 for byte (mutations.tsv, now 7 columns with `n/a (R spot-check)` old-body
 rows; the four legacy F-fix rows were migrated to the same format).
+
+## Batch 5 results (later tests 101–200, 2026-07 late + 2026-08 start)
+
+Marks: R 100, F 0, C 0, D 0.
+
+Wizard-command depth layer (skillset's modify.c-traced list with sharp
+terminator guards, do_set's act.wizard.c cases, force/advance/sethunt/
+checkload/alias/date, eat/use hold-priority) plus the pager parity suite
+(parallel renderLineCount oracle), input-timing (comm.c FIFO/one-per-pulse/
+unit conversion), flee/retreat XP formulas, and the DP_FRESH_MUD God latch.
+All assertive; no fixes, no J10 divergences.
