@@ -17,12 +17,23 @@ import (
 
 // cmdTell sends a private message to another player.
 // Source: act.comm.c do_tell() lines 901-931, perform_tell()
+// escapeTypedDollars mirrors C's process_input doubling (src/comm.c:1968-1977):
+// every $ in typed player input becomes $$ before any command sees it, so
+// text that reaches act() prints typed $-codes literally (act's $$ rule
+// collapses them back, src/comm.c:2406-2457; the input-layer rationale is
+// documented at src/interpreter.c:1192-1200). Apply it only to text that
+// came from a live descriptor — mobprog/script text never passes through
+// C's input doubling.
+func escapeTypedDollars(s string) string {
+	return strings.ReplaceAll(s, "$", "$$")
+}
+
 func cmdTell(s *Session, args []string) error {
 	argument := strings.Join(args, " ")
 	if len(args) >= 2 {
 		argument = args[0] + " " + sanitizeMessage(strings.Join(args[1:], " "))
 	}
-	s.manager.world.DoTell(s.player, argument)
+	s.manager.world.DoTell(s.player, escapeTypedDollars(argument))
 	return nil
 }
 
@@ -30,7 +41,7 @@ func cmdTell(s *Session, args []string) error {
 // Source: act.comm.c do_reply() lines 934-975
 func cmdReply(s *Session, args []string) error {
 	if len(args) > 0 {
-		s.manager.world.DoReply(s.player, sanitizeMessage(strings.Join(args, " ")))
+		s.manager.world.DoReply(s.player, escapeTypedDollars(sanitizeMessage(strings.Join(args, " "))))
 		return nil
 	}
 	s.manager.world.DoReply(s.player, "")
@@ -45,7 +56,7 @@ func cmdReply(s *Session, args []string) error {
 // channels. The world layer owns each channel's C-specific gates and fanout;
 // this command seam only preserves the shared sanitize path.
 func cmdChannel(s *Session, args []string, channel string) error {
-	message := sanitizeMessage(strings.Join(args, " "))
+	message := escapeTypedDollars(sanitizeMessage(strings.Join(args, " ")))
 	s.manager.world.DoChannel(s.player, message, channel)
 	return nil
 }
@@ -96,7 +107,7 @@ func cmdEmote(s *Session, args []string) error {
 // cmdSay sends a message to the room with punctuation-based variants.
 // Source: act.comm.c do_say() lines 824-870
 func cmdSay(s *Session, args []string) error {
-	text := sanitizeMessage(strings.Join(args, " "))
+	text := escapeTypedDollars(sanitizeMessage(strings.Join(args, " ")))
 	s.manager.world.DoSay(s.player, text)
 	return nil
 }

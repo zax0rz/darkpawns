@@ -43,6 +43,9 @@ func cmdGtellBody(ctx command.ExecutionContext, args []string) error {
 	argument := contextArgument(ctx, args)
 	if mob, ok := ctx.Body.(*game.MobInstance); ok {
 		argument = sanitizeMessage(argument)
+		if !ctx.DirectCall {
+			argument = escapeTypedDollars(argument)
+		}
 		ctx.World.GroupSayBody(mob, argument)
 		return nil
 	}
@@ -56,6 +59,9 @@ func cmdChannelBody(ctx command.ExecutionContext, args []string, channel string)
 	s := commandSessionFromContext(ctx)
 	if mob, ok := ctx.Body.(*game.MobInstance); ok {
 		message := sanitizeMessage(contextArgument(ctx, args))
+		if !ctx.DirectCall {
+			message = escapeTypedDollars(message)
+		}
 		ctx.World.NPCGenCommCommand(mob, message, channel)
 		return nil
 	}
@@ -83,7 +89,11 @@ func cmdAskBody(ctx command.ExecutionContext, args []string) error {
 	argument := contextArgument(ctx, args)
 	targetName, message := splitCommunicationTarget(argument)
 	if message != "" {
-		argument = targetName + " " + sanitizeMessage(message)
+		message = sanitizeMessage(message)
+		if !ctx.DirectCall {
+			message = escapeTypedDollars(message)
+		}
+		argument = targetName + " " + message
 	}
 	ctx.World.DoSpecCommMobile(mob, argument, true)
 	return nil
@@ -98,7 +108,11 @@ func cmdWhisperBody(ctx command.ExecutionContext, args []string) error {
 	argument := contextArgument(ctx, args)
 	targetName, message := splitCommunicationTarget(argument)
 	if message != "" {
-		argument = targetName + " " + sanitizeMessage(message)
+		message = sanitizeMessage(message)
+		if !ctx.DirectCall {
+			message = escapeTypedDollars(message)
+		}
+		argument = targetName + " " + message
 	}
 	ctx.World.DoSpecCommMobile(mob, argument, false)
 	return nil
@@ -156,6 +170,11 @@ func cmdThinkBody(ctx command.ExecutionContext, args []string) error {
 		return nil
 	}
 	trimmed = game.DeleteANSIControls(trimmed)
+	if !ctx.DirectCall {
+		// Typed input (a switched player at a descriptor) is doubled by C's
+		// process_input (src/comm.c:1968-1977); mobprog text is not.
+		trimmed = escapeTypedDollars(trimmed)
+	}
 	roomText := "$n thinks . o O ( " + trimmed + " )"
 	game.Act(ctx.World, false, mob, nil, nil, nil, roomText, "", game.ToRoom)
 	mob.SendMessage(fmt.Sprintf("You think . o O ( %s )\n\r", trimmed))
