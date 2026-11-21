@@ -202,4 +202,17 @@ September depth files (parry/pardon/poofin/poofout/prompt/reroll/restore/
 return/rlist/load/mlist/orgasm/order/page/qui/qsay/lines). Same established
 patterns: C entry gates, exact byte branches, state effects. No fixes, no
 J10 divergences. Running: 545/1537; all 400 post-oracle marks are R.
+ HEAD
  98793a514 (test(session): audit batch 7 — September sweep continuation + depth files, all R)
+
+## Batch 8 results (later tests 401–500, 2026-09)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T590-T689.
+
+Sweep continues (B–S) with a stronger variant: RegistrationUsesCEntryGateAndRecord
+pins the social's C-transcribed message table string by string (muhaha verified
+as representative). Depth files: snoop (state branches + relay framing),
+shutdown (guard bytes + lifecycle), send (half_chop audiences), set/spike/split/
+skillset/rsay/qecho/players/socials_command. No fixes, no J10 divergences.
+Running: 645/1537; all 500 post-oracle marks are R.
+ 9fc39554f (test(session): audit batch 8 — sweep B-S + AndRecord variant + depth files, all R)
