@@ -6,12 +6,14 @@ import (
 )
 
 var (
-	// C prints "%sStarted: ..." (src/act.wizard.c:2344): the %s carries
-	// whatever precedes the line — a color code on colored surfaces, an
-	// indent — so the anchor admits ANSI escapes and whitespace before the
-	// label but no other text, keeping ordinary prose that merely contains
-	// "Started:" unnormalized.
-	playerSavedDates = regexp.MustCompile(`^((?:\x1b\[[0-?]*[ -/]*[@-~])*[\t ]*Started: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Last: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Played:.*)$`)
+	// C prints "%sStarted: %-20.16s  Last: %-20.16s  Played: %3dh %2dm\r\n"
+	// (src/act.wizard.c:2342-2346): the %s carries whatever precedes the line —
+	// a color code on colored surfaces, an indent — so the anchor admits ANSI
+	// escapes and whitespace before the label but no other text, keeping
+	// ordinary prose that merely contains "Started:" unnormalized. Each
+	// %-20.16s pads 16 ctime chars with 4 spaces, followed by 2 literal spaces
+	// = exactly 6 spaces before "Last:" and before "Played:".
+	playerSavedDates = regexp.MustCompile(`^((?:\x1b\[[0-?]*[ -/]*[@-~])*[\t ]*Started: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?: [1-9]|[12][0-9]|3[01]) (?:[01][0-9]|2[0-3]):[0-5][0-9]( {6}Last: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?: [1-9]|[12][0-9]|3[01]) (?:[01][0-9]|2[0-3]):[0-5][0-9]( {6}Played:.*)$`)
 	// playerSavedDatesMultiline is playerSavedDates for the keep-prompts
 	// pipeline, which compares raw captured text without splitting lines:
 	// (?m) re-anchors ^ and $ per line and the trailing .* absorbs the \r the
@@ -20,39 +22,33 @@ var (
 	// whenever the two engines' setups straddled a wall-clock minute
 	// (dp-1404-rent-code-claims 2026-10-09; pr1904-dead-code-d 2026-10-10
 	// seed 5).
-	playerSavedDatesMultiline = regexp.MustCompile(`(?m)^((?:\x1b\[[0-?]*[ -/]*[@-~])*[\t ]*Started: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Last: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Played:.*)$`)
+	playerSavedDatesMultiline = regexp.MustCompile(`(?m)^((?:\x1b\[[0-?]*[ -/]*[@-~])*[\t ]*Started: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?: [1-9]|[12][0-9]|3[01]) (?:[01][0-9]|2[0-3]):[0-5][0-9]( {6}Last: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?: [1-9]|[12][0-9]|3[01]) (?:[01][0-9]|2[0-3]):[0-5][0-9]( {6}Played:.*)$`)
 	ansiEscape                = regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]`)
-	wallClock                 = regexp.MustCompile(`\b(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}:\d{2} \d{4}\b`)
-	// The short ctime form (no seconds or year) stat prints inside the Last
-	// Death bracket: a wall-clock minute boundary between the two engines'
-	// deaths reddens otherwise-identical stat blocks. Anchored to the stat
-	// line so ordinary text quoting a date stays raw, like the Started/Last
-	// report anchors above.
-	lastDeathStamp = regexp.MustCompile(`(Last Death: \[)(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}(\])`)
+	// C asctime(3)/ctime(3) (src/act.wizard.c:1814-1826, src/mail.c:429, etc.)
+	// formats "%.3s %.3s%3d %.2d:%.2d:%.2d %d": single-digit days are
+	// space-padded ("Nov  5"), never single-spaced ("Nov 5", PF-151) or
+	// zero-padded ("Nov 05").
+	wallClock = regexp.MustCompile(`\b(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?: [1-9]|[12][0-9]|3[01]) (?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9] \d{4}\b`)
+	// The short ctime form (first 16 chars of asctime, src/act.wizard.c:781-784)
+	// stat prints inside the Last Death bracket: a wall-clock minute boundary
+	// between the two engines' deaths reddens otherwise-identical stat blocks.
+	// Anchored to the stat line so ordinary text quoting a date stays raw, like
+	// the Started/Last report anchors above.
+	lastDeathStamp = regexp.MustCompile(`(Last Death: \[)(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?: [1-9]|[12][0-9]|3[01]) (?:[01][0-9]|2[0-3]):[0-5][0-9](\])`)
 	// SCMD_VERSION's immortal line (src/act.informative.c:2165-2175) carries
-	// load_compile_time()'s stamp (src/version.c:12-62), which is each engine's
+	// load_compile_time()'s stamp (src/version.c:12-65), which is each engine's
 	// own process wall clock at boot — "Month D, YYYY   HH:MM", minute
-	// granularity. The harness freezes the game calendar (DP_FIXED_TIME) but
-	// not process wall time, and the port deliberately reads the real boot
-	// clock because C's compile_time is time(0) (R1), so two boots that
-	// straddle a minute differ only in this stamp. Masked on the exact C
-	// shape only: an abbreviated month, a padded day or a wrong separator is a
-	// real format divergence and must still fail.
-	compileTimeStamp = regexp.MustCompile(`^Compile Time: (?:January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2}, \d{4}   \d{2}:\d{2}$`)
+	// granularity, unpadded day (%d, 1..31). The harness freezes the game
+	// calendar (DP_FIXED_TIME) but not process wall time, and the port
+	// deliberately reads the real boot clock because C's compile_time is
+	// time(0) (R1), so two boots that straddle a minute differ only in this
+	// stamp. Masked on the exact C shape only: an abbreviated month, a padded
+	// day or a wrong separator is a real format divergence and must still fail.
+	compileTimeStamp = regexp.MustCompile(`^Compile Time: (?:January|February|March|April|May|June|July|August|September|October|November|December) (?:[1-9]|[12][0-9]|3[01]), \d{4}   (?:[01][0-9]|2[0-3]):[0-5][0-9]$`)
 	vitalsPrompt     = regexp.MustCompile(`\b\d+H\s+\d+M\s+\d+V\s*>`)
 	promptOnly       = regexp.MustCompile(`^\s*(?:<PROMPT>|>)\s*$`)
 	promptPrefix     = regexp.MustCompile(`^> ?`)
-	autoExitLine     = regexp.MustCompile(`^\s*\[ Exits:`)
-	statusVitals     = regexp.MustCompile(`\b(?:HP|Mana|Move):\s*\d+/\d+`)
 	statsLine        = regexp.MustCompile(`^\s*(?:Str:.*Dex:.*Int:.*|Wis:.*Con:.*Cha:.*)\s*$`)
-	volatileLine     = regexp.MustCompile(`(?i)^\s*(?:` +
-		`(?:current (?:machine )?(?:time|date)|server (?:time|running since)|uptime)\s*[:=]|` +
-		`(?:players online|players\s*:|gods\s*:)\s*[:=]?\s*\d+|` +
-		`as of \d{1,4}[-/]\d{1,2}[-/]\d{1,4}\b|` +
-		`\*{2,}.*(?:\bversion\b|\bv?\d+\.\d+\b|\bbeta\b)|` +
-		`(?:motd|message of the day).*(?:version|updated|date)\s*[:=]|` +
-		`version\s*[:=]\s*\S+` +
-		`)`)
 )
 
 // Normalize applies the Tier-1 rules in this deliberate order. Keep this as
@@ -101,20 +97,16 @@ func normalize(raw string, keepANSI bool) string {
 		raw = ansiEscape.ReplaceAllString(raw, "")
 	}
 
-	// 2. Canonicalize CRLF/LFCR/CR and trailing whitespace: both telnet stacks may frame lines differently.
+	// 2. Canonicalize CRLF/LFCR/CR: both telnet stacks may frame lines differently.
 	raw = strings.ReplaceAll(raw, "\r\n", "\n")
 	raw = strings.ReplaceAll(raw, "\n\r", "\n")
 	raw = strings.ReplaceAll(raw, "\r", "\n")
 	lines := strings.Split(raw, "\n")
-	for i := range lines {
-		if autoExitLine.MatchString(lines[i]) {
-			lines[i] = strings.TrimLeft(lines[i], " \t")
-		}
-	}
 
-	// 3. Remove standalone telnet prompts and mask embedded status values. The
-	// C and Go transports repaint prompts at different times around identical
-	// asynchronous game text, so prompt-only lines are framing, not game output.
+	// 3. Mask approved host-clock metadata in C's exact shapes and normalize
+	// standalone telnet prompts. The C and Go transports repaint prompts at
+	// different times around identical asynchronous game text, so prompt-only
+	// lines are framing, not game output.
 	for i := range lines {
 		// ctime(3) values in durable-player/admin output are host-clock
 		// metadata, not game bytes. The deterministic harness freezes the
@@ -125,7 +117,6 @@ func normalize(raw string, keepANSI bool) string {
 		lines[i] = playerSavedDates.ReplaceAllString(lines[i], "${1}<WALL_CLOCK>${2}<WALL_CLOCK>${3}")
 		lines[i] = vitalsPrompt.ReplaceAllString(lines[i], "<PROMPT>")
 		lines[i] = promptPrefix.ReplaceAllString(lines[i], "")
-		lines[i] = statusVitals.ReplaceAllString(lines[i], "<VITALS>")
 	}
 
 	lines = strings.Split(normalizeUsersLoginAt(strings.Join(lines, "\n")), "\n")
@@ -145,30 +136,24 @@ func normalize(raw string, keepANSI bool) string {
 		filtered = append(filtered, line)
 	}
 
-	// 5. Drop volatile status/MOTD metadata lines: wall-clock, uptime, counts, and
-	// release dates vary per boot. Ordinary comparisons keep prompt-only lines
-	// as <PROMPT> tokens: each framing run is canonicalized so repaint-count
-	// differences collapse while the blank lines before a run's first prompt —
-	// where the real divergences live (#1880, PF-063) — stay comparable;
-	// ReconcilePromptFrames then pairs the two sides' block-edge frames in the
-	// harness. Keep-ANSI keeps its prior contract (PR #1927 review): that mode
-	// certifies raw color bytes inside surfaces whose own menus own the prompt,
-	// so prompt-only lines stay dropped there exactly as before adoption.
+	// 5. Canonicalize prompt framing. Ordinary comparisons keep prompt-only
+	// lines as <PROMPT> tokens: each framing run is canonicalized so
+	// repaint-count differences collapse while the blank lines before a run's
+	// first prompt — where the real divergences live (#1880, PF-063) — stay
+	// comparable; ReconcilePromptFrames then pairs the two sides' block-edge
+	// frames in the harness. Keep-ANSI keeps its prior contract (PR #1927
+	// review): that mode certifies raw color bytes inside surfaces whose own
+	// menus own the prompt, so prompt-only lines stay dropped there exactly as
+	// before adoption.
 	lines = filtered[:0]
 	if keepANSI {
 		for _, line := range filtered {
-			if !volatileLine.MatchString(line) && !promptOnly.MatchString(line) {
+			if !promptOnly.MatchString(line) {
 				lines = append(lines, line)
 			}
 		}
 	} else {
-		dropped := filtered[:0]
-		for _, line := range filtered {
-			if !volatileLine.MatchString(line) {
-				dropped = append(dropped, line)
-			}
-		}
-		lines = canonicalizePromptRuns(dropped)
+		lines = canonicalizePromptRuns(filtered)
 	}
 
 	// Preserve internal blank lines but remove meaningless leading/trailing transcript padding.
@@ -223,10 +208,11 @@ const (
 	usersLoginDivider = "--- ------- ------------ -------------- --- -------- ------------------------"
 )
 
-// src/act.informative.c:2061-2063 renders descriptor login_time as a host-clock
-// HH:MM:SS, independent of DP_CLOCK. Only a valid clock token in a users table
-// is masked; all other bytes (including malformed clocks) remain comparable.
-var usersLoginRowClock = regexp.MustCompile(`^(?:\r|\x1b\[[0-?]*[ -/]*[@-~])*[ \t]*[0-9]+[ \t]+(?:\[[^\]\r\n]+\]|-)[ \t]+[^\r\n]*[ \t]+((?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9])[ \t]+\[[^\r\n]*\](?:\x1b\[[0-?]*[ -/]*[@-~])*[ \t\r\n]*$`)
+// src/act.informative.c:2061-2096 renders descriptor login_time as a host-clock
+// HH:MM:SS (8 bytes) followed by a single space and "[host]", independent of
+// DP_CLOCK. Only a valid clock token in a users table is masked; all other
+// bytes (including malformed clocks) remain comparable.
+var usersLoginRowClock = regexp.MustCompile(`^(?:\r|\x1b\[[0-?]*[ -/]*[@-~])*[ \t]*[0-9]+[ \t]+(?:\[[^\]\r\n]+\]|-)[ \t]+[^\r\n]*[ \t]+((?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]) \[[^\r\n]*\](?:\x1b\[[0-?]*[ -/]*[@-~])*\r?\n?$`)
 
 func normalizeUsersLoginAt(raw string) string {
 	// The keep-prompts mode masks host-clock metadata without touching
