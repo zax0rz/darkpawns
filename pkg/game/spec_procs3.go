@@ -57,7 +57,11 @@ func init() {
 	RegisterSpec("werewolf", specWerewolf)
 	RegisterSpec("field_object", specFieldObject)
 	RegisterSpec("portal_to_temple", specPortalToTemple)
-	RegisterSpec("turn_undead", specTurnUndead)
+	// src/spec_procs3.c:543-581 is an OBJECT special (obj = me); the mob-lane
+	// stub keeps the nil-mob adapter fallback inert while the real handler
+	// lives in ObjSpecRegistry, the moon_gate pattern.
+	RegisterSpec("turn_undead", func(_ *World, _ *Player, _ *MobInstance, _, _ string) bool { return false })
+	RegisterObjSpec("turn_undead", specTurnUndeadObject)
 	RegisterSpec("itoh", specItoh)
 	RegisterSpec("prostitute", specProstitute)
 	RegisterSpec("roach", specRoach)
@@ -921,36 +925,45 @@ func specPortalToTemple(w *World, ch *Player, me *MobInstance, cmd string, arg s
 	return true
 }
 
-// specTurnUndead opens a portal when the player uses the right item.
-// C source: SPECIAL(turn_undead) — creates north exit from 19875→19876 and south exit
-// from 19876→19875 on "use", removes both exits during pulse (cmd="").
-func specTurnUndead(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+// specTurnUndeadObject ports SPECIAL(turn_undead) (src/spec_procs3.c:543-581),
+// an object special: using the assigned object in room 19875 or 19876 emits
+// C's act line with $p (the object's short description, OBJS) and creates the
+// north exit 19875→19876 and south exit 19876→19875; the pulse arm (cmd == "")
+// frees both exits. C assigns this special nowhere (src/spec_assign.c declares
+// it without ASSIGNOBJ), so the proof is this direct call, not the census.
+func specTurnUndeadObject(w *World, ch *Player, obj *ObjectInstance, cmd string, arg string) bool {
 	const roomA = 19875
 	const roomB = 19876
 
-	if cmd == "use" {
+	if cmd == "use" && (ch.GetRoomVNum() == roomA || ch.GetRoomVNum() == roomB) {
+		// src/spec_procs3.c:552-553 — skip_spaces, then isname against the
+		// object's keyword list.
 		arg = strings.TrimSpace(arg)
-		if arg == "" || ch.GetRoomVNum() != roomA && ch.GetRoomVNum() != roomB {
+		if obj == nil || !cIsName(arg, obj.GetName()) {
 			return false
 		}
-		// Check that arg matches the object's keywords
-		if me != nil && !cIsName(arg, me.GetName()) {
-			return false
-		}
-		w.roomMessage(ch.GetRoomVNum(), "A ray of flame bursts out of the object, consuming the undead!")
+		// src/spec_procs3.c:555-556 — act(..., FALSE, ch, obj, 0, TO_ROOM);
+		// $p is OBJS(obj), the short description, never a hardcoded name.
+		Act(w, false, ch, nil, obj, nil,
+			"A ray of flame bursts out of $p, consuming the undead!", "", ToRoom)
 
-		// Create north exit from 19875 → 19876
+		// src/spec_procs3.c:558-563 — CREATE both dir_options.
 		if room := w.GetRoomInWorld(roomA); room != nil {
+			if room.Exits == nil {
+				room.Exits = make(map[string]parser.Exit)
+			}
 			room.Exits["north"] = parser.Exit{Direction: "north", ToRoom: roomB}
 		}
-		// Create south exit from 19876 → 19875
 		if room := w.GetRoomInWorld(roomB); room != nil {
+			if room.Exits == nil {
+				room.Exits = make(map[string]parser.Exit)
+			}
 			room.Exits["south"] = parser.Exit{Direction: "south", ToRoom: roomA}
 		}
 		return true
 	}
 
-	// Pulse: remove exits if they exist
+	// src/spec_procs3.c:567-578 — the !cmd arm frees both exits, if present.
 	if cmd == "" {
 		if room := w.GetRoomInWorld(roomA); room != nil {
 			delete(room.Exits, "north")
