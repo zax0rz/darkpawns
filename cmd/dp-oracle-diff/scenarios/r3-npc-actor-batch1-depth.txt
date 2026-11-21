@@ -83,11 +83,6 @@ Y
 [warmup]
 goto 8162
 teleport Batchwatch 8162
-oedit 8022
-1
-satan long sword
-q
-y
 oedit 8053
 D
 12
@@ -96,9 +91,6 @@ D
 29
 q
 y
-load obj 8022
-give satan satan
-force satan wield satan
 load obj 8053
 give wand satan
 force satan hold wand
