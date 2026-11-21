@@ -27,15 +27,33 @@ TSVs plus this PR's new evidence. When the run finishes, rerun
 | interpreter.c:2227 x2 | settled-unreachable (free_rent=YES + static world ⇒ Crash_load return-2 arms cannot fire) |
 | zedit.c:677 | settled-unreachable (reset disables non-MOEPDRL letters before zedit's display; fixture + empty-list evidence) |
 | limits.c:629 | settled-witnessed (batch three, corpse-decay-depth@2) |
-| constants.c:691 | open (L4: transient descriptor state) |
-| constants.c:712-716 (5) | open (L4: identd socket states) |
+| mobprog.c:577 | settled-witnessed (mob-sound-mime-box-depth; see the hollow-retain note below) |
+| constants.c:691 | open (L4: transient descriptor state, DP-2918) |
+| constants.c:712, 714, 716 (3) | open (L4: identd socket / same-pass staging, DP-2918) |
+| constants.c:713, 715 (2) | settled-unreachable (fall-through ident states held only within one ident_check pass; matches informative.tsv excluded rows) |
 | mobact.c:252 | open (race-hate staging) |
-| mobprog.c:577 | open (RANDZON locator) |
 
-**Open after finish-L1: 8 of the 20.** Exact open list: constants.c:691,
-712, 713, 714, 715, 716 (six transient-descriptor rows, DP-2918 class),
-mobact.c:252 (race-hate staging), mobprog.c:577 (RANDZON locator).
-Settled: the other 12 (2 witnessed, 2 unreachable, 8 unit-exception).
+**Open after finish-L1: 5 of the 20.** Exact open list: constants.c:691,
+712, 714, 716 (four transient-descriptor rows, DP-2918 class), and
+mobact.c:252 (race-hate staging). Settled: the other 15 (3 witnessed,
+4 unreachable, 8 unit-exception).
+
+## Corrections found while finishing
+
+- **mob-sound-mime-emote's retained blocks are hollow.** The shipped mime
+  (vnum 8079) carries MOB_AGGRESSIVE (80.mob act word 1048648 =
+  ISNPC\|AGGRESSIVE\|RANDZON), so the spawned body removes the fresh observer
+  before the pulse window; no retained census dump anywhere contains the mime
+  line. The new mob-sound-mime-box-depth scenario clears AGGRESSIVE on the
+  fixture mob and witnesses the line with the observer co-located. The
+  existing manifest row `mob.mp-sound-emote-line` (mobprog.tsv) keeps its
+  green status on the emote-rendering claim but its retained proof does not
+  contain the case bytes; flagged for Zach.
+- **constants.c:713/715 are same-pass ident states.** CON_IDCONED and
+  CON_IDREAD are fall-through assignments inside ident_check's switch and are
+  left within the same pass; the waiting states are CON_IDCONING (712) and
+  CON_IDREADING (714), which need an in-flight ident socket (DP-2918). This
+  aligns the finish TSV with the already-excluded manifest rows.
 
 ## Coverage-based recount
 
