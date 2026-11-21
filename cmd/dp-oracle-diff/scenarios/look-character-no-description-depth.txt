@@ -1,11 +1,16 @@
 # C-first witness for look_at_char's no-description mobile branch.
-# Two fresh mortals start together in their hometown. Lookpeer has no player
-# description, so looking at them reaches C's look_at_char fallback
-# (src/act.informative.c:388-398, 1020-1024).
+# The empty player store makes Looker an implementor. The warmup moves them
+# from the god room to 8162, where a Bitter Wind with an empty detailed
+# description reaches C's look_at_char fallback (src/act.informative.c:388-398,
+# 1020-1024).
 # depth-case: look.character-no-description
 
 [fixture]
+empty-players
 quiet-mobs
+# Add an extra instance in zone 80's reset list; the mobile's prototype is in
+# zone 191 and its existing reset is elsewhere.
+spawn-mob 19119 80 8162 80
 
 [setup:oracle]
 Looker
@@ -35,33 +40,8 @@ Y
 <ENTER>
 1
 
-[setup:oracle:peer]
-Lookpeer
-Y
-peerpass
-peerpass
-N
-F
-H
-W
-K
-Y
-<ENTER>
-1
-
-[setup:port:peer]
-Lookpeer
-y
-peerpass
-peerpass
-N
-F
-H
-W
-K
-Y
-<ENTER>
-1
+[warmup]
+goto 8162
 
 [probe]
-look at Lookpeer
+look at wind
