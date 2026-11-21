@@ -8,9 +8,6 @@
 [fixture]
 empty-players
 quiet-mobs
-# Add an extra instance in zone 80's reset list; the mobile's prototype is in
-# zone 191 and its existing reset is elsewhere.
-spawn-mob 19119 80 8162 80
 
 [setup:oracle]
 Looker
@@ -42,6 +39,7 @@ Y
 
 [warmup]
 goto 8162
+load mob 19119
 
 [probe]
 look at wind
