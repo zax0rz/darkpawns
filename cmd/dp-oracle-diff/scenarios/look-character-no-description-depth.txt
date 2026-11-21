@@ -39,6 +39,7 @@ Y
 
 [warmup]
 goto 8162
+holylight
 load mob 19119
 
 [probe]
