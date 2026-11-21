@@ -233,3 +233,16 @@ The September era: the out-of-band observer family (channel mirror leaves
 the text path byte-identical), npc command dispatch, mp_give, mail
 save-failure/lifecycle paths, weather lock characterization, tiger skill
 messages, player-flags layout, and look description depth.
+
+## Batch 14 results (post-oracle tests 601–700, 2026-09-12..09-25)
+
+Marks: R 100 / F 0 / C 0 / D 0 (one medium-confidence). (Ledger on branch
+`glm/test-audit-game-14`.)
+
+The mid-September era: use-tattoo depth (12), effective attributes (12),
+save-world (10), plr-crash sites (17 across two files), raw-kill (9),
+room-object scripts, zone clock, persistence seams. One observation for
+Zach: `TestWeatherSynchronizationRace` asserts via the race detector
+(64 goroutines over the weather lock) — it is protective only in a
+`-race` run, which the standard gate does not enable. Not a mark change;
+noted as a gate question.
