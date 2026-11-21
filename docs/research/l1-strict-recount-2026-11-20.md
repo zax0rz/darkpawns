@@ -29,13 +29,13 @@ Claude's to re-run; the census-dump is intact and was used as-is.
 | zedit.c:677 | settled-unreachable (reset disables non-MOEPDRL letters before zedit's display; fixture + empty-list evidence) |
 | limits.c:629 | settled-witnessed (batch three, corpse-decay-depth@2) |
 | mobprog.c:577 | settled-witnessed (mob-sound-mime-box-depth; see the hollow-retain note below) |
-| constants.c:691 | open (L4: transient descriptor state, DP-2918) |
-| constants.c:712, 714, 716 (3) | open (L4: identd socket / same-pass staging, DP-2918) |
+| constants.c:691 | open (L4: transient descriptor state, DP-1618) |
+| constants.c:712, 714, 716 (3) | open (L4: identd socket / same-pass staging, DP-1618) |
 | constants.c:713, 715 (2) | settled-unreachable (fall-through ident states held only within one ident_check pass; matches informative.tsv excluded rows) |
 | mobact.c:252 | open (race-hate staging) |
 
 **Open after finish-L1: 5 of the 20.** Exact open list: constants.c:691,
-712, 714, 716 (four transient-descriptor rows, DP-2918 class), and
+712, 714, 716 (four transient-descriptor rows, DP-1618 class), and
 mobact.c:252 (race-hate staging). Settled: the other 15 (3 witnessed,
 4 unreachable, 8 unit-exception).
 
@@ -57,7 +57,7 @@ mobact.c:252 (race-hate staging). Settled: the other 15 (3 witnessed,
 - **constants.c:713/715 are same-pass ident states.** CON_IDCONED and
   CON_IDREAD are fall-through assignments inside ident_check's switch and are
   left within the same pass; the waiting states are CON_IDCONING (712) and
-  CON_IDREADING (714), which need an in-flight ident socket (DP-2918). This
+  CON_IDREADING (714), which need an in-flight ident socket (DP-1618). This
   aligns the finish TSV with the already-excluded manifest rows.
 
 ## Coverage-based recount (complete)
@@ -118,11 +118,11 @@ the rest of the merged batch scenarios).
   case5/possessive rows are unit-green only), fight.c:1553 (the mounted
   poison-tick line; only a unit-green row covers it).
 - `wide-cite-only` (5): constants.c:712, 714, 716 (ident-socket states,
-  DP-2918), mobact.c:252 (race-hate staging) — this PR's open rows — and
+  DP-1618), mobact.c:252 (race-hate staging) — this PR's open rows — and
   fight.c:1591 (see below).
 
 Plus one unit-unqualified: constants.c:691 (CON_CLOSE same-pass state,
-DP-2918) — also this PR's open row.
+DP-1618) — also this PR's open row.
 
 **One new arrival:** `src/fight.c:1591#1` (`screams in pain!`, the
 `act("$N screams in pain!", ...)` arm behind the `!number(0,2)` draw at
