@@ -1,0 +1,73 @@
+# Abort a live Lua text edit while a peer watches the editor in the same room.
+# C's tedit_string_cleanup emits the room act after the abort response.
+# C: src/modify.c:160-186; src/file-edit.c:60-63.
+# depth-case: mudlog.file-editor-abort-room-act
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Teditactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Teditactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watcher]
+Teditwatch
+Y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watcher]
+Teditwatch
+y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Teditactor level 40
+goto 8105
+teleport Teditwatch 8105
+
+[probe]
+luaedit mob dog
+/a

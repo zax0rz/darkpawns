@@ -38,6 +38,7 @@ Y
 [warmup]
 goto 8105
 set mob clone level 9
+set player Clanbody clan 0
 switch clone
 
 [probe]
