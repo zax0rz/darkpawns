@@ -1,0 +1,75 @@
+# depth-case: equipment.look-mobile-output
+# Equip Sostratos in the fixture and explicitly inspect him. This uses the
+# same known-good E reset and visible light-slot item as
+# equipment-light-slot-depth. C's look_at_char path emits the TO_VICT header.
+# C: src/act.informative.c:388-399, 444-460; src/db.c:2200-2213.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4102 1 8162 80
+equip-object 4102 4212 999 0 80
+force-load 4212
+
+[setup:oracle]
+Equipgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Equipgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:viewer]
+Equiplook
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:viewer]
+Equiplook
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Equiplook 8162
+
+[probe:viewer]
+look at sostratos

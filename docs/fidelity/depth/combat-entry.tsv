@@ -3,6 +3,7 @@ perform_violence	combat	combat.round-continues-after-switcheroo	D5	shared	oracle
 do_hit	hit	hit.no-arg	D1	command	oracle-green	combat-entry-gates	act.offensive.c:108-109	"Hit who?"
 do_hit	hit	hit.not-found	D1	command	oracle-green	combat-entry-gates	act.offensive.c:110-111	do_hit has its own "They don't seem to be here." — NOT NOPERSON (contrast assist/rescue).
 do_hit	hit	hit.self	D2	command	oracle-green	combat-entry-gates	act.offensive.c:112-116	"You hit yourself...OUCH!." self pair.
+do_hit	hit	hit.mobile-self	D3	command	oracle-green	switched-body-utility-actor-depth	act.offensive.c:112-116	A switched mobile targets its own live body; C's private OUCH response reaches the descriptor (R1/R2/R3/R5e/R5h).
 do_hit	hit	hit.self-room	D3	command	oracle-green	combat-entry-gates	act.offensive.c:115	Peer proves "$n hits $mself, and says OUCH!" with $m substitution.
 do_hit	murder	murder.alias-equals-hit	D1	command	oracle-green	combat-entry-gates	interpreter.c:562+act.offensive.c:101	murder maps to do_hit which ignores subcmd; bare murder answers "Hit who?" like hit.
 do_hit	hit	hit.peaceful-gate	D2	command	oracle-green	combat-entry-peaceful-wait	act.offensive.c:126+fight.c:1336-1340	"This room just has such a peaceful, easy feeling..." blocks the swing inside damage().
