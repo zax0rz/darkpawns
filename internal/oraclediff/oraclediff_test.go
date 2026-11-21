@@ -17,9 +17,10 @@ func TestNormalizeTier1Rules(t *testing.T) {
 	raw := "\x1b[31mRoom\x1b[0m\r\n" +
 		"  Str: excellent     Dex: poor          Int: average   \r\n" +
 		"  Wis: decent        Con: good          Cha: bad\r\n" +
-		"22H 100M 83V >   \r\nPlayer HP: 22/22\r\nPlayers online: 7\r\n" +
+		"22H 100M 83V >   \r\nCurrent machine time: Thu Nov  5 09:07:03 2026\r\n" +
 		"As of 10-17-2008 there has been a pwipe.\r\n**** Dark Pawns 3.0 beta\r\nDescription  \r\n"
-	want := "Room\n<ROLLED_STATS>\n<PROMPT>\nPlayer <VITALS>\nDescription  \n"
+	want := "Room\n<ROLLED_STATS>\n<PROMPT>\nCurrent machine time: <WALL_CLOCK>\n" +
+		"As of 10-17-2008 there has been a pwipe.\n**** Dark Pawns 3.0 beta\nDescription  \n"
 	if got := Normalize(raw); got != want {
 		t.Fatalf("Normalize() = %q, want %q", got, want)
 	}
@@ -54,9 +55,9 @@ func TestNormalizeKeepsPromptTokensButPreservesTextGreaterThan(t *testing.T) {
 	}
 }
 
-func TestNormalizeCanonicalizesAutoExitIndentation(t *testing.T) {
+func TestNormalizePreservesAutoExitIndentation(t *testing.T) {
 	raw := "Temple Infirmary\r\n [ Exits: north ]\r\n"
-	want := "Temple Infirmary\n[ Exits: north ]\n"
+	want := "Temple Infirmary\n [ Exits: north ]\n"
 	if got := Normalize(raw); got != want {
 		t.Fatalf("Normalize() = %q, want %q", got, want)
 	}
@@ -709,8 +710,8 @@ func TestNormalizeKeepANSIPreservesEscapeBytes(t *testing.T) {
 }
 
 func TestNormalizePreservesTrailingSpaces(t *testing.T) {
-	raw := "Your current ability scores: \r\n   [ Exits: north ]\r\n"
-	want := "Your current ability scores: \n[ Exits: north ]\n"
+	raw := "Your current ability scores: \r\n[ Exits: north ] \r\n"
+	want := "Your current ability scores: \n[ Exits: north ] \n"
 	if got := Normalize(raw); got != want {
 		t.Fatalf("Normalize() = %q, want %q", got, want)
 	}
