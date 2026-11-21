@@ -3,6 +3,7 @@
 # the body act and reconnect mudlog to their separate audiences.
 # C path: src/interpreter.c:1528-1563,1640-1649.
 # depth-case: entry.reconnect-usurp
+# depth-case: entry.reconnect-usurp-duplicate-login
 # depth-case: entry.identity-persistent-id-duplicate-sessions
 
 [fixture]

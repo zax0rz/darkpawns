@@ -1,4 +1,5 @@
 # depth-case: death.group-autosplit-remainder
+# depth-case: fight.group-gold-room-loot
 # C group_gain() pays each member the truncated share, then pays the actor any
 # odd remainder separately. A real combat kill with 101 coins reaches both
 # output lines and the room announcement.
