@@ -1,0 +1,48 @@
+# C-first do_compare [3,5) band (src/new_cmds.c:2085-2088). Armor diff =
+# ((val0_1+1)/2) - ((val0_2+1)/2) (src/new_cmds.c:2063-2064), then the
+# untrained-compare noise number(-3,3) (2067-2068). The immortal loads two
+# body armors whose truncated AC halves differ by exactly 4 — obj 139 scale
+# mail (AC 8 → 4) and obj 3117 velvet shirt (AC 0 → 0) — so the band-4 base
+# survives the noise in the [3,5) window (`a little better than`) for
+# `compare scale velvet`.
+# depth-case: compare.band-little-better
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Zedqwp
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zedqwp
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load obj 139
+load obj 3117
+
+[probe]
+compare scale velvet

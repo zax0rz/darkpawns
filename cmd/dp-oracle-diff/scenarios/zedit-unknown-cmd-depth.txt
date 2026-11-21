@@ -1,0 +1,50 @@
+# C-first zedit display of a disabled stored command. The zone-command fixture
+# injects a raw three-argument reset opcode with a letter outside MOEPDRL
+# ("Z 0 7914 1", internal/oraclediff scenario.go:201-205) into zone 79's
+# disposable zon; the zon parser stores any single-letter command whose arg
+# count fits (src/db.c:1577-1596), but the first zone reset marks every
+# non-MOEPDRL letter disabled (src/db.c:2278-2280 default arm), and zedit's
+# command display skips disabled commands — the menu prints
+# "0 - <END OF LIST>" and the `<Unknown Command>` default arm
+# (src/zedit.c:676-678) has no live path. Witnesses the skip behind the
+# L1 unreachability ruling for src/zedit.c:677.
+# depth-case: zedit.disabled-stored-command-skip
+
+[fixture]
+empty-players
+quiet-mobs
+zone-command 79 Z 0 7914 1
+
+[setup:oracle]
+Zedqwp
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zedqwp
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 7900
+
+[probe]
+zedit 7900

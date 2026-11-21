@@ -1,0 +1,61 @@
+# depth-case: mob.mp-sound-mime-box
+# The mime (vnum 8079) has a single fixed MP_EMOTE line (src/mobprog.c:576-578).
+# mp_sound fires on the 1-in-16 !number(0,15) gate in mobile_activity
+# (src/mobact.c:145-147) and delivers through do_echo SCMD_EMOTE
+# (src/mobprog.c:606), so the co-located observer hears
+# "The mime tries to escape from an invisible box only he can see."
+#
+# The shipped mob is MOB_AGGRESSIVE|MOB_RANDZON (80.mob act word 1048648 =
+# ISNPC|AGGRESSIVE|RANDZON), so with shipped flags the spawned body kills the
+# fresh observer, and RANDZON relocates it at the injected reset itself
+# (spawn-mob enters through C's normal 'M' reset path, db.c:2132-2145) — which
+# is why every retained block under mob-sound-mime-emote stays hollow (no
+# retained census dump contains the line). The fixture clears both flags so
+# the passive body stays in the sealed infirmary; the line content itself is
+# draw-free (no coin flip).
+#
+# quiet-mobs empties the world; one ambient mob is spawned into the sealed
+# infirmary the new character starts in, so the only draws in the pulse window
+# belong to it. ~dpclock pulse 2000 twice spans enough mobile passes for the
+# 1-in-16 sound trigger (PULSE_MOBILE = 4 RL_SEC, src/structs.h:633).
+
+[fixture]
+quiet-mobs
+replace-room-exits 8162 none
+clear-mob-flag 8079 AGGRESSIVE
+clear-mob-flag 8079 RANDZON
+spawn-mob 8079 1 8162 80
+
+[setup:oracle]
+Boxprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Boxprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[probe]
+look
+~dpclock pulse 2000
+~dpclock pulse 2000
+look
