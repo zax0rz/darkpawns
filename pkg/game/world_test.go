@@ -2,7 +2,6 @@ package game
 
 import (
 	"testing"
-	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -63,27 +62,6 @@ func TestStopAITickerStopsBothTickers(t *testing.T) {
 	// World methods should still work after stopping tickers.
 	if _, ok := w.GetRoom(1001); !ok {
 		t.Error("GetRoom should still work after StopAITicker")
-	}
-}
-
-func TestRealtimeWorldTickersFreezeWhenDPClockIsSet(t *testing.T) {
-	t.Setenv("DP_CLOCK", "1")
-	w, err := NewWorld(&parser.World{})
-	if err != nil {
-		t.Fatalf("NewWorld failed: %v", err)
-	}
-	t.Cleanup(w.StopAITicker)
-
-	player := NewCharacter(1, "Clocktest", ClassWarrior, RaceHuman)
-	if err := w.AddPlayer(player); err != nil {
-		t.Fatal(err)
-	}
-	full := player.GetCondition(CondFull)
-
-	time.Sleep(20 * time.Millisecond)
-
-	if got := player.GetCondition(CondFull); got != full {
-		t.Fatalf("point update changed fullness under DP_CLOCK: %d -> %d", full, got)
 	}
 }
 

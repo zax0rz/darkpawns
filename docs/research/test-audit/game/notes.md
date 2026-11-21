@@ -118,3 +118,19 @@ swapped — red), TestDoTellEligibilityAndDelivery (not-found byte — red,
 after recording that the NoPersonHere constant is not this path's source),
 TestTimeWeatherSnapshotTracksCanonicalClock (snapshot loses the weather
 half — red).
+
+## Post-oracle redo, batch 3 (tests 101–150, T439–T488; 2026-07-14..16)
+
+Marks: R 49 / F 0 / C 0 / D 1. Cites grepped this session: mobact draws
+src/mobact.c:120,146; steal draws/strings src/act.other.c:221,280,395-405,481;
+mud_time_passed src/utils.c with beginning_of_time src/db.c:417,420.
+
+**D: TestRealtimeWorldTickersFreezeWhenDPClockIsSet (J9/J4)** — pkg/game owns
+no realtime ticker (world.go:400: PointUpdate is driven only by the server
+heartbeat), so the 20ms assertion holds with DP_CLOCK unset too (probed).
+The freeze contract is tested for real in pkg/engine
+(gameloop_test.go:40,117). Deleted; the engine tests are the remaining proof.
+
+R spot-checks: backstab extra draw red; recall dream byte red; steal extra
+draw red (after two wrong-target lessons recorded in-session: the first
+anchor hit DoStealth's roll, not DoSteal's).

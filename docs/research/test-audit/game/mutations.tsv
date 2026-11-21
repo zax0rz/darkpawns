@@ -8,3 +8,7 @@ TestConsumables_InstanceIsolation	pkg/game/object.go	-	SetValue leaks val into o
 TestNewbieHometownRoom	pkg/game/death.go	-	Kir-Oshi start room 18201 -> 8162	n/a (R spot-check)	red	yes
 TestDoTellEligibilityAndDelivery	pkg/game/directed_speech.go	-	tell not-found literal "No-one" -> "No one" (directed_speech.go:207; the NoPersonHere constant sits on another path and mutating it stays green — recorded)	n/a (R spot-check)	red	yes
 TestTimeWeatherSnapshotTracksCanonicalClock	pkg/game/weather.go	-	TimeWeatherSnapshot drops the Weather half of the snapshot	n/a (R spot-check)	red	yes
+TestBackstab_MissDrawCountAndOrder	pkg/game/skill_combat.go	86	extra dprng.Number(1,2) draw after the skill roll	n/a (R spot-check)	red	yes
+TestRecallSleepingDreams	pkg/game/other_utility.go	168	dream line "about falling" -> "of falling"	n/a (R spot-check)	red	yes
+TestDoStealInitialRollPrecedesMissingItemLookup	pkg/game/skill_stealth.go	DoSteal first roll	extra dprng.Number(1,2) draw before the item lookup	n/a (R spot-check)	red	yes
+TestRealtimeWorldTickersFreezeWhenDPClockIsSet	pkg/game/world_test.go	(deleted)	pkg/game owns no realtime ticker; condition unchanged after 20ms with DP_CLOCK unset too (probe) — the freeze contract is pkg/engine's	green under any freeze regression (nothing ticks at this layer)	test removed; TestGameLoopStartFreezesWhenDPClockIsSet + TestGameLoopPumpPulsesRequiresDPClock (pkg/engine/gameloop_test.go:40,117) own the contract	n/a
