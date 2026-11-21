@@ -280,3 +280,12 @@ voice/hunt-voice families, and the milestone mudlog matrix (each milestone
 delegating to the shared testMilestoneMudlog helper with watcher/below-level
 assertions). A third -race-vehicle guard surfaced
 (TestGetItemsInRoomSnapshotVsWriter, the CWE-400 unbounded-slice repair).
+
+## Batch 18 results (post-oracle tests 1101–1200, 2026-11-05..11-18)
+
+Marks: R 100 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-18`.)
+
+The November era: the actor-specials guard family (no_move north/east/south/
+west with C exact bytes against src/spec_procs2.c:2033-2111), turn and
+npc-movement depth, the actor specials table, say_spell act routing,
+combat-round specials, mobprogs depth, and spec entry gates.
