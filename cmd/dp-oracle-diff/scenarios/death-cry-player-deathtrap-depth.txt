@@ -11,7 +11,7 @@ replace-room-exits 8162 north 8008 0
 replace-room-exits 8008 south 8162 0
 
 [setup:oracle]
-Cryvictim
+Crygod
 Y
 oraclepass
 oraclepass
@@ -25,6 +25,34 @@ Y
 1
 
 [setup:port]
+Crygod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Cryvictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
 Cryvictim
 y
 oraclepass
@@ -67,8 +95,9 @@ Y
 1
 
 [warmup]
+goto 8162
 teleport Cryvictim 8162
 teleport Crywatch 8162
 
-[probe:Cryvictim]
+[probe:victim]
 north

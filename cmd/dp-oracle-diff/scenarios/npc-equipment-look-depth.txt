@@ -1,5 +1,5 @@
 # depth-case: equipment.look-mobile-output
-# Equip a mobile body and inspect it as a player. C's do_look path reaches
+# Equip the mobile body in the fixture and inspect it. C's do_look path reaches
 # list_char_to_char's TO_VICT equipment header for a visible equipped item.
 # C: src/act.informative.c:449-460.
 
@@ -7,10 +7,10 @@
 empty-players
 quiet-mobs
 spawn-mob 70 1 8162 80
-give-object 70 5800 1 80
+equip-object 70 5800 1 5 80
 
 [setup:oracle]
-Equiplook
+Equipgod
 Y
 oraclepass
 oraclepass
@@ -24,6 +24,34 @@ Y
 1
 
 [setup:port]
+Equipgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:viewer]
+Equiplook
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:viewer]
 Equiplook
 y
 oraclepass
@@ -39,7 +67,7 @@ Y
 
 [warmup]
 goto 8162
-force satan wear breast
+teleport Equiplook 8162
 
-[probe]
+[probe:viewer]
 look at satan

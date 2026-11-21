@@ -72,7 +72,6 @@ Y
 [warmup]
 goto 8162
 teleport Turnwatch 8162
-set player Turnowner level 40
 
 [probe]
 switch satan

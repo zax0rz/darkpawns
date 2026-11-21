@@ -93,10 +93,9 @@ Y
 1
 
 [warmup]
-teleport Fleegod 8162
+goto 8162
 teleport Exfleer 8162
 teleport Exorigin 8162
-set player Fleegod level 40
 set Exfleer move 0
 force Exfleer hit Fleegod
 
