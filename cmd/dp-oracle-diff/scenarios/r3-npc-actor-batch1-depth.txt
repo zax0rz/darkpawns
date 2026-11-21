@@ -4,7 +4,7 @@
 # the C equipd scan select WEAR_HOLD for `use wand satan`; the wand itself has
 # no “satan” keyword. A named peer observes room output while the descriptor
 # switches between Satan Klaus and clone.
-# C paths: src/interpreter.c:910-947; src/act.movement.c:524-536;
+# C paths: src/interpreter.c:910-947; src/act.movement.c:512-517;
 # src/act.item.c:197-213,1009-1012; src/act.other.c:1665-1677;
 # src/act.comm.c:1058-1062; src/act.other.c:897-980;
 # src/spell_parser.c:610-658.
