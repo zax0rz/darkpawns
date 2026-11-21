@@ -1267,8 +1267,9 @@ func readAudiencePeers(audience map[string]Conn, step string, stepIdx int, quies
 }
 
 const (
-	promptWaitPrefix = "wait-prompt:"
-	promptWaitMax    = 5 * time.Second
+	promptWaitPrefix  = "wait-prompt:"
+	promptWaitMax     = 5 * time.Second
+	setupEnterWaitMax = 10 * time.Second
 )
 
 // parsePromptWait parses an optional "wait-prompt:[<N>:]<kind> <step>" prefix.
@@ -1406,7 +1407,17 @@ func setupPasswordRefusal(transcript string) string {
 
 func runSetup(conn Conn, setup []string, settleAfter, pulses int, quiescence time.Duration) (string, error) {
 	var transcript strings.Builder
-	initial, err := conn.ReadUntilQuiescent(quiescence)
+	// A freshly dialed connection has no preceding Send, so ReadUntilQuiescent
+	// would only wait quiescence (300ms) for the greeting banner. Under heavy
+	// census load the server can take longer to emit the greeting; wait up to
+	// firstByteWait when the transport configures one (DP-1623).
+	var initial string
+	var err error
+	if fbw, ok := conn.(FirstByteWaiter); ok && fbw.FirstByteWait() > quiescence {
+		initial, err = readConnUntilPrompt(conn, quiescence, fbw.FirstByteWait(), "", 0)
+	} else {
+		initial, err = conn.ReadUntilQuiescent(quiescence)
+	}
 	if err != nil {
 		return "", fmt.Errorf("read greeting: %w", err)
 	}
@@ -1415,7 +1426,19 @@ func runSetup(conn Conn, setup []string, settleAfter, pulses int, quiescence tim
 		if err := conn.Send(step); err != nil {
 			return transcript.String(), fmt.Errorf("setup step %d send %q: %w\ntranscript so far:\n%s", i+1, step, err, transcript.String())
 		}
-		output, err := conn.ReadUntilQuiescent(quiescence)
+		// Menu choice "1" enters the game and (in Go) runs synchronous SQLite
+		// writes (saveCreationRecord / saveCharacter) before enterWorld and
+		// sendWelcome. Under concurrent disk fsync load those writes can exceed
+		// firstByteWait (2s); returning early on timeout lets [warmup] run
+		// teleport before the peer is registered in the world (DP-1623). Wait
+		// for C's in-game command prompt "> " (src/comm.c:1156,1198,1201),
+		// which cannot be emitted until world registration has finished.
+		var output string
+		if step == enterGameStep {
+			output, err = readConnUntilPrompt(conn, quiescence, setupEnterWaitMax, "> ", 1)
+		} else {
+			output, err = conn.ReadUntilQuiescent(quiescence)
+		}
 		if err != nil {
 			transcript.WriteString(output)
 			return transcript.String(), fmt.Errorf("setup step %d read after %q: %w\ntranscript so far:\n%s", i+1, step, err, transcript.String())
