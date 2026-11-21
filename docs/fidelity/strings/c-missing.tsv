@@ -2500,8 +2500,6 @@ What was that,	src/spec_procs3.c:380	buffered:sprintf	quan_lo
 The room starts to move!	src/spec_procs3.c:418	send_to_char	alien_elevator
 You hear a loud howling in the distance.	src/spec_procs3.c:438	send_to_zone	werewolf
 falls to the ground, screaming in agony!	src/spec_procs3.c:497	act	field_object
-, consuming the undead!	src/spec_procs3.c:555	act	turn_undead
-A ray of flame bursts out of	src/spec_procs3.c:555	act	turn_undead
 You break	src/spec_procs3.c:627	act	mirror
 into tiny pieces!	src/spec_procs3.c:627	act	mirror
 into a million pieces!	src/spec_procs3.c:628	act	mirror

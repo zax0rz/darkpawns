@@ -83,7 +83,10 @@ func cmdLoad(s *Session, args []string) error {
 		// no invisibility term, and the mobile payload ends in a period.
 		game.MudLog(fmt.Sprintf("(GC) %s loaded %s at %s.", s.player.Name, mob.GetName(), s.manager.world.GetRoomInWorld(roomVNum).Name),
 			game.MudlogBrief, s.player.GetLevel()+1, true)
-		sendLoadNarration(s, roomVNum, fmt.Sprintf("%s has created %s!", s.player.Name, mob.GetShortDesc()), fmt.Sprintf("You create %s.", mob.GetShortDesc()))
+		sendLoadNarration(s, func() {
+			game.Act(s.manager.world, false, s.player, mob, nil, nil, "$n has created $N!", "", game.ToRoom)
+			game.Act(s.manager.world, false, s.player, mob, nil, nil, "You create $N.", "", game.ToChar)
+		})
 	} else if loadIsAbbrev(kind, "obj") {
 		obj, err := s.manager.world.SpawnObject(vnum, -1)
 		if err != nil {
@@ -109,7 +112,10 @@ func cmdLoad(s *Session, args []string) error {
 		// src/act.wizard.c:1369-1371: object payload has no final period.
 		game.MudLog(fmt.Sprintf("(GC) %s loaded %s at %s", s.player.Name, obj.GetShortDesc(), s.manager.world.GetRoomInWorld(roomVNum).Name),
 			game.MudlogBrief, s.player.GetLevel()+1, true)
-		sendLoadNarration(s, roomVNum, fmt.Sprintf("%s has created %s!", s.player.Name, obj.GetShortDesc()), fmt.Sprintf("You create %s.", obj.GetShortDesc()))
+		sendLoadNarration(s, func() {
+			game.Act(s.manager.world, false, s.player, nil, obj, nil, "$n has created $p!", "", game.ToRoom)
+			game.Act(s.manager.world, false, s.player, nil, obj, nil, "You create $p.", "", game.ToChar)
+		})
 	} else {
 		s.Send("That'll have to be either 'obj' or 'mob'.\r\n")
 	}
@@ -181,14 +187,17 @@ func loadCostLimit(level int) (int, bool) {
 	}
 }
 
-func sendLoadNarration(s *Session, roomVNum int, roomCreation, actorCreation string) {
-	gesture := fmt.Sprintf("%s makes a strange magickal gesture.\r\n", s.player.Name)
-	s.manager.BroadcastToRoom(roomVNum, []byte(gesture), s.playerName)
+// sendLoadNarration follows do_load's narration (src/act.wizard.c:1318-1320,
+// 1373-1376) and random_load_msg (src/act.wizard.c:1222-1244). Every line is
+// an act() call, so sleeping players get none of them, and a blind viewer
+// gets no gesture or omen and sees "Someone has created something!".
+func sendLoadNarration(s *Session, creation func()) {
+	w := s.manager.world
+	game.Act(w, true, s.player, nil, nil, nil, "$n makes a strange magickal gesture.", "", game.ToRoom)
 	message := loadMessages[dprng.Index(dprng.Number(0, len(loadMessages)-1), len(loadMessages))]
-	s.manager.BroadcastToRoom(roomVNum, []byte(message+"\r\n"), s.playerName)
-	s.Send(message + "\r\n")
-	s.manager.BroadcastToRoom(roomVNum, []byte(roomCreation+"\r\n"), s.playerName)
-	s.Send(actorCreation + "\r\n")
+	game.Act(w, true, s.player, nil, nil, nil, message, "", game.ToRoom)
+	game.Act(w, true, s.player, nil, nil, nil, message, "", game.ToChar)
+	creation()
 }
 
 // ---------------------------------------------------------------------------
