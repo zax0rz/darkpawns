@@ -338,3 +338,29 @@ Marks: R 100 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-23`.)
 The newest tier: unassigned specials depth (9), mickey/mallory (8), the
 muddate family (7), and the turn-undead/quan-lo/portal-bat/couch/summoner/
 little-boy-ira/castle-guard specs.
+
+## Batch 24 results (post-oracle tests 1601–1653, 2026-11-21) — audit COMPLETE
+
+Marks: R 53 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-24`;
+the tail rows of the same November 21 files batch 23 began.)
+
+## Full-audit summary (1,991 tests)
+
+| Mark | Count |
+|---|---:|
+| R keep | 1,987 (99.8%) |
+| F fix | 3 (all fixed in batch 1 with mutation proofs) |
+| C merge | 0 |
+| D delete | 1 (TestZzzCanaryTwo, batch 21) |
+
+Predictions vs actual: predicted R 1,802 / F 120 / C 32 / D 37 — the actual
+weak count is a fraction of the guess. The finding of record: **pkg/game has
+no weak-test layer.** The April ObjectLocation suite is contractual from day
+one, and everything after May carries DP cites, oracle-era byte pins, or
+draw-sequence parity. J10 count: **0** — no test pins Go bytes that C
+disagrees with. J-code usage overall: J2 ×3, J3 ×2 (all fixed); everything
+else clean.
+
+Inventory drift note: this audit's denominator (1,991) was snapshotted at
+branch creation (706084c68-era main); main has since gained new tests from
+other agents' merges. Those belong to future audits, not this one.
