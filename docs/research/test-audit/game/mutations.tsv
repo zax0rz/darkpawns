@@ -1,0 +1,2 @@
+test	file	line	mutation	result(green|red)	restored(yes)
+TestWeatherChange_AdjustsPressureAndSky	pkg/game/weather.go	summer diff +2 -> -2 (seeded pressure 1021 -> 1005)	red	yes
