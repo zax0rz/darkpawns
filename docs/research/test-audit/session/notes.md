@@ -237,3 +237,19 @@ audit-order labels, not load-bearing — the integrity check keys on test names.
 
 445/1537 ledgered. Marks so far: R 441, F 3, C 3, D 0. Every F and C is in the
 pre-oracle layer; all 300 post-oracle marks so far are R.
+
+### Ledger update (2026-11-21, review hold follow-up)
+
+Per-row evidence: every T346–T445 row's evidence cell now names what was
+checked for that test — each registration pin names its command and exact
+C gate values (e.g. commandGates['groinrip'] level 0/PosFighting), the
+position-gate refusals name their byte-exact message, and the distinctive
+tests cite their C source lines. Test file/line columns are backfilled.
+
+All-R spot-checks (random draw, seed 20261106, from T346–T445): T429
+TestKickRegistrationUsesCEntryGate (command_gates.go: registerCommand forced
+MinPosition 5), T352 TestParseDigArgumentsMatchesCFillWordParsing
+(wiz_movement.go: fill-word 'the' removed), T357
+TestCmdHitFillWordsWithoutTargetUseNoArgumentMessage (combat_cmds.go:
+fill-word skip replaced by args[0]). All three went red and were restored
+byte for byte (mutations.tsv).
