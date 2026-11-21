@@ -1,11 +1,12 @@
 # C-first witness for look_at_char's no-description mobile branch.
-# A mortal starts in room 8162 with a Bitter Wind, whose description is empty,
-# so `look at wind` reaches the sampled actor line through look_at_target
-# (src/act.informative.c:388-398,
+# The empty player store makes Looker an implementor; the warmup moves them
+# from the god room to 8162, where a Bitter Wind's empty description makes
+# `look at wind` reach the sampled actor line (src/act.informative.c:388-398,
 # 1020-1024).
 # depth-case: look.character-no-description
 
 [fixture]
+empty-players
 quiet-mobs
 # Existing zone resets can already load this mobile, so allow another instance.
 spawn-mob 19119 80 8162 191
@@ -37,6 +38,9 @@ K
 Y
 <ENTER>
 1
+
+[warmup]
+goto 8162
 
 [probe]
 look at wind
