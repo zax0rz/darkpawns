@@ -187,3 +187,13 @@ C's exact dream bytes, zone-reset seam tests with ordered call hooks
 the shipped-MOTD fixture compare against the C file, and the race-hate /
 scavenge / sound-draw order families. Heuristic scan found zero
 assertion-less bodies; deep reads agree.
+
+## Batch 9 results (post-oracle tests 101–200, 2026-07-16..07-27)
+
+Marks: R 100 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-9`.)
+
+July 16–27 era: movement command gates, paladin spec (charge arithmetic,
+disarm audience/state), get/carve depth tests with act.item.c byte citations,
+guild-guard/dragon-breath/bite/bearhug/ambush depth families. The heuristic
+scan flagged four mobact draw-order tests; their assertMobactDraws helper
+ends in t.Fatalf, so they are real draw-sequence pins.
