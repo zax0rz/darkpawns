@@ -1,0 +1,78 @@
+# depth-case: spell.word-recall-room-act
+# A successful spoken word-of-recall cast by a mage in a non-BFR room emits
+# "<name> disappears." to an origin-room observer before transferring the
+# caster to the mortal start room.
+# C path: do_cast -> cast_spell -> call_magic -> spell_recall
+# (src/spell_parser.c:514,879-925,1038-1110; src/spells.c:124-151).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Recallactor
+Y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Recallactor
+y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Recallpeer
+Y
+pass123
+pass123
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Recallpeer
+y
+pass123
+pass123
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Recallpeer 8105
+set player Recallactor class mage
+set player Recallactor maxmana 5000
+set player Recallactor mana 5000
+skillset Recallactor 'word of recall' 100
+set player Recallactor level 34
+
+[probe]
+cast 'word of recall' Recallactor

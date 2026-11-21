@@ -1,0 +1,75 @@
+# depth-case: reply.target-soundproof
+# The peer records the actor as its last-tell target while both players share a
+# normal room, then moves into a soundproof room. The actor's reply reaches
+# do_reply's target-room soundproof arm, not the earlier PRF_NOTELL arm.
+# C source: src/act.comm.c:934-970.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8163 5 on
+
+[setup:oracle]
+Replyactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Replyactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Replypeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Replypeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Replyactor room 8162
+set player Replypeer room 8162
+send:peer tell Replyactor first message
+set player Replypeer room 8163
+
+[probe]
+reply checking in
