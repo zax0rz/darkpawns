@@ -152,3 +152,16 @@ func TestSpecTurnUndeadObjectRegistered(t *testing.T) {
 		t.Fatal("turn_undead must stay unassigned: no ObjSpecAssign entry (the brief forbids assigning it)")
 	}
 }
+
+// C's skip_spaces trims only LEADING whitespace (src/interpreter.c:1187-1190),
+// so a trailing space survives into isname, and isname("wand ", ...) fails at
+// the keyword's end (src/handler.c:94). A leading space is skipped.
+func TestSpecTurnUndeadObjectSkipSpacesLeadingOnly(t *testing.T) {
+	w, actor, _, wand, _ := buildTurnUndeadWorld(t)
+	if specTurnUndeadObject(w, actor, wand, "use", "wand ") {
+		t.Fatal(`"wand " matched; C keeps the trailing space and isname fails`)
+	}
+	if !specTurnUndeadObject(w, actor, wand, "use", "  wand") {
+		t.Fatal(`"  wand" did not match; C skips leading spaces`)
+	}
+}

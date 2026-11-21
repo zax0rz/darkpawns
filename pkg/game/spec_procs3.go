@@ -938,7 +938,7 @@ func specTurnUndeadObject(w *World, ch *Player, obj *ObjectInstance, cmd string,
 	if cmd == "use" && (ch.GetRoomVNum() == roomA || ch.GetRoomVNum() == roomB) {
 		// src/spec_procs3.c:552-553 — skip_spaces, then isname against the
 		// object's keyword list.
-		arg = strings.TrimSpace(arg)
+		arg = skipSpaces(arg) // C skip_spaces (src/interpreter.c:1187-1190) trims leading only
 		if obj == nil || !cIsName(arg, obj.GetName()) {
 			return false
 		}
