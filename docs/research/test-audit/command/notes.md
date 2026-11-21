@@ -208,7 +208,9 @@ NoSkill, spike/stake twins) each pin a distinct gate-order micro-contract.
 ## The weak tests and their authors
 
 All 9 F + 3 D trace to four sources:
-- BRENDA69 (agent unknown), PRs #19/#84/#113/#182/#189: the middleware trio
+- OpenClaw (multi-model orchestrator; committing as BRENDA69 and the two zach
+  identities per the PF-153 excavation), PRs #19/#84/#113/#182/#189: the
+  middleware trio
   (dead code, deleted with it) and the kill-payout/payout-era tests. The
   kill-payout block itself held up; its one weak test (PlayerDeath_Idempotent)
   promised a second death call it never made.
