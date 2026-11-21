@@ -59,3 +59,29 @@ concentrate-pre-oracle pattern are the firm guesses.
 - Batch 1–3+: the 338 pre-oracle tests in date order (~50–70 per batch).
 - Then the 1,653 later tests in date order, ~50–100 per batch.
 
+
+## Batch 1 results (first 50 pre-oracle tests, 2026-04-25..05-13)
+
+Marks: R 48, F 2, C 0, D 0 (96% keepers). Junk: J2 ×2, J3 ×1. The batch is
+the port's oldest layer: 25 object_movement tests (Location/inventory
+invariants, zach), 5 death tests, 10 combat skill-gate tests, 5 command-exec
+callback tests and 5 message-routing tests (BRENDA69 = OpenClaw).
+
+Predictions vs actual: predicted the pre-oracle layer at ~78% R — actual
+96%. The April object-movement layer is far stronger than guessed: it is the
+AGENTS.md-protected ObjectLocation regression suite with concrete pre/post
+assertions and error contracts, not smoke tests. The weak marks:
+
+- `TestCorpseAttackLongDesc` (F, J2/J3): the table names C corpse substrings
+  (src/fight.c:290-362) but only asserted `len(got) == 0`. Fixed to assert
+  `strings.Contains`; mutation (charred→charrid) reds it.
+- `TestLocationFieldSync` (F, J2): the AddItem branch logged instead of
+  asserting. Fixed to pin the real invariant (AddItem must not change
+  Location; MoveObject owns updates); mutation (addItem sets Location) reds it.
+
+Housekeeping (no mark change): four stale "BUG: This test currently FAILS"
+comment blocks in object_movement_test.go describe early-port bugs that were
+fixed long ago (the tests pass and pin the fixed behavior) — the comments now
+say the bugs were fixed; `TestDoBackstab_NotThief` had a copy-pasted duplicate
+assertion (removed). `TestSaveLoadLocationRoundTrip` exists only as a comment
+block documenting a design gap (no function; not in the inventory).

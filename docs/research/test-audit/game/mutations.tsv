@@ -1,0 +1,3 @@
+test	file	line	mutation	result(green|red)	restored(yes)
+TestCorpseAttackLongDesc	pkg/game/death.go	1045	corpse fire desc "charred" -> "charrid"	red	yes
+TestLocationFieldSync	pkg/game/inventory.go	32	addItem sets item.Location = LocInventoryPlayer("mutant")	red	yes
