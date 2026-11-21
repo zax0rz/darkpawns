@@ -96,3 +96,19 @@ per-name toggle wiring and the dead `gentog` alias's absence (R2).
 
 Coverage: 74.4% → 74.4% (two subset deletions; the exact pins cover the same
 lines).
+
+## Batch 2 update (2026-11-21, post-#2923 review)
+
+- **TestSetCommandExecFunc strengthened** (owed fix): the batch-1 version
+  asserted only the no-session branch; review mutated the wired closure to
+  return false after a successful lookup and every session test stayed green.
+  The test now registers a session, invokes the wired `CommandExecFunc` with
+  `whoami`, and requires a true return plus observable output (the live
+  callers are pkg/game/combat_wire.go:745-752 and
+  pkg/game/damage_stubs.go:390-395). Old green, fixed red under the same
+  mutation (mutations.tsv).
+- **Attribution (PF-152):** BRENDA69 was the original OpenClaw agent, a
+  multi-model orchestrator (mostly glm-5-flash with subagent delegation). All
+  99 BRENDA69-authored rows in this ledger now read `OpenClaw (multi-model
+  orchestrator)` with no model assigned; attribution.tsv carries an agent
+  column.
