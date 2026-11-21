@@ -106,5 +106,3 @@ func TestHandleDeathNeverDieCancelsDeathTail(t *testing.T) {
 		}
 	}
 }
-
-func TestZzzCanaryTwo(t *testing.T) { t.Log("v2") }
