@@ -380,4 +380,27 @@ TestStringDeleteUnwrittenExtraDescReportsNoField (string_cmd.go:388
 NullDescription check removed), T768 TestMeditScriptShallowBehavior
 (medit.go:922 shallow write-through suppressed). All three went red and were
 restored byte for byte (mutations.tsv).
+## Batch 11 results (later tests 701–800, 2026-09/10)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T890-T989.
+
+Link-dead reaper lifecycle (dupe-check reconnect/usurp/switched), GMCP
+negotiation/state, PR #1682's level-filtered show listing (R5h revert-proof),
+persistence/autosave/recovery, proxy limits, clock control, terminal frames,
+greetings fixture. No fixes, no J10 divergences. Running: 945/1537.
+
+### Ledger update (2026-11-21, review hold follow-up)
+
+Per-row evidence: every T846–T945 row's evidence cell now names what was
+checked for that test — the GMCP negotiation/shapes/dedupe invariants, the
+reaper lifecycle (tick thresholds, linkdead retention, rent-style object
+handling), the dupe-check takeover bytes, the special-dispatch C ordering,
+the autosave eligibility/retry policy, and the WebSocket proxy/idle guards.
+Test file/line columns are backfilled.
+
+All-R spot-checks (random draw, seed 20261111, from T846–T945): T902
+TestRunSpecialsRoomPrecedesMob (room special's consume suppressed), T880
+TestPerformDupeCheckWithoutLiveCopy (no-live-copy guard inverted), T890
+TestConnectedIdleDisconnectClosesSession (sendClosed flag not set on close).
+All three went red and were restored byte for byte (mutations.tsv).
 
