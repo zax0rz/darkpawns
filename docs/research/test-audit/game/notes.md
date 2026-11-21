@@ -215,3 +215,12 @@ The August era opens with the spec wave continuing (roach, teleport-victim,
 tattooist 2–4 with exact list bytes, prostitute, quan-lo, teleporter,
 elements) plus the disembowel depth family. Heuristic scan clean; assertion
 density high throughout.
+
+## Batch 12 results (post-oracle tests 401–500, 2026-08-14..09-03)
+
+Marks: R 100 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-12`.)
+
+The August–September era is the skill-depth wave: sharpen, spike, shadow,
+serpent, jin (with C's joined lockout affect record), neckbreak, mount,
+slug, sleeper, and the werewolf spec — each with exact C strings, seeded
+draws and affect-record shape pins.
