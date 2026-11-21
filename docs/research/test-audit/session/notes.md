@@ -77,3 +77,22 @@ Char-creation prompt bytes verified against C `nanny()` this session
 DP-1173's flow, oracle-covered. No J10 divergences in this batch.
 
 Coverage: 74.4% before → after (measured below in the PR body).
+
+## Batch 2 results (pre-oracle tests 51–100, 2026-05-19..06-18)
+
+Marks: R 48, F 0, C 2, D 0. Junk: J4 ×2.
+
+No F marks this batch — the June layer (bucket wiring guards, look/info byte
+pins, drink/eat/taste/think/insult contracts, toggle and credits tests) is
+fully assertive. The two C marks fold the substring subset pins into the later
+exact pins from the same file: TestAcText → TestAcTextEveryBand (DP-1551),
+TestPositionText → TestPositionTextEveryPosition (DP-1553).
+
+Highlights: TestCmdLevels pins the exact mortal row count against C's
+LVL_IMMORT (src/structs.h:620); TestLook_DarkRoom pins the two-line darkness
+block byte-exact; TestCmdColorPersistsLevel pins real flag mutations (a
+placebo-toggle regression); TestBucketEToggleCommandsRegistered pins both the
+per-name toggle wiring and the dead `gentog` alias's absence (R2).
+
+Coverage: 74.4% → 74.4% (two subset deletions; the exact pins cover the same
+lines).
