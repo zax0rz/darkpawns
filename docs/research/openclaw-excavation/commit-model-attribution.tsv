@@ -1,0 +1,251 @@
+commit	author	date	subject	models
+0afecee1c5f49a16c915e16024c498e747391891	Zach Greene <zdgreene@gmail.com>	2026-09-28	test: refresh string census for restored reports	gpt-5.6-sol
+306834f4a2b95a6374c73293d1ffc9e1239f6ee2	Zach Greene <zdgreene@gmail.com>	2026-09-28	fix: align reports with reproducible oracle output	gpt-5.6-sol
+417d0f8ecdadc9d39d34afdd60bb4d23b50af3df	Zach Greene <zdgreene@gmail.com>	2026-09-27	fix(oracle): defer ~dpclock heartbeats out of process_input (DP-1311 F2 harness half)	gpt-5.6-sol
+f38c8a3cf02ce522f3bdcab86b70615e12740a6d	Zach Greene <zdgreene@gmail.com>	2026-09-27	fix: restore full start-room vision from defined C behavior	gpt-5.6-sol
+3902ef1fb796ffdfdf4c853485e2687798159075	Zach Greene <zdgreene@gmail.com>	2026-09-27	fix: close idle lifecycle fidelity gaps	gpt-5.6-sol
+fd9ae8a97708f5a79508993413d35e044040571f	Zach Greene <zdgreene@gmail.com>	2026-09-27	fix: complete idle combat teardown	gpt-5.6-sol
+798b0d5ec361f0d1ef6c1b0fa8cff4324f94eb58	Zach Greene <zdgreene@gmail.com>	2026-09-27	chore(site): refresh archive content inventory	gpt-5.6-sol
+82159eb283c5b5fa3e04778cc8fc1948a7714abd	Zach Greene <zdgreene@gmail.com>	2026-09-27	feat(site): publish recovered Usenet archive	gpt-5.6-sol
+b840c837c032c069d8a67408b9e7bba1c3b339d1	Zach Greene <zdgreene@gmail.com>	2026-09-26	docs: record SQLite-only runtime and installer direction	gpt-5.6-sol
+69a510f3ec7bc0be73b68598a5368e05d51209c6	Zach Greene <zdgreene@gmail.com>	2026-09-26	docs(research): record restart and migration evidence	gpt-5.6-sol
+823cd034d1de4308c2a5b8f08ddfbb06fe96aa8c	Zach Greene <zdgreene@gmail.com>	2026-09-26	test(e2e): assert C-faithful login room	gpt-5.6-sol
+b2fff9d95c9442bbe3ccde88bf949661a76fa972	Zach Greene <zdgreene@gmail.com>	2026-09-26	feat(admin): reconcile builder UI after agent removal	gpt-5.6-sol
+c3e991f1ecb7a1b73d9df0da9d53e16ae3f16ea5	BRENDA69 <brenda@labz0rz.com>	2026-09-21	docs: research log — string at PR #1546 closes the command surface; fmt-gate claim corrected	glm-5-turbo
+16dca5441baf69796d8e9299499a3b14cb521090	BRENDA69 <brenda@labz0rz.com>	2026-09-20	docs: research log — OLC complete, 3k commits, all-green byte-for-byte census	glm-5-turbo
+659235e93d586ba72e88b3d18a7272ebb1347411	zach <zdgreene@gmail.com>	2026-09-01	docs: hand off massage depth fidelity (#1033)	claude-sonnet-4-6
+e2a17fd3ad4726593353a849b21e005ca37e9907	zach <zach@mac-mini.local>	2026-06-29	fix: add conftest.py with base_url fixture for E2E tests	deepseek-v4-flash
+8890057a90e7fdc8020a4f00dce6dc1700732898	zach <zach@mac-mini.local>	2026-06-29	fix: 5 more high-severity bugs + Lua security hardening	deepseek-v4-flash
+080230f61c739671462daf411818bf3a9f2a0b21	zach <zach@mac-mini.local>	2026-06-29	fix: 3 high-severity bugs + mark 11 already-fixed as fixed	deepseek-v4-flash
+e5bbb5332c72ea4c5ee650b5aa9bd2cbeb021804	BRENDA69 <brenda@labz0rz.com>	2026-06-28	fix(scripting): re-entrant DoFile crash in globals.lua (DP-600)	glm-5-turbo
+af42fbc48c108870d31a6e874953eb81ea8ef6f0	BRENDA69 <brenda@labz0rz.com>	2026-05-19	debug: log between GiveStartingItems and GiveStartingSkills	mimo-v2.5-base
+6ffa94610721b8c60b36da9201d9faea1bc1d9c8	BRENDA69 <brenda@labz0rz.com>	2026-05-19	debug: step-by-step logging in completeCharCreation DB/Register/AddPlayer	mimo-v2.5-base
+35dc2debde8c429caca05a9986ba381f38578aa8	BRENDA69 <brenda@labz0rz.com>	2026-05-19	debug: log after NewCharacter in completeCharCreation	mimo-v2.5-base
+8e722b68b6cba1d1bd5756de43f0042f36312d85	BRENDA69 <brenda@labz0rz.com>	2026-05-19	debug: log at top of completeCharCreation and before sendWelcome	mimo-v2.5-base
+682ada3d6eddbb3b2a4c276a684181fb20bbf988	BRENDA69 <brenda@labz0rz.com>	2026-05-19	debug: add panic recovery with stack trace to readPump	mimo-v2.5-base
+b605b626e1df78f5c76a9ebcc9993e7f6e32e113	BRENDA69 <brenda@labz0rz.com>	2026-05-19	debug: add panic recovery in completeCharCreation	mimo-v2.5-base
+704f6e10c5595519f8d9d0ad880bddaab30449b6	BRENDA69 <brenda@labz0rz.com>	2026-05-19	fix: complete web client char creation + agent auth + connection fixes	mimo-v2.5-base
+e9a5aa1cd45cc5872b3bb69ef88c48813a919808	BRENDA69 <brenda@labz0rz.com>	2026-05-19	debug: granular logging in completeCharCreation flow	mimo-v2.5-base
+d77ec0da78c8bfd4726e7cfe5246c5e81e656833	BRENDA69 <brenda@labz0rz.com>	2026-05-19	debug: add logging to sendWelcome and completeCharCreation	mimo-v2.5-base
+030c6d8dd92c2295134714aa9dbd64e5e60dea88	BRENDA69 <brenda@labz0rz.com>	2026-05-19	fix: character creation flow — set initial stage, add client handling	mimo-v2.5-base
+9712a75a1baece2d3e03887bd4ddd007332fd447	BRENDA69 <brenda@labz0rz.com>	2026-05-19	fix: add darkpawns.labz0rz.com to allowed WebSocket origins	mimo-v2.5-base
+82abe0a51a33a9aa5e6032b67860574fd211dde9	BRENDA69 <brenda@labz0rz.com>	2026-05-19	fix: auto-create player record for agent auth, fix IP conn count leak	mimo-v2.5-base
+4fb66212db0f6d407f6ad2726af5ddfeab6e6ce9	BRENDA69 <brenda@labz0rz.com>	2026-05-19	fix: prevent IP connection count leak on unregistered sessions	mimo-v2.5-base
+cd345ffb0dffc591a8ee58b572c1629bf7bb73ad	BRENDA69 <brenda@labz0rz.com>	2026-05-19	fix: allow Docker-internal WebSocket connections without Origin header	mimo-v2.5-base
+c67bb769832b61dfda7d690a230977fb2373323f	BRENDA69 <brenda@labz0rz.com>	2026-05-19	fix: profiler type assertions, stale file refs, pprof shutdown, behead weapon type (DP-208,209,210,211)	mimo-v2.5-base
+4c35fab22e41d5f820daf3956d949d2d69ea4232	BRENDA69 <brenda@labz0rz.com>	2026-05-19	fix: add scrounged items to player inventory (DP-205)	mimo-v2.5-base
+5a6476f9ad803e93d51e4c09be495142e30c4a23	BRENDA69 <brenda@labz0rz.com>	2026-05-19	fix: wire bufferLogger via SetDefault with non-recursive base handler (DP-207)	mimo-v2.5-base
+b4c615b6794d270c5aa670b82974e6ec47ec9c2f	BRENDA69 <brenda@labz0rz.com>	2026-05-19	fix: guard PerformanceMonitor.Stop() with sync.Once to prevent double-close panic (DP-206)	mimo-v2.5-base
+a322227f00a190ed8d968bfbf88209e035be49e4	BRENDA69 <brenda@labz0rz.com>	2026-05-19	fix: track mobs by searching room directly, check sentinel via ActionFlags (DP-202)	mimo-v2.5-base
+21f1ab8fadc6f000a80960e41b8ca92ce323ffb4	BRENDA69 <brenda@labz0rz.com>	2026-05-19	fix: use str_app wield_w table for wield weight check (DP-203)	mimo-v2.5-base
+c7e845b2577b52810f9358eac43d4d179074a490	BRENDA69 <brenda@labz0rz.com>	2026-05-19	fix: remove duplicate client registration in benchmark + rename to _test.go (DP-201, DP-204)	mimo-v2.5-base
+80941537d7a74a9b631b627b3d4ba69f8e21758b	BRENDA69 <brenda@labz0rz.com>	2026-05-19	fix: wrap all pprof endpoints with BasicAuth (DP-200)	mimo-v2.5-base
+66e7e0827b8423e1d32a4fc15c378a6d1f52dfa2	BRENDA69 <brenda@labz0rz.com>	2026-05-18	fix: remove slog.SetDefault deadlock — server now starts and listens	glm-5-turbo
+b588c79da836f82e7b472433c6940106fa74eb22	BRENDA69 <brenda@labz0rz.com>	2026-05-12	feat: last-mile sprint — do_gen_ps, class tables, MagGroups, brag/junking, death cleanup, classSpells rebuild, text files	glm-5-turbo
+0c4fada62014e3e14cffb472d410d70714c02139	BRENDA69 <brenda@labz0rz.com>	2026-05-10	fix(HIGH-012): add logging and TODO comments to 6 spell stub routines	deepseek-v4-flash
+8c574d2b54aaefd9c7eec7cefa3846e23a5831f0	zach <zach@karl-havoc.labz0rz.com>	2026-05-04	test: complete testing push — parser fixes, combat formulas, spells, validation	deepseek-v4-flash
+1c2f14d107aab3e8f65ad60ab5dffcb890f98d43	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	test: parser test files (mob + obj) + testing status doc	mimo-v2.5-base
+1ee29d92490339a1ce27ce426f076bc7ce500d12	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	zone cleanup + parser fixes: recover 53 objects, 6 mobs, fix 3 validation bugs	glm-5-turbo
+d5e631f075d49e0dd83f4d46edd8c04c748725f0	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	reviews + fixes: security, gameplay bugs, char creation, moderation	glm-5-turbo
+9fca0c29b53d5f2f36d5f749a0d571fc528d7cd7	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	swarm: close all remaining gaps — 100% port completion	glm-5-turbo
+7873be9e60f8012931dddc44c47461cc0adc3eaa	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	Close remaining NEXT-SESSION items: world serialization, isShopkeeper, luaExtra, jail timer, switch save-state	glm-5-turbo
+9d4e95072e801a05d9378d91e139b930f8cf6e40	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	Implement review command (gossip history) + whois command	glm-5-turbo
+002745603a127196fd543d7575d8ffa2a068eb46	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	Implement PLR_WRITING mail compose mode	glm-5-turbo
+c059ebc23d46caf34e318be2ffaecba60a13e671	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	PointUpdate audit + Lua player lookup + NPC poison/cutthroat fix	glm-5-turbo
+3ab28da3351bd9ef74b7192226898966936e3584	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	fix: RegisterCommand wired, movement checks, mob commands, boat/tunnel	glm-5-turbo
+cbe58b9f897b7c0ab34e9d8f4210808c805506ad	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	feat: serve web client from game server (-web flag)	glm-5-turbo
+f290e73cd84d7bc09f892acbff8baa15685c420c	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	fix: scripting stubs, social targeting, mob pronouns, command cleanup	glm-5-turbo
+c2c1bae2379843cf319742f4098cf138f4c93ca8	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	feat: core MUD interaction commands — get/give/put/look, movement costs, autoloot	glm-5-turbo
+18ebdb918ca8cce7523eb7983b8fda2fa0044af0	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	feat: mob respawn, condition decay gameloop, MOTD, player mana/move getters	glm-5-turbo
+27fc2e8fdf0ca900cc7cf6c734d4cdb32e105137	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	fix: render mobs in room look + implement periodic zone respawn	glm-5-turbo
+457b6811b7ba14635bc41e4b59275aacc087ee34	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	fix: command argument parsing — split first word as verb	glm-5-turbo
+8de709ffdc5e0075d74f9001d84b9195f440d47b	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	fix: session takeover panic + player cleanup on reconnect	glm-5-turbo
+be4678a9a8c36a67bad8f83e27f186ff1c2a81d6	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	refactor: eliminate all TODOs, stubs, and FIXMEs from pkg/	glm-5-turbo
+9711011b1b663bc2d1fe3373eb8021c301e210e3	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	feat: resolve TODO/FIXME swarm — inventory, ranged death, force safety, switch M-16, weight	glm-5-turbo
+d7e1b729fb0da80a8f5d9eb48c6237789993b269	zach <zach@karl-havoc.labz0rz.com>	2026-05-03	fix: remove ghost files, fix duplicate methods, update test mock	glm-5-turbo
+4d9cc63624d01421dce5488b1d29a824b0f7994a	zach <zach@karl-havoc.labz0rz.com>	2026-05-01	refactor: fix remaining golangci-lint bulk findings	kimi-k2.6
+930526a466c8a36d94ecc34dabe6c8a465751592	zach <zach@karl-havoc.labz0rz.com>	2026-05-01	refactor: fix golangci-lint bulk findings (errcheck, unused, QF, gosimple)	glm-5-turbo
+8cc5aa3a4413f24dce2f661b173a079ac775b7c2	zach <zach@karl-havoc.labz0rz.com>	2026-05-01	refactor: fix golangci-lint staticcheck SA* findings	kimi-k2.6
+39bb9c2d88abb33c02ae609f23942d7f6583726b	zach <zach@karl-havoc.labz0rz.com>	2026-05-01	refactor: fix #nosec G104/G115/G304/G306 in pkg/game/	kimi-k2.6
+876920f4168d5d50406ae1676f02618e5800b5b6	zach <zach@karl-havoc.labz0rz.com>	2026-05-01	fix: restore log import in graph.go (removed by nosec sweep)	glm-5-turbo
+c02ba5e0bdf8011f3ab9d22817ed6e9ad92ecf0b	zach <zach@karl-havoc.labz0rz.com>	2026-05-01	refactor: fix #nosec G104/G115/G304 in pkg/{session,spells,combat,telnet,parser,optimization,agent,audit,secrets,privacy,db,command,engine,storage,scripting,moderation,validation,metrics}	kimi-k2.6
+bbfc471aef08800c04280ef39ba5871e9ff98227	zach <zach@karl-havoc.labz0rz.com>	2026-05-01	refactor: split remaining large files by behavioral concern	kimi-k2.6
+5a47d88c834a9e04b2cdc7b1e0bfd3b3f633490d	zach <zach@karl-havoc.labz0rz.com>	2026-05-01	refactor: split large files into focused modules	glm-5-turbo
+f4226214c3cea117f31b0f10ced7b7b96c40f9be	zach <zach@karl-havoc.labz0rz.com>	2026-05-01	refactor: migrate remaining CustomData writes to typed Runtime fields	kimi-k2.6
+c5d025245d0a63833cce7ef1386655985bee075f	zach <zach@karl-havoc.labz0rz.com>	2026-05-01	fix: ExtractObject equipment handling + AutoEquip location preservation	glm-5-turbo
+817be137c8c6101fec0d67d0a434282148b0a298	zach <zach@karl-havoc.labz0rz.com>	2026-05-01	refactor: handle inventory/equipment error returns in player-facing operations	glm-5-turbo
+65c73436a1f67f619339b718c646469faf0e8220	zach <zach@karl-havoc.labz0rz.com>	2026-05-01	feat: object movement tests + ObjectLocation design doc	kimi-k2.6
+2a6c34ac6488ef200a1be1cf3bf9215f830d9442	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	docs: update planning docs — Phases 1-6 complete, fresh NEXT_SESSION	glm-5-turbo
+cc81a5dd68e9ef93040e88642d966734f2ca9ca9	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	refactor: extract inline styles from splash page to CSS classes	glm-5-turbo
+c867df0229cff51952d5be803da5ad8863edab04	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	feat: add RSS feed discovery links to head	glm-5-turbo
+609602530dc051571f683c0c6689eb48c432593b	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	fix: normalize frontmatter — standardize on description field, add descriptions to help files	glm-5-turbo
+12ac9273b9b1e1a9a112a858ad932e44f62fa478	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	feat: add SVG favicon	glm-5-turbo
+297e7da7ef99c9354d8d94f98b9fd6b611015ec1	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	fix: add SRI integrity hashes to CDN-loaded xterm.js resources	glm-5-turbo
+46806383e5d7fe2e6a16e99e3ae3046c72c6fd44	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	fix: status page now extends baseof.html with full site chrome	glm-5-turbo
+612a1c715f101370a9249745f35a2c3f177c50c4	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	fix: add Hugo markdown templates, delete redundant generate-markdown.sh	glm-5-turbo
+c506d0b5968740159b5cf5edbedefca61b2afa9c	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	chore: remove build artifacts from git tracking, add .gitignore	glm-5-turbo
+2aabfb7eaccfe0ad2543ff2e052bdc2ec008ea4e	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	fix: stop IPRateLimiter goroutine in tests, downgrade rollback log to WARN	glm-5-turbo
+26c43a400e984f084468099366872fcc7ea9a01d	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	docs(website): add deploy config and instructions	glm-5-turbo
+590671f0bcd69dc1d21bae18115fe2d124b37162	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	feat(website): add post-build script for markdown content negotiation	glm-5-turbo
+48a0558674aeaa179c3adbe14957afd106280d41	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	feat(website): add /status page with API fallback	glm-5-turbo
+92ea624a84e647448754290dfa8fe27dc9f3e3da	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	Website Phase 5: Content writing — about, news, credits, connect, changelog	glm-5-turbo
+8ed166b4c04407e7cba9cbffa2f4071751479a4c	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	Website Phase 4: Web client redesign — cream chrome + dark terminal	glm-5-turbo
+3079200e9e374c677b66976ed1e602dbef649373	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	Website Phase 3: Design system, visual templates, section layouts	glm-5-turbo
+7793842c7cbe27a4d5e9d93018d0e50e48a221c7	zach <zach@karl-havoc.labz0rz.com>	2026-04-28	Website Phase 1: Hugo site with 473 content files, 1222 HTML pages	glm-5-turbo
+d4e1abaa82868b2df994e4882c43954d9ac1c50c	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	Remove broken project plan link — status table covers it	glm-5-turbo
+dbb98099427c49303999ff58ea4700388a7d06d3	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	The Great GitHub Re-Write	glm-5-turbo
+29cfdf1ff128b3bb721720ef05e4e44d56e71d7f	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	docs: update backlog with final fix status — 75/86 fixed (87%)	glm-5-turbo
+64501f59529e7f7d9b7fcf7197678bcab92c6381	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(L-01+L-03+L-04+L-05+L-06+L-07+L-09+L-10+L-13+L-14+L-16): remove GoldMu, atomic ticks, file size limit, random fix, name validation, gender pronouns, welcome nil check, buffer constant, tempData helpers, lock docs	glm-5-turbo
+6a82f2580be8a7c7a138416aa731700a3a146c7e	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(L-02+L-08+L-11): spec registry docs, flesh_altered_type, affect restoration from save	glm-5-turbo
+8f94d0fcda5012ae8c2016579d971b8302f5080a	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(M-09+M-25): tick interval goroutine fix, consistent session cleanup	glm-5-turbo
+2c00988a196c2fca345382e4df33ee59b7cd25cf	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(M-16+M-28): cmdSwitch safety docs, session takeover on reconnect	glm-5-turbo
+90e33e9d07ea48df674af6f9d02267b5314e3c6e	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(M-11+M-17+M-24+M-26): immortalSessionProvider sync, rate limit cleanup, XP cap, inventory locks	glm-5-turbo
+d4deb1b4284f9292499c1123d47514a2e6d83045	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(M-03+M-08+M-10): snapshot docs, read lock, event bus unsubscribe	glm-5-turbo
+af5a0a5945dcaa9d433947340b4c2d30dbfe9ed3	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	docs(M-05+M-06+M-07): document interface split, command interfaces, lifecycle concerns	glm-5-turbo
+a1ef2fe0c0846378817e6048cedd8477fcc81e5c	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(M-01+M-02+M-04): error handling, dead code removal, init() documentation	glm-5-turbo
+a163fba641a8dcedc8b82fe3b09e002828cfda18	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(M-22+M-29+M-30): sector move costs, telnet input limit, validateinput dead code	glm-5-turbo
+1fcca589d4af5fcf40acaf7d85cf54b0d5cc6bb7	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(M-15+M-18): hide player IPs from low-wizards, hide agent status from players	glm-5-turbo
+286aebb95a4ba9ab0a928f0d5530970fcd083f72	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	docs: update backlog with fix status strikethroughs	glm-5-turbo
+dc60b08fea1319b43f9c7504a300239b07067291	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(M-19+M-20+M-21): spell affect fidelity from C	glm-5-turbo
+954eefd2d10062a7d8267394661e2ea81aa8f1d0	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(H-13+H-25): WebSocket origin check, JWT lifetime reduction	glm-5-turbo
+463c0a7a4d74f903975e95ab05e4c7129c8ced47	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(M-12+M-13+M-14): CORS subdomain restriction, CSP unsafe-inline removal	glm-5-turbo
+324672778c8beb379d75fdc4a041cdb62347f1e3	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(H-07+H-11): world map iteration locking, spawnmob send deadlock	glm-5-turbo
+cc9c233b57e1fce1bb4f3823d61ed9afe073d6c3	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(H-08+H-20): mobact mutex bypass, death locking consistency	glm-5-turbo
+47cb05ee6eef43ff97771d07b2bc44f4df35bb66	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(H-14+H-24): cmdAt recursion depth limit, force stub safety docs	glm-5-turbo
+a4feb59795633142c75dac5cd54fc2445a5ab1d6	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(H-17+H-18+H-21): integer damage div, probabilistic CON loss, duplicate corpse fix	glm-5-turbo
+1ea6f0d1ad98746e8e3fb18d7257455ce557a79c	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(H-26): counter_procs kill milestone fall-through logic from C	glm-5-turbo
+12886159258960f56d475d7d8190a3db31269aad	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(C-11): port parry and dodge checks into combat rounds from C	glm-5-turbo
+b5aa0c7f1c9a79d2f9ed7066afe7acdf696fae82	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(C-10): port neckbreak, shoot, subdue, sleeper, ambush from C	glm-5-turbo
+2ed7b23cec98a72bc2345677cc887da367e2ddb3	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(C-10): port disembowel, dragon_kick, tiger_punch from C	glm-5-turbo
+99b86f4e3ef266cadada4afb5425c9c768c9f373	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(C-10): port rescue and assist from C	glm-5-turbo
+93bf2db48dd7edb612aa9689f2dddbd324a1b1c5	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(C-10): port bash damage formula from C	glm-5-turbo
+141c2734ab07e371ccf00d2e4b12e27ae7f32dc4	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(C-10): port kick damage formula from C	glm-5-turbo
+5fa7622becf0f99586e756c4da5fd23c08dbdd13	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(C-10): port backstab damage formula from C	glm-5-turbo
+fbfc1f1535a5024f01b4e374c3e46ad81ee47f6b	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(C-10+C-11): port combat command damage formulas from C, implement parry/dodge	glm-5-turbo
+f8e586b1db9715dcd0e9832a35db2ddbf2d07719	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(H-12+H-15): rate limit IP bypass fix, login attempt lockout	glm-5-turbo
+534fc5a17afa32a674ad1da6bd5d71de8b833cb7	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(H-09+H-23): spawner shutdown paths, broadcast drop logging	glm-5-turbo
+556908c80e3da7016c9ce18ded5a0e6bbc3e6334	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	revert: H-12+H-15 had broken references, reverting for clean redo	glm-5-turbo
+557bbd119f095e75a318f26bcf8d105ead83d639	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	revert: H-09+H-23 commit contained broken C-10 changes, reverting for clean redo	glm-5-turbo
+c1397e3aa5239a2f355700f79f3de4d0e3d2ecaf	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(H-12+H-15): fix rate limit IP bypass, add login attempt lockout	glm-5-turbo
+d680e5dce8c60a5e4fd28e2140812ff8b3ed880f	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(H-09+H-23): add shutdown paths for ticker goroutines, log dropped broadcast messages	glm-5-turbo
+a934f3d99c4c8eeb9a50d6bad2a4f6af4950ea38	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(H-22+M-27): enforce minPosition in command dispatch, reset position after respawn	glm-5-turbo
+865881e859c4b9985f1756a1efacaf02908c62c5	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(C-04+C-13): add RLock to playerToSaveData, restructure AdvanceLevel to release lock before save	glm-5-turbo
+8ec63dd6f590171879c4b376f4867bad0bcb98de	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(C-09+H-16): port real saving_throw tables (d100), fix affect duration multiplier	glm-5-turbo
+4a87eb991c446f81342323ded0b1a83ab5fd145e	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(C-07+C-08): add telnet password prompt, harden idlist file path	glm-5-turbo
+d270fb366d2cea91b30c7ea7390312b571f53b5f	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(C-01): unify send channels — remove dead Player.Send, route all messages through Session.send	glm-5-turbo
+6bb78c56cab83b5177dcb27a88073eb3e0399bc8	zach <zach@karl-havoc.labz0rz.com>	2026-04-27	fix(C-05+C-06): add mutex for agent session maps, remove unsynced sneak/hide global maps	glm-5-turbo
+175bb754d09113857491e543367e2255faa33502	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave20: port mapcode + handler.c utility helpers (P4 complete)	glm-5-turbo
+bfec49a2261c0c4114efed700fa1b5dd3a043da5	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave20: update PORT_SCOPE.md — port effectively complete	glm-5-turbo
+b173709484922fd17460a67dc8206c4aa1ae5fe8	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave20: wire house object persistence (ObjFromStore/ObjToStore → JSON)	glm-5-turbo
+a6477ae14d8210f96fa645c2d51c1ec2f2fddace	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave19 tier2 batch D: remove stale .bak files, clean up documentation-only TODOs	deepseek-chat
+622f132f3b7b557f1234b483971865f600e9c112	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave19 tier2 batch C: world integration death handler + target resolution	deepseek-chat
+eaa481db35b8fa9fcb48c2cda29063162bc4fbaf	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave19: clear remaining TODOs — zero actionable TODOs left	glm-5-turbo
+aea20440593c751a78371cda2b2c50c867d6196f	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave19 tier2 batch B: game infrastructure fixes	deepseek-chat
+07b4f8bdc0833993ddffb77a08506d1999dd134d	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave19 tier2 batch A: error handling with retry/backoff for DB batch, slog for WS	deepseek-chat
+6b84daccd6039014db13e0e9d05a53d4c2b1605c	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave19 batch 5: spell system routing + death.go TYPE_/SKILL_ constants	glm-5-turbo
+6a402cc577606ebdf824ce5d923d55e8eb8c8dec	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	docs: update NEXT_SESSION.md and PORT_COMPLETION_PLAN for session handoff	glm-5-turbo
+0ad9293b60831cfe47e15e040b6286f4213c72c4	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave19: clear stale TODOs (backstab, scripting, formulas)	glm-5-turbo
+dfa6c7c969a5c070e9bbc19926fb7995812370db	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave19 batch 4: wizard commands (cmdLoad, cmdPurge, cmdSwitch, cmdReturn, cmdReload, obj stat, wizlist, combat-stop, idlist)	glm-5-turbo
+be13e59a4b90a7fda171d4aa9a19829e30efb33b	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave19 batch 2: char creation state machine, gender pronouns, tattoo spawn	glm-5-turbo
+361d4aae7c2c61a194d3bf01f7c72a34b5be8c28	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave19 batch 1: KK_JIN/KK_ZHEN, PRF_INACTIVE, AFF_FLESH_ALTER, idle, dreams, autowiz	glm-5-turbo
+aaac0b30c1bdf94038d40a69e20b0745412aa0d5	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave19: add affected_by_spell infrastructure, implement KK_JIN/KK_ZHEN	glm-5-turbo
+11c1558a0a5438d96bdf7d763b37eaf7366d92a3	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave19: implement veteran bonuses, kill counter rewards, auto-split	glm-5-turbo
+fc613b7592a85a7f1064992dacddb2e2a57bf1be	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave19: implement equipment regen bonuses (APPLY_MANA/HIT/MOVE_REGEN)	glm-5-turbo
+a3a73868a865575580acdacd95abd89248474c09	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	Add next session prompt: equipment regen bonuses	glm-5-turbo
+36e437e40e6e8aba48f5c04bad6cb370d54be497	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	Wave 18f: mindsight — 24/24 manual spells complete	glm-5-turbo
+2058cb15c76c4ca5114a77714493bb2cc225a0ed	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	Wave 18e: Follower system integration, charm, summon, divine_int, conjure_elemental	glm-5-turbo
+be323e7d1ed1930fe47bf45d1ea5d2e090bb4bfe	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	Wave 18d: are_grouped, mob damage, meteor_swarm, hellfire	glm-5-turbo
+091c7e4b434521c7fc67e2066eb95c2cdf9bb91c	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	Wave 18c follow-up: Fix create_water poison, complete identify, add player stat accessors	glm-5-turbo
+f52ee343bd0c2636e63db6689c812c6966e7ad38	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	Wave 18c: Room transfer infrastructure + recall + teleport	glm-5-turbo
+7677949e11638991f29d4d6c150bc33108d52216	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	Add next session handoff doc for Wave 18 continuation	glm-5-turbo
+6b3dd9778e78632660b75d4e14220d36cd2cf59f	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	Full implementations: spell_coc and spell_silken_missile	glm-5-turbo
+de3b019c34e83a3afe2127bffc9b86cc8deaaaff	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	Add SetValue/ValuesOverride to ObjectInstance (copy-on-write)	glm-5-turbo
+983a4575d6a2fde9cb8c4b6a31e10cc74c76a430	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	Wave 18b: Object instance overrides + Wave B spell implementations	glm-5-turbo
+c37d9d6d5e136298dd2a2ce1d832c76a0e30bf61	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	Wave 18: PLR/MOB flags + Wave A spell implementations	glm-5-turbo
+74d60a7baa13fbda2437e7824b5bfc848bbd9e6e	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave17: add spell port scope doc, commit research log updates	glm-5-turbo
+6f312126a2bed9426b813249916408a9ea47a09e	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave17: add blessed weapon and drunk THAC0 modifiers to hit chance	glm-5-turbo
+d495a96f8fa359c549e08f1060d6d3d89c2186bc	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave17: fix position damage multiplier, wire equipment affects into AffectTotal	glm-5-turbo
+4ed968f34b62775f3c613413fa8ffaed3d289d29	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave17: implement StatModifiable interface on Player	glm-5-turbo
+b684292a4b1512e653a72a2ec9eacc134293d343	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	wave17: fix objsave build errors, wire persistence, add rent metadata	glm-5-turbo
+5e01b189f127c85da1aabc0f1e80d70183114c36	zach <zach@karl-havoc.labz0rz.com>	2026-04-26	feat: Task 4.3 — autogold/autosplit, CON loss on death, jail guard, mob memory/hunter	deepseek-chat
+ee7f8889ed4347658fca73c93bd0f7c9c688ac86	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	merge: fix legacy field references after remote wave integration	glm-5-turbo
+19d596f5ebbd64f350889049285da603e3f59ace	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	security: fix C1/C4/C5/C6 from Opus audit	glm-5-turbo
+0b9e6b5449498bd70ec67d1bc4c27a0bd4028725	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	fix: QA B3+B6 — set Location on load, tighten ObjNowhere validation	glm-5-turbo
+79bafb45a9539a5e59ba3e94dfc2e68d880372e6	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	refactor: Phase 7B/C — unexport inventory mutations, route room adds through MoveObject	glm-5-turbo
+79e2f09d36c34ba07e211ae7df4513ddb43bba6a	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	hardening: Phase 7A/D/E/F — rollback fix, cycle prevention, mob equip, cleanup	glm-5-turbo
+3070adae89466439d12aa175eacb38f200aa26f6	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	refactor: Phase 6 — add typed ItemType with CamelCase constants and helpers	glm-5-turbo
+f00c268c3a1d5bd281df58a787aaaa849086f2ce	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	refactor: Phase 5 — split act_item/act_other/act_offensive into focused files	glm-5-turbo
+518b0f177943fb41f2442a5e9efcd126b46d5b7d	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	feat: Phase 4 — typed runtime state replaces CustomData	glm-5-turbo
+ac3eabd6cf761bbcdaf86c7c5f5460d6680d8898	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	refactor: Phase D — remove legacy Carrier/EquippedOn/Container/EquipPosition fields	glm-5-turbo
+659b610d1cf7904e09b84cf80b64b35a4d25f78b	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	feat: Phase C call site migration — move ~50 assignments to MoveObject helpers	glm-5-turbo
+943d9d8054a56520e65def0c2a3e19beddacb3e6	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	feat: implement MoveObject centralized movement system	glm-5-turbo
+bf741ef4543b75f2f8369b3e97566d2aeb58b4f6	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	feat: add ObjectLocation types, object movement tests, fix ExtractObject deadlock	glm-5-turbo
+38b8f6f77eda3c9ed5b11745c6ddc82b0fa2e2ee	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	docs: add modernization plan with TODO dependency mapping	glm-5-turbo
+3a7e21438fd3ae7688662989515526bb9fe07a40	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	feat: port do_clan_private from C — clan public/private room toggle	glm-5-turbo
+feb02658549e914cf23b0aa7875d30e418f1bf0e	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	feat: clear 9 TODOs — object timer, world tracking, object decay, clan bank, spawner door state	glm-5-turbo
+15d73d5231c083d22fbb3c7be7646e15da681b64	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	fix: clear last 3 TODOs — mob CanSee fix + alias migration note	glm-5-turbo
+53de4a405583113640f1619ab486f68376170878	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	fix: clear 35 TODOs across 6 files — spec_procs2, level, act_informative, modify, gates, aliases	glm-5-turbo
+f4fce8d9b62b0ea528e94e03070626c500e35e7d	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	fix spec_procs3.go: clear 36 TODOs across 6 subagent batches	glm-5-turbo
+26ff4b61da157eaa0c509b2ec01236cdcdcba27b	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	fix spec_procs2.go stubs: batch 1 (room/mob movement) + batch 2 (object spawn/inventory)	glm-5-turbo
+54d715cde99b07b60c4a9d3fe330866bc9dd4986	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	fix: specCleric ch→me swap — eliminate nil-panic on pulse calls	glm-5-turbo
+357b88b31f1076ddc0ee287ac7ef71bb3cd3131f	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	triage: fix build — resolve duplicate methods, wrong API calls, missing fields	glm-5-turbo
+7cb8aa12fb24557dc13626f94bdefed03413c5aa	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	Micro-task 1: port isOwner(), 4 castle guards, wallGuardNS	deepseek-chat
+2baeedfa6a327c61eb21765aaebb5da78bebea6b	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	doc: update PORT-PLAN/DARKPAWNS/RESEARCH-LOG for Wave 15f (gate, graph, mail)	deepseek-chat
+52a013b548a568a1cbc6f6d4cc26604df4414087	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	port mail.c to Go: postmaster special + file-backed mail storage	deepseek-chat
+b70e53d433df090d6ecad1e76458248d9d6c7cf0	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	port graph.c to Go: BFS pathfinding (find_first_step)	deepseek-chat
+6bb56cb1cea4df5be118954be53dc26b624f4451	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	port gate.c to Go: moongate portal helpers + gate phase table	deepseek-chat
+6a96095d09d9a51dd9aab7391af6b75728097863	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	Wave 15e: port remaining under-ported helpers + docs	deepseek-chat
+9a489f7d8c63fb2caecb43c591c4035865680e4d	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	Wave 15c: Port mobprog.c -> mobprogs.go (698 lines)	deepseek-chat
+c9af4ea9080416d112a86a0407f867f7fb001555	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	Wave 15b: Port whod.c -> whod.go (334 lines)	deepseek-chat
+7ef4f6be1ba836dc6de689a36b7aff9518780826	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	Fix ai.go: MobileActivity takes no args	deepseek-chat
+f60089825538ee581cade3111fc5af77be6d3a73	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	Wave 15a: Port clan.c -> clans.go	deepseek-chat
+f7b091b7aca499ef3f6e403b76430ca56aedf386	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	Merge: Wave 12 (mobact) + Wave 13 (alias/ban/dream/weather) - resolve PORT-PLAN and RESEARCH-LOG	deepseek-chat
+10f15ecb3d815af73b76b611a9155ceb39459244	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	Wave 13: Port alias.c, ban.c, dream.c, weather.c	deepseek-chat
+5a1a87e318a5134cf8f1ed0a27cd36cd58a1fec9	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	docs: update PORT-PLAN.md for Wave 12 (mobact.c)	deepseek-chat
+c1434397fae6d5292d88f5f86da086d7c8dcefa0	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	QA: fix alignment-aggro logic, commit Wave 12 mobact.c port	deepseek-chat
+6d280468ecb68a4c5fd056b7da835386ce64fddc	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	Wave 12: port mobact.c -> mobact.go	deepseek-chat
+f2efad31d38fc9ef4aea4cd2a19a6eb3eb3758de	BRENDA69 <brenda@labz0rz.com>	2026-04-25	Add mobprog preservation appendix to PORT-PLAN.md	deepseek-chat
+67194694b219d9985102f4f3487a4136c9d88720	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	Wave 11: Clan/House/Boards — complete C-to-Go port	deepseek-chat
+963684a50ff08770a0f4920261ac49cc83b2d150	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	Patch: deferred fight.c functions and missing mount/hunt fields	deepseek-chat
+5a2d9c76927c3839aa43be58dc27f9b1da95c63f	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	Wave 10: port objsave.c -> pkg/game/objsave.go (persistence/rent/crash/cryo)	deepseek-chat
+189043bb3e75b7dc92521a0d598867ded5e610b4	zach <zach@karl-havoc.labz0rz.com>	2026-04-25	Wave 9.5: port fight.c → pkg/combat/fight_core.go (combat engine core)	deepseek-chat
+1bcdb93f54f9e01ed11c082d964186f5ad0e7712	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	Wave 9 follow-up: update PORT-PLAN.md + RESEARCH-LOG.md with completion status	deepseek-chat
+fa2c4eb81a4c34f30ec104bf9831509976077199	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	Wave 9: port comm.c + act.comm.c (communication subsystem)	deepseek-chat
+f7397eece400cf7428df7cfa23f9a64f2ba1b32b	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	fix: correct poison/regeneration test expected values	deepseek-chat
+e913b4038625fcf956fd95ed5df070f4cd620037	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	docs: update RESEARCH-LOG.md with Wave 8 and bridge pattern observations	deepseek-chat
+10df58645bdf65e3df76018c58e64ca8e91ac14b	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	docs: update PORT-PLAN.md with Wave 8 completion (utils.c → logging.go)	deepseek-chat
+e4871925d61214a095a63128ff727c83d4112a96	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	Wave 8: Port utils.c logging, sprintbit, die_follower, core_dump to Go	deepseek-chat
+682ea59adce887171a09cb7e0df7aea4b562cc65	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	Wave 7: Spell system port — magic.c + spells.c + spell_parser.c	deepseek-chat
+2098e2cceceed560e750b98d69afb252e31c44d6	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	Wave 6.5: Wire 22 player-facing commands from act.other.c	deepseek-chat
+d4cdd6e9bedbc92116be635e7ff02a3bfc283c5c	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	feat(doors): add bashdoor command, register with session	deepseek-chat
+070dfe54ead55d476ef9d24dbe9928425a18301b	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	Wave 4b: blockers (door, shop, rescue, hitroll/damroll, spell effects) + Wave 5 partial (manager lifecycle, wizard cmds, session cmds, engine core)	deepseek-chat
+6d632eb7ae12f75482c87cbe1ed5664b7e62d3d4	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	admin architecture: Opus-reviewed, OLC Waves 8-10 replaced, port plan updated	deepseek-chat
+408b168fedfbdc000aea3e165167af3b99f22c13	BRENDA69 <brenda@labz0rz.com>	2026-04-22	docs: update PORT-PLAN — batch 2 branches marked superseded	deepseek-chat
+923a1904cd3d4a16adf5a1fb31364b4ad91b7357	BRENDA69 <brenda@labz0rz.com>	2026-04-24	fix: log json.Marshal error in SendMemoryBootstrap instead of discarding	deepseek-chat
+93a4c06f1541b82d26aab7813d37c4b12007a33a	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	CI: gate deploy on KUBECONFIG secret existing	deepseek-chat
+dd770a35835d9de84d0a69f721fd4d045bcfedfd	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	CI: add explicit go build ./... check before Docker build	deepseek-chat
+a3d086d54428fd54122911d2196a403cc39ab076	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	Fix CI: add setup-buildx-action for Docker cache export support	deepseek-chat
+5c47c0d6fe260f79240a6d6a090d2921c67a200e	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	Fix CI: remove cache-to lines causing Docker driver error	deepseek-chat
+a80e0fed96b42b38ff0c8b055cf2deaa28769e51	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	Wave 3 done: display, map, tattoo + Wave 4a: spec_assign	deepseek-chat
+726b2059196634b9ebace24db13fb3837f188435	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	Add missing command files (consider, examine, time, weather, affects)	glm-5-turbo
+0cba71d26afbeb95cabed6653a156471f2a17101	zach <zach@karl-havoc.labz0rz.com>	2026-04-24	Port all C skill commands to Go (Wave 1 + Wave 2)	glm-5-turbo
+215161025b5ffc25e417a2583abed35a22b16a21	zach <zach@karl-havoc.labz0rz.com>	2026-04-23	Production readiness: rescue, shop wiring, mob hitroll, position recovery, spell affects, Lua timeout	deepseek-chat
+6ebb862f55eedbec1c528f420054391b0c6d3b8e	zach <zach@karl-havoc.labz0rz.com>	2026-04-23	docs: document snapshot system, middleware pipeline, SQLite persistence, event bus, zone dispatcher	deepseek-chat
+d57df81cf084f065ae2e4cd7874607049fed470e	zach <zach@karl-havoc.labz0rz.com>	2026-04-23	feat: security hardening, combat engine fixes, socials wiring, Lua sandboxing, docs rewrite	deepseek-chat
+6048567d4d5dea7d9d5522e0987f4c13aaae2e05	zach <zach@karl-havoc.labz0rz.com>	2026-04-23	feat(zones): add per-zone goroutine dispatch for resets and AI	deepseek-chat
+1655214a1417108fc589ccdff40bf406a129520b	zach <zach@karl-havoc.labz0rz.com>	2026-04-23	feat(storage): add SQLite persistence backend with PlayerStore/WorldStore interfaces	deepseek-chat
+3b4a09cf5345716bbf5f58ccf2be0994a7030171	zach <zach@karl-havoc.labz0rz.com>	2026-04-23	feat(middleware): add middleware pipeline to command registry	deepseek-chat
+814e4ea5e875c8dc19995ba8cf570524dcbbf50c	zach <zach@karl-havoc.labz0rz.com>	2026-04-23	feat(events): wire typed event bus into death handling	deepseek-chat
+020c4995c5a6961602d81c79c70e36d9a46fed04	zach <zach@karl-havoc.labz0rz.com>	2026-04-23	feat(snapshot): add SnapshotManager with atomic pointer swap	deepseek-chat
+312347ba98a3af132250fac7ee1d4f0379144747	zach <zach@karl-havoc.labz0rz.com>	2026-04-23	feat(snapshot): add SnapshotManager with atomic pointer swap	deepseek-chat
+b53e719ef3d07a18b461e0a46094f6ab93e528f7	zach <zach@karl-havoc.labz0rz.com>	2026-04-23	fix(qa): source headers, slog migration, save/load, death handling, C-ism cleanup	deepseek-chat
+9eedb95d3e5d9989e4bbdc80091bad448fc119ba	zach <zach@karl-havoc.labz0rz.com>	2026-04-23	feat(info): add /info command with ASCII box display and /score stub	deepseek-chat
+585eefab04a211fd46833de2fc07f9c7ac12454b	zach <zach@karl-havoc.labz0rz.com>	2026-04-23	fix(build): resolve compilation errors across swarm output	deepseek-chat
+87af82f060e3520dd56c0c0efcf27fdcbe547a94	zach <zach@karl-havoc.labz0rz.com>	2026-04-23	feat(maps): add ASCII, SVG, and interactive HTML world maps (10,047 rooms, 95 zones)	glm-5-turbo
+11ae78c4eb78312ce1820dba1ff92471ee7b9976	zach <zach@karl-havoc.labz0rz.com>	2026-04-22	Fix CI/CD: Move example files to examples/performance/ to resolve package conflict	deepseek-chat
+322e8d7c63e73962a23f9b319e4f1fc870426512	zach <zach@karl-havoc.labz0rz.com>	2026-04-22	Add interactive map and website mockup	deepseek-chat
+7f836f81bda9df0539df675440969a81430817df	zach <zach@karl-havoc.labz0rz.com>	2026-04-22	Phase 3: Performance optimization	deepseek-chat
+c3ada5af9d2dc4946ed1f49c55797c6e50b9c709	zach <zach@karl-havoc.labz0rz.com>	2026-04-22	Documentation consolidation	deepseek-chat
+f8e81e71852f69248743d3e87385198419755b52	zach <zach@karl-havoc.labz0rz.com>	2026-04-22	Modernization Phase 2: Security hardening	deepseek-chat
+7273c7007b6cf8d7cf8c041123aaac1ea98aad72	zach <zach@karl-havoc.labz0rz.com>	2026-04-22	Modernization Phase 1: Code quality foundation	deepseek-chat
+1fb8cd8388fa02387c0f5bc9626bdf2509d8e74c	zach <zach@karl-havoc.labz0rz.com>	2026-04-22	Ground floor push: Complete Dark Pawns resurrection	deepseek-chat
