@@ -304,4 +304,84 @@ Shop buy/sell transactions with C audiences through real dispatch (src/shop.c
 cites), shopkeeper steal/tell special ordering, spec-proc output surfaces,
 gate portal/spell specials, NPC shared-executor draws, stat report bytes,
 crash-load dex line color. No fixes, no J10 divergences. Running: 1445/1537.
+ HEAD
  c1bab5b4b (test(session): audit batch 16 — shop transactions + spec surfaces, all R)
+
+## Batch 17 results (later tests 1301–1392, final 92, 2026-10/11)
+
+Marks: R 92, F 0, C 0, D 0. Ledger T1490-T1581. (One row, T480
+TestInstakillSendsVictimMessage, was corrected from the mis-typed R to its
+audited F — the batch-3 re-append had written it with R evidence; the mark,
+junk code, and mutation proof stand as originally audited.)
+
+Shop trade/value mutations, do_set sbyte wrap (src/act.wizard.c:2836-2840),
+stat color levels, group list semantics, forced mobile hits, last saved-host
+format, run-specials switched bodies, alias editor routing, Go 1.27 JSON byte
+compat. No fixes, no J10 divergences.
+
+---
+
+# pkg/session summary (all 1,537 tests audited)
+
+## Counts by mark and era
+
+| Mark | Pre-oracle (145) | Later (1392) | Total |
+|---|---|---|---|
+| R | 139 | 1392 | 1531 (99.6%) |
+| F | 3 | 0 | 3 (0.2%) |
+| C | 3 | 0 | 3 (0.2%) |
+| D | 0 | 0 | 0 |
+
+Junk codes in final marks: J3 ×2, J8 ×1, J4 ×3. No J1, J2, J5–J7, J9, J10.
+
+## Predictions vs actuals
+
+Predicted R 1446 / F 58 / C 18 / D 15. Actual R 1531 / F 3 / C 3 / D 0.
+The keep direction was right but the magnitude was off by an order: the
+post-oracle session layer has ZERO weak marks in 1,392 tests, and even the
+pre-oracle May–June layer produced only 6 weak marks in 145 (4.1%). The
+weak-test problem the pilot found in pkg/combat and pkg/spells is simply
+absent here — the session package's tests were either written after the
+depth-test style matured or rewritten by it (DP-1173, DP-1212/1213, PF-063,
+the entry matrices).
+
+## The weak tests and their authors
+
+All 6 weak marks are git-author BRENDA69 (agent unknown, no PR/trailer):
+- F TestSetCommandExecFunc (PR #19 era): asserted its own closure.
+- F TestBuildRoomItems_KeywordDisambiguation (agent-vars era): soft-logged
+  the assertion that mattered; the fixture never exercised disambiguation.
+- F TestInstakillSendsVictimMessage (PR #181): name promised victim delivery;
+  the test substituted the killer side.
+- C TestManager_GetSession_Lookup / TestAcText / TestPositionText: duplicates
+  folded into their exact-pin successors.
+
+## J10 / divergence report
+
+None across 1,537 tests. Every pinned byte, formula, gate, and golden table
+spot-checked against src/ this audit matched (nanny prompts, fight.c
+protection gates, act.offensive/new_cmds bytes, class.c spell levels,
+act.informative score/who/help, modify.c skillset list, shop.c transactions,
+structs.h constants). The divergence class both earlier audits each found one
+of did not appear in either package.
+
+## Notable structural findings
+
+- ~200 tests are a generated registration sweep (C entry gates per command/
+  social, plus the AndRecord variant pinning social message tables verbatim).
+  They are cheap, sharp, and collectively pin the R2 surface.
+- The strongest suites are the October depth files: entry matrices (R5f),
+  reaper/dupe-check lifecycle, shop transactions through real dispatch,
+  OLC editor suites, and the PR #1682 report restorations.
+- Coverage: 74.4% at baseline and after every batch (only assertion-level
+  changes and three duplicate folds; no live statement lost a test).
+
+## Open questions
+
+1. `TestPortableWindowsEditorDelete` is GOOS-windows-tagged: audited from
+   source (registry/deletion semantics match the pattern family) but never
+   executed on this host; CI on windows would exercise it.
+2. BRENDA69's identity: 100+ session tests and all 6 weak marks trace to that
+   git author with no agent trailer. The slop-track paper will want the
+   mapping pinned.
+ dfba3db1a (test(session): audit batch 17 + pkg/session complete — 1537/1537)
