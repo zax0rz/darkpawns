@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/dprng"
+
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -162,6 +164,23 @@ func TestWeatherChange_AdjustsPressureAndSky(t *testing.T) {
 	// Run multiple changes to allow random sky transition to fire
 	for i := 0; i < 20; i++ {
 		WeatherChange(sendToOutdoor)
+	}
+
+	// C clamps pressure into [960,1040] (src/weather.c; weather.go:515-519)
+	if weatherInfo.Pressure < 960 || weatherInfo.Pressure > 1040 {
+		t.Errorf("pressure after 20 changes = %d, want within C's [960,1040] band", weatherInfo.Pressure)
+	}
+
+	// The change arithmetic itself is C's formula: summer month (May), so
+	// pressure 1013 is not > 1015 and diff is +2; seeded stream 7 draws
+	// dice(1,4)=4, dice(2,6)=5, dice(2,6)=5, so change = 4*2+5-5 = 8 and
+	// pressure = 1013+8 = 1021 (src/weather.c:88-95).
+	dprng.ResetStream(7)
+	timeInfo = TimeInfoData{Month: 5}
+	weatherInfo = WeatherData{Pressure: 1013, Change: 0, Sky: SkyCloudless, Sunlight: SunLight}
+	weatherChangeLocked(nil)
+	if weatherInfo.Change != 8 || weatherInfo.Pressure != 1021 {
+		t.Errorf("seeded change/pressure = %d/%d, want 8/1021 (dice(1,4)=4, dice(2,6)=5, dice(2,6)=5 at seed 7)", weatherInfo.Change, weatherInfo.Pressure)
 	}
 
 	// Sunlight and moon accessors
