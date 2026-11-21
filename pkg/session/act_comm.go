@@ -132,7 +132,7 @@ func cmdWhisper(s *Session, args []string) error {
 	if len(args) >= 2 {
 		argument = args[0] + " " + sanitizeMessage(strings.Join(args[1:], " "))
 	}
-	s.manager.world.DoSpecComm(s.player, argument, false)
+	s.manager.world.DoSpecComm(s.player, escapeTypedDollars(argument), false)
 	return nil
 }
 
@@ -146,6 +146,6 @@ func cmdAsk(s *Session, args []string) error {
 	if len(args) >= 2 {
 		argument = args[0] + " " + sanitizeMessage(strings.Join(args[1:], " "))
 	}
-	s.manager.world.DoSpecComm(s.player, argument, true)
+	s.manager.world.DoSpecComm(s.player, escapeTypedDollars(argument), true)
 	return nil
 }
