@@ -330,3 +330,11 @@ Marks: R 100 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-22`.)
 The newest layer: switched actor commands, extra-desc writes, string_add
 overflow, live-list saves, note writes, the DP-1552 look gate, wound act
 depth, real level, death paths, clan atoi.
+
+## Batch 23 results (post-oracle tests 1601–1700, 2026-11-21)
+
+Marks: R 100 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-23`.)
+
+The newest tier: unassigned specials depth (9), mickey/mallory (8), the
+muddate family (7), and the turn-undead/quan-lo/portal-bat/couch/summoner/
+little-boy-ira/castle-guard specs.
