@@ -1,0 +1,40 @@
+# C-first witness for look_at_char's no-description mobile branch.
+# A mortal starts in room 8162 with Satan Klaus, so `look at satan` reaches the
+# sampled actor line through look_at_target (src/act.informative.c:388-398,
+# 1020-1024).
+# depth-case: look.character-no-description
+
+[fixture]
+quiet-mobs
+spawn-mob 70 1 8162 80
+
+[setup:oracle]
+Looker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Looker
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+look at satan
