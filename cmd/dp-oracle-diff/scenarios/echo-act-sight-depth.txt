@@ -1,0 +1,78 @@
+# C-first echo act vehicle (src/act.wizard.c:147-151). do_echo's room and
+# self copies are act(buf, FALSE, ch, 0, 0, TO_ROOM/TO_CHAR), so a sleeping
+# viewer gets nothing — and C doubles every $ in user input before queuing
+# (src/comm.c:1968-1977), so a typed "$n" prints literally instead of
+# substituting (retained oracle bytes for "echo $n lit test.": the literal
+# argument, capitalized). The pre-DP-1621 Go path broadcast the raw name with
+# no sleep gate and substituted typed codes.
+#
+# depth-case: echo.act-sight
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Echoact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Echoact
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Echosee
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Echosee
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Echosee 8162
+
+[probe]
+echo $n peers into the gloom.
+force Echosee sleep
+echo quiet words only.

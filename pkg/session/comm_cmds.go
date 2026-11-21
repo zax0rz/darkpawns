@@ -77,7 +77,9 @@ func cmdEmote(s *Session, args []string) error {
 		s.Send("You try to express yourself but cannot!")
 		return nil
 	}
-	action := sanitizeMessage(strings.Join(args, " "))
+	// C doubles typed $ signs before do_echo sees them (src/comm.c:1968-1977),
+	// so only the sprintf'd "$n " prefix substitutes (src/act.wizard.c:149).
+	action := sanitizeMessage(strings.ReplaceAll(strings.Join(args, " "), "$", "$$"))
 
 	// src/act.wizard.c:144-151: room act first (including arena broadcast),
 	// then the actor's repeat preference. Shared Act renders for each recipient.
@@ -108,7 +110,10 @@ func cmdSay(s *Session, args []string) error {
 // Source: act.comm.c ACMD(do_think) lines 1356-1386
 func cmdThink(s *Session, args []string) error {
 	if len(args) == 0 {
-		broadcastToRoom(s, fmt.Sprintf("%s thinks about life, the universe, and everything.", s.player.Name))
+		// C do_think (src/act.comm.c:1362-1365): act(buf, FALSE, ch, 0, 0,
+		// TO_ROOM) — sleepers get nothing and act's $-codes substitute.
+		game.Act(s.manager.world, false, s.player, nil, nil, nil,
+			"$n thinks about life, the universe, and everything.", "", game.ToRoom)
 		s.Send("You think about life, the universe, and everything.")
 		return nil
 	}
@@ -118,8 +123,13 @@ func cmdThink(s *Session, args []string) error {
 		return nil
 	}
 
-	message := strings.Join(args, " ")
-	broadcastToRoom(s, fmt.Sprintf("%s thinks . o O ( %s )", s.player.Name, message))
+	// src/act.comm.c:1375-1376: the thought text sits inside act's format
+	// string, but C's input layer doubles typed $ signs first
+	// (src/comm.c:1968-1977), so only the sprintf'd "$n thinks..." prefix
+	// substitutes; Go mirrors the doubling on the message.
+	message := strings.ReplaceAll(strings.Join(args, " "), "$", "$$")
+	game.Act(s.manager.world, false, s.player, nil, nil, nil,
+		"$n thinks . o O ( "+message+" )", "", game.ToRoom)
 
 	if s.player.Flags&(1<<game.PrfNoRepeat) == 0 {
 		s.Send(fmt.Sprintf("You think . o O ( %s )", message))

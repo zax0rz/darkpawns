@@ -34,7 +34,6 @@ func (m *Manager) closeIdleDescriptor(p *game.Player) {
 	p.SetLinkless(true)
 	game.Act(m.world, true, p, nil, nil, nil, "$n has lost $s link.", "", game.ToRoom)
 	game.MudLog(fmt.Sprintf("Closing link to: %s.", p.GetName()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true)
-	s.leaveBroadcastHandled = true
 	if s.activePCSwitch() {
 		m.detachPCSwitch(s, false)
 	}

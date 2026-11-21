@@ -1,0 +1,79 @@
+# C-first think act vehicle (src/act.comm.c:1356-1386). do_think's room
+# copies are act(buf, FALSE, ch, 0, 0, TO_ROOM); the sprintf'd "$n thinks..."
+# prefix substitutes with PERS, so a watcher in a ROOM_DARK room
+# (src/structs.h:56; LIGHT_OK false, src/utils.h:515) reads "Someone" — while
+# the thought text arrives doubled by C's input layer (src/comm.c:1968-1977)
+# and prints literally. A sleeper is skipped entirely (src/comm.c:2543).
+#
+# depth-case: think.act-sight
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 0 on
+
+[setup:oracle]
+Thinkact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Thinkact
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Thinksee
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Thinksee
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Thinksee 8162
+goto 8162
+
+[probe]
+think hello world
+think $n quietly
+send:peer sleep
+think last words
