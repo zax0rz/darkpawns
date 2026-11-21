@@ -780,34 +780,39 @@ func TestBuildRoomItems_KeywordDisambiguation(t *testing.T) {
 	s := makeTestSession(t, m, "Alice", 1001, true)
 	s.wantsStructuredData = true
 
-	// Add two items that share a keyword by creating instances with the same proto
-	_ = registerObject(t, m, 3004, 1001)
+	// Two coins with the SAME keywords: registerObject's synthetic prototype
+	// uses "obj<vnum>" keywords, so both coins must be given the real keyword
+	// set — and the second can then only be addressed by the numeric prefix.
+	// The old version overrode only the second coin's keywords and t.Log'ed
+	// when the prefix never appeared — a silent no-op under the bug.
+	coin1 := registerObject(t, m, 3004, 1001)
+	coin1.Prototype.Keywords = "coin gold"
 	coin2 := registerObject(t, m, 3004, 1001)
-
-	// Override short desc and keywords for the second to be distinguishable
-	coin2.Prototype.Keywords = "coin gold silver"
+	coin2.Prototype.Keywords = "coin gold"
 	coin2.Prototype.ShortDesc = "A silver coin"
 
 	items := s.buildRoomItems()
-	if len(items) < 2 {
-		t.Fatalf("expected at least 2 items, got %d", len(items))
+	if len(items) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(items))
 	}
 
 	var foundFirst, foundSecond bool
 	for _, item := range items {
 		switch item.TargetString {
-		case "coin", "gold":
+		case "coin":
 			foundFirst = true
-		case "2.coin", "2.gold", "silver":
+		case "2.coin":
 			foundSecond = true
+		default:
+			t.Errorf("unexpected target_string: %q", item.TargetString)
 		}
 	}
 
 	if !foundFirst {
-		t.Error("first coin should have a target_string")
+		t.Error("first coin should have target_string 'coin'")
 	}
 	if !foundSecond {
-		t.Log("second coin with different keywords — may have its own keyword")
+		t.Error("second coin should have target_string '2.coin' — disambiguation regressed")
 	}
 }
 
