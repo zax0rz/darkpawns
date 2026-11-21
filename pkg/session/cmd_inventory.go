@@ -1,8 +1,6 @@
 package session
 
 import (
-	"encoding/json"
-	"fmt"
 	"log/slog"
 	"strings"
 
@@ -50,23 +48,16 @@ func execQuit(s *Session, reallyQuit bool) error {
 		return nil
 	}
 
-	room := s.player.GetRoom()
-	// C: act("$n has left the game.", TRUE, ch, 0, 0, TO_ROOM) iff !GET_INVIS_LEV(ch).
-	s.leaveBroadcastHandled = true
+	// C do_quit (src/act.other.c:134): act("$n has left the game.", TRUE,
+	// ch, 0, 0, TO_ROOM) iff !GET_INVIS_LEV(ch). hide is TRUE, so viewers who
+	// cannot see the quitter get nothing and sleepers are skipped. C's
+	// close_socket path sends no such line (its only room act is
+	// "has lost $s link", src/comm.c:2131), so generic disconnect cleanup
+	// must not announce the departure either — there is no suppression flag
+	// to set anymore.
 	if s.player.GetInvisLevel() == 0 {
-		msg, err := json.Marshal(ServerMessage{
-			Type: MsgEvent,
-			Data: EventData{
-				Type: "leave",
-				From: s.player.Name,
-				Text: fmt.Sprintf("%s has left the game.", s.player.Name),
-			},
-		})
-		if err != nil {
-			slog.Error("json.Marshal error", "error", err)
-		} else {
-			s.manager.BroadcastToRoom(room, msg, s.player.Name)
-		}
+		game.Act(s.manager.world, true, s.player, nil, nil, nil,
+			"$n has left the game.", "", game.ToRoom)
 	}
 
 	// C: InfoBarOff(ch) if the infobar is on.

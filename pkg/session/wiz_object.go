@@ -223,13 +223,11 @@ func cmdPurge(s *Session, args []string) error {
 				game.Act(s.manager.world, false, s.player, victim, nil, nil, "$n disintegrates $N.", "", game.ToNotVict)
 				game.MudLog(fmt.Sprintf("(GC) %s has purged %s.", s.player.Name, victim.GetName()), game.MudlogBrief, game.LVL_GOD, true)
 
-				// close_socket() announces the lost link before do_purge()
-				// extracts the lower-level player. Suppress the generic Go
-				// "has left" cleanup broadcast so only C's line is visible.
-				if victimSession, ok := s.manager.GetSession(victim.GetName()); ok {
+				// close_socket() announces the lost link (src/comm.c:2131)
+				// before do_purge() extracts the lower-level player.
+				if _, ok := s.manager.GetSession(victim.GetName()); ok {
 					game.Act(s.manager.world, true, victim, nil, nil, nil, "$n has lost $s link.", "", game.ToRoom)
 					game.MudLog(fmt.Sprintf("Closing link to: %s.", victim.GetName()), game.MudlogNormal, max(game.LVL_IMMORT, victim.GetInvisLevel()), true) // comm.c:2132-2133
-					victimSession.leaveBroadcastHandled = true
 					s.manager.UnregisterAndClose(victim.GetName())
 				} else {
 					game.ExtractChar(victim)

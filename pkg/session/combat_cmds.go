@@ -1,9 +1,7 @@
 package session
 
 import (
-	"encoding/json"
 	"fmt"
-	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -281,22 +279,19 @@ func cmdFlee(s *Session) error {
 		if dest, ok := s.manager.world.GetRoom(exit.ToRoom); ok && dest.HasFlag(1) {
 			continue
 		}
-		leaveMsg, err := json.Marshal(ServerMessage{
-			Type: MsgEvent,
-			Data: EventData{
-				Type: "flee",
-				From: s.player.Name,
-				Text: fmt.Sprintf("%s panics, and attempts to flee!", s.player.Name),
-			},
-		})
-		if err != nil {
-			slog.Error("json.Marshal error", "error", err)
-			return nil
-		}
-		s.manager.BroadcastToRoom(s.player.GetRoom(), leaveMsg, s.player.Name)
+		// C do_flee (src/act.offensive.c:397): act("$n panics, and attempts
+		// to flee!", TRUE, ch, 0, 0, TO_ROOM) fires per viable direction,
+		// after CAN_GO/ROOM_DEATH checks — the same position as here. hide is
+		// TRUE, so viewers who cannot see the fleer get nothing and sleepers
+		// are skipped.
+		game.Act(s.manager.world, true, s.player, nil, nil, nil,
+			"$n panics, and attempts to flee!", "", game.ToRoom)
 
 		if !s.manager.world.DoFleeMove(s.player, dir) {
-			broadcastToRoom(s, fmt.Sprintf("%s tries to flee, but can't!", s.player.Name))
+			// src/act.offensive.c:409: act("$n tries to flee, but can't!",
+			// TRUE, ch, 0, 0, TO_ROOM).
+			game.Act(s.manager.world, true, s.player, nil, nil, nil,
+				"$n tries to flee, but can't!", "", game.ToRoom)
 			return nil
 		}
 		newRoomVNum = s.player.GetRoom()

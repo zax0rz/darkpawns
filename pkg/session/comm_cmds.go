@@ -108,7 +108,10 @@ func cmdSay(s *Session, args []string) error {
 // Source: act.comm.c ACMD(do_think) lines 1356-1386
 func cmdThink(s *Session, args []string) error {
 	if len(args) == 0 {
-		broadcastToRoom(s, fmt.Sprintf("%s thinks about life, the universe, and everything.", s.player.Name))
+		// C do_think (src/act.comm.c:1362-1365): act(buf, FALSE, ch, 0, 0,
+		// TO_ROOM) — sleepers get nothing and act's $-codes substitute.
+		game.Act(s.manager.world, false, s.player, nil, nil, nil,
+			"$n thinks about life, the universe, and everything.", "", game.ToRoom)
 		s.Send("You think about life, the universe, and everything.")
 		return nil
 	}
@@ -118,8 +121,11 @@ func cmdThink(s *Session, args []string) error {
 		return nil
 	}
 
+	// src/act.comm.c:1375-1376: the player's own text sits inside act's
+	// format string, so $-codes the player typed substitute for the room too.
 	message := strings.Join(args, " ")
-	broadcastToRoom(s, fmt.Sprintf("%s thinks . o O ( %s )", s.player.Name, message))
+	game.Act(s.manager.world, false, s.player, nil, nil, nil,
+		"$n thinks . o O ( "+message+" )", "", game.ToRoom)
 
 	if s.player.Flags&(1<<game.PrfNoRepeat) == 0 {
 		s.Send(fmt.Sprintf("You think . o O ( %s )", message))

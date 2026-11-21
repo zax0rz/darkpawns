@@ -867,7 +867,6 @@ func (m *Manager) drainPendingExtractionsLocked() {
 			m.mu.Lock()
 			victim.menuActive = true // no second close_socket save: C frees this body
 			m.mu.Unlock()
-			victim.leaveBroadcastHandled = true
 			m.unregisterSession(victim, victim.playerName)
 			continue
 		}
@@ -887,9 +886,9 @@ func (m *Manager) drainPendingExtractionsLocked() {
 			// NULL before extract_char (handler.c:1172-1175), so an
 			// idle-disconnected player is force-rented and dropped — never
 			// returned to the menu. Retire the session and close the
-			// transport; leaveBroadcastHandled suppresses the invented
-			// "has left the game." broadcast, which C never sends here.
-			victim.leaveBroadcastHandled = true
+			// transport; C sends no room announcement on this path
+			// (close_socket's only room act is "has lost $s link",
+			// src/comm.c:2131).
 			m.unregisterSession(victim, victim.playerName)
 			// Unregister saved the rent objects. C then frees them with
 			// Crash_extract_objs (src/objsave.c:947-955); detach from this
@@ -1677,19 +1676,11 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	// 1. Stop combat
 	m.combatEngine.StopCombat(s.player)
 
-	// 2. Broadcast leave message
-	if s.player != nil && !s.menuActive && !s.charCreating && !s.leaveBroadcastHandled {
-		leaveMsg, err := json.Marshal(ServerMessage{
-			Type: MsgEvent,
-			Data: EventData{
-				Type: "leave",
-				Text: s.player.Name + " has left the game.",
-			},
-		})
-		if err == nil {
-			m.BroadcastToRoom(s.player.GetRoom(), leaveMsg, s.player.Name)
-		}
-	}
+	// 2. No room announcement here. C sends "has left the game." only from
+	// do_quit (src/act.other.c:134), which execQuit delivers through Act;
+	// close_socket's only room-facing act is "has lost $s link"
+	// (src/comm.c:2131), delivered on the idle/purge paths. Generic
+	// disconnect cleanup must stay silent.
 
 	m.notifyLeftWorld(s, playerName)
 
@@ -2488,10 +2479,6 @@ type Session struct {
 	// prompt pass queues the changed-field repaint instead of consuming it.
 	infoBarRepaintPending           atomic.Bool
 	infobarLastExp, infobarLastGold int
-	// leaveBroadcastHandled is set by an orderly quit after it applies C's
-	// invisibility gate, preventing generic disconnect cleanup from announcing
-	// the same departure a second time.
-	leaveBroadcastHandled bool
 
 	// Communication state
 	snooping *Session // Session being snooped (for wizard snoop)
@@ -2578,13 +2565,6 @@ func (m *Manager) shutdownGracefully(timeout time.Duration, notify bool) {
 	sessions := make(map[string]*Session)
 	for name, s := range m.sessions {
 		sessions[name] = s
-	}
-	if !notify {
-		// Command shutdown has no post-loop output pass for per-session leave
-		// events. Suppress cleanup's leave broadcast while closing those sessions.
-		for _, s := range sessions {
-			s.leaveBroadcastHandled = true
-		}
 	}
 	m.mu.Unlock()
 

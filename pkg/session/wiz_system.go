@@ -461,9 +461,11 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 		target.player.FreezeLevel = s.player.Level // GET_FREEZE_LEV(vict) = GET_LEVEL(ch)
 		target.Send("A bitter wind suddenly rises and drains every ounce of heat from your body!\r\nYou feel frozen!\r\n")
 		s.Send("Frozen.\r\n")
-		// act("A sudden cold wind conjured from nowhere freezes $n!", vict, TO_ROOM)
-		broadcastToRoomExcept(s, target.player.GetRoom(), target.player.Name,
-			fmt.Sprintf("A sudden cold wind conjured from nowhere freezes %s!\r\n", target.player.Name))
+		// act("A sudden cold wind conjured from nowhere freezes $n!", FALSE,
+		// vict, 0, 0, TO_ROOM) (src/act.wizard.c:2152): the victim is act's
+		// ch, so sleepers get nothing and Act skips the victim itself.
+		game.Act(s.manager.world, false, target.player, nil, nil, nil,
+			"A sudden cold wind conjured from nowhere freezes $n!", "", game.ToRoom)
 		// act.wizard.c:2154: the room act precedes the log.
 		game.MudLog(fmt.Sprintf("(GC) %s frozen by %s.", target.player.Name, s.player.Name),
 			game.MudlogBrief, wizutilMudlogLevel(s.player), true)
@@ -483,9 +485,11 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 		target.player.SetPlrFlag(game.PlrFrozen, false)
 		target.Send("A fireball suddenly explodes in front of you, melting the ice!\r\nYou feel thawed.\r\n")
 		s.Send("Thawed.\r\n")
-		// act("A sudden fireball conjured from nowhere thaws $n!", vict, TO_ROOM)
-		broadcastToRoomExcept(s, target.player.GetRoom(), target.player.Name,
-			fmt.Sprintf("A sudden fireball conjured from nowhere thaws %s!\r\n", target.player.Name))
+		// act("A sudden fireball conjured from nowhere thaws $n!", FALSE,
+		// vict, 0, 0, TO_ROOM) (src/act.wizard.c:2172): the victim is act's
+		// ch; sleepers get nothing.
+		game.Act(s.manager.world, false, target.player, nil, nil, nil,
+			"A sudden fireball conjured from nowhere thaws $n!", "", game.ToRoom)
 	case wizutilUnaffect:
 		// SCMD_UNAFFECT clears the three non-spell status flags before checking
 		// the affect list (act.wizard.c:2174-2211). Those flags are independent
@@ -540,15 +544,6 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 // actor's invisibility raises the bar; the actor's level does not.
 func wizutilMudlogLevel(actor *game.Player) int {
 	return max(game.LVL_GOD, actor.GetInvisLevel())
-}
-
-// broadcastToRoomExcept sends msg to every player in roomVNum except the named
-// player — the TO_ROOM recipient set for act(..., TO_ROOM) where the named
-// player is the act's ch (excluded). Used by freeze/thaw room messages.
-func broadcastToRoomExcept(s *Session, roomVNum int, excludeName, msg string) {
-	if s.manager != nil {
-		s.manager.BroadcastToRoom(roomVNum, []byte(msg), excludeName)
-	}
 }
 
 // hmhr mirrors C's HMHR macro (utils.h:507): him/her/it by sex. Used only in

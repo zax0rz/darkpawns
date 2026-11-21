@@ -1,0 +1,73 @@
+# C-first think sight vehicle (src/act.comm.c:1356-1386). do_think's room
+# copies are act(buf, FALSE, ch, 0, 0, TO_ROOM) (:1363 empty arm, :1376 the
+# spoken thought), so the watcher's sight decides the actor's rendering: in a
+# ROOM_DARK room (src/structs.h:56) the mortal watcher's LIGHT_OK is false
+# (src/utils.h:515) and PERS renders "$n" as "Someone". The player's own text
+# sits inside act's format string, so $-codes the thinker typed substitute for
+# the room as well. The pre-DP-1621 Go path broadcast the raw name.
+#
+# depth-case: think.act-sight
+
+[fixture]
+quiet-mobs
+set-room-flag 8162 0 on
+
+[setup:oracle]
+Thinkact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Thinkact
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Thinksee
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Thinksee
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+think hello world
+send:Thinksee think $n quietly

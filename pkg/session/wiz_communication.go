@@ -47,11 +47,18 @@ func cmdEcho(s *Session, args []string) error {
 		s.Send("Maximum echo length is 500 characters.")
 		return nil
 	}
-	// C act(buf, ..., TO_ROOM) excludes the echoer; the TO_CHAR copy below
-	// delivers their own view (or OK under norepeat).
-	s.manager.BroadcastToRoom(s.player.RoomVNum, []byte(msg), s.player.Name)
+	// C do_echo (src/act.wizard.c:147-151): the room copy is
+	// act(buf, FALSE, ch, 0, 0, TO_ROOM) — sleepers get nothing and act's
+	// $-code substitution applies — then NOREPEAT gets OK (config.c:92) and
+	// everyone else gets the act TO_CHAR copy. Shared Act renders per
+	// recipient, like cmdEmote.
+	game.Act(s.manager.world, false, s.player, nil, nil, nil, msg, "", game.ToRoom)
 	slog.Warn("wizard echo", "by", s.player.Name, "room", s.player.RoomVNum, "message", msg)
-	s.Send(msg)
+	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
+		s.Send("Okay.\r\n")
+	} else {
+		game.Act(s.manager.world, false, s.player, nil, nil, nil, msg, "", game.ToChar)
+	}
 	return nil
 }
 

@@ -1,0 +1,75 @@
+# C-first flee sight vehicle (src/act.offensive.c:397). do_flee sends
+# act("$n panics, and attempts to flee!", TRUE, ch, 0, 0, TO_ROOM) with
+# hide_invisible TRUE, so a watcher who cannot see the fleer gets nothing at
+# all. In a ROOM_DARK room (src/structs.h:56) the mortal watcher's LIGHT_OK is
+# false (src/utils.h:515), CAN_SEE is false, and the watch is silent. An
+# awake sighted watcher in the lit destination still hears the panic act from
+# the old room. All six directions lead to one lit destination so the first
+# draw is always viable and the act fires exactly once.
+#
+# depth-case: flee.act-sight
+
+[fixture]
+quiet-mobs
+set-room-flag 8162 0 on
+replace-room-exits 8162 all 8161 0
+
+[setup:oracle]
+Fleeact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fleeact
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watcher]
+Fleewatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watcher]
+Fleewatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+flee
+send:Fleewatch look

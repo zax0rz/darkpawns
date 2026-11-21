@@ -1,0 +1,74 @@
+# C-first echo sight vehicle (src/act.wizard.c:147-151). do_echo's room copy
+# is act(buf, FALSE, ch, 0, 0, TO_ROOM), so act's sight rules apply: with
+# ROOM_DARK set (src/structs.h:56) the mortal peer's LIGHT_OK is false
+# (src/utils.h:515), CAN_SEE is false, and act's PERS substitution renders
+# "$n" as "Someone". After the peer sleeps, C's SENDOK gate skips it entirely
+# (src/comm.c:2543). The pre-DP-1621 Go path broadcast the raw name with no
+# sight or sleep gates.
+#
+# depth-case: echo.act-sight
+
+[fixture]
+quiet-mobs
+set-room-flag 8162 0 on
+
+[setup:oracle]
+Echoact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Echoact
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Echosee
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Echosee
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+echo $n peers into the gloom.
+force Echosee sleep
+echo quiet words only.

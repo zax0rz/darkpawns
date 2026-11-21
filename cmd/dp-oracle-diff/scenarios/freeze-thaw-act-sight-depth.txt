@@ -1,0 +1,103 @@
+# C-first freeze/thaw sight vehicle (src/act.wizard.c:2152, :2172). Both room
+# lines are act("...", FALSE, vict, 0, 0, TO_ROOM) with the VICTIM as act's
+# ch, so the watcher's sight of the victim decides the rendering: in a
+# ROOM_DARK room (src/structs.h:56) the mortal watcher's LIGHT_OK is false
+# (src/utils.h:515) and PERS renders "$n" — the victim — as "Someone". A
+# sleeper is skipped by SENDOK entirely (src/comm.c:2543). The pre-DP-1621 Go
+# path broadcast the raw victim name with no sight or sleep gates.
+#
+# depth-case: wizutil.freeze-act-sight
+# depth-case: wizutil.thaw-act-sight
+
+[fixture]
+quiet-mobs
+set-room-flag 8162 0 on
+
+[setup:oracle]
+Freezact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Freezact
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Freezsee
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Freezsee
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Freezvic
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Freezvic
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+freeze Freezvic
+thaw Freezvic
+send:Freezvic look

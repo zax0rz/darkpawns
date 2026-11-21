@@ -398,7 +398,7 @@ func TestQuitBroadcastsOneLeaveAndTurnsOffInfobar(t *testing.T) {
 	if err := ExecuteCommand(quitter, "quit", nil); err != nil {
 		t.Fatalf("ExecuteCommand quit: %v", err)
 	}
-	if got := readMsgText(t, observer); got != "Leaver has left the game." {
+	if got := readMsgText(t, observer); got != "Leaver has left the game.\r\n" {
 		t.Fatalf("observer message = %q", got)
 	}
 	if got := len(observer.send); got != 0 {
@@ -415,16 +415,21 @@ func TestQuitDepartureActSkipsSleepingAndWritingObservers(t *testing.T) {
 	sleeping := makeQuitSession(t, m, 2, "Sleeper", 10, 8004)
 	awake := makeQuitSession(t, m, 3, "Awake", 10, 8004)
 	writer := makeQuitSession(t, m, 4, "Writer", 10, 8004)
+	blind := makeQuitSession(t, m, 5, "Blindman", 10, 8004)
 	sleeping.player.SetPosition(combat.PosSleeping)
 	writer.player.SetPlrFlag(game.PlrWriting, true)
+	blind.player.SetAffect(game.AffBlind, true)
 
 	if err := ExecuteCommand(quitter, "quit", nil); err != nil {
 		t.Fatalf("ExecuteCommand quit: %v", err)
 	}
-	if got := readMsgText(t, awake); got != "Leaver has left the game." {
+	if got := readMsgText(t, awake); got != "Leaver has left the game.\r\n" {
 		t.Fatalf("awake observer message = %q", got)
 	}
-	for label, sess := range map[string]*Session{"sleeping": sleeping, "writing": writer} {
+	// C sends this act with hide_invisible TRUE (src/act.other.c:134), so a
+	// blind viewer — CAN_SEE false via LIGHT_OK (src/utils.h:515) — is skipped
+	// entirely rather than reading "Someone has left the game."
+	for label, sess := range map[string]*Session{"sleeping": sleeping, "writing": writer, "blind": blind} {
 		if len(sess.send) != 0 {
 			t.Errorf("%s observer received %d leave frames", label, len(sess.send))
 		}
