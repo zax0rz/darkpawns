@@ -1,12 +1,9 @@
-# C-first witness for look_at_char's no-description mobile branch.
-# The empty player store makes Looker an implementor. The warmup moves them
-# from the god room to 8162, where a Bitter Wind with an empty detailed
-# description reaches C's look_at_char fallback (src/act.informative.c:388-398,
-# 1020-1024).
+# C-first witness for look_at_char's no-description player branch. Two fresh
+# mortal players start in the same room, so no implementor warmup is needed
+# (src/act.informative.c:388-398, 1020-1024).
 # depth-case: look.character-no-description
 
 [fixture]
-empty-players
 quiet-mobs
 
 [setup:oracle]
@@ -37,10 +34,33 @@ Y
 <ENTER>
 1
 
-[warmup]
-goto 8162
-holylight
-load mob 19119
+[setup:oracle:peer]
+Lookpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Lookpeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
 
 [probe]
-look at wind
+look at Lookpeer
