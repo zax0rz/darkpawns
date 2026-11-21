@@ -1,0 +1,41 @@
+# C-first player clan who path. The fresh player has no clan rank, so the
+# registered command reaches do_clan_who's non-member guard.
+# depth-case: clan.who-clanless-player
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Clanbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clanbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Clanbody clan 0
+
+[probe]
+clan who
