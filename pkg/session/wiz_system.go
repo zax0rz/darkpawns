@@ -268,7 +268,7 @@ func cmdDate(s *Session, args []string) error {
 	now := time.Now()
 	// C dispatches date with SCMD_DATE, so do_date ignores its argument;
 	// uptime is a separate command-table entry using SCMD_UPTIME.
-	s.Send(fmt.Sprintf("Current machine time: %s", now.Format("Mon Jan 2 15:04:05 2006")))
+	s.Send(fmt.Sprintf("Current machine time: %s", common.Asctime(now)))
 	return nil
 }
 
@@ -293,7 +293,7 @@ func sendUptime(s *Session, now time.Time) {
 	if days == 1 {
 		dayWord = "day"
 	}
-	s.Send(fmt.Sprintf("Up since %s: %d %s, %d:%02d", boot.Format("Mon Jan 2 15:04:05 2006"), days, dayWord, hours, minutes))
+	s.Send(fmt.Sprintf("Up since %s: %d %s, %d:%02d", common.Asctime(boot), days, dayWord, hours, minutes))
 }
 
 // cmdLast — show last login info for a player (LVL_GOD-1).

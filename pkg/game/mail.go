@@ -16,6 +16,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/common"
 )
 
 // ---------------------------------------------------------------------------
@@ -456,7 +458,7 @@ func readDelete(recipient int) string {
 		return ""
 	}
 
-	tm := time.Unix(header.MailTime, 0).Format("Mon Jan 2 15:04:05 2006")
+	tm := common.Asctime(time.Unix(header.MailTime, 0))
 	fromName := GetNameByID(header.From)
 	toName := GetNameByID(recipient)
 
