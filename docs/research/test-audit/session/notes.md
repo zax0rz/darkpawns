@@ -217,3 +217,23 @@ TestCmdSkillset_ValueExpected (wiz_player.go:411 "Learned value expected."
 room bug), T265 TestCmdTitleSetThenClear (informative_cmds.go:40 ack format
 dropped its period). All three went red and were restored byte for byte
 (mutations.tsv).
+
+## Batch 6 results (later tests 201–300, 2026-08 social-gate sweep + depth files)
+
+Marks: R 100, F 0, C 0, D 0.
+
+~70 generated `Test<Social>RegistrationUsesCEntryGate` pins (template verified
+against the grin/fade/mute representatives: gate-table level/position, social
+metadata, message-count where applicable) plus substantive depth pins:
+freeze target branches, gecho raw spacing, gsay aliases, mute (GC) branches,
+infobar layout, do_hit one_argument boundary, do_home, checkload, do_last,
+do_invis prompt, goto/dig/at movement gates, and the flee-hook install.
+
+Ledger repair: batch 3's 44-row append silently failed at the time (only the
+T145 alias row landed); the 44 rows were re-appended as T446–T489. Ids are
+audit-order labels, not load-bearing — the integrity check keys on test names.
+
+## Running totals after batch 6
+
+445/1537 ledgered. Marks so far: R 441, F 3, C 3, D 0. Every F and C is in the
+pre-oracle layer; all 300 post-oracle marks so far are R.
