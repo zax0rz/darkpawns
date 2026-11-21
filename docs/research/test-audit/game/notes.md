@@ -118,3 +118,16 @@ swapped — red), TestDoTellEligibilityAndDelivery (not-found byte — red,
 after recording that the NoPersonHere constant is not this path's source),
 TestTimeWeatherSnapshotTracksCanonicalClock (snapshot loses the weather
 half — red).
+
+## Post-oracle redo, batch 6 (tests 251–300, T589–T638; 2026-07-18..21)
+
+Marks: R 50 / F 0 / C 0 / D 0. The depth-skill families (behead, bite, carve,
+first aid, flesh-alter with the src/new_cmds.c:1843+ weapon-band table,
+gen-write) and the spec-proc wave (cityguard, dragon breath, fido, guild
+guard incl. the GuildInfo table, janitor, paladin, fighter, guild). Cites
+grepped this session: love-bite act trio src/new_cmds.c:1238-1241; flesh
+bands src/new_cmds.c:1843; gen-write "That must be a mistake..."
+src/act.other.c:1115. Ledger complete T001-T638 on this branch.
+
+R spot-checks: GuildInfo room red; flesh-alter failure wait red; carve
+initials byte red (after the recorded wrong-arm lesson).
