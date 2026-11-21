@@ -42,35 +42,69 @@ func TestApplySkillDamageConsumesThePainScreamDraw(t *testing.T) {
 	}
 }
 
-// The same arm's visible half: a non-charge skill that does more than a quarter
-// of the victim's maximum hit points prints "That really did HURT!" to the
-// victim (src/fight.c:1589).
+// The visible half drives every supported skill attack ID plus the generic
+// hit types through damage()'s default arm. Each must send the same C pain line
+// once the blow exceeds one quarter of the victim's maximum hit points
+// (src/fight.c:1587-1592).
 func TestApplySkillDamageEmitsTheHurtLineForEveryAttackType(t *testing.T) {
-	w, player := newCombatTestWorld(t)
-	mob := spawnTargetMob(t, w)
-	mob.SetMaxHP(200)
-
-	previous := combat.GetCallbacks()
-	t.Cleanup(func() { combat.SetCallbacks(previous) })
-
-	var victimLines []string
-	cb := w.WireCombatCallbacks()
-	// The pain line is a body text message: pkg/combat's sendCombatMessage
-	// prefers the SendText hook and falls back to body.SendMessage, so capture
-	// both routes rather than assuming one.
-	capture := func(body combat.Combatant, msg string) {
-		if body == mob {
-			victimLines = append(victimLines, msg)
-		}
+	cases := []struct {
+		name       string
+		attackType int
+	}{
+		{name: "undefined", attackType: combat.TYPE_UNDEFINED},
+		{name: "hit", attackType: combat.TYPE_HIT},
+		{name: "backstab", attackType: SkillBackstabNum},
+		{name: "bash", attackType: SkillBashNum},
+		{name: "cutthroat", attackType: SkillCutthroatNum},
+		{name: "bearhug", attackType: SkillBearhugNum},
+		{name: "kick", attackType: SkillKickNum},
+		{name: "punch", attackType: SkillPunchNum},
+		{name: "bite", attackType: SkillBiteNum},
+		{name: "headbutt", attackType: SkillHeadbuttNum},
+		{name: "trip", attackType: SkillTripNum},
+		{name: "smackheads", attackType: SkillSmackheadsNum},
+		{name: "slug", attackType: SkillSlugNum},
+		{name: "charge", attackType: SkillChargeNum},
+		{name: "serpent kick", attackType: SkillSerpentKickNum},
+		{name: "circle", attackType: SkillCircleNum},
+		{name: "groinrip", attackType: SkillGroinripNum},
+		{name: "disembowel", attackType: SkillDisembowelNum},
+		{name: "sleeper", attackType: SkillSleeperNum},
+		{name: "neckbreak", attackType: SkillNeckbreakNum},
+		{name: "dragon kick", attackType: SkillDragonKickNum},
+		{name: "strike", attackType: SkillStrikeNum},
+		{name: "ambush", attackType: SkillAmbushNum},
+		{name: "tiger punch", attackType: SkillTigerPunchNum},
 	}
-	cb.SendText = capture
-	cb.SendToChar = capture
-	combat.SetCallbacks(cb)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			w, player := newCombatTestWorld(t)
+			mob := spawnTargetMob(t, w)
+			mob.SetMaxHP(200)
 
-	w.ApplySkillDamageWithMessage(player, mob, mob.GetMaxHP()/4+10, SkillHeadbuttNum, nil)
+			previous := combat.GetCallbacks()
+			t.Cleanup(func() { combat.SetCallbacks(previous) })
 
-	if got := strings.Join(victimLines, ""); !strings.Contains(got, "That really did HURT!") {
-		t.Fatalf("victim lines = %q, want the C pain line", got)
+			var victimLines []string
+			cb := w.WireCombatCallbacks()
+			// The pain line is a body text message: pkg/combat's sendCombatMessage
+			// prefers the SendText hook and falls back to body.SendMessage, so capture
+			// both routes rather than assuming one.
+			capture := func(body combat.Combatant, msg string) {
+				if body == mob {
+					victimLines = append(victimLines, msg)
+				}
+			}
+			cb.SendText = capture
+			cb.SendToChar = capture
+			combat.SetCallbacks(cb)
+
+			w.ApplySkillDamageWithMessage(player, mob, mob.GetMaxHP()/4+10, tc.attackType, nil)
+
+			if got := strings.Join(victimLines, ""); !strings.Contains(got, "That really did HURT!") {
+				t.Fatalf("attack type %d victim lines = %q, want the C pain line", tc.attackType, got)
+			}
+		})
 	}
 }
 

@@ -249,3 +249,18 @@ Junk annotations: J1=1 (backstab damage expectation reuses independently tested 
 All five F rows have detached mutations on exact base `ffc5dbde9`: the original test stayed green, the corrected test failed, and the mutation tree was restored byte-for-byte after every proof. Baseline and final package coverage were **64.5% / 64.5%** (`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game`); the C folds did not reduce coverage. All 11 required gates passed on the final rebased base `4999da772`; no census was needed because this batch changes tests and research records only.
 
 The clearest weak examples here are the Puff gate test, which could not see an extra RNG draw; the assassin success test, whose aggregate sink allowed a private line to reach the victim and still pass; and the cleric threshold test, whose old blind roll never entered the disputed cast branch. Each green gap is documented in `mutations.tsv`.
+
+## Post-oracle redo, batch 10 (T739–T788; 2026-09-16..11-07)
+
+Marks: **R 48 / F 2 / C 0 / D 0.** Junk: J2 1, J3 1. All 50 tests were introduced after the 2026-07-12 oracle start. This is the next 50 not-yet-ledgered functions in `inventory.txt`, after excluding functions already audited in T001–T738.
+
+**F fixes, both mutation-proven in `mutations.tsv`:**
+
+1. `TestApplySkillDamageEmitsTheHurtLineForEveryAttackType` (T758, J3): despite the name, the old body sent only Headbutt through the shared damage path. It now covers every supported skill attack ID and both generic attack types, checking the C pain line at `src/fight.c:1587-1592`. Skipping the bash default-arm callback kept the old body green and made the bash subtest fail.
+2. `TestBanManagerConcurrentReadWrite` (T781, J2): the old test only exercised concurrent calls and asserted no final state. It now checks that the final added substring ban remains visible. Returning from `AddBan` before storing the site kept the old body green and failed the new `IsBanned` postcondition.
+
+**Weak-test attribution:** T758 was authored by DeepSeek. T781 is `unknown` under PF-152/PF-153: its introducing commit has Zach’s git identity and no model trailer. R spot checks were not required because the batch contains F marks.
+
+Coverage was **64.5% before / 64.5% after** (`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game`) on the refreshed base. The targeted tests passed. All 11 gates passed after rebasing to the current main: `make fmt`, Go build, vet and full test; `golangci-lint run ./...`; modernize, deadcode, string-census, fidelity-depth, expected-divergences and function-index checks. The first full-suite attempt had two `cmd/server` readiness timeouts under package parallelism; `go test ./cmd/server -count=1` passed, and the repeated full suite passed. `make string-census` passed its ratchet while reporting stale generated reports; fidelity-depth and function-index passed their intentional expected-red self-tests.
+
+The 1,353-test forecast made before T639 was R1240/F50/C28/D35. Through T788, T639–T788 actuals are R137/F10/C3/D0, leaving 1,203 tests and forecast remainder R1103/F40/C25/D35. No census was needed because this batch changes tests and research records only.

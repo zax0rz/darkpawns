@@ -140,4 +140,9 @@ func TestBanManagerConcurrentReadWrite(t *testing.T) {
 		close(stop)
 	}()
 	wg.Wait()
+	// The writer's final AddBan must survive the concurrent RemoveBan/AddBan
+	// loop and remain visible to a reader after all goroutines finish.
+	if got := bm.IsBanned("host.evil.example"); got != BanNew {
+		t.Fatalf("ban after concurrent read/write loop = %d, want %d", got, BanNew)
+	}
 }
