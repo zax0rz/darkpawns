@@ -197,3 +197,12 @@ disarm audience/state), get/carve depth tests with act.item.c byte citations,
 guild-guard/dragon-breath/bite/bearhug/ambush depth families. The heuristic
 scan flagged four mobact draw-order tests; their assertMobactDraws helper
 ends in t.Fatalf, so they are real draw-sequence pins.
+
+## Batch 10 results (post-oracle tests 201–300, 2026-07-18..08-01)
+
+Marks: R 100 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-10`.)
+
+The late-July/early-August era is the spec-proc golden wave: tattooist,
+butler (GenDoor byte pins, four-item cap), puff, mindflayer, identifier,
+clerk, cleric, citizen, and the castle-guard directions — every file with
+exact output-byte pins. Heuristic scan clean.
