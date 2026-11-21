@@ -29,7 +29,7 @@ i	package	func	file	func_line	lit_line	source_offset	mutation_offset	old_byte	ne
 27	session	sendUptime	pkg/session/wiz_system.go	284	294	8041	8042	d	Q	"""day"""	c-reachable	C do_date includes “day” in its uptime output at src/act.wizard.c:1825-1826.
 28	game	performGetFromContainerMobile	pkg/game/item_transfer_actor.go	214	230	7316	7318	n	Q	"""$n gets $p from $P."""	c-reachable	C perform_get_from_container emits this act at src/act.item.c:209.
 29	game	*World.specRoachFood	pkg/game/spec_procs3.go	1036	1043	35082	35084	n	Q	"""$n feeds on $p."""	c-reachable	C roach emits this feeding act at src/spec_procs3.c:732.
-30	game	*World.deathCry	pkg/game/death.go	834	845	33611	33612	Y	Q	"""Your blood freezes as you hear someone's death cry."""	c-reachable	C death_cry emits the matching death-cry act at src/fight.c:517-518.
+30	game	*World.deathCry	pkg/game/death.go	834	845	33611	33612	Y	Q	"""Your blood freezes as you hear someone's death cry."""	c-reachable	C death_cry emits this exact death-cry line at src/fight.c:524.
 31	game	characterTurn	pkg/game/skill_actor_utility.go	127	129	4136	4137	H	Q	"""Huh?!?\r\n"""	c-reachable	C do_turn emits this handler-level “Huh?!?” at src/new_cmds2.c:965-967.
 32	command	CmdCutthroat	pkg/command/skill_commands.go	743	768	24211	24212	T	Q	"""That would be bad.\n\r"""	c-reachable	C do_cutthroat emits this refusal at src/new_cmds.c:572.
 33	command	CmdGroinrip	pkg/command/skill_commands.go	1725	1741	59128	59129	D	Q	"""Dismount first!\r\n"""	c-reachable	C do_groinrip emits this dismount refusal at src/new_cmds.c:768.
@@ -39,7 +39,7 @@ i	package	func	file	func_line	lit_line	source_offset	mutation_offset	old_byte	ne
 37	game	*World.mobileActivityForMob	pkg/game/mobact.go	170	475	15014	15016	n	Q	"""$n grins evilly."""	c-reachable	C mobile_activity emits this act at src/mobact.c:313.
 38	game	CharacterHit	pkg/game/character_command.go	336	359	13871	13872	Y	Q	"""You hit yourself...OUCH!."""	c-reachable	C do_hit emits this self-hit line at src/act.offensive.c:114.
 39	game	CharacterDream	pkg/game/character_command.go	212	221	8085	8087	n	Q	"""$n dreams of running naked through a field of tulips."""	c-reachable	C do_dream emits this room act at src/act.social.c:302.
-40	game	*World.doTransformAt	pkg/game/other_status.go	134	170	6060	6062	n	Q	"""$n shivers and transforms out of werewolf form!"""	c-reachable	C do_transform emits this room act at src/act.other.c:1439.
+40	game	*World.doTransformAt	pkg/game/other_status.go	134	170	6060	6062	n	Q	"""$n shivers and transforms out of werewolf form!"""	c-reachable	C do_transform emits this werewolf-form message at src/act.other.c:1475; line 1439 is a separate “into a werewolf” message.
 41	game	*World.DoFlee	pkg/game/flee.go	39	99	2977	2979	n	Q	"""$n tries to flee, but can't!"""	c-reachable	C do_flee emits this failed-flee act at src/act.offensive.c:410.
 42	game	specBatRoom	pkg/game/spec_procs2.go	1764	1776	61795	61796	Y	Q	"""Your movements wake up $n!"""	c-unreachable	C SPECIAL(bat_room) contains this line at src/spec_procs2.c:1763, but src/spec_assign.c:588 only declares the special; a full-file search finds no room assignment, so no C path reaches it.
 43	session	cmdAt	pkg/session/wiz_movement.go	99	109	3081	3082	W	Q	"""What do you want to do there?\r\n"""	c-reachable	C do_at emits this missing-destination prompt at src/act.wizard.c:254.
