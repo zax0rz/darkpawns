@@ -1061,7 +1061,7 @@ src/spec_procs3.c:quan_lo	pkg/game/actor_specials_rooms.go	specQuanLoBody	split
 src/spec_procs3.c:quan_lo	pkg/game/spec_procs3.go	specQuanLo	split
 src/spec_procs3.c:roach	pkg/game/spec_procs3.go	specRoach	primary
 src/spec_procs3.c:teleport_victim	pkg/game/spec_procs3.go	specTeleportVictim	primary
-src/spec_procs3.c:turn_undead	pkg/game/spec_procs3.go	specTurnUndead	primary
+src/spec_procs3.c:turn_undead	pkg/game/spec_procs3.go	specTurnUndeadObject	primary
 src/spec_procs3.c:werewolf	pkg/game/spec_procs3.go	specWerewolf	primary
 src/spell_parser.c:call_magic	pkg/spells/call_magic.go	CallMagic	primary
 src/spell_parser.c:call_magic	pkg/spells/call_magic.go	CastFromSpecial	split
