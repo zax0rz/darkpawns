@@ -112,10 +112,6 @@ func cmdZlist(s *Session, args []string) error {
 // a signed decimal prefix, and the final list is paged through the descriptor.
 func cmdRlist(s *Session, args []string) error {
 	pw := s.GetWorld().GetParsedWorld()
-	if pw == nil {
-		s.Send("No parsed world available.")
-		return nil
-	}
 	argument, _ := game.OneArgument(strings.Join(args, " "))
 	zoneNumber := mlistAtoi(argument)
 	var result strings.Builder
@@ -153,10 +149,6 @@ func cmdRlist(s *Session, args []string) error {
 // C's "Sorry, there are no objs in that zone." line.
 func cmdOlist(s *Session, args []string) error {
 	pw := s.GetWorld().GetParsedWorld()
-	if pw == nil {
-		s.Send("Sorry, there are no objs in that zone.\r\n")
-		return nil
-	}
 	argument, _ := game.OneArgument(strings.Join(args, " "))
 	zoneNumber := mlistAtoi(argument)
 	start := zoneNumber * 100
@@ -190,10 +182,6 @@ func cmdOlist(s *Session, args []string) error {
 // string as zero.
 func cmdMlist(s *Session, args []string) error {
 	pw := s.GetWorld().GetParsedWorld()
-	if pw == nil {
-		s.Send("No parsed world available.")
-		return nil
-	}
 	argument, _ := game.OneArgument(strings.Join(args, " "))
 	zoneNumber := mlistAtoi(argument)
 	start := zoneNumber * 100
