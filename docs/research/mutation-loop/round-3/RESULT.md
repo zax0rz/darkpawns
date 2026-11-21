@@ -26,7 +26,7 @@ The corrected bar is not met. At this checkpoint, no repair batch is included; t
 
 ## Decisions for Zach
 
-Round 3 row 50 remains `go-only-in-game`: Go `ExecBan` has a “Ban system not initialized.” fallback without a corresponding C path. Keep the sampled code untouched; see `DECISIONS.md` for the DP-1596 decision.
+Round 3 row 50 was frozen as `go-only-in-game` at the measurement commit. Zach later ruled to remove the unreachable `w.Bans == nil` fallbacks, and PR #2934 merged that change; the frozen measurement and denominator are unchanged.
 
 ## For Claude
 
