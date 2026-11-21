@@ -197,7 +197,8 @@ func TestSpecRescuer_NilChDoesNotPanic_DefendsAllyAgainstAttacker(t *testing.T) 
 	if rescuer.GetFighting() != player.GetName() || player.GetFighting() != rescuer.GetName() {
 		t.Fatalf("expected rescue to interpose rescuer, got rescuer=%q player=%q", rescuer.GetFighting(), player.GetFighting())
 	}
-	// C enrols the ally inside hit()'s damage() (src/act.offensive.c:575);
+	// C calls hit(vict, tmp_ch) after retargeting, then waits the rescued player
+	// for two violence pulses (src/act.offensive.c:576-581).
 	// that is pinned with a real engine by
 	// TestSpecRescuer_UsesCanonicalAllyHitAndWaitState.
 }

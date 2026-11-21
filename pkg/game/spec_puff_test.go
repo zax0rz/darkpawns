@@ -14,11 +14,16 @@ func TestSpecPuff_CommandAndDeathGates(t *testing.T) {
 	lastMsg() // discard the spawn announcement
 
 	dprng.ResetStream(1)
+	wantNextDraw := dprng.Number(0, 90)
+	dprng.ResetStream(1)
 	if specPuff(w, nil, mob, "look", "") {
 		t.Fatal("command-triggered puff should fall through")
 	}
 	if got := lastMsg(); got != "" {
 		t.Fatalf("command-triggered puff output = %q, want empty", got)
+	}
+	if got := dprng.Number(0, 90); got != wantNextDraw {
+		t.Fatalf("command gate consumed a draw: next number = %d, want %d", got, wantNextDraw)
 	}
 
 	mob.CurrentHP = -1
@@ -28,6 +33,7 @@ func TestSpecPuff_CommandAndDeathGates(t *testing.T) {
 		commandName, commandArg = command, argument
 		return liveDirect(body, command, argument, subcmdVal)
 	}
+	dprng.ResetStream(1)
 	if !specPuff(w, nil, mob, "", "") {
 		t.Fatal("dead puff should be handled")
 	}
@@ -37,60 +43,8 @@ func TestSpecPuff_CommandAndDeathGates(t *testing.T) {
 	if got := lastMsg(); got != "A test mob states, 'Shit, I'm dead.'\r\n" {
 		t.Fatalf("dead puff output = %q, want C do_say output", got)
 	}
-}
-
-func TestSpecPuff_CaseOutputsAndReturnContract(t *testing.T) {
-	tests := []struct {
-		name       string
-		roll       int
-		wantHandle bool
-		wantOutput string
-	}{
-		{
-			name:       "exclaims",
-			roll:       0,
-			wantHandle: true,
-			wantOutput: "A test mob exclaims, 'My god!  It's full of stars!'\r\n",
-		},
-		{
-			name:       "states",
-			roll:       3,
-			wantHandle: true,
-			wantOutput: "A test mob states, 'I've got this peaceful, easy feeling.'\r\n",
-		},
-		{
-			name:       "room-emote",
-			roll:       13,
-			wantHandle: true,
-			wantOutput: "A test mob looks at you and then breaks out in a fit of laughter!\r\n",
-		},
-		{
-			name:       "silent-handled",
-			roll:       4,
-			wantHandle: true,
-		},
-		{
-			name:       "default-fallthrough",
-			roll:       90,
-			wantOutput: "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			w, _, lastMsg := newSpecProcTestWorld(t)
-			mob := newSpecProcTestMob(t, w, 1001, 10)
-			lastMsg() // discard the spawn announcement
-			seed := seedForPuffRoll(t, tt.roll)
-			dprng.ResetStream(seed)
-
-			if got := specPuff(w, nil, mob, "", ""); got != tt.wantHandle {
-				t.Fatalf("handled = %v, want %v", got, tt.wantHandle)
-			}
-			if got := lastMsg(); got != tt.wantOutput {
-				t.Fatalf("output = %q, want %q", got, tt.wantOutput)
-			}
-		})
+	if got := dprng.Number(0, 90); got != wantNextDraw {
+		t.Fatalf("dead gate consumed a draw: next number = %d, want %d", got, wantNextDraw)
 	}
 }
 

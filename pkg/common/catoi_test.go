@@ -37,6 +37,7 @@ func TestAtoiCMatchesC(t *testing.T) {
 		{"int max", "2147483647", 2147483647},
 		{"int max plus one", "2147483648", -2147483648},
 		{"uint32 range wraps to zero", "4294967296", 0},
+		{"uint32 plus one wraps to one", "4294967297", 1},
 		{"give lines wimpy wrap", "3000000000", -1294967296},
 		{"negative give wrap", "-3000000000", 1294967296},
 		{"long max truncates", "9223372036854775807", -1},
