@@ -237,4 +237,15 @@ The OLC editor suites: oedit (121 assertions), medit, zedit, sedit, luaedit,
 redit working-copy/concurrency/restart-survival, tedit buffer sharing, string
 commands, zone-save atomicity, and the web/telnet OLC equivalence proof.
 No fixes, no J10 divergences. Running: 845/1537.
+ HEAD
  121b7e180 (test(session): audit batch 10 — OLC editor suites, all R)
+
+## Batch 11 results (later tests 701–800, 2026-09/10)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T890-T989.
+
+Link-dead reaper lifecycle (dupe-check reconnect/usurp/switched), GMCP
+negotiation/state, PR #1682's level-filtered show listing (R5h revert-proof),
+persistence/autosave/recovery, proxy limits, clock control, terminal frames,
+greetings fixture. No fixes, no J10 divergences. Running: 945/1537.
+ ba21921fb (test(session): audit batch 11 — reaper/GMCP/persistence layer, all R)
