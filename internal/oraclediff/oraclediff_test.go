@@ -15,8 +15,8 @@ import (
 // the harness, see ReconcilePromptFrames).
 func TestNormalizeTier1Rules(t *testing.T) {
 	raw := "\x1b[31mRoom\x1b[0m\r\n" +
-		"  Str: excellent     Dex: poor          Int: average   \r\n" +
-		"  Wis: decent        Con: good          Cha: bad\r\n" +
+		"  Str: excellent     Dex: poor          Int: average      \r\n" +
+		"  Wis: decent        Con: good          Cha: bad          \r\n" +
 		"22H 100M 83V >   \r\nCurrent machine time: Thu Nov  5 09:07:03 2026\r\n" +
 		"As of 10-17-2008 there has been a pwipe.\r\n**** Dark Pawns 3.0 beta\r\nDescription  \r\n"
 	want := "Room\n<ROLLED_STATS>\n<PROMPT>\nCurrent machine time: <WALL_CLOCK>\n" +
