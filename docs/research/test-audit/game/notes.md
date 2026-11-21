@@ -1,0 +1,61 @@
+# Test audit: pkg/game — notes
+
+Audit run: 2026-11-21, branch `glm/test-audit-game`, base `origin/main`
+(706084c68). Method: `docs/research/test-audit/pilot-combat/BRIEF.md` with the
+three changes from PROMPT-2026-11-20 (single agent self-checks non-R marks;
+fix-as-you-go; output in-repo) and the PROMPT-2026-11-21 additions (BRENDA69
+rows attribute to "OpenClaw (multi-model orchestrator)" per PF-152).
+
+Baseline: `go test ./pkg/game/` passes at 706084c68 (3.7s).
+Coverage baseline: **64.4%** of statements.
+
+Ground truth: 1,991 test functions in 487 files (the roadmap's "~1,989").
+`go test -list` shows 1,991 on Linux. Attribution via per-file
+`git log --reverse -p` first-introduction parsing: all 1,991 mapped to an
+introducing commit and date.
+
+Era shape: 338 tests born before the first oracle harness (2026-07-12) —
+19 from April, 62 from May, 84 from June, 173 from early July. The bulk is
+post-oracle: July 371, August 329, September 238, October 646, November 242
+(tests attributed to July 12+ count as later; early-July pre-harness tests
+count as pre-oracle).
+
+Authors (introducing-commit git author): Zach Greene 1105, zach 403 (the
+same human under two identities), BRENDA69 416 (OpenClaw, multi-model
+orchestrator — PF-152, no model assigned), DeepSeek/deepseek 41, Luna 15,
+remainder single digits.
+
+## Predictions (written before reading any game test)
+
+pkg/command landed at R 161 / F 9 / D 3 (93% keep); pkg/session predicted
+94.1% keepers. pkg/game is the oldest and biggest package: it carries the
+April 2026 layer — the port's very first weeks, before ANY harness or
+coverage discipline — plus the largest BRENDA69 share (416). The April/May
+smoke-test layer should be the weakest of any audited package; the huge
+October/November layer postdates the depth-test style and should be mostly R.
+pkg/game also holds the combat/skill/death formulas, so J10 (a test pinning
+Go bytes C disagrees with) is more likely here than anywhere — the pilot and
+both Kimi audits each found one.
+
+| Mark | Pre-oracle (338) | Later (1653) | Total (1991) |
+|---|---|---|---|
+| R keep | 262 | 1540 | 1802 (90.5%) |
+| F fix | 48 | 72 | 120 (6.0%) |
+| C merge | 12 | 20 | 32 (1.6%) |
+| D delete | 16 | 21 | 37 (1.9%) |
+
+Junk codes expected: J2 (cannot-fail assertions) and J3 (name overpromise)
+dominating the April–June smoke layer; J8 (mock supplies the behavior)
+around the manager/engine seams; a handful of J5 (implementation-shape pins)
+on the engine internals; at least one J10 (Go/C divergence pinned as
+expected). Coverage: roughly flat overall — F fixes strengthen assertions,
+D deletions only where a named test keeps the behavior.
+
+Confidence: low on the exact F/C/D split; the R share and the weak-marks-
+concentrate-pre-oracle pattern are the firm guesses.
+
+## Batches
+
+- Batch 1–3+: the 338 pre-oracle tests in date order (~50–70 per batch).
+- Then the 1,653 later tests in date order, ~50–100 per batch.
+
