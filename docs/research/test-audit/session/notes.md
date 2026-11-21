@@ -263,3 +263,19 @@ September depth files (parry/pardon/poofin/poofout/prompt/reroll/restore/
 return/rlist/load/mlist/orgasm/order/page/qui/qsay/lines). Same established
 patterns: C entry gates, exact byte branches, state effects. No fixes, no
 J10 divergences. Running: 545/1537; all 400 post-oracle marks are R.
+
+### Ledger update (2026-11-21, review hold follow-up)
+
+Per-row evidence: every T446–T545 row's evidence cell now names what was
+checked for that test — the do_pardon/do_restore/do_return branch bytes, the
+parry act audiences and wait, the poofin/poofout raw-argument preservation,
+the reroll seeded-stat output, the page/qsay/qui audience bytes, and each
+registration row's exact C gate values. Test file/line columns are
+backfilled.
+
+All-R spot-checks (random draw, seed 20261107, from T446–T545): T518
+TestPurrRegistrationUsesCEntryGate (command_gates.tsv:295 purr position 5->4),
+T530 TestRinRegistrationUsesCEntryGate (registerCommand forced MinPosition 5,
+rin golden 8), T494 TestOrgasmRegistrationUsesCEntryGate (registerCommand
+forced MinPosition 0, orgasm golden 5). All three went red and were restored
+byte for byte (mutations.tsv).
