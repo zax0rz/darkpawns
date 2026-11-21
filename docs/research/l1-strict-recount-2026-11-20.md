@@ -10,12 +10,13 @@ recount had, and uses Claude's combined census on main 43cbca21b
 (`/home/zach/Archives/darkpawns/oracle-runs/2026-11-20/claude-integ-1120-full`)
 for the coverage join.
 
-**Status at writing:** Claude's combined census was still running
-(36/36 workers active, no summary yet), so the coverage-based recount below
-is recorded as PENDING and the row-level recount is taken from the four batch
-TSVs plus this PR's new evidence. When the run finishes, rerun
-`cmd/dp-census-coverage` on its `census-dump` and re-run
-`docs/research/l1-strict-2026-11-19.md`'s join to confirm.
+**Status:** complete. Claude's combined census
+`claude-integ-1120-full` (main `43cbca21b`) finished at 10879.8s:
+full corpus CLEAN_AFTER_RECHECK, claims corpus NOT_CLEAN on three INFRA rows
+(groinrip-sleeping-pk-depth, mudlog-olc-disk-depth,
+spec-proc-remorter-equipment — infrastructure-shaped, re-run budget
+exhausted; no FAIL rows; draw parity clean on both corpora). Those three are
+Claude's to re-run; the census-dump is intact and was used as-is.
 
 ## Row-level recount (the 20 rows the finish-L1 brief carried)
 
@@ -59,16 +60,81 @@ mobact.c:252 (race-hate staging). Settled: the other 15 (3 witnessed,
   CON_IDREADING (714), which need an in-flight ident socket (DP-2918). This
   aligns the finish TSV with the already-excluded manifest rows.
 
-## Coverage-based recount
+## Coverage-based recount (complete)
 
-PENDING the claude-integ-1120-full run. When its census-dump lands:
+Ran `GOEXPERIMENT=nojsonv2 go run ./cmd/dp-census-coverage --dump
+/home/zach/Archives/darkpawns/oracle-runs/2026-11-20/claude-integ-1120-full/census-dump`.
+Output retained at `/home/zach/Archives/darkpawns/notes/coverage-2026-11-20/`
+(coverage.tsv, coverage-summary.txt). The dump has 2,428 scenarios and
+39,283 C blocks at main `43cbca21b`. It reports **4,326 of 4,902 measurable C
+segments covered (88.2%)** — 576 uncovered, 1,336 unverifiable short
+segments. (11-19 baseline: 4,285/4,902, 617 uncovered.)
 
-```bash
-GOEXPERIMENT=nojsonv2 go run ./cmd/dp-census-coverage \
-  --dump /home/zach/Archives/darkpawns/oracle-runs/2026-11-20/claude-integ-1120-full/census-dump
-```
+The uncovered set was re-classified with the 11-19 precedence, re-joining the
+CURRENT top-level manifests (which include Luna's batch-one rows that merged
+in #2861 — after the 11-19 recount ran — so three segments move to settled on
+manifest rows the 11-19 pass could not see), the batch TSVs (batch two
+#2891, batch three #2914) and this PR's `l1-final` TSV. A batch ending
+overrides the 11-19 bucket; segments the new dump covers outright leave the
+set (42 flipped to covered on main between the dumps — the four say_spell
+segments via #2898's matcher wildcard, Luna's mutation-repair witnesses, and
+the rest of the merged batch scenarios).
 
-and re-run the 11-19 classification (uncovered segments joined with the
-current top-level manifests and the four batch TSVs). Expected movements vs
-the 11-19 baseline: the four say_spell segments covered (DP-2898's matcher
-fix), plus every segment witnessed by batches two/three/final.
+| Bucket (after join) | Segment rows |
+|---|---:|
+| `settled-excluded` | 304 |
+| `settled-unreachable` | 225 |
+| `settled-witnessed` | 22 |
+| `settled-unit` | 8 |
+| `cited-not-witnessed` | 11 |
+| `wide-cite-only` | 5 |
+| `unit-unqualified` | 1 |
+| **Still uncovered** | **576** |
+
+**Open by formula: 16** (was 161 on 11-19) + 1 exposed unit-unqualified =
+**17 conservative unresolved** (was 163).
+
+**Moved to settled by current manifest rows (#2861, after the 11-19 run):**
+
+- act.comm.c:1115 — `Monsters can't page.. go away.`: page.tsv:3
+  `page.handler-npc` [excluded] carries the exact-line cite; do_page is
+  reachable only through the LVL_IMMORT command-table row and
+  command_interpreter rejects IS_NPC switched bodies before dispatch, so `ch`
+  is never an NPC there.
+- comm.c:915 x2 — the `nusage:` record_usage literals (PF-133 class):
+  comm.tsv:54 `comm.socket-stats-internal-log` [excluded] carries the
+  exact-line cite; the sink is `log()` at comm.c:916, a non-player sink.
+
+**The 16 carried open rows:**
+
+- `cited-not-witnessed` (11): act.offensive.c:558 (`You fail the rescue!`,
+  the percent>prob arm; the rescue-roll rows cite it widely and this dump's
+  rescue blocks never roll the failure), act.wizard.c:1818 (`Current machine
+  time: %s` — the whole line is wall-clock text the dump normalizer redacts,
+  the DP-1496 class; date.machine-time is oracle-green at the exact line but
+  a retained block cannot carry the bytes), fight.c:1179 x3, 1183, 1187,
+  1196, 1209 x2 (the attitude-loot/brag quip lines: oracle-green quip rows
+  cite them narrowly but this dump's quip blocks print other arms, and the
+  case5/possessive rows are unit-green only), fight.c:1553 (the mounted
+  poison-tick line; only a unit-green row covers it).
+- `wide-cite-only` (5): constants.c:712, 714, 716 (ident-socket states,
+  DP-2918), mobact.c:252 (race-hate staging) — this PR's open rows — and
+  fight.c:1591 (see below).
+
+Plus one unit-unqualified: constants.c:691 (CON_CLOSE same-pass state,
+DP-2918) — also this PR's open row.
+
+**One new arrival:** `src/fight.c:1591#1` (`screams in pain!`, the
+`act("$N screams in pain!", ...)` arm behind the `!number(0,2)` draw at
+fight.c:1590). The 11-19 dump covered it via
+`spellmatrix-staff-olc-07-depth`; in this dump that scenario ran but the
+1-in-3 draw did not fire, so the segment flickers back to uncovered. Its only
+manifest cites are wide (cast.tsv spellmatrix rows, fight.c:1587-1614), so it
+classifies `wide-cite-only`; a multi-seed run of the staff-olc scenario
+matrix would re-cover it.
+
+Note on scope: my branch's own witness scenarios (compare-band-depth,
+mob-sound-mime-box-depth, corpse-decay witnesses, zedit skip, dream unit
+rows) are not in this main dump — their segments stay uncovered in the table
+above and are settled through the batch-TSV join with their retained runs,
+as the brief's join prescribes.
