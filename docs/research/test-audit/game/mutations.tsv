@@ -21,3 +21,6 @@ TestDoUseWandConsumesInstanceChargeAndUsesDefaultLevel	pkg/game/other_economy.go
 TestSpecGuildGuard_GuildInfoMatchesC	pkg/game/class_tables.go	-	GuildInfo thief room 8028 -> 8029	n/a (R spot-check)	n/a (R spot-check)	red
 TestDoFleshAlterFailureWaitAndImprovement	pkg/game/skill_special.go	-	flesh-alter failure WaitCh 2 -> 1	n/a (R spot-check)	n/a (R spot-check)	red
 TestDoCarveCEntryBranches	pkg/game/skill_advanced.go	-	"initials ... carve in that" -> "carve on that" (first attempt mutated the self-target arm the test never drives — recorded)	n/a (R spot-check)	n/a (R spot-check)	red
+TestEnterCircleLookBytesMatchC	pkg/game/spec_procs4.go	366	revert C LFCR first-line terminator to CRLF	green (old test expected CRLF)	red (fixed test expects C LFCR)	yes
+TestEquipmentToInventory	pkg/game/equipment.go	250	unequip sets LocNowhere instead of LocInventoryPlayer(owner)	green (old test allowed ObjNowhere)	red (fixed exact owner/location assertion)	yes
+TestExecDNSAddDeletePrefixAndPersistenceState	pkg/game/dns.go	70,95	remove saveDNSLocked after both add and delete	green (old body checks only memory/output)	red (fresh World reload finds no added entry)	yes

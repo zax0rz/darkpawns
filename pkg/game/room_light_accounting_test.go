@@ -172,7 +172,7 @@ func TestBurnoutDropsRoomLightExactlyOnce(t *testing.T) {
 
 // (d) extract_char_final drops equipped items with obj_to_room(unequip_char())
 // — one decrement per lit light, and the DROP itself adds nothing
-// (src/handler.c:1142; obj_to_room :901-913 never touches light). A dropped
+// (src/handler.c:1142; obj_to_room src/handler.c:901-913 never touches light). A dropped
 // lit lantern therefore leaves the room dark.
 func TestExtractionDropsHeldLightWithoutRelight(t *testing.T) {
 	w, ch, _ := newLightTestWorld(t)

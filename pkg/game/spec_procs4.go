@@ -363,7 +363,7 @@ func specEnterCircle(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 		return true
 	}
 
-	ch.SendMessage("Looking into the circle at the platform in the middle of the room, you see\r\n")
+	ch.SendMessage("Looking into the circle at the platform in the middle of the room, you see\n\r")
 	occupants := w.GetAllCharsInRoom(portalRoom)
 	if len(occupants) > 0 {
 		for i, raw := range occupants {
