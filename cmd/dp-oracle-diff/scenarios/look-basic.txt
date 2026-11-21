@@ -69,8 +69,8 @@ Y
 1
 
 [warmup]
-goto 8162
-teleport Lookpeer 8162
+set player Looker room 8162
+set player Lookpeer room 8162
 
 [probe]
 look

@@ -65,10 +65,10 @@ Y
 1
 
 [warmup]
-goto 8162
-teleport Replypeer 8162
+set player Replyactor room 8162
+set player Replypeer room 8162
 send:peer tell Replyactor first message
-send:peer goto 8163
+set player Replypeer room 8163
 
 [probe]
 reply checking in
