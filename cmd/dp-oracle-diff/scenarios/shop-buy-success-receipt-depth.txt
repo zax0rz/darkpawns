@@ -11,10 +11,10 @@ spawn-mob 8005 1 8038 80
 give-object 8005 8037 1 80
 
 [setup:oracle]
-Shopbuyer
+Shopgod
 Y
-shopbuyerpass
-shopbuyerpass
+oraclepass
+oraclepass
 N
 M
 H
@@ -25,10 +25,38 @@ Y
 1
 
 [setup:port]
+Shopgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:buyer]
+Shopbuyer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:buyer]
 Shopbuyer
 y
-shopbuyerpass
-shopbuyerpass
+oraclepass
+oraclepass
 N
 M
 H
@@ -40,8 +68,9 @@ Y
 
 [warmup]
 goto 8038
+teleport Shopbuyer 8038
 set player Shopbuyer level 30
 set player Shopbuyer gold 50000
 
-[probe]
+[probe:buyer]
 buy sword

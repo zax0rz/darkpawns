@@ -14,8 +14,8 @@ spawn-mob 69 1 4813 48
 [setup:oracle]
 Shopbody
 Y
-shopbodypass
-shopbodypass
+oraclepass
+oraclepass
 N
 M
 H
@@ -28,8 +28,8 @@ Y
 [setup:port]
 Shopbody
 y
-shopbodypass
-shopbodypass
+oraclepass
+oraclepass
 N
 M
 H
@@ -40,7 +40,6 @@ Y
 1
 
 [warmup]
-set player Shopbody level 40
 goto 4813
 set mob clone level 9
 set mob clone align -1000
