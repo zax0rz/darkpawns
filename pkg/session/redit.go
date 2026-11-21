@@ -75,7 +75,7 @@ const (
 // command names remain unregistered; their shared surface is not part of this
 // bounded room-editor goal.
 func cmdRedit(s *Session, args []string) error {
-	if s.player == nil || s.manager == nil || s.manager.world == nil {
+	if s.player == nil {
 		return fmt.Errorf("not logged in")
 	}
 

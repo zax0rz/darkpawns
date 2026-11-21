@@ -302,6 +302,13 @@ func TestCmdBearhug_FightingTargetFallback(t *testing.T) {
 			t.Errorf("expected bearhug to target fighting opponent, got: %q", msg)
 		}
 	}
+	// Positive witness that the fallback bearhug ran: do_bearhug's
+	// WAIT_STATE(ch, PULSE_VIOLENCE * 2) is unconditional (src/new_cmds.c
+	// do_bearhug tail). A no-op handler never reaches it (mutations.tsv).
+	if got := session.player.GetWaitState(); got != 2*engine.PULSE_VIOLENCE {
+		t.Errorf("bearhugger wait = %d, want %d — the fallback never executed its tail",
+			got, 2*engine.PULSE_VIOLENCE)
+	}
 }
 
 func TestCmdBash_AppliesWaitStateToMobTarget(t *testing.T) {

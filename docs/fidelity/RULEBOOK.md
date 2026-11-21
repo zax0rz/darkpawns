@@ -77,7 +77,11 @@ the C server exactly. Not "equivalent." Not "improved." Identical.
   (combat's yellow/red and the BLEEDING red were missing, and only 17 of 1,801
   scenarios kept ANSI, none of them combat) and by cutthroat's `\n\r`
   terminator (#532 to #537), which passed green because the normalizer folds
-  line endings.
+  line endings. Every normalizer mask must match only the exact byte shape C
+  emits at that site (including field widths, day padding, and separators),
+  masking only the varying value inside C's shape and never dropping whole
+  lines; each rule carries unit tests showing a wrong shape stays unmasked
+  (taught by PF-122 and PF-151, DP-1620).
 
 ## R2. The command surface is part of the game
 
@@ -266,6 +270,7 @@ cannot observe them.
 | 2026-09-29 | R3c extended (raw-pulse `WAIT_STATE`) | DP-1368 / PR #1705: `PULSE_VIOLENCE + N` waits stored as whole rounds (hit 60 vs C's 22 pulses, plus kick, circle, strike and retreat's failure arm). Added by the implementing agent under the old R5b wording; Zach reviewed and kept it |
 | 2026-09-29 | *Who amends* added; R5b reworded | The R3c edit above: the agent followed R5b's "amend this rulebook" literally, and read authorization for the fix as authorization for the rule. The instruction was ambiguous, so it's clarified: agents propose, Zach approves the text |
 | 2026-10-30 | R1b added | DeepSeek ANSI audit (PR #2231): the census strips ANSI and folds terminators, so combat color was never compared; same class as cutthroat #532/#537. Proposed by the auditing agent, wording widened by Claude, approved by Zach |
+| 2026-11-21 | R1b exact-shape masks | DP-1620 (PR #2955): the wall-clock mask accepted Go's unpadded asctime day (PF-151), and a line-drop rule hid every byte of `date`; same class as the trailing-space trim (PF-122). Proposed by Neon, approved by Zach |
 | 2026-11-05 | R5i added | PR #2271: quiet-mobs, the fixture in 1,813 scenarios, hid literal `$n` on every ambient city mob (PF-100); second instance after PF-099's no-cost practice fixtures, so R5b. Proposed by GLM, approved by Zach |
 | 2026-11-06 | R5j added | PR #2280 (DP-1456): 52 spellmatrix scenarios passed on identical `Huh?!?` refusals of their item-editor setup, backing 269 manifest rows in v0.1.8; second instance after RO-012's refused peer logins, so R5b. Proposed by GLM, wording tightened by Claude, approved by Zach |
 | 2026-11-18 | R1a shop exclusion added | Five shop and bank branches (`docs/briefs/PROPOSAL-2026-11-14-shop-r1a.md`) exist only through C overflow or an out-of-bounds read, so no oracle scenario can settle them and no unit test can without inventing a semantic. Proposed by DeepSeek, approved by Zach as written |

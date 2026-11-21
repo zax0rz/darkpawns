@@ -132,9 +132,6 @@ func loadStartsWithDigit(value string) bool {
 
 func findMobLoadVNum(s *Session, name string) (int, bool) {
 	parsed := s.manager.world.GetParsedWorld()
-	if parsed == nil {
-		return 0, false
-	}
 	for i := range parsed.Mobs {
 		if loadNameMatches(name, parsed.Mobs[i].Keywords) {
 			return parsed.Mobs[i].VNum, true
@@ -145,9 +142,6 @@ func findMobLoadVNum(s *Session, name string) (int, bool) {
 
 func findObjectLoadVNum(s *Session, name string) (int, bool) {
 	parsed := s.manager.world.GetParsedWorld()
-	if parsed == nil {
-		return 0, false
-	}
 	for i := range parsed.Objs {
 		if loadNameMatches(name, parsed.Objs[i].Keywords) {
 			return parsed.Objs[i].VNum, true

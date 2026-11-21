@@ -150,7 +150,7 @@ type oeditExtraMeta struct {
 
 // cmdOedit is the Go port of do_olc's SCMD_OLC_OEDIT branch (src/olc.c).
 func cmdOedit(s *Session, args []string) error {
-	if s.player == nil || s.manager == nil || s.manager.world == nil {
+	if s.player == nil {
 		return fmt.Errorf("not logged in")
 	}
 

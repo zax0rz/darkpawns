@@ -70,14 +70,12 @@ func TestCompileTimeStampKeepsFormatDivergences(t *testing.T) {
 	}
 }
 
-// TestCompileTimeStampAdmitsPaddedDay records the one thing the approved
-// pattern (\d{1,2}) cannot tell apart: C formats the day with %d, so it never
-// emits "01", and a port that did would be masked too. Every other shape
-// difference — month abbreviation, separator widths, seconds, label — still
-// fails, which is what the mask must not hide.
-func TestCompileTimeStampAdmitsPaddedDay(t *testing.T) {
-	if Normalize("Compile Time: October 01, 2026   09:27\r\n") != Normalize("Compile Time: October 1, 2026   09:27\r\n") {
-		t.Fatal(`pattern \d{1,2} is expected to admit a zero-padded day; the approved pattern keeps it masked`)
+// TestCompileTimeStampRejectsPaddedDay proves that C's %d day format
+// (src/version.c:57) never emits a leading zero, so a port that prints "01"
+// stays unmasked and fails the comparison (DP-1620).
+func TestCompileTimeStampRejectsPaddedDay(t *testing.T) {
+	if Normalize("Compile Time: October 01, 2026   09:27\r\n") == Normalize("Compile Time: October 1, 2026   09:27\r\n") {
+		t.Fatal("compileTimeStamp hid a zero-padded day that C's unpadded day format cannot emit")
 	}
 }
 
