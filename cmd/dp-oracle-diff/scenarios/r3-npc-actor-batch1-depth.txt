@@ -19,7 +19,7 @@
 empty-players
 quiet-mobs
 add-obj-index 132.obj
-replace-room-exits 8162 north 8161 1
+replace-room-exits 8162 north 8161 3
 spawn-mob 69 1 8162 80
 spawn-mob 70 1 8162 80
 equip-object 70 1010 999 16 80
