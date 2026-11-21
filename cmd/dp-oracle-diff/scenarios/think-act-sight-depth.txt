@@ -1,10 +1,9 @@
-# C-first think sight vehicle (src/act.comm.c:1356-1386). do_think's room
-# copies are act(buf, FALSE, ch, 0, 0, TO_ROOM) (:1363 empty arm, :1376 the
-# spoken thought), so the watcher's sight decides the actor's rendering: in a
-# ROOM_DARK room (src/structs.h:56) the mortal watcher's LIGHT_OK is false
-# (src/utils.h:515) and PERS renders "$n" as "Someone". The player's own text
-# sits inside act's format string, so $-codes the thinker typed substitute for
-# the room as well. The pre-DP-1621 Go path broadcast the raw name.
+# C-first think act vehicle (src/act.comm.c:1356-1386). do_think's room
+# copies are act(buf, FALSE, ch, 0, 0, TO_ROOM); the sprintf'd "$n thinks..."
+# prefix substitutes with PERS, so a watcher in a ROOM_DARK room
+# (src/structs.h:56; LIGHT_OK false, src/utils.h:515) reads "Someone" — while
+# the thought text arrives doubled by C's input layer (src/comm.c:2216-2218)
+# and prints literally. A sleeper is skipped entirely (src/comm.c:2543).
 #
 # depth-case: think.act-sight
 
@@ -69,6 +68,12 @@ Y
 <ENTER>
 1
 
+[warmup]
+goto 8162
+teleport Thinksee 8162
+
 [probe]
 think hello world
-send:Thinksee think $n quietly
+think $n quietly
+force Thinksee sleep
+think last words

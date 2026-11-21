@@ -1,11 +1,12 @@
 # C-first quit sight vehicle (src/act.other.c:134). do_quit sends
 # act("$n has left the game.", TRUE, ch, 0, 0, TO_ROOM) iff !GET_INVIS_LEV(ch),
 # so a watcher who cannot see the quitter gets nothing at all. The supervisor
-# forces the quitters through reallyquit; Quitter1 departs beside a sighted
-# watcher in the lit start room, Quitter2 departs in a ROOM_DARK room
+# forces the quitters through reallyquit; Quitgo departs beside a sighted
+# watcher in the lit start room, Quitdim departs in a ROOM_DARK room
 # (src/structs.h:56) where the watcher's LIGHT_OK is false (src/utils.h:515)
 # and the watch is silent. The pre-DP-1621 Go path broadcast the raw name
-# through send_to_room semantics with no sight gate.
+# through send_to_room semantics with no sight gate, and cleanupSession
+# announced departures C's close path never makes.
 #
 # depth-case: quit.act-sight
 
@@ -155,6 +156,7 @@ Y
 1
 
 [warmup]
+goto 8162
 teleport Quitgo 8162
 teleport Quitlit 8162
 teleport Quitdim 8163
@@ -163,4 +165,4 @@ teleport Quitdark 8163
 [probe]
 force Quitgo reallyquit
 force Quitdim reallyquit
-send:Quitdark look
+send:darkpeer look

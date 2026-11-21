@@ -60,29 +60,73 @@ func TestEchoRoomActSkipsSleepingViewer(t *testing.T) {
 	}
 }
 
-// act's $-codes substitute for the room, and a viewer who cannot see the
-// actor reads "someone" (PERS, src/utils.h:529 / comm.c perform_act). A blind
-// viewer keeps receiving hide_invisible-FALSE lines, with "someone" in place
-// of the actor's name.
-func TestEchoActSubstitutesActorNameForBlindViewer(t *testing.T) {
+// C doubles typed $ signs at input (src/comm.c:2216-2218), so an echo's
+// typed "$n" reaches act as "$$n" and prints literally for everyone. The
+// empirically retained oracle bytes for "echo $n lit test." are the literal
+// argument, capitalized by act's CAP.
+func TestEchoActPassesTypedDollarsThrough(t *testing.T) {
 	w := makeRoomActTestManager(t)
 	m := newTestManager(t, w, nil)
 	god := makeCommandTestSession(t, m, "Echoer", 40, 1001)
 	awake := makeCommandTestSession(t, m, "Awake", 1, 1001)
-	blind := makeCommandTestSession(t, m, "Blindman", 1, 1001)
 	registerInWorld(t, god)
 	registerInWorld(t, awake)
-	registerInWorld(t, blind)
-	blind.player.SetAffect(game.AffBlind, true)
 
 	if err := ExecuteCommand(god, "echo", []string{"$n", "tests", "$s", "codes."}); err != nil {
 		t.Fatalf("ExecuteCommand echo: %v", err)
 	}
-	if got := readMsgText(t, awake); got != "Echoer tests his codes.\r\n" {
-		t.Fatalf("awake viewer got %q, want substituted codes", got)
+	if got := readMsgText(t, awake); got != "$n tests $s codes.\r\n" {
+		t.Fatalf("awake viewer got %q, want the literal argument (src/comm.c:2216 doubling)", got)
 	}
-	if got := readMsgText(t, blind); got != "Someone tests his codes.\r\n" {
-		t.Fatalf("blind viewer got %q, want someone-substituted codes", got)
+	if got := readMsgText(t, god); got != "$n tests $s codes.\r\n" {
+		t.Fatalf("echoer got %q, want the literal TO_CHAR copy", got)
+	}
+}
+
+// do_think's sprintf'd "$n thinks..." prefix substitutes with PERS, so a
+// viewer who cannot see the thinker reads "Someone"; the thought text itself
+// passes through literally for the same input-doubling reason as echo.
+func TestThinkTypedDollarsStayLiteral(t *testing.T) {
+	w := makeRoomActTestManager(t)
+	m := newTestManager(t, w, nil)
+	thinker := makeCommandTestSession(t, m, "Thinker", 40, 1001)
+	blind := makeCommandTestSession(t, m, "Blindman", 1, 1001)
+	awake := makeCommandTestSession(t, m, "Awake", 1, 1001)
+	registerInWorld(t, thinker)
+	registerInWorld(t, blind)
+	registerInWorld(t, awake)
+	thinker.player.Stats.Int = 10 // do_think refuses INT-0 actors (src/act.comm.c:1370)
+	thinker.player.CopyBaseAttributes()
+	blind.player.SetAffect(game.AffBlind, true)
+
+	if err := ExecuteCommand(thinker, "think", []string{"$n", "quietly"}); err != nil {
+		t.Fatalf("ExecuteCommand think: %v", err)
+	}
+	if got := readMsgText(t, awake); got != "Thinker thinks . o O ( $n quietly )\r\n" {
+		t.Fatalf("awake viewer got %q, want the literal thought text", got)
+	}
+	if got := readMsgText(t, blind); got != "Someone thinks . o O ( $n quietly )\r\n" {
+		t.Fatalf("blind viewer got %q, want Someone with the literal thought text", got)
+	}
+}
+
+// do_echo's SCMD_EMOTE branch sprintf's "$n %s" over the doubled argument
+// (src/act.wizard.c:149): the prefix substitutes, the body stays literal.
+func TestEmotePrefixSubstitutesBodyLiteral(t *testing.T) {
+	w := makeRoomActTestManager(t)
+	m := newTestManager(t, w, nil)
+	actor := makeCommandTestSession(t, m, "Emoter", 10, 1001)
+	watcher := makeCommandTestSession(t, m, "Awake", 1, 1001)
+	registerInWorld(t, actor)
+	registerInWorld(t, watcher)
+	actor.player.Stats.Int = 10 // do_echo's emote gate refuses INT-0 (src/act.wizard.c:139)
+	actor.player.CopyBaseAttributes()
+
+	if err := ExecuteCommand(actor, "emote", []string{"$n", "$s", "probe."}); err != nil {
+		t.Fatalf("ExecuteCommand emote: %v", err)
+	}
+	if got := readMsgText(t, watcher); got != "Emoter $n $s probe.\r\n" {
+		t.Fatalf("watcher got %q, want prefix substituted and body literal", got)
 	}
 }
 

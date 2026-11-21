@@ -2,10 +2,10 @@
 # act("$n panics, and attempts to flee!", TRUE, ch, 0, 0, TO_ROOM) with
 # hide_invisible TRUE, so a watcher who cannot see the fleer gets nothing at
 # all. In a ROOM_DARK room (src/structs.h:56) the mortal watcher's LIGHT_OK is
-# false (src/utils.h:515), CAN_SEE is false, and the watch is silent. An
-# awake sighted watcher in the lit destination still hears the panic act from
-# the old room. All six directions lead to one lit destination so the first
-# draw is always viable and the act fires exactly once.
+# false (src/utils.h:515) and the watch stays silent while the fleer still
+# escapes. All six directions lead to one lit destination so the first draw is
+# always viable and the act fires exactly once. The pre-DP-1621 Go path sent
+# the raw name line to that watcher.
 #
 # depth-case: flee.act-sight
 
@@ -71,6 +71,10 @@ Y
 <ENTER>
 1
 
+[warmup]
+goto 8162
+teleport Fleewatch 8162
+
 [probe]
 flee
-send:Fleewatch look
+send:watcher look
