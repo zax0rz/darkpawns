@@ -651,10 +651,6 @@ var wizardCaffectNames = []string{
 }
 
 func (s *Session) sendStatRoom() {
-	if s.manager == nil || s.manager.world == nil {
-		s.Send("World not available.")
-		return
-	}
 	w := s.manager.world
 	room := w.GetRoomInWorld(s.player.GetRoom())
 	if room == nil {
@@ -819,10 +815,6 @@ func (s *Session) sendStatPlayer(p *game.Player) {
 }
 
 func (s *Session) sendStatObject(name string) {
-	if s.manager == nil || s.manager.world == nil {
-		s.Send("World not available.")
-		return
-	}
 	object, ok := s.manager.world.ResolveObjectWorld(s.player, name)
 	if !ok {
 		s.Send("No such object around.\r\n")
@@ -1234,16 +1226,7 @@ func cmdVnum(s *Session, args []string) error {
 		return nil
 	}
 
-	if s.manager == nil || s.manager.world == nil {
-		s.Send("World not available.")
-		return nil
-	}
-
 	parsed := s.manager.world.GetParsedWorld()
-	if parsed == nil {
-		s.Send("Parsed world data not available.")
-		return nil
-	}
 
 	results := make([]string, 0, 30)
 	switch category {

@@ -72,7 +72,7 @@ type meditState struct {
 
 // cmdMedit is the Go port of do_olc's SCMD_OLC_MEDIT branch (src/olc.c).
 func cmdMedit(s *Session, args []string) error {
-	if s.player == nil || s.manager == nil || s.manager.world == nil {
+	if s.player == nil {
 		return fmt.Errorf("not logged in")
 	}
 

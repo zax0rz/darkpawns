@@ -16,7 +16,7 @@ func cmdOlc(s *Session, args []string) error {
 	if s.isSwitched && s.switchedMob != nil {
 		return nil
 	}
-	if s.player == nil || s.manager == nil || s.manager.world == nil {
+	if s.player == nil {
 		return fmt.Errorf("not logged in")
 	}
 	first, _ := game.OneArgument(strings.Join(args, " "))

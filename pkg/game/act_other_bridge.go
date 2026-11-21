@@ -140,10 +140,6 @@ func (w *World) ExecDream(ch *Player) { DoDream(w, ch) }
 // C's order (producer, acknowledgement, ban file); ack delivers the
 // acknowledgement bytes.
 func (w *World) ExecBan(actorName string, invis int, arg string, ack func(string)) {
-	if w.Bans == nil {
-		ack("Ban system not initialized.\r\n")
-		return
-	}
 	w.Bans.DoBan("./data/badsites", actorName, invis, arg, ack)
 }
 
@@ -151,18 +147,11 @@ func (w *World) ExecBan(actorName string, invis int, arg string, ack func(string
 // C's order here is the reverse: the acknowledgement reaches the actor before
 // the producer, so ack must write to the descriptor.
 func (w *World) ExecUnban(actorName string, invis int, arg string, ack func(string)) {
-	if w.Bans == nil {
-		ack("Ban system not initialized.\r\n")
-		return
-	}
 	w.Bans.DoUnban("./data/badsites", actorName, invis, arg, ack)
 }
 
 // ExecWhod handles the "whod" admin command (ported from whod.c do_whod).
 // Returns the message to send to the player.
 func (w *World) ExecWhod(ch *Player, arg string, output func(string)) string {
-	if w.WhodDisplay == nil {
-		return "WHOD not initialized.\r\n"
-	}
 	return w.WhodDisplay.DoWhod(ch.Name, arg, output)
 }
