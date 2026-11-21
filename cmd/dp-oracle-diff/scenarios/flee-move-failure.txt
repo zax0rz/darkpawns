@@ -6,7 +6,9 @@
 [fixture]
 empty-players
 quiet-mobs
+set-room-flag 8162 4 off
 replace-room-exits 8162 west 8161 0
+spawn-mob 16303 1 8162 80
 
 [setup:oracle]
 Fleegod
@@ -97,7 +99,8 @@ goto 8162
 teleport Exfleer 8162
 teleport Exorigin 8162
 set Exfleer move 0
-force Exfleer hit Fleegod
+set mob trainee hit 1
+force Exfleer hit trainee
 
 [probe:fleer]
 flee

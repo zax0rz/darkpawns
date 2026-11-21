@@ -70,4 +70,4 @@ goto 8162
 teleport Equiplook 8162
 
 [probe:viewer]
-look at satan
+look
