@@ -215,4 +215,15 @@ as representative). Depth files: snoop (state branches + relay framing),
 shutdown (guard bytes + lifecycle), send (half_chop audiences), set/spike/split/
 skillset/rsay/qecho/players/socials_command. No fixes, no J10 divergences.
 Running: 645/1537; all 500 post-oracle marks are R.
+ HEAD
  9fc39554f (test(session): audit batch 8 — sweep B-S + AndRecord variant + depth files, all R)
+
+## Batch 9 results (later tests 501–600, 2026-09)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T690-T789.
+
+AndRecord sweep (S–Y) plus entry_persistence (real-SQLite R5f boundary
+contracts, 81 assertions), tedit/redit editor suites, wnewbie/wiz_set/wiznet/
+zlist/syslog/entry_transport depth pins. No fixes, no J10 divergences.
+Running: 745/1537.
+ 9f83cff51 (test(session): audit batch 9 — sweep S-Y + entry persistence/editor suites, all R)
