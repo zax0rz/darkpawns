@@ -183,8 +183,10 @@ infobar layout, do_hit one_argument boundary, do_home, checkload, do_last,
 do_invis prompt, goto/dig/at movement gates, and the flee-hook install.
 
 Ledger repair: batch 3's 44-row append silently failed at the time (only the
-T145 alias row landed); the 44 rows were re-appended as T446–T489. Ids are
-audit-order labels, not load-bearing — the integrity check keys on test names.
+T145 alias row landed). The 44 recovered rows were initially numbered
+T446–T489 as a workaround and are now folded into audit order as T101–T144
+(review of #2933); batches 7+ ids shifted down 44 to keep T001–T1537
+contiguous.
 
 ## Running totals after batch 6
 
@@ -195,7 +197,7 @@ pre-oracle layer; all 300 post-oracle marks so far are R.
 
 ## Batch 7 results (later tests 301–400, 2026-09)
 
-Marks: R 100, F 0, C 0, D 0. Ledger T490-T589.
+Marks: R 100, F 0, C 0, D 0. Ledger T446-T545.
 
 The A–R continuation of the social/command registration sweep plus the
 September depth files (parry/pardon/poofin/poofout/prompt/reroll/restore/
@@ -207,7 +209,7 @@ J10 divergences. Running: 545/1537; all 400 post-oracle marks are R.
 
 ## Batch 8 results (later tests 401–500, 2026-09)
 
-Marks: R 100, F 0, C 0, D 0. Ledger T590-T689.
+Marks: R 100, F 0, C 0, D 0. Ledger T546-T645.
 
 Sweep continues (B–S) with a stronger variant: RegistrationUsesCEntryGateAndRecord
 pins the social's C-transcribed message table string by string (muhaha verified
@@ -220,7 +222,7 @@ Running: 645/1537; all 500 post-oracle marks are R.
 
 ## Batch 9 results (later tests 501–600, 2026-09)
 
-Marks: R 100, F 0, C 0, D 0. Ledger T690-T789.
+Marks: R 100, F 0, C 0, D 0. Ledger T646-T745.
 
 AndRecord sweep (S–Y) plus entry_persistence (real-SQLite R5f boundary
 contracts, 81 assertions), tedit/redit editor suites, wnewbie/wiz_set/wiznet/
@@ -231,7 +233,7 @@ Running: 745/1537.
 
 ## Batch 10 results (later tests 601–700, 2026-09)
 
-Marks: R 100, F 0, C 0, D 0. Ledger T790-T889.
+Marks: R 100, F 0, C 0, D 0. Ledger T746-T845.
 
 The OLC editor suites: oedit (121 assertions), medit, zedit, sedit, luaedit,
 redit working-copy/concurrency/restart-survival, tedit buffer sharing, string
@@ -242,7 +244,7 @@ No fixes, no J10 divergences. Running: 845/1537.
 
 ## Batch 11 results (later tests 701–800, 2026-09/10)
 
-Marks: R 100, F 0, C 0, D 0. Ledger T890-T989.
+Marks: R 100, F 0, C 0, D 0. Ledger T846-T945.
 
 Link-dead reaper lifecycle (dupe-check reconnect/usurp/switched), GMCP
 negotiation/state, PR #1682's level-filtered show listing (R5h revert-proof),
@@ -309,10 +311,10 @@ crash-load dex line color. No fixes, no J10 divergences. Running: 1445/1537.
 
 ## Batch 17 results (later tests 1301–1392, final 92, 2026-10/11)
 
-Marks: R 92, F 0, C 0, D 0. Ledger T1490-T1581. (One row, T480
-TestInstakillSendsVictimMessage, was corrected from the mis-typed R to its
-audited F — the batch-3 re-append had written it with R evidence; the mark,
-junk code, and mutation proof stand as originally audited.)
+Marks: R 92, F 0, C 0, D 0. Ledger T1446-T1537. (One row,
+TestInstakillSendsVictimMessage, was corrected from the mis-typed R to its audited F — the batch-3
+re-append had written it with R evidence; the mark, junk code, and mutation
+proof stand as originally audited.)
 
 Shop trade/value mutations, do_set sbyte wrap (src/act.wizard.c:2836-2840),
 stat color levels, group list semantics, forced mobile hits, last saved-host
