@@ -1,13 +1,15 @@
 # depth-case: equipment.look-mobile-output
-# Equip Satan Klaus in the fixture and explicitly inspect him. C's
-# look_at_char path emits the TO_VICT equipment header for a visible equipped
-# item. C: src/act.informative.c:389-399, 447-460.
+# Equip Sostratos in the fixture and explicitly inspect him. This uses the
+# same known-good E reset and visible light-slot item as
+# equipment-light-slot-depth. C's look_at_char path emits the TO_VICT header.
+# C: src/act.informative.c:388-399, 444-460; src/db.c:2200-2213.
 
 [fixture]
 empty-players
 quiet-mobs
-spawn-mob 70 1 8162 80
-equip-object 70 5800 1 5 80
+spawn-mob 4102 1 8162 80
+equip-object 4102 4212 999 0 80
+force-load 4212
 
 [setup:oracle]
 Equipgod
@@ -70,4 +72,4 @@ goto 8162
 teleport Equiplook 8162
 
 [probe:viewer]
-look at satan
+look at sostratos

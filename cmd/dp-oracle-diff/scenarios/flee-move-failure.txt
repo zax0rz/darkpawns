@@ -1,7 +1,8 @@
 # depth-case: flee.simple-move-failure
-# God stages a mortal at zero movement. A valid west exit reaches
-# do_simple_move, which emits the exhaustion reason and returns false; do_flee
-# must then broadcast its failure line to the origin room.
+# Damage drops a mortal below the default wimp threshold, so C calls do_flee
+# from damage() (src/fight.c:1601-1610). One safe exit reaches do_simple_move,
+# which fails for zero movement; do_flee then broadcasts the failure line to
+# the origin room (src/act.offensive.c:392-412; src/act.movement.c:172-177).
 
 [fixture]
 empty-players
@@ -98,10 +99,9 @@ Y
 goto 8162
 teleport Exfleer 8162
 teleport Exorigin 8162
-set Exfleer hitroll 100
-set Exfleer move 0
-set mob trainee hit 1000
-force Exfleer hit trainee
-
-[probe]
-force Exfleer flee
+set player Exfleer maxhit 50
+set player Exfleer hit 4
+set player Exfleer move 0
+set mob trainee hitroll 100
+set mob trainee damroll -20
+force trainee hit Exfleer
