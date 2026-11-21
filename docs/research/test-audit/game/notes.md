@@ -128,3 +128,14 @@ gates with scripted rollers, the room-flags decimal-parse regression guard
 affect-update duration semantics (DP-669, C magic.c:441-450), the safe spec
 caller's panic recovery, and C-structs.h bit-order pins. Four batches in:
 197 R / 3 F / 0 C / 0 D — every weak mark was in April.
+
+## Batch 5 results (pre-oracle tests 201–250, 2026-07-04..07-05)
+
+Marks: R 50 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-5`.)
+
+The July 4–5 tier keeps the DP-era standard: bash/headbutt/kick/rescue/trip/
+dragon-kick gate families with scripted rollers and C line citations
+(act.offensive.c:488-489 unconditional wait, new_cmds.c:443-445 recoil,
+DP-936 flat damage), the attribute golden tables transcribed verbatim from
+src/constants.c:1124-1183, and the nil-ch spec guards. Running total:
+247 R / 3 F / 0 C / 0 D.
