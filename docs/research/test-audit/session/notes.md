@@ -248,4 +248,15 @@ Link-dead reaper lifecycle (dupe-check reconnect/usurp/switched), GMCP
 negotiation/state, PR #1682's level-filtered show listing (R5h revert-proof),
 persistence/autosave/recovery, proxy limits, clock control, terminal frames,
 greetings fixture. No fixes, no J10 divergences. Running: 945/1537.
+ HEAD
  ba21921fb (test(session): audit batch 11 — reaper/GMCP/persistence layer, all R)
+
+## Batch 12 results (later tests 801–900, 2026-10)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T990-T1089.
+
+The R5f entry-flow matrix suites (name gate with the aIkO regression probe,
+deleted-record lifecycle, password/world/restore matrices), switch
+lifecycle/readers/gates, heartbeat output framing, zone occupancy, idle rent.
+No fixes, no J10 divergences. Running: 1045/1537.
+ eee9c0796 (test(session): audit batch 12 — R5f entry matrices + switch lifecycle, all R)
