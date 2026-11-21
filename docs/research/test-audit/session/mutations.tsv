@@ -18,3 +18,6 @@ TestOrgasmRegistrationUsesCEntryGate	pkg/session/command_gates.go	42	n/a (R spot
 TestSetFieldTableMatchesCOrderAndGates	pkg/session/wiz_set.go	37	n/a (R spot-check)	set field table row "brief" level LVL_GOD -> LVL_GRGOD	red (set field 0 level 38, want 34)	yes
 TestSkillsetRegistrationUsesCEntryGates	pkg/session/command_gates.go	42	n/a (R spot-check)	registerCommand forced MinPosition 5 (skillset golden 4)	red (skillset registry gate level 38 position 5, want 4)	yes
 TestRuffleRegistrationUsesCEntryGate	pkg/session/command_gates.tsv	336	n/a (R spot-check)	ruffle gate row position 8 -> 7	red (ruffle gate level 0 position 7, want 8)	yes
+TestZresetZoneIndexUsesCZoneTablePosition	pkg/session/wiz_zone.go	79	n/a (R spot-check)	zresetZoneIndex return i -> i + 1	red (first zone index 1, want 0)	yes
+TestCmdTitlePreservesDoubledDollarAndStripsANSIMarkers	pkg/session/informative_cmds.go	31	n/a (R spot-check)	cmdTitle gained a $$ -> $ collapse	red (title "rthe Re$d Knight", want "rthe Re$$d Knight")	yes
+TestStrokeRegistrationUsesCEntryGateAndRecord	pkg/session/command_gates.tsv	414	n/a (R spot-check)	stroke gate row position 5 -> 4	red (stroke gate level 0 position 4, want 5)	yes

@@ -306,3 +306,27 @@ T603 TestSkillsetRegistrationUsesCEntryGates (registerCommand forced
 MinPosition 5, golden 4), T574 TestRuffleRegistrationUsesCEntryGate
 (command_gates.tsv:336 ruffle position 8->7). All three went red and were
 restored byte for byte (mutations.tsv).
+## Batch 9 results (later tests 501–600, 2026-09)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T690-T789.
+
+AndRecord sweep (S–Y) plus entry_persistence (real-SQLite R5f boundary
+contracts, 81 assertions), tedit/redit editor suites, wnewbie/wiz_set/wiznet/
+zlist/syslog/entry_transport depth pins. No fixes, no J10 divergences.
+Running: 745/1537.
+
+### Ledger update (2026-11-21, review hold follow-up)
+
+Per-row evidence: every T646–T745 row's evidence cell now names what was
+checked for that test — the do_newbie C order and audiences, the entry/
+persistence boundary suites against a real SQLite store (R5f), the tedit/
+redit editor lifecycles, the do_set bit-pinning rows, the title $$-preservation
+path, and each AndRecord row's string-by-string social message table. Test
+file/line columns are backfilled.
+
+All-R spot-checks (random draw, seed 20261109, from T646–T745): T669
+TestStrokeRegistrationUsesCEntryGateAndRecord (command_gates.tsv:414 stroke
+position 5->4), T652 TestCmdTitlePreservesDoubledDollarAndStripsANSIMarkers
+(cmdTitle gained a $$ collapse), T708 TestZresetZoneIndexUsesCZoneTablePosition
+(return i -> i+1). All three went red and were restored byte for byte
+(mutations.tsv).
