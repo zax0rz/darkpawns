@@ -114,3 +114,35 @@ func TestLoadCostAndObjectLimits(t *testing.T) {
 		})
 	}
 }
+
+// C do_load narrates through act() (src/act.wizard.c:1373-1376; random_load_msg
+// at src/act.wizard.c:1222-1244). A blind viewer gets neither the gesture nor
+// the omen (hide_invisible TRUE) and sees "Someone has created something!".
+func TestCmdLoadNarrationRespectsViewerSight(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Load room", Zone: 1}},
+		Objs:  []parser.Obj{{VNum: 3001, Keywords: "loaf bread", ShortDesc: "a loaf of bread", Cost: 3}},
+	}
+	w, err := game.NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+	m := newTestManager(t, w, nil)
+	actor := makeCommandTestSession(t, m, "Loader", LVL_IMPL, 1001)
+	blind := makeCommandTestSession(t, m, "Blindman", 1, 1001)
+	registerInWorld(t, actor)
+	registerInWorld(t, blind)
+	blind.player.SetAffect(game.AffBlind, true)
+
+	dprng.ResetStream(1)
+	if err := cmdLoad(actor, []string{"obj", "bread"}); err != nil {
+		t.Fatalf("cmdLoad: %v", err)
+	}
+	drainSendChannel(t, actor)
+	got := drainSendChannel(t, blind)
+	if !strings.Contains(got, "Someone has created something!") || strings.Contains(got, "gesture") ||
+		strings.Contains(got, "Loader") || strings.Count(got, `"text":"`) != 1 {
+		t.Fatalf("blind viewer output = %q, want only %q", got, "Someone has created something!")
+	}
+}

@@ -226,6 +226,7 @@ src/act.wizard.c:do_force	pkg/session/wiz_communication.go	forceMobNotice	split
 src/act.wizard.c:do_idlist	pkg/session/idlist.go	writeObjectIDList	primary
 src/act.wizard.c:do_invis	pkg/game/invis.go	(World).DoInvis	primary
 src/act.wizard.c:do_load	pkg/common/catoi.go	AtoiC	primary
+src/act.wizard.c:do_load	pkg/session/wiz_object.go	sendLoadNarration	split
 src/act.wizard.c:do_mlist	pkg/session/wiz_zone.go	cmdMlist	primary
 src/act.wizard.c:do_newbie	pkg/session/wiz_system.go	cmdNewbie	primary
 src/act.wizard.c:do_olist	pkg/session/wiz_zone.go	cmdOlist	primary
