@@ -214,7 +214,7 @@ func cmdGtell(s *Session, args []string) error {
 // internal and trailing whitespace, and delete_ansi_controls runs over the
 // complete formatted message before it is sent to any audience.
 func cmdGtellText(s *Session, text string) error {
-	s.manager.world.GroupSay(s.player, text)
+	s.manager.world.GroupSay(s.player, escapeTypedDollars(text))
 	return nil
 }
 
