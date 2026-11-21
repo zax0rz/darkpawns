@@ -10,7 +10,6 @@ package command
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 	"sync"
 
@@ -101,21 +100,16 @@ func (r *Registry) SetActorHandler(name string, handler ActorHandler) error {
 	return nil
 }
 
-// Middleware wraps a Handler to add cross-cutting behavior (logging, auth, rate limiting).
-type Middleware func(Handler) Handler
-
-// Registry is a thread-safe command registry with middleware support.
+// Registry is a thread-safe command registry.
 type Registry struct {
-	mu         sync.RWMutex
-	commands   map[string]*Entry // keyed by primary name and aliases
-	middleware []Middleware      // global middleware chain
+	mu       sync.RWMutex
+	commands map[string]*Entry // keyed by primary name and aliases
 }
 
 // NewRegistry creates a new command registry.
 func NewRegistry() *Registry {
 	return &Registry{
-		commands:   make(map[string]*Entry),
-		middleware: make([]Middleware, 0),
+		commands: make(map[string]*Entry),
 	}
 }
 
@@ -125,15 +119,9 @@ func (r *Registry) Register(name string, handler Handler, helpText string, minLe
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	// Wrap handler through middleware chain
-	wrapped := handler
-	for _, v := range slices.Backward(r.middleware) {
-		wrapped = v(wrapped)
-	}
-
 	entry := &Entry{
 		Name:        name,
-		Handler:     wrapped,
+		Handler:     handler,
 		HelpText:    helpText,
 		MinLevel:    minLevel,
 		MinPosition: minPosition,
@@ -147,15 +135,6 @@ func (r *Registry) Register(name string, handler Handler, helpText string, minLe
 	for _, alias := range aliases {
 		r.commands[strings.ToLower(alias)] = entry
 	}
-}
-
-// Use adds a middleware function to the global chain.
-// Middleware are executed in order, each wrapping the next.
-// All future Execute calls through the registry will run through the chain.
-func (r *Registry) Use(mw Middleware) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.middleware = append(r.middleware, mw)
 }
 
 // Lookup finds a command entry by name (case-insensitive).

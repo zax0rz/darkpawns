@@ -190,10 +190,16 @@ func newBashCommandSession(t *testing.T) *rescueCommandSession {
 
 func TestCmdBash_FightingTargetFallback(t *testing.T) {
 	session := newBashCommandSession(t)
+	// C's damage() refuses player-vs-player hits while either side is level
+	// 10 or below (src/fight.c:1345-1356), which also suppresses the
+	// knockdown; fight above the protection gate so the bash can land.
+	session.player.SetLevel(15)
+	session.player.SetMove(100) // do_bash spends 10 moves (src/act.offensive.c:423)
 	target, ok := session.world.GetPlayer("Target")
 	if !ok {
 		t.Fatal("missing fixture target")
 	}
+	target.SetLevel(15)
 	session.player.SetFightingBody(target)
 
 	if err := CmdBash(session, nil); err != nil {
@@ -204,6 +210,14 @@ func TestCmdBash_FightingTargetFallback(t *testing.T) {
 		if strings.Contains(msg, "Bash who?") {
 			t.Errorf("expected bash to target fighting opponent, got: %q", msg)
 		}
+	}
+
+	// Positive check: a successful bash sets the victim sitting
+	// (src/act.offensive.c:493). The negative check alone stayed green when
+	// CmdBash was mutated to a no-op, so it cannot prove the fallback ran.
+	if target.GetPosition() != combat.PosSitting {
+		t.Errorf("expected fighting-target fallback to reach DoBash and knock the target down; position = %d, messages = %q",
+			target.GetPosition(), session.messages)
 	}
 }
 
