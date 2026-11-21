@@ -1,0 +1,91 @@
+# C-first Round 3 switched-mobile equipment witness. A room oncmd marks
+# Satan's carried tunic ITEM_ANTI_EVIL through lua_obj_extra. The switched
+# mobile first names a valid but unsupported body slot, then wears the tunic
+# normally and reaches equip_char's anti-alignment room act.
+# C paths: src/act.item.c:1416-1463,1584-1659; src/handler.c:690-712;
+# src/scripts.c:403-420,923-945; src/interpreter.c:809.
+# depth-case: equipment.npc-wear-invalid-position-output
+# depth-case: equipment.npc-anti-alignment-equip-output
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 70 1 8162 80
+give-object 70 8019 1 80
+mob-script 70 oracle/npcwear.lua 512
+
+[lua-script mob/oracle/npcwear.lua]
+function oncmd()
+if (argument ~= "say mark") then
+return FALSE
+end
+obj_extra(me.objs[1], "set", 10)
+return TRUE
+end
+
+[setup:oracle]
+Equipowner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Equipowner
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Equipwatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Equipwatch
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Equipwatch 8162
+say mark
+
+[probe]
+switch satan
+wear tunic head
+wear tunic
+return
