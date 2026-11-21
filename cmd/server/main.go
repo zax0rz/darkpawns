@@ -805,6 +805,14 @@ func main() {
 		OnAutosave: func() {
 			manager.AutosaveTick()
 		},
+		// comm.c:843 — write_mud_date_to_file every 60 minutes of pulses,
+		// after record_usage, so etc/date_record tracks a long-running mud
+		// calendar even without a shutdown (DP-1603).
+		OnWriteMudDate: func() {
+			if err := game.WriteMudDateToFile(); err != nil {
+				slog.Error("write mud date record", "error", err)
+			}
+		},
 	})
 	manager.SetPulsePump(gameLoop.PumpPulses)
 	// loopCtx ties the heartbeat to the server lifetime: canceling it drains the
@@ -1217,10 +1225,14 @@ func main() {
 	// mutating the world while sessions close.
 	wg.Wait()
 
-	// C's init_game() saves nothing here beyond the clan table, the in-game
-	// date and the player file (src/comm.c:289-291). Player profiles were
-	// drained above; transient world state is rebuilt from the area files on
-	// the next boot. Do not reintroduce a world snapshot (RULEBOOK R4).
+	// C's shutdown writes the mud date after the sockets close and alongside
+	// the clan/whod saves (src/comm.c:289-291: save_clans, close_whod,
+	// write_mud_date_to_file). Player profiles were drained above; transient
+	// world state is rebuilt from the area files on the next boot. Do not
+	// reintroduce a world snapshot (RULEBOOK R4).
+	if err := game.WriteMudDateToFile(); err != nil {
+		slog.Error("write mud date record", "error", err)
+	}
 	slog.Info("Shutdown complete. Farewell.")
 	if serverErr {
 		os.Exit(1) //nolint:gocritic // exitAfterDefer: graceful shutdown completed above

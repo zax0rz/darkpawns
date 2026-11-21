@@ -90,7 +90,17 @@ const beginningOfTime = 650336715
 // Tests that need real-time pulses (e.g. e2e combat, which observes live
 // combat rounds) but still require a pinned, daytime clock use DP_FIXED_TIME
 // instead, so pulses keep running while sunlight stays stable.
-var nowFunc = func() int64 { return time.Now().Unix() }
+//
+// fixedTimePinned records whether the seam is active. The oracle build's
+// patched reset_time (darkpawns-c-oracle/src/db.c:415-432) skips
+// read_mud_date_from_file when DP_FIXED_TIME is set — the pinned epoch IS the
+// calendar for both engines there — and Go mirrors that skip so a stale
+// date_record can never override a pinned calendar. Production (seam unset)
+// takes C's faithful path: epoch first, then the date_record override.
+var (
+	nowFunc         = func() int64 { return time.Now().Unix() }
+	fixedTimePinned bool
+)
 
 // ConfigureNowFromEnv wires nowFunc to the DP_FIXED_TIME seam: when set to a
 // Unix timestamp, reset_time() derives the calendar from that fixed instant
@@ -108,6 +118,7 @@ func ConfigureNowFromEnv() (int64, bool) {
 		return 0, false
 	}
 	nowFunc = func() int64 { return ts }
+	fixedTimePinned = true
 	return ts, true
 }
 
@@ -182,11 +193,13 @@ var (
 // initializes its clock, matching C's boot ordering (reset_time is the first
 // thing boot_db does, db.c:311).
 //
-// C's reset_time additionally calls read_mud_date_from_file() (db.c:421) to
-// overwrite {year,month,day} from etc/date_record; that persistence override is
-// not ported here (Go has no date_record file). The calendar derived from the
-// epoch alone is the faithful default C falls back to when date_record is
-// missing (db.c:3206-3208).
+// C's reset_time calls read_mud_date_from_file() at this point (db.c:421) to
+// overwrite {year,month,day} from etc/date_record; the file's absence or
+// corruption keeps the computed calendar (db.c:3203-3214). The DP_FIXED_TIME
+// seam skips the read on both engines — see fixedTimePinned above.
+//
+// The calendar derived from the epoch alone remains the faithful default C
+// falls back to when date_record is missing (db.c:3206-3208).
 func ResetTime() {
 	weatherMu.Lock()
 	defer weatherMu.Unlock()
@@ -199,6 +212,13 @@ func ResetTime() {
 func resetTimeLocked() {
 	// db.c:420 — time_info = mud_time_passed(time(0), beginning_of_time);
 	timeInfo = mudTimePassed(nowFunc(), beginningOfTime)
+
+	// db.c:421 — read_mud_date_from_file() overrides {year,month,day} from
+	// etc/date_record so the calendar survives restarts (DP-1603). Skipped
+	// when DP_FIXED_TIME pins the calendar (see fixedTimePinned).
+	if !fixedTimePinned {
+		readMudDateFromFile()
+	}
 
 	// db.c:423-432 — sunlight from the hour of day.
 	switch {
