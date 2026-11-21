@@ -226,4 +226,15 @@ AndRecord sweep (S–Y) plus entry_persistence (real-SQLite R5f boundary
 contracts, 81 assertions), tedit/redit editor suites, wnewbie/wiz_set/wiznet/
 zlist/syslog/entry_transport depth pins. No fixes, no J10 divergences.
 Running: 745/1537.
+ HEAD
  9f83cff51 (test(session): audit batch 9 — sweep S-Y + entry persistence/editor suites, all R)
+
+## Batch 10 results (later tests 601–700, 2026-09)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T790-T889.
+
+The OLC editor suites: oedit (121 assertions), medit, zedit, sedit, luaedit,
+redit working-copy/concurrency/restart-survival, tedit buffer sharing, string
+commands, zone-save atomicity, and the web/telnet OLC equivalence proof.
+No fixes, no J10 divergences. Running: 845/1537.
+ 121b7e180 (test(session): audit batch 10 — OLC editor suites, all R)
