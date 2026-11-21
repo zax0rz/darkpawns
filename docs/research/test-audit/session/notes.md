@@ -279,3 +279,14 @@ T530 TestRinRegistrationUsesCEntryGate (registerCommand forced MinPosition 5,
 rin golden 8), T494 TestOrgasmRegistrationUsesCEntryGate (registerCommand
 forced MinPosition 0, orgasm golden 5). All three went red and were restored
 byte for byte (mutations.tsv).
+
+## Batch 8 results (later tests 401–500, 2026-09)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T590-T689.
+
+Sweep continues (B–S) with a stronger variant: RegistrationUsesCEntryGateAndRecord
+pins the social's C-transcribed message table string by string (muhaha verified
+as representative). Depth files: snoop (state branches + relay framing),
+shutdown (guard bytes + lifecycle), send (half_chop audiences), set/spike/split/
+skillset/rsay/qecho/players/socials_command. No fixes, no J10 divergences.
+Running: 645/1537; all 500 post-oracle marks are R.
