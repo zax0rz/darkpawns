@@ -112,3 +112,29 @@ lines).
   99 BRENDA69-authored rows in this ledger now read `OpenClaw (multi-model
   orchestrator)` with no model assigned; attribution.tsv carries an agent
   column.
+## Batch 3 results (pre-oracle tests 101–145, 2026-06-18..07-11)
+
+Marks: R 44, F 1, C 0, D 0. Junk: J3 ×1. Pre-oracle layer complete: 145/145.
+
+The single F is the same name-overpromises shape pkg/command had: the
+instakill victim-message test admitted in its own comment that capturing the
+victim's line "isn't trivial" and asserted the killer's chop confirmation
+instead — green when the production victim line is deleted. Fixed by
+registering the victim as a session and draining its channel; the fixed test
+goes red under the same mutation and incidentally proved production does
+deliver "$N chops you to pieces!" (mutations.tsv).
+
+Otherwise the June-early-July layer is strong: DP-1041 instakill gates,
+DP-1045 peaceful/low-level combat gates with exact C bytes
+(src/fight.c:1336-1357, verified this session), DP-954 registry MinLevel
+gates, the spell-level golden table transcribed from src/class.c
+init_spell_levels() (spot-checked: MAGIC_MISSILE mu:1, HEADBUTT/SLUG warrior
+15/17), sip/taste/think contracts incl. the LFCR "Ok.\n\r" pin, and the
+use-after-close race guards. No J10 divergences in the pre-oracle layer.
+
+Pre-oracle totals (145 tests): R 139 (95.9%), F 3, C 3, D 0 — far better
+than the 116/18/6/5 predicted; the May–June port layer was written with more
+care than its age suggests.
+
+Coverage: 74.4% → 74.4%.
+

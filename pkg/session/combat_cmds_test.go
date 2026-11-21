@@ -160,28 +160,19 @@ func TestInstakillFiresAtImplLevel(t *testing.T) {
 
 func TestInstakillSendsVictimMessage(t *testing.T) {
 	// When a player instakills another player, the victim receives
-	// "$N chops you to pieces!" (C: act.offensive.c:152-154). We verify the
-	// victim's SendMessage is called with the chop message.
+	// "$N chops you to pieces!" (C: act.offensive.c:152-154). The victim is
+	// registered as a session so the TO_VICT act line routes to its channel;
+	// the old version only drained the killer's side.
 	m := makeInstakillTestManager(t)
 
 	killer := makeInstakillSession(t, m, "Killer", 40)
+	victim := makeInstakillSession(t, m, "Victim", 10)
 
-	// Create a victim player in the same room at a lower level.
-	victim := game.NewPlayer(2, "Victim", 1001)
-	victim.SetLevel(10)
-	if err := m.world.AddPlayer(victim); err != nil {
-		t.Fatalf("AddPlayer victim failed: %v", err)
-	}
-
-	// Capture victim messages by swapping out SendMessage isn't trivial
-	// (Player.SendMessage writes to its session). Instead, verify the killer
-	// gets the chop confirmation and the victim is handled by HandleDeath.
-	// The key fidelity check: equal-level is blocked, lower-level dies.
 	if err := cmdKill(killer, []string{"victim"}); err != nil {
-		t.Fatalf("cmdKill returned error: %v", err)
+		t.Fatalf("cmdKill: %v", err)
 	}
 
-	// Drain killer's send channel — expect the chop message.
+	// The key fidelity check: equal-level is blocked, lower-level dies.
 	gotChop := false
 drainLoop:
 	for {
@@ -196,5 +187,21 @@ drainLoop:
 	}
 	if !gotChop {
 		t.Error("killer should receive a 'chop' confirmation message (DP-1041)")
+	}
+
+	gotVictim := false
+victimLoop:
+	for {
+		select {
+		case msg := <-victim.send:
+			if strings.Contains(string(msg), "chops you to pieces") {
+				gotVictim = true
+			}
+		case <-time.After(100 * time.Millisecond):
+			break victimLoop
+		}
+	}
+	if !gotVictim {
+		t.Error("victim should receive '$N chops you to pieces!' (src/act.offensive.c:152-154)")
 	}
 }
