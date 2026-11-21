@@ -311,6 +311,35 @@ func TestSQLiteJournalMode(t *testing.T) {
 	}
 }
 
+// TestSQLiteSynchronousOverride proves DP_SQLITE_SYNCHRONOUS accepts only exact
+// "NORMAL" (PRAGMA synchronous = 1) and leaves SQLite's default FULL (2) for
+// unset or any other value including "OFF".
+func TestSQLiteSynchronousOverride(t *testing.T) {
+	cases := []struct {
+		name string
+		env  string
+		want int
+	}{
+		{name: "unset keeps FULL", env: "", want: 2},
+		{name: "NORMAL sets NORMAL", env: "NORMAL", want: 1},
+		{name: "OFF rejected keeps FULL", env: "OFF", want: 2},
+		{name: "lowercase normal rejected keeps FULL", env: "normal", want: 2},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("DP_SQLITE_SYNCHRONOUS", tc.env)
+			database := openGameStore(t, "sqlite://"+filepath.Join(t.TempDir(), "game.db"))
+			var syncMode int
+			if err := database.conn.QueryRow(`PRAGMA synchronous`).Scan(&syncMode); err != nil {
+				t.Fatalf("PRAGMA synchronous: %v", err)
+			}
+			if syncMode != tc.want {
+				t.Errorf("PRAGMA synchronous = %d, want %d (DP_SQLITE_SYNCHRONOUS=%q)", syncMode, tc.want, tc.env)
+			}
+		})
+	}
+}
+
 var nameCounter int
 
 // uniqueName returns a player name unique to this test process, so two runs that

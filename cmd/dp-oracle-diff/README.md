@@ -22,6 +22,16 @@ even when the result is green; use it to ensure a queued command actually ran.
 When `DP_ORACLE_BIN` is unset, the command prints `SKIP` and exits successfully,
 so the default build and test path does not require the oracle.
 
+## Engine environment
+
+Both engines receive `DP_SEED`, `DP_CLOCK=1` (frozen pulse clock), and
+`DP_FIXED_TIME` (pinned wall clock). The harness also sets
+`DP_SQLITE_SYNCHRONOUS=NORMAL` on the **Go** server only: it applies
+`PRAGMA synchronous = NORMAL` to the throwaway SQLite store so 36–72 concurrent
+census workers do not stall on per-commit WAL `fsync()` calls. Only the harness
+sets it, only the Go side gets it, and production leaves it unset (keeping
+SQLite's default `FULL` durability).
+
 ## Scenario format
 
 Scenario files live in [`scenarios`](scenarios). Setup is server-specific because

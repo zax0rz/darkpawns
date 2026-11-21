@@ -509,7 +509,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		name: "C oracle",
 		start: func() (*process, error) {
 			return startProcess(ctx, "C oracle", oracleRoot,
-				append(append(os.Environ(), "DP_SEED="+seed, "DP_CLOCK=1", "DP_FIXED_TIME="+pinnedTime), oracleDrawEnv...), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
+				oracleServerEnv(os.Environ(), seed, pinnedTime, oracleDrawEnv...), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
 		},
 	}
 	goEngine := &engine{
@@ -535,18 +535,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		return err
 	}
 
-	goEnv = append(
-		os.Environ(),
-		"DP_SEED="+seed,
-		"DP_CLOCK=1",
-		"DP_FIXED_TIME="+pinnedTime,
-		"JWT_SECRET=oracle-diff-secret-at-least-32-characters-long",
-		"ENVIRONMENT=development",
-	)
-	if drawParity {
-		goEnv = append(goEnv, "DP_DRAW_LOG=1", "DP_DRAW_LOG_FILE="+goDrawLog)
-	}
-	goEnv = withFreshMUDEnv(goEnv, scenario.EmptyPlayers)
+	goEnv = goServerEnv(os.Environ(), seed, pinnedTime, drawParity, goDrawLog, scenario.EmptyPlayers)
 	// Every scenario boots the Go port with a real SQLite store, the same one
 	// login and the record consumers use: C always has its player file, and a
 	// store-less boot silenced every saved-player surface (DP-1463, DP-1464).
@@ -1610,6 +1599,35 @@ func decodeShippedPlayerRecord(rec []byte) (*db.PlayerRecord, int64, error) {
 		record.Password = cPwd
 	}
 	return record, idnum, nil
+}
+
+func oracleServerEnv(base []string, seed, pinnedTime string, extra ...string) []string {
+	env := make([]string, 0, len(base)+3+len(extra))
+	for _, entry := range base {
+		if !strings.HasPrefix(entry, "DP_SQLITE_SYNCHRONOUS=") {
+			env = append(env, entry)
+		}
+	}
+	env = append(env, "DP_SEED="+seed, "DP_CLOCK=1", "DP_FIXED_TIME="+pinnedTime)
+	return append(env, extra...)
+}
+
+func goServerEnv(base []string, seed, pinnedTime string, drawParity bool, goDrawLog string, emptyPlayers bool) []string {
+	env := make([]string, 0, len(base)+8)
+	env = append(env, base...)
+	env = append(
+		env,
+		"DP_SEED="+seed,
+		"DP_CLOCK=1",
+		"DP_SQLITE_SYNCHRONOUS=NORMAL",
+		"DP_FIXED_TIME="+pinnedTime,
+		"JWT_SECRET=oracle-diff-secret-at-least-32-characters-long",
+		"ENVIRONMENT=development",
+	)
+	if drawParity {
+		env = append(env, "DP_DRAW_LOG=1", "DP_DRAW_LOG_FILE="+goDrawLog)
+	}
+	return withFreshMUDEnv(env, emptyPlayers)
 }
 
 func withFreshMUDEnv(env []string, enabled bool) []string {
