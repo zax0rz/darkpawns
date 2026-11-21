@@ -1,0 +1,78 @@
+# C-first witness for an NPC command actor reaching an uncharmed conjured
+# mobile's SPECIAL(conjured) before the command handler. The switched horse is
+# the actor; the Dominion Angel is the separate special host.
+# depth-case: mob.conjured-npc-actor-lane
+# C path: src/interpreter.c:1407-1476 -> src/spec_procs3.c:859-892 ->
+# src/act.comm.c:759-820; src/handler.c:1194-1248.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 14410 99 8162 80
+spawn-mob 85 1 8162 80
+set-mob-flag 85 SPEC
+
+[setup:oracle]
+ConjuredOwner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ConjuredOwner
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ConjuredPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ConjuredPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport ConjuredPeer 8162
+switch horse
+
+[probe]
+say hello

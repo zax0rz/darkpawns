@@ -85,13 +85,10 @@ func TestCombatBodyMovementWindow(t *testing.T) {
 			}
 			close(e.resume)
 			err := <-done
-			// Pins the live path's contract for combat.body-movement-window:
-			// DoMove has no mid-move revalidation window — the concurrent
-			// body/world mutations do not block the commit, which lands in
-			// room 1002 with the sector cost deducted. The pre-1904 proof
-			// encoded the deleted MovePlayer wrapper's two-phase window
-			// (mutations failed the stale commit) instead; the combat-identity
-			// owner should confirm this pinned contract is intended (#1907).
+			// Pins the Go movement transaction's in-flight behavior: combat
+			// cleanup suspends the transfer, but already-admitted movement still
+			// commits after concurrent state changes. C is single-threaded and has
+			// no equivalent interleaving.
 			if err != nil {
 				t.Fatalf("%s: move failed: %v", kind, err)
 			}

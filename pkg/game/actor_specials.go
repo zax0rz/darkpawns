@@ -170,16 +170,16 @@ func init() {
 	RegisterActorSpec("conjured", specConjuredActor)
 }
 
-// specConjuredActor ports the command-time branch of C's SPECIAL(conjured),
-// src/spec_procs3.c:859-892, for an NPC actor. A charmed conjured creature
-// returns FALSE for every command and does nothing at all, which is the state a
-// summoned elemental is normally in; without this lane its room blocked every
-// command any pet was given. An uncharmed conjured body leaves the world on the
-// next call (the act/extract pair at :875-888), and that branch stays an
-// explicit gap rather than a silent decline.
-func specConjuredActor(_ *World, _ CharacterSpecialContext, me *MobInstance, _, _ string) SpecialResult {
+// specConjuredActor ports SPECIAL(conjured)'s command-time branch for an NPC
+// actor. C ignores the actor and command text: a charmed conjured body declines;
+// an uncharmed one emits its fizzle/disappearance messages and queues extraction
+// (src/spec_procs3.c:859-892).
+func specConjuredActor(w *World, _ CharacterSpecialContext, me *MobInstance, cmd, arg string) SpecialResult {
 	if me != nil && me.IsAffected(affCharm) {
 		return SpecialDeclined
+	}
+	if specConjured(w, nil, me, cmd, arg) {
+		return SpecialHandled
 	}
 	return SpecialUnsupported
 }

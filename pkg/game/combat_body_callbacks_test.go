@@ -150,6 +150,9 @@ func TestCombatBodyScriptDispatch(t *testing.T) {
 		w.FireMobFightScript(first, one, 1001)
 		w.FireMobDeathScript(second, two, 1001)
 	}
+	if len(r.bodies) != 80 || len(r.actors) != 80 {
+		t.Fatalf("script dispatch recorded bodies/actors = %d/%d, want 80/80", len(r.bodies), len(r.actors))
+	}
 	for i, b := range r.bodies {
 		want := combat.Combatant(first)
 		actor := one

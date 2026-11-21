@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // specInterceptGolden is every cSpecialInterceptsOnly entry's command set,
@@ -356,24 +358,49 @@ func isIdentByte(b byte) bool {
 	return b == '_' || b >= 'a' && b <= 'z' || b >= 'A' && b <= 'Z' || b >= '0' && b <= '9'
 }
 
-// TestConjuredActorDeclinesOnlyForCharmedBodies pins the one branch of
-// SPECIAL(conjured) (src/spec_procs3.c:859-892) this lane ports: a charmed
-// conjured creature declines every command, and the uncharmed branch stays an
-// explicit gap instead of a silent decline.
+// TestConjuredActorDeclinesOnlyForCharmedBodies pins SPECIAL(conjured)'s
+// command-independent charm gate and uncharmed extraction branch
+// (src/spec_procs3.c:859-892).
 func TestConjuredActorDeclinesOnlyForCharmedBodies(t *testing.T) {
-	w, _, actor, _ := newNPCCommandWorld(t)
-	conjured := newSpecProcTestMob(t, w, actor.GetRoom(), 10)
-	ctx := CharacterSpecialContext{Actor: actor}
-
-	conjured.RemoveAffected(affCharm)
-	if got := DispatchCharacterSpecial("conjured", w, ctx, conjured, "emote", ""); got != SpecialUnsupported {
-		t.Errorf("uncharmed conjured NPC \"emote\" = %v, want unsupported (the leave-the-world branch is unported)", got)
+	w, master, actor, _ := newNPCCommandWorld(t)
+	peer := NewPlayer(2, "Peer", master.GetRoom())
+	peer.SetPosition(combat.PosStanding)
+	if err := w.AddPlayer(peer); err != nil {
+		t.Fatal(err)
 	}
+	conjured := conjuredTestMob(t, w, 81, actor.GetRoom())
+	conjured.SetFollowing(master.GetName())
+	ctx := CharacterSpecialContext{Actor: actor}
+	messages := make(map[string][]string)
+	w.MessageSink = func(name string, msg []byte) { messages[name] = append(messages[name], string(msg)) }
+
 	conjured.SetAffected(affCharm)
 	if got := DispatchCharacterSpecial("conjured", w, ctx, conjured, "emote", ""); got != SpecialDeclined {
 		t.Errorf("charmed conjured NPC \"emote\" = %v, want declined", got)
 	}
 	if got := DispatchCharacterSpecial("conjured", w, ctx, conjured, "north", ""); got != SpecialDeclined {
 		t.Errorf("charmed conjured NPC \"north\" = %v, want declined", got)
+	}
+	if len(messages[master.GetName()]) != 0 || len(messages[peer.GetName()]) != 0 || conjured.HasMobFlag(MobFlagExtract) {
+		t.Fatalf("charmed conjured state changed: master=%q peer=%q extracting=%v", messages[master.GetName()], messages[peer.GetName()], conjured.HasMobFlag(MobFlagExtract))
+	}
+
+	conjured.RemoveAffected(affCharm)
+	if got := DispatchCharacterSpecial("conjured", w, ctx, conjured, "emote", ""); got != SpecialHandled {
+		t.Fatalf("uncharmed conjured NPC \"emote\" = %v, want handled", got)
+	}
+	wantRoom := "An earth elemental returns to its own plane of existence.\r\n"
+	if got := messages[master.GetName()]; !equalDescriptorMessages(got, []string{"You lose control and an earth elemental fizzles away!\r\n", wantRoom}) {
+		t.Errorf("master fizzle = %q, want master-only notice and room fizzle", got)
+	}
+	if got := messages[peer.GetName()]; !equalDescriptorMessages(got, []string{wantRoom}) {
+		t.Errorf("peer fizzle = %q, want room fizzle only", got)
+	}
+	if !conjured.HasMobFlag(MobFlagExtract) {
+		t.Fatal("uncharmed conjured body was not queued for extraction")
+	}
+	w.ExtractPendingChars()
+	if _, ok := w.GetMobByID(conjured.GetID()); ok {
+		t.Fatal("conjured body remained after the pending extraction pass")
 	}
 }
