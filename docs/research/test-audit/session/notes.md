@@ -157,3 +157,36 @@ The orchestrator model is glm-5-turbo (wording corrected from glm-5-flash).
   coverage autofix lane (PR #414, zach@mac-mini.local) now read `OpenClaw
   (Reek coverage lane), Claude Opus 4.8 per trailer`. The session ledger has
   no rows from that lane (checked: zero reek-cover commits).
+
+## Batch 4 results (later tests 1–100, all 2026-07)
+
+Marks: R 100, F 0, C 0, D 0.
+
+The first post-oracle month is the strongest layer yet: DP-1115 quit/reallyquit
+semantics with captured-save persistence proofs, the cast-command draw-order
+suite (concentration/dice/save stream arithmetic, draw-free gates, incantation
+audiences), do_who/do_help/do_time byte pins with C line cites, the
+command-surface oracles (golden gate/order hashes, prefix-resolution laws from
+interpreter.c:909-912, draw parity), whisper/page/recite audience bytes
+(including BEL \x07\x07 and LFCR shapes), and the social gate-table fallback.
+No fixes needed anywhere in the batch. No J10 divergences.
+
+Attribution: codex 24, glm 7, unknown 69 (the July QA/sprint branches by
+BRENDA69 and zach without trailers).
+
+### Ledger update (2026-11-21, review hold on #2986)
+
+Per-row evidence: every T146–T245 row's evidence cell now names what was
+checked for that test — the asserted bytes with a C cite, the draw-stream
+arithmetic, the registry pins, or the Go call it drives. The shared template
+strings ("assertive pin; can fail") are gone; test file/line columns are
+backfilled.
+
+All-R spot-checks (random draw, seed 20261121, from T146–T245): T213
+TestCharacterCreationPasswordConfirmationStartsColorOnNewLine
+(char_creation.go:218 `charStage = "color"` → `"colour"`), T168
+TestCmdScoreFixedFixtureGolden (cmd_info.go:149 "how boring." → "how
+boring!"), T181 TestCmdHitCharmedMasterUsesActPronouns (combat_cmds.go:109
+"good friend" → "dear friend"). All three went red and were restored byte
+for byte (mutations.tsv, now 7 columns with `n/a (R spot-check)` old-body
+rows; the four legacy F-fix rows were migrated to the same format).
