@@ -41,14 +41,18 @@ mobact.c:252 (race-hate staging). Settled: the other 15 (3 witnessed,
 ## Corrections found while finishing
 
 - **mob-sound-mime-emote's retained blocks are hollow.** The shipped mime
-  (vnum 8079) carries MOB_AGGRESSIVE (80.mob act word 1048648 =
-  ISNPC\|AGGRESSIVE\|RANDZON), so the spawned body removes the fresh observer
-  before the pulse window; no retained census dump anywhere contains the mime
-  line. The new mob-sound-mime-box-depth scenario clears AGGRESSIVE on the
-  fixture mob and witnesses the line with the observer co-located. The
-  existing manifest row `mob.mp-sound-emote-line` (mobprog.tsv) keeps its
-  green status on the emote-rendering claim but its retained proof does not
-  contain the case bytes; flagged for Zach.
+  (vnum 8079) carries MOB_AGGRESSIVE|MOB_RANDZON (80.mob act word 1048648 =
+  ISNPC\|AGGRESSIVE\|RANDZON); spawn-mob enters through C's normal 'M' reset
+  path, so RANDZON relocates the body at db.c:2132-2145 before the observer
+  ever sees it, and the aggressive body removes the fresh one. No retained
+  census dump anywhere contains the mime line. The new
+  mob-sound-mime-box-depth scenario clears both flags on the fixture mob and
+  witnesses the line with the observer co-located
+  (glm-l1-final-mime3/census-dump/mob-sound-mime-box-depth.txt:16,20;
+  mutant red glm-l1-final-mut-mime, parity MATCH). The existing manifest row
+  `mob.mp-sound-emote-line` (mobprog.tsv) keeps its green status on the
+  emote-rendering claim but its retained proof does not contain the case
+  bytes; flagged for Zach.
 - **constants.c:713/715 are same-pass ident states.** CON_IDCONED and
   CON_IDREAD are fall-through assignments inside ident_check's switch and are
   left within the same pass; the waiting states are CON_IDCONING (712) and
