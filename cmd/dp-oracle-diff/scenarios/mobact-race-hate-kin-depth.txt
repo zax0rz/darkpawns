@@ -1,0 +1,120 @@
+# depth-case: mob.race-hate-kin-line
+# mobile_activity's race-hate warning (src/mobact.c:236-256): the player
+# wields the sword Antali (#4703, APPLY_RACE_HATE entry race 1), and Amaristee (#14424, race 1, no SPEC, not aggressive, no
+# shopkeeper proc) rolls the 1-in-6 !number(0,5) warning gate before her hit.
+# The mob is non-aggressive so mobact.c:226's MOB_AGGRESSIVE branch cannot
+# fire first; the player lacks PRF_NOHASSLE and AFF_PROTECT_EVIL; the room's
+# exits are sealed DARK cleared, and PEACEFUL set so the warning's follow-up hit is refused (src/fight.c:1336-1343) before any enrollment can desync the fight. The warning act goes
+# TO_ROOM, so the observer's block carries it. The earlier race-hate warning
+# scenario paired a stock dagger with a stone giant whose spawn never landed
+# in the C room (hollow pass); this one spawns the mob in its own zone and
+# verifies the line in the C transcript.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 14424 1 14400 144
+replace-room-exits 14400 none
+set-room-flag 14400 0 off
+set-room-flag 14400 4 on
+
+[setup:oracle]
+Kingod
+Y
+oracle1
+oracle1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Kingod
+y
+oracle1
+oracle1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:wearer]
+Kinwear
+Y
+kinpass1
+kinpass1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:wearer]
+Kinwear
+y
+kinpass1
+kinpass1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Kinsee
+Y
+kinsee1
+kinsee1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Kinsee
+y
+kinsee1
+kinsee1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 14400
+teleport Kinwear 14400
+teleport Kinsee 14400
+set Kinwear level 30
+set Kinwear maxhit 5000000
+set Kinwear hit 5000000
+load obj 4703
+give sword Kinwear
+force Kinwear wield sword
+~dpclock pulse 10
+
+[probe:observer]
+~dpclock pulse 120
+look

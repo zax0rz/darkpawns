@@ -1,0 +1,125 @@
+# depth-case: rescue.fail-roll
+# do_rescue's failure arm (src/act.offensive.c:552-558): percent =
+# number(1,101) > prob, so a rescuer whose learned rescue is 1 fails on every
+# roll except a natural 1. The victim out-levels the rescuer so the spawned
+# AGGR24 trainee latches the victim, and the victim's hit points are padded so
+# the fight stays open through the probe. The C transcript must show
+# "You fail the rescue!" — the existing combat-entry-rescue-* scenarios grant
+# skill 75 and only ever roll the success arm. The primary is the idle God
+# (empty-players); the rescuer is a peer, matching combat-entry-rescue-fighting.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+set-mob-flag 16303 AGGR24
+
+[setup:oracle]
+Rescugod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Rescugod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:rescuer]
+Rescfail
+Y
+rescuepass
+rescuepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:rescuer]
+Rescfail
+y
+rescuepass
+rescuepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+Vicfall
+Y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+Vicfall
+y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set Vicfall level 30
+set Vicfall maxhit 5000000
+set Vicfall hit 5000000
+skillset Rescfail 'rescue' 1
+~dpclock pulse 60
+
+[probe:rescuer]
+rescue Vicfall
