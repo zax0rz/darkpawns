@@ -1,0 +1,119 @@
+# C-first Round 3 mobile-actor batch: an unkeyed door room act, mobile get
+# from a container, poisoned drink, non-thief peek, missing paper, and the
+# self-point room act from a zero-charge wand. A named peer observes room
+# output while the descriptor switches between Satan Klaus and clone.
+# C paths: src/interpreter.c:910-947; src/act.movement.c:524-536;
+# src/act.item.c:197-213,1009-1012; src/act.other.c:1665-1677;
+# src/act.comm.c:1058-1062; src/act.other.c:897-980;
+# src/spell_parser.c:610-658.
+# depth-case: door.unkeyed-switched-mobile-room-act
+# depth-case: get.container-mobile-room-act
+# depth-case: drink.poison-mobile-room-act
+# depth-case: peek.switched-mobile-nonthief-gate
+# depth-case: write.switched-mobile-missing-paper
+# depth-case: use.mobile-wand-self-point-room-act
+
+[fixture]
+empty-players
+quiet-mobs
+add-obj-index 132.obj
+replace-room-exits 8162 north 8161 1 gate
+replace-room-exits 8162 east 8161 0
+spawn-mob 69 1 8162 80
+spawn-mob 70 1 8162 80
+give-object 70 8032 1 80
+give-object 70 8010 1 80
+
+[setup:oracle]
+Batchactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Batchactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Batchwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Batchwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Batchwatch 8162
+oedit 8022
+1
+satan long sword
+q
+y
+oedit 8053
+D
+12
+2
+0
+29
+q
+y
+load obj 8022
+give satan satan
+force satan wield satan
+load obj 8053
+give wand satan
+force satan hold wand
+load obj 13301
+give goblet satan
+
+[probe]
+switch satan
+open east
+close east
+put bread bag
+get bread bag
+drink goblet
+use wand satan
+return
+switch clone
+peek
+write scroll
