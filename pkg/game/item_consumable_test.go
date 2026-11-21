@@ -95,15 +95,23 @@ func TestConsumables_InstanceIsolation(t *testing.T) {
 	// --- eat isolation ---
 	eaten := NewObjectInstance(foodProto, -1)
 	otherFood := NewObjectInstance(foodProto, -1)
-	if err := ch.Inventory.AddItem(eaten); err != nil {
-		t.Fatalf("AddItem eaten: %v", err)
-	}
+	// Inventory AddItem prepends (obj_to_char order), so the newest instance
+	// resolves first; add the acted-on instance last.
 	if err := ch.Inventory.AddItem(otherFood); err != nil {
 		t.Fatalf("AddItem otherFood: %v", err)
 	}
+	if err := ch.Inventory.AddItem(eaten); err != nil {
+		t.Fatalf("AddItem eaten: %v", err)
+	}
 
-	w.DoEat(ch, nil, "eat", "bread", scmdEat)
+	// Drive a real value mutation: taste decrements value[0] through
+	// SetValue (act.item.c do_eat SCMD_TASTE), where a copy-on-write bug
+	// would leak into the prototype or the sibling instance.
+	w.DoEat(ch, nil, "taste", "bread", scmdTaste)
 
+	if eaten.GetValue(0) >= 5 {
+		t.Errorf("eat isolation: tasted instance value[0] = %d, want < 5 (the taste must write)", eaten.GetValue(0))
+	}
 	if otherFood.GetValue(0) != 5 {
 		t.Errorf("eat isolation: other instance value[0] = %d, want 5", otherFood.GetValue(0))
 	}
@@ -114,15 +122,22 @@ func TestConsumables_InstanceIsolation(t *testing.T) {
 	// --- drink isolation ---
 	drunk := NewObjectInstance(drinkProto, -1)
 	otherDrink := NewObjectInstance(drinkProto, -1)
-	if err := ch.Inventory.AddItem(drunk); err != nil {
-		t.Fatalf("AddItem drunk: %v", err)
-	}
 	if err := ch.Inventory.AddItem(otherDrink); err != nil {
 		t.Fatalf("AddItem otherDrink: %v", err)
 	}
+	if err := ch.Inventory.AddItem(drunk); err != nil {
+		t.Fatalf("AddItem drunk: %v", err)
+	}
 
+	// Clear the condition gates (act.item.c:994-1001: full>20 with thirst
+	// refuses the drink) so the sip actually writes value[1].
+	ch.SetCondition(CondFull, 0)
+	ch.SetCondition(CondThirst, 0)
 	w.DoDrink(ch, nil, "drink", "skin", scmdDrink)
 
+	if drunk.GetValue(1) >= 10 {
+		t.Errorf("drink isolation: drunk instance value[1] = %d, want < 10 (the drink must write)", drunk.GetValue(1))
+	}
 	if otherDrink.GetValue(1) != 10 {
 		t.Errorf("drink isolation: other instance value[1] = %d, want 10", otherDrink.GetValue(1))
 	}
@@ -136,18 +151,29 @@ func TestConsumables_InstanceIsolation(t *testing.T) {
 	fromInst := NewObjectInstance(fromProto, -1)
 	otherFrom := NewObjectInstance(fromProto, -1)
 	toInst := NewObjectInstance(toProto, -1)
-	if err := ch.Inventory.AddItem(fromInst); err != nil {
-		t.Fatalf("AddItem fromInst: %v", err)
-	}
 	if err := ch.Inventory.AddItem(otherFrom); err != nil {
 		t.Fatalf("AddItem otherFrom: %v", err)
+	}
+	if err := ch.Inventory.AddItem(fromInst); err != nil {
+		t.Fatalf("AddItem fromInst: %v", err)
 	}
 	if err := ch.Inventory.AddItem(toInst); err != nil {
 		t.Fatalf("AddItem toInst: %v", err)
 	}
 
-	w.DoPour(ch, nil, "pour", "skin skin2", scmdPour)
+	// Give the target container a distinct keyword; with both protos sharing
+	// "waterskin skin" the pour resolves one object for both args and writes
+	// nothing.
+	toInst.Prototype = &parser.Obj{
+		VNum: toProto.VNum, ShortDesc: "a flask", Keywords: "flask",
+		TypeFlag: ITEM_DRINKCON, Weight: 10,
+		Values: [4]int{10, 0, 0, 0},
+	}
+	w.DoPour(ch, nil, "pour", "skin flask", scmdPour)
 
+	if fromInst.GetValue(1) == 10 {
+		t.Errorf("pour isolation: from-instance value[1] = 10, want < 10 (the pour must write)")
+	}
 	if otherFrom.GetValue(1) != 10 {
 		t.Errorf("pour isolation: other instance value[1] = %d, want 10", otherFrom.GetValue(1))
 	}
