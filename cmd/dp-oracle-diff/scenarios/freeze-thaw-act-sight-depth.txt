@@ -6,8 +6,8 @@
 # sleeper is skipped by SENDOK entirely (src/comm.c:2543). The pre-DP-1621 Go
 # path broadcast the raw victim name with no sight or sleep gates.
 #
-# depth-case: wizutil.freeze-act-sight
-# depth-case: wizutil.thaw-act-sight
+# depth-case: freeze.act-sight
+# depth-case: thaw.act-sight
 
 [fixture]
 empty-players
