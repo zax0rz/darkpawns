@@ -88,6 +88,10 @@ durable evidence; prose percentages are only snapshots.
   no-diff report is meaningless if the intended block never ran.
 - State such as exact XP deltas may be silent in C. Prove the arithmetic in a
   unit test and separately prove that no invented player message appears (R4).
+- **A pass that compares nothing is not a witness.** Before citing a scenario as
+  proof of a line, grep the retained C transcript for that exact line. A setup
+  both engines refused, a mob that never reached the room, or a step that both
+  engines answered with `Huh?!?` passes the census with no game bytes compared.
 
 ## Dated handoffs
 
