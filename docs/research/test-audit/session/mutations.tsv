@@ -15,3 +15,6 @@ TestCmdHitFillWordsWithoutTargetUseNoArgumentMessage	pkg/session/combat_cmds.go	
 TestPurrRegistrationUsesCEntryGate	pkg/session/command_gates.tsv	295	n/a (R spot-check)	purr gate row position 5 -> 4	red (purr gate level 0 position 4, want 5)	yes
 TestRinRegistrationUsesCEntryGate	pkg/session/command_gates.go	42	n/a (R spot-check)	registerCommand forced MinPosition 5 (rin golden 8)	red (rin registry gate level 0 position 5, want 8)	yes
 TestOrgasmRegistrationUsesCEntryGate	pkg/session/command_gates.go	42	n/a (R spot-check)	registerCommand forced MinPosition 0 (orgasm golden 5)	red (orgasm registry gate level 31 position 0, want 5)	yes
+TestSetFieldTableMatchesCOrderAndGates	pkg/session/wiz_set.go	37	n/a (R spot-check)	set field table row "brief" level LVL_GOD -> LVL_GRGOD	red (set field 0 level 38, want 34)	yes
+TestSkillsetRegistrationUsesCEntryGates	pkg/session/command_gates.go	42	n/a (R spot-check)	registerCommand forced MinPosition 5 (skillset golden 4)	red (skillset registry gate level 38 position 5, want 4)	yes
+TestRuffleRegistrationUsesCEntryGate	pkg/session/command_gates.tsv	336	n/a (R spot-check)	ruffle gate row position 8 -> 7	red (ruffle gate level 0 position 7, want 8)	yes
