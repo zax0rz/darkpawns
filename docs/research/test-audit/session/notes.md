@@ -270,4 +270,15 @@ show rent/shops/player/zones/aggr/hooks report bytes, mudlog routing,
 wizlock/ban/IP admission matrices, OLC reachability, combat-body routing and
 ANSI color, object-save snapshot boundaries. No fixes, no J10 divergences.
 Running: 1145/1537.
+ HEAD
  0d2e279a3 (test(session): audit batch 13 — report bytes + admission matrices, all R)
+
+## Batch 14 results (later tests 1001–1100, 2026-10)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T1190-T1289.
+
+R4 agent-feed hygiene, czedit/zedit/file-editor reachability and mudlog
+boundaries, input-queue capacity, OLC save-all, ban/mudlog bytes, bare-send
+framing, terminal colors, character dispatch. No fixes, no J10 divergences.
+Running: 1245/1537.
+ 7efe635b0 (test(session): audit batch 14 — R4 hygiene + mudlog boundaries, all R)
