@@ -1,5 +1,5 @@
 # C-first witness for an NPC command actor reaching an uncharmed conjured
-# mobile's SPECIAL(conjured) before the command handler. The switched horse is
+# mobile's SPECIAL(conjured) before the command handler. The switched Silk is
 # the actor; the Dominion Angel is the separate special host.
 # depth-case: mob.conjured-npc-actor-lane
 # C path: src/interpreter.c:1407-1476 -> src/spec_procs3.c:859-892 ->
@@ -72,7 +72,7 @@ Y
 [warmup]
 goto 8162
 teleport ConjuredPeer 8162
-switch horse
+switch silk
 
 [probe]
 say hello
