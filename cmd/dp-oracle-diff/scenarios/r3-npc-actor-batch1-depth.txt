@@ -17,8 +17,7 @@
 empty-players
 quiet-mobs
 add-obj-index 132.obj
-replace-room-exits 8162 north 8161 1 gate
-replace-room-exits 8162 east 8161 0
+replace-room-exits 8162 north 8161 1
 spawn-mob 69 1 8162 80
 spawn-mob 70 1 8162 80
 give-object 70 8032 1 80
@@ -84,6 +83,8 @@ Y
 goto 8162
 teleport Batchwatch 8162
 oedit 8053
+1
+wand invis satan
 D
 12
 2
@@ -98,14 +99,14 @@ give goblet satan
 
 [probe]
 switch satan
-open east
-close east
+open north
+close north
 put bread bag
 get bread bag
 drink goblet
 hold wand
 use wand satan
+write scroll
 return
 switch clone
 peek
-write scroll
