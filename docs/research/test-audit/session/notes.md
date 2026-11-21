@@ -259,4 +259,15 @@ The R5f entry-flow matrix suites (name gate with the aIkO regression probe,
 deleted-record lifecycle, password/world/restore matrices), switch
 lifecycle/readers/gates, heartbeat output framing, zone occupancy, idle rent.
 No fixes, no J10 divergences. Running: 1045/1537.
+ HEAD
  eee9c0796 (test(session): audit batch 12 — R5f entry matrices + switch lifecycle, all R)
+
+## Batch 13 results (later tests 901–1000, 2026-10)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T1090-T1189.
+
+show rent/shops/player/zones/aggr/hooks report bytes, mudlog routing,
+wizlock/ban/IP admission matrices, OLC reachability, combat-body routing and
+ANSI color, object-save snapshot boundaries. No fixes, no J10 divergences.
+Running: 1145/1537.
+ 0d2e279a3 (test(session): audit batch 13 — report bytes + admission matrices, all R)
