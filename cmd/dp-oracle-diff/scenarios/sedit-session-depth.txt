@@ -3,6 +3,7 @@
 # sedit_parse in C and the Go descriptor-owned SEDIT state machine.
 
 # depth-case: sedit.interactive-olc
+# depth-case: sedit.room-act
 
 [fixture]
 empty-players
@@ -35,8 +36,38 @@ Y
 <ENTER>
 1
 
+[setup:oracle:peer]
+Seditpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Seditpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 goto 8162
+teleport Seditpeer 8162
+set player Seditstate level 34
 
 [probe]
 sedit 8000

@@ -10,6 +10,7 @@
 # depth-case: look.at-no-argument
 # depth-case: look.look-target
 # depth-case: look.read-target
+# depth-case: look.character-no-description
 [fixture]
 quiet-mobs
 [setup:oracle]
@@ -38,6 +39,39 @@ K
 Y
 <ENTER>
 1
+
+[setup:oracle:peer]
+Lookpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Lookpeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Lookpeer 8162
+
 [probe]
 look
 look north
@@ -51,3 +85,4 @@ look at pack
 look at
 look pack
 read pack
+look at Lookpeer
