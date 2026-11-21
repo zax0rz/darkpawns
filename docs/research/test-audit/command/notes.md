@@ -136,3 +136,11 @@ prefix; git author BRENDA69), unknown 1 (PR #189, git author BRENDA69).
 
 Coverage: 67.8% before → 67.8% after (assertions only; no tests added or
 removed, so the denominator is unchanged and no live statement lost coverage).
+
+## Attribution update (2026-11-21, PF-152)
+
+Git author `BRENDA69 <brenda@labz0rz.com>` was the original OpenClaw agent —
+a multi-model orchestrator (mostly glm-5-flash delegating to subagents), per
+ledger PF-152. All 38 BRENDA69-authored rows in this ledger now read
+`OpenClaw (multi-model orchestrator)` with no model assigned, and
+attribution.tsv carries an agent column.
