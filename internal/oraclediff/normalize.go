@@ -48,8 +48,19 @@ var (
 	vitalsPrompt     = regexp.MustCompile(`\b\d+H\s+\d+M\s+\d+V\s*>`)
 	promptOnly       = regexp.MustCompile(`^\s*(?:<PROMPT>|>)\s*$`)
 	promptPrefix     = regexp.MustCompile(`^> ?`)
-	statsLine        = regexp.MustCompile(`^\s*(?:Str:.*Dex:.*Int:.*|Wis:.*Con:.*Cha:.*)\s*$`)
+	// C prints rolled ability scores at src/interpreter.c:2109-2110 and :2137-2138:
+	//   "  Str: %-13s Dex: %-13s Int: %-13s\r\n"
+	//   "  Wis: %-13s Con: %-13s Cha: %-13s\r\n"
+	// with adjectives from abil_names[] (src/constants.c:61-90). Each %-13s
+	// field is left-aligned in 13 bytes (including trailing spaces on Int/Cha),
+	// and both lines must appear as an adjacent Str/Wis pair (R1b).
+	statsLineTop    = regexp.MustCompile(`^  Str: ` + abilField + ` Dex: ` + abilField + ` Int: ` + abilField + `$`)
+	statsLineBottom = regexp.MustCompile(`^  Wis: ` + abilField + ` Con: ` + abilField + ` Cha: ` + abilField + `$`)
 )
+
+// abilField matches each distinct abil_names[] entry (src/constants.c:61-90)
+// padded to C's exact %-13s width (13 bytes).
+const abilField = `(?:terrible {5}|awful {8}|bad {10}|poor {9}|below average|average {6}|decent {7}|good {9}|very good {4}|excellent {4}|superior {5}|godlike {6})`
 
 // Normalize applies the Tier-1 rules in this deliberate order. Keep this as
 // the single rule list: order matters, and each rule documents why it exists.
@@ -121,19 +132,17 @@ func normalize(raw string, keepANSI bool) string {
 
 	lines = strings.Split(normalizeUsersLoginAt(strings.Join(lines, "\n")), "\n")
 
-	// 4. Mask the rolled stat block: adjective values derive from unmatched Tier-1 PRNG streams.
-	maskedStats := false
+	// 4. Mask the rolled stat block: only an exact C two-line Str/Wis pair
+	// (src/interpreter.c:2109-2110, :2137-2138) masks to <ROLLED_STATS>.
 	filtered := make([]string, 0, len(lines))
-	for _, line := range lines {
-		if statsLine.MatchString(line) {
-			if !maskedStats {
-				filtered = append(filtered, "<ROLLED_STATS>")
-				maskedStats = true
-			}
+	for i := 0; i < len(lines); {
+		if i+1 < len(lines) && statsLineTop.MatchString(lines[i]) && statsLineBottom.MatchString(lines[i+1]) {
+			filtered = append(filtered, "<ROLLED_STATS>")
+			i += 2
 			continue
 		}
-		maskedStats = false
-		filtered = append(filtered, line)
+		filtered = append(filtered, lines[i])
+		i++
 	}
 
 	// 5. Canonicalize prompt framing. Ordinary comparisons keep prompt-only
