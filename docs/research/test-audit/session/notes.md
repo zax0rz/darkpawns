@@ -46,3 +46,34 @@ Confidence: low on the F/C/D partition; the R share is the firm guess.
 
 - Batch 1–3: the 145 pre-oracle tests (~50 per batch).
 - Then the 1,392 later tests in date order, ~50–100 per batch.
+
+## Batch 1 results (first 50 pre-oracle tests, 2026-05-13..19)
+
+Marks: R 47, F 2, C 1, D 0. Junk: J3 ×1, J4 ×1, J8 ×1.
+
+The May layer is the port's earliest infrastructure work (manager broadcasts,
+agent vars, WebSocket char creation), all authored by BRENDA69 with no PR or
+trailer — agent attribution `unknown` across the batch.
+
+F fixes (both proven by mutation, see mutations.tsv):
+- `TestBuildRoomItems_KeywordDisambiguation` (J3): the second coin was given
+  *different* keywords and the missing `2.coin` prefix only produced a t.Log.
+  Worse, `registerObject`'s synthetic prototype uses `obj<vnum>` keywords, so
+  the first coin never had "coin" either — the test passed without ever
+  exercising disambiguation. Fixed: both coins share `coin gold` keywords and
+  `foundSecond` is strict.
+- `TestSetCommandExecFunc` (J8): the test installed its own closure over
+  `CommandExecFunc` and asserted that. Fixed: exercise the production closure's
+  no-session branch; green under a lookup-skipping mutation while the old
+  version stayed green.
+
+C: `TestManager_GetSession_Lookup` was a byte-for-byte duplicate of
+`TestManager_GetSession` (same registration, same lookup, same assertions);
+folded — remaining proof `TestManager_GetSession`.
+
+Char-creation prompt bytes verified against C `nanny()` this session
+(src/interpreter.c:1782, :1857, :1946, :1966, :2024-2025, :2070, :2085). The
+`\r\n` prefix on the WS color prompt is deliberate (char_creation.go:219) —
+DP-1173's flow, oracle-covered. No J10 divergences in this batch.
+
+Coverage: 74.4% before → after (measured below in the PR body).

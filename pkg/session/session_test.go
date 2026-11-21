@@ -294,29 +294,12 @@ func TestSetCommandExecFunc(t *testing.T) {
 		t.Fatal("CommandExecFunc should be set after SetCommandExecFunc")
 	}
 
-	// Test that the callback delegates to ExecuteCommand
-	s := makeTestSession(t, m, "Alice", 1001, true)
-	m.mu.Lock()
-	m.sessions["alice"] = s
-	m.mu.Unlock()
-
-	// Wire the callback — it should find Alice's session and dispatch
-	called := false
-	m.world.CommandExecFunc = func(ch *game.Player, command string) bool {
-		called = true
-		// The callback should be called with the correct player
-		if ch.GetName() != "Alice" {
-			t.Errorf("callback received player %q, want %q", ch.GetName(), "Alice")
-		}
-		return true
-	}
-
-	result := m.world.CommandExecFunc(game.NewPlayer(1, "Alice", 1001), "look")
-	if !result {
-		t.Error("callback should return true")
-	}
-	if !called {
-		t.Error("callback was not called")
+	// Test that the production wiring looks up the body's session: the wired
+	// callback must refuse a body with no session (its early return). The old
+	// version of this test overwrote CommandExecFunc with its own closure and
+	// asserted that instead — J8, the fixture supplied the asserted behavior.
+	if m.world.CommandExecFunc(game.NewPlayer(2, "Nobody", 1001), "look") {
+		t.Error("wired callback should return false for a body with no session")
 	}
 }
 
@@ -340,28 +323,6 @@ func TestManager_SendToAll_EmptyMessage(t *testing.T) {
 		t.Error("empty message should not be sent")
 	default:
 		// expected
-	}
-}
-
-// ---------------------------------------------------------------------------
-// TestManager_GetSession_Lookup — find by lowercase key
-// ---------------------------------------------------------------------------
-
-func TestManager_GetSession_Lookup(t *testing.T) {
-	m := makeTestManager(t)
-	s := makeTestSession(t, m, "Alice", 1001, true)
-
-	m.mu.Lock()
-	m.sessions["alice"] = s
-	m.mu.Unlock()
-
-	// GetSession is case-sensitive (keys are lowercased on registration)
-	found, ok := m.GetSession("alice")
-	if !ok {
-		t.Error("GetSession should find alice")
-	}
-	if found != s {
-		t.Error("GetSession returned wrong session")
 	}
 }
 
