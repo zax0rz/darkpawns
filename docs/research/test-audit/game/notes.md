@@ -172,3 +172,8 @@ src/act.other.c:1115. Ledger complete T001-T638 on this branch.
 
 R spot-checks: GuildInfo room red; flesh-alter failure wait red; carve
 initials byte red (after the recorded wrong-arm lesson).
+
+
+## Post-oracle redo, batches 8 onward — prediction before reading tests
+
+The remaining inventory is T639–T1991: 1,353 tests, all later than the 2026-07-12 oracle start. Before opening any remaining test body, I predict R 1,240 / F 50 / C 28 / D 35 (1,353 total). There are no pre-oracle tests left to classify; the completed pre-oracle result remains R 335 / F 3 / C 0 / D 0. I expect most weak marks to involve vacuous checks, duplicate contracts, or wrong-path negatives, and few or no J10s because these tests postdate the oracle harness.
