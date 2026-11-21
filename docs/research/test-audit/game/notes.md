@@ -117,3 +117,14 @@ procs and item NODROP tests assert C messages and the bit-7-vs-bit-0
 regression guard. No fixes needed; no mutations run (nothing to prove).
 Prediction check: the later half of the pre-oracle set is even better than
 guessed — the April-only layer carried all of the batch-1 weakness.
+
+## Batch 4 results (pre-oracle tests 151–200, 2026-06-28..07-04)
+
+Marks: R 50 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-4`.)
+
+The June 28–July 4 tier is uniformly DP-era quality: circle/spike/stake
+gates with scripted rollers, the room-flags decimal-parse regression guard
+(bit 15 vs bit 8), real-world high-flag room checks against lib/world,
+affect-update duration semantics (DP-669, C magic.c:441-450), the safe spec
+caller's panic recovery, and C-structs.h bit-order pins. Four batches in:
+197 R / 3 F / 0 C / 0 D — every weak mark was in April.
