@@ -21,3 +21,11 @@ For each citation it reports one result:
 | `resolves` | the lines exist and the row quotes nothing, so a script can't judge it |
 
 Only the first four are checked mechanically. `problems-2026-11-21.tsv` lists every `no-such-file`, `out-of-range` and `anchor-drift` row from the first run on 2026-11-21. Of about 19,600 citations it found 3 to files that don't exist, 10 past the end of a real file, and 173 drift candidates. A drift candidate isn't necessarily wrong: a row may quote a message while citing the start of the function that prints it. Each needs a short read.
+
+## Second run, after the fixes (2026-11-21)
+
+GLM flash's #2972 fixed 43 wrong citations: 3 to nonexistent files, 10 past end of file, and 30 drifted. It marked the other 143 flagged rows correct as is, mostly function-start, call-site and spell-matrix template citations; Claude sampled them, and they held up. `fixes-2026-11-21.tsv` records each decision with its grepped evidence.
+
+Flash also found a checker bug. A backtick pair holding fewer than 8 characters (`` `stand` ``) made the pattern pair the wrong backticks. The checker now matches every quote or backtick pair first and then filters, and it skips bare identifiers such as `mag_damage`. Those are code references, not quoted messages.
+
+On main after both fixes: `no-such-file` 0, `out-of-range` 0, `anchor-drift` 132 (all among the reviewed correct-as-is set), `anchor-match` 749.

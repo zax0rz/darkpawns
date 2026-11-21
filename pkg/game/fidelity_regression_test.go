@@ -67,12 +67,10 @@ func TestFidelityCanSeeBlindnessAndInvis(t *testing.T) {
 	}
 }
 
-// TestFidelityCanSeeObjectInvisibility verifies canSeeObject's ITEM_INVISIBLE
-// check uses bit 5 (src/structs.h:468-496), not bit 0 (ITEM_GLOW).
-
-// TestFidelityChCanSeeObjInvisibility verifies chCanSeeObj's ITEM_INVISIBLE
-// check and nil-safety (act_informative.go) — the simpler, Player-specific
-// sibling of canSeeObject.
+// TestFidelityChCanSeeObjInvisibility verifies chCanSeeObj's invisible-object
+// gate and nil-safety. C's CAN_SEE_OBJ uses ITEM_INVISIBLE bit 5 and permits
+// detection through detect-invisible or HOLYLIGHT (src/utils.h:535-540;
+// src/structs.h:468-496).
 func TestFidelityChCanSeeObjInvisibility(t *testing.T) {
 	mortal := NewPlayer(1, "Mortal", 1001)
 	immort := NewPlayer(2, "Immort", 1001)
@@ -106,8 +104,8 @@ func TestFidelityChCanSeeObjInvisibility(t *testing.T) {
 	}
 }
 
-// TestFidelityStealMobRestrictions verifies that DoSteal works on mob targets
-// and respects weight penalties.
+// TestFidelityStealMobRestrictions verifies that DoSteal transfers an item
+// from a mob's inventory to the thief's inventory.
 func TestFidelityStealMobRestrictions(t *testing.T) {
 	thief := NewPlayer(1, "Thief", 1001)
 	thief.SetSkill(SkillSteal, 1000) // extremely high skill to guarantee success

@@ -225,8 +225,8 @@ func TestEquipmentToInventory(t *testing.T) {
 		t.Error("expected SlotWield to be empty after unequip")
 	}
 
-	if obj.Location.Kind != ObjInInventory && obj.Location.Kind != ObjNowhere {
-		t.Errorf("expected item Location.Kind to be ObjInInventory or ObjNowhere after unequip, got %v", obj.Location.Kind)
+	if got, want := obj.Location, LocInventoryPlayer(player.Name); got != want {
+		t.Errorf("item location after unequip = %+v, want %+v", got, want)
 	}
 }
 
@@ -320,13 +320,8 @@ func TestExtractObject(t *testing.T) {
 
 // ---------------------------------------------------------------------------
 // TestExtractObjectFromInventory — extract an object carried by a player
-// ---------------------------------------------------------------------------
-//
-// SURPRISING BEHAVIOR: Inventory.AddItem() sets item.Carrier = *Inventory, but
-// ExtractObject() type-asserts Carrier as *Player or *MobInstance.  To work
-// around this, the test manually sets Carrier to *Player to match what the
-// ExtractObject carrier branch expects.  After the ObjectLocation refactor
-// this should be cleaned up.
+// ExtractObject follows the item's ObjectLocation to remove it from inventory
+// before clearing its world registration.
 
 func TestExtractObjectFromInventory(t *testing.T) {
 	w, player := newTestWorld(t)
@@ -784,13 +779,8 @@ func TestMoveObjectRollbackStrandedLocation(t *testing.T) {
 
 // ---------------------------------------------------------------------------
 // TestExtractObjectFromPlayerEquipment — extract an object equipped on a player
-// ---------------------------------------------------------------------------
-//
-// BUG: This test currently FAILS. ExtractObject's ObjEquipped branch is a
-// no-op comment ("handled by the equipment system through inventory remove").
-// The item remains in player.Equipment.Slots after ExtractObject, and the
-// Equipment system has no cleanup hook. ExtractObject must call
-// p.Equipment.unequip() or equivalent to remove from the slot map.
+// ExtractObject must remove the item from both the player's equipment slot and
+// the world's object registry.
 
 func TestExtractObjectFromPlayerEquipment(t *testing.T) {
 	w, player := newTestWorld(t)
@@ -808,7 +798,7 @@ func TestExtractObjectFromPlayerEquipment(t *testing.T) {
 
 	// Item must be removed from equipment
 	if _, ok := player.Equipment.GetItemInSlot(SlotWield); ok {
-		t.Error("BUG: equipped item still in the equipment slots after ExtractObject")
+		t.Error("equipped item still in the equipment slots after ExtractObject")
 	}
 
 	// Item must be removed from global instance map
@@ -863,11 +853,8 @@ func TestExtractObjectFromContainer(t *testing.T) {
 
 // ---------------------------------------------------------------------------
 // TestExtractObjectFromMobEquipment — extract an object equipped on a mob
-// ---------------------------------------------------------------------------
-//
-// BUG: This test currently FAILS. Same root cause as
-// TestExtractObjectFromPlayerEquipment — ExtractObject's ObjEquipped branch
-// is a no-op for both OwnerPlayer and OwnerMob.
+// ExtractObject must remove a mob-equipped item from the slot and the world
+// object registry.
 
 func TestExtractObjectFromMobEquipment(t *testing.T) {
 	w, _ := newTestWorld(t)
@@ -886,7 +873,7 @@ func TestExtractObjectFromMobEquipment(t *testing.T) {
 	w.ExtractObject(obj, 1001)
 
 	if _, ok := mob.Equipment[mobWearWield]; ok {
-		t.Error("BUG: equipped item still in mob Equipment map after ExtractObject")
+		t.Error("equipped item still in mob Equipment map after ExtractObject")
 	}
 
 	w.mu.RLock()

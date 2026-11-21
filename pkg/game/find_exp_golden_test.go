@@ -4,8 +4,8 @@ import "testing"
 
 // Tier-2 fidelity golden test (deterministic — no RNG, no game-code change).
 //
-// findExpGolden is the XP-per-level curve transcribed VERBATIM from the original C source
-// (src/class.c: `int find_exp(int class, int level)`). It is the fidelity ground truth:
+// These tests pin the XP-per-level curve from C's find_exp
+// (src/class.c:1089-1180). It is the fidelity ground truth:
 // FindExp MUST reproduce these exactly, or leveling progression in the Go port diverges
 // from the original game.
 //
@@ -13,7 +13,8 @@ import "testing"
 // We test both: the fixed values directly, and the formula output for each class modifier.
 // Index is [class][level]; level 0 is the sentinel (1), levels 1–12 are fixed, 13–40 use formula.
 
-// findExpFixed are the hardcoded XP values for levels 0–12 from src/class.c find_exp().
+// findExpFixed are C's hardcoded XP values for levels 0–12
+// (src/class.c:1131-1158).
 var findExpFixed = [13]int{
 	1,      // level 0
 	1500,   // level 1
@@ -30,7 +31,7 @@ var findExpFixed = [13]int{
 	870000, // level 12
 }
 
-// classModifiers maps class constants to their XP multipliers from src/class.c find_exp().
+// classModifiers maps class constants to the multipliers in src/class.c:1093-1128.
 var classModifiers = map[int]float64{
 	ClassMageUser: 0.3,
 	ClassCleric:   0.4,
@@ -73,8 +74,8 @@ func TestFindExp_GoldenFixedLevels(t *testing.T) {
 	}
 }
 
-// TestFindExp_GoldenFormulaLevel13Plus asserts FindExp reproduces the C formula for levels 13–40
-// across every class. The C formula (src/class.c lines ~340-345):
+// TestFindExp_GoldenFormulaLevel13Plus asserts FindExp reproduces C's formula
+// for levels 13–40 across every class (src/class.c:1177-1178):
 //
 //	return 900000 + ((level-13) * level * 20000) + (level*level*1000) + (modifier*10000*level)
 //
@@ -90,25 +91,6 @@ func TestFindExp_GoldenFormulaLevel13Plus(t *testing.T) {
 				t.Errorf("FindExp(%s, %d) = %d, want %d (per src/class.c formula, modifier=%.1f)",
 					name, level, got, want, modifier)
 			}
-		}
-	}
-}
-
-// TestFindExp_GoldenClassModifiers asserts that each class gets the correct modifier from C.
-// This is a cross-check: we call FindExp with a known level and verify the result matches
-// the expected modifier-derived value.
-func TestFindExp_GoldenClassModifiers(t *testing.T) {
-	// Level 20 is in the formula range. Expected base: 900000 + (7*20*20000) + (400*1000) = 900000 + 2800000 + 400000 = 4100000
-	// Then add modifier*10000*20 = modifier*200000
-	baseAt20 := 900000 + (7 * 20 * 20000) + (20 * 20 * 1000) // = 4100000
-
-	for class, modifier := range classModifiers {
-		name := classNamesGame[class]
-		want := baseAt20 + int(modifier*200000)
-		got := FindExp(class, 20)
-		if got != want {
-			t.Errorf("FindExp(%s, 20) = %d, want %d (modifier=%.1f, base=%d)",
-				name, got, want, modifier, baseAt20)
 		}
 	}
 }

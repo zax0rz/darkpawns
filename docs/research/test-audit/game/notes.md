@@ -172,3 +172,70 @@ src/act.other.c:1115. Ledger complete T001-T638 on this branch.
 
 R spot-checks: GuildInfo room red; flesh-alter failure wait red; carve
 initials byte red (after the recorded wrong-arm lesson).
+
+
+## Post-oracle redo, batches 8 onward — prediction before reading tests
+
+The remaining inventory is T639–T1991: 1,353 tests, all later than the 2026-07-12 oracle start. Before opening any remaining test body, I predict R 1,240 / F 50 / C 28 / D 35 (1,353 total). There are no pre-oracle tests left to classify; the completed pre-oracle result remains R 335 / F 3 / C 0 / D 0. I expect most weak marks to involve vacuous checks, duplicate contracts, or wrong-path negatives, and few or no J10s because these tests postdate the oracle harness.
+
+## Post-oracle redo, batch 8 (T639–T688; 2026-04-25..11-13)
+
+Marks: **R 46 / F 3 / C 1 / D 0.** Junk: J2 1, J3 1, J4 1, J10 1.
+
+The initial prediction said all remaining tests were introduced after the oracle
+start. Git attribution corrected that: **16 of these 50** were introduced before
+2026-07-12 (pre-oracle split: R 14 / F 1 / C 1; post-oracle split: R 32 / F 2).
+Through T688, cumulative counts are pre-oracle R 349 / F 4 / C 1 / D 0 and
+post-oracle R 330 / F 3 / C 0 / D 1. The 1,353-test prediction remains open
+until the audit finishes.
+
+**F fixes, each mutation-proven (both halves in `mutations.tsv`):**
+
+1. `TestEnterCircleLookBytesMatchC` (J10): its first line expected CRLF, but C
+   sends LFCR at `src/spec_procs.c:1964-1975`. The Go helper now emits C's bytes,
+   and the assertion checks the literal LFCR. `enter_circle` has no C room or
+   mobile assignment (`src/spec_assign.c:573-635`; R2/R4/R5e), so there is no
+   player scenario that can reach the changed line. A targeted census would
+   have no scenario capable of failing on this edit; the direct unit test is
+   the available proof.
+2. `TestEquipmentToInventory` (J2): the old predicate accepted
+   `ObjNowhere` after a successful unequip. It now requires the exact
+   `LocInventoryPlayer(player.Name)`.
+3. `TestExecDNSAddDeletePrefixAndPersistenceState` (J3): despite its name, the
+   old body checked only in-memory state. It now reloads a fresh World after
+   add and delete and checks the persisted list. Removing both save calls kept
+   the old body green and failed the fixed test.
+
+**C merge:** `TestFindExp_GoldenClassModifiers` (J4) repeated the level-20 case
+already covered by `TestFindExp_GoldenFormulaLevel13Plus` across all classes and
+levels 13–40. Removed the duplicate and redirected the depth proof to the
+retained test. Corrected the stale formula citation from approximately 340 to
+`src/class.c:1177-1178`; fixed XP values are at `1131-1158` and multipliers at
+`1093-1128`.
+
+Other comment/citation cleanup: replaced stale BUG and Carrier-workaround
+comments on extraction tests; removed an orphan comment for a nonexistent
+object-visibility test; narrowed the steal-test comment to its actual mob-item
+transfer assertion; corrected the room-light `obj_to_room` citation.
+
+**Weak-test author attribution (git identity/trailers):** T657 DeepSeek; T663
+OpenClaw (multi-model orchestrator); T665 unknown; the merged T686 duplicate
+was OpenClaw (multi-model orchestrator). Zach's `zdgreene` identity without a
+model trailer remains unknown under PF-152/PF-153. No model was assigned from
+the Claude Sonnet trailer on T681 because the commit-model attribution table
+does not list that commit.
+
+Coverage: **64.4% before / 64.5% after** `GOEXPERIMENT=nojsonv2 go test -cover
+./pkg/game`.
+
+All 11 required repository gates passed on the final batch state: `make fmt`,
+Go build/vet/test, pinned golangci-lint, modernize, deadcode, string census,
+fidelity-depth, expected-divergences and function-index. The first full test
+attempt exposed a spacing error in the newly added DNS persistence expectation;
+that expectation was corrected, the focused DNS test passed and the full suite
+passed on retry. `make string-census` passed its ratchet while reporting its
+generated reports as stale.
+
+R-mutation spot checks were not required because this batch contained F/C
+marks. The detached mutation tree was restored byte-for-byte after each of the
+three proofs.

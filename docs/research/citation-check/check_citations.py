@@ -1,6 +1,7 @@
 # For every row citing src/<file>:<line>[-<end>], check:
 #  resolve: the file exists and the lines are in range;
-#  anchor: if the row quotes a C string (>=8 chars, in "..." or `...`) that
+#  anchor: if the row quotes a C string (>=8 chars, in "..." or `...`, not a bare
+#          identifier) that
 #          occurs in that C file, is one occurrence inside the cited range?
 import os, re, sys, glob, csv, collections
 ROOT = sys.argv[1]; OUT = sys.argv[2]
@@ -11,7 +12,8 @@ def lines(f):
         src[f] = open(p, errors="replace").read().split("\n") if os.path.exists(p) else None
     return src[f]
 CITE = re.compile(r'(?:src/)?([a-z_0-9.-]+\.(?:c|h)):(\d+)(?:-(\d+))?')
-ANCH = re.compile(r'"([^"\n]{8,}?)"|`([^`\n]{8,}?)`')
+ANCH = re.compile(r'"([^"\n]*)"|`([^`\n]*)`')
+IDENT = re.compile(r'^[A-Za-z_][A-Za-z0-9_]*(\(\))?$')
 def norm(s): return s.replace("\\r", "").replace("\\n", "").replace('\\"', '"').strip()
 sources = sorted(glob.glob(f"{ROOT}/docs/fidelity/depth/*.tsv")) + sorted(glob.glob(f"{ROOT}/docs/research/test-audit/*/ledger.tsv")) + [f"{ROOT}/docs/research/EVIDENCE_LEDGER.tsv"]
 stats = collections.Counter(); out = []
@@ -21,7 +23,7 @@ for path in sources:
         cites = CITE.findall(row)
         if not cites: continue
         anchors = [norm(a or b) for a, b in ANCH.findall(row)]
-        anchors = [a for a in anchors if not CITE.search(a) and len(a) >= 8]
+        anchors = [a for a in anchors if not CITE.search(a) and len(a) >= 8 and not IDENT.match(a)]
         for f, a, b in cites:
             L = lines(f); s = int(a); e = int(b) if b else s
             if L is None: res = "no-such-file"; actual = ""
