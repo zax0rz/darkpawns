@@ -85,3 +85,22 @@ fixed long ago (the tests pass and pin the fixed behavior) — the comments now
 say the bugs were fixed; `TestDoBackstab_NotThief` had a copy-pasted duplicate
 assertion (removed). `TestSaveLoadLocationRoundTrip` exists only as a comment
 block documenting a design gap (no function; not in the inventory).
+
+## Batch 2 results (pre-oracle tests 51–100, 2026-05-13..06-18)
+
+Marks: R 49, F 1, C 0, D 0 (98% keepers). Junk: J3 ×1. (Ledger on branch
+`glm/test-audit-game-2`; this shared file carries the running summary.)
+
+- `TestWeatherChange_AdjustsPressureAndSky` (F, J3): the name promises
+  pressure/sky behavior but the 20-iteration loop asserted nothing and the
+  tail only checked two accessors. Fixed to pin C's formula deterministically:
+  seed 7 draws dice(1,4)=4, dice(2,6)=5, dice(2,6)=5, summer diff +2, so
+  change = 8 and pressure 1013 → 1021, plus the [960,1040] clamp band.
+  Mutation (summer diff +2 → −2) reds it.
+
+The May–June layer is uniformly strong: movement gates, C-cited starting-kit
+pins (obj_to_char order, container children), the canSee fidelity matrix
+(with a C-cited note that AFF_HIDE is NOT part of CAN_SEE), save round-trips,
+weather/wraps, ban substring semantics, and the item donation/wear/transfer
+family with exact C refusal strings. No J10 found yet — the class both prior
+audits each hit remains open.
