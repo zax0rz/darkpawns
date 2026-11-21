@@ -93,7 +93,6 @@ q
 y
 load obj 8053
 give wand satan
-force satan hold wand
 load obj 13301
 give goblet satan
 
@@ -104,6 +103,7 @@ close east
 put bread bag
 get bread bag
 drink goblet
+hold wand
 use wand satan
 return
 switch clone
