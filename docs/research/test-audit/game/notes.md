@@ -308,3 +308,17 @@ The recent era: party mixed-group, the h6 resource audit, vulnerable races,
 room broadcast awake gates, player physical checks, and two dense contract
 families — the spec mob-tell arguments (each spec's tell arguments pinned to
 its src/graph.c line) and the raw-kill sequence guards.
+
+## Batch 21 results (post-oracle tests 1401–1500, 2026-10-29..11-20)
+
+Marks: R 99 / F 0 / C 0 / D 1. (Ledger on branch `glm/test-audit-game-21`.)
+
+The audit's first deletion: **TestZzzCanaryTwo** — `t.Log("v2")` with no
+assertions, introduced as a leftover with the extraction-window repair
+(55246fe1e, which carries the file's two excellent dying-spec-arm tests).
+Deleted; the file's real tests cover the behavior. The rest of the batch is
+the strong November pattern (spec act templates, subdue depth, teleport npc
+refusal — the spells.c:189-194 test this L1 work knows, mirror-image
+create-mobile, counterproc damage).
+
+Running total: 1,796 R / 3 F / 0 C / 1 D of 1,991.
