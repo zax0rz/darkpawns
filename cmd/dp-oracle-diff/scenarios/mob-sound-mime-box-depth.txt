@@ -24,7 +24,7 @@ clear-mob-flag 8079 AGGRESSIVE
 spawn-mob 8079 1 8162 80
 
 [setup:oracle]
-Mimeprobe
+Boxprobe
 Y
 oraclepass
 oraclepass
@@ -38,7 +38,7 @@ Y
 1
 
 [setup:port]
-Mimeprobe
+Boxprobe
 Y
 oraclepass
 oraclepass
