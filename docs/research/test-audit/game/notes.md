@@ -118,3 +118,57 @@ swapped — red), TestDoTellEligibilityAndDelivery (not-found byte — red,
 after recording that the NoPersonHere constant is not this path's source),
 TestTimeWeatherSnapshotTracksCanonicalClock (snapshot loses the weather
 half — red).
+
+## Post-oracle redo, batch 3 (tests 101–150, T439–T488; 2026-07-14..16)
+
+Marks: R 49 / F 0 / C 0 / D 1. Cites grepped this session: mobact draws
+src/mobact.c:120,146; steal draws/strings src/act.other.c:221,280,395-405,481;
+mud_time_passed src/utils.c with beginning_of_time src/db.c:417,420.
+
+**D: TestRealtimeWorldTickersFreezeWhenDPClockIsSet (J9/J4)** — pkg/game owns
+no realtime ticker (world.go:400: PointUpdate is driven only by the server
+heartbeat), so the 20ms assertion holds with DP_CLOCK unset too (probed).
+The freeze contract is tested for real in pkg/engine
+(gameloop_test.go:40,117). Deleted; the engine tests are the remaining proof.
+
+R spot-checks: backstab extra draw red; recall dream byte red; steal extra
+draw red (after two wrong-target lessons recorded in-session: the first
+anchor hit DoStealth's roll, not DoSteal's).
+
+## Post-oracle redo, batch 4 (tests 151–200, T489–T538; 2026-07-16)
+
+Marks: R 50 / F 0 / C 0 / D 0. The batch is three tight families plus
+singles: the skillmsg reroute family (bash/headbutt/kick/trip ×5 — one
+shared contract per shape, all citing src/fight.c:1023-1035 skill_message,
+verified this session), the first-player-god bootstrap (citing
+src/db.c:3016-3024, verified), the help loader/search family, yank's gates
+(src/act.other.c:1620+ verified: no-arg, NOPERSON, self "That's wierd.",
+non-follower "That probably wouldn't be appreciated.", already-up mounted/
+unmounted, sleeping), plus give's NOPERSON and the gen-tog clan gate.
+
+R spot-checks: yank pronoun byte red; help first-match backtrack reversed
+red; quoted-keyword parse disabled red.
+
+## Post-oracle redo, batch 5 (tests 201–250, T539–T588; 2026-07-17..18)
+
+Marks: R 50 / F 0 / C 0 / D 0. (This branch's ledger splices the unmerged
+batch-3/4 rows T439–T538 so the file is complete T001–T588; the PRs are a
+train per the follow-up.) Cites grepped this session: drink gates
+src/act.item.c:933,939,944; drunk speech speak_drunk src/act.comm.c:757-789;
+give-weight IS_CARRYING_W(vict) src/act.item.c:690.
+
+R spot-checks: onget trigger disabled red; leader look moved after greet
+red; wand charge not decremented red.
+
+## Post-oracle redo, batch 6 (tests 251–300, T589–T638; 2026-07-18..21)
+
+Marks: R 50 / F 0 / C 0 / D 0. The depth-skill families (behead, bite, carve,
+first aid, flesh-alter with the src/new_cmds.c:1843+ weapon-band table,
+gen-write) and the spec-proc wave (cityguard, dragon breath, fido, guild
+guard incl. the GuildInfo table, janitor, paladin, fighter, guild). Cites
+grepped this session: love-bite act trio src/new_cmds.c:1238-1241; flesh
+bands src/new_cmds.c:1843; gen-write "That must be a mistake..."
+src/act.other.c:1115. Ledger complete T001-T638 on this branch.
+
+R spot-checks: GuildInfo room red; flesh-alter failure wait red; carve
+initials byte red (after the recorded wrong-arm lesson).

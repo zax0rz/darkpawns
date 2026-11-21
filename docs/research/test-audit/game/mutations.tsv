@@ -8,3 +8,16 @@ TestConsumables_InstanceIsolation	pkg/game/object.go	-	SetValue leaks val into o
 TestNewbieHometownRoom	pkg/game/death.go	-	Kir-Oshi start room 18201 -> 8162	n/a (R spot-check)	red	yes
 TestDoTellEligibilityAndDelivery	pkg/game/directed_speech.go	-	tell not-found literal "No-one" -> "No one" (directed_speech.go:207; the NoPersonHere constant sits on another path and mutating it stays green — recorded)	n/a (R spot-check)	red	yes
 TestTimeWeatherSnapshotTracksCanonicalClock	pkg/game/weather.go	-	TimeWeatherSnapshot drops the Weather half of the snapshot	n/a (R spot-check)	red	yes
+TestBackstab_MissDrawCountAndOrder	pkg/game/skill_combat.go	86	extra dprng.Number(1,2) draw after the skill roll	n/a (R spot-check)	red	yes
+TestRecallSleepingDreams	pkg/game/other_utility.go	168	dream line "about falling" -> "of falling"	n/a (R spot-check)	red	yes
+TestDoStealInitialRollPrecedesMissingItemLookup	pkg/game/skill_stealth.go	DoSteal first roll	extra dprng.Number(1,2) draw before the item lookup	n/a (R spot-check)	red	yes
+TestRealtimeWorldTickersFreezeWhenDPClockIsSet	pkg/game/world_test.go	(deleted)	pkg/game owns no realtime ticker; condition unchanged after 20ms with DP_CLOCK unset too (probe) — the freeze contract is pkg/engine's	green under any freeze regression (nothing ticks at this layer)	test removed; TestGameLoopStartFreezesWhenDPClockIsSet + TestGameLoopPumpPulsesRequiresDPClock (pkg/engine/gameloop_test.go:40,117) own the contract	n/a
+TestDoYank_Success_FemalePronouns	pkg/game/other_mount.go	307	yank format "to $S feet." -> "to $S foot."	n/a (R spot-check)	red	yes
+TestSearchHelpPrefixAndFirstMatch	pkg/game/help.go	-	SearchHelp first-match backtrack traces FORWARDS to the last match instead	n/a (R spot-check)	n/a (R spot-check)	red
+TestLoadHelpFilesRealDataParity	pkg/game/help.go	-	oneWord quoted-span branch disabled (quoted keywords split into words)	n/a (R spot-check)	n/a (R spot-check)	red
+TestGetFiresOnGetRoomScript	pkg/game/item_transfer.go	-	fireOnGet no longer runs the onget trigger	n/a (R spot-check)	n/a (R spot-check)	red
+TestPerformMoveRendersLeaderBeforeFollowerRecursion	pkg/game/act_movement.go	-	MovementLook renders after the greet triggers instead of before	n/a (R spot-check)	n/a (R spot-check)	red
+TestDoUseWandConsumesInstanceChargeAndUsesDefaultLevel	pkg/game/other_economy.go	-	takeMagicItemCharge stops decrementing the charge	n/a (R spot-check)	n/a (R spot-check)	red
+TestSpecGuildGuard_GuildInfoMatchesC	pkg/game/class_tables.go	-	GuildInfo thief room 8028 -> 8029	n/a (R spot-check)	n/a (R spot-check)	red
+TestDoFleshAlterFailureWaitAndImprovement	pkg/game/skill_special.go	-	flesh-alter failure WaitCh 2 -> 1	n/a (R spot-check)	n/a (R spot-check)	red
+TestDoCarveCEntryBranches	pkg/game/skill_advanced.go	-	"initials ... carve in that" -> "carve on that" (first attempt mutated the self-target arm the test never drives — recorded)	n/a (R spot-check)	n/a (R spot-check)	red
