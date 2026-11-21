@@ -256,3 +256,15 @@ matrices (load/unknown/loop/equipment — 20 tests), combat-body
 callbacks/cleanup, jail spec, and the tattoo depth composite (one heuristic
 flag resolved: TestUseTattooDepth is a wrapper whose twelve subtests carry
 their own assertions, including draw-parity against ten C skull dice).
+
+## Batch 16 results (post-oracle tests 801–900, 2026-10-01..10-20)
+
+Marks: R 100 / F 0 / C 0 / D 0 (one medium-confidence). (Ledger on branch
+`glm/test-audit-game-16`.)
+
+The October era: object registration, damage-before-message ordering,
+unassigned-script mudlog guards, death followers, whod, tick damage, house
+save nesting, bad stats, arena broadcast, race locks. One second
+`-race`-vehicle test found (`TestCombatBodyReferencesConcurrentAndReciprocal`,
+three goroutines × 1000 reciprocal fighting-reference cycles) — reinforces
+the batch-14 gate question about a `-race` CI pass.
