@@ -246,3 +246,13 @@ Zach: `TestWeatherSynchronizationRace` asserts via the race detector
 (64 goroutines over the weather lock) — it is protective only in a
 `-race` run, which the standard gate does not enable. Not a mark change;
 noted as a gate question.
+
+## Batch 15 results (post-oracle tests 701–800, 2026-09-25..10-02)
+
+Marks: R 100 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-15`.)
+
+The late-September era: mobile equipment readers (24 tests), zone-reset
+matrices (load/unknown/loop/equipment — 20 tests), combat-body
+callbacks/cleanup, jail spec, and the tattoo depth composite (one heuristic
+flag resolved: TestUseTattooDepth is a wrapper whose twelve subtests carry
+their own assertions, including draw-parity against ten C skull dice).
