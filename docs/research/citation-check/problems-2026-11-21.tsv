@@ -1,0 +1,187 @@
+source	row_line	cite	result	detail
+docs/fidelity/depth/boards.tsv	8	boards.c:349-354	anchor-drift	'At least wait until the author is finished before ' at boards.c:419
+docs/fidelity/depth/boards.tsv	34	boards.c:228	anchor-drift	'We must have a headline!' at boards.c:241
+docs/fidelity/depth/cast.tsv	38	spells.c:439-441	anchor-drift	"""You can't have any followers of your own!"" at spells.c:421"
+docs/fidelity/depth/cast.tsv	204	spell_parser.c:916-963	anchor-drift	'skill_message(0, ch, tch, spellnum)' at spell_parser.c:1100
+docs/fidelity/depth/cast.tsv	205	spell_parser.c:916-963	anchor-drift	'mag_damage' at spell_parser.c:473
+docs/fidelity/depth/cast.tsv	205	magic.c:767-785	anchor-drift	'mag_damage' at magic.c:602,1504,1505,1551
+docs/fidelity/depth/cast.tsv	208	spell_parser.c:916-963	anchor-drift	'mag_damage' at spell_parser.c:473
+docs/fidelity/depth/cast.tsv	208	magic.c:709-720	anchor-drift	'mag_damage' at magic.c:602,1504,1505,1551
+docs/fidelity/depth/cast.tsv	210	spell_parser.c:916-963	anchor-drift	'mag_damage' at spell_parser.c:473
+docs/fidelity/depth/cast.tsv	210	magic.c:688-708	anchor-drift	'mag_damage' at magic.c:602,1504,1505,1551
+docs/fidelity/depth/cast.tsv	212	spell_parser.c:916-963	anchor-drift	'mag_damage' at spell_parser.c:473
+docs/fidelity/depth/cast.tsv	212	magic.c:808-827	anchor-drift	'mag_damage' at magic.c:602,1504,1505,1551
+docs/fidelity/depth/cast.tsv	267	magic.c:1512	anchor-drift	'A warm feeling floods your body.' at magic.c:1791,1801
+docs/fidelity/depth/cast.tsv	267	magic.c:1754	anchor-drift	'A warm feeling floods your body.' at magic.c:1791,1801
+docs/fidelity/depth/cast.tsv	267	magic.c:602	anchor-drift	'A warm feeling floods your body.' at magic.c:1791,1801
+docs/fidelity/depth/cast.tsv	267	magic.c:863	anchor-drift	'A warm feeling floods your body.' at magic.c:1791,1801
+docs/fidelity/depth/cast.tsv	295	spell_parser.c:452-459	anchor-drift	'Nothing seems to happen.' at spell_parser.c:590,648,772,795
+docs/fidelity/depth/cast.tsv	295	spells.c:794	anchor-drift	'Nothing seems to happen.' at spells.c:658,1200
+docs/fidelity/depth/cast.tsv	295	spell_parser.c:1283	anchor-drift	'Nothing seems to happen.' at spell_parser.c:590,648,772,795
+docs/fidelity/depth/cast.tsv	298	magic.c:1890	anchor-drift	'Your eyes tingle.' at magic.c:1010,1019,1028
+docs/fidelity/depth/cast.tsv	298	magic.c:863	anchor-drift	'Your eyes tingle.' at magic.c:1010,1019,1028
+docs/fidelity/depth/cast.tsv	341	spell_parser.c:452-459	anchor-drift	'spell_enchant_armor' at spell_parser.c:519
+docs/fidelity/depth/cast.tsv	341	magic.c:1466	anchor-drift	'obj == NULL' at magic.c:1693,1896
+docs/fidelity/depth/cast.tsv	341	magic.c:602	anchor-drift	'obj == NULL' at magic.c:1693,1896
+docs/fidelity/depth/cast.tsv	341	spells.c:476	anchor-drift	'spell_enchant_armor' at spells.c:836
+docs/fidelity/depth/cast.tsv	341	spells.c:701	anchor-drift	'spell_enchant_armor' at spells.c:836
+docs/fidelity/depth/cast.tsv	341	spell_parser.c:1347	anchor-drift	'spell_enchant_armor' at spell_parser.c:519
+docs/fidelity/depth/cast.tsv	341	spell_parser.c:601-606	anchor-drift	'spell_enchant_armor' at spell_parser.c:519
+docs/fidelity/depth/cast.tsv	379	magic.c:1466	anchor-drift	'You vanish.' at magic.c:1080
+docs/fidelity/depth/cast.tsv	379	magic.c:602	anchor-drift	'You vanish.' at magic.c:1080
+docs/fidelity/depth/cast.tsv	379	magic.c:1471-1488	anchor-drift	'You vanish.' at magic.c:1080
+docs/fidelity/depth/cast.tsv	379	magic.c:1447-1448	anchor-drift	'You vanish.' at magic.c:1080
+docs/fidelity/depth/cast.tsv	394	spells.c:476	anchor-drift	'The bowels of hell open beneath your feet!!' at spells.c:714
+docs/fidelity/depth/cast.tsv	394	spells.c:701	anchor-drift	'The bowels of hell open beneath your feet!!' at spells.c:714
+docs/fidelity/depth/cast.tsv	394	spells.c:836	anchor-drift	'The bowels of hell open beneath your feet!!' at spells.c:714
+docs/fidelity/depth/cast.tsv	400	spells.c:476	anchor-drift	'age(victim).hours' at spells.c:601
+docs/fidelity/depth/cast.tsv	400	spells.c:701	anchor-drift	'age(victim).hours' at spells.c:601
+docs/fidelity/depth/cast.tsv	400	spells.c:836	anchor-drift	'age(victim).hours' at spells.c:601
+docs/fidelity/depth/cast.tsv	411	magic.c:1512	anchor-drift	'Like a physical blow, emotions of others wash over' at magic.c:1012
+docs/fidelity/depth/cast.tsv	411	magic.c:1754	anchor-drift	'Like a physical blow, emotions of others wash over' at magic.c:1012
+docs/fidelity/depth/cast.tsv	411	magic.c:602	anchor-drift	'Like a physical blow, emotions of others wash over' at magic.c:1012
+docs/fidelity/depth/cast.tsv	411	magic.c:863	anchor-drift	'Like a physical blow, emotions of others wash over' at magic.c:1012
+docs/fidelity/depth/cast.tsv	414	magic.c:1512	anchor-drift	'Your wounds mend beneath your hands!' at magic.c:1819
+docs/fidelity/depth/cast.tsv	414	magic.c:1754	anchor-drift	'Your wounds mend beneath your hands!' at magic.c:1819
+docs/fidelity/depth/cast.tsv	414	magic.c:602	anchor-drift	'Your wounds mend beneath your hands!' at magic.c:1819
+docs/fidelity/depth/cast.tsv	414	magic.c:863	anchor-drift	'Your wounds mend beneath your hands!' at magic.c:1819
+docs/fidelity/depth/cast.tsv	433	spells.c:1132	anchor-drift	'Your psionic energy recoils!' at spells.c:970
+docs/fidelity/depth/cast.tsv	433	spells.c:1170	anchor-drift	'Your psionic energy recoils!' at spells.c:970
+docs/fidelity/depth/cast.tsv	433	spells.c:912	anchor-drift	'Your psionic energy recoils!' at spells.c:970
+docs/fidelity/depth/cast.tsv	433	spells.c:960	anchor-drift	'Your psionic energy recoils!' at spells.c:970
+docs/fidelity/depth/cast.tsv	443	magic.c:1512	anchor-drift	'Suddenly, your mind numbs and you feel somewhat im' at magic.c:1376
+docs/fidelity/depth/cast.tsv	443	magic.c:1754	anchor-drift	'Suddenly, your mind numbs and you feel somewhat im' at magic.c:1376
+docs/fidelity/depth/cast.tsv	443	magic.c:602	anchor-drift	'Suddenly, your mind numbs and you feel somewhat im' at magic.c:1376
+docs/fidelity/depth/cast.tsv	443	magic.c:863	anchor-drift	'Suddenly, your mind numbs and you feel somewhat im' at magic.c:1376
+docs/fidelity/depth/cast.tsv	465	spells.c:1132	anchor-drift	'You divide yourself in two!' at spells.c:1152
+docs/fidelity/depth/cast.tsv	465	spells.c:1170	anchor-drift	'You divide yourself in two!' at spells.c:1152
+docs/fidelity/depth/cast.tsv	465	spells.c:912	anchor-drift	'You divide yourself in two!' at spells.c:1152
+docs/fidelity/depth/cast.tsv	465	spells.c:960	anchor-drift	'You divide yourself in two!' at spells.c:1152
+docs/fidelity/depth/cast.tsv	495	magic.c:1512	anchor-drift	'As you quickly mumble the incantation a cloud of t' at magic.c:1521
+docs/fidelity/depth/cast.tsv	495	magic.c:1754	anchor-drift	'As you quickly mumble the incantation a cloud of t' at magic.c:1521
+docs/fidelity/depth/cast.tsv	495	magic.c:602	anchor-drift	'As you quickly mumble the incantation a cloud of t' at magic.c:1521
+docs/fidelity/depth/cast.tsv	495	magic.c:863	anchor-drift	'As you quickly mumble the incantation a cloud of t' at magic.c:1521
+docs/fidelity/depth/cast.tsv	516	magic.c:1512	anchor-drift	'Your head clears and you realize some of the secre' at magic.c:1366
+docs/fidelity/depth/cast.tsv	516	magic.c:1754	anchor-drift	'Your head clears and you realize some of the secre' at magic.c:1366
+docs/fidelity/depth/cast.tsv	516	magic.c:602	anchor-drift	'Your head clears and you realize some of the secre' at magic.c:1366
+docs/fidelity/depth/cast.tsv	516	magic.c:863	anchor-drift	'Your head clears and you realize some of the secre' at magic.c:1366
+docs/fidelity/depth/checkload.tsv	17	act.wizard.c:3854-3869	out-of-range	file has 3864 lines
+docs/fidelity/depth/combat-entry.tsv	7	act.offensive.c:101	anchor-drift	'Hit who?' at act.offensive.c:109,717
+docs/fidelity/depth/combat-entry.tsv	8	act.offensive.c:126	anchor-drift	'This room just has such a peaceful, easy feeling..' at act.offensive.c:436
+docs/fidelity/depth/combat-entry.tsv	17	act.offensive.c:138-141	anchor-drift	'Hit who?' at act.offensive.c:109,717
+docs/fidelity/depth/combat-entry.tsv	20	act.offensive.c:74-75	anchor-drift	"""They don't seem to be here."" at act.offensive.c:111"
+docs/fidelity/depth/combat-entry.tsv	33	act.offensive.c:515-519	anchor-drift	"""They don't seem to be here."" at act.offensive.c:111"
+docs/fidelity/depth/combat-entry.tsv	73	fight.c:1673-1680	anchor-drift	'saved by the gods' at fight.c:1514
+docs/fidelity/depth/comm.tsv	39	act.comm.c:944-971	anchor-drift	'You tell $N' at act.comm.c:888
+docs/fidelity/depth/compare.tsv	17	new_cmds.c:2067-2068	anchor-drift	'a little better than' at new_cmds.c:2088
+docs/fidelity/depth/compare.tsv	17	new_cmds.c:2067-2068	anchor-drift	'a little better than' at new_cmds.c:2088
+docs/fidelity/depth/consider.tsv	2	act.informative.c:2330-2338	anchor-drift	'Consider killing who?' at act.informative.c:2343
+docs/fidelity/depth/db-boot.tsv	7	db.c:2701-2724	anchor-drift	'room #%d, direction D%d' at db.c:877
+docs/fidelity/depth/descriptor-state.tsv	8	interpreter.c:1860-1884	anchor-drift	'Reconnecting.' at interpreter.c:1636
+docs/fidelity/depth/descriptor-state.tsv	12	comm.c:613	anchor-drift	'$n has lost $s link.' at comm.c:2131
+docs/fidelity/depth/descriptor-state.tsv	14	comm.c:1378-1429	anchor-drift	'**OVERFLOW**' at comm.c:1628
+docs/fidelity/depth/disposal.tsv	27	act.item.c:511	anchor-drift	'Something' at act.item.c:1455
+docs/fidelity/depth/dream.tsv	19	dream.c:102-105	anchor-drift	'You have a dream %s' at dream.c:196,209
+docs/fidelity/depth/drop.tsv	5	act.item.c:601-603	anchor-drift	"""You don't seem to be carrying anything."" at act.item.c:620"
+docs/fidelity/depth/eat.tsv	20	act.item.c:1048-1056	anchor-drift	'Eat what?!?' at act.item.c:1088
+docs/fidelity/depth/entry.tsv	45	interpreter.c:1548-1556	anchor-drift	'] has reconnected.' at interpreter.c:1640,1654
+docs/fidelity/depth/flee.tsv	18	act.offensive.c:377-381	anchor-drift	'panics, and attempts to flee!' at act.offensive.c:397
+docs/fidelity/depth/flee.tsv	18	act.offensive.c:490-494	anchor-drift	'panics, and attempts to flee!' at act.offensive.c:397
+docs/fidelity/depth/get.tsv	10	act.item.c:409-410	anchor-drift	"""You can't seem to find any containers."" at act.item.c:418"
+docs/fidelity/depth/give.tsv	7	act.item.c:758-762	anchor-drift	"""What's the point of that?"" at act.item.c:725"
+docs/fidelity/depth/give.tsv	14	act.item.c:688-691	anchor-drift	"""You can't let go of $p!!  Yeech!"" at act.item.c:682"
+docs/fidelity/depth/give.tsv	17	act.item.c:730-732	anchor-drift	'Heh heh heh ... we are jolly funny today, eh?' at act.item.c:740
+docs/fidelity/depth/give.tsv	18	act.item.c:733-736	anchor-drift	"""You don't have that many coins!"" at act.item.c:438,745"
+docs/fidelity/depth/give.tsv	33	act.item.c:730-731	anchor-drift	'Heh heh heh ... we are jolly funny today, eh?' at act.item.c:740
+docs/fidelity/depth/hit.tsv	9	act.offensive.c:122-129	anchor-drift	"""They don't seem to be here."" at act.offensive.c:111"
+docs/fidelity/depth/hold.tsv	3	act.item.c:1685-1689	anchor-drift	'Hold what?' at act.item.c:1692
+docs/fidelity/depth/idlist.tsv	5	constants.c:712-716	anchor-drift	'no track' at constants.c:662
+docs/fidelity/depth/info.tsv	4	act.informative.c:1568-1600	anchor-drift	'You have no feeling about the weather at all.' at act.informative.c:1562
+docs/fidelity/depth/info.tsv	8	act.informative.c:1240-1265	anchor-drift	'lightly clothed' at act.informative.c:1234
+docs/fidelity/depth/informative.tsv	37	act.informative.c:1751-1753	anchor-drift	'(writing)' at act.informative.c:561,1888
+docs/fidelity/depth/kuji.tsv	3	new_cmds.c:1559-1568	anchor-drift	'You are thrown across the room...' at new_cmds.c:416,2621
+docs/fidelity/depth/kuji.tsv	3	new_cmds.c:1565-1568	anchor-drift	'You are thrown across the room...' at new_cmds.c:416,2621
+docs/fidelity/depth/load.tsv	16	act.wizard.c:1286-1290	anchor-drift	'A NEGATIVE number??' at act.wizard.c:1295,1395
+docs/fidelity/depth/look.tsv	16	act.informative.c:954-957	anchor-drift	"""There's nothing inside that!"" at act.informative.c:933"
+docs/fidelity/depth/look.tsv	17	act.informative.c:959-960	anchor-drift	'It is closed.' at act.informative.c:939
+docs/fidelity/depth/look.tsv	42	act.informative.c:635-638	anchor-drift	'(hidden)' at act.informative.c:557
+docs/fidelity/depth/magic-materials.tsv	2	magic.c:486-491	anchor-drift	'A puff of smoke rises from your pack.' at magic.c:588
+docs/fidelity/depth/magic-materials.tsv	3	magic.c:486-491	anchor-drift	"""A puff of smoke rises from $n's pack."" at magic.c:589"
+docs/fidelity/depth/medit.tsv	3	olc.c:106-130	anchor-drift	'Yikes!  Stop that, someone will get hurt!' at olc.c:143
+docs/fidelity/depth/medit.tsv	4	olc.c:132-144	anchor-drift	'Sorry, there is no zone for that number!' at olc.c:172
+docs/fidelity/depth/mob-voice.tsv	7	fight.c:1129	anchor-drift	'all corpse' at fight.c:1120,1136,1711
+docs/fidelity/depth/mob-voice.tsv	11	graph.c:357	anchor-drift	"""I hear %s thinks %s's bad."" at graph.c:367"
+docs/fidelity/depth/mobprog.tsv	15	mobprog.c:250-266	anchor-drift	'mp_bribe' at mobprog.c:173
+docs/fidelity/depth/mobprog.tsv	27	mobact.c:593-604	out-of-range	file has 409 lines
+docs/fidelity/depth/mount.tsv	17	follow.c:130-177	no-such-file	
+docs/fidelity/depth/movement.tsv	11	act.movement.c:166-173	anchor-drift	'You are too exhausted.' at act.movement.c:176
+docs/fidelity/depth/mudlog.tsv	80	file-edit.c:19-25	anchor-drift	"""OLC: %s deletes '%s'."" at file-edit.c:43"
+docs/fidelity/depth/mudlog.tsv	80	file-edit.c:40	anchor-drift	"""OLC: %s deletes '%s'."" at file-edit.c:43"
+docs/fidelity/depth/mudlog.tsv	103	db.c:385-392	anchor-drift	'log_zone_error' at db.c:136,1020,2048,2061
+docs/fidelity/depth/mudlog.tsv	103	db.c:385-392	anchor-drift	'log_zone_error' at db.c:136,1020,2048,2061
+docs/fidelity/depth/mudlog.tsv	103	zedit.c:431-437	anchor-drift	'zedit_setup' at zedit.c:32,58
+docs/fidelity/depth/new-cmds-gates.tsv	2	new_cmds.c:991-995	anchor-drift	"""You smack your head twice and say 'DOH!'"" at new_cmds.c:999"
+docs/fidelity/depth/new-cmds-gates.tsv	4	new_cmds.c:2270	anchor-drift	"""You're unable to see very far..."" at new_cmds.c:2289"
+docs/fidelity/depth/object-magic.tsv	76	magic.c:1729	anchor-drift	"""life of it's own"" at magic.c:1646,1737"
+docs/fidelity/depth/objsave-receptionist.tsv	6	objsave.c:1149-1153	anchor-drift	'But you are not carrying anything!  Just quit!' at objsave.c:1094
+docs/fidelity/depth/objsave-receptionist.tsv	8	objsave.c:1149-1153	anchor-drift	'Plus, my %d coin fee..' at objsave.c:1105
+docs/fidelity/depth/objsave-receptionist.tsv	11	objsave.c:1201-1208	anchor-drift	"""I don't deal with people I can't see!"" at objsave.c:1146"
+docs/fidelity/depth/oedit.tsv	9	oedit.c:861-875	anchor-drift	'Invalid choice, try again :' at oedit.c:1184
+docs/fidelity/depth/oedit.tsv	10	oedit.c:884-924	anchor-drift	"""That's not a valid choice!"" at oedit.c:1219"
+docs/fidelity/depth/other.tsv	66	act.other.c:557-585	anchor-drift	'You are already visible.' at act.other.c:590
+docs/fidelity/depth/other.tsv	67	act.item.c:587-589	anchor-drift	'Heh heh heh.. we are jolly funny today, eh?' at act.item.c:436
+docs/fidelity/depth/other.tsv	83	act.other.c:394	anchor-drift	'Steal the equipment now?  Impossible!' at act.other.c:409
+docs/fidelity/depth/page.tsv	18	act.comm.c:1082-1083	anchor-drift	'There is no such person in the game!' at act.comm.c:1137
+docs/fidelity/depth/palm.tsv	6	act.item.c:317-329	anchor-drift	'You get $p.' at act.item.c:277
+docs/fidelity/depth/pour.tsv	11	act.item.c:1210-1214	anchor-drift	"""You can't fill something from $p."" at act.item.c:1220"
+docs/fidelity/depth/pour.tsv	12	act.item.c:1293-1297	anchor-drift	'There is no room for more.' at act.item.c:1290
+docs/fidelity/depth/put.tsv	11	act.item.c:122-123	anchor-drift	'$n puts $p in $P.' at act.item.c:62
+docs/fidelity/depth/put.tsv	17	act.item.c:63-64	anchor-drift	"""$p won't fit in $P."" at act.item.c:56"
+docs/fidelity/depth/reload.tsv	7	help.c:1618-1661	no-such-file	
+docs/fidelity/depth/remove.tsv	9	act.item.c:1716-1717	anchor-drift	"""You can't remove $p, it must be CURSED!"" at act.item.c:1720"
+docs/fidelity/depth/remove.tsv	10	act.item.c:1718-1719	anchor-drift	"""$p: you can't carry that many items!"" at act.item.c:1722"
+docs/fidelity/depth/review.tsv	6	new_cmds.c:1355-1357	anchor-drift	'Someone invisible' at new_cmds.c:1382
+docs/fidelity/depth/show.tsv	10	crash.c:290-321	no-such-file	
+docs/fidelity/depth/show.tsv	33	shop.c:930-939	anchor-drift	"""This isn't a shop!"" at shop.c:1429"
+docs/fidelity/depth/shutdown.tsv	19	act.wizard.c:1864	anchor-drift	'all save' at act.wizard.c:1113
+docs/fidelity/depth/socials.tsv	9	interpreter.c:330-540	anchor-drift	'rolleyes' at interpreter.c:665
+docs/fidelity/depth/socials.tsv	11	act.social.c:246	anchor-drift	"""Can't open socials file '"" at act.social.c:229"
+docs/fidelity/depth/socials.tsv	11	act.social.c:246	anchor-drift	"""Can't open socials file '"" at act.social.c:229"
+docs/fidelity/depth/spec-procs.tsv	323	utils.c:1170-1192	out-of-range	file has 981 lines
+docs/fidelity/depth/spec-procs.tsv	325	utils.c:1170-1192	out-of-range	file has 981 lines
+docs/fidelity/depth/spec-procs.tsv	351	act.social.c:1451-1455	out-of-range	file has 306 lines
+docs/fidelity/depth/spec-procs.tsv	366	house.c:1844-1876	out-of-range	file has 745 lines
+docs/fidelity/depth/spec-procs.tsv	373	house.c:1844-1876	out-of-range	file has 745 lines
+docs/fidelity/depth/spec-procs.tsv	380	house.c:1844-1876	out-of-range	file has 745 lines
+docs/fidelity/depth/spec-procs.tsv	421	act.comm.c:2392-2555	out-of-range	file has 1567 lines
+docs/fidelity/depth/spec-procs.tsv	642	spec_procs3.c:456-461	anchor-drift	'falls to the ground, screaming in agony!' at spec_procs3.c:497
+docs/fidelity/depth/spec-procs.tsv	647	spec_procs3.c:1250	anchor-drift	'mumbles softly and you begin to scream, involuntar' at spec_procs3.c:1266
+docs/fidelity/depth/spec-procs.tsv	648	spec_procs.c:803-806	anchor-drift	"""$n says, 'You just pissed me off, $N!'"" at spec_procs.c:815"
+docs/fidelity/depth/spec-procs.tsv	650	spec_procs.c:1532-1543	anchor-drift	'$n stares into the sky.' at spec_procs.c:1003,1494
+docs/fidelity/depth/spec-procs.tsv	650	spec_procs.c:1532-1543	anchor-drift	'$n stares into the sky.' at spec_procs.c:1003,1494
+docs/fidelity/depth/spec-procs.tsv	654	spec_procs3.c:130	anchor-drift	'You cannot afford it!' at spec_procs3.c:125
+docs/fidelity/depth/spec-procs.tsv	656	spec_procs3.c:284-289	anchor-drift	'You can buy up to %d point%s, at %d per point.' at spec_procs3.c:275
+docs/fidelity/depth/spec-procs.tsv	656	spec_procs3.c:286	anchor-drift	'You can buy up to %d point%s, at %d per point.' at spec_procs3.c:275
+docs/fidelity/depth/spec-procs.tsv	657	spec_procs3.c:292-296	anchor-drift	"""You can't afford it!"" at spec_procs3.c:286"
+docs/fidelity/depth/spec-procs.tsv	657	spec_procs3.c:294	anchor-drift	"""You can't afford it!"" at spec_procs3.c:286"
+docs/fidelity/depth/spec-procs.tsv	663	fight.c:2066-2069	out-of-range	file has 2034 lines
+docs/fidelity/depth/strike.tsv	2	new_cmds.c:1446-1448	anchor-drift	'Yeah, right.' at new_cmds.c:1149,1254,1442
+docs/fidelity/depth/string.tsv	8	modify.c:636-641	anchor-drift	'Monsters have no titles.' at modify.c:655
+docs/fidelity/depth/string.tsv	12	modify.c:748-751	anchor-drift	'That field is undefined for objects.' at modify.c:744
+docs/fidelity/depth/summon.tsv	3	spell_parser.c:513	anchor-drift	'You do not know that spell!' at spell_parser.c:965
+docs/fidelity/depth/summon.tsv	3	spell_parser.c:879-925	anchor-drift	'You do not know that spell!' at spell_parser.c:965
+docs/fidelity/depth/tedit.tsv	46	improved-edit.c:159	anchor-drift	'Line(s) out of range; not deleting.' at improved-edit.c:193
+docs/fidelity/depth/tedit.tsv	46	improved-edit.c:347	anchor-drift	'Line(s) out of range; not deleting.' at improved-edit.c:193
+docs/fidelity/depth/tedit.tsv	46	improved-edit.c:395	anchor-drift	'Line(s) out of range; not deleting.' at improved-edit.c:193
+docs/fidelity/depth/tedit.tsv	50	improved-edit.c:353-357	anchor-drift	'Current buffer empty.' at improved-edit.c:47,59,65,74
+docs/fidelity/depth/tedit.tsv	50	improved-edit.c:356	anchor-drift	'Current buffer empty.' at improved-edit.c:47,59,65,74
+docs/fidelity/depth/tiger.tsv	12	act.offensive.c:711-714	anchor-drift	"""Aren't we funny today..."" at act.offensive.c:452,612,661,723"
+docs/fidelity/depth/use.tsv	28	spell_parser.c:558-577	anchor-drift	'Nothing seems to happen.' at spell_parser.c:590,648,772,795
+docs/fidelity/depth/wear.tsv	10	act.item.c:1636-1640	anchor-drift	"""You can't wear $p there."" at act.item.c:1461"
+docs/fidelity/depth/wield.tsv	4	act.item.c:1636-1640	anchor-drift	"""You can't wear $p there."" at act.item.c:1461"
+docs/fidelity/depth/wield.tsv	5	act.item.c:1427-1432	anchor-drift	"""You can't wield that."" at act.item.c:1482"
+docs/fidelity/depth/wizard.tsv	124	act.wizard.c:2008-2016	anchor-drift	'Gods offline:' at act.wizard.c:1973
+docs/fidelity/depth/wizard.tsv	209	act.wizard.c:2512-2612	anchor-drift	'That can only be done to a beast!' at act.wizard.c:2698
+docs/fidelity/depth/wizard.tsv	210	act.wizard.c:197-203	anchor-drift	'No such connection.' at act.wizard.c:1749
+docs/fidelity/depth/wizard.tsv	210	act.wizard.c:1742	anchor-drift	'No such connection.' at act.wizard.c:1749
+docs/fidelity/depth/wizard.tsv	211	act.wizard.c:1022	anchor-drift	'Nothing around by that name.' at act.wizard.c:1069
