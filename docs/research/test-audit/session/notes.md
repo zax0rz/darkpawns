@@ -155,4 +155,17 @@ No fixes needed anywhere in the batch. No J10 divergences.
 
 Attribution: codex 24, glm 7, unknown 69 (the July QA/sprint branches by
 BRENDA69 and zach without trailers).
+ HEAD
  1daa6607f (test(session): audit batch 4 — post-oracle July tests 1–100, all R)
+
+## Batch 5 results (later tests 101–200, 2026-07 late + 2026-08 start)
+
+Marks: R 100, F 0, C 0, D 0.
+
+Wizard-command depth layer (skillset's modify.c-traced list with sharp
+terminator guards, do_set's act.wizard.c cases, force/advance/sethunt/
+checkload/alias/date, eat/use hold-priority) plus the pager parity suite
+(parallel renderLineCount oracle), input-timing (comm.c FIFO/one-per-pulse/
+unit conversion), flee/retreat XP formulas, and the DP_FRESH_MUD God latch.
+All assertive; no fixes, no J10 divergences.
+ aae2ef461 (test(session): audit batch 5 — later tests 101–200, all R)
