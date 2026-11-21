@@ -1,6 +1,7 @@
 # depth-case: give.gold-zero
 # probe-setup-refusal-reason: "give 0 coins givevic": witnesses perform_give_gold's nonpositive-amount refusal (src/act.item.c:740)
-# probe-setup-refusal-reason: "give 5 coins givevic": witnesses perform_give_gold's insufficient-gold refusal (src/act.item.c:438)
+# probe-setup-refusal-reason: "give 5 coins givevic": witnesses perform_give_gold's insufficient-gold refusal (src/act.item.c:743-746,784-785).
+# probe-setup-refusal-reason: "give 5 coins trainee": witnesses the same empty-purse refusal before mp_bribe (src/act.item.c:743-746,756-758,784-785).
 # depth-case: give.gold-insufficient
 # depth-case: give.mobile-bribe-insufficient-gold
 
