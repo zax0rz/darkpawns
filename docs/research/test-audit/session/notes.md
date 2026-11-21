@@ -1,0 +1,48 @@
+# Test audit: pkg/session — notes
+
+Audit run: 2026-11-20, branch `kimi/test-audit-session`, base `origin/main`
+(b2e884aca). Method: `docs/research/test-audit/pilot-combat/BRIEF.md` with the
+three changes from PROMPT-2026-11-20 (single agent self-checks non-R marks;
+fix-as-you-go; output in-repo). Continues the pkg/command audit whose summary
+lives at `docs/research/test-audit/command/notes.md`.
+
+Baseline: `go test ./pkg/session/...` passes at b2e884aca (19.6s).
+Coverage baseline: **74.4%** of statements.
+
+Ground truth: 1,537 test functions in 572 files (60,762 test lines).
+`go test -list` shows 1,536 on Linux — `TestPortableWindowsEditorDelete`
+(file_editor_access_windows_test.go) is GOOS-windows-tagged and counted from
+source; it is in this inventory and will be audited from source. 145 tests
+born before the first oracle harness (2026-07-12): 86 from 2026-05, 39 from
+2026-06, 20 from early July. The bulk (1,032 of 1,537) is Sep–Oct 2026.
+
+## Predictions (written before reading any session test)
+
+pkg/command (audited this morning) landed at R 161 / F 9 / D 3 — 93% keepers,
+weak marks concentrated pre-oracle (13.5% weak) vs later (5.1%), no merges
+needed anywhere. pkg/session is bigger and more wizard-surface-heavy, with a
+large pre-oracle May–June layer from the port's first months. I expect the
+same shape, slightly worse pre-oracle (the May layer predates even the
+coverage discipline of July) and slightly better later (most session tests
+postdate the depth-test style established in August).
+
+| Mark | Pre-oracle (145) | Later (1392) | Total (1537) |
+|---|---|---|---|
+| R keep | 116 | 1330 | 1446 (94.1%) |
+| F fix | 18 | 40 | 58 (3.8%) |
+| C merge | 6 | 12 | 18 (1.2%) |
+| D delete | 5 | 10 | 15 (1.0%) |
+
+Junk codes expected: J3 (name promises more than asserted) dominates, then
+J2 (assertions that cannot fail) in the May smoke-test layer; some J5
+(implementation-shape pins) around the session manager; and — because pkg/session
+carries nanny/login entry flow — at least one Go/C divergence pinned by a test
+(J10), the class both earlier audits each found exactly one of. Coverage:
+near-unchanged overall (deletions offset by strengthened assertions).
+
+Confidence: low on the F/C/D partition; the R share is the firm guess.
+
+## Batches
+
+- Batch 1–3: the 145 pre-oracle tests (~50 per batch).
+- Then the 1,392 later tests in date order, ~50–100 per batch.
