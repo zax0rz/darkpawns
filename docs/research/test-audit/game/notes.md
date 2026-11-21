@@ -224,3 +224,12 @@ The August–September era is the skill-depth wave: sharpen, spike, shadow,
 serpent, jin (with C's joined lockout affect record), neckbreak, mount,
 slug, sleeper, and the werewolf spec — each with exact C strings, seeded
 draws and affect-record shape pins.
+
+## Batch 13 results (post-oracle tests 501–600, 2026-09-03..09-12)
+
+Marks: R 100 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-13`.)
+
+The September era: the out-of-band observer family (channel mirror leaves
+the text path byte-identical), npc command dispatch, mp_give, mail
+save-failure/lifecycle paths, weather lock characterization, tiger skill
+messages, player-flags layout, and look description depth.
