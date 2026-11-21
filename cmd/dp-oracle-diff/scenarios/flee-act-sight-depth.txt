@@ -10,6 +10,7 @@
 # depth-case: flee.act-sight
 
 [fixture]
+empty-players
 quiet-mobs
 set-room-flag 8162 0 on
 replace-room-exits 8162 all 8161 0

@@ -10,6 +10,7 @@
 # depth-case: quit.act-sight
 
 [fixture]
+empty-players
 quiet-mobs
 set-room-flag 8163 0 on
 

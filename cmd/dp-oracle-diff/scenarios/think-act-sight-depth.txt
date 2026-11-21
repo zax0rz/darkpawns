@@ -9,6 +9,7 @@
 # depth-case: think.act-sight
 
 [fixture]
+empty-players
 quiet-mobs
 set-room-flag 8162 0 on
 
