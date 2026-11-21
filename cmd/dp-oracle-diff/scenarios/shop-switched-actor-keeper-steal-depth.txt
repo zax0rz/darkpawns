@@ -1,0 +1,49 @@
+# A switched mobile actor issues steal in a real shop. C runs the keeper
+# special before do_steal and directs its shout to the switched descriptor.
+# C: src/shop.c:968-978.
+# depth-case: shops.audit.keeper-steal-switched-mobile
+
+[fixture]
+empty-players
+quiet-mobs
+quiet-zone 121
+spawn-mob 12102 1 12135 121
+give-object 12102 12102 100000 121
+spawn-mob 69 1 12135 121
+
+[setup:oracle]
+Shopbody
+Y
+shopbodypass
+shopbodypass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopbody
+y
+shopbodypass
+shopbodypass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Shopbody level 40
+goto 12135
+set mob clone level 9
+switch clone
+
+[probe]
+steal gold

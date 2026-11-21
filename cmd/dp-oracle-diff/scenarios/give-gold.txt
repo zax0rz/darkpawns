@@ -2,9 +2,11 @@
 # probe-setup-refusal-reason: "give 0 coins givevic": witnesses perform_give_gold's nonpositive-amount refusal (src/act.item.c:740)
 # probe-setup-refusal-reason: "give 5 coins givevic": witnesses perform_give_gold's insufficient-gold refusal (src/act.item.c:438)
 # depth-case: give.gold-insufficient
+# depth-case: give.mobile-bribe-insufficient-gold
 
 [fixture]
 quiet-mobs
+spawn-mob 16303 1 8105 80
 [setup:oracle]
 Givegld
 Y
@@ -57,6 +59,12 @@ K
 Y
 <ENTER>
 1
+[warmup]
+goto 8105
+teleport Givevic 8105
+set player Givegld gold 0
+
 [probe]
 give 0 coins givevic
 give 5 coins givevic
+give 5 coins trainee

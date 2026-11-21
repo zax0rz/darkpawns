@@ -1,0 +1,47 @@
+# A funded ordinary player buy reaches cmdBuy's successful receipt line.
+# C's shopping_buy emits "You now have %s." after the keeper tell.
+# C: src/shop.c:573-584.
+# depth-case: shops.buy-success-receipt
+
+[fixture]
+empty-players
+quiet-mobs
+quiet-zone 80
+spawn-mob 8005 1 8038 80
+give-object 8005 8037 1 80
+
+[setup:oracle]
+Shopbuyer
+Y
+shopbuyerpass
+shopbuyerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopbuyer
+y
+shopbuyerpass
+shopbuyerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8038
+set player Shopbuyer level 30
+set player Shopbuyer gold 50000
+
+[probe]
+buy sword
