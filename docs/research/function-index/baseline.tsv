@@ -1164,3 +1164,6 @@ src/whod.c:whod_loop	pkg/game/whod.go	WhodGreeting	split
 src/whod.c:whod_loop	pkg/game/whod.go	WhodHeader	split
 src/whod.c:whod_loop	pkg/session/whod_listener.go	(whodListener).supervise	split
 src/whod.c:whod_loop	pkg/session/whod_listener.go	whodRequestHost	split
+src/comm.c:process_input	pkg/session/comm_cmds.go	escapeTypedDollars	split
+src/comm.c:perform_act	pkg/session/comm_cmds.go	escapeTypedDollars	split
+src/act.comm.c:do_tell	pkg/session/comm_cmds.go	escapeTypedDollars	split
