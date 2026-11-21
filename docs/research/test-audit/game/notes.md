@@ -175,3 +175,15 @@ layer was written with contracts from the start.
 Authors: zach 139, BRENDA69/OpenClaw 195, glm 4. J10 count: 0 (no test pins
 Go bytes C disagrees with in the pre-oracle set; the known design gap —
 objsave load never sets ObjectLocation — is documented, not pinned).
+
+## Batch 8 results (post-oracle tests 1–100, 2026-07-12..07-18)
+
+Marks: R 100 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-8`;
+post-oracle ledger ids continue from T339.)
+
+The July 12–18 era is oracle-era quality as expected: recall fidelity with
+C's exact dream bytes, zone-reset seam tests with ordered call hooks
+(floating-O, percent-load, dependent commands), stealth draw-order pins,
+the shipped-MOTD fixture compare against the C file, and the race-hate /
+scavenge / sound-draw order families. Heuristic scan found zero
+assertion-less bodies; deep reads agree.
