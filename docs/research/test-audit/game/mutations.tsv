@@ -8,3 +8,6 @@ TestConsumables_InstanceIsolation	pkg/game/object.go	-	SetValue leaks val into o
 TestNewbieHometownRoom	pkg/game/death.go	-	Kir-Oshi start room 18201 -> 8162	n/a (R spot-check)	red	yes
 TestDoTellEligibilityAndDelivery	pkg/game/directed_speech.go	-	tell not-found literal "No-one" -> "No one" (directed_speech.go:207; the NoPersonHere constant sits on another path and mutating it stays green — recorded)	n/a (R spot-check)	red	yes
 TestTimeWeatherSnapshotTracksCanonicalClock	pkg/game/weather.go	-	TimeWeatherSnapshot drops the Weather half of the snapshot	n/a (R spot-check)	red	yes
+TestGetFiresOnGetRoomScript	pkg/game/item_transfer.go	fireOnGet no longer runs the onget trigger	n/a (R spot-check)	red	yes
+TestPerformMoveRendersLeaderBeforeFollowerRecursion	pkg/game/act_movement.go	MovementLook renders after the greet triggers instead of before	n/a (R spot-check)	red	yes
+TestDoUseWandConsumesInstanceChargeAndUsesDefaultLevel	pkg/game/other_economy.go	takeMagicItemCharge stops decrementing the charge	n/a (R spot-check)	red	yes

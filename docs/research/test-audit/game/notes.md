@@ -118,3 +118,14 @@ swapped — red), TestDoTellEligibilityAndDelivery (not-found byte — red,
 after recording that the NoPersonHere constant is not this path's source),
 TestTimeWeatherSnapshotTracksCanonicalClock (snapshot loses the weather
 half — red).
+
+## Post-oracle redo, batch 5 (tests 201–250, T539–T588; 2026-07-17..18)
+
+Marks: R 50 / F 0 / C 0 / D 0. (This branch's ledger splices the unmerged
+batch-3/4 rows T439–T538 so the file is complete T001–T588; the PRs are a
+train per the follow-up.) Cites grepped this session: drink gates
+src/act.item.c:933,939,944; drunk speech speak_drunk src/act.comm.c:757-789;
+give-weight IS_CARRYING_W(vict) src/act.item.c:690.
+
+R spot-checks: onget trigger disabled red; leader look moved after greet
+red; wand charge not decremented red.
