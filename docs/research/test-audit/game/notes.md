@@ -206,3 +206,12 @@ The late-July/early-August era is the spec-proc golden wave: tattooist,
 butler (GenDoor byte pins, four-item cap), puff, mindflayer, identifier,
 clerk, cleric, citizen, and the castle-guard directions — every file with
 exact output-byte pins. Heuristic scan clean.
+
+## Batch 11 results (post-oracle tests 301–400, 2026-08-01..08-14)
+
+Marks: R 100 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-11`.)
+
+The August era opens with the spec wave continuing (roach, teleport-victim,
+tattooist 2–4 with exact list bytes, prostitute, quan-lo, teleporter,
+elements) plus the disembowel depth family. Heuristic scan clean; assertion
+density high throughout.
