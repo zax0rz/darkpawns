@@ -1,0 +1,47 @@
+# C-first connected_types "Asking name" (src/constants.c:716) via the immortal
+# `users` listing (src/act.informative.c:2068). With the shipped config
+# (int ident = NO, src/config.c:283) ident_hook sends every fresh descriptor
+# straight to CON_ASKNAME (src/ident.c:62-66), where it sits until the client
+# names itself; the raw second connection here is held exactly there, and the
+# immortal's users pass lists it with the verbatim label.
+# depth-case: users.asking-name-state
+
+[fixture]
+empty-players
+no-settle
+quiet-mobs
+
+[setup:oracle:held]
+
+[setup:port:held]
+
+[setup:oracle]
+Zedqwp
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zedqwp
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+users
