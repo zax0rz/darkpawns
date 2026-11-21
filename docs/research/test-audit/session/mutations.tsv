@@ -12,3 +12,6 @@ TestCmdTitleSetThenClear	pkg/session/informative_cmds.go	40	n/a (R spot-check)	t
 TestKickRegistrationUsesCEntryGate	pkg/session/command_gates.go	42	n/a (R spot-check)	registerCommand forced MinPosition to 5 (PosResting) instead of the gate value	red (kick registry gate level 1 position 5, want 7)	yes
 TestParseDigArgumentsMatchesCFillWordParsing	pkg/session/wiz_movement.go	183	n/a (R spot-check)	fill-word case lost "the" in parseDigArguments	red (parse = the/n, want n/1205)	yes
 TestCmdHitFillWordsWithoutTargetUseNoArgumentMessage	pkg/session/combat_cmds.go	71	n/a (R spot-check)	cmdHit fill-word skip replaced by raw args[0]	red (fill-only hit answered the not-found line, want Hit who?)	yes
+TestPurrRegistrationUsesCEntryGate	pkg/session/command_gates.tsv	295	n/a (R spot-check)	purr gate row position 5 -> 4	red (purr gate level 0 position 4, want 5)	yes
+TestRinRegistrationUsesCEntryGate	pkg/session/command_gates.go	42	n/a (R spot-check)	registerCommand forced MinPosition 5 (rin golden 8)	red (rin registry gate level 0 position 5, want 8)	yes
+TestOrgasmRegistrationUsesCEntryGate	pkg/session/command_gates.go	42	n/a (R spot-check)	registerCommand forced MinPosition 0 (orgasm golden 5)	red (orgasm registry gate level 31 position 0, want 5)	yes
