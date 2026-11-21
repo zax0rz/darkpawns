@@ -1,0 +1,47 @@
+# C-first zedit unknown-command display (src/zedit.c:674-678). The zone-command
+# fixture injects a raw three-argument reset opcode with a letter outside
+# MOEPDRL ("Z 0 7914 1", internal/oraclediff scenario.go:201-205) into zone
+# 79's disposable zon; the zon parser stores any single-letter command
+# (src/db.c:1577 only validates the arg count), so zedit's command display
+# loop reaches the default arm and prints `<Unknown Command>` verbatim
+# (src/zedit.c:672-678).
+# depth-case: zedit.unknown-command-display
+
+[fixture]
+empty-players
+quiet-mobs
+zone-command 79 Z 0 7914 1
+
+[setup:oracle]
+Zedqwp
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zedqwp
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 7900
+
+[probe]
+zedit 7900
