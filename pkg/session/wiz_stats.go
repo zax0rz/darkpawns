@@ -685,8 +685,9 @@ func (s *Session) sendStatRoom() {
 	} else {
 		s.Send("  None.\r\n")
 	}
-	for i := range parsed.Rooms {
-		prototype := &parsed.Rooms[i]
+	parsedForRoomExtras := w.GetParsedWorld()
+	for i := range parsedForRoomExtras.Rooms {
+		prototype := &parsedForRoomExtras.Rooms[i]
 		if prototype.VNum != room.VNum || len(prototype.ExtraDescs) == 0 {
 			continue
 		}
