@@ -98,9 +98,10 @@ Y
 goto 8162
 teleport Exfleer 8162
 teleport Exorigin 8162
+set Exfleer hitroll 100
 set Exfleer move 0
-set mob trainee hit 1
+set mob trainee hit 1000
 force Exfleer hit trainee
 
-[probe:fleer]
-flee
+[probe]
+force Exfleer flee

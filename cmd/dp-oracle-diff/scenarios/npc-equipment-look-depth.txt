@@ -1,7 +1,7 @@
 # depth-case: equipment.look-mobile-output
-# Equip the mobile body in the fixture and inspect it. C's do_look path reaches
-# list_char_to_char's TO_VICT equipment header for a visible equipped item.
-# C: src/act.informative.c:449-460.
+# Equip Satan Klaus in the fixture and explicitly inspect him. C's
+# look_at_char path emits the TO_VICT equipment header for a visible equipped
+# item. C: src/act.informative.c:389-399, 447-460.
 
 [fixture]
 empty-players
@@ -70,4 +70,4 @@ goto 8162
 teleport Equiplook 8162
 
 [probe:viewer]
-look
+look at satan
