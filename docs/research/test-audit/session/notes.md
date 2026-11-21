@@ -293,4 +293,15 @@ flags), character-command resolution, prompt frames, whod listener C bytes,
 mudlog producers/discriminators, Lua/NPC shared executor, crash-load bad-stat
 recovery, descriptor semantics, LFCR preservation. No fixes, no J10
 divergences. Running: 1345/1537.
+ HEAD
  75e5b942b (test(session): audit batch 15 — actor lane + mudlog producers, all R)
+
+## Batch 16 results (later tests 1201–1300, 2026-10)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T1390-T1489.
+
+Shop buy/sell transactions with C audiences through real dispatch (src/shop.c
+cites), shopkeeper steal/tell special ordering, spec-proc output surfaces,
+gate portal/spell specials, NPC shared-executor draws, stat report bytes,
+crash-load dex line color. No fixes, no J10 divergences. Running: 1445/1537.
+ c1bab5b4b (test(session): audit batch 16 — shop transactions + spec surfaces, all R)
