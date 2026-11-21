@@ -6,6 +6,7 @@
 # - sneak / stealth / hide / kabuki: 1 number(1,101) draw each (src/act.other.c:233,291,1770)
 # - palm: 1 number(1,101) draw + "Palm what?" (src/new_cmds.c:2112,2120)
 # - compare / sharpen / carve / point: mob inventory/room context
+# depth-case: palm.no-arg
 
 [fixture]
 empty-players

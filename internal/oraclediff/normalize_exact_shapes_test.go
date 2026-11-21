@@ -220,3 +220,106 @@ func TestExactShapeUsersLoginRowClock(t *testing.T) {
 		})
 	}
 }
+
+func TestExactShapeStatsLine(t *testing.T) {
+	// C src/interpreter.c:2109-2110, :2137-2138 with abil_names[] (src/constants.c:61-90):
+	// "  Str: %-13s Dex: %-13s Int: %-13s\r\n"
+	// "  Wis: %-13s Con: %-13s Cha: %-13s\r\n"
+	valid := []struct {
+		name string
+		in   string
+	}{
+		{
+			name: "standard rolled block with exact 13-byte fields",
+			in: "  Str: very good     Dex: good          Int: average      \r\n" +
+				"  Wis: decent        Con: good          Cha: poor         \r\n",
+		},
+		{
+			name: "all remaining abil_names entries",
+			in: "  Str: terrible      Dex: awful         Int: bad          \r\n" +
+				"  Wis: below average Con: excellent     Cha: godlike      \r\n",
+		},
+		{
+			name: "superior entry",
+			in: "  Str: superior      Dex: below average Int: below average\r\n" +
+				"  Wis: godlike       Con: terrible      Cha: awful        \r\n",
+		},
+	}
+	for _, tc := range valid {
+		t.Run("valid/"+tc.name, func(t *testing.T) {
+			if got := Normalize(tc.in); got != "<ROLLED_STATS>\n" {
+				t.Fatalf("Normalize(valid) = %q, want %q", got, "<ROLLED_STATS>\n")
+			}
+		})
+	}
+
+	// Two consecutive valid blocks must produce two <ROLLED_STATS> tokens, not collapse to one.
+	t.Run("two_consecutive_blocks", func(t *testing.T) {
+		twoBlocks := valid[0].in + valid[1].in
+		if got := Normalize(twoBlocks); got != "<ROLLED_STATS>\n<ROLLED_STATS>\n" {
+			t.Fatalf("two consecutive blocks collapsed: got %q, want %q", got, "<ROLLED_STATS>\n<ROLLED_STATS>\n")
+		}
+	})
+
+	invalid := []struct {
+		name string
+		in   string
+	}{
+		{
+			name: "one leading space instead of two",
+			in: " Str: very good     Dex: good          Int: average      \r\n" +
+				"  Wis: decent        Con: good          Cha: poor         \r\n",
+		},
+		{
+			name: "three leading spaces instead of two",
+			in: "   Str: very good     Dex: good          Int: average      \r\n" +
+				"  Wis: decent        Con: good          Cha: poor         \r\n",
+		},
+		{
+			name: "wrong pad width on Str column",
+			in: "  Str: good        Dex: good          Int: average      \r\n" +
+				"  Wis: decent        Con: good          Cha: poor         \r\n",
+		},
+		{
+			name: "missing trailing pad spaces on Int column",
+			in: "  Str: very good     Dex: good          Int: average\r\n" +
+				"  Wis: decent        Con: good          Cha: poor         \r\n",
+		},
+		{
+			name: "missing trailing pad spaces on Cha column",
+			in: "  Str: very good     Dex: good          Int: average      \r\n" +
+				"  Wis: decent        Con: good          Cha: poor\r\n",
+		},
+		{
+			name: "unknown adjective not in abil_names",
+			in: "  Str: amazing       Dex: good          Int: average      \r\n" +
+				"  Wis: decent        Con: good          Cha: poor         \r\n",
+		},
+		{
+			name: "numeric stats instead of adjectives",
+			in: "  Str: 18/00         Dex: 14            Int: 12           \r\n" +
+				"  Wis: 11            Con: 15            Cha: 9            \r\n",
+		},
+		{
+			name: "lone Str line without Wis line",
+			in:   "  Str: very good     Dex: good          Int: average      \r\n",
+		},
+		{
+			name: "lone Wis line without Str line",
+			in:   "  Wis: decent        Con: good          Cha: poor         \r\n",
+		},
+		{
+			name: "swapped Wis before Str",
+			in: "  Wis: decent        Con: good          Cha: poor         \r\n" +
+				"  Str: very good     Dex: good          Int: average      \r\n",
+		},
+	}
+	for _, tc := range invalid {
+		t.Run("invalid/"+tc.name, func(t *testing.T) {
+			want := strings.ReplaceAll(tc.in, "\r\n", "\n")
+			if got := Normalize(tc.in); got != want {
+				t.Fatalf("wrong statsLine shape was masked: got %q, want %q", got, want)
+			}
+		})
+	}
+}

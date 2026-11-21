@@ -2,6 +2,7 @@
 # The mounted PC and the room peers witness the dismount lines; DEX 0 selects the thud result (src/act.offensive.c:627-630; src/fight.c:1547-1556).
 # depth-case: fight.damage-victim-knockoff-char
 # depth-case: fight.damage-victim-dismount-thud
+# depth-case: fight.damage-mounted-hit-thud
 
 [fixture]
 empty-players

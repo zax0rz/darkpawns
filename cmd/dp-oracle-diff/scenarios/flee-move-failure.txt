@@ -1,12 +1,17 @@
 # depth-case: flee.simple-move-failure
-# God stages a mortal at zero movement. A valid west exit reaches
-# do_simple_move, which emits the exhaustion reason and returns false; do_flee
-# must then broadcast its failure line to the origin room.
+# This C-first witness exercises the mobile command path to do_flee, which
+# reaches World.DoFlee rather than the player's session cmdFlee. One safe exit
+# reaches do_simple_move, then fails because the tunnel destination already
+# has a PC (src/act.offensive.c:360-415; src/act.movement.c:180-185;
+# ROOM_TUNNEL is bit 8 at src/structs.h:64).
 
 [fixture]
 empty-players
 quiet-mobs
+set-room-flag 8162 4 off
+set-room-flag 8161 8 on
 replace-room-exits 8162 west 8161 0
+spawn-mob 16303 80 8162 163
 
 [setup:oracle]
 Fleegod
@@ -93,7 +98,14 @@ Y
 1
 
 [warmup]
-set Exfleer move 0
+goto 8162
+teleport Exfleer 8162
+teleport Exorigin 8161
+set player Exfleer maxhit 5000
+set player Exfleer hit 5000
+set mob trainee hitroll 100
+set mob trainee damroll -20
+force trainee hit Exfleer
 
-[probe:fleer]
-flee
+[probe]
+force trainee flee

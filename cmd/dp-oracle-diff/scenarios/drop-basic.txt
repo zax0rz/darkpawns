@@ -7,11 +7,14 @@
 # depth-case: drop.all-success
 # depth-case: drop.all-empty
 # depth-case: drop.alldot-empty
+# depth-case: drop.cursed-refusal
 # Core drop tree. Droppable items come from the starting backpack (open, then
 # get bread into inventory). The "obs" peer proves the TO_ROOM drop broadcast.
 
 [fixture]
 quiet-mobs
+# Existing resets can already load this object, so allow another instance.
+spawn-obj 2111 80 8162 21
 
 [setup:oracle]
 Dropper
@@ -82,3 +85,5 @@ drop skin
 drop all
 drop all
 drop all.
+get amulet
+drop amulet

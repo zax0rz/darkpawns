@@ -1,4 +1,5 @@
 # depth-case: palm.miss
+# depth-case: palm.no-arg
 # depth-case: palm.mount-block
 # depth-case: palm.quiet-pickup
 # depth-case: palm.all
@@ -81,6 +82,7 @@ skillset Palmgod 'palm' 100
 goto 8162
 
 [probe]
+palm
 palm xyzzy
 palm bread
 palm all

@@ -1,0 +1,103 @@
+# depth-case: fight.death-cry-player-deathtrap
+# The victim enters a death-trap room through the real north exit. C calls
+# death_cry before extraction; the observer left in the origin room hears the
+# adjacent-room line from src/fight.c:521-527.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8008 1 on
+replace-room-exits 8162 north 8008 0
+replace-room-exits 8008 south 8162 0
+
+[setup:oracle]
+Crygod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Crygod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Cryvictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Cryvictim
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Crywatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Crywatch
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Cryvictim 8162
+teleport Crywatch 8162
+
+[probe:victim]
+north
