@@ -5,7 +5,7 @@ do_flee	flee	flee.death-exit-rejected	D2	command	oracle-green-multiseed	flee-dea
 do_flee	flee	flee.success-actor	D2	command	oracle-green-multiseed	flee-audience-success@1,2,3,5,8	act.offensive.c:398-403	Destination look and self success bytes.
 do_flee	flee	flee.success-origin-audience	D3	command	oracle-green-multiseed	flee-audience-success@1,2,3,5,8	act.offensive.c:397-398	Panic plus ordinary direction leave bytes.
 do_flee	flee	flee.success-destination-audience	D3	command	oracle-green-multiseed	flee-audience-success@1,2,3,5,8	act.movement.c:231-273	Ordinary reverse-direction arrival bytes expose the selected RNG direction.
-do_flee	flee	flee.simple-move-failure	D3	command	oracle-green	flee-move-failure	act.offensive.c:398-412	Exhaustion makes do_simple_move false; actor and origin failure bytes match.
+do_flee	flee	flee.simple-move-failure	D3	command	oracle-green	flee-move-failure	act.offensive.c:398-412	A fighting peer forces the mortal into do_flee with zero movement; do_simple_move returns false and C broadcasts the failure line to the origin observer.
 do_flee	flee	flee.combat-stop	D4	command	oracle-green-multiseed	flee-combat-forced@1,2,3,5	act.offensive.c:365-370,398	Synchronous forced call proves active-combat successful movement and audiences.
 do_flee	flee	flee.base-xp-loss	D4	state	unit-green	TestCmdFlee_CanonicalCombatStateAndSilentXPLoss	act.offensive.c:365-370,403-409	Exact missing-HP times opponent-level delta; C has no loss message.
 do_flee	flee	flee.high-level-xp-bonus	D4	state	unit-green	TestCmdFlee_CanonicalHighLevelXPBonus	act.offensive.c:405-406	Exact truncation of 500*(level/2.6), added after base loss only above level 10.

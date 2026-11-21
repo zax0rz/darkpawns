@@ -1,0 +1,83 @@
+# depth-case: turn.mobile-zero-skill
+# depth-case: hit.mobile-self
+# depth-case: dream.switched-mobile-sleeping-branch
+# A switched mobile runs three ordinary registered commands through C's
+# command_interpreter body. Its zero turn skill prints Huh?!?, a self-hit
+# reaches do_hit's private OUCH line, and a sleep/dream pair reaches the
+# sleeping do_dream branch and its room act.
+# C: src/new_cmds2.c:965-967; src/act.offensive.c:112-116;
+# src/act.social.c:302-304; src/interpreter.c:910-947.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 70 1 8162 80
+
+[setup:oracle]
+Turnowner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Turnowner
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Turnwatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Turnwatch
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Turnwatch 8162
+set player Turnowner level 40
+
+[probe]
+switch satan
+turn
+hit satan
+sleep
+dream
+return
