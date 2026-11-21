@@ -330,3 +330,54 @@ position 5->4), T652 TestCmdTitlePreservesDoubledDollarAndStripsANSIMarkers
 (cmdTitle gained a $$ collapse), T708 TestZresetZoneIndexUsesCZoneTablePosition
 (return i -> i+1). All three went red and were restored byte for byte
 (mutations.tsv).
+
+### Ledger update (2026-11-21, review hold follow-up)
+
+Per-row evidence: every T546–T645 row's evidence cell now names what was
+checked for that test — the do_set field table's per-field level gates, the
+snoop relay framing bytes, the shutdown plan globals, the sendText half_chop
+branches, the AndRecord rows' string-by-string social message tables, and
+each registration row's exact C gate values. Test file/line columns are
+backfilled.
+
+All-R spot-checks (random draw, seed 20261108, from T546–T645): T587
+TestSetFieldTableMatchesCOrderAndGates (wiz_set.go:37 brief level 34->38),
+T603 TestSkillsetRegistrationUsesCEntryGates (registerCommand forced
+MinPosition 5, golden 4), T574 TestRuffleRegistrationUsesCEntryGate
+(command_gates.tsv:336 ruffle position 8->7). All three went red and were
+restored byte for byte (mutations.tsv).
+
+## Batch 9 results (later tests 501–600, 2026-09)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T690-T789.
+
+AndRecord sweep (S–Y) plus entry_persistence (real-SQLite R5f boundary
+contracts, 81 assertions), tedit/redit editor suites, wnewbie/wiz_set/wiznet/
+zlist/syslog/entry_transport depth pins. No fixes, no J10 divergences.
+Running: 745/1537.
+
+## Batch 10 results (later tests 601–700, 2026-09)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T790-T889.
+
+The OLC editor suites: oedit (121 assertions), medit, zedit, sedit, luaedit,
+redit working-copy/concurrency/restart-survival, tedit buffer sharing, string
+commands, zone-save atomicity, and the web/telnet OLC equivalence proof.
+No fixes, no J10 divergences. Running: 845/1537.
+
+### Ledger update (2026-11-21, review hold follow-up)
+
+Per-row evidence: every T746–T845 row's evidence cell now names what was
+checked for that test — the medit/redit/oedit/sedit/zedit editor lifecycles
+(entry gates, working-copy semantics, save-confirm asymmetries, menu colors,
+disk round-trips), the tedit shared-buffer and replacement edges, the
+string-editor C edges, and the web/telnet byte-identity suites. Test
+file/line columns are backfilled.
+
+All-R spot-checks (random draw, seed 20261110, from T746–T845): T784
+TestOeditNoZoneSaveGate (oedit.go:206 banner dropped its period), T828
+TestStringDeleteUnwrittenExtraDescReportsNoField (string_cmd.go:388
+NullDescription check removed), T768 TestMeditScriptShallowBehavior
+(medit.go:922 shallow write-through suppressed). All three went red and were
+restored byte for byte (mutations.tsv).
+
