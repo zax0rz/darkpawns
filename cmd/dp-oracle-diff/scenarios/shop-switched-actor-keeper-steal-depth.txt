@@ -9,7 +9,7 @@ empty-players
 quiet-mobs
 quiet-zone 48
 spawn-mob 4808 1 4813 48
-spawn-mob 69 1 4813 48
+spawn-mob 1 1 4813 48
 
 [setup:oracle]
 Shopbody
@@ -41,9 +41,9 @@ Y
 
 [warmup]
 goto 4813
-set mob clone level 9
-set mob clone align -1000
-switch clone
+set mob Puff level 9
+set mob Puff align -1000
+switch Puff
 
 [probe]
 steal gold

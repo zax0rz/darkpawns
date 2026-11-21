@@ -13,7 +13,7 @@
 
 [fixture]
 quiet-mobs
-spawn-obj 2111 1 8004 80
+spawn-obj 2111 1 8162 80
 
 [setup:oracle]
 Dropper
