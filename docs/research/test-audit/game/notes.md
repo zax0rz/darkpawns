@@ -151,3 +151,27 @@ over every registered spec, practice-parameter and skill-formula goldens
 gates (the mobact.c family the L1 work knows well), player-store versioning
 warnings, and the animate-dead charm/cap gates. Running total: 297 R / 3 F /
 0 C / 0 D.
+
+## Batch 7 results (pre-oracle tests 301–338, 2026-07-11) — pre-oracle COMPLETE
+
+Marks: R 38 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-7`.)
+
+The last pre-oracle tier (July 11): mob AI aggression gates (aggr24/aggressive/
+memory with sight, NOHASSLE and PEACEFUL skips), movement-cost tables,
+alignment shifts, HP band thresholds, sanctuary halving, the inventory
+CAN_GET_OBJ order, and str_app-derived capacity.
+
+## Pre-oracle summary (338 tests, complete)
+
+**R 335 / F 3 / C 0 / D 0** — 99.1% keepers. All three F marks were in the
+April object-movement/early-May layer (batch 1); every F was fixed in its
+batch PR with a mutation proof. Predictions (262/48/12/16) overshot the
+weakness badly: the actual pre-oracle layer is nearly all keepers, because
+the April suite is the deliberate ObjectLocation regression set and May–July
+tests were already DP-cited. The audit's "weak tests are pre-oracle" pattern
+from pkg/combat and pkg/spells does NOT reproduce here — pkg/game's pre-oracle
+layer was written with contracts from the start.
+
+Authors: zach 139, BRENDA69/OpenClaw 195, glm 4. J10 count: 0 (no test pins
+Go bytes C disagrees with in the pre-oracle set; the known design gap —
+objsave load never sets ObjectLocation — is documented, not pinned).
