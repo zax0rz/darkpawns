@@ -139,3 +139,15 @@ dragon-kick gate families with scripted rollers and C line citations
 DP-936 flat damage), the attribute golden tables transcribed verbatim from
 src/constants.c:1124-1183, and the nil-ch spec guards. Running total:
 247 R / 3 F / 0 C / 0 D.
+
+## Batch 6 results (pre-oracle tests 251–300, 2026-07-05..07-11)
+
+Marks: R 50 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-6`.)
+
+The July 5–11 tier: spec-proc goldens (cityguard/cleric/dragon-breath/dump/
+fighter/guild/janitor/magic-user/snake/thief), the smoke-all panic contract
+over every registered spec, practice-parameter and skill-formula goldens
+(bash success rate pinned to C's 60/101 within ±3%), race-hate aggression
+gates (the mobact.c family the L1 work knows well), player-store versioning
+warnings, and the animate-dead charm/cap gates. Running total: 297 R / 3 F /
+0 C / 0 D.
