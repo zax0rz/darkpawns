@@ -60,7 +60,7 @@ func TestEchoRoomActSkipsSleepingViewer(t *testing.T) {
 	}
 }
 
-// C doubles typed $ signs at input (src/comm.c:2216-2218), so an echo's
+// C doubles typed $ signs at input (src/comm.c:1968-1977), so an echo's
 // typed "$n" reaches act as "$$n" and prints literally for everyone. The
 // empirically retained oracle bytes for "echo $n lit test." are the literal
 // argument, capitalized by act's CAP.
@@ -76,7 +76,7 @@ func TestEchoActPassesTypedDollarsThrough(t *testing.T) {
 		t.Fatalf("ExecuteCommand echo: %v", err)
 	}
 	if got := readMsgText(t, awake); got != "$n tests $s codes.\r\n" {
-		t.Fatalf("awake viewer got %q, want the literal argument (src/comm.c:2216 doubling)", got)
+		t.Fatalf("awake viewer got %q, want the literal argument (src/comm.c:1975-1976 doubling)", got)
 	}
 	if got := readMsgText(t, god); got != "$n tests $s codes.\r\n" {
 		t.Fatalf("echoer got %q, want the literal TO_CHAR copy", got)

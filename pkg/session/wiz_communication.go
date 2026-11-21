@@ -51,7 +51,7 @@ func cmdEcho(s *Session, args []string) error {
 	// act(buf, FALSE, ch, 0, 0, TO_ROOM) — sleepers get nothing — then
 	// NOREPEAT gets OK (config.c:92) and everyone else gets the act TO_CHAR
 	// copy. C doubles every $ in user input before queuing
-	// (src/comm.c:2216-2218), so a typed "$n" reaches act as "$$n" and prints
+	// (src/comm.c:1968-1977), so a typed "$n" reaches act as "$$n" and prints
 	// literally; Go has no input doubling, so the argument is escaped here.
 	msg = strings.ReplaceAll(msg, "$", "$$")
 	game.Act(s.manager.world, false, s.player, nil, nil, nil, msg, "", game.ToRoom)

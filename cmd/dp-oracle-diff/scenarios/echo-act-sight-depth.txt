@@ -1,7 +1,7 @@
 # C-first echo act vehicle (src/act.wizard.c:147-151). do_echo's room and
 # self copies are act(buf, FALSE, ch, 0, 0, TO_ROOM/TO_CHAR), so a sleeping
 # viewer gets nothing — and C doubles every $ in user input before queuing
-# (src/comm.c:2216-2218), so a typed "$n" prints literally instead of
+# (src/comm.c:1968-1977), so a typed "$n" prints literally instead of
 # substituting (retained oracle bytes for "echo $n lit test.": the literal
 # argument, capitalized). The pre-DP-1621 Go path broadcast the raw name with
 # no sleep gate and substituted typed codes.
