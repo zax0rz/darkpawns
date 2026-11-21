@@ -66,9 +66,6 @@ func TestDoBackstab_NotThief(t *testing.T) {
 	if result.MessageToCh != "You have no idea how." {
 		t.Errorf("unexpected message: %q", result.MessageToCh)
 	}
-	if result.MessageToCh != "You have no idea how." {
-		t.Errorf("unexpected message: %q", result.MessageToCh)
-	}
 }
 
 // ---------------------------------------------------------------------------
