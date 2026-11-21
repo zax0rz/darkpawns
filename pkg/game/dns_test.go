@@ -15,6 +15,20 @@ func TestExecDNSAddDeletePrefixAndPersistenceState(t *testing.T) {
 	}
 	w.WorldPath = filepath.Join(t.TempDir(), "world")
 
+	listFromDisk := func() string {
+		reloaded, err := NewWorld(&parser.World{})
+		if err != nil {
+			t.Fatalf("NewWorld for DNS reload: %v", err)
+		}
+		t.Cleanup(reloaded.StopAITicker)
+		reloaded.WorldPath = w.WorldPath
+		reloadedAdmin := &Player{Name: "ReloadedAdmin"}
+		if err := reloaded.AddPlayer(reloadedAdmin); err != nil {
+			t.Fatalf("AddPlayer for DNS reload: %v", err)
+		}
+		return reloaded.ExecDns(reloadedAdmin, "list")
+	}
+
 	var output strings.Builder
 	w.MessageSink = func(_ string, message []byte) { output.Write(message) }
 	ch := &Player{Name: "Admin"}
@@ -30,6 +44,12 @@ func TestExecDNSAddDeletePrefixAndPersistenceState(t *testing.T) {
 	}
 	if got, want := output.String(), "OK!\r\nOK!\r\n"; got != want {
 		t.Fatalf("add output = %q, want %q", got, want)
+	}
+	persisted := listFromDisk()
+	for _, entry := range []string{"001.002.003.004   hostfour\r\n", "001.002.003.      hostthree\r\n"} {
+		if !strings.Contains(persisted, entry) {
+			t.Fatalf("reloaded DNS list %q does not contain persisted entry %q", persisted, entry)
+		}
 	}
 
 	w.dnsMu.Lock()
@@ -51,6 +71,9 @@ func TestExecDNSAddDeletePrefixAndPersistenceState(t *testing.T) {
 	}
 	if got, want := output.String(), "Deleting hostthree.\r\nDeleting hostfour.\r\n"; got != want {
 		t.Fatalf("delete output = %q, want %q", got, want)
+	}
+	if got, want := listFromDisk(), "IP Address        Host Name\r\n"; got != want {
+		t.Fatalf("reloaded DNS list after delete = %q, want %q", got, want)
 	}
 
 	w.dnsMu.Lock()
