@@ -1,5 +1,5 @@
 # C-first witness for look_at_char's no-description mobile branch.
-# A mortal starts in room 8162 with a Bitter Wind, whose description is empty,
+# A mortal starts in room 8004 with a Bitter Wind, whose description is empty,
 # so `look at wind` reaches the sampled actor line through look_at_target
 # (src/act.informative.c:388-398,
 # 1020-1024).
@@ -7,7 +7,7 @@
 
 [fixture]
 quiet-mobs
-spawn-mob 19119 1 8162 80
+spawn-mob 19119 1 8004 80
 
 [setup:oracle]
 Looker
