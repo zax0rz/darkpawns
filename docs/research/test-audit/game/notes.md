@@ -104,3 +104,16 @@ pins (obj_to_char order, container children), the canSee fidelity matrix
 weather/wraps, ban substring semantics, and the item donation/wear/transfer
 family with exact C refusal strings. No J10 found yet — the class both prior
 audits each hit remains open.
+
+## Batch 3 results (pre-oracle tests 101–150, 2026-06-18..06-28)
+
+Marks: R 50 / F 0 / C 0 / D 0. (Ledger on branch `glm/test-audit-game-3`.)
+
+The June–early-July layer is the DP-era: every kuji-kiri/berserk test carries
+exact C refusal strings, gate order and draw-site pins (including the
+C dangling-else improve_skill bug, documented in-test); the regen/find_exp
+goldens transcribe src/limits.c and src/class.c tables verbatim; the spec
+procs and item NODROP tests assert C messages and the bit-7-vs-bit-0
+regression guard. No fixes needed; no mutations run (nothing to prove).
+Prediction check: the later half of the pre-oracle set is even better than
+guessed — the April-only layer carried all of the batch-1 weakness.
