@@ -3,3 +3,13 @@ TestCmdBash_FightingTargetFallback	pkg/command/skill_commands.go	CmdBash, after 
 TestCmdBash_FightingTargetFallback	pkg/command/skill_commands.go	same no-op mutation against the fixed test (positive POS_SITTING assertion, src/act.offensive.c:493)	red (fixed test fails: target still standing)	yes
 TestKillPayout_PlayerDeath_Idempotent	pkg/game/death.go	handlePlayerDeath: removed the queued-extract early return (`if player.GetFlags()&extractMask != 0 { return }`)	green (pre-fix test made only one death call)	yes
 TestKillPayout_PlayerDeath_Idempotent	pkg/game/death.go	same mutation against the fixed test (second HandleDeath must not punish again)	red (fixed test fails: 'lost 262 more exp' — double punishment)	yes
+TestCmdBerserk_Executes	pkg/command/skill_commands.go	after skillPlayer's err check in CmdBerserk: inserted `return nil`	green (err==nil-only assertion cannot detect a dead handler)	yes
+TestCmdBerserk_Executes	pkg/command/skill_commands.go	same no-op mutation against the fixed test (asserts C's gate bytes, src/new_cmds.c:2142)	red (wire output empty)	yes
+TestCmdDetect_Executes	pkg/command/skill_commands.go	after skillPlayer's err check in CmdDetect: inserted `return nil`	green (pre-fix assertion cannot detect a dead handler)	yes
+TestCmdDetect_Executes	pkg/command/skill_commands.go	same no-op mutation against the fixed test (asserts 'Yeah, right.\r\n', src/new_cmds2.c:506)	red (wire output empty)	yes
+TestCmdScrounge_Executes	pkg/command/skill_commands.go	after skillPlayer's err check in CmdScrounge: inserted `return nil`	green (pre-fix assertion cannot detect a dead handler)	yes
+TestCmdScrounge_Executes	pkg/command/skill_commands.go	same no-op mutation against the fixed test (asserts 'You can\\'t seem to find anything edible.\\r\\n', src/new_cmds2.c:73)	red (wire output empty)	yes
+TestCmdKujiKiri_Executes	pkg/command/skill_commands.go	inside the CmdKujiKiri closure after skillPlayer's err check: inserted `return nil`	green (pre-fix assertion cannot detect a dead handler)	yes
+TestCmdKujiKiri_Executes	pkg/command/skill_commands.go	same no-op mutation against the fixed test (asserts 'You know nothing of kuji-kiri!\\r\\n', src/new_cmds.c:1561)	red (wire output empty)	yes
+TestCmdPoint_Executes	pkg/command/skill_commands.go	after skillPlayer's err check in CmdPoint: inserted `return nil`	green (pre-fix assertion cannot detect a dead handler)	yes
+TestCmdPoint_Executes	pkg/command/skill_commands.go	same no-op mutation against the fixed test (asserts 'You point north.\\r\\n', src/new_cmds.c:2527)	red (wire output empty)	yes

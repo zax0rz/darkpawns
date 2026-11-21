@@ -101,3 +101,38 @@ deletions showed the only newly-uncovered functions were the three dead ones;
 after the production removal the denominator shrank to live code only, and no
 remaining statement lost a test — behavior coverage only got stricter (two
 contracts gained real assertions).
+
+
+## Batch 2 results (74 post-oracle July tests)
+
+Marks: R 69, F 5, C 0, D 0. Junk: 5×J3, all in one family.
+
+The one weak family: the `_Executes` smoke tests from the DP-608/658 utility
+coverage push (PR #414, claude). `TestCmdBerserk_Executes`,
+`TestCmdDetect_Executes`, `TestCmdScrounge_Executes`, `TestCmdKujiKiri_Executes`
+and `TestCmdPoint_Executes` asserted only `err == nil` — every one stayed green
+when its handler was mutated to a no-op (mutations.tsv). Fixed by asserting the
+exact C gate bytes each fixture input produces (src/new_cmds.c:2142,
+src/new_cmds2.c:506, src/new_cmds2.c:73, src/new_cmds.c:1561,
+src/new_cmds.c:2527); each fixed test goes red under the same mutation.
+
+Everything else in the batch held up. The glm DP-1212/1213 draw-order and
+enrollment tests are the strongest tests in the package: seed search that
+accepts only seeds distinguishing C order from the old order (sharp by
+construction, R5a), three independent observables per run, and the real
+sendSkillResult path. The 33 gate byte pins from PR #414 (bearhug, behead,
+bite-no-args, carve, compare, cutthroat, disarm, disembowel, dragon kick,
+first aid, flesh alter, mindlink, palm, serpent kick, sharpen, slug,
+smackheads, spike/stake no-args, strike, tag, tiger punch — plus the XPLower
+formula row and the three-command thief utility test) were each verified
+against grepped C lines. The byte pins dated later (turn, mold, compare blind,
+carve exact-no-args, spike/stake NOPERSON gates, bite punctuation and the
+silent-bite contract, strike's charmed-master gate) belong to batch 3; their
+verification is recorded there. No J10 divergences found.
+
+Attribution: glm 8 (PRs #469×4 tests, #474×2, #476, #460), claude 64 (PR #414,
+Co-Authored-By trailer; branch prefix was clawpatch), codex 1 (PR #366, branch
+prefix; git author BRENDA69), unknown 1 (PR #189, git author BRENDA69).
+
+Coverage: 67.8% before → 67.8% after (assertions only; no tests added or
+removed, so the denominator is unchanged and no live statement lost coverage).
