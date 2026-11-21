@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -22,6 +23,12 @@ func TestCmdKickUsesCOneArgument(t *testing.T) {
 	}
 	if sess.hasMessage("Kick who?") {
 		t.Fatalf("C one_argument target was not resolved: messages=%v", sess.getMessages())
+	}
+	// Positive witness: do_kick sets WAIT_STATE(ch, PULSE_VIOLENCE + 2)
+	// unconditionally (src/act.offensive.c:633), hit or miss. A no-op handler
+	// never reaches it (mutations.tsv).
+	if got := p.GetWaitState(); got != engine.PULSE_VIOLENCE+2 {
+		t.Errorf("kicker wait = %d, want %d — the kick never executed its tail", got, engine.PULSE_VIOLENCE+2)
 	}
 }
 
@@ -53,6 +60,14 @@ func TestCmdKickTargetGates(t *testing.T) {
 			gotPrompt := sess.hasMessage("Kick who?")
 			if gotPrompt != tt.wantPrompt {
 				t.Fatalf("Kick who? = %v, want %v; messages=%v", gotPrompt, tt.wantPrompt, sess.getMessages())
+			}
+			if tt.fighting {
+				// Positive witness that the fallback kick ran: do_kick's
+				// WAIT_STATE(ch, PULSE_VIOLENCE + 2) is unconditional
+				// (src/act.offensive.c:633).
+				if got := p.GetWaitState(); got != engine.PULSE_VIOLENCE+2 {
+					t.Fatalf("fighting-fallback wait = %d, want %d", got, engine.PULSE_VIOLENCE+2)
+				}
 			}
 		})
 	}

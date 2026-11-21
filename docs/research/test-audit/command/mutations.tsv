@@ -13,3 +13,8 @@ TestCmdKujiKiri_Executes	pkg/command/skill_commands.go	inside the CmdKujiKiri cl
 TestCmdKujiKiri_Executes	pkg/command/skill_commands.go	same no-op mutation against the fixed test (asserts 'You know nothing of kuji-kiri!\\r\\n', src/new_cmds.c:1561)	red (wire output empty)	yes
 TestCmdPoint_Executes	pkg/command/skill_commands.go	after skillPlayer's err check in CmdPoint: inserted `return nil`	green (pre-fix assertion cannot detect a dead handler)	yes
 TestCmdPoint_Executes	pkg/command/skill_commands.go	same no-op mutation against the fixed test (asserts 'You point north.\\r\\n', src/new_cmds.c:2527)	red (wire output empty)	yes
+TestCmdKickUsesCOneArgument	pkg/command/skill_commands.go	after skillPlayer's err check in CmdKick: inserted `return nil`	green (negative-only assertion cannot detect a dead handler)	yes
+TestCmdKickUsesCOneArgument	pkg/command/skill_commands.go	same no-op mutation against the fixed test (asserts the kick ran via C's unconditional WAIT_STATE(ch, PULSE_VIOLENCE+2), src/act.offensive.c:633)	red (wait 0)	yes
+TestCmdBearhug_FightingTargetFallback	pkg/command/skill_commands.go	after skillPlayer's err check in CmdBearhug: inserted `return nil`	green (negative-only assertion cannot detect a dead handler)	yes
+TestCmdBearhug_FightingTargetFallback	pkg/command/skill_commands.go	same no-op mutation against the fixed test (asserts the fallback ran via C's unconditional WAIT_STATE(ch, PULSE_VIOLENCE*2))	red (wait 0)	yes
+TestCmdKickTargetGates	pkg/command/skill_commands.go	after skillPlayer's err check in CmdKick: inserted `return nil`	red (the two positive prompt rows already catch a dead handler; kept R)	yes
