@@ -69,7 +69,7 @@ func TestCanSeeLightOKMatrix(t *testing.T) {
 			}
 
 			// A hide_invisible TO_ROOM act reaches the observer only when
-			// they can see the actor (comm.c:2537-2538).
+			// they can see the actor (src/comm.c:2532-2535).
 			Act(w, true, actor, nil, nil, nil, "$n waves at you.", "", ToRoom)
 			if got := obsOut.String(); tc.wantSee && got == "" {
 				t.Fatal("observer who can see received no act bytes")

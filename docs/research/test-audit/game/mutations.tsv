@@ -31,3 +31,7 @@ TestSpecCleric_BlindnessGateConsumesCDraw	pkg/game/spec_procs3.go	225	remove lsp
 TestSpecCleric_CallLightningWeatherGate	pkg/game/spec_procs3.go	269	force weather condition true and ignore SkyRaining	green (old test only used rain)	red (dry case exhausted unexpected Number(0,5))	yes
 TestApplySkillDamageEmitsTheHurtLineForEveryAttackType	pkg/game/damage_stubs.go	229	omit ApplySurvivingVictimDefaultArm for SkillBashNum	green (original test exercised only Headbutt)	red (expanded bash subtest misses the C pain line)	yes
 TestBanManagerConcurrentReadWrite	pkg/game/bans.go	205	return nil before appending the new ban site	green (original body had no final-state assertion)	red (corrected final IsBanned assertion sees 0, wants BanNew)	yes
+TestChannelMirrorSkipsNoRepeatAcknowledgement	pkg/game/out_of_band.go	53	bypass observer.ChannelLine delivery	green	red	yes
+TestCityguardBribeRefusalSwings	pkg/game/mobprogs.go	182	change cityguard refusal OR gate to AND	green	red	yes
+TestClanIsPlayingGates	pkg/game/clan_membership.go	35	suppress live applicant emission	green	red	yes
+TestClanPlanEditorOverflowMatchesC	pkg/game/clans.go	328	change max_str comparison from > to >=	green	red	yes

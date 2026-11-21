@@ -98,56 +98,66 @@ func TestElementsGuardianPlayerHitSwings(t *testing.T) {
 }
 
 func TestCityguardBribeRefusalSwings(t *testing.T) {
-	for _, peaceful := range []bool{true, false} {
-		w, ce := newRealPulseWorld(t, peaceful,
-			parser.Mob{
-				VNum: 2747, Keywords: "cityguard guard", ShortDesc: "the cityguard", Level: 33,
-				HP: parser.DiceRoll{Num: 1, Sides: 1, Plus: 500},
-			},
-		)
-		guard, err := w.SpawnMob(2747, 1001)
-		if err != nil {
-			t.Fatalf("SpawnMob: %v", err)
-		}
-		p := NewPlayer(1, "Briber", 1001)
-		p.SetLevel(30)
-		if err := w.AddPlayer(p); err != nil {
-			t.Fatalf("AddPlayer: %v", err)
-		}
+	for _, refusal := range []struct {
+		name, random string
+		amount       int
+		roll         int
+	}{
+		{name: "random-roll refusal", amount: 200, roll: 0, random: "zero"},
+		{name: "minimum-amount refusal", amount: 10, roll: 1, random: "nonzero"},
+	} {
+		t.Run(refusal.name, func(t *testing.T) {
+			for _, peaceful := range []bool{true, false} {
+				w, ce := newRealPulseWorld(t, peaceful,
+					parser.Mob{
+						VNum: 2747, Keywords: "cityguard guard", ShortDesc: "the cityguard", Level: 33,
+						HP: parser.DiceRoll{Num: 1, Sides: 1, Plus: 500},
+					},
+				)
+				guard, err := w.SpawnMob(2747, 1001)
+				if err != nil {
+					t.Fatalf("SpawnMob: %v", err)
+				}
+				p := NewPlayer(1, "Briber", 1001)
+				p.SetLevel(30)
+				if err := w.AddPlayer(p); err != nil {
+					t.Fatalf("AddPlayer: %v", err)
+				}
 
-		// C refuses when number(0,2) is zero; pin that draw and a missed swing.
-		var seed uint32
-		for s := uint32(1); s < 8192; s++ {
-			dprng.ResetStream(s)
-			if dprng.Number(0, 2) != 0 {
-				continue
-			}
-			dprng.ResetStream(s)
-			dprng.Number(0, 2)
-			if dprng.Number(1, 20) == 1 {
-				seed = s
-				break
-			}
-		}
-		if seed == 0 {
-			t.Fatal("no seed found with a refusing bribe and a missed swing")
-		}
+				// Isolate both arms of C's (number(0,2)==0 || amount<200) gate,
+				// then make the refusal swing miss so exactly its hit draw remains.
+				var seed uint32
+				for s := uint32(1); s < 8192; s++ {
+					dprng.ResetStream(s)
+					if dprng.Number(0, 2) != refusal.roll {
+						continue
+					}
+					if dprng.Number(1, 20) == 1 {
+						seed = s
+						break
+					}
+				}
+				if seed == 0 {
+					t.Fatalf("no seed with %s refusal roll and a missed swing", refusal.random)
+				}
 
-		dprng.ResetStream(seed)
-		w.MpGive(guard, p, 10) // amount < 200 also forces the refusal arm
-		gotNext := dprng.Number(0, 999)
-		dprng.ResetStream(seed)
-		dprng.Number(0, 2)
-		dprng.Number(1, 20)
-		wantNext := dprng.Number(0, 999)
-		if gotNext != wantNext {
-			t.Fatalf("peaceful=%v: bribe strike changed the draw stream: next=%d, want %d", peaceful, gotNext, wantNext)
-		}
-		if peaceful && (ce.IsFighting(guard) || p.GetFightingBody() != nil) {
-			t.Fatal("peaceful bribe strike enrolled anyone")
-		}
-		if !peaceful && (!ce.IsFighting(guard) || p.GetFightingBody() != guard) {
-			t.Fatal("open-room bribe strike failed to enrol the pair")
-		}
+				dprng.ResetStream(seed)
+				w.MpGive(guard, p, refusal.amount)
+				gotNext := dprng.Number(0, 999)
+				dprng.ResetStream(seed)
+				dprng.Number(0, 2)
+				dprng.Number(1, 20)
+				wantNext := dprng.Number(0, 999)
+				if gotNext != wantNext {
+					t.Fatalf("peaceful=%v amount=%d: bribe strike changed the draw stream: next=%d, want %d", peaceful, refusal.amount, gotNext, wantNext)
+				}
+				if peaceful && (ce.IsFighting(guard) || p.GetFightingBody() != nil) {
+					t.Fatal("peaceful bribe strike enrolled anyone")
+				}
+				if !peaceful && (!ce.IsFighting(guard) || p.GetFightingBody() != guard) {
+					t.Fatal("open-room bribe strike failed to enrol the pair")
+				}
+			}
+		})
 	}
 }

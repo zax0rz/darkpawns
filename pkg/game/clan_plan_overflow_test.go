@@ -62,10 +62,17 @@ func TestClanPlanEditorOverflowMatchesC(t *testing.T) {
 
 	sent = nil
 	world.BeginClanPlanWrite(player, clan)
-	if !world.HandleClanPlanInput(player, strings.Repeat("z", MaxClanPlanBytes-4)) {
+	boundary := strings.Repeat("z", MaxClanPlanBytes-3)
+	if !world.HandleClanPlanInput(player, boundary) {
 		t.Fatal("boundary line refused")
 	}
 	if !player.ClanPlanWriting {
 		t.Fatal("editor exited on a boundary line")
+	}
+	if got, want := player.ClanPlanBuffer, boundary+"\r\n"; got != want {
+		t.Fatalf("boundary buffer = %d bytes, want exact accepted line at %d bytes", len(got), len(want))
+	}
+	if got := strings.Join(sent, ""); strings.Contains(got, "String too long") {
+		t.Fatalf("C-fit boundary line received overflow notice: %q", got)
 	}
 }
