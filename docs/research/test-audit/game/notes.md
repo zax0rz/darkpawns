@@ -268,3 +268,15 @@ save nesting, bad stats, arena broadcast, race locks. One second
 `-race`-vehicle test found (`TestCombatBodyReferencesConcurrentAndReciprocal`,
 three goroutines × 1000 reciprocal fighting-reference cycles) — reinforces
 the batch-14 gate question about a `-race` CI pass.
+
+## Batch 17 results (post-oracle tests 901–1000, 2026-10-20..11-03)
+
+Marks: R 100 / F 0 / C 0 / D 0 (two medium-confidence race-vehicle rows).
+(Ledger on branch `glm/test-audit-game-17`.)
+
+The late-October era: mobact depth (14), pk-death mudlog producers,
+point-update object timers, mount depth, bad stats, room activity, mob
+voice/hunt-voice families, and the milestone mudlog matrix (each milestone
+delegating to the shared testMilestoneMudlog helper with watcher/below-level
+assertions). A third -race-vehicle guard surfaced
+(TestGetItemsInRoomSnapshotVsWriter, the CWE-400 unbounded-slice repair).
