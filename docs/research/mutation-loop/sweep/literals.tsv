@@ -1,0 +1,999 @@
+func	file	line	literal	offset
+*BoardSystem.WriteMessage	pkg/boards/boards.go	615	"You are not holy enough to write on this board.\\r\\n"	19629
+*BoardSystem.WriteMessage	pkg/boards/boards.go	619	"The board is full.\\r\\n"	19766
+*BoardSystem.WriteMessage	pkg/boards/boards.go	624	"The board is malfunctioning - sorry.\\r\\n"	19864
+*BoardSystem.WriteMessage	pkg/boards/boards.go	636	"We must have a headline!\\r\\n"	20180
+*BoardSystem.WriteMessage	pkg/boards/boards.go	654	"The board is malfunctioning - sorry.\\r\\n"	21073
+*BoardSystem.WriteMessage	pkg/boards/boards.go	676	"Write your message.\\r\\n"	21681
+*BoardSystem.WriteMessage	pkg/boards/boards.go	677	"Instructions: /s or @ to save, /h for more options.\\r\\n"	21724
+*BoardSystem.WriteMessage	pkg/boards/boards.go	681	"%s starts to write a message."	21862
+*CombatEngine.prepareRoundDefense	pkg/combat/engine.go	851	"With a dazzling show of swordplay, you move into defensive position...\\r\\n"	34154
+*CombatEngine.prepareRoundDefense	pkg/combat/engine.go	865	"%s displays a dazzling show of swordplay, fending off your every blow!\\r\\n"	34955
+*CombatEngine.prepareRoundDefense	pkg/combat/engine.go	868	"You dodge!\\r\\n"	35172
+*CombatEngine.prepareRoundDefense	pkg/combat/engine.go	869	"%s dodges your attack!\\r\\n"	35255
+*CombatEngine.prepareRoundDefense	pkg/combat/engine.go	874	"%s dodges %s's attack!\\r\\n"	35451
+UpdatePositionAfterDamage	pkg/combat/fight_core.go	181	"You are mortally wounded, and will die soon, if not aided.\\r\\n"	5847
+UpdatePositionAfterDamage	pkg/combat/fight_core.go	184	"You are incapacitated an will slowly die, if not aided.\\r\\n"	6060
+UpdatePositionAfterDamage	pkg/combat/fight_core.go	187	"You're stunned, but will probably regain consciousness again.\\r\\n"	6270
+emitWoundBand	pkg/combat/fight_core.go	354	"You are mortally wounded, and will die soon, if not aided.\\r\\n"	12325
+emitWoundBand	pkg/combat/fight_core.go	356	"You are incapacitated an will slowly die, if not aided.\\r\\n"	12435
+emitWoundBand	pkg/combat/fight_core.go	358	"You're stunned, but will probably regain consciousness again.\\r\\n"	12544
+ApplySurvivingVictimDefaultArm	pkg/combat/fight_core.go	523	"That really did HURT!\\r\\n"	19622
+ApplySurvivingVictimDefaultArm	pkg/combat/fight_core.go	539	"You wimp out, and attempt to flee!\\r\\n"	20222
+executeShoot	pkg/command/shoot.go	19	"$n fires %s %s with %s."	723
+executeShoot	pkg/command/shoot.go	20	"Twang... your projectile flies into the distance.\\r\\n"	849
+executeShoot	pkg/command/shoot.go	31	"Some kind of %s streaks in from %s and just misses you!\\r\\n"	1342
+executeShoot	pkg/command/shoot.go	32	"Some kind of %s streaks in from %s and narrowly misses $n!"	1478
+executeShoot	pkg/command/shoot.go	39	"You hear a roar of pain!\\r\\n"	1890
+executeShoot	pkg/command/shoot.go	44	"Some kind of %s streaks in from %s and strikes $n!"	2067
+executeShoot	pkg/command/shoot.go	46	"Some kind of %s streaks in from %s and hits you!\\r\\n"	2188
+executeShoot	pkg/command/shoot.go	52	"Suddenly some kind of projectile pierces your arm!\\r\\n"	2500
+executeShoot	pkg/command/shoot.go	56	"You decide to go investigate...\\r\\n"	2650
+executeShoot	pkg/command/shoot.go	64	"$n bursts into the room and scowls at $N.\\r\\n"	2964
+executeShoot	pkg/command/shoot.go	65	"%s bursts into the room and scowls at you!\\r\\n"	3070
+CmdBash	pkg/command/skill_commands.go	107	"This room just has such a peaceful, easy feeling...\\r\\n"	3141
+CmdBash	pkg/command/skill_commands.go	118	"Bash who?\\r\\n"	3572
+CmdBash	pkg/command/skill_commands.go	123	"Bash who?\\r\\n"	3713
+CmdBash	pkg/command/skill_commands.go	126	"Bash who?\\r\\n"	3767
+CmdBash	pkg/command/skill_commands.go	130	"Aren't we funny today...\\r\\n"	3830
+CmdTigerPunch	pkg/command/skill_commands.go	359	"That's pretty tough to do while wielding a weapon.\\r\\n"	10308
+CmdTigerPunch	pkg/command/skill_commands.go	363	"Hit who?\\r\\n"	10454
+CmdTigerPunch	pkg/command/skill_commands.go	366	"Aren't we funny today...\\r\\n"	10538
+CmdTigerPunch	pkg/command/skill_commands.go	369	"Dismount first!\\r\\n"	10617
+shootTargetGate	pkg/command/skill_commands.go	499	"Maybe that isn't such a great idea...\\r\\n"	15351
+shootTargetGate	pkg/command/skill_commands.go	504	"It looks like they are fighting, you can't aim properly.\\r\\n"	15583
+shootTargetGate	pkg/command/skill_commands.go	507	"You cannot see well enough to aim...\\r\\n"	15760
+CmdSubdue	pkg/command/skill_commands.go	527	"You're too busy right now!\\r\\n"	16473
+CmdSubdue	pkg/command/skill_commands.go	530	"Subdue who?\\r\\n"	16554
+CmdSubdue	pkg/command/skill_commands.go	537	"Subdue who?\\r\\n"	16853
+CmdSubdue	pkg/command/skill_commands.go	540	"Aren't we funny today...\\r\\n"	16917
+CmdAmbush	pkg/command/skill_commands.go	603	"Ambush who?\\r\\n"	19078
+CmdAmbush	pkg/command/skill_commands.go	608	"Ambush who?\\r\\n"	19252
+CmdAmbush	pkg/command/skill_commands.go	614	"You are a little busy for that right now!\\r\\n"	19410
+CmdAmbush	pkg/command/skill_commands.go	617	"Ambush yourself? You idiot!\\r\\n"	19504
+CmdAmbush	pkg/command/skill_commands.go	622	"Ambush someone here? Impossible!\\r\\n"	19770
+CmdAmbush	pkg/command/skill_commands.go	625	"They're too alert for that, currently.\\r\\n"	19874
+CmdSteal	pkg/command/skill_commands.go	709	"Steal what from who?\\r\\n"	22466
+CmdSteal	pkg/command/skill_commands.go	716	"Steal what from who?\\r\\n"	22638
+CmdCarve	pkg/command/skill_commands.go	730	"How can you think of food at a time like this?!?\\r\\n"	22997
+CmdCarve	pkg/command/skill_commands.go	735	"You want to carve what?!?\\r\\n"	23163
+CmdFirstAid	pkg/command/skill_commands.go	922	"Aid who?\\r\\n"	28969
+CmdFirstAid	pkg/command/skill_commands.go	929	"They don't seem to be here.\\r\\n"	29171
+CmdDisarm	pkg/command/skill_commands.go	959	"Disarm who?\\r\\n"	30185
+CmdDisarm	pkg/command/skill_commands.go	965	"Disarm who?\\r\\n"	30357
+CmdDisarm	pkg/command/skill_commands.go	970	"Disarm who?\\r\\n"	30519
+CmdSerpentKick	pkg/command/skill_commands.go	1029	"Kick who?\\r\\n"	31992
+CmdSerpentKick	pkg/command/skill_commands.go	1041	"Kick who?\\r\\n"	32502
+sendSkillResult::func@1410	pkg/command/skill_commands.go	1419	"$n falls to $s knees, clutching $s groin and throwing up\\r\\neverywhere!"	49546
+CmdSlug	pkg/command/skill_commands.go	1607	"Slug who?\\r\\n"	55396
+CmdBite	pkg/command/skill_commands.go	1658	"Bite who?!\\r\\n"	56613
+CmdBite	pkg/command/skill_commands.go	1667	"Bite who?!\\r\\n"	56984
+cmdSpikeOrStake	pkg/command/skill_commands.go	1826	"Whom do you wish to %s?\\r\\n"	61726
+cmdSpikeOrStake	pkg/command/skill_commands.go	1833	"No-one by that name here.\\r\\n"	61946
+CmdCharge	pkg/command/skill_commands.go	1895	"Great! Fine! Charge who?!?!\\r\\n"	63772
+CmdCharge	pkg/command/skill_commands.go	1900	"Great! Fine! Charge who?!?!\\r\\n"	63931
+CmdCharge	pkg/command/skill_commands.go	1903	"Great! Fine! Charge who?!?!\\r\\n"	64003
+CmdCharge	pkg/command/skill_commands.go	1907	"You charge headlong into the ground, impressing everyone..\\r\\n"	64084
+*World.kenderStealItem	pkg/game/act_informative.go	170	"$N catches you trying to steal something..."	5871
+*World.kenderStealItem	pkg/game/act_informative.go	171	"$n tried to steal something from you!"	5965
+*World.kenderStealItem	pkg/game/act_informative.go	172	"$n tries to steal something from $N."	6052
+*World.kenderStealItem	pkg/game/act_informative.go	215	"Somehow $p makes it's way into your pack."	7738
+*World.DoMove	pkg/game/act_movement.go	212	"Alas, you cannot go that way..."	5621
+okPick	pkg/game/act_movement.go	765	"Odd - you can't seem to find a keyhole."	22624
+okPick	pkg/game/act_movement.go	767	"You'll need to hold a set of lockpicks before you can pick a lock!"	22757
+okPick	pkg/game/act_movement.go	769	"It resists your attempts to pick it."	22861
+okPick	pkg/game/act_movement.go	772	"You failed to pick the lock."	22977
+okPick	pkg/game/act_movement.go	779	"$n curses as $e bends some of $s lockpicks."	23169
+okPick	pkg/game/act_movement.go	780	"You ruin your lockpicks in the process."	23245
+specNewbieZoneEntranceActor	pkg/game/actor_specials_guards.go	207	"Nah, you're too much of a badass to go in there!\\r\\n"	9545
+specChosenGuardActor	pkg/game/actor_specials_guards.go	353	"$n blocks $N's way."	15485
+specChosenGuardActor	pkg/game/actor_specials_guards.go	354	"$n blocks your way."	15609
+specChosenGuardActor	pkg/game/actor_specials_guards.go	355	"$n says 'Thou shalt not pass.'"	15723
+specCarrionBody	pkg/game/actor_specials_rooms.go	458	"Suddenly $n skitters from out of a corpse!"	16604
+*World.wanderMobWithDoor	pkg/game/ai.go	198	"$n leaves %s."	8029
+*World.wanderMobWithDoor	pkg/game/ai.go	210	"$n flies in from the %s."	8369
+*World.wanderMobWithDoor	pkg/game/ai.go	212	"$n swims in from the %s."	8477
+*World.wanderMobWithDoor	pkg/game/ai.go	214	"$n arrives from the %s."	8551
+*World.wanderMobWithDoor	pkg/game/ai.go	219	"$n flies in from below."	8659
+*World.wanderMobWithDoor	pkg/game/ai.go	221	"$n swims in from below."	8745
+*World.wanderMobWithDoor	pkg/game/ai.go	223	"$n climbs in from below."	8797
+*World.wanderMobWithDoor	pkg/game/ai.go	228	"$n flies in from above."	8897
+*World.wanderMobWithDoor	pkg/game/ai.go	230	"$n swims in from above."	8983
+*World.wanderMobWithDoor	pkg/game/ai.go	232	"$n climbs in from above."	9035
+*World.attitudeLootMob	pkg/game/attitude_loot.go	27	"You junk $p. It vanishes in a puff of smoke!"	850
+*World.attitudeLootMob	pkg/game/attitude_loot.go	29	"$n junks $p. It vanishes in a puff of smoke!"	955
+*BanManager.DoBan	pkg/game/bans.go	340	"Usage: ban {all | select | new} site_name\\r\\n"	10780
+*BanManager.DoBan	pkg/game/bans.go	345	"Flag must be ALL, SELECT, or NEW.\\r\\n"	10905
+*BanManager.DoBan	pkg/game/bans.go	361	"That site has already been banned -- unban it to change the ban type.\\r\\n"	11449
+*BanManager.DoBan	pkg/game/bans.go	368	"Site banned.\\r\\n"	11762
+CharacterFollow	pkg/game/character_command.go	113	"No-one by that name here."	4230
+*World.doClanRename	pkg/game/clan_admin.go	13	"You need to specify a clan number.\\r\\n"	206
+*World.doClanRename	pkg/game/clan_admin.go	18	"There is no clan with that number.\\r\\n"	360
+*World.doClanRename	pkg/game/clan_admin.go	23	"What do you want to rename it?\\r\\n"	449
+*World.doClanRename	pkg/game/clan_admin.go	29	"There is no clan with that number.\\r\\n"	570
+*World.doClanRename	pkg/game/clan_admin.go	37	"Clan renamed.\\r\\n"	726
+*World.doClanBank	pkg/game/clan_bank.go	20	"You don't belong to any clan!\\r\\n"	321
+*World.doClanBank	pkg/game/clan_bank.go	28	"You're not influent enough in the clan to do that!\\r\\n"	489
+*World.doClanBank	pkg/game/clan_bank.go	35	"Deposit how much?\\r\\n"	630
+*World.doClanBank	pkg/game/clan_bank.go	37	"Withdraw how much?\\r\\n"	692
+*World.doClanBank	pkg/game/clan_bank.go	39	"Bad clan banking call, please report to a God.\\r\\n"	747
+*World.doClanBank	pkg/game/clan_bank.go	47	"Deposit what?\\r\\n"	894
+*World.doClanBank	pkg/game/clan_bank.go	49	"Withdraw what?\\r\\n"	952
+*World.doClanBank	pkg/game/clan_bank.go	51	"Bad clan banking call, please report to a God.\\r\\n"	1003
+*World.doClanBank	pkg/game/clan_bank.go	61	"The clan is not wealthy enough for your needs!\\r\\n"	1196
+*World.doClanBank	pkg/game/clan_bank.go	65	"You withdraw from the clan's treasure.\\r\\n"	1302
+*World.doClanBank	pkg/game/clan_bank.go	69	"You do not have that kind of money!\\r\\n"	1555
+*World.doClanBank	pkg/game/clan_bank.go	73	"You add to the clan's treasure.\\r\\n"	1660
+*World.doClanAppLevel	pkg/game/clan_economy.go	72	"You're not influent enough in the clan to do that!\\r\\n"	1421
+*World.doClanAppLevel	pkg/game/clan_economy.go	77	"Set to which level?\\r\\n"	1525
+*World.doClanAppLevel	pkg/game/clan_economy.go	82	"Set the application level to what?\\r\\n"	1604
+*World.doClanAppLevel	pkg/game/clan_economy.go	89	"The application level can go from 1 to 30.\\r\\n"	1744
+*World.doClanApply	pkg/game/clan_info.go	47	"Gods cannot apply for any clan.\\r\\n"	1068
+*World.doClanApply	pkg/game/clan_info.go	51	"You already belong to a clan!\\r\\n"	1158
+*World.doClanApply	pkg/game/clan_info.go	57	"Unknown clan.\\r\\n"	1271
+*World.doClanApply	pkg/game/clan_info.go	62	"You are not mighty enough to apply to this clan.\\r\\n"	1356
+*World.doClanApply	pkg/game/clan_info.go	66	"You cannot afford the application fee!\\r\\n"	1471
+*World.doClanApply	pkg/game/clan_info.go	76	"You've applied to the clan!\\r\\n"	1692
+*World.doClanInfo	pkg/game/clan_info.go	85	"No clans have formed yet.\\r\\n"	2017
+*World.doClanInfo	pkg/game/clan_info.go	93	"\\t\\t\\tooO Clans of Dark Pawns Ooo\\r\\n"	2263
+*World.doClanInfo	pkg/game/clan_info.go	100	"[%-2d]  %-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\\r\\n"	2504
+*World.doClanInfo	pkg/game/clan_info.go	103	"%-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\\r\\n"	2687
+*World.doClanInfo	pkg/game/clan_info.go	113	"Unknown clan.\\r\\n"	2920
+*World.doClanInfo	pkg/game/clan_info.go	118	"Info for the clan %s :\\r\\n"	2998
+*World.doClanInfo	pkg/game/clan_info.go	119	"Ranks      : %d\\r\\nTitles     : "	3055
+*World.doClanInfo	pkg/game/clan_info.go	121	"%s "	3152
+*World.doClanInfo	pkg/game/clan_info.go	123	"\\r\\nMembers    : %d\\r\\nPower      : %d\\t\\nTreasure   : %d\\r\\nSpells     : "	3196
+*World.doClanInfo	pkg/game/clan_info.go	127	"%d "	3390
+*World.doClanInfo	pkg/game/clan_info.go	130	"\\r\\nClan privileges:\\r\\n"	3428
+*World.doClanInfo	pkg/game/clan_info.go	132	"   %-10s: %d\\r\\n"	3500
+*World.doClanInfo	pkg/game/clan_info.go	134	"\\r\\nDescription:\\r\\n"	3575
+*World.doClanInfo	pkg/game/clan_info.go	136	"(null)"	3636
+*World.doClanInfo	pkg/game/clan_info.go	150	"This clan is at peace with all others.\\r\\n"	3837
+*World.doClanInfo	pkg/game/clan_info.go	152	"This clan is at war.\\r\\n"	3911
+*World.doClanInfo	pkg/game/clan_info.go	154	"Application fee  : %d gold\\r\\nMonthly Dues     : %d gold\\r\\n"	3961
+*World.doClanInfo	pkg/game/clan_info.go	155	"Application level: %d\\r\\n"	4062
+*World.doClanMembers	pkg/game/clan_membership.go	294	"You aren't in a clan!\\r\\n"	7498
+*World.doClanMembers	pkg/game/clan_membership.go	300	"You aren't in a clan!\\r\\n"	7613
+*World.doClanMembers	pkg/game/clan_membership.go	304	"\\r\\nList of your clan members\\r\\n"	7671
+*World.doClanMembers	pkg/game/clan_membership.go	313	"%s %s \\r\\n"	7977
+*World.doClanMembers	pkg/game/clan_membership.go	328	"%s %s \\r\\n"	8403
+*World.doClanPlan	pkg/game/clan_settings.go	70	"You're not influent enough in the clan to do that!\\r\\n"	1975
+*World.doClanPlan	pkg/game/clan_settings.go	75	"Enter the description, or plan for clan <<%s>>.\\r\\n"	2094
+*World.doClanPlan	pkg/game/clan_settings.go	77	"Old plan for clan <<%s>>:\\r\\n%s\\r\\n"	2197
+*World.doClanPlan	pkg/game/clan_settings.go	78	"Enter new plan:\\r\\n"	2270
+*World.doClanPlan	pkg/game/clan_settings.go	80	"End with @ on a line by itself.\\r\\n"	2312
+*World.doClanRanks	pkg/game/clan_settings.go	101	"You're not influent enough in the clan to do that!\\r\\n"	2766
+*World.doClanRanks	pkg/game/clan_settings.go	106	"Set how many ranks?\\r\\n"	2870
+*World.doClanRanks	pkg/game/clan_settings.go	111	"Set the ranks to what?\\r\\n"	2949
+*World.doClanRanks	pkg/game/clan_settings.go	118	"The clan already has this number of ranks.\\r\\n"	3067
+*World.doClanRanks	pkg/game/clan_settings.go	123	"Clans must have from 2 to 20 ranks.\\r\\n"	3183
+*World.doClanRanks	pkg/game/clan_settings.go	128	"Changing the clan hierarchy requires 5,000 coins!\\r\\n"	3293
+*World.doClanTitles	pkg/game/clan_settings.go	201	"You don't belong to any clan!\\r\\n"	4961
+*World.doClanTitles	pkg/game/clan_settings.go	205	"You're not influent enough in the clan to do that!\\r\\n"	5060
+*World.doClanTitles	pkg/game/clan_settings.go	210	"You do not have clan privileges.\\r\\n"	5191
+*World.doClanTitles	pkg/game/clan_settings.go	216	"You need to specify a clan number.\\r\\n"	5322
+*World.doClanTitles	pkg/game/clan_settings.go	222	"There is no clan with that number.\\r\\n"	5472
+*World.doClanTitles	pkg/game/clan_settings.go	231	"You need to specify a rank number.\\r\\n"	5612
+*World.doClanTitles	pkg/game/clan_settings.go	238	"This clan has no such rank number.\\r\\n"	5744
+*World.doClanTitles	pkg/game/clan_settings.go	243	"You need a clan title of under 20 characters.\\r\\n"	5850
+*World.doClanTitles	pkg/game/clan_settings.go	251	"Done.\\r\\n"	5986
+*World.doClanSP	pkg/game/clan_settings.go	322	"You're not influent enough in the clan to do that!\\r\\n"	7527
+*World.doClanSP	pkg/game/clan_settings.go	327	"Set the privilege to which rank?\\r\\n"	7631
+*World.doClanSP	pkg/game/clan_settings.go	332	"Set the privilege to what?\\r\\n"	7723
+*World.doClanSP	pkg/game/clan_settings.go	339	"There is no such rank in the clan.\\r\\n"	7848
+*World.sendClanFormat	pkg/game/clans.go	368	"Clan commands available to you:\\r\\n"	9787
+*World.sendClanFormat	pkg/game/clans.go	369	"   clan status\\r\\n"	9829
+*World.sendClanFormat	pkg/game/clans.go	370	"   clan info <clan>\\r\\n"	9854
+*World.sendClanFormat	pkg/game/clans.go	379	"   clan create     <leader> <clan name>\\r\\n"	10033
+*World.sendClanFormat	pkg/game/clans.go	380	"   clan destroy    <clan>\\r\\n"	10084
+*World.sendClanFormat	pkg/game/clans.go	381	"   clan rename     <#> <name>\\r\\n"	10121
+*World.sendClanFormat	pkg/game/clans.go	382	"   clan enroll     <player> <clan>\\r\\n"	10162
+*World.sendClanFormat	pkg/game/clans.go	383	"   clan expel      <player> <clan>\\r\\n"	10208
+*World.sendClanFormat	pkg/game/clans.go	384	"   clan promote    <player> <clan>\\r\\n"	10254
+*World.sendClanFormat	pkg/game/clans.go	385	"   clan demote     <player> <clan>\\r\\n"	10300
+*World.sendClanFormat	pkg/game/clans.go	386	"   clan withdraw   <amount> <clan>\\r\\n"	10346
+*World.sendClanFormat	pkg/game/clans.go	387	"   clan deposit    <amount> <clan>\\r\\n"	10392
+*World.sendClanFormat	pkg/game/clans.go	388	"   clan set ranks  <rank>   <clan>\\r\\n"	10438
+*World.sendClanFormat	pkg/game/clans.go	389	"   clan set appfee <amount> <clan>\\r\\n"	10484
+*World.sendClanFormat	pkg/game/clans.go	390	"   clan set dues   <amount> <clan>\\r\\n"	10530
+*World.sendClanFormat	pkg/game/clans.go	391	"   clan set applev <level>  <clan>\\r\\n"	10576
+*World.sendClanFormat	pkg/game/clans.go	392	"   clan set plan   <clan>\\r\\n"	10622
+*World.sendClanFormat	pkg/game/clans.go	393	"   clan private <clan>\\r\\n"	10659
+*World.sendClanFormat	pkg/game/clans.go	394	"   clan set privilege  <privilege>   <rank> <clan>\\r\\n"	10693
+*World.sendClanFormat	pkg/game/clans.go	395	"   clan set title  <clan number> <rank> <title>\\r\\n"	10755
+*World.sendClanFormat	pkg/game/clans.go	398	"   clan apply      <clan>\\r\\n"	10859
+*World.sendClanFormat	pkg/game/clans.go	403	"   clan who\\r\\n"	10995
+*World.sendClanFormat	pkg/game/clans.go	404	"   clan members\\r\\n"	11033
+*World.sendClanFormat	pkg/game/clans.go	405	"   clan quit\\r\\n"	11075
+*World.sendClanFormat	pkg/game/clans.go	406	"   clan deposit    <amount>\\r\\n"	11114
+*World.sendClanFormat	pkg/game/clans.go	408	"   clan withdraw   <amount>\\r\\n"	11207
+*World.sendClanFormat	pkg/game/clans.go	411	"   clan enroll     <player>\\r\\n"	11304
+*World.sendClanFormat	pkg/game/clans.go	414	"   clan expel      <player>\\r\\n"	11400
+*World.sendClanFormat	pkg/game/clans.go	417	"   clan promote    <player>\\r\\n"	11498
+*World.sendClanFormat	pkg/game/clans.go	420	"   clan demote     <player>\\r\\n"	11595
+*World.sendClanFormat	pkg/game/clans.go	423	"   clan set applev <level>\\r\\n"	11695
+*World.sendClanFormat	pkg/game/clans.go	426	"   clan set appfee <amount>\\r\\n"	11792
+*World.sendClanFormat	pkg/game/clans.go	427	"   clan set dues   <amount>\\r\\n"	11834
+*World.sendClanFormat	pkg/game/clans.go	430	"   clan set plan\\r\\n"	11932
+*World.sendClanFormat	pkg/game/clans.go	433	"   clan private\\r\\n"	12004
+*World.sendClanFormat	pkg/game/clans.go	434	"   clan set ranks  <rank>\\r\\n"	12034
+*World.sendClanFormat	pkg/game/clans.go	435	"   clan set title  <rank> <title>\\r\\n"	12074
+*World.sendClanFormat	pkg/game/clans.go	436	"   clan set privilege  <privilege> <rank>\\r\\n"	12122
+*World.mobGenCommBody	pkg/game/comm_channel.go	248	"The walls seem to absorb your words.\\r\\n"	7938
+*World.mobGenCommBody	pkg/game/comm_channel.go	255	"You must be at least level %d before you can %s.\\r\\n"	8188
+*World.mobGenCommBody	pkg/game/comm_channel.go	260	"You are too stupid to communicate with language!\\r\\n"	8369
+*World.mobGenCommBody	pkg/game/comm_channel.go	267	"Yes, %s, fine, %s we must, but WHAT???"	8649
+*World.mobGenCommBody	pkg/game/comm_channel.go	272	"You're too exhausted to holler.\\r\\n"	8868
+*World.mobGenCommBody	pkg/game/comm_channel.go	281	"You %s, '%s'"	9265
+*World.doCTell	pkg/game/comm_channel.go	343	"There is no clan with that number.\\r\\n"	11912
+*World.doCTell	pkg/game/comm_channel.go	349	"You're not part of a clan.\\r\\n"	12061
+*World.doCTell	pkg/game/comm_channel.go	356	"You aren't currently on your clan channel.\\r\\n"	12207
+*World.doCTell	pkg/game/comm_channel.go	360	"You cannot clan-tell anything!\\r\\n"	12338
+*World.doCTell	pkg/game/comm_channel.go	366	"What do you want to tell your clan?\\r\\n"	12450
+*World.doCTell	pkg/game/comm_channel.go	373	"Try entering in a number.\\r\\n"	12634
+*World.doCTell	pkg/game/comm_channel.go	384	"No one has a clan rank high enough to hear you!\\r\\n"	13039
+*World.doCTell	pkg/game/comm_channel.go	389	"What do you want to tell them?\\r\\n"	13178
+*World.doCTell	pkg/game/comm_channel.go	392	" (%d) "	13263
+*World.doCTell	pkg/game/comm_channel.go	397	"Okay.\\r\\n"	13383
+*World.doCTell	pkg/game/comm_channel.go	399	"You tell your clan%s, '%s'\\r\\n"	13428
+*World.doCTell	pkg/game/comm_channel.go	413	"Someone"	13810
+*World.doCTell	pkg/game/comm_channel.go	415	"%s tells your clan%s, '%s'\\r\\n"	13846
+*World.NPCDoRaceSay	pkg/game/comm_say.go	100	"You are too stupid to communicate with language!\\r\\n"	2596
+*World.NPCDoRaceSay	pkg/game/comm_say.go	104	"Yes, but WHAT do you want to say?\\n\\r"	2697
+*World.NPCDoRaceSay	pkg/game/comm_say.go	115	"Human"	2944
+*World.NPCDoRaceSay	pkg/game/comm_say.go	117	"Elven"	3003
+*World.NPCDoRaceSay	pkg/game/comm_say.go	119	"Dwarven"	3066
+*World.NPCDoRaceSay	pkg/game/comm_say.go	121	"Kenderkin"	3131
+*World.NPCDoRaceSay	pkg/game/comm_say.go	123	"Minotauran"	3202
+*World.NPCDoRaceSay	pkg/game/comm_say.go	125	"Rakshasan"	3275
+*World.NPCDoRaceSay	pkg/game/comm_say.go	127	"Ssauran"	3340
+*World.NPCDoRaceSay	pkg/game/comm_say.go	133	" %s, "	3454
+*World.NPCDoRaceSay	pkg/game/comm_say.go	139	"%s%s'(In %s) %s'\\r\\n"	3701
+*World.NPCDoRaceSay	pkg/game/comm_say.go	141	"%s%s'%s'\\r\\n"	3809
+*World.NPCDoRaceSay	pkg/game/comm_say.go	148	"%s%s'(In %s) %s'\\r\\n"	4027
+*World.NPCDoRaceSay	pkg/game/comm_say.go	151	"You %s, '(In %s) %s'\\r\\n"	4154
+*World.okDamageShopkeeper	pkg/game/damage_gate.go	119	"$n slaps $N."	4527
+*World.okDamageShopkeeper	pkg/game/damage_gate.go	120	"You are slapped by $n."	4602
+*World.okDamageShopkeeper	pkg/game/damage_gate.go	122	"$n tells you, 'Get out of here before I call the guards!'"	4687
+*World.counter_procs	pkg/game/death.go	1406	"The gods reward your many victories!\\n\\r"	54988
+*World.counter_procs	pkg/game/death.go	1423	"The gods reward your glory in battle!\\n\\r"	55710
+*World.counter_procs	pkg/game/death.go	1433	"The gods of war and death bestow a blessing upon you.\\r\\n"	56036
+*World.DoTell	pkg/game/directed_speech.go	202	"Who do you wish to tell what??"	5217
+*World.DoTell	pkg/game/directed_speech.go	207	"No-one by that name here."	5343
+*World.DoTell	pkg/game/directed_speech.go	213	"No-one by that name here."	5534
+*World.DoTell	pkg/game/directed_speech.go	217	"You can't tell other people while you have notell on."	5672
+*World.DoTell	pkg/game/directed_speech.go	221	"You cannot tell anyone anything!"	5810
+*World.DoTell	pkg/game/directed_speech.go	225	"The walls seem to absorb your words."	5934
+*World.DoTell	pkg/game/directed_speech.go	231	"$E can't hear you."	6231
+*World.DoTell	pkg/game/directed_speech.go	239	"No-one by that name here."	6406
+*World.DoTell	pkg/game/directed_speech.go	244	"You try to tell yourself something."	6537
+*World.DoTell	pkg/game/directed_speech.go	248	"You can't tell other people while you have notell on."	6666
+*World.DoTell	pkg/game/directed_speech.go	252	"You cannot tell anyone anything!"	6785
+*World.DoTell	pkg/game/directed_speech.go	256	"The walls seem to absorb your words."	6886
+*World.DoTell	pkg/game/directed_speech.go	260	"$E's linkless at the moment."	7004
+*World.DoTell	pkg/game/directed_speech.go	264	"$E's writing a message right now; try again later."	7134
+*World.DoTell	pkg/game/directed_speech.go	268	"$E can't hear you."	7342
+*World.mobWake	pkg/game/dream_mob.go	50	"You can't wake up!\\r\\n"	1705
+*World.mobWake	pkg/game/dream_mob.go	51	"$n tosses and turns uncomfortably."	1764
+*World.mobWake	pkg/game/dream_mob.go	55	"You are already awake...\\r\\n"	1878
+*World.mobWake	pkg/game/dream_mob.go	58	"You awaken, and sit up.\\r\\n"	1937
+*World.mobWake	pkg/game/dream_mob.go	59	"$n awakens."	2000
+dreamLevelFlavor	pkg/game/dreams.go	161	"You have dreams of showing this world what you are really made of.\\r\\n"	5924
+dreamLevelFlavor	pkg/game/dreams.go	162	"$n smiles in $s sleep."	6015
+dreamLevelFlavor	pkg/game/dreams.go	168	"You have a pleasant dream of safe travels to far places and a hero's welcome when you return.\\r\\n"	6189
+dreamLevelFlavor	pkg/game/dreams.go	169	"$n begins to hum a happy ditty in $s sleep."	6307
+dreamLevelFlavor	pkg/game/dreams.go	175	"You dream of your conquest of the world.\\r\\n"	6503
+dreamLevelFlavor	pkg/game/dreams.go	176	"$n begins to grin in $s sleep."	6568
+dreamLevelFlavor	pkg/game/dreams.go	182	"You dream of slaying the dark creatures of the night.\\r\\n"	6751
+dreamLevelFlavor	pkg/game/dreams.go	183	"$n smirks in $s sleep."	6829
+dreamLevelFlavor	pkg/game/dreams.go	189	"You have a fantastic dream of one day attaining immortality.\\r\\n"	7004
+dreamLevelFlavor	pkg/game/dreams.go	190	"$n looks like $e is having big dreams."	7089
+dreamLevelFlavor	pkg/game/dreams.go	196	"You have big, grand dreams of the power of the Gods.\\r\\n"	7274
+dreamLevelFlavor	pkg/game/dreams.go	197	"$n glows in $s sleep."	7351
+dreamLevelFlavor	pkg/game/dreams.go	204	"You toss and turn under the constant fear of the wrath of Orodreth :-)\\r\\n"	7531
+dreamLevelFlavor	pkg/game/dreams.go	205	"You find yourself wide awake!\\r\\n"	7626
+dreamLevelFlavor	pkg/game/dreams.go	206	"$n awakens with fear in $s eyes."	7680
+DreamTravelFn	pkg/game/dreams.go	236	"You have a dream %s \\r\\n"	9016
+DreamTravelFn	pkg/game/dreams.go	237	"The sleeping body of $n fades from existence."	9074
+DreamTravelFn	pkg/game/dreams.go	239	"The sleeping body of $n fades into existence."	9169
+DreamTravelFn	pkg/game/dreams.go	246	"You have a dream %s \\r\\n"	9418
+DreamTravelFn	pkg/game/dreams.go	247	"The sleeping body of $n fades from existence."	9476
+DreamTravelFn	pkg/game/dreams.go	249	"The sleeping body of $n fades into existence."	9571
+*World.doSimpleMoveMob	pkg/game/flee.go	139	"The thought of leaving your master makes you weep.\\r\\n"	4508
+*World.doSimpleMoveMob	pkg/game/flee.go	157	"You need a boat to go there.\\r\\n"	5008
+*World.doSimpleMoveMob	pkg/game/flee.go	171	"You're in no position to go ANYWHERE!\\r\\n"	5491
+*World.doSimpleMoveMob	pkg/game/flee.go	175	"You are too exhausted to carry your rider further.\\r\\n"	5617
+*World.doSimpleMoveMob	pkg/game/flee.go	176	"Your mount is too exhausted to carry you further.\\r\\n"	5696
+*World.doSimpleMoveMob	pkg/game/flee.go	181	"There isn't enough room there!\\r\\n"	5906
+*World.doSimpleMoveMob	pkg/game/flee.go	185	"You can't ride in there! Dismount first!\\r\\n"	6078
+*World.doSimpleMoveMob	pkg/game/flee.go	191	"$n leaves %s."	6245
+*World.performMoveMob	pkg/game/flee.go	276	"Alas, you cannot go that way...\\r\\n"	9009
+*World.performMoveMob	pkg/game/flee.go	285	"Alas, you cannot go that way...\\r\\n"	9439
+*World.performMoveMob	pkg/game/flee.go	287	"The %s seems to be closed.\\r\\n"	9529
+*World.performMoveMob	pkg/game/flee.go	290	"It seems to be closed.\\r\\n"	9629
+*World.performMoveMob	pkg/game/flee.go	314	"You follow $N."	10418
+AddFollowerMob	pkg/game/follow.go	76	"$n starts following you."	2645
+AddFollowerMob	pkg/game/follow.go	77	"$n starts to follow $N."	2722
+StopFollower	pkg/game/follow.go	182	"You realize that $N is a jerk!"	6041
+StopFollower	pkg/game/follow.go	184	"$n realizes that $N is a jerk!"	6127
+StopFollower	pkg/game/follow.go	187	"$n hates your guts!"	6239
+StopFollower	pkg/game/follow.go	193	"You stop shadowing $N."	6422
+StopFollower	pkg/game/follow.go	196	"You stop following $N."	6511
+StopFollower	pkg/game/follow.go	198	"$n stops following $N."	6589
+StopFollower	pkg/game/follow.go	201	"$n stops following you."	6760
+*World.doTrack	pkg/game/graph.go	137	"You have no idea how.\\r\\n"	3761
+*World.doTrack	pkg/game/graph.go	142	"You have no idea how.\\r\\n"	3857
+*World.doTrack	pkg/game/graph.go	148	"Whom are you trying to track?\\r\\n"	3967
+*World.doTrack	pkg/game/graph.go	155	"You can't sense a trail to them from here.\\r\\n"	4166
+*World.doTrack	pkg/game/graph.go	167	"You sense no trail.\\r\\n"	4479
+*World.doTrack	pkg/game/graph.go	176	"You sense no trail.\\r\\n"	4794
+*World.doTrack	pkg/game/graph.go	186	"Hmm.. something seems to be wrong.\\r\\n"	4965
+*World.doTrack	pkg/game/graph.go	188	"You're already in the same room!!\\r\\n"	5049
+*World.doTrack	pkg/game/graph.go	190	"You can't sense a trail to %s from here.\\r\\n"	5138
+*World.doTrack	pkg/game/graph.go	216	"You sense a trail %s from here!\\r\\n"	5859
+*World.doTrack	pkg/game/graph.go	218	"There doesn't seem to be any way out of here!\\r\\n"	5942
+*World.HcontrolSetKey	pkg/game/house_control.go	314	"That house doesn't exist!\\r\\n"	8147
+*World.HcontrolSetKey	pkg/game/house_control.go	321	"That object doesn't exist!\\r\\n"	8293
+*World.HcontrolSetKey	pkg/game/house_control.go	329	"House key set.\\r\\n"	8427
+*World.doHouseGuest	pkg/game/house_player.go	65	"No such player.\\r\\n"	1599
+*World.doHouseGuest	pkg/game/house_player.go	79	"Guest deleted.\\r\\n"	1900
+*World.doHouseGuest	pkg/game/house_player.go	85	"You've already reached the maximum number of guests in your house!\\r\\n"	2005
+*World.doHouseGuest	pkg/game/house_player.go	92	"Guest added.\\r\\n"	2191
+*World.listHouseGuests	pkg/game/house_player.go	123	"Guests of your house:\\r\\n"	2998
+*World.listHouseGuests	pkg/game/house_player.go	125	"  None.\\r\\n"	3069
+applyDrinkSustenance	pkg/game/item_consumable.go	138	"The vampirism in your body is not satiated by mere %s...\\r\\n"	4514
+applyDrinkSustenance	pkg/game/item_consumable.go	144	"You feel drunk.\\r\\n"	4760
+applyDrinkSustenance	pkg/game/item_consumable.go	147	"You don't feel thirsty any more.\\r\\n"	4845
+applyDrinkSustenance	pkg/game/item_consumable.go	151	"You are full.\\r\\n"	4946
+*World.eatWerewolfCorpse	pkg/game/item_consumable.go	285	"You savagely rip into $p, feeding your insatiable appetite."	8958
+*World.eatWerewolfCorpse	pkg/game/item_consumable.go	286	"$n savagely rips into $p, crunching through flesh and bone alike."	9069
+*World.DoPour	pkg/game/item_consumable.go	326	"From what do you want to pour?"	10359
+*World.DoPour	pkg/game/item_consumable.go	331	"You can't find it!"	10516
+*World.DoPour	pkg/game/item_consumable.go	335	"You can't pour from that!"	10648
+*World.DoPour	pkg/game/item_consumable.go	340	"What do you want to fill?  And what are you filling it from?\\r\\n"	10761
+*World.DoPour	pkg/game/item_consumable.go	347	"You can't find it!"	11057
+*World.DoPour	pkg/game/item_consumable.go	351	"You can't fill $p!"	11177
+*World.DoPour	pkg/game/item_consumable.go	355	"What do you want to fill $p from?"	11283
+*World.DoPour	pkg/game/item_consumable.go	360	"There doesn't seem to be %s %s here.\\r\\n"	11459
+*World.DoPour	pkg/game/item_consumable.go	364	"You can't fill something from $p."	11622
+*World.DoPour	pkg/game/item_consumable.go	370	"The $p is empty."	11761
+*World.DoPour	pkg/game/item_consumable.go	376	"Where do you want it?  Out or in what?"	11887
+*World.DoPour	pkg/game/item_consumable.go	386	"You can't find it!"	12127
+*World.DoPour	pkg/game/item_consumable.go	390	"You can't pour anything into that."	12297
+*World.DoPour	pkg/game/item_consumable.go	396	"A most unproductive effort."	12425
+*World.DoPour	pkg/game/item_consumable.go	400	"There is already another liquid in it!"	12590
+*World.DoPour	pkg/game/item_consumable.go	404	"There is no room for more."	12738
+*World.DoPour	pkg/game/item_consumable.go	411	"You pour the %s into the %s."	12986
+*World.DoPour	pkg/game/item_consumable.go	414	"You gently fill $p from $P."	13128
+*World.DoPour	pkg/game/item_consumable.go	415	"$n gently fills $p from $P."	13211
+*World.putAll	pkg/game/item_container.go	139	"You don't seem to have anything to put in it.\\r\\n"	4009
+*World.putAll	pkg/game/item_container.go	141	"You don't seem to have any %ss.\\r\\n"	4103
+*World.performWear	pkg/game/item_equipment.go	116	"You can't wear $p there."	2914
+*World.performWear	pkg/game/item_equipment.go	149	"You can't wield that.\\r\\n"	3615
+*World.performWear	pkg/game/item_equipment.go	153	"Your flesh is altered, you can't wield anything!\\r\\n"	3712
+*World.performWear	pkg/game/item_equipment.go	157	"It is too heavy for you to use.\\r\\n"	3850
+*World.performWear	pkg/game/item_equipment.go	162	"Both hands must be free to wield that.\\r\\n"	4062
+*World.performWear	pkg/game/item_equipment.go	170	"Both your hands are occupied with your weapon at the moment.\\r\\n"	4357
+*World.performWear	pkg/game/item_equipment.go	181	"You are zapped by $p and instantly let go of it."	4592
+*World.performWear	pkg/game/item_equipment.go	182	"$n is zapped by $p and instantly lets go of it."	4672
+*World.performWear	pkg/game/item_equipment.go	186	"You cannot use $p."	4789
+*World.performWear	pkg/game/item_equipment.go	192	"You can't wear that right now.\\r\\n"	4992
+*World.DoWear	pkg/game/item_equipment.go	397	"Wear what?\\r\\n"	11289
+*World.DoWear	pkg/game/item_equipment.go	403	"You can't specify the same body location for more than one item!\\r\\n"	11408
+*World.DoWear	pkg/game/item_equipment.go	419	"You don't seem to have anything wearable.\\r\\n"	11782
+*World.DoWear	pkg/game/item_equipment.go	427	"Wear all of what?\\r\\n"	11961
+*World.DoWear	pkg/game/item_equipment.go	439	"You can't wear $p."	12297
+*World.DoWear	pkg/game/item_equipment.go	443	"You don't seem to have any %ss.\\r\\n"	12382
+*World.DoWear	pkg/game/item_equipment.go	450	"You don't seem to have %s %s.\\r\\n"	12527
+*World.DoWear	pkg/game/item_equipment.go	457	"You can't wear $p."	12715
+*World.DoWear	pkg/game/item_equipment.go	459	"'%s'?  What part of your body is THAT?\\r\\n"	12786
+*World.DoGrab	pkg/game/item_equipment.go	486	"Hold what?\\r\\n"	13597
+*World.DoGrab	pkg/game/item_equipment.go	491	"You don't seem to have %s %s.\\r\\n"	13706
+*World.DoGrab	pkg/game/item_equipment.go	496	"You can't hold that.\\r\\n"	13963
+*World.performRemove	pkg/game/item_equipment.go	516	"You can't remove $p, it must be CURSED!"	14373
+*World.performRemove	pkg/game/item_equipment.go	520	"$p: you can't carry that many items!"	14520
+*World.performRemove	pkg/game/item_equipment.go	526	"You can't remove that right now.\\r\\n"	14738
+*World.performRemove	pkg/game/item_equipment.go	530	"You stop using $p."	14808
+*World.performRemove	pkg/game/item_equipment.go	531	"$n stops using $p."	14857
+*World.getFromRoom	pkg/game/item_transfer.go	183	"You can't reach it from your mount.\\r\\n"	6393
+*World.getFromRoom	pkg/game/item_transfer.go	195	"You don't see %s %s here.\\r\\n"	6779
+*World.getFromRoom	pkg/game/item_transfer.go	201	"Get all of what?\\r\\n"	6946
+*World.getFromRoom	pkg/game/item_transfer.go	215	"There doesn't seem to be anything here.\\r\\n"	7258
+*World.getFromRoom	pkg/game/item_transfer.go	217	"You don't see any %ss here.\\r\\n"	7344
+*World.performGiveToMob	pkg/game/item_transfer.go	487	"$N doesn't seem to be interested in $p."	15737
+*World.performGiveToMob	pkg/game/item_transfer.go	491	"You can't let go of $p!!  Yeech!"	15913
+*World.performGiveToMob	pkg/game/item_transfer.go	495	"$E can't carry that much weight."	16087
+*World.performGiveToMob	pkg/game/item_transfer.go	500	"$E can't carry that much weight."	16371
+*World.performGiveToMob	pkg/game/item_transfer.go	504	"You give $p to $N."	16469
+*World.performGiveToMob	pkg/game/item_transfer.go	505	"$n gives you $p."	16540
+*World.performGiveToMob	pkg/game/item_transfer.go	506	"$n gives $p to $N."	16606
+performDropMobile	pkg/game/item_transfer_actor.go	325	"$n drops $p."	10121
+*World.DoEquipment	pkg/game/item_views.go	84	"You are using:\\r\\n"	2591
+*World.DoEquipment	pkg/game/item_views.go	99	"Something.\\r\\n"	3005
+*World.DoEquipment	pkg/game/item_views.go	104	" Nothing.\\r\\n"	3060
+*World.pullIdlePlayerToVoid	pkg/game/limits_misc.go	68	"$n disappears into the void."	1832
+*World.pullIdlePlayerToVoid	pkg/game/limits_misc.go	69	"You have been idle, and are pulled into a void.\\r\\n"	1891
+*World.mobAssist	pkg/game/mobact.go	593	"$N assists you!"	18831
+*World.mobAssist	pkg/game/mobact.go	595	"$n assists $N."	18963
+*World.MpGreetActor	pkg/game/mobprogs.go	66	"$n mutters something about filthy animals in $s shop..."	2121
+*World.MpGreetActor	pkg/game/mobprogs.go	73	"$n says, 'Have a seat there! Stay a while, rest your bones and warm your feet by the fire!'"	2517
+*World.DoFollow	pkg/game/movement_commands.go	207	"Whom do you wish to follow?\\r\\n"	7785
+*World.DoFollow	pkg/game/movement_commands.go	221	"No-one by that name here.\\r\\n"	8217
+*World.DoFollow	pkg/game/movement_commands.go	226	"You are already following $M."	8364
+*World.DoFollow	pkg/game/movement_commands.go	231	"But you only feel like following $N!"	8566
+*World.DoFollow	pkg/game/movement_commands.go	237	"You are already following yourself.\\r\\n"	8707
+*World.DoFollow	pkg/game/movement_commands.go	245	"Sorry, but following in loops is not allowed.\\r\\n"	8887
+*World.DoFollow	pkg/game/movement_commands.go	274	"You now follow $N."	9820
+*World.DoFollow	pkg/game/movement_commands.go	287	"You now follow $N."	10204
+*World.DoFollow	pkg/game/movement_commands.go	289	"$n starts following you."	10347
+*World.DoFollow	pkg/game/movement_commands.go	291	"$n starts to follow $N."	10426
+*World.DoEnter	pkg/game/movement_commands.go	326	"There is no "	11404
+*World.DoEnter	pkg/game/movement_commands.go	326	" here.\\r\\n"	11428
+*World.DoEnter	pkg/game/movement_commands.go	330	"You are already indoors.\\r\\n"	11552
+*World.DoEnter	pkg/game/movement_commands.go	342	"You can't seem to find anything to enter.\\r\\n"	11951
+*World.DoLeave	pkg/game/movement_commands.go	353	"You are outside.. where do you want to go?\\r\\n"	12312
+*World.DoLeave	pkg/game/movement_commands.go	365	"I see no obvious exits to the outside.\\r\\n"	12752
+*World.npcStand	pkg/game/npc_command.go	131	"$n clambers to $s feet."	5519
+*World.npcStand	pkg/game/npc_command.go	133	"$n stops resting, and clambers on $s feet."	5617
+*World.npcStand	pkg/game/npc_command.go	135	"$n stops floating around, and puts $s feet on the ground."	5719
+*World.npcTell	pkg/game/npc_command.go	194	"Who do you wish to tell what??"	8196
+*World.npcTell	pkg/game/npc_command.go	200	"No-one by that name here."	8383
+*World.npcTell	pkg/game/npc_command.go	207	"No-one by that name here."	8666
+*World.npcTell	pkg/game/npc_command.go	211	"You try to tell yourself something."	8774
+*World.npcTell	pkg/game/npc_command.go	215	"The walls seem to absorb your words."	8926
+*World.npcTell	pkg/game/npc_command.go	219	"$E can't hear you."	9109
+*World.npcTell	pkg/game/npc_command.go	227	"No-one by that name here."	9296
+*World.npcTell	pkg/game/npc_command.go	231	"The walls seem to absorb your words."	9434
+*World.npcTell	pkg/game/npc_command.go	235	"$E's linkless at the moment."	9562
+*World.npcTell	pkg/game/npc_command.go	239	"$E's writing a message right now; try again later."	9715
+*World.npcTell	pkg/game/npc_command.go	244	"$E can't hear you."	9973
+*World.npcPutDirect	pkg/game/npc_command_items.go	62	"Put what in what?\\r\\n"	2174
+*World.npcPutDirect	pkg/game/npc_command_items.go	66	"You can only put things into one container at a time.\\r\\n"	2278
+*World.npcPutDirect	pkg/game/npc_command_items.go	70	"it"	2410
+*World.npcPutDirect	pkg/game/npc_command_items.go	72	"them"	2454
+*World.npcPutDirect	pkg/game/npc_command_items.go	74	"What do you want to put "	2475
+*World.npcPutDirect	pkg/game/npc_command_items.go	74	" in?\\r\\n"	2511
+*World.npcPutDirect	pkg/game/npc_command_items.go	94	"You don't see "	3054
+*World.npcPutDirect	pkg/game/npc_command_items.go	94	" here.\\r\\n"	3113
+*World.npcPutDirect	pkg/game/npc_command_items.go	98	"$p is not a container."	3252
+*World.npcPutDirect	pkg/game/npc_command_items.go	102	"You'd better open it first!\\r\\n"	3366
+*World.npcPutDirect	pkg/game/npc_command_items.go	114	"You aren't carrying "	3722
+*World.npcPutDirect	pkg/game/npc_command_items.go	118	"You attempt to fold it into itself, but fail.\\r\\n"	3862
+*World.npcPutDirect	pkg/game/npc_command_items.go	137	"You don't seem to have anything to put in it.\\r\\n"	4424
+*World.npcPutDirect	pkg/game/npc_command_items.go	139	"You don't seem to have any "	4499
+*World.npcPutDirect	pkg/game/npc_command_items.go	139	"s.\\r\\n"	4541
+*World.npcWearAtDirect	pkg/game/npc_command_items.go	161	" what?\\r\\n"	5367
+*World.npcWearAtDirect	pkg/game/npc_command_items.go	172	"You don't seem to have "	5669
+*World.npcRemoveDirect	pkg/game/npc_command_items.go	208	"Remove what?\\r\\n"	6901
+*World.npcRemoveDirect	pkg/game/npc_command_items.go	236	"You can't remove $p, it must be CURSED!"	7639
+*World.npcRemoveDirect	pkg/game/npc_command_items.go	242	"You stop using $p."	7791
+*World.npcRemoveDirect	pkg/game/npc_command_items.go	243	"$n stops using $p."	7862
+*World.npcRemoveDirect	pkg/game/npc_command_items.go	247	"You're not using anything.\\r\\n"	7956
+*World.npcRemoveDirect	pkg/game/npc_command_items.go	249	"Remove all of what?\\r\\n"	8086
+*World.npcRemoveDirect	pkg/game/npc_command_items.go	251	"You don't seem to be using any "	8167
+*World.npcRemoveDirect	pkg/game/npc_command_items.go	251	"all."	8228
+*World.npcRemoveDirect	pkg/game/npc_command_items.go	251	"s.\\r\\n"	8238
+*World.npcRemoveDirect	pkg/game/npc_command_items.go	253	"You don't seem to be using "	8277
+*World.npcWearDirect	pkg/game/npc_command_items.go	265	"Wear what?\\r\\n"	8719
+*World.npcWearDirect	pkg/game/npc_command_items.go	269	"Wear all of what?\\r\\n"	8863
+*World.npcWearDirect	pkg/game/npc_command_items.go	273	"You can't specify the same body location for more than one item!\\r\\n"	8989
+*World.npcWearDirect	pkg/game/npc_command_items.go	292	"'?  What part of your body is THAT?\\r\\n"	9700
+*World.npcWearDirect	pkg/game/npc_command_items.go	295	"You can't wear $p."	9846
+*World.npcWearDirect	pkg/game/npc_command_items.go	300	"You don't seem to have any "	9947
+*World.npcWearDirect	pkg/game/npc_command_items.go	300	"s.\\r\\n"	9989
+*World.npcWearDirect	pkg/game/npc_command_items.go	302	"You don't seem to have "	10052
+*World.npcWearDirect	pkg/game/npc_command_items.go	304	"You don't seem to have anything wearable.\\r\\n"	10166
+*World.npcWearDirect	pkg/game/npc_command_items.go	307	"You don't seem to have anything wearable.\\r\\n"	10286
+*World.characterMobPourOut	pkg/game/npc_command_utility.go	190	"$n empties $p."	6191
+*World.characterMobPourOut	pkg/game/npc_command_utility.go	191	"You empty $p."	6262
+*World.characterMobPourOut	pkg/game/npc_command_utility.go	198	"Error, please tell a god.\\r\\n"	6552
+*World.doUse	pkg/game/other_economy.go	115	"What do you want to %s?\\r\\n"	2875
+*World.doUse	pkg/game/other_economy.go	132	"s"	3619
+*World.doUse	pkg/game/other_economy.go	136	"You can't use your tattoo's magick for %d more hour%s.\\r\\n"	3703
+*World.doUse	pkg/game/other_economy.go	142	"You don't have a tattoo.\\r\\n"	3874
+*World.doUse	pkg/game/other_economy.go	159	"$n's tattoo glows brightly for a second, and $N appears!"	4493
+*World.doUse	pkg/game/other_economy.go	160	"Your tattoo glows brightly for a second, and $N appears!"	4589
+*World.doUse	pkg/game/other_economy.go	168	"Your tattoo can't be 'use'd.\\r\\n"	4887
+*World.doUse	pkg/game/other_economy.go	179	"You don't seem to have %s %s.\\r\\n"	5120
+*World.doUse	pkg/game/other_economy.go	186	"You can't seem to figure out how to use it.\\r\\nTry holding it.(?)\\r\\n"	5306
+*World.useStaff	pkg/game/other_economy.go	415	"$n's $p sparks blindingly, bathing you in its glow."	13871
+*World.useStaff	pkg/game/other_economy.go	425	"$P"	14353
+*World.useStaff	pkg/game/other_economy.go	425	"<NULL>"	14359
+*World.useStaff	pkg/game/other_economy.go	430	"Your $p radiates an ethereal glow that lights the room."	14485
+*World.useStaff	pkg/game/other_economy.go	433	"It seems powerless."	14630
+*World.useStaff	pkg/game/other_economy.go	434	"Nothing seems to happen."	14701
+*World.useStaffTap	pkg/game/other_economy.go	482	"You tap $p three times on the ground."	16699
+*World.useStaffTap	pkg/game/other_economy.go	486	"$n taps $p three times on the ground."	16936
+*World.useStaffTap	pkg/game/other_economy.go	489	"It seems powerless."	17065
+*World.useStaffTap	pkg/game/other_economy.go	490	"Nothing seems to happen."	17136
+*World.doYank	pkg/game/other_mount.go	233	"Who do you wish to yank?\\r\\n"	7449
+*World.doYank	pkg/game/other_mount.go	242	"No-one by that name here.\\r\\n"	7814
+*World.doYank	pkg/game/other_mount.go	277	"That's wierd.\\r\\n"	9015
+*World.doYank	pkg/game/other_mount.go	283	"That probably wouldn't be appreciated.\\r\\n"	9207
+*World.doYank	pkg/game/other_mount.go	291	"$N is already on $S feet."	9507
+*World.doYank	pkg/game/other_mount.go	293	"You can't yank $M off $S mount!"	9602
+*World.doYank	pkg/game/other_mount.go	301	"$N is is no position to be yanked around!"	9867
+*World.doYank	pkg/game/other_mount.go	307	"You yank $M to $S feet."	10124
+*World.doYank	pkg/game/other_mount.go	308	"$n yanks you to your feet."	10204
+*World.doYank	pkg/game/other_mount.go	309	"$n yanks $N to $S feet."	10287
+*World.doWimpy	pkg/game/other_settings.go	27	"Your current wimp level is %d hit points.\\r\\n"	539
+*World.doWimpy	pkg/game/other_settings.go	29	"At the moment, you're not a wimp. (sure, sure...)\\r\\n"	632
+*World.doWimpy	pkg/game/other_settings.go	38	"Specify at how many hit points you want to wimp out at.  (0 to disable)\\r\\n"	983
+*World.doWimpy	pkg/game/other_settings.go	49	"Heh, heh, heh.. we are jolly funny today, eh?\\r\\n"	1383
+*World.doWimpy	pkg/game/other_settings.go	51	"That doesn't make much sense, now does it?\\r\\n"	1488
+*World.doWimpy	pkg/game/other_settings.go	53	"You can't set your wimp level above one third your hit points.\\r\\n"	1596
+*World.doWimpy	pkg/game/other_settings.go	56	"Okay, you'll wimp out if you drop below %d hit points.\\r\\n"	1735
+*World.doWimpy	pkg/game/other_settings.go	60	"Okay, you'll now tough out fights to the bitter end.\\r\\n"	1859
+*World.doAuto	pkg/game/other_status.go	54	"You have the following autos set:\\r\\n"	1884
+*World.doAuto	pkg/game/other_status.go	56	"Exits "	1971
+*World.doAuto	pkg/game/other_status.go	59	"Loot "	2050
+*World.doAuto	pkg/game/other_status.go	62	"Gold "	2128
+*World.doAuto	pkg/game/other_status.go	65	"Split"	2207
+*World.doAuto	pkg/game/other_status.go	68	"None."	2310
+*World.doAuto	pkg/game/other_status.go	79	"You will no longer see room exits.\\r\\n"	2508
+*World.doAuto	pkg/game/other_status.go	82	"You will now see room exits.\\r\\n"	2603
+*World.doAuto	pkg/game/other_status.go	87	"You will no longer loot corpses.\\r\\n"	2755
+*World.doAuto	pkg/game/other_status.go	90	"You will now automatically loot corpses.\\r\\n"	2860
+*World.doAuto	pkg/game/other_status.go	95	"You will no longer get the gold from corpses.\\r\\n"	3024
+*World.doAuto	pkg/game/other_status.go	98	"You will now get the gold from corpses.\\r\\n"	3142
+*World.doAuto	pkg/game/other_status.go	103	"You will no longer split gold with your group.\\r\\n"	3308
+*World.doAuto	pkg/game/other_status.go	106	"You will now split gold with your group.\\r\\n"	3428
+*World.doAuto	pkg/game/other_status.go	109	"What do you want to make automatic?\\r\\n"	3507
+*World.doScout	pkg/game/other_utility.go	318	"Scout where?\\r\\n"	10793
+*World.doScout	pkg/game/other_utility.go	324	"Scout in which direction?\\r\\n"	10899
+*World.doScout	pkg/game/other_utility.go	329	"You have no idea how!\\r\\n"	10999
+*World.doScout	pkg/game/other_utility.go	335	"You can only do this outdoors.\\r\\n"	11179
+*World.doScout	pkg/game/other_utility.go	341	"There is nothing of interest there.\\r\\n"	11308
+*World.doScout	pkg/game/other_utility.go	347	"There is nothing of interest there.\\r\\n"	11450
+*World.doScout	pkg/game/other_utility.go	353	"You see %s to the %s.\\r\\n"	11652
+*World.doScout	pkg/game/other_utility.go	357	"It looks pretty dark there.\\r\\n"	11773
+*World.doScout	pkg/game/other_utility.go	360	"You sense that it is not safe to travel there.\\r\\n"	11863
+*World.doScout	pkg/game/other_utility.go	363	"It looks like a very narrow passage.\\r\\n"	11973
+*World.doScout	pkg/game/other_utility.go	367	"It looks like there is something on the ground there.\\r\\n"	12083
+*World.doScout	pkg/game/other_utility.go	371	"It looks like there is %s over there.\\r\\n"	12287
+*World.mobReplyToTeller	pkg/game/reply_body.go	99	"They are no longer playing.\\r\\n"	3734
+*World.mobReplyToTeller	pkg/game/reply_body.go	103	"They are writing now, try later.\\r\\n"	3843
+*World.mobReplyToTeller	pkg/game/reply_body.go	107	"They can't hear you.\\r\\n"	3956
+*World.mobReplyToTeller	pkg/game/reply_body.go	111	"The walls seem to absorb your words.\\r\\n"	4061
+*World.mobReplyToTeller	pkg/game/reply_body.go	115	"$E's linkless at the moment."	4226
+*World.mobReplyToTeller	pkg/game/reply_body.go	119	"$E can't hear you."	4423
+*World.mobPerformTell	pkg/game/reply_body.go	140	"$n tells you, '%s'"	5200
+*World.mobPerformTell	pkg/game/reply_body.go	141	"You tell $N, '%s'"	5299
+*World.selfDamage	pkg/game/room_activity.go	296	"$n slowly fades into existence."	10885
+*World.selfDamage	pkg/game/room_activity.go	313	"The hit knocks you off of your mount!\\r\\n"	11535
+*World.selfDamage	pkg/game/room_activity.go	314	"$n gets knocked off of his mount."	11626
+*World.selfDamage	pkg/game/room_activity.go	317	"You land on your feet!\\r\\n"	11806
+*World.selfDamage	pkg/game/room_activity.go	319	"You hit the ground with a thud.\\r\\n"	11864
+*World.SpellCreatedObjectAct	pkg/game/say_spell_act.go	99	"$n creates $p."	3651
+characterDisarm	pkg/game/skill_actor_combat.go	493	"$E doesn't have anything to disarm."	16067
+characterDisarm	pkg/game/skill_actor_combat.go	506	"You disarm $N and $p goes flying!"	16543
+characterDisarm	pkg/game/skill_actor_combat.go	507	"$n knocks $p from $N's hand!"	16665
+characterDisarm	pkg/game/skill_actor_combat.go	508	"$n deftly disarms you, knocking $p from your hand!"	16761
+characterDisarm	pkg/game/skill_actor_combat.go	517	"You try to disarm $N but fail, tumbling to the ground in the process!"	17056
+characterDisarm	pkg/game/skill_actor_combat.go	518	"$n tries to disarm you but fails and falls flat on $s face instead!"	17211
+characterDisarm	pkg/game/skill_actor_combat.go	519	"$n tries to disarm $N, but fails and falls flat on $s face!"	17340
+characterGroinrip	pkg/game/skill_actor_combat.go	670	"$n falls to $s knees, clutching $s groin and throwing up\\r\\neverywhere!"	22431
+characterNeckbreak	pkg/game/skill_actor_combat_next.go	82	"You try to break $S neck, but $E is too strong!"	2619
+characterNeckbreak	pkg/game/skill_actor_combat_next.go	84	"$n tries to break your neck, but can't!"	2755
+characterNeckbreak	pkg/game/skill_actor_combat_next.go	86	"$n tries to break $N's neck, but $N slips free!"	2859
+characterRescue	pkg/game/skill_actor_combat_next.go	272	"But nobody is fighting $M!"	9380
+characterRescue	pkg/game/skill_actor_combat_next.go	287	"You are rescued by $N, you are confused!"	9775
+characterRescue	pkg/game/skill_actor_combat_next.go	289	"$n heroically rescues $N!"	9888
+characterSmackheads	pkg/game/skill_actor_combat_next.go	446	"%s and %s duck as %s lunges at them!"	16100
+characterSmackheads	pkg/game/skill_actor_combat_next.go	453	"%s grabs the heads of %s and %s and bangs them together with a sickening *SMACK*."	16644
+characterSpikeStake	pkg/game/skill_actor_combat_next.go	536	"You drive $p into $S chest!"	20379
+characterSpikeStake	pkg/game/skill_actor_combat_next.go	537	"$n drives $p into the chest of $N!"	20505
+characterSpikeStake	pkg/game/skill_actor_combat_next.go	538	"$n drives $p into your chest with a solid blow!"	20617
+characterSpikeStake	pkg/game/skill_actor_combat_next.go	554	"$N twists at the last moment, and you miss!"	21279
+characterSpikeStake	pkg/game/skill_actor_combat_next.go	555	"$N growls in anger as $n tries to drive a $p into $M!"	21421
+characterSpikeStake	pkg/game/skill_actor_combat_next.go	556	"$n comes at you with a $p, but you dodge the attempt!"	21552
+characterSleeper	pkg/game/skill_actor_combat_next.go	595	" failed to sleeper you because "	22995
+characterSleeper	pkg/game/skill_actor_combat_next.go	595	" is not an Outlaw.\\r\\n"	23047
+characterSleeper	pkg/game/skill_actor_combat_next.go	618	"You try to grab $N in a sleeper hold but fail!"	23898
+characterSleeper	pkg/game/skill_actor_combat_next.go	620	"$n tries to put a sleeper hold on you, but you break free!"	24042
+characterSleeper	pkg/game/skill_actor_combat_next.go	622	"$n tries to put $N in a sleeper hold..."	24174
+characterSleeper	pkg/game/skill_actor_combat_next.go	629	"You put $N in a sleeper hold."	24399
+characterSleeper	pkg/game/skill_actor_combat_next.go	631	"You feel very sleepy... Zzzzz.."	24524
+characterSleeper	pkg/game/skill_actor_combat_next.go	633	"$n puts $N in a sleeper hold."	24627
+characterSleeper	pkg/game/skill_actor_combat_next.go	635	"$N goes to sleep."	24728
+characterStrike	pkg/game/skill_actor_combat_next.go	673	"You beat yourself about the face and neck."	25915
+characterStrike	pkg/game/skill_actor_combat_next.go	675	"$n slaps $mself around a little."	26044
+characterStrike	pkg/game/skill_actor_combat_next.go	680	"$N is just such a good friend, you simply can't strike $M."	26276
+characterSubdue	pkg/game/skill_actor_combat_next.go	734	" failed to subdue you because "	28074
+characterSubdue	pkg/game/skill_actor_combat_next.go	734	" is not an Outlaw.\\r\\n"	28125
+characterSubdue	pkg/game/skill_actor_combat_next.go	756	"$n misses a blow to the back of your head."	28808
+characterSubdue	pkg/game/skill_actor_combat_next.go	758	"$N avoids your misplaced blow to the back of $S head."	28939
+characterSubdue	pkg/game/skill_actor_combat_next.go	760	"$N avoids $n's misplaced blow to the back of $S head."	29090
+characterSubdue	pkg/game/skill_actor_combat_next.go	763	"Someone sneaks up behind you and knocks you out!\\r\\n"	29230
+characterSubdue	pkg/game/skill_actor_combat_next.go	765	"You knock $M out cold."	29359
+characterSubdue	pkg/game/skill_actor_combat_next.go	767	"$n knocks out $N with a well-placed blow to the back of the head."	29479
+mobileStaffTap	pkg/game/skill_actor_itemmagic.go	286	"Nothing seems to happen."	10120
+CharacterBehead::func@301	pkg/game/skill_actor_selected.go	303	"$n beheads $p!"	11056
+CharacterBehead::func@301	pkg/game/skill_actor_selected.go	305	"You behead $p!"	11151
+CharacterBehead::func@301	pkg/game/skill_actor_selected.go	308	"$n rips the head off $p!"	11265
+CharacterBehead::func@301	pkg/game/skill_actor_selected.go	310	"You rip the head off $p with your bare hands!"	11368
+characterShoot	pkg/game/skill_actor_shoot.go	127	"$n fires %s %s with %s."	4656
+characterShoot	pkg/game/skill_actor_shoot.go	140	"Some kind of %s streaks in from %s and narrowly misses $n!"	5486
+characterShoot	pkg/game/skill_actor_shoot.go	152	"Some kind of %s streaks in from %s and strikes $n!"	6126
+characterShoot	pkg/game/skill_actor_shoot.go	167	"$n bursts into the room and scowls at $N.\\r\\n"	6817
+characterShoot	pkg/game/skill_actor_shoot.go	180	"Some kind of %s streaks in from %s and strikes $n!"	7526
+CharacterSteal	pkg/game/skill_actor_steal.go	45	"%s failed to steal from you because %s is not an Outlaw!\\r\\n"	1561
+CharacterSteal	pkg/game/skill_actor_steal.go	74	"$N catches you trying to steal something..."	2799
+CharacterSteal	pkg/game/skill_actor_steal.go	76	"$n tried to steal something from you!"	2945
+CharacterSteal	pkg/game/skill_actor_steal.go	78	"$n tries to steal something from $N."	3060
+CharacterSteal	pkg/game/skill_actor_steal.go	90	"Somehow $p makes it's way into your pack."	3718
+CharacterSteal	pkg/game/skill_actor_steal.go	105	"You try to unequip $p, but fail!"	4346
+CharacterSteal	pkg/game/skill_actor_steal.go	107	"$n tries to steal $p from $N, but fails!"	4482
+CharacterSteal	pkg/game/skill_actor_steal.go	121	"You unequip $p and steal it."	5245
+CharacterSteal	pkg/game/skill_actor_steal.go	123	"$n steals $p from $N."	5378
+CharacterSteal	pkg/game/skill_actor_steal.go	130	"$E hasn't got that item."	5643
+CharacterSteal	pkg/game/skill_actor_steal.go	137	"You discover that $n has $s hands in your wallet."	5917
+CharacterSteal	pkg/game/skill_actor_steal.go	139	"$n tries to steal gold from $N."	6040
+characterSneak	pkg/game/skill_actor_utility.go	55	"Dismount first!\\r\\n"	1726
+characterSneak	pkg/game/skill_actor_utility.go	58	"Okay, you'll try to move silently for a while.\\r\\n"	1818
+characterHide	pkg/game/skill_actor_utility.go	83	"Dismount first!\\r\\n"	2529
+characterHide	pkg/game/skill_actor_utility.go	91	"You attempt to practice the art of kabuki.\\r\\n"	2792
+characterHide	pkg/game/skill_actor_utility.go	93	"You attempt to hide yourself.\\r\\n"	2886
+characterMindlink	pkg/game/skill_actor_utility.go	110	"Link your mind to whose?\\r\\n"	3402
+characterMindlink	pkg/game/skill_actor_utility.go	115	"They don't seem to be here.\\r\\n"	3580
+characterMindlink	pkg/game/skill_actor_utility.go	119	"You wish you could.\\r\\n"	3715
+characterMindlink	pkg/game/skill_actor_utility.go	123	"Yeah, right.\\r\\n"	3886
+characterCarve	pkg/game/skill_actor_utility.go	326	"How can you think of food at a time like this?!?\\r\\n"	12670
+characterCarve	pkg/game/skill_actor_utility.go	331	"You want to carve what?!?\\r\\n"	12857
+characterCarve	pkg/game/skill_actor_utility.go	336	"This game doesn't support self-mutilation!\\r\\n"	13067
+characterCarve	pkg/game/skill_actor_utility.go	338	"You kill it first and THEN you can eat it!\\r\\n"	13163
+characterCarve	pkg/game/skill_actor_utility.go	344	"You can't seem to find a %s to carve!\\r\\n"	13377
+characterCarve	pkg/game/skill_actor_utility.go	348	"Your initials are about all you can carve in that!\\r\\n"	13561
+characterCarve	pkg/game/skill_actor_utility.go	352	"There's no way you could ever eat THAT!!!\\r\\n"	13745
+characterCarve	pkg/game/skill_actor_utility.go	356	"Your arms are already full!\\r\\n"	13920
+characterCarve	pkg/game/skill_actor_utility.go	376	"You carve %s from %s.\\r\\n"	14551
+characterCarve	pkg/game/skill_actor_utility.go	377	"$n carves $p from $P."	14671
+*World.roomCleanup	pkg/game/spec_procs.go	114	"$p vanishes in a puff of smoke!"	4431
+specGuild	pkg/game/spec_procs.go	171	"You do not seem to be able to practice now."	6316
+specGuild	pkg/game/spec_procs.go	178	"You do not know of that %s."	6536
+specGuild	pkg/game/spec_procs.go	186	"You are already learned in that area."	6741
+specGuild	pkg/game/spec_procs.go	190	"You practice for a while..."	6816
+specGuild	pkg/game/spec_procs.go	207	"You are now learned in that area."	7242
+specJanitor	pkg/game/spec_procs.go	762	"$n picks up some trash."	23931
+specDragonBreath	pkg/game/spec_procs.go	1061	"$n looks at you."	34425
+specDragonBreath	pkg/game/spec_procs.go	1062	"$n growls, 'So, you have found my lair...'"	34491
+specDragonBreath	pkg/game/spec_procs.go	1063	"$n exclaims, 'For that you must die!'"	34583
+specStableboy	pkg/game/spec_procs2.go	258	"You can buy a horse for 300 gold coins."	9466
+specStableboy	pkg/game/spec_procs2.go	286	"How do you expect to stable a mount, you don't have a mount!"	10195
+specStableboy	pkg/game/spec_procs2.go	294	"$N takes $n out back to the stables."	10465
+specStableboy	pkg/game/spec_procs2.go	296	"I will take good care of 'em, for %d coins a day."	10576
+specStableboy	pkg/game/spec_procs2.go	301	"Hey now, you need to have stabled a mount to pick one up."	10730
+specStableboy	pkg/game/spec_procs2.go	311	"Hey man, you can't afford the %d gold you need to get your mount outa' hock."	11031
+specStableboy	pkg/game/spec_procs2.go	316	"Sorry, we are unable to gather your mount, try back later."	11241
+specStableboy	pkg/game/spec_procs2.go	324	"$N brings $n up from the stables out back."	11523
+specStableboy	pkg/game/spec_procs2.go	328	"Here ya go pal, all patted down and ready to go... cost ya %d to keep 'em here."	11714
+specRemorter	pkg/game/spec_procs2.go	558	"You must come unto me naked, wearing only thy old body.\\r\\n"	20707
+specRemorter	pkg/game/spec_procs2.go	564	"The remorter moves his hands over your eyes, closing them with a touch.\\r\\nColors spiral in your sight... You open your eyes, feeling refreshed.\\r\\n"	20878
+specTattoo1	pkg/game/spec_procs2.go	1057	"Your magickal center is already tattooed. Get a new arm or get rid of that tattoo then come back."	34732
+specTattoo1	pkg/game/spec_procs2.go	1068	"You look a little short on the price there, kid."	35040
+giveTattoo	pkg/game/spec_procs2.go	1084	"$n starts to work on $N's tattoo..."	35575
+giveTattoo	pkg/game/spec_procs2.go	1085	"A ghastly scream is ripped from $N's lips just before $E blacks out."	35661
+giveTattoo	pkg/game/spec_procs2.go	1086	"$n starts to work on your tattoo..."	35782
+giveTattoo	pkg/game/spec_procs2.go	1087	"The pain is incredible; it seems to eat into your soul.\\r\\nA scream is ripped from your lips...\\r\\n"	35849
+giveTattoo	pkg/game/spec_procs2.go	1089	"You black out.\\r\\n"	36025
+specEviltrade	pkg/game/spec_procs2.go	1299	"Don't give me that crap."	43072
+specEviltrade	pkg/game/spec_procs2.go	1303	"Get lost, goody-goody."	43170
+specEviltrade	pkg/game/spec_procs2.go	1310	"eneeswseswseswseswsesw"	43436
+specIra	pkg/game/spec_procs2.go	1399	"$n exclaims, 'Dirty Orange Scum!'"	47083
+specJail	pkg/game/spec_procs2.go	1507	"The guard says, 'Time's up, scum!'"	51362
+specJail	pkg/game/spec_procs2.go	1508	"The guard says, 'Time's up, scum!'"	51444
+specJail	pkg/game/spec_procs2.go	1509	"$N gets thrown out of the cell!"	51526
+specJail	pkg/game/spec_procs2.go	1510	"The guard throws you out of the cell!\\r\\n"	51608
+specMedusa	pkg/game/spec_procs2.go	1548	"With a sound like that of a crashing wave, $N slowly turns to stone!"	52993
+specMedusa	pkg/game/spec_procs2.go	1550	"With growing horror and increasing agony, your body slowly turns to stone!"	53118
+specPortalRoom	pkg/game/spec_procs2.go	1644	"\\r\\nWith a blinding flash of light and a crack of thunder, you are teleported...\\r\\n"	56776
+specPortalRoom	pkg/game/spec_procs2.go	1646	"\\r\\nWith a blinding flash of light and a crack of thunder, $n disappears!\\r\\n\\r\\n"	56900
+specPortalRoom	pkg/game/spec_procs2.go	1651	"\\r\\nWith a blinding flash of light and a crack of thunder, $n appears!\\r\\n\\r\\n"	57172
+specBat	pkg/game/spec_procs2.go	1793	"$n swoops down, narrowly missing your face."	62438
+specBat	pkg/game/spec_procs2.go	1795	"$n lets out a shrill, piercing scream."	62543
+specBat	pkg/game/spec_procs2.go	1797	"Circling around your head, $n lets out a high-pitched shriek."	62643
+specBat	pkg/game/spec_procs2.go	1813	"$n wakes $n up with it's flapping!"	63229
+specBrainEater	pkg/game/spec_procs3.go	507	"$n pulls the brain out of the head and eats it with a noisy\\r\\nslurp, blood and drool flying everywhere."	16754
+specTroll	pkg/game/spec_procs3.go	695	"$n's wounds glow brightly for a moment, then disappear!"	23348
+specTroll	pkg/game/spec_procs3.go	708	"$n's wounds glow brightly for a moment, then disappear!"	23751
+specTurnUndeadObject	pkg/game/spec_procs3.go	948	"A ray of flame bursts out of $p, consuming the undead!"	32336
+specProstitute	pkg/game/spec_procs3.go	1032	"$n says, 'If I could see you, we could do business..'"	35374
+specProstitute	pkg/game/spec_procs3.go	1033	"$n winks coyly."	35477
+specProstitute	pkg/game/spec_procs3.go	1039	"I ain't for sale, just rent. Give me 5 gold for a good time."	35578
+specProstitute	pkg/game/spec_procs3.go	1042	"For five coins, I'll show you a good time."	35695
+specConjured	pkg/game/spec_procs3.go	1238	"You lose control and %s fizzles away!\\r\\n"	42976
+specConjured	pkg/game/spec_procs3.go	1241	"$n returns to its own plane of existence."	43079
+specConjured	pkg/game/spec_procs3.go	1246	"%s disappears in a flash of white light!\\r\\n"	43390
+specConductor	pkg/game/spec_procs4.go	73	"$n shouts, 'I said give me your ticket!'"	2189
+specConductor	pkg/game/spec_procs4.go	75	"$n asks, 'Why are you so stupid?'"	2253
+specConductor	pkg/game/spec_procs4.go	77	"$n shouts 'Get off my train you trash!'"	2310
+specConductor	pkg/game/spec_procs4.go	79	"$n shouts 'Security!  Help me with this piece of garbage!'"	2373
+specConductor	pkg/game/spec_procs4.go	81	"$n asks, 'Why wouldn't you just give me your ticket?'"	2455
+specConductor	pkg/game/spec_procs4.go	116	"$n asks, 'Pardon me $N, do you have your ticket?'"	3281
+specConductor	pkg/game/spec_procs4.go	120	"$n asks, 'I said, do you have your ticket?'"	3426
+specConductor	pkg/game/spec_procs4.go	125	"$n says, 'Ok $N, I'll let ya off this time, but don't do it again'."	3614
+specConductor	pkg/game/spec_procs4.go	126	"$n walks out the door and vanishes."	3736
+specConductor	pkg/game/spec_procs4.go	129	"$n says, 'Well then...'."	3875
+specConductor	pkg/game/spec_procs4.go	130	"$n screams, 'GET THE HELL OFF MY TRAIN!!!'"	3951
+specBrassDragon	pkg/game/spec_procs4.go	145	"The brass dragon humiliates $n, and blocks $s way."	4470
+specBrassDragon	pkg/game/spec_procs4.go	146	"The brass dragon humiliates you, and blocks your way.\\n\\r"	4553
+specOutOfJailGuard	pkg/game/spec_procs4.go	169	"The guard grabs $n by the collar and blocks $s way."	5438
+specOutOfJailGuard	pkg/game/spec_procs4.go	170	"The guard stops you from entering with one quick jerk of your collar."	5522
+specJailGuard	pkg/game/spec_procs4.go	194	"The guard grabs $n with one hand and throws $m back in the room."	6415
+specJailGuard	pkg/game/spec_procs4.go	195	"The guard stops you from leaving with one flabby hand."	6512
+specPetShops	pkg/game/spec_procs4.go	257	"Available pets are:\\r\\n"	8174
+specPetShops	pkg/game/spec_procs4.go	260	"%8d - %s\\r\\n"	8294
+specPetShops	pkg/game/spec_procs4.go	285	"There is no such pet!\\r\\n"	8807
+specPetShops	pkg/game/spec_procs4.go	290	"You can't have any more followers!\\r\\n"	8927
+specPetShops	pkg/game/spec_procs4.go	296	"You don't have enough gold!\\r\\n"	9060
+specPetShops	pkg/game/spec_procs4.go	326	"May you enjoy your pet.\\r\\n"	9976
+specPetShops	pkg/game/spec_procs4.go	327	"$n buys $N as a pet."	10045
+specEnterCircle	pkg/game/spec_procs4.go	344	"Enter what?\\r\\n"	10478
+specEnterCircle	pkg/game/spec_procs4.go	349	"You can't fit on the portal, it's too crowded.\\n\\r"	10584
+specEnterCircle	pkg/game/spec_procs4.go	353	"You stand in the circle.\\n\\r"	10675
+specEnterCircle	pkg/game/spec_procs4.go	354	"$n enters the circle which suddenly starts glowing brightly, obscuring your view of $m!"	10741
+specEnterCircle	pkg/game/spec_procs4.go	366	"Looking into the circle at the platform in the middle of the room, you see\\n\\r"	11059
+specEnterCircle	pkg/game/spec_procs4.go	375	" and "	11360
+specEnterCircle	pkg/game/spec_procs4.go	380	"no one"	11439
+specElevator	pkg/game/spec_procs4.go	398	"The portal begins to rise, lifted by the air elemental summoned by your rune!\\n\\r\\n\\r"	11910
+specElevator	pkg/game/spec_procs4.go	399	"The portal begins to rise, lifted by the air elemental summoned by $n!\\r\\n\\r\\n"	12033
+specPrayForItems	pkg/game/spec_procs4.go	488	"Nice try."	14680
+specPrayForItems	pkg/game/spec_procs4.go	507	"$n kneels and at the altar and chants a prayer to Odin."	15232
+specPrayForItems	pkg/game/spec_procs4.go	508	"You notice a faint light in Odin's eye."	15322
+specPrayForItems	pkg/game/spec_procs4.go	524	"$p slowly fades into existence."	16063
+specPrayForItems	pkg/game/spec_procs4.go	525	"$p slowly fades into existence."	16146
+specOroQuartersRoom	pkg/game/spec_procs4.go	626	"A strong force jolts $n in $s attempt to leave south."	19773
+specOroQuartersRoom	pkg/game/spec_procs4.go	627	"A strong force blocks your way and gives you a nasty jolt."	19859
+specBank	pkg/game/spec_procs4.go	661	"Your current balance is %d coins."	21101
+specBank	pkg/game/spec_procs4.go	663	"You currently have no money deposited."	21186
+specBank	pkg/game/spec_procs4.go	671	"How much do you want to deposit?"	21340
+specBank	pkg/game/spec_procs4.go	679	"You don't have that many coins!"	21697
+specBank	pkg/game/spec_procs4.go	682	"You deposit %d coins."	21780
+specBank	pkg/game/spec_procs4.go	683	"$n makes a bank transaction."	21848
+specBank	pkg/game/spec_procs4.go	690	"How much do you want to withdraw?"	22001
+specBank	pkg/game/spec_procs4.go	696	"You don't have that many coins deposited!"	22261
+specBank	pkg/game/spec_procs4.go	699	"You withdraw %d coins."	22354
+specBank	pkg/game/spec_procs4.go	700	"$n makes a bank transaction."	22423
+specRecharger	pkg/game/spec_procs_missing.go	51	"$n sighs loudly."	1693
+specRecharger	pkg/game/spec_procs_missing.go	52	"$n says 'I recharge wands and staves, of course!'"	1759
+specRecharger	pkg/game/spec_procs_missing.go	53	"$n says 'My price is 100 coins per spell level per charge..'"	1858
+specRecharger	pkg/game/spec_procs_missing.go	54	"$n says 'So a wand casting heal at level 25 would cost 2500 coins per charge.'"	1968
+specRecharger	pkg/game/spec_procs_missing.go	55	"$n says 'If it had 10 max charges at first, it would have 9 max after charging."	2096
+specRecharger	pkg/game/spec_procs_missing.go	56	"$n says 'That means that an item could have 1 charge maximum, with 2 charges remaining (after a recharge)'"	2225
+specRecharger	pkg/game/spec_procs_missing.go	57	"$n says 'To recharge an item type: recharge <staff or wand>.'"	2381
+specRecharger	pkg/game/spec_procs_missing.go	58	"$n stares expectantly at $N."	2491
+specRecharger	pkg/game/spec_procs_missing.go	59	"$n stares expectantly at you."	2572
+specRecharger	pkg/game/spec_procs_missing.go	87	"$n tells you, 'You don't have that!'"	3192
+specRecharger	pkg/game/spec_procs_missing.go	88	"$n whaps $N upside the head."	3277
+specRecharger	pkg/game/spec_procs_missing.go	89	"$n whaps you upside the head."	3358
+specRecharger	pkg/game/spec_procs_missing.go	95	"$n tells you, 'Ummm... does that look like a wand or staff to you?'"	3541
+specRecharger	pkg/game/spec_procs_missing.go	96	"$n shakes his head in disgust."	3658
+specRecharger	pkg/game/spec_procs_missing.go	105	"$n tells you, 'You don't have enough gold!'"	3933
+specRecharger	pkg/game/spec_procs_missing.go	112	"$n tells you, 'The item does not need recharging, stop wasting my time!'"	4157
+specRecharger	pkg/game/spec_procs_missing.go	127	"$n waves his hands around and chants strange things."	4711
+specRecharger	pkg/game/spec_procs_missing.go	128	"The item now has %d charges remaining.\\r\\n"	4807
+anotherHourLocked	pkg/game/weather.go	405	"The suns rise in the east and north.\\r\\n"	13688
+anotherHourLocked	pkg/game/weather.go	412	"The day has begun.\\r\\n"	13892
+anotherHourLocked	pkg/game/weather.go	417	"The suns slowly disappear in the west and south.\\r\\n"	14014
+anotherHourLocked	pkg/game/weather.go	428	"The night has begun.\\r\\n"	14408
+*World.LookAtRoomSimple	pkg/game/world.go	1112	"%s\\r\\n"	38091
+*World.LookAtRoomSimple	pkg/game/world.go	1119	"%s is here.\\r\\n"	38294
+*World.LookAtRoomSimple	pkg/game/world.go	1124	"%s is here.\\r\\n"	38512
+castSpellC	pkg/game/world_bridge.go	1191	"You're not smart enough to cast!\\r\\n"	35059
+castSpellC	pkg/game/world_bridge.go	1200	"You can't cast anything yet!\\r\\n"	35568
+castSpellC	pkg/game/world_bridge.go	1211	"You dream about great magical powers.\\r\\n"	35833
+castSpellC	pkg/game/world_bridge.go	1213	"You cannot concentrate while resting.\\r\\n"	35916
+castSpellC	pkg/game/world_bridge.go	1215	"You can't do this sitting!\\r\\n"	35999
+castSpellC	pkg/game/world_bridge.go	1217	"Impossible!  You can't concentrate enough!\\r\\n"	36072
+castSpellC	pkg/game/world_bridge.go	1219	"You can't do much of anything like this!\\r\\n"	36145
+castSpellC	pkg/game/world_bridge.go	1225	"You are afraid you might hurt your master!\\r\\n"	36393
+castSpellC	pkg/game/world_bridge.go	1231	"You can only cast this spell upon yourself!\\r\\n"	36672
+castSpellC	pkg/game/world_bridge.go	1233	"You can only will this power upon yourself!\\r\\n"	36748
+castSpellC	pkg/game/world_bridge.go	1239	"You cannot cast this spell upon yourself!\\r\\n"	36920
+castSpellC	pkg/game/world_bridge.go	1241	"You cannot will this power upon yourself!\\r\\n"	36994
+castSpellC	pkg/game/world_bridge.go	1247	"You can't cast this spell if you're not in a group!\\r\\n"	37190
+castSpellC	pkg/game/world_bridge.go	1249	"You cannot use this power if you are not in a group!\\r\\n"	37274
+castSpellC	pkg/game/world_bridge.go	1254	"Okay.\\r\\n"	37423
+*World.MindsightNotifyWatchers	pkg/game/world_movement.go	201	"You feel like you're being watched.\\r\\n"	6028
+sendCommandsForBody	pkg/session/act_informative.go	220	"No commands available.\\r\\n"	6146
+cmdAlias	pkg/session/act_social.go	44	"Currently defined aliases:\\r\\n"	1120
+cmdAlias	pkg/session/act_social.go	46	" None.\\r\\n"	1189
+cmdAlias	pkg/session/act_social.go	50	"%-15s %s\\r\\n"	1273
+cmdAlias	pkg/session/act_social.go	64	"Alias deleted."	1751
+cmdAlias	pkg/session/act_social.go	68	"No such alias.\\r\\n"	1802
+cmdAlias	pkg/session/act_social.go	77	"Maximum alias length is 120 characters. Yours has been truncated.\\r\\n"	2103
+cmdAlias	pkg/session/act_social.go	94	"You can't alias 'alias'.\\r\\n"	2688
+cmdAlias	pkg/session/act_social.go	107	"You have too many aliases. Delete one first.\\r\\n"	3216
+cmdAlias	pkg/session/act_social.go	114	"Alias added."	3479
+cmdAutoLoot	pkg/session/autoloot.go	25	"You will now automatically loot corpses.\\r\\n"	692
+cmdAutoLoot	pkg/session/autoloot.go	27	"You will no longer loot corpses.\\r\\n"	759
+checkCastPosition	pkg/session/cast_cmds.go	346	"You dream about great magical powers.\\r\\n"	12185
+checkCastPosition	pkg/session/cast_cmds.go	348	"You cannot concentrate while resting.\\r\\n"	12269
+checkCastPosition	pkg/session/cast_cmds.go	350	"You can't do this sitting!\\r\\n"	12353
+checkCastPosition	pkg/session/cast_cmds.go	352	"Impossible!  You can't concentrate enough!\\r\\n"	12427
+checkCastPosition	pkg/session/cast_cmds.go	354	"You can't do much of anything like this!\\r\\n"	12496
+*Session.completeCharCreation	pkg/session/char_creation.go	740	"$n has entered the game."	26204
+cmdOrder	pkg/session/cmd_combat_special.go	14	"Order who to do what?\\r\\n"	248
+cmdOrder	pkg/session/cmd_combat_special.go	37	"That person isn't here.\\r\\n"	912
+cmdOrder	pkg/session/cmd_combat_special.go	41	"You obviously suffer from skitzofrenia.\\r\\n"	1015
+cmdOrder	pkg/session/cmd_combat_special.go	47	"Your superior would not aprove of you giving orders.\\r\\n"	1185
+cmdOrder	pkg/session/cmd_combat_special.go	57	"$N orders you to '%s'"	1452
+cmdOrder	pkg/session/cmd_combat_special.go	59	"$n gives $N an order."	1561
+cmdOrder	pkg/session/cmd_combat_special.go	63	"$n has an indifferent look."	1735
+cmdOrder	pkg/session/cmd_combat_special.go	67	"Okay.\\r\\n"	1811
+cmdOrder	pkg/session/cmd_combat_special.go	76	"$n issues the order '%s'."	2135
+cmdOrder	pkg/session/cmd_combat_special.go	86	"Okay.\\r\\n"	2478
+cmdOrder	pkg/session/cmd_combat_special.go	88	"Nobody here is a loyal subject of yours!\\r\\n"	2510
+cmdAbilsForBody	pkg/session/cmd_info.go	64	"Your current ability scores: \\r\\n"	1417
+cmdAbilsForBody	pkg/session/cmd_info.go	65	"Strength:      (%s)\\r\\n"	1474
+cmdAbilsForBody	pkg/session/cmd_info.go	66	"Dexterity:     (%s)\\r\\n"	1567
+cmdAbilsForBody	pkg/session/cmd_info.go	67	"Intelligence:  (%s)\\r\\n"	1660
+cmdAbilsForBody	pkg/session/cmd_info.go	68	"Wisdom:        (%s)\\r\\n"	1753
+cmdAbilsForBody	pkg/session/cmd_info.go	69	"Constitution:  (%s)\\r\\n"	1846
+cmdAbilsForBody	pkg/session/cmd_info.go	70	"Charisma:      (%s)\\r\\n"	1940
+cmdWhois	pkg/session/cmd_info.go	1542	"For whom do you wish to search?\\r\\n"	46719
+cmdWhois	pkg/session/cmd_info.go	1558	"[%2d %s] %s %s\\r\\n"	47384
+cmdWhois	pkg/session/cmd_info.go	1568	"There is no such player.\\r\\n"	47683
+cmdWhois	pkg/session/cmd_info.go	1572	"There is no such player.\\r\\n"	47761
+cmdWhois	pkg/session/cmd_info.go	1586	"the Adventurer"	48192
+cmdWhois	pkg/session/cmd_info.go	1589	"[%2d %s] %s %s\\r\\n"	48239
+cmdWhois	pkg/session/cmd_info.go	1593	"There is no such player.\\r\\n"	48326
+cmdShutdowStub	pkg/session/cmd_inventory.go	36	"If you want to shut something down, say so!\\r\\n"	1075
+execQuit	pkg/session/cmd_inventory.go	60	"$n has left the game."	2241
+cmdKill	pkg/session/combat_cmds.go	26	"Kill who?\\r\\n"	707
+cmdKill	pkg/session/combat_cmds.go	38	"They aren't here.\\r\\n"	1187
+cmdKill	pkg/session/combat_cmds.go	44	"They aren't here.\\r\\n"	1292
+cmdKill	pkg/session/combat_cmds.go	48	"Your mother would be so sad.. :(\\r\\n"	1367
+cmdKill	pkg/session/combat_cmds.go	52	"No can do, buddy.. \\r\\n"	1486
+cmdKill	pkg/session/combat_cmds.go	57	"You chop $M to pieces!  Ah!  The blood!"	1582
+cmdKill	pkg/session/combat_cmds.go	59	"$N chops you to pieces!"	1694
+cmdKill	pkg/session/combat_cmds.go	61	"$n brutally slays $N!"	1802
+cmdHit	pkg/session/combat_cmds.go	73	"Hit who?\\r\\n"	2350
+cmdHit	pkg/session/combat_cmds.go	86	"They don't seem to be here.\\r\\n"	2762
+cmdHit	pkg/session/combat_cmds.go	91	"They don't seem to be here.\\r\\n"	2876
+cmdHit	pkg/session/combat_cmds.go	99	"You hit yourself...OUCH!."	3127
+cmdHit	pkg/session/combat_cmds.go	101	"$n hits $mself, and says OUCH!"	3239
+cmdHit	pkg/session/combat_cmds.go	107	"$N is just such a good friend, you simply can't hit $M."	3458
+cmdHit	pkg/session/combat_cmds.go	115	"You do the best you can!\\r\\n"	3802
+cmdHit	pkg/session/combat_cmds.go	144	"They don't seem to be here.\\r\\n"	5050
+cmdParry	pkg/session/combat_cmds.go	173	"You're not good enough at swordplay to parry!\\r\\n"	6263
+cmdParry	pkg/session/combat_cmds.go	178	"But you aren't fighting anyone!\\r\\n"	6382
+cmdParry	pkg/session/combat_cmds.go	184	"But you aren't fighting anyone!\\r\\n"	6547
+cmdParry	pkg/session/combat_cmds.go	189	"But noone's attacking you!\\r\\n"	6718
+cmdParry	pkg/session/combat_cmds.go	194	"Parry with what? You're unarmed!\\r\\n"	6810
+cmdParry	pkg/session/combat_cmds.go	198	"Parry with what? You're unarmed!\\r\\n"	6976
+cmdParry	pkg/session/combat_cmds.go	205	"With a dazzling show of swordplay, you attempt to parry...but are outmaneuvered!\\r\\n"	7199
+cmdParry	pkg/session/combat_cmds.go	211	"With a dazzling show of swordplay, you move into defensive position...\\r\\n"	7427
+cmdParry	pkg/session/combat_cmds.go	213	"$n displays a dazzling show of swordplay, fending off $N's every blow!"	7568
+cmdParry	pkg/session/combat_cmds.go	215	"$n displays a dazzling show of swordplay, fending off your every blow!"	7710
+cmdEmote	pkg/session/comm_cmds.go	70	"Yes.. but what?"	2542
+cmdEmote	pkg/session/comm_cmds.go	77	"You try to express yourself but cannot!"	2864
+cmdEmote	pkg/session/comm_cmds.go	86	"$n "	3323
+cmdEmote	pkg/session/comm_cmds.go	89	"Okay.\\r\\n"	3490
+cmdPageText	pkg/session/comm_cmds.go	172	"Whom do you wish to page?"	6736
+cmdPageText	pkg/session/comm_cmds.go	178	"\\x07\\x07*%s* %s"	6908
+cmdPageText	pkg/session/comm_cmds.go	186	"You will never be godly enough to do that!"	7270
+cmdPageText	pkg/session/comm_cmds.go	215	"There is no such person in the game!"	8387
+cmdPageText	pkg/session/comm_cmds.go	222	"Okay."	8593
+cmdThinkBody	pkg/session/comm_switched.go	150	"$n thinks about life, the universe, and everything."	4366
+cmdThinkBody	pkg/session/comm_switched.go	151	"You think about life, the universe, and everything.\\n\\r"	4456
+cmdThinkBody	pkg/session/comm_switched.go	155	"You try to think aloud, but cannot!\\r\\n"	4573
+cmdThinkBody	pkg/session/comm_switched.go	159	"$n thinks . o O ( "	4689
+cmdThinkBody	pkg/session/comm_switched.go	161	"You think . o O ( %s )\\n\\r"	4831
+executeCommandRaw	pkg/session/commands.go	1134	"Huh?!?\\r\\n"	61880
+mobInfoBarBody	pkg/session/infobar_body.go	50	"Your infobar is off.\\r\\n"	1600
+mobInfoBarBody	pkg/session/infobar_body.go	52	"Your infobar is on.\\r\\n"	1670
+mobInfoBarBody	pkg/session/infobar_body.go	54	"You had an unknown infobar setting.\\r\\n"	1727
+mobInfoBarBody	pkg/session/infobar_body.go	55	"It is being set to OFF.\\r\\n"	1789
+mobInfoBarBody	pkg/session/infobar_body.go	68	"Your infobar is now set to off.\\r\\n"	2148
+mobInfoBarBody	pkg/session/infobar_body.go	70	"Your infobar is already off.\\r\\n"	2217
+mobInfoBarBody	pkg/session/infobar_body.go	90	"Your infobar is now set to on.\\r\\n"	2852
+mobInfoBarBody	pkg/session/infobar_body.go	92	"Your infobar is already on.\\r\\n"	2920
+mobInfoBarBody	pkg/session/infobar_body.go	95	"Usage:  infobar < on | off >\\r\\n"	2987
+cmdMapForBody	pkg/session/map_cmds.go	189	"Type HELP MAP to see a map of town.\\r\\n"	5476
+cmdMapForBody	pkg/session/map_cmds.go	243	"You look down upon the world and see...\\r\\n"	6937
+cmdMapForBody	pkg/session/map_cmds.go	285	"\\r\\nKEY: inside = &g0&n, city = &m#&n, field = &Y:&n, forest = &G+&n, hills = &w%&n,\\r\\n"	8452
+cmdMapForBody	pkg/session/map_cmds.go	286	"     mountain = &y^&n, swim water = &B~&n, noswim water = &b~&n, underwater = &b_&n,\\r\\n"	8547
+cmdMapForBody	pkg/session/map_cmds.go	287	"     flying = &C@&n, desert = &r$&n, fire = &RF&n, earth = &YE&n, wind = &CW&n,\\r\\n"	8642
+cmdMapForBody	pkg/session/map_cmds.go	288	"     water = &cw&n, swamp = &D`&n\\r\\n"	8732
+cmdMapForBody	pkg/session/map_cmds.go	289	"     &RX&n = You are here. &D*&n = overlapping room(s)\\r\\n"	8776
+*Session.finishDupeCheck	pkg/session/reconnect.go	167	"You take over your own body, already in use!\\r\\n"	6527
+*Session.finishDupeCheck	pkg/session/reconnect.go	169	"$n suddenly keels over in pain, surrounded by a white aura...\\r\\n"	6620
+*Session.finishDupeCheck	pkg/session/reconnect.go	170	"$n's body has been taken over by a new spirit!"	6693
+*Session.finishDupeCheck	pkg/session/reconnect.go	173	"Reconnecting.\\r\\n"	6931
+*Session.finishDupeCheck	pkg/session/reconnect.go	175	"You have mail waiting.\\r\\n"	6998
+*Session.finishDupeCheck	pkg/session/reconnect.go	177	"$n has reconnected."	7070
+*Session.routeDescriptorLine	pkg/session/session_login.go	419	"Post not aborted, use REMOVE <post #>.\\r\\n"	15975
+*Session.routeDescriptorLine	pkg/session/session_login.go	432	"Line number must be higher than 0.\\r\\n"	16563
+*Session.routeDescriptorLine	pkg/session/session_login.go	436	"Line changed.\\r\\n"	16755
+cmdEcho	pkg/session/wiz_communication.go	42	"Yes.. but what?"	1004
+cmdEcho	pkg/session/wiz_communication.go	47	"Maximum echo length is 500 characters."	1101
+cmdEcho	pkg/session/wiz_communication.go	60	"Okay.\\r\\n"	1853
+cmdForceText	pkg/session/wiz_communication.go	141	"Whom do you wish to force do what?\\r\\n"	4778
+cmdForceText	pkg/session/wiz_communication.go	148	"Okay.\\r\\n"	5068
+cmdForceText	pkg/session/wiz_communication.go	183	"No, no, no!\\r\\n"	6231
+cmdForceText	pkg/session/wiz_communication.go	187	"Okay.\\r\\n"	6275
+cmdForceText	pkg/session/wiz_communication.go	191	"$n has forced you to '%s'."	6500
+forceAll	pkg/session/wiz_communication.go	321	"Okay.\\r\\n"	11016
+wiznetList	pkg/session/wiz_communication.go	506	"Gods online:\\r\\n"	17317
+wiznetList	pkg/session/wiz_communication.go	509	"  %s"	17375
+wiznetList	pkg/session/wiz_communication.go	511	" (Writing)\\r\\n"	17472
+wiznetList	pkg/session/wiz_communication.go	513	" (Writing mail)\\r\\n"	17563
+wiznetList	pkg/session/wiz_communication.go	524	"Gods offline:\\r\\n"	17801
+wiznetList	pkg/session/wiz_communication.go	527	"  %s\\r\\n"	17860
+cmdCheckload	pkg/session/wiz_info.go	464	"Usage: checkload { obj | mob } <number>\\r\\n"	15433
+cmdCheckload	pkg/session/wiz_info.go	476	"That mob does not exist.\\r\\n"	15751
+cmdCheckload	pkg/session/wiz_info.go	490	"That object does not exist.\\r\\n"	16330
+cmdCheckload	pkg/session/wiz_info.go	501	"Usage: checkload { obj | mob } <number>\\r\\n"	16779
+cmdLoad	pkg/session/wiz_object.go	30	"Usage: load { obj | mob } <number or name>\\r\\n"	733
+cmdLoad	pkg/session/wiz_object.go	35	"Mob name not found.\\r\\n"	860
+cmdLoad	pkg/session/wiz_object.go	37	"Object name not found.\\r\\n"	940
+cmdLoad	pkg/session/wiz_object.go	39	"Usage: load { obj | mob } <number or name>\\r\\n"	983
+cmdLoad	pkg/session/wiz_object.go	51	"Mob name not found.\\r\\n"	1225
+cmdLoad	pkg/session/wiz_object.go	56	"Object name not found.\\r\\n"	1374
+cmdLoad	pkg/session/wiz_object.go	61	"Usage: load { obj | mob } <number or name>\\r\\n"	1470
+cmdLoad	pkg/session/wiz_object.go	70	"A NEGATIVE number??\\r\\n"	1813
+cmdLoad	pkg/session/wiz_object.go	79	"There is no monster with that number.\\r\\n"	2014
+cmdLoad	pkg/session/wiz_object.go	93	"There is no object with that number.\\r\\n"	2747
+cmdLoad	pkg/session/wiz_object.go	98	"You're not godly enough to load that!\\r\\n"	2961
+cmdLoad	pkg/session/wiz_object.go	103	"That is beyond your godly powers...\\r\\n"	3180
+cmdLoad	pkg/session/wiz_object.go	109	"You can't carry that right now.\\r\\n"	3497
+cmdLoad	pkg/session/wiz_object.go	120	"That'll have to be either 'obj' or 'mob'.\\r\\n"	4061
+cmdLoad::func@86	pkg/session/wiz_object.go	87	"$n has created $N!"	2488
+cmdLoad::func@86	pkg/session/wiz_object.go	88	"You create $N."	2588
+cmdLoad::func@115	pkg/session/wiz_object.go	116	"$n has created $p!"	3902
+cmdLoad::func@115	pkg/session/wiz_object.go	117	"You create $p."	4002
+sendLoadNarration	pkg/session/wiz_object.go	190	"$n makes a strange magickal gesture."	5824
+cmdPurge	pkg/session/wiz_object.go	211	"Fuuuuuuuuu!\\r\\n"	6940
+cmdPurge	pkg/session/wiz_object.go	217	"$n disintegrates $N."	7174
+cmdPurge	pkg/session/wiz_object.go	223	"$n has lost $s link."	7588
+cmdPurge	pkg/session/wiz_object.go	230	"$n disintegrates $N."	7995
+cmdPurge	pkg/session/wiz_object.go	233	"Okay.\\r\\n"	8097
+cmdPurge	pkg/session/wiz_object.go	238	"$n destroys $p."	8278
+cmdPurge	pkg/session/wiz_object.go	240	"Okay.\\r\\n"	8373
+cmdPurge	pkg/session/wiz_object.go	243	"Nothing here by that name.\\r\\n"	8413
+cmdPurge	pkg/session/wiz_object.go	247	"$n gestures... You are surrounded by scorching flames!"	8560
+cmdRestore	pkg/session/wiz_player.go	24	"Whom do you wish to restore?\\r\\n"	730
+cmdRestore	pkg/session/wiz_player.go	35	"No-one by that name here.\\r\\n"	1202
+cmdRestore	pkg/session/wiz_player.go	81	"Okay.\\r\\n"	2659
+cmdRestore	pkg/session/wiz_player.go	87	"The hand of $N touches you, healing your wounds and leaving you refreshed!"	2963
+cmdSwitch	pkg/session/wiz_player.go	102	"You're already switched.\\r\\n"	3524
+cmdSwitch	pkg/session/wiz_player.go	107	"Switch with who?\\r\\n"	3603
+cmdSwitch	pkg/session/wiz_player.go	112	"Switch with who?\\r\\n"	3735
+cmdSwitch	pkg/session/wiz_player.go	117	"No such character.\\r\\n"	3856
+cmdSwitch	pkg/session/wiz_player.go	121	"Hee hee... we are jolly funny today, eh?\\r\\n"	3942
+cmdSwitch	pkg/session/wiz_player.go	125	"You can't do that, the body is already in use!\\r\\n"	4082
+cmdSwitch	pkg/session/wiz_player.go	129	"You aren't holy enough to use a mortal's body.\\r\\n"	4222
+cmdSwitch	pkg/session/wiz_player.go	148	"Okay.\\r\\n"	4739
+*Manager.returnSwitch	pkg/session/wiz_player.go	191	"You return to your original body.\\r\\n"	6151
+applySetField	pkg/session/wiz_set.go	687	"Assuming the player is not logged in, this will not take effect if they are.\\r\\n"	21253
+*Session.sendStatObject	pkg/session/wiz_stats.go	817	"No such object around.\\r\\n"	31707
+cmdWizlock	pkg/session/wiz_system.go	197	"currently"	5150
+cmdWizlock	pkg/session/wiz_system.go	201	"Invalid wizlock value.\\r\\n"	5262
+cmdWizlock	pkg/session/wiz_system.go	206	"now"	5383
+cmdWizlock	pkg/session/wiz_system.go	212	"The game is %s completely open.\\r\\n"	5472
+cmdWizlock	pkg/session/wiz_system.go	214	"The game is %s closed to new players.\\r\\n"	5548
+cmdWizlock	pkg/session/wiz_system.go	216	"Only level %d and above may enter the game %s.\\r\\n"	5631
+cmdFreeze	pkg/session/wiz_system.go	590	"Yes, but for whom?!?\\r\\n"	20387
+cmdMute	pkg/session/wiz_system.go	646	"Huh?!?"	22564
+cmdMute	pkg/session/wiz_system.go	650	"Yes, but for whom?!?\\r\\n"	22620
+cmdNewbie	pkg/session/wiz_system.go	671	"Whom do you wish to newbie?\\r\\n"	23324
+cmdNewbie	pkg/session/wiz_system.go	677	"No-one by that name here.\\r\\n"	23465
+cmdNewbie	pkg/session/wiz_system.go	715	"Newbied.\\r\\n"	24756
+cmdNewbie	pkg/session/wiz_system.go	717	"$N makes a magickal gesture, creating a bunch of equipment, and hands it to you!"	24828
+cmdZreset	pkg/session/wiz_zone.go	28	"You must specify a zone.\\r\\n"	646
+cmdZreset	pkg/session/wiz_zone.go	45	"Reset world.\\r\\n"	1018
+cmdZreset	pkg/session/wiz_zone.go	61	"Invalid zone number.\\r\\n"	1536
+cmdZreset	pkg/session/wiz_zone.go	67	"Reset zone %d (#%d): %s.\\r\\n"	1649
+mobWizutilBody::func@15	pkg/session/wizutil_body.go	21	"Huh?!?\\r\\n"	704
+mobWizutilBody::func@15	pkg/session/wizutil_body.go	30	"Yes, but for whom?!?\\r\\n"	945
+mobWizutilBody::func@15	pkg/session/wizutil_body.go	36	"You can't do that to a mob!\\r\\n"	1166
+mobWizutilBody::func@15	pkg/session/wizutil_body.go	39	"There is no such player.\\r\\n"	1265
+mobWizutilBody::func@15	pkg/session/wizutil_body.go	44	"Hmmm...you'd better not.\\r\\n"	1468
+mobWizutilBody::func@15	pkg/session/wizutil_body.go	53	"OFF"	1783
+mobWizutilBody::func@15	pkg/session/wizutil_body.go	55	"ON"	1818
+mobWizutilBody::func@15	pkg/session/wizutil_body.go	59	"(GC) Squelch %s for %s by %s.\\r\\n"	1998
+mobWizutilBody::func@15	pkg/session/wizutil_body.go	62	"Your victim is not flagged.\\r\\n"	2160
+mobWizutilBody::func@15	pkg/session/wizutil_body.go	66	"Pardoned.\\r\\n"	2303
+mobWizutilBody::func@15	pkg/session/wizutil_body.go	67	"You have been pardoned by the Gods!\\r\\n"	2342
+*Session.startZedit	pkg/session/zedit.go	192	"$n starts using OLC."	5442
