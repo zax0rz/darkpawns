@@ -2,14 +2,14 @@
 # special before do_steal and directs its shout to the switched descriptor.
 # C: src/shop.c:968-978.
 # depth-case: shops.audit.keeper-steal-switched-mobile
+# depth-case: shops.audit.keeper-no-trade-mobile-customer
 
 [fixture]
 empty-players
 quiet-mobs
-quiet-zone 121
-spawn-mob 12102 1 12135 121
-give-object 12102 12102 100000 121
-spawn-mob 69 1 12135 121
+quiet-zone 48
+spawn-mob 4808 1 4813 48
+spawn-mob 69 1 4813 48
 
 [setup:oracle]
 Shopbody
@@ -41,9 +41,11 @@ Y
 
 [warmup]
 set player Shopbody level 40
-goto 12135
+goto 4813
 set mob clone level 9
+set mob clone align -1000
 switch clone
 
 [probe]
 steal gold
+sell sword
