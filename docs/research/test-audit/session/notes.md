@@ -108,7 +108,7 @@ lines).
   pkg/game/damage_stubs.go:390-395). Old green, fixed red under the same
   mutation (mutations.tsv).
 - **Attribution (PF-152):** BRENDA69 was the original OpenClaw agent, a
-  multi-model orchestrator (mostly glm-5-flash with subagent delegation). All
+  multi-model orchestrator (mostly glm-5-turbo with subagent delegation). All
   99 BRENDA69-authored rows in this ledger now read `OpenClaw (multi-model
   orchestrator)` with no model assigned; attribution.tsv carries an agent
   column.
@@ -138,3 +138,11 @@ care than its age suggests.
 
 Coverage: 74.4% → 74.4%.
 
+
+## Batch 3 update (2026-11-21, PF-153 excavation)
+
+The pre-oracle layer's OpenClaw rows now reflect the excavation's three
+identities (BRENDA69, zach@karl-havoc.labz0rz.com, zach@mac-mini.local):
+101 rows in this ledger attribute to `OpenClaw (multi-model orchestrator)`,
+model blank (the excavation file names no model for any of these commits).
+The orchestrator model is glm-5-turbo (wording corrected from glm-5-flash).
