@@ -304,8 +304,9 @@ func TestCorpseAttackLongDesc(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.contains, func(t *testing.T) {
 			got := corpseAttackLongDesc("Victim", tt.attackType, tt.gender)
-			if len(got) == 0 {
-				t.Error("corpseAttackLongDesc returned empty string")
+			if !strings.Contains(got, tt.contains) {
+				t.Errorf("corpseAttackLongDesc(%v, %s) = %q, want substring %q (src/fight.c corpse table)",
+					tt.attackType, tt.gender, got, tt.contains)
 			}
 		})
 	}

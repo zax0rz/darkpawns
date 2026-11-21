@@ -1037,14 +1037,14 @@ func TestLocationFieldSync(t *testing.T) {
 		t.Errorf("spawned location invalid: %v", err)
 	}
 
-	// Add to inventory — Location should update
+	// Add to inventory — AddItem alone must NOT change Location; MoveObject
+	// owns location updates (the inventory list and ObjectLocation are kept
+	// in step only by MoveObject).
 	_ = player.Inventory.AddItem(obj)
-	obj.Location = LocInventoryPlayer(player.Name)
-	if !obj.Location.IsInInventory() {
-		// Note: AddItem sets Carrier to *Inventory, which SetCarrier can't
-		// cleanly map to a Location kind. This documents the mismatch.
-		t.Log("Carrier is *Inventory — Location mismatch expected until MoveObject")
+	if obj.Location.IsInInventory() {
+		t.Error("AddItem must not change Location; MoveObject owns location updates")
 	}
+	obj.Location = LocInventoryPlayer(player.Name)
 
 	// MoveObject to player inventory should update Location correctly
 	obj2, _ := w.SpawnObject(3001, 1001)

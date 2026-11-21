@@ -1,0 +1,4 @@
+test	file	line	mutation	old-body-result(green|red)	fixed-result(green|red)	restored(yes)
+TestCorpseAttackLongDesc	pkg/game/death.go	1045	fire-corpse string "charred" -> "charrid"	green (old body asserted only len(got)==0, non-empty under the mutation)	red (strings.Contains asserts the C substring)	yes
+TestLocationFieldSync	pkg/game/object_movement_test.go	1023	inventory.go:32 addItem sets item.Location = LocInventoryPlayer("mutant")	green (old branch called t.Log, which cannot fail)	red (asserts AddItem must not write Location)	yes
+TestWeatherChange_AdjustsPressureAndSky	pkg/game/weather.go	weatherChangeLocked (C src/weather.c:133-137)	summer pressure-not>1015 diff +2 -> -2 (seeded pressure 1021 -> 1005)	green (old body looped 20x with no value assertions; accessor checks self-compare)	red (seeded pin: change 8 / pressure 1021)	yes
