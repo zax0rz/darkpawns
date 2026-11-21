@@ -253,3 +253,13 @@ MinPosition 5), T352 TestParseDigArgumentsMatchesCFillWordParsing
 TestCmdHitFillWordsWithoutTargetUseNoArgumentMessage (combat_cmds.go:
 fill-word skip replaced by args[0]). All three went red and were restored
 byte for byte (mutations.tsv).
+
+## Batch 7 results (later tests 301–400, 2026-09)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T490-T589.
+
+The A–R continuation of the social/command registration sweep plus the
+September depth files (parry/pardon/poofin/poofout/prompt/reroll/restore/
+return/rlist/load/mlist/orgasm/order/page/qui/qsay/lines). Same established
+patterns: C entry gates, exact byte branches, state effects. No fixes, no
+J10 divergences. Running: 545/1537; all 400 post-oracle marks are R.
