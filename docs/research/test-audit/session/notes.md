@@ -281,4 +281,16 @@ R4 agent-feed hygiene, czedit/zedit/file-editor reachability and mudlog
 boundaries, input-queue capacity, OLC save-all, ban/mudlog bytes, bare-send
 framing, terminal colors, character dispatch. No fixes, no J10 divergences.
 Running: 1245/1537.
+ HEAD
  7efe635b0 (test(session): audit batch 14 — R4 hygiene + mudlog boundaries, all R)
+
+## Batch 15 results (later tests 1101–1200, 2026-10)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T1290-T1389.
+
+Actor-lane command semantics (position refusals, sit/stand bytes, visibility
+flags), character-command resolution, prompt frames, whod listener C bytes,
+mudlog producers/discriminators, Lua/NPC shared executor, crash-load bad-stat
+recovery, descriptor semantics, LFCR preservation. No fixes, no J10
+divergences. Running: 1345/1537.
+ 75e5b942b (test(session): audit batch 15 — actor lane + mudlog producers, all R)
