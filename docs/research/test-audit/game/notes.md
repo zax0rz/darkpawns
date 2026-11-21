@@ -55,12 +55,15 @@ Full-identity check of all 60 introducing commits against
   orchestrator)** (PF-153: karl-havoc is an OpenClaw commit identity,
   glm-5-turbo/deepseek-chat mix) — 25 tests. The earlier batches wrongly
   said "repository owner"; corrected here.
-- `zach <zdgreene@gmail.com>` → zach (Zach Greene, the repository owner) —
-  44 tests.
+- `zach <zdgreene@gmail.com>` → **OpenClaw (multi-model orchestrator)** —
+  44 tests. The author name is Zach's, but every one of these commits carries
+  a `Co-Authored-By: BRENDA69` trailer, and 40 also credit Claude Sonnet 5.
+  Zach doesn't write code by hand, so his git identity alone never means a
+  human author; check the trailers (Claude review, 2026-11-21).
 - The eight glm_batch_a tests are BRENDA69-authored (3f315db63); the file
   name names the repair batch, not the author.
 
-Total: OpenClaw 294, zach 44.
+Total: OpenClaw 338 (40 with a Claude Sonnet 5 trailer).
 
 ## Finding
 

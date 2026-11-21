@@ -174,7 +174,7 @@ func TestWeatherChange_AdjustsPressureAndSky(t *testing.T) {
 	// The change arithmetic itself is C's formula: summer month (May), so
 	// pressure 1013 is not > 1015 and diff is +2; seeded stream 7 draws
 	// dice(1,4)=4, dice(2,6)=5, dice(2,6)=5, so change = 4*2+5-5 = 8 and
-	// pressure = 1013+8 = 1021 (src/weather.c:88-95).
+	// pressure = 1013+8 = 1021 (src/weather.c:133-142).
 	dprng.ResetStream(7)
 	timeInfo = TimeInfoData{Month: 5}
 	weatherInfo = WeatherData{Pressure: 1013, Change: 0, Sky: SkyCloudless, Sunlight: SunLight}
