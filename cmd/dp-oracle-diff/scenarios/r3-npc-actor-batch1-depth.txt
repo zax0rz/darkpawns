@@ -1,7 +1,9 @@
 # C-first Round 3 mobile-actor batch: an unkeyed door room act, mobile get
 # from a container, poisoned drink, non-thief peek, missing paper, and the
-# self-point room act from a zero-charge wand. A named peer observes room
-# output while the descriptor switches between Satan Klaus and clone.
+# self-point room act from a zero-charge wand. A wielded “claw satan” makes
+# the C equipd scan select WEAR_HOLD for `use wand satan`; the wand itself has
+# no “satan” keyword. A named peer observes room output while the descriptor
+# switches between Satan Klaus and clone.
 # C paths: src/interpreter.c:910-947; src/act.movement.c:524-536;
 # src/act.item.c:197-213,1009-1012; src/act.other.c:1665-1677;
 # src/act.comm.c:1058-1062; src/act.other.c:897-980;
@@ -20,6 +22,7 @@ add-obj-index 132.obj
 replace-room-exits 8162 north 8161 1
 spawn-mob 69 1 8162 80
 spawn-mob 70 1 8162 80
+equip-object 70 1010 999 16 80
 give-object 70 8032 1 80
 give-object 70 8010 1 80
 
@@ -84,7 +87,7 @@ goto 8162
 teleport Batchwatch 8162
 oedit 8053
 1
-wand invis satan
+wand invis
 D
 12
 2
@@ -99,8 +102,8 @@ give goblet satan
 
 [probe]
 switch satan
-open north
-close north
+open door north
+close door north
 put bread bag
 get bread bag
 drink goblet
