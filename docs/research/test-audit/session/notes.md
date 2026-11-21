@@ -290,3 +290,19 @@ as representative). Depth files: snoop (state branches + relay framing),
 shutdown (guard bytes + lifecycle), send (half_chop audiences), set/spike/split/
 skillset/rsay/qecho/players/socials_command. No fixes, no J10 divergences.
 Running: 645/1537; all 500 post-oracle marks are R.
+
+### Ledger update (2026-11-21, review hold follow-up)
+
+Per-row evidence: every T546–T645 row's evidence cell now names what was
+checked for that test — the do_set field table's per-field level gates, the
+snoop relay framing bytes, the shutdown plan globals, the sendText half_chop
+branches, the AndRecord rows' string-by-string social message tables, and
+each registration row's exact C gate values. Test file/line columns are
+backfilled.
+
+All-R spot-checks (random draw, seed 20261108, from T546–T645): T587
+TestSetFieldTableMatchesCOrderAndGates (wiz_set.go:37 brief level 34->38),
+T603 TestSkillsetRegistrationUsesCEntryGates (registerCommand forced
+MinPosition 5, golden 4), T574 TestRuffleRegistrationUsesCEntryGate
+(command_gates.tsv:336 ruffle position 8->7). All three went red and were
+restored byte for byte (mutations.tsv).
