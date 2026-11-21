@@ -75,5 +75,5 @@ goto 8162
 [probe]
 think hello world
 think $n quietly
-force Thinksee sleep
+send:peer sleep
 think last words
