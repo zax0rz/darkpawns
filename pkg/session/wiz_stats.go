@@ -136,12 +136,11 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 	proto := mob.Proto()
 	normal, _ := s.statColorGates()
 	rnum := -1
-	if parsed := s.manager.world.GetParsedWorld(); parsed != nil {
-		for i := range parsed.Mobs {
-			if parsed.Mobs[i].VNum == proto.VNum {
-				rnum = i
-				break
-			}
+	parsed := s.manager.world.GetParsedWorld()
+	for i := range parsed.Mobs {
+		if parsed.Mobs[i].VNum == proto.VNum {
+			rnum = i
+			break
 		}
 	}
 
@@ -651,10 +650,6 @@ var wizardCaffectNames = []string{
 }
 
 func (s *Session) sendStatRoom() {
-	if s.manager == nil || s.manager.world == nil {
-		s.Send("World not available.")
-		return
-	}
 	w := s.manager.world
 	room := w.GetRoomInWorld(s.player.GetRoom())
 	if room == nil {
@@ -662,13 +657,12 @@ func (s *Session) sendStatRoom() {
 		return
 	}
 
+	parsed := w.GetParsedWorld()
 	zoneIndex := 0
-	if parsed := w.GetParsedWorld(); parsed != nil {
-		for i := range parsed.Zones {
-			if parsed.Zones[i].Number == room.Zone {
-				zoneIndex = i
-				break
-			}
+	for i := range parsed.Zones {
+		if parsed.Zones[i].Number == room.Zone {
+			zoneIndex = i
+			break
 		}
 	}
 	rnum, _ := w.RealRoomIndex(room.VNum)
@@ -691,19 +685,18 @@ func (s *Session) sendStatRoom() {
 	} else {
 		s.Send("  None.\r\n")
 	}
-	if parsed := w.GetParsedWorld(); parsed != nil {
-		for i := range parsed.Rooms {
-			prototype := &parsed.Rooms[i]
-			if prototype.VNum != room.VNum || len(prototype.ExtraDescs) == 0 {
-				continue
-			}
-			keywords := make([]string, 0, len(prototype.ExtraDescs))
-			for _, desc := range prototype.ExtraDescs {
-				keywords = append(keywords, desc.Keywords)
-			}
-			s.Send(wizardExtraDescriptionLine(keywords, normal))
-			break
+	parsedForRoomExtras := w.GetParsedWorld()
+	for i := range parsedForRoomExtras.Rooms {
+		prototype := &parsedForRoomExtras.Rooms[i]
+		if prototype.VNum != room.VNum || len(prototype.ExtraDescs) == 0 {
+			continue
 		}
+		keywords := make([]string, 0, len(prototype.ExtraDescs))
+		for _, desc := range prototype.ExtraDescs {
+			keywords = append(keywords, desc.Keywords)
+		}
+		s.Send(wizardExtraDescriptionLine(keywords, normal))
+		break
 	}
 
 	players := w.GetPlayersInRoom(room.VNum)
@@ -819,10 +812,6 @@ func (s *Session) sendStatPlayer(p *game.Player) {
 }
 
 func (s *Session) sendStatObject(name string) {
-	if s.manager == nil || s.manager.world == nil {
-		s.Send("World not available.")
-		return
-	}
 	object, ok := s.manager.world.ResolveObjectWorld(s.player, name)
 	if !ok {
 		s.Send("No such object around.\r\n")
@@ -838,12 +827,11 @@ func (s *Session) sendStatObjectInstance(object *game.ObjectInstance) {
 	w := s.manager.world
 	proto := object.Prototype
 	rnum := -1
-	if parsed := w.GetParsedWorld(); parsed != nil {
-		for i := range parsed.Objs {
-			if parsed.Objs[i].VNum == object.GetVNum() {
-				rnum = i
-				break
-			}
+	parsed := w.GetParsedWorld()
+	for i := range parsed.Objs {
+		if parsed.Objs[i].VNum == object.GetVNum() {
+			rnum = i
+			break
 		}
 	}
 
@@ -1234,16 +1222,7 @@ func cmdVnum(s *Session, args []string) error {
 		return nil
 	}
 
-	if s.manager == nil || s.manager.world == nil {
-		s.Send("World not available.")
-		return nil
-	}
-
 	parsed := s.manager.world.GetParsedWorld()
-	if parsed == nil {
-		s.Send("Parsed world data not available.")
-		return nil
-	}
 
 	results := make([]string, 0, 30)
 	switch category {

@@ -191,11 +191,6 @@ func cmdReload(s *Session, args []string) error {
 
 // cmdStat — inspect a character, room, or object (LVL_IMMORT)
 func cmdWizlock(s *Session, args []string) error {
-	if s.manager == nil {
-		s.Send("Cannot access manager state.")
-		return nil
-	}
-
 	s.manager.wizlockMutex.Lock()
 	defer s.manager.wizlockMutex.Unlock()
 
@@ -305,10 +300,6 @@ func cmdLast(s *Session, args []string) error {
 		return nil
 	}
 	target, _ := game.OneArgument(strings.Join(args, " "))
-	if s.manager == nil {
-		s.Send("There is no such player.\r\n")
-		return nil
-	}
 	if !s.manager.hasDB {
 		// No store: no pfiles to load, so C's load_char fails.
 		s.Send("There is no such player.\r\n")

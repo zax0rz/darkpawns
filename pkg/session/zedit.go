@@ -53,7 +53,7 @@ type zeditState struct {
 // The editor key is a room VNUM: the containing zone is selected from that
 // room, and the working reset list contains only commands scoped to it.
 func cmdZedit(s *Session, args []string) error {
-	if s.player == nil || s.manager == nil || s.manager.world == nil {
+	if s.player == nil {
 		return fmt.Errorf("not logged in")
 	}
 

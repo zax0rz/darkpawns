@@ -325,7 +325,7 @@ func findSetField(input string) (setField, bool) {
 }
 
 func resolveSetTarget(s *Session, name string, playerOnly bool) (setTarget, bool) {
-	if s == nil || s.player == nil || s.manager == nil {
+	if s == nil || s.player == nil {
 		return setTarget{}, false
 	}
 	if playerOnly {
@@ -339,14 +339,12 @@ func resolveSetTarget(s *Session, name string, playerOnly bool) (setTarget, bool
 		}
 		return setTarget{}, false
 	}
-	if s.manager.world != nil {
-		if resolved, ok := s.manager.world.ResolveCharWorld(s.player, name); ok {
-			if resolved.Player != nil {
-				return setTarget{player: resolved.Player, session: findSessionForPlayer(s.manager, resolved.Player)}, true
-			}
-			if resolved.Mob != nil {
-				return setTarget{mob: resolved.Mob}, true
-			}
+	if resolved, ok := s.manager.world.ResolveCharWorld(s.player, name); ok {
+		if resolved.Player != nil {
+			return setTarget{player: resolved.Player, session: findSessionForPlayer(s.manager, resolved.Player)}, true
+		}
+		if resolved.Mob != nil {
+			return setTarget{mob: resolved.Mob}, true
 		}
 	}
 	// Unit fixtures construct sessions without registering their players in the
@@ -643,7 +641,7 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 			m.SetLevel(valueInt)
 		}
 	case "room":
-		if s.manager.world == nil || s.manager.world.GetRoomInWorld(valueInt) == nil {
+		if s.manager.world.GetRoomInWorld(valueInt) == nil {
 			return "No room exists with that number.\r\n", false, true
 		}
 		var err error

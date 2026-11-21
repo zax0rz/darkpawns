@@ -76,7 +76,7 @@ var seditMessageModes = map[seditMode]int{
 // works on shop VNUMs, not keeper VNUMs; a missing shop enters the new-shop
 // defaults from sedit_setup_new (src/sedit.c:103-130).
 func cmdSedit(s *Session, args []string) error {
-	if s.player == nil || s.manager == nil || s.manager.world == nil {
+	if s.player == nil {
 		return fmt.Errorf("not logged in")
 	}
 

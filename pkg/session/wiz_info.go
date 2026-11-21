@@ -180,11 +180,7 @@ func cmdShow(s *Session, args []string) error {
 		PageString(s, report.String())
 	case "stats":
 		parsed := s.manager.world.GetParsedWorld()
-		mobPrototypes, objectPrototypes := 0, 0
-		if parsed != nil {
-			mobPrototypes = len(parsed.Mobs)
-			objectPrototypes = len(parsed.Objs)
-		}
+		mobPrototypes, objectPrototypes := len(parsed.Mobs), len(parsed.Objs)
 		// C walks character_list (act.wizard.c:2356-2378): non-NPC characters
 		// the caller can see, and of those the ones holding a descriptor — a
 		// linkdead player counts in the first number only. `registered` is the
