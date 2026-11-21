@@ -1,0 +1,187 @@
+source	row_line	old_cite	outcome	new_cite	evidence
+docs/fidelity/depth/boards.tsv	8	boards.c:349-354	wrong	boards.c:417-420	"boards.c:419:       send_to_char(""At least wait until the author is finished before removing it!\r\n"", ch);"
+docs/fidelity/depth/boards.tsv	34	boards.c:228	correct-as-is	boards.c:228	boards.c:228:   if ((NEW_MSG_INDEX(board_type).slot_num = find_slot()) == -1) {
+docs/fidelity/depth/cast.tsv	38	spells.c:439-441	correct-as-is	spells.c:439-441	spells.c:439:   else if (!IS_NPC(victim) && !IS_OUTLAW(ch))
+docs/fidelity/depth/cast.tsv	204	spell_parser.c:916-963	correct-as-is	spell_parser.c:916-963	spell_parser.c:916: ACMD(do_cast)
+docs/fidelity/depth/cast.tsv	205	spell_parser.c:916-963	correct-as-is	spell_parser.c:916-963	spell_parser.c:916: ACMD(do_cast)
+docs/fidelity/depth/cast.tsv	205	magic.c:767-785	correct-as-is	magic.c:767-785	magic.c:767:    case SPELL_SOUL_LEECH:
+docs/fidelity/depth/cast.tsv	208	spell_parser.c:916-963	correct-as-is	spell_parser.c:916-963	spell_parser.c:916: ACMD(do_cast)
+docs/fidelity/depth/cast.tsv	208	magic.c:709-720	correct-as-is	magic.c:709-720	magic.c:709:    case SPELL_DISRUPT:
+docs/fidelity/depth/cast.tsv	210	spell_parser.c:916-963	correct-as-is	spell_parser.c:916-963	spell_parser.c:916: ACMD(do_cast)
+docs/fidelity/depth/cast.tsv	210	magic.c:688-708	correct-as-is	magic.c:688-708	magic.c:688:    case SPELL_DISINTEGRATE:
+docs/fidelity/depth/cast.tsv	212	spell_parser.c:916-963	correct-as-is	spell_parser.c:916-963	spell_parser.c:916: ACMD(do_cast)
+docs/fidelity/depth/cast.tsv	212	magic.c:808-827	correct-as-is	magic.c:808-827	magic.c:808:    case SPELL_PSIBLAST:
+docs/fidelity/depth/cast.tsv	267	magic.c:1512	correct-as-is	magic.c:1512	magic.c:1512: mag_masses(int level, struct char_data * ch, int spellnum, int savetype)
+docs/fidelity/depth/cast.tsv	267	magic.c:1754	correct-as-is	magic.c:1754	magic.c:1754: mag_points(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	267	magic.c:602	correct-as-is	magic.c:602	magic.c:602: mag_damage(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	267	magic.c:863	correct-as-is	magic.c:863	magic.c:863: mag_affects(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	295	spell_parser.c:452-459	correct-as-is	spell_parser.c:452-459	spell_parser.c:454:   case CAST_STAFF:
+docs/fidelity/depth/cast.tsv	295	spells.c:794	correct-as-is	spells.c:794	spells.c:794: ASPELL(spell_detect_poison)
+docs/fidelity/depth/cast.tsv	295	spell_parser.c:1283	correct-as-is	spell_parser.c:1283	spell_parser.c:1283:   spello(SPELL_CURSE, 80, 50, 2, POS_FIGHTING,
+docs/fidelity/depth/cast.tsv	298	magic.c:1890	correct-as-is	magic.c:1890	magic.c:1890: mag_alter_objs(int level, struct char_data * ch, struct obj_data * obj,
+docs/fidelity/depth/cast.tsv	298	magic.c:863	correct-as-is	magic.c:863	magic.c:863: mag_affects(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	341	spell_parser.c:452-459	correct-as-is	spell_parser.c:452-459	spell_parser.c:454:   case CAST_STAFF:
+docs/fidelity/depth/cast.tsv	341	magic.c:1466	correct-as-is	magic.c:1466	magic.c:1466: mag_groups(int level, struct char_data * ch, int spellnum, int savetype)
+docs/fidelity/depth/cast.tsv	341	magic.c:602	correct-as-is	magic.c:602	magic.c:602: mag_damage(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	341	spells.c:476	correct-as-is	spells.c:476	spells.c:476: ASPELL(spell_identify)
+docs/fidelity/depth/cast.tsv	341	spells.c:701	correct-as-is	spells.c:701	spells.c:701: ASPELL(spell_hellfire)
+docs/fidelity/depth/cast.tsv	341	spell_parser.c:1347	correct-as-is	spell_parser.c:1347	spell_parser.c:1347:   spello(SPELL_GROUP_INVIS, 135, 135, 1, POS_STANDING,
+docs/fidelity/depth/cast.tsv	341	spell_parser.c:601-606	correct-as-is	spell_parser.c:601-606	spell_parser.c:602:         call_magic(ch, tch, NULL, GET_OBJ_VAL(obj, 3),
+docs/fidelity/depth/cast.tsv	379	magic.c:1466	correct-as-is	magic.c:1466	magic.c:1466: mag_groups(int level, struct char_data * ch, int spellnum, int savetype)
+docs/fidelity/depth/cast.tsv	379	magic.c:602	correct-as-is	magic.c:602	magic.c:602: mag_damage(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	379	magic.c:1471-1488	correct-as-is	magic.c:1471-1488	magic.c:1474:    if (!IS_AFFECTED(ch, AFF_GROUP))
+docs/fidelity/depth/cast.tsv	379	magic.c:1447-1448	correct-as-is	magic.c:1447-1448	magic.c:1448:       mag_affects(level, ch, tch, SPELL_INVISIBLE, savetype);
+docs/fidelity/depth/cast.tsv	394	spells.c:476	correct-as-is	spells.c:476	spells.c:476: ASPELL(spell_identify)
+docs/fidelity/depth/cast.tsv	394	spells.c:701	correct-as-is	spells.c:701	spells.c:701: ASPELL(spell_hellfire)
+docs/fidelity/depth/cast.tsv	394	spells.c:836	correct-as-is	spells.c:836	spells.c:836: ASPELL(spell_enchant_armor)
+docs/fidelity/depth/cast.tsv	400	spells.c:476	correct-as-is	spells.c:476	spells.c:476: ASPELL(spell_identify)
+docs/fidelity/depth/cast.tsv	400	spells.c:701	correct-as-is	spells.c:701	spells.c:701: ASPELL(spell_hellfire)
+docs/fidelity/depth/cast.tsv	400	spells.c:836	correct-as-is	spells.c:836	spells.c:836: ASPELL(spell_enchant_armor)
+docs/fidelity/depth/cast.tsv	411	magic.c:1512	correct-as-is	magic.c:1512	magic.c:1512: mag_masses(int level, struct char_data * ch, int spellnum, int savetype)
+docs/fidelity/depth/cast.tsv	411	magic.c:1754	correct-as-is	magic.c:1754	magic.c:1754: mag_points(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	411	magic.c:602	correct-as-is	magic.c:602	magic.c:602: mag_damage(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	411	magic.c:863	correct-as-is	magic.c:863	magic.c:863: mag_affects(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	414	magic.c:1512	correct-as-is	magic.c:1512	magic.c:1512: mag_masses(int level, struct char_data * ch, int spellnum, int savetype)
+docs/fidelity/depth/cast.tsv	414	magic.c:1754	correct-as-is	magic.c:1754	magic.c:1754: mag_points(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	414	magic.c:602	correct-as-is	magic.c:602	magic.c:602: mag_damage(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	414	magic.c:863	correct-as-is	magic.c:863	magic.c:863: mag_affects(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	433	spells.c:1132	correct-as-is	spells.c:1132	spells.c:1132: ASPELL(spell_mirror_image)
+docs/fidelity/depth/cast.tsv	433	spells.c:1170	correct-as-is	spells.c:1170	spells.c:1170: ASPELL(spell_divine_int)
+docs/fidelity/depth/cast.tsv	433	spells.c:912	correct-as-is	spells.c:912	spells.c:912: ASPELL(spell_mindsight)
+docs/fidelity/depth/cast.tsv	433	spells.c:960	correct-as-is	spells.c:960	spells.c:960: ASPELL(spell_mental_lapse)
+docs/fidelity/depth/cast.tsv	443	magic.c:1512	correct-as-is	magic.c:1512	magic.c:1512: mag_masses(int level, struct char_data * ch, int spellnum, int savetype)
+docs/fidelity/depth/cast.tsv	443	magic.c:1754	correct-as-is	magic.c:1754	magic.c:1754: mag_points(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	443	magic.c:602	correct-as-is	magic.c:602	magic.c:602: mag_damage(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	443	magic.c:863	correct-as-is	magic.c:863	magic.c:863: mag_affects(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	465	spells.c:1132	correct-as-is	spells.c:1132	spells.c:1132: ASPELL(spell_mirror_image)
+docs/fidelity/depth/cast.tsv	465	spells.c:1170	correct-as-is	spells.c:1170	spells.c:1170: ASPELL(spell_divine_int)
+docs/fidelity/depth/cast.tsv	465	spells.c:912	correct-as-is	spells.c:912	spells.c:912: ASPELL(spell_mindsight)
+docs/fidelity/depth/cast.tsv	465	spells.c:960	correct-as-is	spells.c:960	spells.c:960: ASPELL(spell_mental_lapse)
+docs/fidelity/depth/cast.tsv	495	magic.c:1512	correct-as-is	magic.c:1512	magic.c:1512: mag_masses(int level, struct char_data * ch, int spellnum, int savetype)
+docs/fidelity/depth/cast.tsv	495	magic.c:1754	correct-as-is	magic.c:1754	magic.c:1754: mag_points(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	495	magic.c:602	correct-as-is	magic.c:602	magic.c:602: mag_damage(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	495	magic.c:863	correct-as-is	magic.c:863	magic.c:863: mag_affects(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	516	magic.c:1512	correct-as-is	magic.c:1512	magic.c:1512: mag_masses(int level, struct char_data * ch, int spellnum, int savetype)
+docs/fidelity/depth/cast.tsv	516	magic.c:1754	correct-as-is	magic.c:1754	magic.c:1754: mag_points(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	516	magic.c:602	correct-as-is	magic.c:602	magic.c:602: mag_damage(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/cast.tsv	516	magic.c:863	correct-as-is	magic.c:863	magic.c:863: mag_affects(int level, struct char_data * ch, struct char_data * victim,
+docs/fidelity/depth/checkload.tsv	17	act.wizard.c:3854-3869	wrong	act.wizard.c:3846-3855	act.wizard.c:3848:     which = real_object(atoi(buf3));
+docs/fidelity/depth/combat-entry.tsv	7	act.offensive.c:101	correct-as-is	act.offensive.c:101	act.offensive.c:101: ACMD(do_hit)
+docs/fidelity/depth/combat-entry.tsv	8	act.offensive.c:126	correct-as-is	act.offensive.c:126	act.offensive.c:126:           hit(ch, vict, TYPE_UNDEFINED);
+docs/fidelity/depth/combat-entry.tsv	17	act.offensive.c:138-141	correct-as-is	act.offensive.c:138-141	act.offensive.c:140:       do_hit(ch, argument, cmd, subcmd);
+docs/fidelity/depth/combat-entry.tsv	20	act.offensive.c:74-75	correct-as-is	act.offensive.c:74-75	act.offensive.c:75:     send_to_char(NOPERSON, ch);
+docs/fidelity/depth/combat-entry.tsv	33	act.offensive.c:515-519	correct-as-is	act.offensive.c:515-519	"act.offensive.c:517:       send_to_char(""Whom do you want to rescue?\r\n"", ch);"
+docs/fidelity/depth/combat-entry.tsv	73	fight.c:1673-1680	correct-as-is	fight.c:1673-1680	fight.c:1674:                  GET_NAME(ch), world[victim->in_room].name);
+docs/fidelity/depth/comm.tsv	39	act.comm.c:944-971	correct-as-is	act.comm.c:944-971	act.comm.c:971:       perform_tell(ch, tch, argument);
+docs/fidelity/depth/compare.tsv	17	new_cmds.c:2067-2068	correct-as-is	new_cmds.c:2067-2068	new_cmds.c:2068:     diff += number (-3,3);
+docs/fidelity/depth/compare.tsv	17	new_cmds.c:2067-2068	correct-as-is	new_cmds.c:2067-2068	new_cmds.c:2068:     diff += number (-3,3);
+docs/fidelity/depth/consider.tsv	2	act.informative.c:2330-2338	correct-as-is	act.informative.c:2330-2338	act.informative.c:2330: ACMD(do_consider)
+docs/fidelity/depth/db-boot.tsv	7	db.c:2701-2724	correct-as-is	db.c:2701-2724	"db.c:2701:     fprintf(stderr, ""SYSERR: fread_string: format error at or near %s\n"","
+docs/fidelity/depth/descriptor-state.tsv	8	interpreter.c:1860-1884	correct-as-is	interpreter.c:1860-1884	interpreter.c:1860:   case CON_PASSWORD:        /* get pwd for known player      */
+docs/fidelity/depth/descriptor-state.tsv	12	comm.c:613	correct-as-is	comm.c:613	comm.c:613:     d->has_prompt = 0;
+docs/fidelity/depth/descriptor-state.tsv	14	comm.c:1378-1429	correct-as-is	comm.c:1378-1429	comm.c:1382:     strcpy(txt + size - strlen(text_overflow), text_overflow);  /* strcpy: OK */
+docs/fidelity/depth/disposal.tsv	27	act.item.c:511	correct-as-is	act.item.c:511	"act.item.c:511:       act(""$p suddenly appears in a puff a smoke!"", FALSE, 0, obj, 0, TO_ROOM);"
+docs/fidelity/depth/dream.tsv	19	dream.c:102-105	correct-as-is	dream.c:102-105	dream.c:103:   if(IS_AFFECTED(ch, AFF_DREAM)) {
+docs/fidelity/depth/drop.tsv	5	act.item.c:601-603	wrong	act.item.c:617-620	"act.item.c:620:         send_to_char(""You don't seem to be carrying anything.\r\n"", ch);"
+docs/fidelity/depth/eat.tsv	20	act.item.c:1048-1056	correct-as-is	act.item.c:1048-1056	act.item.c:1050:       if (!((IS_AFFECTED(ch, AFF_WEREWOLF) &&
+docs/fidelity/depth/entry.tsv	45	interpreter.c:1548-1556	correct-as-is	interpreter.c:1548-1556	interpreter.c:1555:           mode = UNSWITCH;
+docs/fidelity/depth/flee.tsv	18	act.offensive.c:377-381	correct-as-is	act.offensive.c:377-381	act.offensive.c:377:   if (IS_NPC(ch) && GET_MOB_WAIT(ch))
+docs/fidelity/depth/flee.tsv	18	act.offensive.c:490-494	correct-as-is	act.offensive.c:490-494	act.offensive.c:494:       WAIT_STATE(vict, PULSE_VIOLENCE * 2);
+docs/fidelity/depth/get.tsv	10	act.item.c:409-410	wrong	act.item.c:417-418	"act.item.c:418:         send_to_char(""You can't seem to find any containers.\r\n"", ch);"
+docs/fidelity/depth/give.tsv	7	act.item.c:758-762	wrong	act.item.c:723-726	"act.item.c:725:       send_to_char(""What's the point of that?\r\n"", ch);"
+docs/fidelity/depth/give.tsv	14	act.item.c:688-691	wrong	act.item.c:680-683	"act.item.c:682:       act(""You can't let go of $p!!  Yeech!"", FALSE, ch, obj, 0, TO_CHAR);"
+docs/fidelity/depth/give.tsv	17	act.item.c:730-732	wrong	act.item.c:738-741	"act.item.c:740:       send_to_char(""Heh heh heh ... we are jolly funny today, eh?\r\n"", ch);"
+docs/fidelity/depth/give.tsv	18	act.item.c:733-736	correct-as-is	act.item.c:733-736	act.item.c:734: perform_give_gold(struct char_data * ch, struct char_data * vict, int amount)
+docs/fidelity/depth/give.tsv	33	act.item.c:730-731	wrong	act.item.c:738-741	"act.item.c:740:       send_to_char(""Heh heh heh ... we are jolly funny today, eh?\r\n"", ch);"
+docs/fidelity/depth/hit.tsv	9	act.offensive.c:122-129	correct-as-is	act.offensive.c:122-129	act.offensive.c:126:           hit(ch, vict, TYPE_UNDEFINED);
+docs/fidelity/depth/hold.tsv	3	act.item.c:1685-1689	correct-as-is	act.item.c:1685-1689	act.item.c:1685: ACMD(do_grab)
+docs/fidelity/depth/idlist.tsv	5	constants.c:712-716	correct-as-is	constants.c:712-716	"constants.c:712:   ""Ident conning"","
+docs/fidelity/depth/info.tsv	4	act.informative.c:1568-1600	wrong	act.informative.c:1561-1562	"act.informative.c:1562:     send_to_char(""You have no feeling about the weather at all.\r\n"", ch);"
+docs/fidelity/depth/info.tsv	8	act.informative.c:1240-1265	wrong	act.informative.c:1229-1234	"act.informative.c:1234:     strcat(tmpbuf, ""are lightly clothed."");"
+docs/fidelity/depth/informative.tsv	37	act.informative.c:1751-1753	correct-as-is	act.informative.c:1751-1753	act.informative.c:1752:       if (d->original)
+docs/fidelity/depth/kuji.tsv	3	new_cmds.c:1559-1568	correct-as-is	new_cmds.c:1559-1568	"new_cmds.c:1567:       send_to_char(""You are too busy fighting to practice kuji-kiri!\r\n"", ch);"
+docs/fidelity/depth/kuji.tsv	3	new_cmds.c:1565-1568	correct-as-is	new_cmds.c:1565-1568	"new_cmds.c:1567:       send_to_char(""You are too busy fighting to practice kuji-kiri!\r\n"", ch);"
+docs/fidelity/depth/load.tsv	16	act.wizard.c:1286-1290	correct-as-is	act.wizard.c:1286-1290	act.wizard.c:1288:    if (!*buf || !*buf2 || (!isdigit(*buf2) && number==0) )  {
+docs/fidelity/depth/look.tsv	16	act.informative.c:954-957	wrong	act.informative.c:930-933	"act.informative.c:933:     send_to_char(""There's nothing inside that!\r\n"", ch);"
+docs/fidelity/depth/look.tsv	17	act.informative.c:959-960	wrong	act.informative.c:938-939	"act.informative.c:939:         send_to_char(""It is closed.\r\n"", ch);"
+docs/fidelity/depth/look.tsv	42	act.informative.c:635-638	correct-as-is	act.informative.c:635-638	act.informative.c:638:          ( IS_SET_AR(PRF_FLAGS(ch), PRF_HOLYLIGHT) &&
+docs/fidelity/depth/magic-materials.tsv	2	magic.c:486-491	correct-as-is	magic.c:486-491	magic.c:486:       return(mag_materials(ch,
+docs/fidelity/depth/magic-materials.tsv	3	magic.c:486-491	correct-as-is	magic.c:486-491	magic.c:486:       return(mag_materials(ch,
+docs/fidelity/depth/medit.tsv	3	olc.c:106-130	wrong	olc.c:141-145	"olc.c:143:       send_to_char (""Yikes!  Stop that, someone will get hurt!\r\n"", ch);"
+docs/fidelity/depth/medit.tsv	4	olc.c:132-144	wrong	olc.c:169-175	"olc.c:172:     send_to_char (""Sorry, there is no zone for that number!\r\n"", ch);"
+docs/fidelity/depth/mob-voice.tsv	7	fight.c:1129	correct-as-is	fight.c:1129	"fight.c:1129:        act(""You junk $p. It vanishes in a puff of smoke!"", FALSE, ch, obj, 0, TO_CHAR);"
+docs/fidelity/depth/mob-voice.tsv	11	graph.c:357	correct-as-is	graph.c:357	graph.c:357:         do_gen_comm(ch, msg, 0, SCMD_AUCTION);
+docs/fidelity/depth/mobprog.tsv	15	mobprog.c:250-266	correct-as-is	mobprog.c:250-266	mobprog.c:250:   } else if (GET_MOB_VNUM(mob)==13108) {
+docs/fidelity/depth/mobprog.tsv	27	mobact.c:593-604	wrong	mobprog.c:593-604	mobprog.c:594:         if (number(0, 1))
+docs/fidelity/depth/mount.tsv	17	follow.c:130-177	wrong	utils.c:463-476	utils.c:463: add_follower_quiet(struct char_data *ch, struct char_data *leader)
+docs/fidelity/depth/movement.tsv	11	act.movement.c:166-173	wrong	act.movement.c:172-177	"act.movement.c:176:       send_to_char(""You are too exhausted.\r\n"", ch);"
+docs/fidelity/depth/mudlog.tsv	80	file-edit.c:19-25	correct-as-is	file-edit.c:19-25	file-edit.c:22:   if (access(pathname, R_OK))
+docs/fidelity/depth/mudlog.tsv	80	file-edit.c:40	correct-as-is	file-edit.c:40	"file-edit.c:40:         sprintf(buf, ""SYSERR: Can't delete file '%s'."", storage);"
+docs/fidelity/depth/mudlog.tsv	103	db.c:385-392	correct-as-is	db.c:385-392	db.c:391:       reset_zone(i);
+docs/fidelity/depth/mudlog.tsv	103	db.c:385-392	correct-as-is	db.c:385-392	db.c:391:       reset_zone(i);
+docs/fidelity/depth/mudlog.tsv	103	zedit.c:431-437	correct-as-is	zedit.c:431-437	"zedit.c:435:         sprintf(buf, ""SYSERR: OLC: z_save_to_disk(): Unknown cmd '%c' - NOT saving"", ZCMD.command);"
+docs/fidelity/depth/new-cmds-gates.tsv	2	new_cmds.c:991-995	correct-as-is	new_cmds.c:991-995	new_cmds.c:991:   if (victim1 == ch || victim2 == ch)
+docs/fidelity/depth/new-cmds-gates.tsv	4	new_cmds.c:2270	correct-as-is	new_cmds.c:2270	new_cmds.c:2270: ACMD(do_scan)
+docs/fidelity/depth/object-magic.tsv	76	magic.c:1729	correct-as-is	magic.c:1729	magic.c:1729:       act(mag_summon_msgs[fmsg], FALSE, ch, 0, mob, TO_ROOM);
+docs/fidelity/depth/objsave-receptionist.tsv	6	objsave.c:1149-1153	correct-as-is	objsave.c:1149-1153	objsave.c:1149:   if (free_rent) {
+docs/fidelity/depth/objsave-receptionist.tsv	8	objsave.c:1149-1153	correct-as-is	objsave.c:1149-1153	objsave.c:1149:   if (free_rent) {
+docs/fidelity/depth/objsave-receptionist.tsv	11	objsave.c:1201-1208	correct-as-is	objsave.c:1201-1208	objsave.c:1199: SPECIAL(receptionist)
+docs/fidelity/depth/oedit.tsv	9	oedit.c:861-875	correct-as-is	oedit.c:861-875	oedit.c:866:   for (counter = 0; counter < NUM_ITEM_TYPES; counter++)
+docs/fidelity/depth/oedit.tsv	10	oedit.c:884-924	correct-as-is	oedit.c:884-924	oedit.c:879: oedit_disp_extra_menu(struct descriptor_data * d)
+docs/fidelity/depth/other.tsv	66	act.other.c:557-585	correct-as-is	act.other.c:557-585	act.other.c:557: ACMD(do_visible)
+docs/fidelity/depth/other.tsv	67	act.item.c:587-589	correct-as-is	act.item.c:587-589	act.item.c:592:     perform_drop_gold(ch, amount, mode, RDR);
+docs/fidelity/depth/other.tsv	83	act.other.c:394	correct-as-is	act.other.c:394	act.other.c:394:         (isname(obj_name, GET_EQ(vict, eq_pos)->name)) &&
+docs/fidelity/depth/page.tsv	18	act.comm.c:1082-1083	wrong	act.comm.c:1136-1137	"act.comm.c:1137:       send_to_char(""There is no such person in the game!\r\n"", ch);"
+docs/fidelity/depth/palm.tsv	6	act.item.c:317-329	correct-as-is	act.item.c:317-329	act.item.c:329:           perform_get_from_room(ch, obj, quiet);
+docs/fidelity/depth/pour.tsv	11	act.item.c:1210-1214	wrong	act.item.c:1218-1222	"act.item.c:1220:       act(""You can't fill something from $p."","
+docs/fidelity/depth/pour.tsv	12	act.item.c:1293-1297	correct-as-is	act.item.c:1293-1297	"act.item.c:1295:       sprintf(buf, ""You pour the %s into the %s."","
+docs/fidelity/depth/put.tsv	11	act.item.c:122-123	wrong	act.item.c:61-62	"act.item.c:62:       act(""$n puts $p in $P."", TRUE, ch, obj, cont, TO_ROOM);"
+docs/fidelity/depth/put.tsv	17	act.item.c:63-64	wrong	act.item.c:55-56	"act.item.c:56:     act(""$p won't fit in $P."", FALSE, ch, obj, cont, TO_CHAR);"
+docs/fidelity/depth/reload.tsv	7	help.c:1618-1661	wrong	db.c:1618-1649	db.c:1618: void load_help(FILE *fl)
+docs/fidelity/depth/remove.tsv	9	act.item.c:1716-1717	wrong	act.item.c:1719-1720	"act.item.c:1720:      act(""You can't remove $p, it must be CURSED!"", FALSE, ch, obj, 0, TO_CHAR);"
+docs/fidelity/depth/remove.tsv	10	act.item.c:1718-1719	wrong	act.item.c:1721-1722	"act.item.c:1722:     act(""$p: you can't carry that many items!"", FALSE, ch, obj, 0, TO_CHAR);"
+docs/fidelity/depth/review.tsv	6	new_cmds.c:1355-1357	correct-as-is	new_cmds.c:1355-1357	new_cmds.c:1357:   review[0].invis = GET_INVIS_LEV(speaker);
+docs/fidelity/depth/show.tsv	10	crash.c:290-321	wrong	objsave.c:275-288	"objsave.c:286:     sprintf(buf, ""%s has no rent file.\r\n"", name);"
+docs/fidelity/depth/show.tsv	33	shop.c:930-939	correct-as-is	shop.c:930-939	shop.c:936:     SHOP_ROOM(shop_nr, index) == real_room(1) )
+docs/fidelity/depth/shutdown.tsv	19	act.wizard.c:1864	correct-as-is	act.wizard.c:1864	"act.wizard.c:1864:   sprintf(buf1, ""$n has forced you to '%s'."", to_force);"
+docs/fidelity/depth/socials.tsv	9	interpreter.c:330-540	correct-as-is	interpreter.c:330-540	"interpreter.c:665:   /*  { ""rolleyes"" , POS_RESTING , do_action   , 0, 0 },*/"
+docs/fidelity/depth/socials.tsv	11	act.social.c:246	correct-as-is	act.social.c:246	"act.social.c:246:       sprintf(buf, ""Unknown social '%s' in social file"", next_soc);"
+docs/fidelity/depth/socials.tsv	11	act.social.c:246	correct-as-is	act.social.c:246	"act.social.c:246:       sprintf(buf, ""Unknown social '%s' in social file"", next_soc);"
+docs/fidelity/depth/spec-procs.tsv	323	utils.c:1170-1192	wrong	interpreter.c:1187-1190	interpreter.c:1187: void skip_spaces(char **string)
+docs/fidelity/depth/spec-procs.tsv	325	utils.c:1170-1192	wrong	interpreter.c:1187-1190	interpreter.c:1187: void skip_spaces(char **string)
+docs/fidelity/depth/spec-procs.tsv	351	act.social.c:1451-1455	wrong	act.social.c:126-130	act.social.c:129:     act(action->others_no_arg, action->hide, ch, 0, 0, TO_ROOM);
+docs/fidelity/depth/spec-procs.tsv	366	house.c:1844-1876	wrong	spec_procs2.c:1845-1868	spec_procs2.c:1846: is_owner(struct char_data *ch, int room_vnum)
+docs/fidelity/depth/spec-procs.tsv	373	house.c:1844-1876	wrong	spec_procs2.c:1845-1868	spec_procs2.c:1846: is_owner(struct char_data *ch, int room_vnum)
+docs/fidelity/depth/spec-procs.tsv	380	house.c:1844-1876	wrong	spec_procs2.c:1845-1868	spec_procs2.c:1846: is_owner(struct char_data *ch, int room_vnum)
+docs/fidelity/depth/spec-procs.tsv	421	act.comm.c:2392-2555	wrong	comm.c:2485-2536	comm.c:2485: void act(char *str, int hide_invisible, struct char_data *ch,
+docs/fidelity/depth/spec-procs.tsv	642	spec_procs3.c:456-461	correct-as-is	spec_procs3.c:456-461	spec_procs3.c:463:    if (cmd || obj->in_room <= 0)
+docs/fidelity/depth/spec-procs.tsv	647	spec_procs3.c:1250	correct-as-is	spec_procs3.c:1250	spec_procs3.c:1251:   if (!cmd)
+docs/fidelity/depth/spec-procs.tsv	648	spec_procs.c:803-806	correct-as-is	spec_procs.c:803-806	spec_procs.c:804:       if ((GET_ALIGNMENT(tch) < max_evil) &&
+docs/fidelity/depth/spec-procs.tsv	650	spec_procs.c:1532-1543	correct-as-is	spec_procs.c:1532-1543	spec_procs.c:1542:       cast_spell(ch, vict, NULL, SPELL_HARM);
+docs/fidelity/depth/spec-procs.tsv	650	spec_procs.c:1532-1543	correct-as-is	spec_procs.c:1532-1543	spec_procs.c:1542:       cast_spell(ch, vict, NULL, SPELL_HARM);
+docs/fidelity/depth/spec-procs.tsv	654	spec_procs3.c:130	wrong	spec_procs3.c:124-127	spec_procs3.c:124:      if (GET_GOLD(ch) < 2000) {
+docs/fidelity/depth/spec-procs.tsv	656	spec_procs3.c:284-289	wrong	spec_procs3.c:275-279	"spec_procs3.c:275:       sprintf (msg, ""%s You can buy up to %d point%s, at %d per point."","
+docs/fidelity/depth/spec-procs.tsv	656	spec_procs3.c:286	wrong	spec_procs3.c:275-279	"spec_procs3.c:275:       sprintf (msg, ""%s You can buy up to %d point%s, at %d per point."","
+docs/fidelity/depth/spec-procs.tsv	657	spec_procs3.c:292-296	wrong	spec_procs3.c:284-288	spec_procs3.c:284:       if (GET_GOLD(ch) < GET_LEVEL(ch)*400)
+docs/fidelity/depth/spec-procs.tsv	657	spec_procs3.c:294	wrong	spec_procs3.c:284-288	spec_procs3.c:284:       if (GET_GOLD(ch) < GET_LEVEL(ch)*400)
+docs/fidelity/depth/spec-procs.tsv	663	fight.c:2066-2069	wrong	fight.c:2030-2031	fight.c:2030:       if (MOB_FLAGGED(ch, MOB_SPEC) && GET_MOB_SPEC(ch) && !MOB_FLAGGED(ch, MOB_EXTRACT))
+docs/fidelity/depth/strike.tsv	2	new_cmds.c:1446-1448	wrong	new_cmds.c:1441-1444	"new_cmds.c:1442:     stc(""Yeah, right.\r\n"", ch);"
+docs/fidelity/depth/string.tsv	8	modify.c:636-641	correct-as-is	modify.c:636-641	"modify.c:637:         send_to_char(""That field is for monsters only.\n\r"", ch);"
+docs/fidelity/depth/string.tsv	12	modify.c:748-751	wrong	modify.c:742-745	"modify.c:744:          ""That field is undefined for objects.\n\r"", ch);"
+docs/fidelity/depth/summon.tsv	3	spell_parser.c:513	correct-as-is	spell_parser.c:513	spell_parser.c:513:       case SPELL_SUMMON:      MANUAL_SPELL(spell_summon); break;
+docs/fidelity/depth/summon.tsv	3	spell_parser.c:879-925	correct-as-is	spell_parser.c:879-925	spell_parser.c:905:   return (call_magic(ch, tch, tobj, spellnum, GET_LEVEL(ch), CAST_SPELL));
+docs/fidelity/depth/tedit.tsv	46	improved-edit.c:159	correct-as-is	improved-edit.c:159	"improved-edit.c:159:     write_to_output(d, ""String '%s' not found.\r\n"", s);"
+docs/fidelity/depth/tedit.tsv	46	improved-edit.c:347	correct-as-is	improved-edit.c:347	"improved-edit.c:347:       write_to_output(d, ""You must specify a line number before which to insert text.\r\n"");"
+docs/fidelity/depth/tedit.tsv	46	improved-edit.c:395	correct-as-is	improved-edit.c:395	"improved-edit.c:395:       write_to_output(d, ""You must specify a line number at which to change text.\r\n"");"
+docs/fidelity/depth/tedit.tsv	50	improved-edit.c:353-357	correct-as-is	improved-edit.c:353-357	"improved-edit.c:356:       write_to_output(d, ""Buffer is empty, nowhere to insert.\r\n"");"
+docs/fidelity/depth/tedit.tsv	50	improved-edit.c:356	correct-as-is	improved-edit.c:356	"improved-edit.c:356:       write_to_output(d, ""Buffer is empty, nowhere to insert.\r\n"");"
+docs/fidelity/depth/tiger.tsv	12	act.offensive.c:711-714	wrong	act.offensive.c:721-724	"act.offensive.c:723:       send_to_char(""Aren't we funny today...\r\n"", ch);"
+docs/fidelity/depth/use.tsv	28	spell_parser.c:558-577	correct-as-is	spell_parser.c:558-577	spell_parser.c:576:   if( equipd==WEAR_HOLD || (GET_OBJ_TYPE(obj) != ITEM_STAFF &&
+docs/fidelity/depth/wear.tsv	10	act.item.c:1636-1640	wrong	act.item.c:1459-1462	"act.item.c:1461:       act(""You can't wear $p there."", FALSE, ch, obj, 0, TO_CHAR);"
+docs/fidelity/depth/wield.tsv	4	act.item.c:1636-1640	wrong	act.item.c:1459-1462	"act.item.c:1461:       act(""You can't wear $p there."", FALSE, ch, obj, 0, TO_CHAR);"
+docs/fidelity/depth/wield.tsv	5	act.item.c:1427-1432	correct-as-is	act.item.c:1427-1432	act.item.c:1430:     ITEM_WEAR_WIELD, ITEM_WEAR_TAKE, ITEM_WEAR_TAKE, ITEM_WEAR_ABLEGS,
+docs/fidelity/depth/wizard.tsv	124	act.wizard.c:2008-2016	correct-as-is	act.wizard.c:2008-2016	act.wizard.c:2009:   for (d = descriptor_list; d; d = d->next)
+docs/fidelity/depth/wizard.tsv	209	act.wizard.c:2512-2612	correct-as-is	act.wizard.c:2512-2612	"act.wizard.c:2543:     { ""brief"",      LVL_GOD,    PC,     BINARY },  /* 0 */"
+docs/fidelity/depth/wizard.tsv	210	act.wizard.c:197-203	correct-as-is	act.wizard.c:197-203	act.wizard.c:199:     tmp = atoi(roomstr);
+docs/fidelity/depth/wizard.tsv	210	act.wizard.c:1742	correct-as-is	act.wizard.c:1742	act.wizard.c:1742:   if (!(num_to_dc = atoi(arg))) {
+docs/fidelity/depth/wizard.tsv	211	act.wizard.c:1022	correct-as-is	act.wizard.c:1022	act.wizard.c:1022:       if ((victim = get_player_vis(ch, buf2, 0)))

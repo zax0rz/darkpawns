@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_strike	strike	strike.no-skill	D1	command	oracle-green	mortal-batch4	new_cmds.c:1446-1448	An unlearned caller sees C's exact "Yeah, right." after the declaration-list number(1,101) draw (R1/R2/R3).
+do_strike	strike	strike.no-skill	D1	command	oracle-green	mortal-batch4	new_cmds.c:1441-1444	An unlearned caller sees C's exact "Yeah, right." after the declaration-list number(1,101) draw (R1/R2/R3).
 do_strike	strike	strike.no-target	D2	command	oracle-green-multiseed	strike-depth@1,2,3	new_cmds.c:1441-1456	A bare strike with no opponent is "Strike who?"; a named target that resolves to nobody is "They don't seem to be here."; both consume the shared percent draw.
 do_strike	strike	strike.self	D2	command	oracle-green-multiseed	strike-depth@1,2,3	new_cmds.c:1458-1462	The self target emits "You beat yourself about the face and neck." to the actor and the $n slaps $mself act to the room, then returns before damage() and WAIT_STATE.
 do_strike	strike	strike.mounted	D2	command	unit-green	TestCmdStrike_BlocksMountedBeforeRoll	new_cmds.c:1471-1474	The mount refusal precedes the roll and WAIT_STATE, so a resolvable target still sees only "Dismount first!".
