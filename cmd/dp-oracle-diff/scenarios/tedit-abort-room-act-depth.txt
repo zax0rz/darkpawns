@@ -8,7 +8,7 @@ empty-players
 quiet-mobs
 
 [setup:oracle]
-Teditactor
+Scribe
 Y
 oraclepass
 oraclepass
@@ -22,7 +22,7 @@ Y
 1
 
 [setup:port]
-Teditactor
+Scribe
 y
 oraclepass
 oraclepass
@@ -36,7 +36,7 @@ Y
 1
 
 [setup:oracle:watcher]
-Teditwatch
+Witness
 Y
 watchpass
 watchpass
@@ -50,7 +50,7 @@ Y
 1
 
 [setup:port:watcher]
-Teditwatch
+Witness
 y
 watchpass
 watchpass
@@ -64,9 +64,8 @@ Y
 1
 
 [warmup]
-set player Teditactor level 40
 goto 8105
-teleport Teditwatch 8105
+teleport Witness 8105
 
 [probe]
 luaedit mob dog
