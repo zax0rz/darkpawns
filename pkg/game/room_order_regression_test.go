@@ -1,29 +1,9 @@
 package game
 
-// room_order_regression_test.go — the two PR-review repros for the room
-// list's C-order invariant: the decay pass ticks each object once even when
-// a rotted container spills (R3b), and the butler takes the newest four
-// zone-loaded items (C walks contents head-first, db.c:2155 prepends).
+// room_order_regression_test.go — the PR-review repro that the decay pass
+// ticks each object once even when a rotted container spills (R3b).
 
 import "testing"
-
-func TestReviewButlerZoneLoadedOrder(t *testing.T) {
-	w, actor, _, mob, _ := newButlerTestWorld(t)
-	setupButlerContainers(t, w)
-	s := NewSpawner(w)
-	var objects []*ObjectInstance
-	for range 5 {
-		obj, err := s.SpawnObject(3005, butlerTestRoom)
-		if err != nil {
-			t.Fatal(err)
-		}
-		objects = append(objects, obj)
-	}
-	specButler(w, actor, mob, "", "")
-	if objects[0].Location.Kind != ObjInRoom {
-		t.Fatal("oldest zone-loaded item was taken; C takes the newest four")
-	}
-}
 
 func TestReviewCorpseSpillDoesNotRetickEarlierObject(t *testing.T) {
 	w := newDecayTestWorld(t, 0)

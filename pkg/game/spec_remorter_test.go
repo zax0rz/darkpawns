@@ -175,7 +175,7 @@ func TestRemorterRefusalCarriesCsLineEnding(t *testing.T) {
 	if !specRemorter(w, player, mob, "remort", "") {
 		t.Fatal("a dressed player should be refused by the equipment gate")
 	}
-	if got := output.String(); !strings.HasSuffix(got, "You must come unto me naked, wearing only thy old body.\r\n") {
+	if got := output.String(); got != "You must come unto me naked, wearing only thy old body.\r\n" {
 		t.Fatalf("remorter refusal = %q, want C's exact bytes ending in CRLF", got)
 	}
 }
