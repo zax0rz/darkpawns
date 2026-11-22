@@ -9,11 +9,11 @@ Earlier pieces this builds on:
 `docs/research/port-completion-survey-2026-11-05.md` (the inventory) and
 `docs/briefs/PLAN-2026-11-07-done-measurement-tooling.md` (the tools).
 
-## Where we are (2026-11-21)
+## Where we are (2026-11-21, evening)
 
-Measured at `origin/main` `c28a41e9d`. Sections 1 to 8 are the plan as
+Measured at `origin/main` `139d88b5f`. Sections 1 to 8 are the plan as
 written on 11-10 and settled on 11-11; this section is progress against it.
-It replaces the 11-19 status.
+It replaces the morning's 11-21 status.
 
 **Phases 0 to 2 are done. Phase 3 is under way:** the test audit is running,
 the mutation sweep is under way, and random play waits on the play lab.
@@ -21,93 +21,78 @@ the mutation sweep is under way, and random play waits on the play lab.
 | List | Frozen 11-11 | Open now | What's left |
 |---|---|---|---|
 | L1. Uncovered C sites | 739 | **0 known** | a fresh strict recount on a new full dump, to confirm 0 |
-| L2. Known divergences | 58 | 0 of the frozen 58; 3 open since | DP-1610 (waits on a ruling), DP-1622 (typed `$`), DP-1623 (warmup race) |
-| L3. Blocked proof units | 62 | shop rows excluded under R1a | Zach rules on the rest once L1 and L2 settle |
-| L4. Harness blind spots | 11 | 0 open | DP-1592 and DP-1618 are done; R1b now requires exact-shape masks (DP-1620) |
-| L5. Duplicate and invented code | 5 | 0 | the ban fallbacks went in DP-1619 |
+| L2. Known divergences | 58 | **0** | none open; DP-1610 is an approved divergence |
+| L3. Blocked proof units | 62 | shop rows excluded under R1a | Zach rules on the rest once the L1 recount settles |
+| L4. Harness blind spots | 11 | 0 open | none |
+| L5. Duplicate and invented code | 5 | 0 | none |
 | L6. Unverified research claims | 14 | 14 | not part of the stopping rule |
 
-**L1.** GLM's strict recount on 11-20 (`docs/research/l1-strict-recount-2026-11-20.md`)
-left 16 open rows plus one unit-unqualified. All are now settled:
-- **The `date` line** (`act.wizard.c:1818`): witnessed once the census
-  stopped dropping it (DP-1620, #2955).
-- **The two ident states** (`constants.c:712`, `:714`): settled by Zach's
-  DP-1605 ruling.
-- **"Asking name"** (`constants.c:716`): unreachable, because the ident
-  sweep runs before commands in the same pass.
-- **"Disconnecting"** (`constants.c:691`): excluded, ruled by Zach 11-21
-  (#2966).
-- **The 12 dice and setup rows** (rescue failure, five loot quips, "You land
-  on your feet!", "screams in pain", race-hate): witnessed C-first, with
-  retained census evidence (#2979).
+**L1** stays at "0 known". GLM's 11-20 strict recount left 17 rows, and all
+are settled (witnessed, ruled, unreachable or excluded; details in the
+11-21 morning status, `1f6911ffc`). A recount can surface rows nobody
+listed, so L1 counts as 0 only after a fresh strict recount on a full dump.
+The nightly census provides the dump.
 
-A recount can surface rows nobody listed, so L1 counts as 0 only after a
-fresh strict recount. The nightly census provides the dump.
+**L2 is at zero.** All three items open this morning are closed:
+- **DP-1610**, clanless `clan quit` (C writes out of bounds): Zach ruled to
+  keep Go's behavior as an approved divergence.
+- **DP-1622**, typed `$` reaching `act()` in the remaining commands: fixed
+  by mirroring C's input `$`-doubling (#2983).
+- **DP-1623**, the Go warmup race under load: a harness wait bug, not a game
+  bug. Setup now waits for C's prompt (#2985, PF-162).
 
-**L2.** Fixed since 11-19:
-- the map-order loops (DP-1589) and the last two specials (DP-1584);
-- `date_record` persistence (DP-1603);
-- load narration through `act()` (#2924);
-- `asctime`'s day padding in `date`, `uptime` and mail (#2927);
-- room text sent raw where C uses `act()`, plus typed `$` in echo, think
-  and emote (DP-1621).
-
-Three are open:
-- **DP-1610**, clanless `clan quit`: C writes out of bounds. It waits on an
-  R1a ruling.
-- **DP-1622**, typed `$` reaching `act()` in the remaining commands. Kimi
-  has it next.
-- **DP-1623**, a new Go warmup race under load, possibly from DP-1621.
-  Neon has it.
-
-**The census itself.** Two normalizer blind spots hid real Go bugs:
-trailing spaces (PF-122) and asctime's day padding (PF-151). The masks now
-match C's exact shapes (#2955, #2976), and R1b says so (8f75ac8b8).
-
-The census also runs **nightly at 02:30 on main** (`~/bin/dp-nightly-census.sh`,
-results to Discord). Main can no longer drift unnoticed between releases.
+**The census itself.** Under heavy load, Go's SQLite saves could stall long
+enough to make scenarios fail for reasons that weren't fidelity. The Go
+server in the census now writes with `synchronous = NORMAL` (#2996, PF-163),
+set on every database connection (#2997). Production keeps SQLite's default.
+The census still runs **nightly at 02:30 on main**
+(`~/bin/dp-nightly-census.sh`, results to Discord). Tonight's run is the
+first with these changes.
 
 **The four numbers.**
 
 | # | Number | Now | Measured on |
 |---|---|---|---|
-| 1 | Bytes | 0 real FAIL | combined census `2026-11-21/dp-1620-statsline` at `b928d5788`: NOT_CLEAN, with every non-PASS row explained. One timing flake; two DP-1623 warmup refusals; the rest passed on recheck |
+| 1 | Bytes | 0 real FAIL | combined census `2026-11-21/dp-1620-statsline` at `b928d5788`: NOT_CLEAN, with every non-PASS row explained. The two warmup refusals in it were DP-1623, now fixed |
 | 2 | Behavior | 0 draw divergence | the same run, with `--draw-parity` |
 | 3 | Reach | not remeasured | waits on the fresh L1 recount |
-| 4 | Sensitivity | **64.3%** (corrected lower bound 51.7%) | mutation loop Round 3, 63 of 98 killed (PF-149). Round 2 was 64.9%. The bar is a corrected lower bound of 80% (90 of 100 at z = 2.50, 4 looks; 3 used) |
+| 4 | Sensitivity | **64.3%** (corrected lower bound 51.7%) | mutation loop Round 3, 63 of 98 killed (PF-149). The bar is a corrected lower bound of 80% (90 of 100 at z = 2.50, 4 looks; 3 used) |
 
-**Sensitivity is the long pole.** Rounds 2 and 3 stayed flat because each
-round draws fresh functions, while repairs fix only the drawn rows. So the
-score measures the pool's coverage. On 11-21 Zach chose to mutate **every**
-literal in the Round 4 pool and repair the survivors before the last
-measured round. That pass isn't a measurement, so it uses no look. Round 3's
-repairs are merged (#2973-#2975, #2977, #2978, #2982).
+**Sensitivity is still the long pole.** The whole-pool sweep mutates every
+literal in the Round 4 pool in 13 batches, each a full census on a mutated
+commit. It isn't a measurement, so it uses no look. Batches 03, 05, 08 and 09
+are running, each about a third done. The other nine died or were cancelled,
+and will rerun one at a time. Running four at once starves memory: alone, a
+full combined census takes about 2.3 hours.
 
 **Test audit.**
 
 | Package | Audited | Note |
 |---|---|---|
 | `pkg/command` | 173 of 173 | done |
-| `pkg/session` | 145 of 1,537 | pre-oracle layer done |
-| `pkg/game` | 738 of 1,991 | pre-oracle done; post-oracle redo through T738 |
+| `pkg/session` | 1,045 of 1,537 | Kimi, batches 1 to 12; Neon has the last 492 (batches 13 to 17) and the summary |
+| `pkg/game` | 1,038 of 1,991 | Luna; post-oracle redo continuing |
 
-GLM's first post-oracle run was a template, not an audit: 900 identical rows
-(PF-157). It was closed and redone. Authorship follows commit trailers:
-OpenClaw wrote under three identities (PF-152, PF-153), and Zach's own git
-name never means a human author.
+Two cautions from today. A logged mutation proof in `pkg/game` didn't
+reproduce on rerun; the test was missing the exact-boundary case, and the
+record was corrected (#2987, PF-164). And every post-oracle `pkg/session`
+row so far is R, against a prediction of about 5% weak tests, so the
+remaining batches are briefed to check each test against the production
+path it claims to guard.
 
 **Random play** waits on DeepSeek's play lab (about 11-25). Its logging is
 being designed to double as decision-model training data.
 
 **What's left, in order:**
 
-1. **The fresh strict L1 recount** on the first nightly dump, then the
-   non-shop L3 rows it turns up, then Zach's L3 rulings.
-2. **L2:** a ruling on DP-1610; fixes for DP-1622 and DP-1623.
-3. **Sensitivity:** the whole-pool sweep and its repairs, then Round 4.
-   It may still fall short. If it does, the report gives the measured rate.
-4. **The test audit:** the rest of `pkg/session` and `pkg/game`.
-5. **Phase 3:** 24 hours of random play, then the release census with
+1. **The fresh strict L1 recount** on a nightly dump, then the non-shop L3
+   rows it turns up, then Zach's L3 rulings.
+2. **Sensitivity:** finish the whole-pool sweep and its repairs, then
+   Round 4. It may still fall short. If it does, the report gives the
+   measured rate.
+3. **The test audit:** the rest of `pkg/session` (Neon) and `pkg/game`
+   (Luna).
+4. **Phase 3:** 24 hours of random play, then the release census with
    `--combined --release --draw-parity` on the tagged commit.
 
 ## 1. What "done" means
