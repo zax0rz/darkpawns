@@ -403,4 +403,28 @@ TestRunSpecialsRoomPrecedesMob (room special's consume suppressed), T880
 TestPerformDupeCheckWithoutLiveCopy (no-live-copy guard inverted), T890
 TestConnectedIdleDisconnectClosesSession (sendClosed flag not set on close).
 All three went red and were restored byte for byte (mutations.tsv).
+## Batch 12 results (later tests 801–900, 2026-10)
+
+Marks: R 100, F 0, C 0, D 0. Ledger T990-T1089.
+
+The R5f entry-flow matrix suites (name gate with the aIkO regression probe,
+deleted-record lifecycle, password/world/restore matrices), switch
+lifecycle/readers/gates, heartbeat output framing, zone occupancy, idle rent.
+No fixes, no J10 divergences. Running: 1045/1537.
+
+### Ledger update (2026-11-21, review hold follow-up)
+
+Per-row evidence: every T946–T1045 row's evidence cell now names what was
+checked for that test — the deleted-record replacement lifecycle, the name
+gate matrix (validation, capitalization, descriptor ownership, the R5f
+saved-lookup ordering), the password accounting byte views, the reroll draw
+stream (db.c:3038-3048), the switch ownership/readers/lifecycle invariants,
+the zone-occupancy rules, and the heartbeat output staging barriers. Test
+file/line columns are backfilled.
+
+All-R spot-checks (random draw, seed 20261112, from T946–T1045): T972
+TestEntryCreationChoiceMatrix (class rejection prompt reworded), T1010
+TestSwitchLinkdeadLevelGate (linkdead refusal reworded), T994
+TestEntryStatsRerollMatrix (invalid stats input made to reroll). All three
+went red and were restored byte for byte (mutations.tsv).
 

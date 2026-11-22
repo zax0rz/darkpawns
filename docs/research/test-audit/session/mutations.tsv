@@ -27,3 +27,6 @@ TestMeditScriptShallowBehavior	pkg/session/medit.go	922	n/a (R spot-check)	shall
 TestRunSpecialsRoomPrecedesMob	pkg/session/commands.go	1342	n/a (R spot-check)	room special's TRUE-consume suppressed (room and mob specials both ran)	red (specials called [room:look mob:look], want only the room special)	yes
 TestPerformDupeCheckWithoutLiveCopy	pkg/session/reconnect.go	44	n/a (R spot-check)	no-live-copy guard made to return true	red (performDupeCheck reconnected with nothing to reconnect to)	yes
 TestConnectedIdleDisconnectClosesSession	pkg/session/session_player.go	138	n/a (R spot-check)	closeSendNow closes the channel without setting sendClosed	red (SendClosed false after idle-disconnect teardown)	yes
+TestEntryStatsRerollMatrix	pkg/session/char_creation.go	369	n/a (R spot-check)	invalid stats input rerolled instead of re-prompting	red (invalid changed state: stats rerolled)	yes
+TestEntryCreationChoiceMatrix	pkg/session/char_creation.go	323	n/a (R spot-check)	class rejection prompt "That's not a class." reworded	red (class gate prompt mismatch)	yes
+TestSwitchLinkdeadLevelGate	pkg/session/wiz_player.go	129	n/a (R spot-check)	linkdead refusal "You aren't holy enough to use a mortal's body." reworded	red (linkdead level refusal mismatch)	yes
