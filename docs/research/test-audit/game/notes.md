@@ -829,3 +829,66 @@ expected-divergences`, and `make function-index`. The first fidelity-depth run
 identified the stale T1192 manifest reference; the manifest update was followed
 by a clean rerun. `make expected-divergences` exited 0 with its existing
 unresolved-proof notices.
+
+## Batch 20 preregistered estimate (before reading tests T1239–T1288)
+
+The prior working forecast after T1188 was R739/F16/C18/D30 across 803 tests.
+Subtracting batch 19's actual R40/F8/C1/D1 leaves a forecast remainder of
+R699/F8/C17/D29 across 753 tests. For this next 50-test slice I expect
+R46/F2/C1/D1, with all 50 introduced after the 2026-07-12 oracle date.
+
+The roster is the next 50 unledgered names in inventory order after T1238.
+Fourteen previously audited names encountered in this inventory span were
+skipped (T191, T192–T195, T456, T462–T465, T476, and T482–T484). The selected
+names span inventory lines 1292–1355:
+
+- `TestRawKillDeathCryPrecedesCorpse`
+- `TestRawKillDisintegrateDispatchesDust`
+- `TestRawKillLuaBinding`
+- `TestRawKillProtectionBackfire`
+- `TestRawKillRaceDust`
+- `TestRawKillRemovesTattoo`
+- `TestRawKillTeardownOrder`
+- `TestRawKillUndeadAndVampireDispatchDust`
+- `TestRawKillVampireManaClamp`
+- `TestReadDisposableMobRollsReadMobileDraws`
+- `TestReadDisposableObjectRollsRareVariance`
+- `TestReadMudDateCorruptRecordKeepsComputedCalendar`
+- `TestReadMudDateMissingRecordKeepsComputedCalendar`
+- `TestReadMudDateRecordOverridesCalendar`
+- `TestReadMudDateSkippedWhenFixedTimePinned`
+- `TestRealLevel`
+- `TestRecallUnmountsBeforeTransferAndLeavesMountBehind`
+- `TestRecruiterDirectTellUsesTellDeliveryGates`
+- `TestReditWorldPublicationConcurrentSnapshots`
+- `TestRefreshLiveObjInstancesDiscardsLiveExtraDescs`
+- `TestRegenActiveSpellFlags`
+- `TestRegisteredObjectsHaveUniqueIDs`
+- `TestRemorterClassMatchesCMapping`
+- `TestRemorterRefusalCarriesCsLineEnding`
+- `TestRemoveAffectBitRetainsTimedRecordWithoutRestoringBit`
+- `TestRemoveSetsCrashFlag`
+- `TestRenderSkillListImmortalCatalogAndOverflow`
+- `TestRenderSkillListManaColumn`
+- `TestRenderSkillListMappedSkills`
+- `TestRenderSkillListNinjaLearnedArts`
+- `TestRenderSkillListPracticeHeader`
+- `TestRentOutDropsHeldLightOnce`
+- `TestRenumConvertsLegacyRemoveToObject`
+- `TestRenumDisablesInvalidCommandsAndTheirDependents`
+- `TestReplacingShopPreservesRuntimeBank`
+- `TestReplayCrashLoadBadStatsBleedingLineIsRedAtSparseColor`
+- `TestReplayCrashLoadBadStatsFiresPerEquippedItem`
+- `TestReplayCrashLoadBadStatsHoldsRoomAtNowhere`
+- `TestReplayCrashLoadBadStatsLethalConLossDraw`
+- `TestReplayCrashLoadBadStatsLethalConLossSecondDraw`
+- `TestReplayCrashLoadBadStatsLethalExpLossClamp`
+- `TestReplayCrashLoadBadStatsLethalStopsAtRawKill`
+- `TestReplayEquipmentBadStatsFiresPerWornItem`
+- `TestResolveCharInRoomUsesAuthoredKeywords`
+- `TestResolvePlayerWorldRefusesInvisible`
+- `TestRestartDoesNotRestoreLegacyWorldSnapshot`
+- `TestRestoreSkillsMigratesCatalogNames`
+- `TestReviewButlerZoneLoadedOrder`
+- `TestReviewCannotShowPreRestartGossip`
+- `TestReviewCorpseSpillDoesNotRetickEarlierObject`
