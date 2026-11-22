@@ -21,3 +21,6 @@ TestRuffleRegistrationUsesCEntryGate	pkg/session/command_gates.tsv	336	n/a (R sp
 TestZresetZoneIndexUsesCZoneTablePosition	pkg/session/wiz_zone.go	79	n/a (R spot-check)	zresetZoneIndex return i -> i + 1	red (first zone index 1, want 0)	yes
 TestCmdTitlePreservesDoubledDollarAndStripsANSIMarkers	pkg/session/informative_cmds.go	31	n/a (R spot-check)	cmdTitle gained a $$ -> $ collapse	red (title "rthe Re$d Knight", want "rthe Re$$d Knight")	yes
 TestStrokeRegistrationUsesCEntryGateAndRecord	pkg/session/command_gates.tsv	414	n/a (R spot-check)	stroke gate row position 5 -> 4	red (stroke gate level 0 position 4, want 5)	yes
+TestOeditNoZoneSaveGate	pkg/session/oedit.go	206	n/a (R spot-check)	zone-save banner "Saving all objects in zone.\r\n" dropped its period	red (banner mismatch)	yes
+TestStringDeleteUnwrittenExtraDescReportsNoField	pkg/session/string_cmd.go	388	n/a (R spot-check)	delete refused only on index<0, dropping the NullDescription check (modify.c:718 NULL-description semantics)	red (unwritten delete answered "Field deleted.", want the no-field message)	yes
+TestMeditScriptShallowBehavior	pkg/session/medit.go	922	n/a (R spot-check)	shallow script-name write-through to the live prototype suppressed (_ = name)	red (shallow script name not live)	yes
