@@ -1160,21 +1160,20 @@ func TestMobileActivityCharmedHelperAssistReturnsFromPulse(t *testing.T) {
 	}
 }
 
-func TestMobileActivityDivineAngelsStayOutOfCombat(t *testing.T) {
+func TestMobileActivityAlignmentOnlyMobDoesNotAttack(t *testing.T) {
 	w, ce := newMobactTestWorld(t)
 	master := newMobactSpeakingPlayer(t, w, "Master")
 	victim := newMobactSpeakingPlayer(t, w, "Victim")
 	victim.Alignment = -1000
 	observer := newMobactSpeakingPlayer(t, w, "Observer")
-	for _, vnum := range []int{85, 86} {
-		alignment := "aggr_evil"
-		if vnum == 86 {
-			alignment = "aggr_good"
-		}
-		angel := newMobactTestMob(w, vnum, 1, 0, alignment, "helper", "sentinel")
-		angel.Proto().ShortDesc = "a Dominion Angel"
-		angel.SetAffected(affCharm)
-		angel.SetFollowing(master.Name)
+	for _, tc := range []struct {
+		vnum int
+		flag string
+	}{{85, "aggr_evil"}, {86, "aggr_good"}} {
+		mob := newMobactTestMob(w, tc.vnum, 1, 0, tc.flag, "helper", "sentinel")
+		mob.Proto().ShortDesc = "a Dominion Angel"
+		mob.SetAffected(affCharm)
+		mob.SetFollowing(master.Name)
 	}
 
 	out := captureOutput(w)
@@ -1182,26 +1181,13 @@ func TestMobileActivityDivineAngelsStayOutOfCombat(t *testing.T) {
 	w.MobileActivity()
 
 	if len(ce.starts) != 0 {
-		t.Fatalf("alignment-only divine angels started combat: %+v", ce.starts)
+		t.Fatalf("alignment-only mobs started combat: %+v", ce.starts)
 	}
 	if got := outputOf(out, observer.Name); got != "" {
-		t.Fatalf("observer saw angel combat = %q, want no attack or assist", got)
+		t.Fatalf("observer saw alignment-only combat = %q, want no attack or assist", got)
 	}
 	if victim.GetFightingBody() != nil {
 		t.Fatalf("victim fighting = %v, want nil", victim.GetFightingBody())
-	}
-}
-
-func TestMobileActivityAlignmentOnlyMobDoesNotAttack(t *testing.T) {
-	w, ce := newMobactTestWorld(t)
-	newMobactTestMob(w, 85, 1, 0, "aggr_evil", "sentinel")
-	victim := newMobactTestPlayer(w, "EvilVictim")
-	victim.Alignment = -1000
-
-	w.mobileActivityForMob(w.activeMobs[1])
-
-	if len(ce.starts) != 0 {
-		t.Fatalf("alignment-only mob started combat: %+v", ce.starts)
 	}
 }
 

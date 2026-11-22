@@ -313,25 +313,3 @@ func TestPlayer_HitModifiers(t *testing.T) {
 		t.Fatalf("blessed weapon reported blessed = false, want true")
 	}
 }
-
-func TestMobInstance_HitModifiers(t *testing.T) {
-	mob := &MobInstance{
-		Equipment: make(map[int]*ObjectInstance),
-	}
-	mods := mob.HitModifiers()
-	if mods.WeaponBlessed {
-		t.Fatalf("unarmed mob HitModifiers.WeaponBlessed = true, want false")
-	}
-
-	blessedWeapon := &ObjectInstance{
-		Prototype: &parser.Obj{
-			TypeFlag:   ITEM_WEAPON,
-			ExtraFlags: [4]int{1 << itemExtraBless, 0, 0, 0},
-		},
-	}
-	mob.Equipment[mobWearWield] = blessedWeapon
-	mods = mob.HitModifiers()
-	if !mods.WeaponBlessed {
-		t.Fatalf("armed mob with blessed weapon HitModifiers.WeaponBlessed = false, want true")
-	}
-}

@@ -48,6 +48,11 @@ func TestMobileEquipmentReaderCombatWeapon(t *testing.T) {
 }
 
 func TestMobileEquipmentReaderHitModifiers(t *testing.T) {
+	unarmed := &MobInstance{Equipment: make(map[int]*ObjectInstance)}
+	if unarmed.HitModifiers().WeaponBlessed {
+		t.Fatal("unarmed mob HitModifiers.WeaponBlessed = true, want false")
+	}
+
 	_, m, _ := zoneArmedMob(t)
 	if !m.HitModifiers().WeaponBlessed {
 		t.Fatal("HitModifiers missed C WEAR_WIELD weapon")
@@ -106,10 +111,18 @@ func TestMobileEquipmentReaderArmor(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	var equipped int
 	for _, mob := range w.GetMobsInRoom(100) {
-		if mob != m && mob.GetAC() != 70 {
+		if mob == m {
+			continue
+		}
+		equipped++
+		if mob.GetAC() != 70 {
 			t.Fatalf("mobile body armor AC=%d want 70", mob.GetAC())
 		}
+	}
+	if equipped != 1 {
+		t.Fatalf("reset spawned %d additional equipped mobiles, want 1", equipped)
 	}
 }
 
