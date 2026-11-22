@@ -635,3 +635,7 @@ T1097 (`TestMudDateRecordHasNoTrailingNewlineLikeC`) is C/J4 and folds into `Tes
 All seven non-R tests were introduced by Zach Greene with no `Co-Authored-By` trailer, so PF-152/PF-153 attribution is **unknown**: T1097, T1109, T1113, T1117, T1118, T1132, and T1137. No C disagreement was found. The selected C references and test comments were checked against `src/`; changes are test and audit documentation only, so no census was required.
 
 `GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` rose from 64.6% before the batch to 64.7% after it; the DoWrite gate test now reaches additional production statements. All 11 repository gates passed individually. No census was required because the changes are tests and audit documentation only.
+
+## Batch 18 preregistered estimate (before reading tests T1139–T1188)
+
+The forecast remainder after T1088 was R831/F18/C20/D34 across 903 rows. Batch 17’s preregistered slice was R46/F1/C1/D2; subtracting that forecast leaves R785/F17/C19/D32 over 853 tests. For this next 50-test batch I expect R46/F1/C1/D2, with all 50 post-oracle and weak marks more likely among older introductions.
