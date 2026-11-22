@@ -2498,3 +2498,21 @@ T001–T2038 contains 2,038 ledger rows and 1,966 unique frozen-inventory names.
 - TestZzzCanaryTwo
 
 Before reading these tests, my estimate is **R22 / F2 / C1 / D0**, expected in the post-oracle segment.
+
+## Batch 36 actuals (T2039–T2063)
+
+The preregistered estimate was R22/F2/C1/D0. Actual marks are **R22/F0/C2/D1**, all post-oracle (variance R0/F−2/C+1/D+1). The two J4 folds are T2039 TestZoneResetGPrependsToMobInventory, covered by T2037 TestZoneResetGiveGlobalCapAndConditionalFailure, and T2057 TestZoneResetRemoveFindsAnyObjectInRoom, covered by T2051 TestZoneResetObjectRemovalExtractsAllContents. The latter removes a newer world-created room object, recursively extracts its contents, and runs the conditional successor. Before deletion, git grep -n <TestName> docs/fidelity cmd/dp-oracle-diff found the two live wizard.tsv proof rows; both now name only surviving tests. There were no live references to T2063 TestZzzCanaryTwo, whose body only logs a constant and protects no behavior. The frozen inventory remains unchanged.
+
+T2061 carries J2 for its immediate local command copy compared with the same snapshot field. Its concurrent reset/editor workload still has independent final assertions for the object cap and canonical equipped ownership. No F row or regression-claiming D row was found, so no mutation rows were added; mutations.tsv remains at 177 data rows. No C disagreement was found. Changes are test and fidelity-inventory edits only, so no oracle census was needed.
+
+Coverage remained **64.8% before and after** (GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game). GOEXPERIMENT=nojsonv2 go test ./pkg/game/... and the full GOEXPERIMENT=nojsonv2 go test ./... both passed. All eleven gates passed separately: make fmt; GOEXPERIMENT=nojsonv2 go build ./...; GOEXPERIMENT=nojsonv2 go vet ./...; full Go tests; CI's golangci-lint v2.15.0 (0 issues); make modernize-check (clean); make deadcode-ratchet (35 baselined, 0 new); make string-census (ratchet clean, 9 known and 0 unreviewed; generated reports remain stale and four old baseline entries are obsolete); make fidelity-depth (8,282 cases, 7,968 proven/delegated, 1 blocked, 297 excluded, 16 approved-divergent); make expected-divergences-check (exit 0 with existing unresolved selectors); and make function-index-check (the fake association was rejected as expected, then the ratchet was clean).
+
+## pkg/game audit summary (T001–T2063)
+
+The frozen inventory has **1,991 test functions**, represented by **2,063 ledger rows** because some table-driven functions have separately adjudicated subtest rows. At function level, marks are **R 1,788 / F 155 / C 37 / D 11**. At ledger-row level, marks are R 1,860 / F 155 / C 37 / D 11; the extra 72 rows are additional R subcases. Overlapping junk annotations total J3=137, J4=38, J7=27, J9=15, J2=11, J5=6, J1=5, J10=4, and J8=3.
+
+For function-level totals, any F/C/D subrow determines that function's mark; a function with only R subrows counts as R. Junk totals count annotations on ledger rows and can overlap.
+
+The opening forecast was R1,802/F120/C32/D37 across the 1,991 functions. Actual function-level results were R1,788/F155/C37/D11: 14 fewer R, 35 more F, 5 more C, and 26 fewer D than forecast. For the date split, 338 pre-oracle functions (390 ledger rows) classify as R327/F7/C3/D1; 1,653 later functions (1,673 rows) classify as R1,461/F148/C34/D10. Functions with any non-R row are 11/338 (3.3%) pre-oracle and 192/1,653 (11.6%) later. This time split is descriptive, not evidence that oracle access caused the difference: the eras also differ in auditors, test style, and coverage.
+
+Among F rows, introduction-author attribution is unknown for 132, DeepSeek for 10, OpenClaw for 8, Claude Opus 5.5 for 4, and Luna for 1. Among C/D rows it is unknown for 40, OpenClaw for 5, DeepSeek for 1, Claude Opus 5.5 for 1, and Cline for 1. These labels follow the introducing commit identity and trailers under PF-152/PF-153, not branch names.

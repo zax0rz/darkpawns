@@ -74,29 +74,3 @@ func TestRenumDisablesInvalidCommandsAndTheirDependents(t *testing.T) {
 		t.Fatalf("valid O loaded %d objects, want 1", got)
 	}
 }
-
-// reset_zone's R searches the whole room (get_obj_in_list_num over
-// world[room].contents), so it removes an object a player dropped, not only
-// one the spawner placed (db.c:2220-2226).
-func TestZoneResetRemoveFindsAnyObjectInRoom(t *testing.T) {
-	world, zone := newRenumWorld(t, []parser.ZoneCommand{{Command: "R", Arg1: 100, Arg2: 200, Arg3: -1}})
-	dropped, err := world.SpawnObject(200, 100)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := world.MoveObjectToRoom(dropped, 100); err != nil {
-		t.Fatal(err)
-	}
-	spawner := NewSpawner(world)
-	spawner.world.zoneResetMu.Lock()
-	err = spawner.executeZoneResetLocked(zone)
-	spawner.world.zoneResetMu.Unlock()
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, obj := range world.GetItemsInRoom(100) {
-		if obj.VNum == 200 {
-			t.Fatal("R left the dropped object in the room")
-		}
-	}
-}
