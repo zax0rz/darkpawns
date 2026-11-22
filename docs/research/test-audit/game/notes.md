@@ -892,3 +892,65 @@ names span inventory lines 1292–1355:
 - `TestReviewButlerZoneLoadedOrder`
 - `TestReviewCannotShowPreRestartGossip`
 - `TestReviewCorpseSpillDoesNotRetickEarlierObject`
+
+## Post-oracle redo, batch 20 (T1239–T1288)
+
+Marks: **R 45 / F 3 / C 2 / D 0.** Junk: J3 3, J4 2, J7 1. All 50
+introducing commits are after 2026-07-12, matching the batch forecast.
+
+The preregistered batch estimate was R46/F2/C1/D1. Actuals were R45/F3/C2/D0:
+one fewer R, one more F, one more C, and one fewer D than predicted. The
+remaining forecast moves from R699/F8/C17/D29 over 753 tests to
+R654/F5/C15/D29 over 703.
+
+**F repairs and mutation proofs:**
+
+- `TestReadDisposableObjectRollsRareVariance` (J3): seed 3 rolled 29, so the
+  old body never reached C's conditional sign draw. Added a hit seed 5 (roll
+  14) alongside the miss case. Omitting the sign draw kept the old test green
+  and made the repaired test red.
+- `TestReditWorldPublicationConcurrentSnapshots` (J3): the old concurrent
+  readers checked only room VNUM/order while writers changed room names and
+  other fields. Readers now inspect changed names and compare the final
+  lock-free room with the locked snapshot. Mutating a published room name in
+  place kept the old body green under `-race` and made the repaired body red
+  with a data race.
+- `TestRemorterRefusalCarriesCsLineEnding` (J3): `HasSuffix` accepted extra
+  bytes before C's single refusal line. Exact output equality now pins the
+  complete write. A prefixed extra send kept the old test green and made the
+  repaired test red.
+
+**C folds:** T1246 `TestRawKillUndeadAndVampireDispatchDust` was deleted as a
+subset of `TestRawKillRaceDust`, which also checks carried/worn scatter and
+output. T1286 `TestReviewButlerZoneLoadedOrder` was deleted as a duplicate of
+`TestSpecButler_CanGetPredicateAndFourItemCap/four item cap`. The corpse-spill
+decay regression remains.
+
+Attribution of the five weak tests: four `unknown` (Zach-authored without a
+model trailer) and one DeepSeek. The J7 row is `TestReadMudDateSkippedWhenFixedTimePinned`: it protects the Go `DP_FIXED_TIME` harness seam,
+which has no C counterpart. No expected value disagreed with C. C paths and
+line ranges cited in the reviewed test files were checked; the stale mud-date
+comment range `src/comm.c:2624-2638` was corrected to the file's final line,
+2637. This batch changes tests, research ledgers and notes only, so no census
+was needed.
+
+Batch 20 verification: `make fmt`, `GOEXPERIMENT=nojsonv2 go build ./...`,
+`go vet ./...`, `go test ./...`, `golangci-lint run ./...`,
+`make modernize-check`, `make deadcode-ratchet`, `make string-census`,
+`make fidelity-depth`, `make expected-divergences`, and `make function-index`
+all exited successfully, each run separately. `make fidelity-depth` initially
+reported the deleted duplicate as a missing unit-test symbol; the corpse depth
+row now names the retained `TestRawKillRaceDust`, and the rerun passed.
+`make function-index-check` also passed after restoring generated index churn.
+The `pkg/game` coverage report is 64.6%. `make expected-divergences` exited 0
+with its existing unresolved-proof notices. All new ledger citations and
+selected-test C comment ranges resolve to source lines. No census was needed.
+
+Call-order clarification for T1255: C `spell_recall` transfers the player with
+`char_to_room` and then unmounts. Go clears mounted state before
+`PlayerTransfer` because that API follows mounted bodies. The test asserts the
+C-equivalent final placement/affect/link state; Go comments now state this
+adapter difference accurately rather than attributing Go's internal order to C.
+The 11 gates were rerun after the recall call-order comment correction and
+passed again; the two Go comments and test comment now cite C's actual
+`char_to_room`-then-unmount order.
