@@ -3,7 +3,6 @@ package game
 import (
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -11,7 +10,7 @@ import (
 // TestMobilePointAffectsRecomputeFromTimedRecords pins C's affect_total for
 // mobiles (src/handler.c:337-372): every timed affect record with APPLY_AC,
 // APPLY_HITROLL or APPLY_DAMROLL moves the mobile's combat points, exactly as
-// affect_to_char's berserk records do (src/new_cmds.c:2146-2160 — +25 AC, +2
+// affect_to_char's berserk records do (src/new_cmds.c:2171-2184 — +25 AC, +2
 // hitroll, +2 damroll; the failed attempt installs zeroes). The port's
 // getters used to read only the wizard override/prototype, so a berserked
 // mobile fought with its base points and split the shared draw stream
@@ -63,5 +62,4 @@ func TestMobilePointAffectsRecomputeFromTimedRecords(t *testing.T) {
 	if got := m2.GetDamroll(); got != -3 {
 		t.Fatalf("cursed damroll = %d, want -3", got)
 	}
-	_ = combat.TYPE_SLASH // keep combat import if assertions evolve
 }

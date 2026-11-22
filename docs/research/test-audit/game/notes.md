@@ -503,3 +503,44 @@ No package summary or PF row is due until T1991.
 
 `GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` reported 64.6% both before
 and after this batch.
+
+## Batch 15 preregistered estimate (before reading tests T989–T1038)
+
+Based on the cumulative forecast remainder after T988, I expect this 50-test
+slice to contain R46/F1/C1/D2. I expect roughly two pre-oracle tests and 48
+post-oracle tests, with any weak cases concentrated in the older tests.
+
+## Post-oracle redo, batch 15 (T989–T1038)
+
+Marks: **R 47 / F 1 / C 2 / D 0.** Junk: J3 1, J4 2. All 50 tests were
+introduced after the oracle was available; the preregistered date split of two
+pre-oracle and 48 post-oracle tests was wrong.
+
+T1022, `TestMobileEquipmentReaderArmor` (J3), had a vacuous loop: if a zone
+reset failed to spawn the additional mobile, the E command logged an error and
+the loop never asserted armor. In a detached mutation worktree, I changed the
+max-in-world=2 spawn check in `pkg/game/spawner.go` to reject that spawn. The
+old body stayed green; the repaired body failed because it requires exactly
+one additional equipped mobile. The mutation was restored byte for byte. Its
+old-body/fixed-body/restoration evidence is in `mutations.tsv`.
+
+T995, `TestMobileActivityDivineAngelsStayOutOfCombat` (J4), repeated T989's
+alignment-only no-attack contract. I folded both evil- and good-alignment
+mobile cases into T989's full-pulse test and removed the duplicate. T1038,
+`TestMobInstance_HitModifiers` (J4), duplicated T1027's positive/negative
+`HitModifiers` contract; its unarmed assertion now lives beside the real
+zone-loaded blessed-weapon assertion in T1027, and the duplicate was removed.
+
+I corrected the berserk affect citation in T1036's test comment to
+`src/new_cmds.c:2171-2184` and removed an unused placeholder import/reference.
+The cited C call paths and the other C references in this batch were checked
+against `src/`. No production behavior changed, so no oracle census was needed.
+Weak-test authorship is unknown for all three weak rows (T995, T1022, T1038).
+
+The audited T639–T1038 segment now totals R365/F27/C7/D1 across 400 rows.
+The cumulative ledger through T1038 has 371 pre-oracle rows
+(R364/F4/C2/D1) and 667 post-oracle rows (R634/F27/C5/D1). Against the initial
+T639–T1991 estimate (R1240/F50/C28/D35), 953 tests remain with a forecast
+remainder of R875/F23/C21/D34. No package summary or PF row is due until
+T1991. `GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` reports 64.6%,
+unchanged from batch 14.
