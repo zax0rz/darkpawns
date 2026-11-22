@@ -2393,3 +2393,60 @@ Before deleting/folding, git grep -n <TestName> docs/fidelity cmd/dp-oracle-diff
 Coverage stayed **64.7% before / 64.7% after** (GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game). The package test and all eleven gates passed separately: GOEXPERIMENT=nojsonv2 go test ./pkg/game/...; make fmt; GOEXPERIMENT=nojsonv2 go build ./...; GOEXPERIMENT=nojsonv2 go vet ./...; GOEXPERIMENT=nojsonv2 go test ./...; CI-pinned golangci-lint v2.15.0 (0 issues); make modernize-check; make deadcode-ratchet (35 baselined, 0 new); make string-census (ratchet clean; existing stale reports and four obsolete baseline entries); make fidelity-depth (8,282 cases, 7,968 proven/delegated, 1 blocked, 297 excluded, 16 approved-divergent); make expected-divergences-check (exit 0, existing unresolved selectors); and make function-index-check (expected-red fake association rejected, then ratchet clean).
 
 This batch changes tests and fidelity inventory records only, so no census was required. The cumulative ledger now has R1793/F152/C33/D10 across T001–T1988. It contains 1,916 unique frozen-inventory names; **75 tests remain**.
+
+## Batch 35 preregistered estimate (before reading tests T1989–T2038)
+
+T001–T1988 contains 1,988 ledger rows and 1,916 unique frozen-inventory names. The inventory leaves 75 unledgered tests; this batch takes the next 50 names in the remaining inventory order:
+
+- TestVisibilitySkipsSwitchLookupWithoutInvisLevel
+- TestVitalsSnapshotMatchesStoredFields
+- TestWallGuardNSActorPortsDelegateLikeC
+- TestWanderMobMovesFromDryRoom
+- TestWanderMobNeedsBoatInNoswimRoom
+- TestWanderMobStopsAtClosedDoor
+- TestWeatherAndTimePreservesWeatherDrawOrder
+- TestWeatherEvents_SynchronizedDirectEntryPoints
+- TestWeatherLockReentryRegression
+- TestWeatherLockReentryRegressionWorker
+- TestWeatherSynchronizationRace
+- TestWerewolfBiteMobVictimDeathRunsKillSeam
+- TestWerewolfBiteReducesMobVictimMoveWithFloatTruncation
+- TestWerewolfCorpseConsumeStateAndAudience
+- TestWerewolfCorpseEntryGates
+- TestWerewolfCorpseFullBoundariesAndTaste
+- TestWhisperAskSelfReplyCarriesOwnBreak
+- TestWhodBuildWhoListAfkMarker
+- TestWhodBuildWhoListDefaultMode
+- TestWhodBuildWhoListGodTokenLadder
+- TestWhodBuildWhoListInvisibleAndSite
+- TestWhodBuildWhoListUnknownSite
+- TestWhodGreetingMatchesConfigBytes
+- TestWhodHeaderPinsMudName
+- TestWorldBridgeCharFields
+- TestWorldBridgeMobileActionsDispatchTheCCommandAndArgument
+- TestWorldBridgeTimerIsMobWait
+- TestWorldCombatWimpyFleeUsesMobileDirectCommand
+- TestWorldModifyWeatherChangeUpdatesCanonicalState
+- TestWornExtractionLeavesFlag
+- TestWornTimerDecrementsByTwo
+- TestWoundActHidesInvisibleVictimFromRoom
+- TestWoundActVisibleVictimReachesRoom
+- TestWriteAliasesRefusesUnsafeNameWithoutWriting
+- TestWriteMudDateFormatMatchesC
+- TestZoneClockConcurrentManualAndHeartbeat
+- TestZoneClockManualResetPreservesQueue
+- TestZoneClockMinuteModesAndQueue
+- TestZoneClockPumpedHeartbeatExecutesReset
+- TestZoneClockTrackingConcurrentRestore
+- TestZoneErrorMudlogBranches
+- TestZoneResetCapIsNotAWarning
+- TestZoneResetConcurrentClockManualAndReaders
+- TestZoneResetConditionalStateMatrix
+- TestZoneResetDoorClearsSecretMark
+- TestZoneResetEquipmentAttributeBoundary
+- TestZoneResetEquipmentLoadGates
+- TestZoneResetEquipmentOwnershipAndOccupiedSlot
+- TestZoneResetGPrependsToMobInventory
+- TestZoneResetGiveGlobalCapAndConditionalFailure
+
+Before reading these tests, my estimate is **R43 / F5 / C1 / D1**, all in the post-oracle segment.
