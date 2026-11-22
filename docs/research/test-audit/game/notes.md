@@ -1756,3 +1756,63 @@ Through T1638, T639–T1638 totals R872/F100/C20/D8. Cumulative T001–T1638
 totals are R1505/F104/C20/D9: pre-oracle R379/F7/C3/D1 and post-oracle
 R1126/F97/C17/D8. No package summary or PF evidence row is due until T1991;
 use PF-168 or later when that final summary is written.
+
+## Batch 28 preregistered estimate (before reading tests T1639–T1688)
+
+Continue the frozen inventory-order sweep: select the first 50 test names not
+already present in any ledger row, scanning from the start of the 1,991-function
+inventory. T001–T1638 has 1,638 rows and 1,566 unique test names, leaving 425
+unique inventory functions unledgered. The selected roster is the next 50:
+
+- `TestGenericFindEquipFirstLookInObj`
+- `TestGenericFindEquipFirstMagObjectMagic`
+- `TestGetACIncludesWornApplyAC`
+- `TestGetAllCharsInRoomUsesCPrependOrderAcrossBodyTypes`
+- `TestGetArmorClassAppliesCSlotFactors`
+- `TestGetCharVisRoomThenCharacterList`
+- `TestGetCheckMoneyConsumesOnce`
+- `TestGetDrinkAffectsColumnOrder`
+- `TestGetFollowerActorsUsesCPrependOrder`
+- `TestGetFromRoomStaleSnapshotCreditedOnce`
+- `TestGetItemsInRoomSnapshotVsWriter`
+- `TestGetWeaponInfoFleshAlter`
+- `TestGhostShipOpensAndClosesMatchingRuntimeExits`
+- `TestGhostShipSecondDockDepartureAnnouncedOnFirstDock`
+- `TestGiveGoldConservationUnderConcurrency`
+- `TestGo126JSONBytes`
+- `TestGossipChannelHistoryKeepsSpeakerInvisibility`
+- `TestGossipObserverMatchesMortalAndLeavesGameBytes`
+- `TestGossipObserverOnlyPublicGossipAndIncludesNPC`
+- `TestGossipObserverReceivesLuaBridge`
+- `TestGroupedNPCKillerAwardsPlayerShares`
+- `TestGroupExcludesOutOfRoomMembers`
+- `TestGroupPenaltyRoundsAfterSubtraction`
+- `TestGroupShareMessageOrderFollowsCFollowerList`
+- `TestGroupSplitNoGoldLeaderSilent`
+- `TestGuildGuardActorPortsDoorwayAndDeclines`
+- `TestGuildGuardActorPortsFleeArm`
+- `TestGuildGuardRoomActCarriesOwnBreak`
+- `TestHandleDeathDrainsMobVictimExpBy37`
+- `TestHandleDeathDyingSpecArmPuffSaysLine`
+- `TestHandleDeathNeverDieCancelsDeathTail`
+- `TestHandleDeathRunsRawKillSequence`
+- `TestHandleMailAndNoteSlashAAbort`
+- `TestHandleMobDeathClearsMemoryAndHunting`
+- `TestHandlePlayerDeathPenaltiesAreSilent`
+- `TestHandlePlayerDeathVampireDispatchesDust`
+- `TestHcontrolBuildHouseRejects`
+- `TestHcontrolBuildHouseWithoutLookup`
+- `TestHcontrolBuildHouseWithWiredLookup`
+- `TestHcontrolPayDeliversToActorAndWatcher`
+- `TestHeldLightMovesWithPlayer`
+- `TestHiddenAffectRestoredAtEveryTotalBoundary`
+- `TestHitAndMoveRegenGearMatchC`
+- `TestHitrollDamrollStorageIsSByte`
+- `TestHoldLitLanternLightsDarkRoom`
+- `TestHomeLoadRoomUsesExistingSaveRoomField`
+- `TestHorseAppearsInRoomLook`
+- `TestHorseFollowsPlayerAndStaysVisible`
+- `TestHorseReappearsInLookAfterDismount`
+- `TestHorseVisibleToInfravisionAfterDismount`
+
+Before reading these tests, my estimate is **R43 / F5 / C1 / D1**.
