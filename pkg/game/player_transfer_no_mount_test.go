@@ -6,7 +6,8 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
-// TestPlayerTransferMountVariant pins the mount split that do_trans relies on:
+// TestPlayerTransferMountVariant pins the mount split that do_trans relies on
+// (src/act.wizard.c:332-358):
 // PlayerTransfer carries a ridden mount (the single-target branch, and C's
 // gate/moon-gate callers), while PlayerTransferNoMount leaves it behind (the
 // all-target branch). The contrast makes each assertion able to fail: a
@@ -43,6 +44,9 @@ func TestPlayerTransferMountVariant(t *testing.T) {
 		w, p, mount := newRider(t)
 		if err := w.PlayerTransfer(p, 1002); err != nil {
 			t.Fatal(err)
+		}
+		if got := p.GetRoomVNum(); got != 1002 {
+			t.Fatalf("rider room = %d, want 1002", got)
 		}
 		if got := mount.GetRoomVNum(); got != 1002 {
 			t.Fatalf("mount room = %d, want 1002 (PlayerTransfer carries the mount)", got)

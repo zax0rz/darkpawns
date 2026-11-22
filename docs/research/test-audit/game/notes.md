@@ -791,3 +791,41 @@ Inventory lines 1233–1291:
 - `TestRawKillCorpseAttackDispatch`
 - `TestRawKillCorpseHoldsEachItemExactlyOnce`
 - `TestRawKillCorpseHoldsInventoryEquipmentAndGold`
+
+## Post-oracle redo, batch 19 (T1189–T1238)
+
+The batch contains R40/F8/C1/D1. Junk codes are J3=8, J4=1, and J9=1; all
+50 tests were introduced after the 2026-07-12 oracle date. The preregistered
+forecast was R46/F1/C1/D2, so actual-minus-forecast was R−6/F+7/C0/D−1.
+Attribution is unknown for 46 rows and Claude Opus 5.5 for four. Among the ten
+weak rows, nine are unknown and T1218 is Claude Opus 5.5.
+
+All eight F tests were repaired in this PR and mutation-proven in the separate
+detached worktree: T1191, T1194, T1197, T1205, T1211, T1218, T1219, and T1220.
+Each original body passed, each fixed body failed the corresponding mutant,
+and every mutation was restored byte-for-byte; see `mutations.tsv`. T1191 now
+checks both rider and mount movement. T1194 and T1197 assert full output bytes;
+T1205 checks dismount ordering; T1211 excludes destination-room output; and
+T1218–T1220 require exactly one gossip delivery.
+
+T1192 is D/J9: `Player.Unmount()` has no production callers. Its test was
+deleted, with the production `Unmount(rider, mount)` behavior still covered by
+`TestLegacyUnmountClearsAffectsButRetainsMasterLinks`. The dismount depth
+manifest was updated to remove the deleted test from its proof list. T1237 is
+C/J4 and duplicates the corpse-content uniqueness proof in T1238, which now
+checks all four distinct object references. T1235 continues to cover callback
+cleanup.
+
+Every C citation in the batch and new comments was checked against `src/`.
+`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` reports 64.6% coverage. No
+census was required because the batch changes tests and research manifests but
+does not change production behavior.
+
+All 11 repository gates passed individually: `make fmt`, `GOEXPERIMENT=nojsonv2
+go build ./...`, `GOEXPERIMENT=nojsonv2 go vet ./...`, `GOEXPERIMENT=nojsonv2
+go test ./...`, `golangci-lint run ./...`, `make modernize-check`, `make
+deadcode-ratchet`, `make string-census`, `make fidelity-depth`, `make
+expected-divergences`, and `make function-index`. The first fidelity-depth run
+identified the stale T1192 manifest reference; the manifest update was followed
+by a clean rerun. `make expected-divergences` exited 0 with its existing
+unresolved-proof notices.

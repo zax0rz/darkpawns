@@ -267,17 +267,6 @@ func TestLegacyUnmountClearsAffectsButRetainsMasterLinks(t *testing.T) {
 	}
 }
 
-func TestPlayerUnmountClearsAffectWithoutCachedMountName(t *testing.T) {
-	rider := NewPlayer(77, "Unmounted", 1001)
-	rider.SetAffect(affMounted, true)
-
-	rider.Unmount()
-
-	if rider.IsAffected(affMounted) || rider.GetMountName() != "" {
-		t.Fatalf("Player.Unmount left rider mounted: affect=%t cache=%q", rider.IsAffected(affMounted), rider.GetMountName())
-	}
-}
-
 func TestLegacyUnmountClearsMountWithNilRider(t *testing.T) {
 	_, _, mount := newRideDepthWorld(t)
 	mount.SetAffected(affMounted)

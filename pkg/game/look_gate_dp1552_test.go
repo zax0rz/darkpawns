@@ -96,7 +96,9 @@ func TestDoLookForSpellGates(t *testing.T) {
 }
 
 // TestPortalToTempleAndItohUseDoLook pins the R5c class: both specials call
-// do_look (src/spec_procs3.c:537, 606), so a sub-sleeping arrival gets stars.
+// do_look (src/spec_procs3.c:537, 606), so a sub-sleeping arrival gets stars
+// without revealing the destination room; C's position gate returns before
+// room output (src/act.informative.c:1106-1108).
 func TestPortalToTempleAndItohUseDoLook(t *testing.T) {
 	cases := []struct {
 		name string
@@ -123,6 +125,13 @@ func TestPortalToTempleAndItohUseDoLook(t *testing.T) {
 			got := messages[ch.GetName()]
 			if !strings.Contains(got, "You can't see anything but stars!") {
 				t.Fatalf("sub-sleeping %s look = %q, want stars", tc.name, got)
+			}
+			roomName := "Temple"
+			if tc.name == "itoh" {
+				roomName = "Itoh"
+			}
+			if strings.Contains(got, roomName) {
+				t.Fatalf("sub-sleeping %s look leaked destination room %q: %q", tc.name, roomName, got)
 			}
 		})
 	}
