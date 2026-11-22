@@ -104,33 +104,43 @@ func TestCombatRoundSnakeSpecialFiresAfterOrdinaryAttack(t *testing.T) {
 		// Reference pass on a twin fixture without the spec flag: the stream
 		// position after the ordinary round is deterministic, and its next
 		// value is what the special's number(0,32-level) draw must consume.
-		_, ce2, hero2, mob2 := combatSpecialWorld(t, snakeVNum, snakeVNum, 5, 50, "snake")
+		w2, ce2, hero2, mob2 := combatSpecialWorld(t, snakeVNum, snakeVNum, 5, 50, "snake")
 		mob2.ClearMobFlag(MobFlagSpec)
 		mutualEnrol(t, ce2, mob2, hero2)
+		var ordinaryLog []string
+		w2.MessageSink = func(name string, msg []byte) {
+			if name == hero2.GetName() {
+				ordinaryLog = append(ordinaryLog, string(msg))
+			}
+		}
 		dprng.ResetStream(seed)
 		ce2.PerformRound()
 		ref1 := dprng.Number(0, 27)
-		if ref1 != 0 {
+		if ref1 != 0 || len(ordinaryLog) == 0 {
 			continue // this seed's bite draw is nonzero; try the next
 		}
 
 		dprng.ResetStream(seed)
 		ce.PerformRound()
-		var biteAt, attackAt int
-		biteAt, attackAt = -1, -1
+		biteAt := -1
 		for i, m := range roomLog {
 			if strings.Contains(m, "bites you") && biteAt < 0 {
 				biteAt = i
-			}
-			if attackAt < 0 && i != biteAt && len(strings.TrimSpace(m)) > 0 {
-				attackAt = i
 			}
 		}
 		if biteAt < 0 {
 			t.Fatalf("seed %d: reference bite draw was 0 but no bite ran; transcript %q", seed, roomLog)
 		}
-		if attackAt >= 0 && attackAt > biteAt {
-			t.Fatalf("seed %d: bite at %d followed non-bite output at %d; transcript %q", seed, biteAt, attackAt, roomLog)
+		if len(roomLog) < len(ordinaryLog) {
+			t.Fatalf("seed %d: special transcript %q lost ordinary transcript %q", seed, roomLog, ordinaryLog)
+		}
+		for i, want := range ordinaryLog {
+			if roomLog[i] != want {
+				t.Fatalf("seed %d: output %d before snake special = %q, want ordinary round %q; transcript %q", seed, i, roomLog[i], want, roomLog)
+			}
+		}
+		if biteAt < len(ordinaryLog) {
+			t.Fatalf("seed %d: snake bite at %d preceded ordinary round %q; transcript %q", seed, biteAt, ordinaryLog, roomLog)
 		}
 		// call_magic's poison allows a save; keep scanning until the victim
 		// fails one so the proof covers the affect landing too.
@@ -241,6 +251,20 @@ func TestCombatRoundSpecialRunsAfterOrdinaryAttack(t *testing.T) {
 				roomLog = append(roomLog, string(msg))
 			}
 		}
+		refWorld, refEngine, refHero, refMob := combatSpecialWorld(t, teleporterVNum, teleporterVNum, 15, 100, "wizard")
+		refMob.ClearMobFlag(MobFlagSpec)
+		mutualEnrol(t, refEngine, refMob, refHero)
+		var ordinaryLog []string
+		refWorld.MessageSink = func(name string, msg []byte) {
+			if name == refHero.GetName() {
+				ordinaryLog = append(ordinaryLog, string(msg))
+			}
+		}
+		dprng.ResetStream(seed)
+		refEngine.PerformRound()
+		if len(ordinaryLog) == 0 {
+			continue
+		}
 		dprng.ResetStream(seed)
 		ce.PerformRound()
 		doneAt := -1
@@ -253,8 +277,16 @@ func TestCombatRoundSpecialRunsAfterOrdinaryAttack(t *testing.T) {
 		if doneAt < 0 {
 			continue
 		}
-		if doneAt == 0 {
-			t.Fatalf("seed %d: special fired before any ordinary attack output: %q", seed, roomLog)
+		if len(roomLog) < len(ordinaryLog) {
+			t.Fatalf("seed %d: special transcript %q lost ordinary transcript %q", seed, roomLog, ordinaryLog)
+		}
+		for i, want := range ordinaryLog {
+			if roomLog[i] != want {
+				t.Fatalf("seed %d: output %d before teleporter special = %q, want ordinary round %q; transcript %q", seed, i, roomLog[i], want, roomLog)
+			}
+		}
+		if doneAt < len(ordinaryLog) {
+			t.Fatalf("seed %d: special at %d preceded ordinary transcript %q: %q", seed, doneAt, ordinaryLog, roomLog)
 		}
 		return
 	}

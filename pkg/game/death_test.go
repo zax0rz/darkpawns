@@ -196,18 +196,17 @@ func TestCreateMoneyObjectExtraDescs(t *testing.T) {
 		amount   int
 		wantKeys string
 		wantDesc string
-		prefix   bool
 	}{
 		{name: "single coin", amount: 1, wantKeys: "coin gold", wantDesc: "It's just one miserable little gold coin."},
 		{name: "under 10", amount: 7, wantKeys: "coins gold", wantDesc: "There are 7 coins."},
 		{name: "under 100", amount: 57, wantKeys: "coins gold", wantDesc: "There are about 50 coins."},
 		{name: "under 1000", amount: 789, wantKeys: "coins gold", wantDesc: "It looks to be about 700 coins."},
-		{name: "1000 to 99999 draws", amount: 5000, wantKeys: "coins gold", wantDesc: "You guess there are, maybe, ", prefix: true},
+		{name: "1000 to 99999 draws", amount: 5000, wantKeys: "coins gold", wantDesc: "You guess there are, maybe, 7000 coins."},
 		{name: "100000 or more", amount: 100000, wantKeys: "coins gold", wantDesc: "There are a LOT of coins."},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dprng.Seed(1)
+			dprng.ResetStream(1)
 			obj := w.createMoneyObject(tt.amount)
 			if obj == nil {
 				t.Fatalf("createMoneyObject(%d) = nil", tt.amount)
@@ -219,11 +218,7 @@ func TestCreateMoneyObjectExtraDescs(t *testing.T) {
 			if descs[0].Keywords != tt.wantKeys {
 				t.Errorf("Keywords = %q, want %q", descs[0].Keywords, tt.wantKeys)
 			}
-			if tt.prefix {
-				if !strings.HasPrefix(descs[0].Description, tt.wantDesc) {
-					t.Errorf("Description = %q, want prefix %q", descs[0].Description, tt.wantDesc)
-				}
-			} else if descs[0].Description != tt.wantDesc {
+			if descs[0].Description != tt.wantDesc {
 				t.Errorf("Description = %q, want %q", descs[0].Description, tt.wantDesc)
 			}
 		})

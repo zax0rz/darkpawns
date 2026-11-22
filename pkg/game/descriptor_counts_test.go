@@ -30,6 +30,9 @@ func TestCounterProcsBlessingOnlyReachesPlayingDescriptors(t *testing.T) {
 	if got, want := messages["Playing"], []string{"The gods of war and death bestow a blessing upon you.\r\n"}; !equalDescriptorMessages(got, want) {
 		t.Errorf("playing descriptor blessing = %q, want %q", got, want)
 	}
+	if got, want := messages["Actor"], []string{"The gods reward your glory in battle!\n\r"}; !equalDescriptorMessages(got, want) {
+		t.Errorf("actor messages = %q, want only the actor's milestone reward %q", got, want)
+	}
 	for _, player := range players[2:] {
 		if player.Health != 1 || len(messages[player.Name]) != 0 {
 			t.Errorf("non-playing %s state: HP=%d messages=%q; want HP=1 and no blessing", player.Name, player.Health, messages[player.Name])

@@ -344,3 +344,62 @@ Scope note: current `origin/main` adds
 `TestClanQuitClanlessKeepsApprovedRefusal`, which is absent from the prompt’s
 pinned 1,991-name inventory. It was left out of this batch’s IDs; the audit
 remains scoped to the authoritative inventory until Zach refreshes it.
+
+## Batch 12 — T839–T888 (combat-body identity, death paths, and actor specials)
+
+This batch classifies the next 50 entries in the pinned inventory: **42 R, 8 F,
+0 C, 0 D**. Junk codes are J2=2 (T847, T850), J3=4 (T861, T862, T874,
+T883), J9=1 (T875), and J10=1 (T867). All 50 were introduced after the
+2026-07-12 oracle cutoff. Attribution by introducing commit is unknown=48,
+DeepSeek=1 (T869), and Claude Opus 5.5=1 (T887).
+
+The eight weak tests and their fixes:
+
+- T847, `TestCombatBodyReferencesConcurrentAndReciprocal` (J2): the introducing
+  commit is titled “key combat membership by concrete bodies.” Its concurrent
+  loops called the setters/getters/stoppers but never checked a value. The
+  fixed body checks each selected body and name plus the final cleared state.
+- T850, `TestCombatBodyScriptDispatch` (J2): the callback/message refactor
+  intended to retain exact body and actor identities through script dispatch,
+  but a recorder receiving zero calls made the old identity loop vacuous. The
+  fixed test requires 80 fight and 80 death records.
+- T861 and T862 (J3): PR #2003’s combat-round special audit states that C runs
+  ordinary hits before `MOB_SPEC`. The old tests could pass without establishing
+  an ordinary-hit transcript. Both now compare the special round against an
+  otherwise identical seeded round without the special and require the full
+  ordinary transcript as an exact prefix.
+- T867, `TestConjuredActorDeclinesOnlyForCharmedBodies` (J10): PR #2084
+  intentionally ported only the charmed actor decline and called the uncharmed
+  leave-the-world branch an explicit gap. C handles that branch, so the actor
+  lane now delegates to `specConjured`, and the test asserts both message
+  recipients and extraction. The switched NPC scenario was added to depth
+  coverage; its targeted census is still pending at this note's first write.
+- T874, `TestCorpsesMoneyAndAshDoNotSurviveRestart` (J3): the restart audit
+  covered transient world state, but this test's setup created only synthetic
+  money and a corpse despite promising ash. It now creates prototype vnum 18
+  dust and checks all three objects before and after boot.
+- T875, `TestCounterProcsBlessingOnlyReachesPlayingDescriptors` (J9): the
+  descriptor-count change targeted global rewards, but the test checked a peer
+  recipient without pinning that the actor was excluded. It now requires the
+  actor's own milestone line to be its only output.
+- T883, `TestCreateMoneyObjectExtraDescs` (J3): PR #2694 matched C's
+  randomized `create_money` description and draw, while the test only required
+  the stable text prefix. It now resets the stream and checks the exact seeded
+  7000-coin description.
+
+All eight F rows have detached mutation proofs in `mutations.tsv`; for each,
+the old body stayed green, the fixed body failed, and the mutation was restored.
+No R spot-checks were required because this batch contains F marks. After the
+conjured change, no test in this batch still pins output or state that disagrees
+with C. T843 remains an R with medium confidence: it deliberately tests the
+Go movement transaction's admitted in-flight behavior, for which C's
+single-threaded path has no concurrent interleaving analogue. The stale #1907
+claim was removed from its comment.
+
+By the ledger's `born_before_oracle` field, T639–T888 contains 16 pre-oracle
+rows (R14/F1/C1/D0) and 234 post-oracle rows (R211/F21/C2/D0). Cumulatively,
+T001–T888 contains 354 pre-oracle rows (R349/F4/C1/D0) and 534 post-oracle
+rows (R509/F22/C2/D1). The forecast from before T639 was R1240/F50/C28/D35
+for the remaining 1,353 tests. Through T888, T639–T888 actuals are R225/F22/C3/D0,
+leaving 1,103 tests and forecast remainder R1015/F28/C25/D35. The remaining
+1,103 tests continue in the next batch; no package summary or PF row is due yet.

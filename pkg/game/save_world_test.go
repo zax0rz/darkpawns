@@ -217,7 +217,11 @@ func TestReviewCannotShowPreRestartGossip(t *testing.T) {
 // death path really produces (VNum == -1, no prototype) in one world and shows
 // the booted world starting without them.
 func TestCorpsesMoneyAndAshDoNotSurviveRestart(t *testing.T) {
-	before, err := NewWorld(restartFixtureWorldData())
+	fixture := restartFixtureWorldData()
+	fixture.Objs = append(fixture.Objs, parser.Obj{
+		VNum: 18, Keywords: "dust ash", ShortDesc: "a pile of dust", LongDesc: "A pile of dust is here.",
+	})
+	before, err := NewWorld(fixture)
 	if err != nil {
 		t.Fatalf("NewWorld: %v", err)
 	}
@@ -231,18 +235,39 @@ func TestCorpsesMoneyAndAshDoNotSurviveRestart(t *testing.T) {
 	if err := before.MoveObjectToRoom(corpse, 5001); err != nil {
 		t.Fatalf("move corpse: %v", err)
 	}
+	before.makeDust(nil, nil, nil, 5001, 0, 93)
 
 	placed := before.GetItemsInRoom(5001)
-	if len(placed) < 2 {
-		t.Fatalf("fixture placed %d synthetic objects, want >= 2", len(placed))
+	if len(placed) != 3 {
+		t.Fatalf("fixture placed %d objects, want money, corpse and ash", len(placed))
 	}
+	foundAsh := false
+	foundMoney, foundCorpse := false, false
 	for _, obj := range placed {
-		if obj.VNum != -1 {
-			t.Fatalf("fixture object %d vnum = %d, want the synthetic -1", obj.ID, obj.VNum)
+		switch {
+		case obj.IsCorpse:
+			foundCorpse = obj.VNum == -1
+		case obj.GetVNum() == 18:
+			foundAsh = true
+		case obj.GetVNum() == -1:
+			foundMoney = true
+		default:
+			t.Fatalf("unexpected fixture object %d vnum=%d corpse=%v", obj.ID, obj.GetVNum(), obj.IsCorpse)
 		}
 	}
+	if !foundMoney || !foundCorpse || !foundAsh {
+		t.Fatalf("fixture objects lack a synthetic money/corpse or prototype ash: money=%v corpse=%v ash=%v", foundMoney, foundCorpse, foundAsh)
+	}
 
-	after := bootRestartFixture(t)
+	after, err := NewWorld(fixture)
+	if err != nil {
+		t.Fatalf("NewWorld after restart: %v", err)
+	}
+	t.Cleanup(after.StopAITicker)
+	if err := after.StartZoneResets(); err != nil {
+		t.Fatalf("StartZoneResets after restart: %v", err)
+	}
+	IgnoreLegacyWorldState()
 	if got := len(after.GetItemsInRoom(5001)); got != 0 {
 		t.Fatalf("room 5001 items after restart = %d, want 0 (corpses, money and ash are transient)", got)
 	}

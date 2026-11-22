@@ -128,7 +128,12 @@ func TestCombatBodyReferencesConcurrentAndReciprocal(t *testing.T) {
 	go func() {
 		for i := 0; i < 1000; i++ {
 			one.SetFightingBody(two)
-			_ = one.GetFighting()
+			if got := one.GetFightingBody(); got != two {
+				t.Errorf("one opponent body = %p, want %p", got, two)
+			}
+			if got := one.GetFighting(); got != two.GetName() {
+				t.Errorf("one opponent name = %q, want %q", got, two.GetName())
+			}
 			one.StopFighting()
 		}
 		done <- struct{}{}
@@ -136,7 +141,12 @@ func TestCombatBodyReferencesConcurrentAndReciprocal(t *testing.T) {
 	go func() {
 		for i := 0; i < 1000; i++ {
 			two.SetFightingBody(one)
-			_ = two.GetFighting()
+			if got := two.GetFightingBody(); got != one {
+				t.Errorf("two opponent body = %p, want %p", got, one)
+			}
+			if got := two.GetFighting(); got != one.GetName() {
+				t.Errorf("two opponent name = %q, want %q", got, one.GetName())
+			}
 			two.StopFighting()
 		}
 		done <- struct{}{}
@@ -144,12 +154,25 @@ func TestCombatBodyReferencesConcurrentAndReciprocal(t *testing.T) {
 	go func() {
 		for i := 0; i < 1000; i++ {
 			mob.SetFightingBody(one)
-			_ = mob.GetFighting()
+			if got := mob.GetFightingBody(); got != one {
+				t.Errorf("mob opponent body = %p, want %p", got, one)
+			}
+			if got := mob.GetFighting(); got != one.GetName() {
+				t.Errorf("mob opponent name = %q, want %q", got, one.GetName())
+			}
 			mob.StopFighting()
 		}
 		done <- struct{}{}
 	}()
 	for i := 0; i < 3; i++ {
 		<-done
+	}
+	for name, body := range map[string]combat.Combatant{"one": one, "two": two, "mob": mob} {
+		if got := body.GetFightingBody(); got != nil {
+			t.Errorf("%s retained opponent body %p after StopFighting", name, got)
+		}
+		if got := body.GetFighting(); got != "" {
+			t.Errorf("%s retained opponent name %q after StopFighting", name, got)
+		}
 	}
 }
