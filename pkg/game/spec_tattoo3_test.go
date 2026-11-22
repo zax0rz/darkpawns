@@ -2,7 +2,6 @@ package game
 
 import (
 	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -197,16 +196,5 @@ func TestSpecTattoo3AutonomousEntry(t *testing.T) {
 	w, _, tattooist, _ := newTattoo3TestWorld(t, false)
 	if specTattoo3(w, nil, tattooist, "", "") {
 		t.Fatal("autonomous no-command call should fall through")
-	}
-}
-
-func TestTattoo3OfferDataIsStable(t *testing.T) {
-	if got := strings.Join([]string{
-		tattoo3Offers[0].name,
-		tattoo3Offers[1].name,
-		tattoo3Offers[2].name,
-		tattoo3Offers[3].name,
-	}, "|"); got != "of an open eye|of crossed swords|of a ship|of the word 'MOM'" {
-		t.Fatalf("offer names = %q", got)
 	}
 }

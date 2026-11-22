@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -78,7 +77,7 @@ func TestUseTattooCooldownAndUnsupported(t *testing.T) {
 	}
 }
 
-// C: tattoo.c:69-80; magic.c:912-926,1278-1287,1339-1350.
+// C: tattoo.c:73-83; magic.c:912-926,1278-1287,1339-1350.
 func TestUseTattooSpellStateAndPosition(t *testing.T) {
 	for _, tc := range []struct {
 		tattoo, spell, duration, count int
@@ -199,6 +198,9 @@ func TestUseTattooSkullAudienceAndIdentity(t *testing.T) {
 	}
 }
 
+// C: do_use checks the held object before tattoo fallback (act.other.c:895-930),
+// then use_tattoo checks cooldown and sets 24 (tattoo.c:37-44,88); point update
+// decrements positive tattoo timers (limits.c:483-484).
 func TestUseTattooHeldPrecedenceAndExpiry(t *testing.T) {
 	w, a, _, out := tattooDepthWorld(t)
 	a.Tattoo = TattooEye
@@ -207,7 +209,7 @@ func TestUseTattooHeldPrecedenceAndExpiry(t *testing.T) {
 		t.Fatal(err)
 	}
 	w.DoUse(a, "tattoo")
-	if a.TatTimer != 0 || len(a.ActiveAffects) != 0 || !strings.HasPrefix(out[a.Name], "You can't seem to figure out how to use it.") {
+	if a.TatTimer != 0 || len(a.ActiveAffects) != 0 || out[a.Name] != "You can't seem to figure out how to use it.\r\nTry holding it.(?)\r\n" {
 		t.Fatalf("held precedence: %q", out[a.Name])
 	}
 	if err := w.MoveObject(obj, LocInventoryPlayer(a.Name)); err != nil {
@@ -245,23 +247,8 @@ func TestUseTattooHeldPrecedenceAndExpiry(t *testing.T) {
 	}
 }
 
-// TestUseTattooDepth is the manifest-owned state matrix.
-func TestUseTattooDepth(t *testing.T) {
-	t.Run("cooldown", TestUseTattooCooldownAndUnsupported)
-	t.Run("spells", TestUseTattooSpellStateAndPosition)
-	t.Run("nomagic", TestUseTattooNoMagic)
-	t.Run("gate-order", TestUseTattooNoMagicPrecedesSitting)
-	t.Run("skull", TestUseTattooSkullAudienceAndIdentity)
-	t.Run("precedence", TestUseTattooHeldPrecedenceAndExpiry)
-	t.Run("keyword-boundaries", TestUseTattooHeldKeywordBoundaries)
-	t.Run("draws", TestUseTattooDrawParity)
-	t.Run("visibility", TestUseTattooSkullVisibility)
-	t.Run("eye-audience", TestUseTattooEyeAudienceGates)
-	t.Run("no-magic-names", TestUseTattooNoMagicAudienceNames)
-}
-
-// C read_mobile rolls the skull's ten HP dice; benign self spells and
-// cooldown/refusal paths draw nothing (db.c read_mobile; tattoo.c:36-90).
+// C read_mobile rolls the skull's ten HP dice (db.c:1725-1756); benign self
+// spells and cooldown/refusal paths draw nothing (tattoo.c:36-90).
 func TestUseTattooDrawParity(t *testing.T) {
 	for _, seed := range []uint32{1, 2, 3, 5, 8} {
 		for _, tattoo := range []int{TattooNone, TattooDragon, TattooEye, TattooShip, TattooAngel, TattooSkull} {
@@ -288,6 +275,8 @@ func TestUseTattooDrawParity(t *testing.T) {
 	}
 }
 
+// C uses act audiences for the skull activation lines (tattoo.c:67-70),
+// whose visibility and sleeping gates are in utils.h:515-530.
 func TestUseTattooSkullVisibility(t *testing.T) {
 	for _, sleep := range []bool{false, true} {
 		t.Run(fmt.Sprint(sleep), func(t *testing.T) {
@@ -302,8 +291,8 @@ func TestUseTattooSkullVisibility(t *testing.T) {
 			if out[b.Name] != "" {
 				t.Fatalf("hidden/asleep observer saw %q", out[b.Name])
 			}
-			if !strings.HasPrefix(out[a.Name], "Your tattoo glows") {
-				t.Fatal("actor missed activation")
+			if got, want := out[a.Name], "Your tattoo glows brightly for a second, and a flaming skull appears!\r\n"; got != want {
+				t.Fatalf("actor activation = %q, want exact C bytes %q", got, want)
 			}
 		})
 	}
@@ -320,6 +309,9 @@ func TestUseTattooNoMagicPrecedesSitting(t *testing.T) {
 	}
 }
 
+// C tests the held object's names before the "tattoo" fallback
+// (act.other.c:907-925); isname is case-insensitive and token-boundary based
+// (handler.c:81-110).
 func TestUseTattooHeldKeywordBoundaries(t *testing.T) {
 	for _, tc := range []struct {
 		name   string

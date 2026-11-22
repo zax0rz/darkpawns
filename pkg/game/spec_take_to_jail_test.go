@@ -383,15 +383,13 @@ func TestTakeToJailBreedCallerAndRoomOrder(t *testing.T) {
 			handled := specTakeToJail(w, nil, guard, "", "")
 			got := output()
 			want := victim.GetName()
+			wantOutput := "A test mob exclaims, 'Die, nightbreed!!'\r\n"
 			if outlawFirst {
 				want = player.GetName()
-				if strings.Contains(got, "nightbreed") || !strings.Contains(got, "OUTLAWS") {
-					t.Fatalf("first outlaw did not keep priority: %q", got)
-				}
-			} else {
-				if !handled || !strings.Contains(got, "Die, nightbreed!!") || strings.Contains(got, "OUTLAWS") {
-					t.Fatalf("earlier breed handoff did not consume before later outlaw: handled=%t output=%q", handled, got)
-				}
+				wantOutput = "A test mob says 'We don't like OUTLAWS like you in this city!'\r\n"
+			}
+			if got != wantOutput || (!outlawFirst && !handled) {
+				t.Fatalf("room-order result: handled=%t output=%q, want exact C transcript %q", handled, got, wantOutput)
 			}
 			if len(engine.starts) != 1 || engine.starts[0][1] != want {
 				t.Fatalf("selected combat starts=%v, want only %s", engine.starts, want)

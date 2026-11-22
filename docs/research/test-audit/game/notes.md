@@ -2379,3 +2379,17 @@ Continue the frozen inventory-order sweep. T001–T1938 has 1,938 ledger rows an
 - `TestVisibilitySitesUseRealLevel`
 
 Before reading these tests, my estimate is **R43 / F5 / C1 / D1**, all in the post-oracle segment.
+
+## Batch 34 actuals (T1939–T1988)
+
+The preregistered estimate was R43/F5/C1/D1. Actual marks are **R38/F5/C7/D0**, all post-oracle (variance R−5/F0/C+6/D−1). The five F rows are J3 weak output checks, tightened to exact C bytes. Five detached mutations kept each former assertion green and made its fixed assertion red; every mutated production file was restored byte-for-byte. The J4 folds are the standalone synthetic-money predicate, four tattoo offer-name snapshots, the direct no-magic act helper test, and the tattoo state-matrix aggregator. Each surviving command-path test now named in the ledger covers its contract.
+
+The tracking tests that replace the trackNumber draw seam are tagged J7 (five tests). The object-onpulse test records the Zach-approved DP-1416 divergence as J10: C dereferences NULL in the unassigned diagnostic before output, while Go intentionally remains silent.
+
+The weak tests were introduced by DeepSeek (two: the synthetic-money C fold and undead-knight F) or have Zach's git identity with no model trailer (ten: the other three F fixes and six remaining C folds). Luna authored the unbounded-damage R test. All 50 rows were added as raw tab-separated text; historical rows were not rewritten.
+
+Before deleting/folding, git grep -n <TestName> docs/fidelity cmd/dp-oracle-diff was checked for all seven removed tests. The live corpse and tattoo inventory rows now name survivors; the only remaining TestUseTattooDepth hit is the dated 2026-10-01 handoff, which can remain. No other live inventory hits remain.
+
+Coverage stayed **64.7% before / 64.7% after** (GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game). The package test and all eleven gates passed separately: GOEXPERIMENT=nojsonv2 go test ./pkg/game/...; make fmt; GOEXPERIMENT=nojsonv2 go build ./...; GOEXPERIMENT=nojsonv2 go vet ./...; GOEXPERIMENT=nojsonv2 go test ./...; CI-pinned golangci-lint v2.15.0 (0 issues); make modernize-check; make deadcode-ratchet (35 baselined, 0 new); make string-census (ratchet clean; existing stale reports and four obsolete baseline entries); make fidelity-depth (8,282 cases, 7,968 proven/delegated, 1 blocked, 297 excluded, 16 approved-divergent); make expected-divergences-check (exit 0, existing unresolved selectors); and make function-index-check (expected-red fake association rejected, then ratchet clean).
+
+This batch changes tests and fidelity inventory records only, so no census was required. The cumulative ledger now has R1793/F152/C33/D10 across T001–T1988. It contains 1,916 unique frozen-inventory names; **75 tests remain**.
