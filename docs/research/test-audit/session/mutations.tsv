@@ -30,3 +30,6 @@ TestConnectedIdleDisconnectClosesSession	pkg/session/session_player.go	138	n/a (
 TestEntryStatsRerollMatrix	pkg/session/char_creation.go	369	n/a (R spot-check)	invalid stats input rerolled instead of re-prompting	red (invalid changed state: stats rerolled)	yes
 TestEntryCreationChoiceMatrix	pkg/session/char_creation.go	323	n/a (R spot-check)	class rejection prompt "That's not a class." reworded	red (class gate prompt mismatch)	yes
 TestSwitchLinkdeadLevelGate	pkg/session/wiz_player.go	129	n/a (R spot-check)	linkdead refusal "You aren't holy enough to use a mortal's body." reworded	red (linkdead level refusal mismatch)	yes
+TestShowPlayerDurableReport	pkg/session/wiz_info.go	147	n/a (R spot-check)	show player label "Player: %-12s" mutated to "Hero: %-12s"	red (durable report mismatch: got "Hero: Recoverer...", want "Player: Recoverer...")	yes
+TestEntryIPFailureLockoutApproved	pkg/session/session_login.go	48	n/a (R spot-check)	lockout message "Too many failed login attempts. Try again in %d minutes." mutated to "Locked out for %d minutes."	red (IP lockout bypassed: "\r\n!! Locked out for 15 minutes.\r\n")	yes
+TestPasswordChangeUpdatesCharacterSaveMetadata	pkg/session/menu.go	299	n/a (R spot-check)	removed s.saveCharacter("password change", game.LoadRoomNowhere) call	red (password confirmation omitted character save: LastLogon:123 gold=0 played=0)	yes

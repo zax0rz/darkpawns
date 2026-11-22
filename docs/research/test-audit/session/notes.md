@@ -428,3 +428,28 @@ TestSwitchLinkdeadLevelGate (linkdead refusal reworded), T994
 TestEntryStatsRerollMatrix (invalid stats input made to reroll). All three
 went red and were restored byte for byte (mutations.tsv).
 
+
+## Batch 13 results (later tests 901–1000, 2026-10-03..07, T1046–T1145)
+
+Marks: R 100, F 0, C 0, D 0.
+Running total: 1145/1537 (R 1139, F 3, C 3, D 0).
+
+The 100 R tests cover sysfile C 255-byte chunking (db.c:2896-2932), entry IP
+admission (DP-1387 approved Go-only rate limit and 10-failure lockout), wizlock
+and site-ban matrices (interpreter.c:1825-1910), show rent/player/shops/aggr/
+hooks/zones depth suites, combat body routing/cleanup/corpse/retreat, offline
+rename rent/alias cleanup, WebSocket idle pong liveness (DP-1385), C input
+filtering (comm.c:1965-1982), shop buy container registration and carry-weight
+refusal, the D7 mudlog producer family (wizutil, skillset, help, local, OLC
+memory/disk/open-parent, new-zone, steal/zone, whod, wizard, shutdown), and 8
+static C-unreachability proofs (`T1138`–`T1145` in
+`olc_control_reachability_test.go` and `zedit_argument_reachability_test.go`)
+cited by `docs/fidelity/depth/mudlog.tsv:96-107` to settle L1 unreachable C
+branches (retained as R; by design they cannot fail on Go).
+
+All-R spot-checks (random draw, seed 20261113, from T1046–T1137): T1068
+`TestShowPlayerDurableReport` (`pkg/session/wiz_info.go:147`), T1048
+`TestEntryIPFailureLockoutApproved` (`pkg/session/session_login.go:48`), T1062
+`TestPasswordChangeUpdatesCharacterSaveMetadata` (`pkg/session/menu.go:299`).
+All three went red with assertion failures and were restored byte for byte
+(`mutations.tsv`). No J10 divergences.
