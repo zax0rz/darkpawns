@@ -263,6 +263,13 @@ beside the port as a referee, so this project could **measure how often the AI,
 the tests and even the referee were wrong**, and most projects can't. Lead with
 the failures and the numbers.
 
+**Tests are evidence, not a chapter** (Zach, 2026-11-22). Nobody wants to read
+about testing, so no post or paper section is about the tests. Each test
+finding goes where it proves a claim: fake and template tests are part of the
+slop story (PF-157, PF-165, the deleted unreachability proofs), and mutation
+kill rates and census results are part of the fidelity claim. Section 9 is the
+internal record, not prose for readers.
+
 Material that already exists in the ledger:
 
 - A clean census and a 99.9% manifest, while a random sample showed four in
@@ -332,7 +339,9 @@ main and `AGENTS.md` links to it; the tag is `v1.0.0`. The record is in
 The finish line in section 6 includes auditing `pkg/game`, `pkg/session`
 and `pkg/command`: 3,701 Go tests. With the earlier `pkg/combat` and
 `pkg/spells` audits, the total is 4,100. This section records that work and
-the checking around it, since no other single document does.
+the checking around it, since no other single document does. It is the
+internal record. Writing for readers weaves this material into other
+stories (section 7).
 
 ### Four layers, four questions
 
