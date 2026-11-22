@@ -598,6 +598,15 @@ Pre-oracle tests (`born_before_oracle=yes`, 145 tests, May–July 2026) had a
 `F`, 1 `C`) in the post-oracle depth-testing era — a ~30× drop in weak/duplicate
 test rate, sharper than the predicted ~3.6× drop.
 
+**Caveat (Claude, 2026-11-21):** read the drop as a measurement of this
+ledger, not as an effect of the oracle. Different agents audited the two eras
+(Kimi, then Neon), and the 2026-07-12 boundary also separates test style,
+agent maturity and review. Other packages disagree: `pkg/command` went from
+13.5% non-R pre-oracle to 5.1% post, but `pkg/game` went from 2.8% (GLM) to
+5.0% (Luna). A blind cross-audit of sampled R rows by another auditor would
+separate auditor strictness from test quality. PF-165 is partially-verified
+until then.
+
 ### Junk-code counts
 
 | Junk code | Count | Tests |
