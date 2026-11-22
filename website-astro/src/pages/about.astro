@@ -1,28 +1,21 @@
 ---
 import Base from '../layouts/Base.astro';
+import ChapterHeader from '../components/ChapterHeader.astro';
+import EraLedger from '../components/EraLedger.astro';
 import LineageTree from '../components/LineageTree.astro';
-
-const timeline = [
-  { year: '1994', title: 'Dark Pawns begins', text: 'Serapis and Tracer start the game on CircleMUD 1.7 at knight.ufp.org.' },
-  { year: '1995', title: 'The first major change', text: 'The base code moves to CircleMUD 2.2. The game becomes Dark Pawns 1.0.' },
-  { year: '1996', title: 'Coders and builders arrive', text: 'Arak and Orodreth join as coders in February; Frontline follows in March while Oddity, Nimos, and Aralius build the world.' },
-  { year: '1998', title: 'Dark Pawns 2.2', text: 'Frontline and Orodreth become co-implementors in May. The largest update in the game’s history ships that December.' },
-  { year: '2001', title: 'The break-in', text: 'An intruder destroys the server files. Backups recover part of the game, but player data and significant work on 3.0 are lost.' },
-  { year: '2010', title: 'The public server closes', text: 'The old Dark Pawns server shuts down. Frontline later publishes its code and world in the state they held at closure.' },
-  { year: '2019', title: 'DPReturns', text: 'Started by Slayer (dpreturns.com) and later maintained by Vintage at darkpawns.net, former players reopen the game and expand its C source.' },
-  { year: '2026', title: 'The Go restoration', text: 'A new open-source server begins loading the original world under a strict fidelity rule: the game is the game.' },
-];
 ---
 
 <Base title="About Dark Pawns" description="Dark Pawns began in 1994. This is the sourced history of the original MUD, its players, DPReturns, and the modern Go restoration.">
   <article class="about-page">
-    <header class="about-hero container">
-      <h1>Dark Pawns began in 1994.</h1>
-      <blockquote>
-        “Like a great game of chess, the world has become a board filled with bishops and kings, stately queens, white knights and dark pawns striving to rise through the ranks into godhood.”
-      </blockquote>
-      <p class="attribution">R.E. Paret (Frontline), original Dark Pawns website</p>
-    </header>
+    <div class="container">
+      <ChapterHeader title="Dark Pawns began in 1994." />
+      <figure class="about-epigraph">
+        <blockquote>
+          &ldquo;Like a great game of chess, the world has become a board filled with bishops and kings, stately queens, white knights and dark pawns striving to rise through the ranks into godhood.&rdquo;
+        </blockquote>
+        <figcaption class="attribution">R.E. Paret (Frontline), original Dark Pawns website</figcaption>
+      </figure>
+    </div>
 
     <section class="about-intro container">
       <div>
@@ -46,14 +39,7 @@ const timeline = [
           <h2>The record so far</h2>
           <p>The early chronology comes from Frontline’s history of Dark Pawns, itself an update to an account by Orodreth. Later dates use Frontline’s published repository and contemporary records from the DPReturns revival.</p>
         </div>
-        <ol class="timeline">
-          {timeline.map((event) => (
-            <li>
-              <time>{event.year}</time>
-              <div><h3>{event.title}</h3><p>{event.text}</p></div>
-            </li>
-          ))}
-        </ol>
+        <EraLedger surface="paper-deep" />
         <p class="source-link"><a href="/archive/history/">Read the preserved history <span aria-hidden="true">→</span></a></p>
       </div>
     </section>
@@ -97,10 +83,9 @@ const timeline = [
 </Base>
 
 <style>
-  .about-hero { padding-block: var(--space-xl); }
-  .about-hero h1 { max-width: 13ch; font-size: clamp(3rem, 8vw, 6rem); }
-  .about-hero blockquote { max-width: 50rem; margin: var(--space-lg) 0 var(--space-sm); padding-left: var(--space-lg); border-left: 4px solid var(--accent); font-family: var(--font-display); font-size: clamp(1.4rem, 3vw, 2.25rem); line-height: 1.25; }
-  .attribution { color: var(--ink-muted); font-size: .9rem; margin-left: calc(var(--space-lg) + 4px); }
+  .about-epigraph { margin: 0 0 var(--space-xl); max-width: 50rem; }
+  .about-epigraph blockquote { margin: 0 0 var(--space-sm); padding-left: var(--space-lg); border-left: 3px solid var(--accent); font-family: var(--font-display); font-size: clamp(1.3rem, 2.5vw, 1.85rem); line-height: 1.3; }
+  .attribution { color: var(--ink-muted); font-size: .9rem; margin-left: calc(var(--space-lg) + 3px); }
   .about-intro { display: grid; grid-template-columns: minmax(0, 2fr) minmax(15rem, 1fr); gap: var(--space-xl); padding-bottom: var(--space-xl); }
   .about-intro > div { max-width: var(--content-width); }
   .signature { font-family: var(--font-mono); font-size: .82rem; color: var(--ink-muted); }
@@ -108,11 +93,6 @@ const timeline = [
   .history-section { background: var(--paper-deep); border-block: 1px solid var(--rule); padding-block: var(--space-xl); }
   .section-heading { max-width: var(--content-width); }
   .section-heading > p:last-child { color: var(--ink-muted); }
-  .timeline { list-style: none; margin: var(--space-lg) 0; padding: 0; border-top: 1px solid var(--rule); }
-  .timeline li { display: grid; grid-template-columns: 7rem 1fr; gap: var(--space-lg); padding: var(--space-md) 0; border-bottom: 1px solid var(--rule); }
-  .timeline time { color: var(--accent); font-family: var(--font-mono); font-weight: 700; }
-  .timeline h3 { font-size: 1.2rem; margin-bottom: var(--space-xs); }
-  .timeline p { color: var(--ink-muted); margin: 0; }
   .source-link { margin: 0; }
   .revivals { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xl); padding-block: var(--space-xl); }
   .revivals article { border-top: 2px solid var(--rule); padding-top: var(--space-md); }
@@ -125,6 +105,6 @@ const timeline = [
   .btn-primary { display: inline-block; background: var(--accent); color: var(--paper); border: 1px solid var(--accent); padding: .65rem 1rem; font-family: var(--font-display); }
   .btn-primary:hover { background: var(--accent-deep); text-decoration: none; }
   .text-link { padding: .65rem 0; }
-  @media (max-width: 720px) { .about-intro, .revivals { grid-template-columns: 1fr; gap: var(--space-lg); } .timeline li { grid-template-columns: 5rem 1fr; gap: var(--space-md); } }
-  @media (max-width: 520px) { .about-hero, .about-intro, .history-section .container, .revivals, .about-cta { padding-inline: var(--space-md); } .about-hero blockquote { padding-left: var(--space-md); } .attribution { margin-left: calc(var(--space-md) + 4px); } }
+  @media (max-width: 720px) { .about-intro, .revivals { grid-template-columns: 1fr; gap: var(--space-lg); } }
+  @media (max-width: 520px) { .about-intro, .history-section .container, .revivals, .about-cta { padding-inline: var(--space-md); } .about-epigraph blockquote { padding-left: var(--space-md); } .attribution { margin-left: calc(var(--space-md) + 3px); } }
 </style>

@@ -1,14 +1,15 @@
 ---
 import Base from '../layouts/Base.astro';
+import ChapterHeader from '../components/ChapterHeader.astro';
 ---
 
 <Base title="Connect a MUD Client | Dark Pawns" description="Connect to Dark Pawns over TLS on port 7778 with Mudlet, TinTin++, or a raw terminal, and set up the Mudlet dock, map, and dp commands.">
   <section class="connection-guide container" aria-labelledby="desktop-client">
-    <div class="guide-heading">
-      <p class="eyebrow">Long-form play</p>
-      <h1 id="desktop-client">Connect with a MUD client</h1>
-      <p>A dedicated client gives you persistent scrollback, aliases, triggers, and mapping tools.</p>
-    </div>
+    <ChapterHeader
+      id="desktop-client"
+      title="Connect with a MUD client"
+      lede="A dedicated client gives you persistent scrollback, aliases, triggers, and mapping tools."
+    />
     <dl class="connection-card">
       <div><dt>Host</dt><dd><code>darkpawns.org</code></dd></div>
       <div><dt>Port</dt><dd><code>7778</code></dd></div>
@@ -93,10 +94,7 @@ import Base from '../layouts/Base.astro';
 </Base>
 
 <style>
-  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
-  .connection-guide { padding-block: var(--space-xl); }
-  .guide-heading { max-width: var(--content-width); margin-bottom: var(--space-lg); }
-  .guide-heading > p:last-child { color: var(--ink-muted); }
+  .connection-guide { padding-bottom: var(--space-xl); }
   .connection-card { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 0 var(--space-sm); border: 1px solid var(--rule); }
   .plaintext-note { max-width: var(--content-width); margin: 0 0 var(--space-lg); color: var(--ink-muted); font-size: .95rem; }
   .connection-card div { padding: var(--space-md); }

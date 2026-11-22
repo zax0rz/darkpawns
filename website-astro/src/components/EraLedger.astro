@@ -1,0 +1,170 @@
+---
+import { HISTORY_ERAS, type HistoryEra } from '../lib/history';
+
+interface Props {
+  eras?: readonly HistoryEra[];
+  surface?: 'paper' | 'paper-deep';
+  ariaLabel?: string;
+}
+
+const {
+  eras = HISTORY_ERAS,
+  surface = 'paper',
+  ariaLabel = 'Key dates in Dark Pawns history',
+} = Astro.props;
+---
+
+<ol class:list={['era-ledger', `era-ledger--${surface}`]} aria-label={ariaLabel}>
+  {eras.map((era) => (
+    <li class="era-row">
+      <div class="era-year-col">
+        <span class="era-tick" aria-hidden="true"></span>
+        <time datetime={era.year}>{era.year}</time>
+      </div>
+      <div class="era-body">
+        <div class="era-head">
+          <strong class="era-title">{era.title}</strong>
+          {era.sourceHref ? (
+            <a class="era-source" href={era.sourceHref}>{era.source}</a>
+          ) : (
+            <span class="era-source">{era.source}</span>
+          )}
+        </div>
+        <p class="era-text">{era.text}</p>
+      </div>
+    </li>
+  ))}
+</ol>
+
+<style>
+  .era-ledger {
+    list-style: none;
+    margin: var(--space-lg) 0;
+    padding: 0;
+    border-top: 1px solid var(--rule);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .era-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: var(--space-md);
+    padding: 0.85rem var(--space-sm);
+    border-bottom: 1px solid var(--rule);
+    align-items: baseline;
+    transition: background-color 140ms var(--ease-out-expo);
+  }
+
+  /* Continuous hairline chronology spine running behind the ink ticks. */
+  .era-row::before {
+    content: '';
+    position: absolute;
+    left: 0.72rem;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: color-mix(in srgb, var(--rule) 28%, transparent);
+    pointer-events: none;
+  }
+  .era-row:first-child::before { top: 1.25rem; }
+  .era-row:last-child::before { bottom: calc(100% - 1.25rem); }
+
+  .era-ledger--paper .era-row:hover,
+  .era-ledger--paper .era-row:focus-within {
+    background: var(--paper-deep);
+  }
+  .era-ledger--paper-deep .era-row:hover,
+  .era-ledger--paper-deep .era-row:focus-within {
+    background: var(--paper);
+  }
+
+  .era-year-col {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .era-tick {
+    width: 0.45rem;
+    height: 0.45rem;
+    flex-shrink: 0;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    transition: background-color 140ms var(--ease-out-expo), border-color 140ms var(--ease-out-expo);
+  }
+  .era-ledger--paper-deep .era-tick {
+    background: var(--paper-deep);
+  }
+  .era-row:hover .era-tick,
+  .era-row:focus-within .era-tick {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .era-year-col time {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+  }
+
+  .era-body {
+    min-width: 0;
+  }
+
+  .era-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-md);
+    margin-bottom: 0.2rem;
+  }
+
+  .era-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 1.1rem;
+    color: var(--ink);
+  }
+
+  .era-source {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+    white-space: nowrap;
+    opacity: 0.72;
+    transition: opacity 140ms var(--ease-out-expo), color 140ms var(--ease-out-expo);
+  }
+  .era-row:hover .era-source,
+  .era-row:focus-within .era-source {
+    opacity: 1;
+    color: var(--accent);
+  }
+
+  .era-text {
+    margin: 0;
+    color: var(--ink-muted);
+    font-size: 0.98rem;
+    line-height: 1.55;
+    max-width: 64ch;
+  }
+
+  @media (max-width: 640px) {
+    .era-row {
+      grid-template-columns: 4.75rem minmax(0, 1fr);
+      gap: var(--space-sm);
+      padding-inline: 0.25rem;
+    }
+    .era-row::before { left: 0.47rem; }
+    .era-head {
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+    .era-source { opacity: 1; }
+  }
+</style>

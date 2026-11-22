@@ -14,7 +14,13 @@ Install Dark Pawns, then run `darkpawns setup` to create an instance and open th
 curl -fsSL https://darkpawns.org/install.sh | bash
 ```
 
-**On Windows:** use PowerShell 5.1 or newer and follow the [signed Windows bootstrap instructions](https://github.com/zax0rz/darkpawns/blob/main/docs/portable-release.md#bootstrap-installation). The instructions verify the installer's publisher signature before running it.
+**On Windows (PowerShell 5.1 or newer):**
+
+```powershell
+irm https://darkpawns.org/install.ps1 | iex
+```
+
+The bootstrap stub pins the publisher key, downloads `install.ps1` and `install.ps1.sig` from the latest release, and verifies the publisher signature before running anything. For manual verification steps, see the [portable release guide](https://github.com/zax0rz/darkpawns/blob/main/docs/portable-release.md#bootstrap-installation).
 
 ![Portable bundle setup starts an isolated local world.](/media/docs/install-and-setup.gif)
 

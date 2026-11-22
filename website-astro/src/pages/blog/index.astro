@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import ChapterHeader from '../../components/ChapterHeader.astro';
 import { getCollection } from 'astro:content';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
@@ -13,16 +14,13 @@ const [latest, ...earlier] = posts;
 
 <Base title="Blog | Dark Pawns" description="Notes on the port, the world, and the development of Dark Pawns.">
   <article class="container blog-index">
-    <header class="blog-header">
-      <div class="blog-header-top">
-        <p class="eyebrow">Dispatches · {posts.length} Essays</p>
-        <a class="rss-link" href="/rss.xml" title="Subscribe via RSS">RSS Feed</a>
-      </div>
-      <h1>Blog</h1>
-      <p class="lede">
-        Notes on the C-to-Go port, the recovered community archive, the original world files, and where Dark Pawns is going.
-      </p>
-    </header>
+    <ChapterHeader
+      title="Blog"
+      lede="Notes on the C-to-Go port, the recovered community archive, the original world files, and where Dark Pawns is going."
+    >
+      <a slot="aside" class="rss-link" href="/rss.xml" title="Subscribe via RSS">RSS Feed</a>
+      <Fragment slot="meta">{posts.length} essays · Field notes &amp; engineering dispatches</Fragment>
+    </ChapterHeader>
 
     {latest && (
       <section class="featured" aria-labelledby="featured-heading">
@@ -64,31 +62,14 @@ const [latest, ...earlier] = posts;
 
 <style>
   .blog-index {
-    max-width: 54rem;
-    padding-block: var(--space-xl);
-  }
-  .blog-header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-    margin-bottom: var(--space-xs);
-  }
-  .eyebrow {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 0;
+    padding-bottom: var(--space-xl);
   }
   .rss-link {
     font-family: var(--font-mono);
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    padding: 0.2rem 0.55rem;
+    padding: 0.25rem 0.6rem;
     border: 1px solid var(--rule);
     background: var(--paper-deep);
     color: var(--ink);
@@ -98,15 +79,6 @@ const [latest, ...earlier] = posts;
     border-color: var(--accent);
     color: var(--accent);
     text-decoration: none;
-  }
-  .blog-header h1 {
-    margin-bottom: var(--space-sm);
-  }
-  .lede {
-    color: var(--ink-muted);
-    font-size: 1.15rem;
-    max-width: 58ch;
-    margin: 0 0 var(--space-xl);
   }
 
   /* Featured Lead Post */

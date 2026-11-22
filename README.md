@@ -63,7 +63,7 @@ curl -fsSL https://darkpawns.org/install.sh | bash
 **Windows (PowerShell 5.1+):**
 
 ```powershell
-$installer = Join-Path ([IO.Path]::GetTempPath()) ('darkpawns-' + [Guid]::NewGuid().ToString('N') + '.ps1'); try { Invoke-WebRequest -UseBasicParsing 'https://github.com/zax0rz/darkpawns/releases/latest/download/install.ps1' -OutFile $installer; & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $installer; if ($LASTEXITCODE -ne 0) { throw 'Installer did not complete.' } } finally { Remove-Item -LiteralPath $installer -ErrorAction SilentlyContinue }
+irm https://darkpawns.org/install.ps1 | iex
 ```
 
 **Package managers and containers:**

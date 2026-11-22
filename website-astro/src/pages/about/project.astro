@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import ChapterHeader from '../../components/ChapterHeader.astro';
 import activity from '../../generated/project-activity.json';
 
 const maxCommits = Math.max(...activity.weeks.map((week) => week.commits), 1);
@@ -15,15 +16,18 @@ const contributionPaths = [
 
 <Base title="The Dark Pawns restoration" description="Recent work on the open-source Dark Pawns server and ways to contribute to the restoration.">
   <div class="project-page">
-    <header class="project-hero container">
-      <nav class="about-back" aria-label="About"><a href="/about/">Back to About Dark Pawns</a></nav>
-      <h1>The restoration is public.</h1>
-      <p class="lede">The Go server, tests, documentation, and website are maintained in the open.</p>
-      <div class="hero-actions">
-        <a class="btn-primary" href={activity.repository}>Browse the repository</a>
-        <a class="btn-secondary" href="/docs/project/contributing/">Read the contributing guide</a>
-      </div>
-    </header>
+    <div class="container">
+      <nav class="about-back" aria-label="About"><a href="/about/"><span aria-hidden="true">←</span> Back to About Dark Pawns</a></nav>
+      <ChapterHeader
+        title="The restoration is public."
+        lede="The Go server, tests, documentation, and website are maintained in the open."
+      >
+        <div slot="aside" class="hero-actions">
+          <a class="btn-primary" href={activity.repository}>Browse the repository</a>
+          <a class="btn-secondary" href="/docs/project/contributing/">Contributing guide</a>
+        </div>
+      </ChapterHeader>
+    </div>
 
     <section class="ledger-section">
       <div class="container ledger-grid">
@@ -91,12 +95,10 @@ const contributionPaths = [
 </Base>
 
 <style>
-  .about-back { margin-bottom: var(--space-md); }
-  .about-back a { display: inline-block; padding-block: .65rem; }
-  .project-hero { padding-block: var(--space-xl); }
-  .project-hero h1 { max-width: 13ch; font-size: clamp(3rem, 8vw, 6rem); }
-  .lede { color: var(--ink-muted); font-size: 1.25rem; }
-  .hero-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-lg); }
+  .about-back { padding-top: var(--space-lg); margin-bottom: calc(var(--space-lg) * -1); }
+  .about-back a { display: inline-block; font-family: var(--font-mono); font-size: .78rem; letter-spacing: .04em; color: var(--ink-muted); }
+  .about-back a:hover { color: var(--accent); }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
   .btn-primary, .btn-secondary { display: inline-block; border: 1px solid var(--rule); padding: .65rem 1rem; font-family: var(--font-display); color: var(--ink); }
   .btn-primary { border-color: var(--accent); background: var(--accent); color: var(--paper); }
   .btn-primary:hover { background: var(--accent-deep); text-decoration: none; }

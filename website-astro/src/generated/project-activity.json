@@ -1,20 +1,8 @@
 {
-  "generatedAt": "2026-10-31T14:27:08-04:00",
+  "generatedAt": "2026-11-22T08:29:04-05:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
-    {
-      "week": "2026-08-10",
-      "commits": 100
-    },
-    {
-      "week": "2026-08-17",
-      "commits": 0
-    },
-    {
-      "week": "2026-08-24",
-      "commits": 0
-    },
     {
       "week": "2026-08-31",
       "commits": 37
@@ -49,39 +37,51 @@
     },
     {
       "week": "2026-10-26",
-      "commits": 88
+      "commits": 128
+    },
+    {
+      "week": "2026-11-02",
+      "commits": 135
+    },
+    {
+      "week": "2026-11-09",
+      "commits": 271
+    },
+    {
+      "week": "2026-11-16",
+      "commits": 213
     }
   ],
   "recentCommits": [
     {
-      "sha": "ace2c23568ac054ed38bd1062a8f08a0197b83d4",
-      "date": "2026-10-31",
-      "title": "Merge remote-tracking branch 'origin/main' into codex/docs-starlight",
-      "url": "https://github.com/zax0rz/darkpawns/commit/ace2c23568ac054ed38bd1062a8f08a0197b83d4"
+      "sha": "ab14720f9c394b8f1d4065a89942bf56741f06b5",
+      "date": "2026-11-22",
+      "title": "Merge pull request #3025 from zax0rz/codex/luna-ta-game-26",
+      "url": "https://github.com/zax0rz/darkpawns/commit/ab14720f9c394b8f1d4065a89942bf56741f06b5"
     },
     {
-      "sha": "a35c47eb4c19e75201d5a8f6ae8794176048eea5",
-      "date": "2026-10-31",
-      "title": "docs: sharpen Dark Pawns voice, help epigraphs, and Starlight callouts (R1/R4)",
-      "url": "https://github.com/zax0rz/darkpawns/commit/a35c47eb4c19e75201d5a8f6ae8794176048eea5"
+      "sha": "22edb77e99ca47907211e40ecaab926726adf2c1",
+      "date": "2026-11-22",
+      "title": "Merge pull request #3024 from zax0rz/neon/dp1625-spend-helpers",
+      "url": "https://github.com/zax0rz/darkpawns/commit/22edb77e99ca47907211e40ecaab926726adf2c1"
     },
     {
-      "sha": "104099b8f1898a2723c6c040bc967dfdb7d1cdd4",
-      "date": "2026-10-31",
-      "title": "chore(site): refresh generated project activity",
-      "url": "https://github.com/zax0rz/darkpawns/commit/104099b8f1898a2723c6c040bc967dfdb7d1cdd4"
+      "sha": "ee37389fbe77f7218adc523c6cc072f0b3a6ed60",
+      "date": "2026-11-22",
+      "title": "Merge pull request #3022 from zax0rz/codex/luna-ta-game-25",
+      "url": "https://github.com/zax0rz/darkpawns/commit/ee37389fbe77f7218adc523c6cc072f0b3a6ed60"
     },
     {
-      "sha": "b2a5c3089604f2071e671f5a9f4ed4983f0bf6a6",
-      "date": "2026-10-31",
-      "title": "docs: convert guide and hub pages to Starlight components",
-      "url": "https://github.com/zax0rz/darkpawns/commit/b2a5c3089604f2071e671f5a9f4ed4983f0bf6a6"
+      "sha": "30e0f6ed37f9db80cce8e05ebc0b973b0919cfe1",
+      "date": "2026-11-22",
+      "title": "Merge pull request #3023 from zax0rz/claude/agents-md-markdown-to-main",
+      "url": "https://github.com/zax0rz/darkpawns/commit/30e0f6ed37f9db80cce8e05ebc0b973b0919cfe1"
     },
     {
-      "sha": "1d82cae02abe4d1ad8e858b8181ced212af0013e",
-      "date": "2026-10-31",
-      "title": "docs(play): voice pass on Your first hour and Connect a client",
-      "url": "https://github.com/zax0rz/darkpawns/commit/1d82cae02abe4d1ad8e858b8181ced212af0013e"
+      "sha": "232463dcba454c66a6fd42c5f065086c264e35c0",
+      "date": "2026-11-22",
+      "title": "Merge pull request #3020 from zax0rz/claude/roadmap-test-work",
+      "url": "https://github.com/zax0rz/darkpawns/commit/232463dcba454c66a6fd42c5f065086c264e35c0"
     }
   ],
   "pullRequests": [

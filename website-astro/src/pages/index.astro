@@ -1,9 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
 import CopyCommand from '../components/CopyCommand.astro';
+import EraLedger from '../components/EraLedger.astro';
 import SocialLinks from '../components/SocialLinks.astro';
 import bookPaper from '../assets/paper/book-page.jpg';
-import chapterAltar from '../assets/chapter/temple-altar.png';
+import coverVignette from '../assets/chapter/cover-vignette.png';
 import { unixInstall } from '../lib/download';
 import { getCollection } from 'astro:content';
 // Counts come from the same generated assets the map and database pages ship,
@@ -49,15 +50,6 @@ const fieldGuides = [
   { href: '/database/', title: 'Database', meta: `${count(mobs + objects)} records`, text: 'Every mob and object loaded by the current server, indexed by its in-game ID.' },
   { href: '/docs/reference/commands/', title: 'Help files', meta: `${count(helpEntries.length)} topics`, text: 'The commands, spells, and reference files used in the game, preserved word for word.' },
 ];
-
-const eras = [
-  ['1994', 'knight.ufp.org', 'Serapis (Derek Karnes) and Tracer (C. Jackson) open Dark Pawns on CircleMUD 1.7 in September.'],
-  ['1998', 'Version 2.2', 'Frontline (R.E. Paret) and Orodreth (S. Thompson) become co-implementors and ship the largest update in the game\u2019s history.'],
-  ['2001', 'The break-in', 'An intruder wipes talon.wolfpaw.net; Orodreth\u2019s backups save the world and darkpawns.com is registered.'],
-  ['2010', 'The quiet years', 'The public server closes, and Frontline later publishes the surviving C source and world files on GitHub.'],
-  ['2019', 'DPReturns', 'Former players reopen the C codebase at dpreturns.com (now darkpawns.net), started by Slayer, expanded over the pandemic years, and later maintained by Vintage.'],
-  ['2026', 'The Go restoration', 'A new open-source server loads the original world and verifies its behavior byte for byte against the C oracle.'],
-] as const;
 ---
 
 <Base
@@ -67,7 +59,7 @@ const eras = [
   <div class="home-page" style={{ '--book-paper': `url("${bookPaper.src}")` }}>
     <section class="cover container" aria-labelledby="cover-heading">
       <div class="cover-invitation">
-        <img class="chapter-vignette" src={chapterAltar.src} width={chapterAltar.width} height={chapterAltar.height} alt="" />
+        <img class="chapter-vignette" src={coverVignette.src} width={coverVignette.width} height={coverVignette.height} alt="" />
         <h1 id="cover-heading">You type and<br />the world answers.</h1>
         <p class="lede">A multiplayer text RPG, first opened in 1994.<br /> Play here, or run a world of your own.</p>
         <a class="btn-primary" href="/play/">Enter the game</a>
@@ -88,44 +80,15 @@ const eras = [
         </section>
         <section class="host-choice" aria-labelledby="host-heading">
           <h2 id="host-heading">Run your own world</h2>
-          <p>Install the game and original world files. The setup wizard takes it from there.</p>
+          <p>Install the open-source Go server and original 1994 world files. The setup wizard takes it from there.</p>
           <div class="host-command">
             <CopyCommand command={unixInstall} label="macOS / Linux" id="home-install" />
-            <p class="download-link"><a href="/download/">Windows, all downloads &amp; hosting instructions <span aria-hidden="true">→</span></a></p>
+            <p class="host-links">
+              <a href="/download/">Windows, all downloads &amp; hosting instructions <span aria-hidden="true">→</span></a>
+            </p>
           </div>
         </section>
       </div>
-    </section>
-
-    <section class="world-introduction container" aria-labelledby="world-heading">
-      <header class="world-heading">
-        <h2 id="world-heading">Inside Dark Pawns</h2>
-        <a href="/world/">Explore the world <span aria-hidden="true">→</span></a>
-      </header>
-      <dl class="world-rules" aria-label="Distinctive rules of Dark Pawns">
-        <div>
-          <dt>30 levels + remort</dt>
-          <dd>Start again at level 1 in an advanced class, keeping your equipment, gold, and statistics.</dd>
-        </div>
-        <div>
-          <dt>Three-character parties</dt>
-          <dd>A solo level 15 character will not survive a level 15 fight; run up to three characters at once.</dd>
-        </div>
-        <div>
-          <dt>Wyldlands &amp; blood</dt>
-          <dd>Vampirism tied to the moon, and dreams in the Wyldlands that become real.</dd>
-        </div>
-      </dl>
-
-      <dl class="facts" aria-label="What the world contains">
-        {facts.map((fact) => (
-          <div>
-            <dt>{fact.label}</dt>
-            <dd class="fact-figure">{fact.figure}</dd>
-            <dd class="fact-detail">{fact.detail}</dd>
-          </div>
-        ))}
-      </dl>
     </section>
 
     {lead && (
@@ -160,7 +123,7 @@ const eras = [
                 </a>
               </h3>
               <p>{lead.summary}</p>
-              <a class="dispatch-read" href={lead.href}>Read the post <span aria-hidden="true">→</span></a>
+              <a class="dispatch-read" href={lead.href}>Read the essay <span aria-hidden="true">→</span></a>
             </article>
             {morePosts.length > 0 && (
               <ol class="dispatch-more">
@@ -177,6 +140,37 @@ const eras = [
         </div>
       </section>
     )}
+
+    <section class="world-introduction container" aria-labelledby="world-heading">
+      <header class="world-heading">
+        <h2 id="world-heading">Inside Dark Pawns</h2>
+        <a href="/world/">Explore the world <span aria-hidden="true">→</span></a>
+      </header>
+      <dl class="world-rules" aria-label="Distinctive rules of Dark Pawns">
+        <div>
+          <dt>30 levels + remort</dt>
+          <dd>Start again at level 1 in an advanced class, keeping your equipment, gold, and statistics.</dd>
+        </div>
+        <div>
+          <dt>Three-character parties</dt>
+          <dd>A solo level 15 character will not survive a level 15 fight; run up to three characters at once.</dd>
+        </div>
+        <div>
+          <dt>Wyldlands &amp; blood</dt>
+          <dd>Vampirism tied to the moon, and dreams in the Wyldlands that become real.</dd>
+        </div>
+      </dl>
+
+      <dl class="facts" aria-label="What the world contains">
+        {facts.map((fact) => (
+          <div>
+            <dt>{fact.label}</dt>
+            <dd class="fact-figure">{fact.figure}</dd>
+            <dd class="fact-detail">{fact.detail}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
 
     <section class="voices" aria-labelledby="voices-heading">
       <div class="container">
@@ -253,16 +247,7 @@ const eras = [
       <article class="archive-feature">
         <h2 id="archive-heading">Over thirty years in the record</h2>
         <p>Copies of dp-players.com (which I ran as Aidan in 2004) and Frontline&rsquo;s darkpawns.com survived in the Wayback Machine, alongside eighteen threads from rec.games.mud. The archive preserves {count(archiveRecords.length)} sourced records and documents where every page came from.</p>
-        <ol class="era-ledger" aria-label="Key dates in Dark Pawns history">
-          {eras.map(([year, title, text]) => (
-            <li>
-              <time>{year}</time>
-              <div>
-                <strong>{title}:</strong> {text}
-              </div>
-            </li>
-          ))}
-        </ol>
+        <EraLedger surface="paper" />
         <nav class="record-links" aria-label="Archive and history">
           <a href="/archive/"><span>Browse the archive<small>{count(archiveRecords.length)} sourced records</small></span><span aria-hidden="true">→</span></a>
           <a href="/about/"><span>Read the full history</span><span aria-hidden="true">→</span></a>
@@ -274,19 +259,26 @@ const eras = [
       </article>
 
       <aside class="restoration-note" aria-labelledby="oracle-heading">
-        <figure class="wanderer-plate">
-          <img
-            src="/images/blog/the-long-middle.png"
-            width="900"
-            height="720"
-            loading="lazy"
-            alt="Pen-and-ink illustration of a hooded traveller with a staff walking a mountain road toward a low sun"
-          />
-        </figure>
-        <h2 id="oracle-heading">The game is the game.</h2>
+        <div class="restoration-head">
+          <div class="restoration-mark" aria-hidden="true">
+            <svg class="restoration-pawn" viewBox="24 8 52 88" focusable="false">
+              <g fill="currentColor">
+                <circle cx="50" cy="23" r="12" />
+                <rect x="37" y="38" width="26" height="5" />
+                <polygon points="43,46 57,46 62,75 38,75" />
+                <rect x="31" y="77" width="38" height="6" />
+                <rect x="26" y="85" width="48" height="7" />
+              </g>
+            </svg>
+          </div>
+          <h2 id="oracle-heading">The game is the game.</h2>
+        </div>
         <p>The Go server treats the original C implementation as a read-only oracle. Both servers run side by side against deterministic scenarios; when a single player-facing byte or random roll disagrees, the C source wins.</p>
         <p>While the separate community revival at <a href="https://www.darkpawns.net/">darkpawns.net</a> expanded the C codebase after 2019, this project preserves the 1994 to 2010 game intact.</p>
-        <p class="restoration-cta"><a href="/about/project/">See the current work and how to help <span aria-hidden="true">→</span></a></p>
+        <p class="restoration-cta">
+          <a href="/about/project/">See the restoration activity &amp; how to help <span aria-hidden="true">→</span></a>
+          <a href="/docs/project/port-fidelity/">Read the oracle fidelity rules <span aria-hidden="true">→</span></a>
+        </p>
       </aside>
     </section>
 
@@ -296,22 +288,22 @@ const eras = [
 
 <style>
   .home-page { isolation: isolate; }
-  .home-page::before { content: ''; position: fixed; inset: 0; z-index: -1; background-image: var(--book-paper); background-size: cover; background-position: center; opacity: .1; pointer-events: none; }
+  .home-page::before { content: ''; position: fixed; inset: 0; z-index: -1; background-image: var(--book-paper); background-size: cover; background-position: center; opacity: .22; mix-blend-mode: multiply; pointer-events: none; }
   @media (forced-colors: active) { .home-page::before { display: none; } }
   /* A centered chapter opening on worn paper. */
   .cover { padding-block: var(--space-lg); }
   .cover-invitation { max-width: 48rem; margin-inline: auto; text-align: center; }
-  .chapter-vignette { display: block; width: min(22.5rem, 72vw); height: auto; margin: 0 auto var(--space-md); }
+  .chapter-vignette { display: block; width: min(26rem, 84vw); height: auto; margin: 0 auto var(--space-md); }
   .cover h1 { margin-bottom: var(--space-md); font-size: clamp(2.5rem, 4.6vw, 4rem); line-height: 1.04; letter-spacing: -.025em; text-wrap: initial; }
   .lede { max-width: 44ch; font-size: 1.05rem; line-height: 1.6; margin: 0 auto var(--space-md); color: var(--ink-muted); }
   .btn-primary { display: inline-block; border: 1px solid var(--accent); padding: .7rem 1.4rem; font-family: var(--font-display); font-size: 1.1rem; background: var(--accent); color: var(--paper); }
   .btn-primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); text-decoration: none; }
   .play-note { color: var(--ink-muted); font-size: .9rem; margin: var(--space-xs) auto 0; }
-  .entry-options { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: var(--space-xl); align-items: start; border-block: 1px solid var(--rule); padding-block: var(--space-lg); margin-top: 1.5rem; }
+  .entry-options { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: var(--space-xl); align-items: start; border-block: 1px solid var(--rule); padding-block: var(--space-lg); margin-top: 1.5rem; }
   .entry-options h2 { font-size: 1.25rem; margin-bottom: var(--space-xs); }
   .entry-options section > p { margin: 0; font-size: .95rem; color: var(--ink-muted); }
   .host-command { min-width: 0; margin-top: var(--space-md); }
-  .download-link { font-size: .95rem; margin: var(--space-sm) 0 0; }
+  .host-links { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-xs) var(--space-sm); font-size: .95rem; color: var(--ink-muted); margin: var(--space-sm) 0 0; }
   .connection-settings { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm) var(--space-lg); margin: var(--space-md) 0; }
   .connection-host { grid-column: 1 / -1; }
   .connection-settings dt { font-size: .9rem; color: var(--ink-muted); }
@@ -383,8 +375,10 @@ const eras = [
   figcaption a { color: var(--accent); }
   .letter {
     background: var(--paper);
-    border: 1px solid var(--rule);
-    padding: var(--space-lg);
+    border: 2px solid var(--rule);
+    outline: 1px solid var(--rule);
+    outline-offset: -6px;
+    padding: calc(var(--space-lg) + 0.25rem);
   }
   .letter blockquote { margin: 0; }
   .letter blockquote p {
@@ -396,11 +390,17 @@ const eras = [
   }
   .letter blockquote p:first-child {
     font-family: var(--font-display);
-    font-size: clamp(1.25rem, 2.1vw, 1.75rem);
-    line-height: 1.28;
-    text-indent: -.4em;
+    font-size: clamp(1.25rem, 2.1vw, 1.65rem);
+    line-height: 1.3;
   }
-  .letter blockquote p:first-child::before { content: "\201C"; color: var(--accent); }
+  .letter blockquote p:first-child::first-letter {
+    float: left;
+    font-family: var(--font-display);
+    font-size: 3.4rem;
+    line-height: 0.82;
+    padding: 0.14rem 0.45rem 0 0;
+    color: var(--accent);
+  }
   .letter blockquote p:last-child { margin-bottom: 0; font-style: italic; }
   .letter figcaption { margin-top: var(--space-md); padding-top: var(--space-sm); border-top: 1px solid var(--rule); }
 
@@ -444,30 +444,6 @@ const eras = [
   .archive-feature { border-top: 2px solid var(--rule); padding-top: var(--space-md); }
   .archive-feature h2 { max-width: 21ch; font-size: clamp(1.75rem, 3.2vw, 2.5rem); }
   .archive-feature > p { color: var(--ink-muted); }
-  .era-ledger {
-    list-style: none;
-    margin: var(--space-lg) 0;
-    padding: 0;
-    border-top: 1px solid var(--rule);
-    font-variant-numeric: tabular-nums;
-  }
-  .era-ledger li {
-    display: grid;
-    grid-template-columns: 3.8rem minmax(0, 1fr);
-    gap: var(--space-md);
-    padding-block: .65rem;
-    border-bottom: 1px solid var(--rule);
-    align-items: baseline;
-    font-size: 1rem;
-  }
-  .era-ledger time {
-    font-family: var(--font-mono);
-    font-size: .8rem;
-    font-weight: 700;
-    color: var(--accent);
-  }
-  .era-ledger div { color: var(--ink-muted); }
-  .era-ledger strong { font-family: var(--font-display); font-weight: 400; font-size: 1rem; color: var(--ink); }
   .record-links { font-family: var(--font-display); font-size: 1.25rem; }
   .record-links > a { display: flex; justify-content: space-between; align-items: center; gap: var(--space-md); padding-block: var(--space-md); border-bottom: 1px solid var(--rule); }
   .record-links small { display: block; margin-top: var(--space-xs); font-family: var(--font-body); font-size: .9rem; color: var(--ink-muted); }
@@ -480,18 +456,32 @@ const eras = [
     border: 1px solid var(--rule);
     border-top: 3px solid var(--accent);
     background: var(--paper-deep);
-    padding: var(--space-md);
+    padding: var(--space-lg) var(--space-md);
   }
-  .wanderer-plate {
-    margin: 0 0 var(--space-md);
+  .restoration-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+  }
+  .restoration-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    flex-shrink: 0;
     background: var(--paper);
     border: 1px solid var(--rule);
-    padding: var(--space-sm);
   }
-  .wanderer-plate img { display: block; width: 100%; height: auto; max-width: 16rem; margin-inline: auto; }
-  .restoration-note h2 { font-size: 1.5rem; margin-bottom: var(--space-xs); }
+  .restoration-pawn {
+    height: 1.55rem;
+    width: auto;
+    color: var(--ink);
+  }
+  .restoration-note h2 { font-size: 1.5rem; margin: 0; }
   .restoration-note p { color: var(--ink-muted); font-size: 1rem; }
-  .restoration-cta { margin-bottom: 0; font-family: var(--font-display); font-size: 1rem; }
+  .restoration-cta { display: flex; flex-direction: column; gap: var(--space-xs); margin-bottom: 0; font-family: var(--font-display); font-size: 1rem; }
 
   @media (max-width: 1000px) {
     .voices-grid { grid-template-columns: 1fr; gap: var(--space-lg); }
@@ -505,7 +495,7 @@ const eras = [
     .facts > div:nth-child(n + 3) { border-top: 1px solid var(--rule); }
   }
   @media (max-width: 900px), (pointer: coarse) {
-    .client-guide a, .download-link a, .world-heading > a,
+    .client-guide a, .host-links a, .world-heading > a,
     .dispatch-head > a, .dispatch-read, .record-references a, .restoration-cta a {
       display: inline-block;
       min-height: 44px;

@@ -1,0 +1,88 @@
+---
+title: "Directions and speedwalks"
+description: "Verified walking directions and speedwalks from Market Square in Kir Drax'in to cities, leveling zones, high-level areas, and the Moongates."
+type: reference
+audience: players
+verified: v0.1.8
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+Every route below starts at **Market Square** in Kir Drax'in (room `#8046`) unless noted otherwise. Each path is verified step by step against the shipped world files (`lib/world/wld/`), cross-checked with the recovered [2004 dp-players.com directions](/archive/player-page-directions/).
+
+<Aside type="tip" title="Reading speedwalk shorthand">
+  A number before a direction repeats that step: `13s4wd` means 13 south, 4 west, then down. Directions are `n` (north), `s` (south), `e` (east), `w` (west), `u` (up), and `d` (down). Routes marked **Waterwalk** cross water sectors.
+</Aside>
+
+<Tabs>
+  <TabItem label="Cities">
+    | Destination | Verified route from Market Square | Arrives at | Notes |
+    | --- | --- | --- | --- |
+    | **Alaozar** | `20e5n2e30n` | Main Street (`#21257`) | Classic road route; shorter forest path is `9e4n5en2enene2n` |
+    | **Kir-Oshi** | `16s14w20s4e` | The West Gate (`#18236`) | Classic road route; shorter path is `23s2w13se` |
+    | **Haven** | `8s18e2s7e3se4s` | The Gates of Haven (`#12101`) | Waterwalk required |
+    | **Xixieqi** | `41s` | The Docks of XiXieqi (`#4800`) | Waterwalk required |
+  </TabItem>
+
+  <TabItem label="Newbie">
+    | Destination | Levels | Verified route from Market Square | Arrives at | Notes |
+    | --- | --- | --- | --- | --- |
+    | **The Crystal Temple** | 1-3 | `2n4e2n` | Inside the Crystal Temple (`#11725`) | Open door at `#11700` (`2n4en`) |
+    | **Kir Drax'in Zoo** | 1-10 | `2n2e2n` | The Zoo (`#14501`) | Entrance is `2n2en` |
+    | **Kir Drax'in Slums** | 6-11 | `4se` | Entering a Dim Street (`#7001`) | Inside Kir Drax'in |
+    | **The Ender Village** | 6-12 | `13s4wd` | The Gateway (`#18715`) | 13 south, not 14 |
+    | **Troll Caverns** | 6-12 | `11s12ws` | Entrance of a Narrow Pass (`#19901`) | Southwest of Kir Drax'in |
+    | **Kir Drax'in Stadium** | 7-15 | `2n4w2nu` | In the Stands (`#10032`) | Entrance is `2n4wn` |
+    | **Cold Village (Monster Village)** | 9-12 | `11w7n` | A Short Pass (`#18601`) | Also reachable via `9w2n2w4n` |
+  </TabItem>
+
+  <TabItem label="Mid-level">
+    | Destination | Levels | Verified route from Market Square | Arrives at | Notes |
+    | --- | --- | --- | --- | --- |
+    | **Hell, Level 1** | 3-6 | `9e4n5en2enene9n` | A Forest Road (`#9971`) | Northeast forest road |
+    | **The Swamp** | 8-17 | `18s12e` | The Swamp (`#12232`) | Waterwalk required |
+    | **The Bhyroga Valley** | 9-20 | `9w2n2w2n3w2nw3nwnen2en` | A Narrow Pass Through the Mountains (`#4201`) | Also reachable via the northwest Moongate |
+    | **Ogre Emperor's Stronghold** | 12-20 | `16e7nw2s` | Guard Room (`#14302`) | Entrance valley is `9e4n5e2nw` |
+    | **Sea Cave Lagoon (Haven Lighthouse)** | 15-20 | `15s28e7s2wswswn` | The Sea Cave Lagoon (`#15880`) | Waterwalk required |
+    | **The Black Sands Desert** | 16-30 | `18s30w4s10w4nw8n` | A Secluded Grove (`#4004`) | Desert Moongate; also reachable via the west Moongate |
+    | **Shax'in (Brown Dragon)** | 16-30 | `18s30w4s8ws2wd` | In a Strange Cave (`#11513`) | Inside the Black Sands Desert |
+  </TabItem>
+
+  <TabItem label="High-level">
+    | Destination | Levels | Verified route from Market Square | Arrives at | Notes |
+    | --- | --- | --- | --- | --- |
+    | **King Solomon's Mines** | 22-30 | `9w3n2w2n2wn3wnw2n3e` | In The Mines (`#12832`) | High-level desert region |
+    | **Glyndwr (Dirt Zone)** | 24-30 | `9en19e` | The Forest (`#3213`) | East of Kir Drax'in |
+    | **Amber / Forest Arden** | 25-30 | `9e2nen15e2ne2ne2nen2e2n5e` | The Forest Arden (`#2712`) | Also reachable via the northeast Moongate |
+    | **Ruined Temple of Paphoset** | 25-30 | `9e2nen2enede` | Entry Chamber (`#14120`) | Northeast approach |
+    | **The Grey Keep** | 26-30 | `18s30w3s7w2n` | Before a Massive Gate (`#14402`) | Southwest road |
+    | **Elemental Planes** | 27-30 | `33s6w` | A Tropical Island (`#1395`) | Waterwalk required |
+    | **Ssyzyil's Island (Kuo-toa)** | High | From Xixieqi (`#4800`): `12e7n5w` | A lush Jungle (`#3591`) | Start at Xixieqi docks (`41s`) |
+  </TabItem>
+
+  <TabItem label="Moongates">
+    Walk `12e3n` from Market Square to reach the Kir Drax'in grove (`#4007`). Stepping into the gate places you at the center (`#4000`) of a 3x3 void grid. Walk toward a compass edge to exit at that region's grove:
+
+    | Compass direction | Destination region | Grove room |
+    | --- | --- | --- |
+    | **North** | Kir Drax'in / The Great Forest | `#4007` |
+    | **Northeast** | Amber / Arden Forest | `#4008` |
+    | **East** | The Eastern Forest (toward Glyndwr and Haven) | `#4005` |
+    | **Southeast** | The Swamp | `#4003` |
+    | **South** | The Great Plains | `#4002` |
+    | **Southwest** | Noirwood Forest | `#4001` |
+    | **West** | The Black Sands Desert | `#4004` |
+    | **Northwest** | The Bhyroga Valley | `#4006` |
+  </TabItem>
+</Tabs>
+
+<Aside type="note" title="About older player direction lists">
+  Community speedwalk lists from the 2004 `dp-players.com` site and the 2019 DPReturns revival (`darkpawns.net`) include some paths that do not match the current world graph, such as `14s4wd` for Ender Village (the shipped map uses `13s4wd`) or zones reached through locked portals and custom exits. Only routes verified directly against the server's world files appear above. For full room-by-room exploration, open the [interactive world map](/map/).
+</Aside>
+
+## Related
+
+- [Interactive world map](/map/)
+- [2004 dp-players.com directions archive](/archive/player-page-directions/)
+- [Your first hour](/docs/play/first-hour/)
+- [Connect a client](/docs/play/connect-client/)

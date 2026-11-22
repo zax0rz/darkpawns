@@ -1,28 +1,28 @@
 ---
 import Base from '../layouts/Base.astro';
+import ChapterHeader from '../components/ChapterHeader.astro';
 
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
 ---
 
-<Base title="Contact Dark Pawns" description="Send a private message about Dark Pawns, its history, or the current restoration.">
+<Base title="Contact Dark Pawns" description="Send a private message to Zach Greene about Dark Pawns, the Go restoration, research, or the 1994-2010 community archive.">
   {turnstileSiteKey && <script slot="head" src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
-  <div class="contact-page container">
-    <header>
-      <p class="eyebrow">Private correspondence</p>
-      <h1>Were you there?</h1>
-      <p class="lede">Use this form if you played Dark Pawns, remember part of its history, or want to help with the restoration. Your reply address is sent privately and is not published.</p>
-    </header>
+  <article class="contact-page container">
+    <ChapterHeader
+      title="Contact"
+      lede="Send a private message to Zach Greene about the Go restoration, research and engineering inquiries, playing Dark Pawns, or the recovered 1994 to 2010 archive."
+    />
 
     <div class="contact-grid">
       <form id="contact-form" class="contact-form" data-configured={turnstileSiteKey ? 'true' : 'false'}>
         <div class="field-pair">
           <label>
-            <span>Character name <small>optional</small></span>
+            <span>Name or handle <small>optional</small></span>
             <input name="character" type="text" maxlength="80" autocomplete="nickname" />
           </label>
           <label>
-            <span>Years played <small>optional</small></span>
-            <input name="years" type="text" maxlength="80" placeholder="For example, 2001 to 2005" />
+            <span>Years played or topic <small>optional</small></span>
+            <input name="years" type="text" maxlength="80" placeholder="For example, 2001 to 2005, or Go port" />
           </label>
         </div>
         <label>
@@ -40,23 +40,31 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
         {turnstileSiteKey ? (
           <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-action="contact" data-theme="light"></div>
         ) : (
-          <p class="preview-note">Spam protection is not configured in this local preview.</p>
+          <p class="preview-note">Spam protection (<code>PUBLIC_TURNSTILE_SITE_KEY</code>) is not configured in this local preview.</p>
         )}
-        <p class="privacy-note">The <a href="/privacy/">privacy page</a> explains how messages and spam checks are handled.</p>
+        <p class="privacy-note">Your reply address is sent privately and is never published. See the <a href="/privacy/">privacy page</a> for how messages and spam checks are handled.</p>
         <div class="form-actions">
           <button class="btn-primary" type="submit" disabled={!turnstileSiteKey}>Send privately</button>
           <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
         </div>
       </form>
 
-      <aside>
-        <h2>What happens next</h2>
-        <p>The message goes to Zach Greene. If you provide a reply address, he can write back to you directly.</p>
-        <p>Contact details are not added to the archive or exposed on this site.</p>
-        <p>This form is also the place to request a correction or ask for archived material to be removed.</p>
+      <aside class="contact-notes" aria-labelledby="notes-heading">
+        <h2 id="notes-heading">Good reasons to write</h2>
+        <ul>
+          <li><strong>You played between 1994 and 2010</strong> and have logs, maps, stories, or corrections for the archive.</li>
+          <li><strong>Engineering &amp; research:</strong> questions about the C-to-Go oracle port, deterministic testing, or collaboration.</li>
+          <li><strong>Archive corrections &amp; removals:</strong> if your old handle, post, or photo appears in the archive and you want it edited or taken down.</li>
+          <li><strong>Hosting &amp; bugs:</strong> trouble running your own Dark Pawns server or connecting a MUD client.</li>
+        </ul>
+        <div class="other-channels">
+          <h3>Public channels</h3>
+          <p><a href="https://github.com/zax0rz/darkpawns">GitHub repository <span aria-hidden="true">→</span></a></p>
+          <p><a href="https://discord.gg/supVzU9yN">Dark Pawns Discord <span aria-hidden="true">→</span></a></p>
+        </div>
       </aside>
     </div>
-  </div>
+  </article>
 </Base>
 
 <script>
@@ -98,12 +106,13 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
 </script>
 
 <style>
-  .contact-page { padding-block: var(--space-xl); }
-  .contact-page header { max-width: 50rem; margin-bottom: var(--space-xl); }
-  .contact-page h1 { max-width: 12ch; font-size: clamp(3rem, 8vw, 6rem); }
-  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
-  .lede { color: var(--ink-muted); font-size: 1.2rem; }
-  .contact-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(17rem, .65fr); gap: var(--space-xl); align-items: start; }
+  .contact-page { padding-bottom: var(--space-xl); }
+  .contact-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(17rem, 0.75fr);
+    gap: var(--space-xl);
+    align-items: start;
+  }
   .contact-form { border-top: 2px solid var(--rule); padding-top: var(--space-lg); }
   .field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); }
   label { display: block; margin-bottom: var(--space-md); }
@@ -113,16 +122,27 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
   textarea { resize: vertical; }
   input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
   .honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
-  .preview-note { border-block: 1px solid var(--rule); color: var(--ink-muted); padding-block: var(--space-sm); }
+  .preview-note { border-block: 1px solid var(--rule); color: var(--ink-muted); padding-block: var(--space-sm); font-size: 0.95rem; }
   .privacy-note { color: var(--ink-muted); font-size: .85rem; }
   .form-actions { display: flex; align-items: center; gap: var(--space-md); margin-top: var(--space-md); }
-  .btn-primary { border: 1px solid var(--accent); background: var(--accent); color: var(--paper); padding: .65rem 1rem; font-family: var(--font-display); font-size: 1rem; }
+  .btn-primary { border: 1px solid var(--accent); background: var(--accent); color: var(--paper); padding: .65rem 1.2rem; font-family: var(--font-display); font-size: 1rem; }
   .btn-primary:hover:not(:disabled) { background: var(--accent-deep); }
   .btn-primary:disabled { background: var(--ink-muted); border-color: var(--ink-muted); cursor: not-allowed; }
   .form-status { color: var(--ink-muted); margin: 0; }
-  aside { border-top: 2px solid var(--accent); background: var(--paper-deep); padding: var(--space-md); }
-  aside h2 { font-size: 1.35rem; }
-  aside p { color: var(--ink-muted); }
-  @media (max-width: 720px) { .contact-grid, .field-pair { grid-template-columns: 1fr; } .contact-grid { gap: var(--space-lg); } }
-  @media (max-width: 520px) { .contact-page { padding-inline: var(--space-md); } .form-actions { align-items: flex-start; flex-direction: column; } }
+  .contact-notes {
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--accent);
+    background: var(--paper-deep);
+    padding: var(--space-lg) var(--space-md);
+  }
+  .contact-notes h2 { font-size: 1.35rem; margin-bottom: var(--space-md); }
+  .contact-notes ul { margin: 0 0 var(--space-md); padding-left: 1.15rem; }
+  .contact-notes li { margin-bottom: var(--space-sm); color: var(--ink-muted); font-size: 0.95rem; }
+  .contact-notes strong { color: var(--ink); font-weight: 600; }
+  .other-channels { padding-top: var(--space-md); border-top: 1px solid color-mix(in srgb, var(--rule) 35%, transparent); }
+  .other-channels h3 { font-size: 1.1rem; margin-bottom: var(--space-xs); }
+  .other-channels p { margin: 0 0 var(--space-xs); font-family: var(--font-display); }
+  .other-channels p:last-child { margin-bottom: 0; }
+  @media (max-width: 780px) { .contact-grid, .field-pair { grid-template-columns: 1fr; } .contact-grid { gap: var(--space-lg); } }
+  @media (max-width: 640px) { .contact-page { padding-inline: var(--space-md); } .form-actions { align-items: flex-start; flex-direction: column; } }
 </style>

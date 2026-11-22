@@ -7,8 +7,8 @@ export const releaseVersion = latestRelease.replace(/^v/, '');
 export const releaseURL = `https://github.com/zax0rz/darkpawns/releases/tag/v${releaseVersion}`;
 export const assetBase = `https://github.com/zax0rz/darkpawns/releases/download/v${releaseVersion}`;
 export const unixInstall = 'curl -fsSL https://darkpawns.org/install.sh | bash';
-// Keep this invocation in step with README.md: use a temporary file and clean it up.
-export const windowsInstall = "$installer = Join-Path ([IO.Path]::GetTempPath()) ('darkpawns-' + [Guid]::NewGuid().ToString('N') + '.ps1'); try { Invoke-WebRequest -UseBasicParsing 'https://github.com/zax0rz/darkpawns/releases/latest/download/install.ps1' -OutFile $installer; & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $installer; if ($LASTEXITCODE -ne 0) { throw 'Installer did not complete.' } } finally { Remove-Item -LiteralPath $installer -ErrorAction SilentlyContinue }";
+// Keep this invocation in step with README.md and website/static/install.ps1.
+export const windowsInstall = 'irm https://darkpawns.org/install.ps1 | iex';
 export const platforms = [
   { name: 'macOS', os: 'darwin', format: 'tar.gz', architectures: [{ arch: 'arm64', label: 'Apple silicon' }, { arch: 'amd64', label: 'Intel' }] },
   { name: 'Linux', os: 'linux', format: 'tar.gz', architectures: [{ arch: 'amd64', label: 'Intel / AMD (x86-64)' }, { arch: 'arm64', label: 'ARM64' }] },
