@@ -1059,3 +1059,65 @@ against the named source lines. No expected value disagreed with C. This batch
 changes tests and research records only, so no census was needed. `pkg/game`
 coverage was 64.6% on the preregistered commit and remains 64.6% after this
 batch.
+
+## Batch 22 preregistered estimate (before reading tests T1339–T1388)
+
+The remainder forecast after T1338 is R611/F1/C12/D29 across 653 tests. For
+this 50-test slice I predict R46/F1/C1/D2, with all 50 introduced after the
+2026-07-12 oracle date. That leaves a forecast of R565/F0/C11/D27 across 603
+tests.
+
+The roster is the next 50 unledgered names in inventory order after T1338.
+They span inventory lines 1441–1543, skipping names already recorded in the
+ledger:
+
+- `TestShootTargetCMatcherAndRoomOrder`
+- `TestShootTargetConcurrentMovement`
+- `TestShopAccountPurchaseAndSaleBanking`
+- `TestShopNPCGodLevelPaysAndPrefixSale`
+- `TestShopPricesUseCFloatMarkup`
+- `TestShopPriceUsesCIntegerOrder`
+- `TestShopProducesObjectRejectsPrototypeLessObject`
+- `TestShopRoomWildcardUsesCRealRoomIndex`
+- `TestShopTradeExpressionMatchesCStackSemantics`
+- `TestShopTradeWithMatchesCRefusalOrder`
+- `TestShopTransactionAmountUsesDigitOnlyLeadingCount`
+- `TestShowShopsKeeperRNumZeroCollision`
+- `TestSkillDamageAttackTypeMatchesC`
+- `TestSkillDamageNilAttacker`
+- `TestSkillDamageSeamRunsFullJailGuardRedirect`
+- `TestSkillDeathOrderExactBytes`
+- `TestSkillKillCorpseUsesCSkillAttackType`
+- `TestSkillResultDamageAttackTypePrefersCSkillMessageKey`
+- `TestSkillStorageName_AllKujiSealsUseCommandSkillKeys`
+- `TestSkillStorageName_JinUsesCommandSkillKey`
+- `TestSkillToAttackTypePreservesDamageSpellIDs`
+- `TestSleepingVisibilityNamesCharactersAndObjects`
+- `TestSnakeSpecialDrawsOnlyWithSameRoomVictim`
+- `TestSpawnMobWithLevelIAppliesCreateMobileScaling`
+- `TestSpawnObjectToPlayerInventoryIUsesObjToCharPlacement`
+- `TestSpawnObjectToRoomForSpellUsesObjToRoomPlacement`
+- `TestSpecAlienElevatorMovesOnlyOpenEastRoom`
+- `TestSpecAssignmentsHaveLegacyLanesForThePlayerWalk`
+- `TestSpecBackstabber_MissSetsVictimFightingPosition`
+- `TestSpecBat_Arms`
+- `TestSpecBatRoom_WakesSleeping`
+- `TestSpecBeholderFightingArmDraws`
+- `TestSpecBeholderPeacefulLoneRoomDoesNotDraw`
+- `TestSpecBeholderPeacefulPulseDraws`
+- `TestSpecBrainEater_BeheadsCorpseAndLevelsInstance`
+- `TestSpecBrainEater_DamrollGrowthAtLevelThirty`
+- `TestSpecBrainEater_EntryGates`
+- `TestSpecBrainEater_SkipsNonQualifyingObjects`
+- `TestSpecBrassDragonBlocksThroughAct`
+- `TestSpecBrassDragonUsesMoverRoomAndImmortalGate`
+- `TestSpecButler_GenDoorCallBytesMatchC`
+- `TestSpecButler_GenDoorUsesGenericFindInventoryFirst`
+- `TestSpecCarrionActorSpawnsForTheActor`
+- `TestSpecCastleGuardEast_AssistsOnlyEast`
+- `TestSpecCastleGuardEast_BlockAndHit`
+- `TestSpecCleric_Lspell12FallsToDefaultHarm`
+- `TestSpecClerk_HometownZoneNames`
+- `TestSpecClerkTellArgumentsMatchC`
+- `TestSpecClerk_VisibilityAndUnknownZone`
+- `TestSpecConductorAsksTicketOnAutonomousPulse`
