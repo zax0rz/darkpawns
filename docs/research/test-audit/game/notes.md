@@ -2172,3 +2172,12 @@ then the ratchet reported clean).
 Cumulatively, T001–T1838 has R1681/F124/C24/D9. The pre-oracle segment remains
 R379/F7/C3/D1; post-oracle is R1302/F117/C21/D8. From T639 through T1838 the
 counts are R1048/F120/C24/D8.
+
+## Inventory-count erratum
+
+Recomputing directly from the frozen 1,991-name inventory and unique test names
+in `ledger.tsv`: after T1838 there are **225** unledgered functions
+(1,991 − 1,766). The Batch 30 result's 203 and this batch's 153 were arithmetic
+errors. The prior checkpoints are 325 after T1738 and 275 after T1788. Batch 32
+was preregistered from the direct inventory/ledger difference of 225 and starts
+with the first 50 unledgered names, leaving 175 after its roster is audited.
