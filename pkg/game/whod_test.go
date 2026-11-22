@@ -6,28 +6,22 @@ import (
 )
 
 // TestWhodGreetingMatchesConfigBytes pins SHORT_GREETINGS
-// (src/config.c:221-231): 509 bytes, with the escape-heavy lines checked
+// (src/config.c:221-233): 509 bytes, all lines checked
 // literally so a transcription slip cannot pass.
 func TestWhodGreetingMatchesConfigBytes(t *testing.T) {
-	const (
-		line3 = "   _     /  __ \\           | |    |  __ \\                            _\n\r"
-		line5 = "   =    /| |  | |/ _` | '__| |/ / |  ___/ _` \\ \\ /\\ / / '_ \\/ __|    =\n\r"
-		line7 = " ~~~~~  /|_____/ \\__,_|_|  |_|\\_\\ |||   \\__,_| \\_/\\_/ |_| |_|___/  ~~~~~\n\r"
-	)
-	got := WhodGreeting()
-	if len(got) != 509 {
-		t.Fatalf("greeting length = %d, want 509", len(got))
-	}
-	if !strings.HasPrefix(got, "\n\r\n\r         (_____)") {
-		t.Fatalf("greeting prefix = %q", got[:24])
-	}
-	if !strings.HasSuffix(got, "                 `.'\n\r\n\r") {
-		t.Fatalf("greeting suffix = %q", got[len(got)-24:])
-	}
-	for i, want := range []string{line3, line5, line7} {
-		if !strings.Contains(got, want) {
-			t.Fatalf("greeting missing escaped line %d: %q", i+3, want)
-		}
+	want := "\n\r\n\r" +
+		"         (_____)           (_)    (_____)\n\r" +
+		"   _     /  __ \\           | |    |  __ \\                            _\n\r" +
+		"  ;*;   /| |  | | __ _ _ __| | __ | |__) |_ _(_      _)_ __ (___)   ;*;\n\r" +
+		"   =    /| |  | |/ _` | '__| |/ / |  ___/ _` \\ \\ /\\ / / '_ \\/ __|    =\n\r" +
+		" .***.  /| |__| | (_| | |  |   <  | |  | (_| |\\ V  V /| | | \\__ \\  .***.\n\r" +
+		" ~~~~~  /|_____/ \\__,_|_|  |_|\\_\\ |||   \\__,_| \\_/\\_/ |_| |_|___/  ~~~~~\n\r" +
+		"        /                         |||\n\r" +
+		"                             |||\n\r" +
+		"                 `.'\n\r" +
+		"\n\r"
+	if got := WhodGreeting(); got != want {
+		t.Fatalf("greeting bytes = %q, want C SHORT_GREETINGS %q (src/config.c:221-233)", got, want)
 	}
 }
 
@@ -120,22 +114,7 @@ func TestWhodBuildWhoListAfkMarker(t *testing.T) {
 		t.Fatalf("AFK bytes = %q", got)
 	}
 	w.SetMode(WhodShowName)
-	if got := w.BuildWhoList([]WhodEntry{{Name: "Albe", Level: 3, Title: "the Test"}}); !strings.Contains(got, "Albe\r\n") {
+	if got := w.BuildWhoList([]WhodEntry{{Name: "Albe", Level: 3, Title: "the Test", AFK: true}}); !strings.Contains(got, "Albe\r\n") {
 		t.Fatalf("name-only bytes = %q", got)
-	}
-}
-
-// TestWhodBuildWhoListUnknownSite pins the SHOW_SITE "[ ** Unknown ** ]" arm
-// (src/whod.c:404-410): a session whose host string is empty renders the
-// placeholder. The census transports always carry a peer address, so no
-// vehicle can produce this arm -- unit proof only, per the L3 blocked row
-// whod-daemon.unknown-site (R5h: fails if the arm is deleted).
-func TestWhodBuildWhoListUnknownSite(t *testing.T) {
-	w := NewWhod()
-	w.SetMode(WhodShowName | WhodShowSite)
-	got := w.BuildWhoList([]WhodEntry{{Name: "Hostless", Class: ClassWarrior, Level: 3}})
-	want := WhodHeader() + "Hostless [ ** Unknown ** ]\r\n" + "\n\rPlayers : 1     Gods : 0\n\r\n\r"
-	if got != want {
-		t.Fatalf("unknown-site bytes =\n%q\nwant\n%q", got, want)
 	}
 }

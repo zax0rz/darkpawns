@@ -156,9 +156,9 @@ func TestVisibilitySitesUseRealLevel(t *testing.T) {
 }
 
 // A subject without wizinvis passes C's GET_REAL_LEVEL(sub) >= GET_INVIS_LEV(obj)
-// test for every observer, since levels are never negative. The visibility
-// sites skip the switch lookup then, so an ordinary mob looking at an ordinary
-// player never scans the session table under the manager lock.
+// test for every observer, since levels are never negative (src/utils.h:285-287,
+// 528-530). The visibility sites skip the switch lookup then, so an ordinary
+// mob looking at an ordinary player never scans the session table under lock.
 func TestVisibilitySkipsSwitchLookupWithoutInvisLevel(t *testing.T) {
 	w, mortal, _, _, _ := newChannelWorld(t)
 	mortal.SetLevel(5)

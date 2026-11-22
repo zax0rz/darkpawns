@@ -966,6 +966,7 @@ src/spec_procs.c:dragon_breath	pkg/game/spec_procs.go	specDragonBreath	split
 src/spec_procs.c:dump	pkg/game/actor_specials_rooms.go	specDumpActor	primary
 src/spec_procs.c:elemental_room	pkg/game/spec_procs4.go	specElementalRoom	primary
 src/spec_procs.c:fighter	pkg/game/spec_fighter.go	(World).npcFighterCommand	primary
+src/spec_procs.c:fighter	pkg/game/actor_specials_guards.go	specWallGuardNSActor	split
 src/spec_procs.c:guild	pkg/game/spec_assign.go	npcSpecialFallback	primary
 src/spec_procs.c:guild	pkg/game/spec_procs.go	specGuild	split
 src/spec_procs.c:guild_guard	pkg/game/actor_specials_guards.go	specGuildGuardActor	primary

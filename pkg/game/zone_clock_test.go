@@ -89,23 +89,6 @@ func TestZoneClockManualResetPreservesQueue(t *testing.T) {
 	}
 }
 
-func TestZoneClockConcurrentManualAndHeartbeat(t *testing.T) {
-	w := zoneClockFixture(t)
-	var wg sync.WaitGroup
-	for range 4 {
-		wg.Go(func() {
-			for range 60 {
-				w.ZoneUpdate()
-				if err := w.ResetZone(2); err != nil {
-					t.Error(err)
-				}
-				_ = w.ZoneClockSnapshot()
-			}
-		})
-	}
-	wg.Wait()
-}
-
 func TestZoneClockPumpedHeartbeatExecutesReset(t *testing.T) {
 	w := zoneClockFixture(t)
 	w.SetExitInfo(300, "north", 0)

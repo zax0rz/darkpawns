@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -405,17 +406,45 @@ func TestNewbieZoneEntranceActorPortsLevelGate(t *testing.T) {
 }
 
 // TestWallGuardNSActorPortsDelegateLikeC pins SPECIAL(wall_guard_ns),
-// src/spec_procs2.c:2260-2300, for an NPC actor: C hands every typed command to
-// fighter(ch, ch, 0, NULL), whose first gate declines a body that is not already
-// fighting. The revert control is the old blanket "unsupported".
+// src/spec_procs2.c:2266-2270, for an NPC actor: C hands every typed command to
+// fighter(ch, ch, 0, NULL), whose fighting gate and headbutt arm are in
+// src/spec_procs.c:509-535. The forced headbutt draw makes that delegation
+// observable through the direct-command seam.
 func TestWallGuardNSActorPortsDelegateLikeC(t *testing.T) {
-	w, _, actor, _, private := guardActorWorld(t)
+	w, player, actor, _, private := guardActorWorld(t)
 	guard := newSpecProcTestMob(t, w, actor.GetRoom(), 10)
+	actor.SetPosition(combat.PosFighting)
+	actor.SetFightingBody(player)
 
-	for _, cmd := range []string{"emote", "say", "north"} {
-		if got := DispatchCharacterSpecial("wall_guard_ns", w, guardActorCtx(actor, private), guard, cmd, ""); got != SpecialDeclined {
-			t.Errorf("wall_guard_ns %q = %v, want declined", cmd, got)
+	var command, argument string
+	var subcmd int
+	w.CharacterCommandDirectExecFunc = func(body combat.Combatant, name, arg string, commandSubcmd int) CharacterCommandResult {
+		if body != actor {
+			t.Errorf("fighter delegate body = %v, want actor %v", body, actor)
 		}
+		command, argument, subcmd = name, arg, commandSubcmd
+		return CharacterCommandHandled
+	}
+
+	// Pick fighter's headbutt arm so an implementation that simply declines
+	// every typed command cannot satisfy this test.
+	var seed uint32
+	for candidate := uint32(1); candidate < 10000; candidate++ {
+		dprng.ResetStream(candidate)
+		if dprng.Number(0, 10) == 1 {
+			seed = candidate
+			break
+		}
+	}
+	if seed == 0 {
+		t.Fatal("could not find a seed selecting fighter's headbutt arm")
+	}
+	dprng.ResetStream(seed)
+	if got := DispatchCharacterSpecial("wall_guard_ns", w, guardActorCtx(actor, private), guard, "emote", ""); got != SpecialHandled {
+		t.Fatalf("wall_guard_ns emote = %v, want handled by fighter", got)
+	}
+	if command != "headbutt" || argument != player.GetName() || subcmd != 1 {
+		t.Fatalf("fighter delegation = %q %q subcmd=%d, want headbutt %q subcmd=1", command, argument, subcmd, player.GetName())
 	}
 }
 

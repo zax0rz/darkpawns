@@ -311,9 +311,9 @@ func specGuildGuardActor(w *World, ctx CharacterSpecialContext, me *MobInstance,
 
 // specWallGuardNSActor ports SPECIAL(wall_guard_ns), src/spec_procs2.c:2260-2300,
 // for an NPC actor. Every typed command — and a sleeping or fighting guard on
-// the pulse — takes C's `return (fighter(ch, ch, 0, NULL))` arm, which runs the
-// fighter body with the ACTOR as both the character and the mobile. That is why
-// the delegation passes the actor as me and no Player.
+// the pulse — takes C's `return (fighter(ch, ch, 0, NULL))` arm
+// (src/spec_procs2.c:2266-2270). The fighter gate and skill dispatch are in
+// src/spec_procs.c:509-535; the delegation passes the actor as me and no Player.
 func specWallGuardNSActor(w *World, ctx CharacterSpecialContext, me *MobInstance, cmd, _ string) SpecialResult {
 	if me == nil || ctx.Actor == nil || !ctx.Actor.IsNPC() {
 		return SpecialUnsupported
@@ -322,11 +322,11 @@ func specWallGuardNSActor(w *World, ctx CharacterSpecialContext, me *MobInstance
 	if !ok {
 		return SpecialUnsupported
 	}
-	if cmd != "" && me.GetPosition() > combat.PosSleeping && !me.IsFighting() {
+	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.IsFighting() {
+		if specFighter(w, nil, actor, "", "") {
+			return SpecialHandled
+		}
 		return SpecialDeclined
-	}
-	if specFighter(w, nil, actor, "", "") {
-		return SpecialHandled
 	}
 	return SpecialDeclined
 }

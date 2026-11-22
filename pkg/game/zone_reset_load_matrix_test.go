@@ -151,6 +151,8 @@ func TestZoneResetObjectRoomOrderAndOwnership(t *testing.T) {
 	}
 }
 
+// C reset_zone initializes its local last-mob pointer to NULL and G refuses
+// to fall back to a world-registry mobile (src/db.c:2073-2080,2185-2189).
 func TestZoneResetGiveWithoutLastMob(t *testing.T) {
 	w, s := newZoneResetTestSpawner(t)
 	mob, err := w.SpawnMob(300, 100)

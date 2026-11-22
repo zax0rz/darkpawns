@@ -1,0 +1,79 @@
+# C-first witness for SPECIAL(wall_guard_ns)'s typed-command handoff to
+# fighter(ch, ch, 0, NULL) while the switched mobile is already fighting.
+# The wall guard shares the room with the switched horse; its first call on
+# A pre-fight typed emote proves the switched actor's room-visible command
+# lane. After kill establishes combat, the next typed emote reaches fighter
+# with a live opponent and pins the delegated draw path in parity.
+# depth-case: mob.wall-guard-fighting-actor-delegates
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8021 1 8105 80
+spawn-mob 8060 1 8105 80
+
+[setup:oracle]
+WallFighter
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+WallFighter
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+WallTarget
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+WallTarget
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport WallTarget 8105
+switch horse
+
+[probe]
+emote wall-guard-probe-before-fight
+kill WallTarget
+emote wall-guard-probe-fighting
