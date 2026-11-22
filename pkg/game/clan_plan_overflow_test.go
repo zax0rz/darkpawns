@@ -6,9 +6,10 @@ import (
 	"testing"
 )
 
-// string_add's improved-editor overflow path (modify.c:131-155) truncates an
-// overlong first line or skips an overlong later line while keeping the clan
-// plan editor open.
+// string_add's improved-editor overflow path (src/modify.c:131-155) truncates
+// an overlong first line or skips an overlong later line while keeping the
+// clan plan editor open. Its later-line boundary is the exact +3 comparison at
+// src/modify.c:146.
 func TestClanPlanEditorOverflowMatchesC(t *testing.T) {
 	var sent []string
 	player := NewPlayer(1, "Editor", 1001)
@@ -62,10 +63,65 @@ func TestClanPlanEditorOverflowMatchesC(t *testing.T) {
 
 	sent = nil
 	world.BeginClanPlanWrite(player, clan)
-	if !world.HandleClanPlanInput(player, strings.Repeat("z", MaxClanPlanBytes-4)) {
+	boundary := strings.Repeat("z", MaxClanPlanBytes-3)
+	if !world.HandleClanPlanInput(player, boundary) {
 		t.Fatal("boundary line refused")
 	}
 	if !player.ClanPlanWriting {
 		t.Fatal("editor exited on a boundary line")
+	}
+	if got, want := player.ClanPlanBuffer, boundary+"\r\n"; got != want {
+		t.Fatalf("boundary buffer = %d bytes, want exact accepted line at %d bytes", len(got), len(want))
+	}
+	if got := strings.Join(sent, ""); strings.Contains(got, "String too long") {
+		t.Fatalf("C-fit boundary line received overflow notice: %q", got)
+	}
+	world.HandleClanPlanInput(player, "@")
+
+	// C's later-line test includes the stored buffer, new line, CRLF and NUL:
+	// strlen(str) + strlen(*d->str) + 3 == max_str is accepted (modify.c:146).
+	sent = nil
+	world.BeginClanPlanWrite(player, clan)
+	if !world.HandleClanPlanInput(player, "p") {
+		t.Fatal("editor refused the later-line prefix")
+	}
+	prefix := player.ClanPlanBuffer
+	exactLine := strings.Repeat("e", MaxClanPlanBytes-len(prefix)-3)
+	if got := len(prefix) + len(exactLine) + 3; got != MaxClanPlanBytes {
+		t.Fatalf("later-line equality input = %d bytes, want MaxClanPlanBytes (%d)", got, MaxClanPlanBytes)
+	}
+	if !world.HandleClanPlanInput(player, exactLine) {
+		t.Fatal("editor refused a later line that exactly fits C's max_str check")
+	}
+	if want := prefix + exactLine + "\r\n"; player.ClanPlanBuffer != want {
+		t.Fatalf("later-line equality buffer = %d bytes, want exact accepted line at %d bytes", len(player.ClanPlanBuffer), len(want))
+	}
+	if got := strings.Join(sent, ""); strings.Contains(got, "String too long") {
+		t.Fatalf("C-fit later line received overflow notice: %q", got)
+	}
+
+	// A fresh editor with the same prefix and a line one byte longer must skip
+	// that line and preserve the buffer.
+	sent = nil
+	world.BeginClanPlanWrite(player, clan)
+	if !world.HandleClanPlanInput(player, "p") {
+		t.Fatal("editor refused the one-byte-over prefix")
+	}
+	prefix = player.ClanPlanBuffer
+	tooLongLine := strings.Repeat("o", MaxClanPlanBytes-len(prefix)-3+1)
+	if got := len(prefix) + len(tooLongLine) + 3; got != MaxClanPlanBytes+1 {
+		t.Fatalf("later-line over-boundary input = %d bytes, want MaxClanPlanBytes+1 (%d)", got, MaxClanPlanBytes+1)
+	}
+	if !world.HandleClanPlanInput(player, tooLongLine) {
+		t.Fatal("editor did not consume the one-byte-over later line")
+	}
+	if player.ClanPlanBuffer != prefix {
+		t.Fatalf("one-byte-over later line changed buffer: got %d bytes, want %d", len(player.ClanPlanBuffer), len(prefix))
+	}
+	if got, want := strings.Join(sent, ""), "String too long.  Last line skipped.\r\n"; got != want {
+		t.Fatalf("one-byte-over later-line reply = %q, want %q", got, want)
+	}
+	if !player.ClanPlanWriting {
+		t.Fatal("editor closed after C skipped the one-byte-over later line")
 	}
 }

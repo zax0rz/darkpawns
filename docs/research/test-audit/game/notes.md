@@ -264,3 +264,83 @@ Marks: **R 48 / F 2 / C 0 / D 0.** Junk: J2 1, J3 1. All 50 tests were introduce
 Coverage was **64.5% before / 64.5% after** (`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game`) on the refreshed base. The targeted tests passed. All 11 gates passed after rebasing to the current main: `make fmt`, Go build, vet and full test; `golangci-lint run ./...`; modernize, deadcode, string-census, fidelity-depth, expected-divergences and function-index checks. The first full-suite attempt had two `cmd/server` readiness timeouts under package parallelism; `go test ./cmd/server -count=1` passed, and the repeated full suite passed. `make string-census` passed its ratchet while reporting stale generated reports; fidelity-depth and function-index passed their intentional expected-red self-tests.
 
 The 1,353-test forecast made before T639 was R1240/F50/C28/D35. Through T788, T639–T788 actuals are R137/F10/C3/D0, leaving 1,203 tests and forecast remainder R1103/F40/C25/D35. No census was needed because this batch changes tests and research records only.
+
+## Batch 11 — T789–T838 (visibility, actor bytes, clan and combat-body paths)
+
+This batch follows the exact T739–T788 commit from PR #2984 on current
+`origin/main`, so the ledger remains contiguous while the earlier append is
+reviewed. It audits the next 50 names not already present in the pinned
+`inventory.txt`. Results: **46 R, 4 F, 0 C, 0 D**; all 50 introductions are
+post-oracle (2026-08-31 through 2026-11-20).
+
+Junk annotations: J2=1 (T822’s mismatched output sink made the negative-only
+assertion vacuous), J3=3 (T800’s 30-letter row is beyond C’s defined buffer
+contract; T821’s two refusal predicates were both true in the only case;
+T824’s old below-cap input was not the claimed equality boundary), J5=1
+(T799 directly pins the C plain-char conversion helper), and J9=1 (T804’s
+negative-only assertion passed if the observer delivered nothing).
+
+The four F tests were strengthened in this batch:
+
+- T804 (`out_of_band_test.go:112`): the PR #1553 commit,
+  `feat(gmcp): Mudlet-grade GMCP message set, fired from the text's own
+  moments`, appears to have aimed to suppress the no-repeat acknowledgement
+  from the mirror. Its test rejected that actor record but did not require a
+  delivered recipient record; bypassing observer delivery left the old test
+  green. Git author/trailer attribution: Claude Opus 5.5.
+- T821 (`spec_entry_gates_test.go:100`): PR #1986,
+  `fix(spec): no_get, elements guardian and cityguard bribe swing hit()`,
+  appears to have aimed to pin the refusal swing and draw. The old amount=10,
+  roll-zero case made both arms of C’s OR true, so losing either condition
+  stayed green. The fixed test isolates each arm and checks the hit draw.
+  Git author/trailer attribution: unknown (Zach identity, no model trailer).
+- T822 (`clan_is_playing_test.go:10`): PR #2543,
+  `fix(clan): gate live-vs-stored clan lookups on CON_PLAYING`, targeted the
+  live-versus-stored applicant path. The old sink listened to `Leader` while
+  the applicant-list command ran as `Mortal`, and had no positive live
+  applicant assertion. The corrected test captures the caller and requires a
+  live applicant while excluding linkless state. Git author/trailer
+  attribution: unknown (Zach identity, no model trailer).
+- T824 (`clan_plan_overflow_test.go:12`): PR #2139,
+  `fix: review follow-ups — C's clan plan editor semantics, stream race,
+  ceiling refresh`, appears to have been a C-boundary follow-up. The prior
+  “boundary” case exercised the first-line branch and did not test equality in
+  the later-line comparison at `src/modify.c:146`. The corrected test starts
+  with a three-byte buffer, accepts a 1018-byte line where
+  `3 + 1018 + 3 == MaxClanPlanBytes`, then skips a 1019-byte line.
+  Git author/trailer attribution: unknown (Zach identity, no model trailer).
+
+Mutation correction for T824 (2026-11-21): the earlier `mutations.tsv` row said
+that changing the later-line comparison from `>` to `>=` made the fixed test
+red. That was not reproducible: the earlier body's equality case hit the
+first-line branch, so the old body and the pre-fix T789 body both passed under
+the mutant. I cannot explain the earlier recorded red; its output was not
+retained. On the rebased branch, the old body passed under the mutant and the
+fixed later-line equality test failed (`got 3 buffer bytes, want 1023`). The
+unmutated test passes. The accurate rerun is recorded in `mutations.tsv`.
+
+The other three F rows have detached production mutations on base `3229914ce`:
+old body green, fixed test red, and restoration checked byte-for-byte. All four
+rows are in `mutations.tsv`; no all-R spot checks apply.
+
+By introducing identity: **unknown=41, Claude Opus 5.5=7, DeepSeek=1, Luna=1**.
+All 50 are post-oracle. No test was found with expected bytes or numbers that
+disagree with defined C behavior. T800’s 30-letter input would overrun C’s
+static `holder[30]` when writing its terminator, so the test explicitly treats
+that row as Go behavior rather than defined C output. A scan of 2,402 object
+and door keyword first runs in `lib/world` found none at 30 letters or longer
+(maximum 13).
+
+Coverage was **64.6% before and after** (`GOEXPERIMENT=nojsonv2 go test
+-cover ./pkg/game`). The focused four-test run and the full suite passed. All
+11 requested gates passed; the first golangci-lint invocation collided with a
+shared-host lint run, then the pinned v2.15.0 retry passed with 0 issues.
+`make string-census` passed its ratchet while noting generated reports are
+stale. `make function-index` completed but regenerated broad pre-existing
+line-number changes; those generated report changes were restored, and
+`make function-index-check` passed.
+
+Scope note: current `origin/main` adds
+`TestClanQuitClanlessKeepsApprovedRefusal`, which is absent from the prompt’s
+pinned 1,991-name inventory. It was left out of this batch’s IDs; the audit
+remains scoped to the authoritative inventory until Zach refreshes it.

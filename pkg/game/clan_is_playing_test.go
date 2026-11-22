@@ -22,24 +22,26 @@ func TestClanIsPlayingGates(t *testing.T) {
 
 	var actorOut strings.Builder
 	w.MessageSink = func(name string, msg []byte) {
-		if name == "Leader" {
+		if name == "Leader" || name == "Mortal" {
 			actorOut.Write(msg)
 		}
 	}
 
 	leader := &Player{Name: "Leader", Level: 34, RoomVNum: 1001, ClanID: clan.ID, ClanRank: 2}
 	mortalLeader := &Player{Name: "Mortal", Level: 10, RoomVNum: 1001, ClanID: clan.ID, ClanRank: 2}
+	liveApplicant := &Player{Name: "Applicant", Level: 10, RoomVNum: 1001, ClanID: clan.ID, ClanRank: 0}
 	linkless := &Player{Name: "Linkless", Level: 10, RoomVNum: 1001, ClanID: clan.ID, ClanRank: 0}
 	storedLinkless := &Player{Name: "Linkless", Level: 10, ClanID: 0, ClanRank: 0}
 
 	w.AddPlayer(leader)
 	w.AddPlayer(mortalLeader)
+	w.AddPlayer(liveApplicant)
 	w.AddPlayer(linkless)
 	w.PlayerHasPlayingDescriptor = func(p *Player) bool {
-		return p == leader || p == mortalLeader
+		return p == leader || p == mortalLeader || p == liveApplicant
 	}
 	w.PlayerStoreList = func() ([]*Player, error) {
-		return []*Player{leader, storedLinkless}, nil
+		return []*Player{leader, liveApplicant, storedLinkless}, nil
 	}
 	w.PlayerStoreEdit = func(name string, change func(*Player)) error {
 		if name == storedLinkless.Name {
@@ -51,8 +53,12 @@ func TestClanIsPlayingGates(t *testing.T) {
 	// 1. do_clan_enroll applicant list (clan.c:328): linkless in-memory applicant
 	// is skipped by is_playing(), so stored state (ClanID=0) is used -> omitted.
 	w.doClanEnroll(mortalLeader, "")
-	if strings.Contains(actorOut.String(), "Linkless") {
-		t.Fatalf("doClanEnroll listed linkless unsaved applicant: %q", actorOut.String())
+	applicants := actorOut.String()
+	if strings.Contains(applicants, "Linkless") {
+		t.Fatalf("doClanEnroll listed linkless unsaved applicant: %q", applicants)
+	}
+	if !strings.Contains(applicants, "Applicant\r\n") {
+		t.Fatalf("doClanEnroll omitted the live applicant: %q", applicants)
 	}
 
 	// 2. do_clan_set_rank (clan.c:1132): stored rank is updated for non-playing

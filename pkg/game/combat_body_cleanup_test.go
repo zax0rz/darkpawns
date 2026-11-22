@@ -173,7 +173,7 @@ func TestCombatBodyExtractionWaitsForPendingPass(t *testing.T) {
 	if !ce.IsFighting(one) || !ce.IsFighting(two) || one.GetFightingBody() == nil || p.GetFightingBody() != one {
 		t.Fatal("extract retired combat body before extract_pending_chars")
 	}
-	w.ExtractPendingChars() // handler.c:1194-1209, called from comm.c:805.
+	w.ExtractPendingChars() // handler.c:1221-1253, called from comm.c:804-805.
 	if _, ok := w.GetMobByID(one.GetID()); ok {
 		t.Fatal("pending pass left extracted mob active")
 	}
