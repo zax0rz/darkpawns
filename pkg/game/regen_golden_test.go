@@ -406,7 +406,7 @@ func TestMobGainSharedTail(t *testing.T) {
 	w, err := NewWorld(&parser.World{
 		Rooms: []parser.Room{
 			{VNum: 1001, Name: "Plain", Zone: 1},
-			// ROOM_REGENROOM is bit 18 (src/constants.c room list).
+			// ROOM_REGENROOM is bit 18 (src/structs.h:74).
 			{VNum: 1002, Name: "Regen", Zone: 1, Flags: []string{"262144", "0", "0", "0"}},
 		},
 	})

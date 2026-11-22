@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// TestLookGates proves do_look's early gates (act.item.c:1104-1113): a
+// TestLookGates proves do_look's early gates (src/act.informative.c:1106-1113): a
 // sub-sleeping position and blindness each short-circuit the look.
 func TestLookGates(t *testing.T) {
 	t.Run("position", func(t *testing.T) {

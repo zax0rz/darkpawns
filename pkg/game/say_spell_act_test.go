@@ -124,7 +124,7 @@ func TestSpellAddFollowerRendersCFollowerAudiences(t *testing.T) {
 }
 
 // mag_points' heal line is act(..., TRUE, ch, 0, victim, TO_NOTVICT)
-// (src/magic.c:1769): a listener who cannot see the caster hears nothing, and
+// (src/magic.c:1769-1770): a listener who cannot see the caster hears nothing, and
 // $N is PERS(victim). The old path pasted the victim's name for everyone.
 func TestMendRoomLineRendersThroughAct(t *testing.T) {
 	t.Run("seeing listener", func(t *testing.T) {
@@ -155,9 +155,9 @@ func TestMendRoomLineRendersThroughAct(t *testing.T) {
 	})
 }
 
-// C magic.c:1421 uses act(to_room, TRUE, victim, 0, ch, TO_ROOM) for affect
-// room lines. A listener who cannot see the affected character receives no
-// line; the former pasted-name path leaked it to invisible targets.
+// C magic.c:1418-1419 uses act(to_room, TRUE, victim, 0, ch, TO_ROOM) for
+// affect room lines; comm.c:2532-2535 filters listeners who cannot see the
+// affected character. The former pasted-name path leaked the line to them.
 func TestMagAffectsRoomLineHidesInvisibleTarget(t *testing.T) {
 	w, caster, observer, _, out := newChannelWorld(t)
 	target := channelPlayer(t, w, 4, "Patient", 1001)

@@ -173,7 +173,7 @@ func TestMobGenDoorUnlockNeedsKey(t *testing.T) {
 	}
 
 	// With the key held, unlock then open — the mayor's 'O' cycle
-	// (src/spec_procs.c 'O').
+	// (src/spec_procs.c:905-908).
 	key, err := w.SpawnObject(5001, -1)
 	if err != nil {
 		t.Fatalf("SpawnObject key: %v", err)

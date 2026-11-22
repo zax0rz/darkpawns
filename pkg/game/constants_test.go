@@ -42,7 +42,7 @@ func TestRoomBitConstantsMatchCStructs(t *testing.T) {
 }
 
 func TestMobFlagStayZoneBitPosition(t *testing.T) {
-	// MOB_STAY_ZONE is bit 6 in src/structs.h.
+	// MOB_STAY_ZONE is bit 6 in src/structs.h:253.
 	if MobFlagStayZone != 6 {
 		t.Errorf("MobFlagStayZone = %d, want 6 (bit 6)", MobFlagStayZone)
 	}

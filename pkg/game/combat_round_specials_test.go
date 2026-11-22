@@ -293,39 +293,55 @@ func TestCombatRoundSpecialRunsAfterOrdinaryAttack(t *testing.T) {
 	t.Fatal("no seed in 1..40 ran the teleport arm")
 }
 
-// TestMagicUserSelectsFightingMobVictim pins the victim walk
-// (src/spec_procs.c:417-425): C iterates every body in the room — mobiles
-// included — and falls back to FIGHTING(ch), so a caster fighting another
-// mobile still casts. Go previously only considered players and declined.
+// TestMagicUserSelectsFightingMobVictim pins C's FIGHTING(ch) fallback
+// (src/spec_procs.c:417-425): when the room-candidate roll declines a mobile
+// opponent, the special still casts on its fighting body. Go previously only
+// considered players and declined when the opponent was another mobile.
 func TestMagicUserSelectsFightingMobVictim(t *testing.T) {
-	for seed := uint32(1); seed <= 60; seed++ {
-		w, _, hero, caster := combatSpecialWorld(t, 1307, 1307, 20, 200, "mage")
-		_ = hero
-		foe, err := w.SpawnMob(1307, 1001)
-		if err != nil {
-			t.Fatal(err)
+	// Skip the room-candidate draw so the special must use FIGHTING(caster),
+	// then pick shocking grasp (level-20 roll 10 or 11), which targets one body.
+	seed := uint32(0)
+	for candidateSeed := uint32(1); candidateSeed <= 50000; candidateSeed++ {
+		r := dprng.New(candidateSeed)
+		if r.Number(0, 4) == 0 {
+			continue
 		}
-		foe.SetPosition(combat.PosFighting)
-		foe.SetHealth(100)
-		caster.SetPosition(combat.PosFighting)
-		caster.SetFightingBody(foe)
-		foe.SetFightingBody(caster)
-		var roomLog []string
-		w.MessageSink = func(name string, msg []byte) {
-			roomLog = append(roomLog, fmt.Sprintf("%s: %s", name, msg))
-		}
-		dprng.ResetStream(seed)
-		specMagicUser(w, nil, caster, "", "")
-		for _, m := range roomLog {
-			// castMobSpell emits the verbal component before call_magic;
-			// an utterance proves the cast ran with the mob foe as victim
-			// (no player fights the caster, so the fallback is FIGHTING).
-			if strings.Contains(m, "utters") {
-				return
-			}
+		if spellRoll := r.Number(0, 10) + 10; spellRoll == 10 || spellRoll == 11 {
+			seed = candidateSeed
+			break
 		}
 	}
-	t.Fatal("no seed in 1..60 produced a cast at the mob victim")
+	if seed == 0 {
+		t.Fatal("no seed in 1..50000 selects the FIGHTING fallback and shocking grasp")
+	}
+	t.Cleanup(func() { dprng.ResetStream(1) })
+	w, _, hero, caster := combatSpecialWorld(t, 1307, 1307, 20, 200, "mage")
+	foe, err := w.SpawnMob(1307, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+	foe.SetPosition(combat.PosFighting)
+	foe.SetHealth(100)
+	caster.SetPosition(combat.PosFighting)
+	caster.SetFightingBody(foe)
+	foe.SetFightingBody(caster)
+	var roomLog []string
+	w.MessageSink = func(name string, msg []byte) {
+		roomLog = append(roomLog, fmt.Sprintf("%s: %s", name, msg))
+	}
+	dprng.ResetStream(seed)
+	if !specMagicUser(w, nil, caster, "", "") {
+		t.Fatalf("seed %d: magic-user special declined its fighting fallback", seed)
+	}
+	if got := foe.GetHP(); got >= 100 {
+		t.Fatalf("seed %d: fighting mobile took no shocking-grasp damage: HP=%d", seed, got)
+	}
+	if got := hero.GetHP(); got != 500 {
+		t.Fatalf("seed %d: player received the single-target spell: HP=%d", seed, got)
+	}
+	if !strings.Contains(strings.Join(roomLog, ""), "utters") {
+		t.Fatalf("seed %d: mobile victim lost its verbal cast line: %q", seed, roomLog)
+	}
 }
 
 func mutualEnrol(t *testing.T, ce *combat.CombatEngine, mob *MobInstance, hero *Player) {
