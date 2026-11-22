@@ -20,18 +20,20 @@ the mutation sweep is under way, and random play waits on the play lab.
 
 | List | Frozen 11-11 | Open now | What's left |
 |---|---|---|---|
-| L1. Uncovered C sites | 739 | **0 known** | a fresh strict recount on a new full dump, to confirm 0 |
+| L1. Uncovered C sites | 739 | **0** | confirmed by the 11-22 strict recount |
 | L2. Known divergences | 58 | **0** | none open; DP-1610 is an approved divergence |
 | L3. Blocked proof units | 62 | shop rows excluded under R1a | Zach rules on the rest once the L1 recount settles |
 | L4. Harness blind spots | 11 | 0 open | none |
 | L5. Duplicate and invented code | 5 | 0 | none |
 | L6. Unverified research claims | 14 | 14 | not part of the stopping rule |
 
-**L1** stays at "0 known". GLM's 11-20 strict recount left 17 rows, and all
-are settled (witnessed, ruled, unreachable or excluded; details in the
-11-21 morning status, `1f6911ffc`). A recount can surface rows nobody
-listed, so L1 counts as 0 only after a fresh strict recount on a full dump.
-The nightly census provides the dump.
+**L1 is at zero, confirmed.** Neon's strict recount on the 11-22 nightly dump
+(`docs/research/l1-strict-recount-2026-11-22.md`, PF-166, #3021) classified
+all 574 uncovered C segments: 307 excluded by a ruling, 226 unreachable with
+a C cite, 33 witnessed in the multi-seed dumps, 8 unit-proven, and **0 open**.
+No new uncovered segment appeared, and the four rows that moved since 11-20
+are the ones settled on 11-21. Claude reran the coverage tool on the same
+dump and got identical totals and an identical `coverage.tsv` hash.
 
 **L2 is at zero.** All three items open this morning are closed:
 - **DP-1610**, clanless `clan quit` (C writes out of bounds): Zach ruled to
@@ -58,7 +60,7 @@ censuses.
 |---|---|---|---|
 | 1 | Bytes | **0 FAIL** | nightly combined census `2026-11-22/nightly-20261122` at `f8c4ad638`: CLEAN, 7,067 runs, no rechecks |
 | 2 | Behavior | **0 draw divergence** | the same run, with `--draw-parity`; `draw-results.tsv` present |
-| 3 | Reach | not remeasured | waits on the fresh L1 recount |
+| 3 | Reach | **88.3%** of segments (4,328 of 4,902); 89.0% with the other seeds; 66.4% of sites (3,622 of 5,454) | `make census-coverage` on `2026-11-22/nightly-20261122`. Up from 73.5% and 54.3% on 11-10 |
 | 4 | Sensitivity | **64.3%** (corrected lower bound 51.7%) | mutation loop Round 3, 63 of 98 killed (PF-149). The bar is a corrected lower bound of 80% (90 of 100 at z = 2.50, 4 looks; 3 used) |
 
 **Sensitivity is still the long pole.** The whole-pool sweep mutates every
@@ -85,8 +87,8 @@ being designed to double as decision-model training data.
 
 **What's left, in order:**
 
-1. **The fresh strict L1 recount** on the 11-22 nightly dump (Neon), then
-   the non-shop L3 rows it turns up, then Zach's L3 rulings.
+1. **L3:** Zach's rulings on the remaining blocked units, now that L1 is
+   confirmed at zero.
 2. **Sensitivity:** finish the whole-pool sweep and its repairs, then
    Round 4. It may still fall short. If it does, the report gives the
    measured rate.
@@ -350,7 +352,7 @@ Each layer answers a different question. None stands in for another.
 | Layer | Question | Where it lives | State on 11-22 |
 |---|---|---|---|
 | **Oracle census** | Given the same input, do Go and C send the same bytes and draw the same random numbers? | `scripts/census.sh`; `docs/fidelity/oracle-differential-testing.md` | nightly at 02:30; the 11-22 run was CLEAN with 0 draw divergences |
-| **Depth proofs** | Does every C output site have a scenario or unit test that fails when the site breaks (R5h)? | `docs/fidelity/DEPTH_TESTING.md`; `docs/fidelity/depth/` | tracked as L1 and L3; strict recount next |
+| **Depth proofs** | Does every C output site have a scenario or unit test that fails when the site breaks (R5h)? | `docs/fidelity/DEPTH_TESTING.md`; `docs/fidelity/depth/` | L1 confirmed 0 on 11-22 (PF-166); L3 awaits rulings |
 | **Mutation sampling** | If the port's output changes, does the census notice? | `docs/research/mutation-loop/`; earlier one-letter samples PF-102, PF-117, PF-118 | Rounds 1 to 3: 67.0%, 64.9%, 64.3%, against a bar of 80% (corrected lower bound); whole-pool sweep under way |
 | **Test audit** | Does each Go test check what its name claims, on the code players run? | `docs/research/test-audit/` | below |
 
