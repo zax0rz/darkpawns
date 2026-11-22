@@ -617,15 +617,6 @@ func TestContainerCyclePreventionDeep(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// TestMobEquipInEquipmentNotInventory — equip puts in Equipment, not Inventory
-// ---------------------------------------------------------------------------
-//
-// BUG: This test currently FAILS. attachObjectLocked(ObjEquipped, OwnerMob)
-// calls m.AddToInventory(obj) before setting Equipment[slot], so the item
-// ends up in BOTH Inventory and Equipment. Correct behavior: Equipment only.
-// Location is set correctly by the final obj.Location = dst assignment.
-
 func TestMobEquipInEquipmentNotInventory(t *testing.T) {
 	w, _ := newTestWorld(t)
 

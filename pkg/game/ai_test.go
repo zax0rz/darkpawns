@@ -1,29 +1,10 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
-
-func TestMobFlagComparisonCaseInsensitive(t *testing.T) {
-	// Simulate parser output: flags stored as UPPERCASE
-	mob := &MobInstance{}
-	mob.SetProto(&parser.Mob{ActionFlags: []string{"SENTINEL", "STAY_ZONE"}})
-
-	// This should find the flag — if it doesn't, the lowercase comparison is wrong
-	found := false
-	for _, f := range mob.Proto().ActionFlags {
-		if strings.EqualFold(f, "sentinel") {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Fatal("SENTINEL flag not found with case-insensitive comparison")
-	}
-}
 
 func TestMobStayZonePreventsWander(t *testing.T) {
 	// A STAY_ZONE mob should be recognized by hasMobFlag regardless of case.

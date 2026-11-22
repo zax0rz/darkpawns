@@ -54,8 +54,10 @@ func npcMovementWorld(t *testing.T) (*World, *MobInstance, *Player, *Player, map
 }
 
 // TestNPCPerformMoveLeaveAndArrivalBytes pins perform_move's leave and arrival
-// audiences for the mobile lane (src/act.movement.c:181-183, 210-235): the
-// origin room hears "$n leaves north." and the destination room hears
+// audiences for the mobile lane (src/act.movement.c:181-183, 210-235). Its
+// synchronous successful transfer also exercises the world write-lock path
+// and fails if that path deadlocks. The origin room hears "$n leaves north."
+// and the destination room hears
 // "$n arrives from the south."
 func TestNPCPerformMoveLeaveAndArrivalBytes(t *testing.T) {
 	w, actor, _, _, out := npcMovementWorld(t)

@@ -124,7 +124,7 @@ func TestSpellAddFollowerRendersCFollowerAudiences(t *testing.T) {
 }
 
 // mag_points' heal line is act(..., TRUE, ch, 0, victim, TO_NOTVICT)
-// (src/magic.c:1769): a listener who cannot see the caster hears nothing, and
+// (src/magic.c:1769-1770): a listener who cannot see the caster hears nothing, and
 // $N is PERS(victim). The old path pasted the victim's name for everyone.
 func TestMendRoomLineRendersThroughAct(t *testing.T) {
 	t.Run("seeing listener", func(t *testing.T) {

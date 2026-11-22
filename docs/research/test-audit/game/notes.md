@@ -465,3 +465,41 @@ Batch 12’s first targeted census was setup-refused because its fixture used
 artifact. Commit `8546e1df4` corrects the warmup to `switch silk`; a proper
 four-scenario `--draw-parity` recheck is queued in PR #2990 at
 `/home/zach/Archives/darkpawns/oracle-runs/2026-11-21/luna-ta-game-12-conjured-actor-recheck`.
+
+## Post-oracle redo, batch 14 (T939–T988)
+
+Marks: **R 47 / F 0 / C 2 / D 1.** Junk: J3 2, J4 3.
+
+T964 (`TestMobCommandMovement_NoDeadlock`, J3/J4) directly called
+`performMoveMob`; it never dispatched an NPC command, and the successful
+transfer was already exercised with room output assertions by
+`TestNPCPerformMoveLeaveAndArrivalBytes`. I removed the duplicate and added a
+comment to the surviving transfer test documenting that it also exercises the
+synchronous world write-lock path. T970 (`TestMobFlagComparisonCaseInsensitive`,
+J3/J4) only compared hardcoded strings with `strings.EqualFold`; I removed it,
+with `TestHasMobFlagCaseInsensitive` retaining the production-helper proof.
+T982 (`TestMobHitGain_EvenLevelUnchanged`, J4) repeated the exact level-10
+value asserted by T973, `TestMobGainSharedTail`, so I removed it.
+
+No F or regression-claiming D rows were found, so this batch needed no mutation
+proofs. No production behavior changed and no oracle census was required. I
+read the tests and their relevant production/C paths; the C citations in this
+batch were checked against `src/`. Corrections include T942's `mag_points`
+source (`src/magic.c:1769-1770`), the ROOM_REGENROOM and MOB_STAY_ZONE
+bit declarations (`src/structs.h:74,253`), the mayor's gate cycle
+(`src/spec_procs.c:905-908`), and the NPC hit-gain branch (`src/limits.c:133-137`).
+No C disagreement or J10 was found.
+
+Weak-test authorship: T964 unknown, T970 OpenClaw, T982 OpenClaw. All other
+rows are R. By introduction date, T939–T988 contains 11 pre-oracle rows
+(R9/C1/D1) and 39 post-oracle rows (R38/C1). The pre-oracle rows are T939–T941,
+T970, T972, T975, T977, and T982–T985.
+
+Cumulatively, T001–T988 contains 371 pre-oracle rows (R364/F4/C2/D1) and 617
+post-oracle rows (R587/F26/C3/D1). For the audited T639–T988 segment the totals
+are R318/F26/C5/D1. Against the initial T639–T1991 forecast (R1240/F50/C28/D35),
+the 1,003 remaining tests have a forecast remainder of R922/F24/C23/D34.
+No package summary or PF row is due until T1991.
+
+`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` reported 64.6% both before
+and after this batch.
