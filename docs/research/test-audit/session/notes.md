@@ -509,3 +509,28 @@ T1249 `TestRegisteredActorRoomVisibilityMatchesSitAndStandActFlags`
 `TestPurgeMobRetainsListsUntilHeartbeat` (`pkg/session/wiz_object.go:231`).
 All three went red with assertion failures and were restored byte for byte
 (`mutations.tsv`).
+
+
+## Batch 16 results (later tests 1201–1300, 2026-10-15..26, T1346–T1445)
+
+Marks: R 100, F 0, C 0, D 0. Junk: none.
+Running total: 1445/1537 (R 1439, F 3, C 3, D 0).
+
+All 100 tests are assertive, non-duplicate keepers covering interpreter position
+and empty-line draw gates, Crash_load Dex suffering and store-failure NOTICE,
+special-proc and shop output/transaction depth (dump, pet_shops, beholder,
+recharger, zen_master, gate, shop buy/sell/list/stat/hours/selectors), wizard
+stat/OLC/set output (oedit, zedit, wiz_stats, wiz_stats_output, cmd_set),
+score/cast/track/retreat/quit depth, NPC actor/order dispatch, WebSocket
+teardown and connection caps (BUG-R2-C1-A3-H1/H2), and approved operator/Go-only
+behaviors (operator greeting, alias cap, opt-in Discord gossip MOTD overlay,
+notifications, admin offline reservation, whod loopback bind, empty-world gate,
+and Windows file-editor delete). No fixes, no merges, no deletions, no J10
+divergences.
+
+All-R spot-checks (random draw, seed 20261116, from T1346–T1445): T1372
+`TestStatMobNoiseColorAndHuntingMatchC` (`pkg/session/wiz_stats.go:218`), T1373
+`TestTerminalLineBareReturnClearsHide` (`pkg/session/character_dispatch.go:371`),
+and T1427 `TestBankHiddenTransactionsThroughDispatch`
+(`pkg/game/spec_procs4.go:683`). All three went red with assertion failures and
+were restored byte for byte (`mutations.tsv`).
