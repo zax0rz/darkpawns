@@ -2026,3 +2026,40 @@ is:
 - `TestSpecMindflayer_EntryGatesAndFallthrough`
 
 Before reading these tests, my estimate is **R44 / F4 / C1 / D1**.
+
+## Batch 30 results (T1739–T1788)
+
+The actual marks are R44 / F5 / C1 / D0 versus the preregistered estimate of
+R44 / F4 / C1 / D1. There are five F rows, all J3, and the single C row is
+J4. I found no D row. All 50 tests were introduced after the 2026-07-12
+oracle cutoff. The batch authors are unknown for 49 tests and DeepSeek for
+T1753; among the five weak tests, four are unknown-authored and one is
+DeepSeek-authored.
+
+I tightened five weak output checks: T1753 tattoo color, T1766 Ira's room
+act, T1772 jail release transcript, T1777 Mallory's hunting log, and T1779
+the mayor's wake act. For each, the old assertion stayed green with an extra
+output mutant and the exact assertion turned red; all five mutants were
+restored byte-for-byte in the detached mutation worktree. The C-marked
+T1768 command-fallthrough test is folded into T1771's jail pulse-gate table,
+which checks the same return, silence, room, gold, and movement contract. I
+checked for live documentation/oracle-harness citations before folding it;
+there were no hits. No D deletion or C divergence was needed.
+
+Package statement coverage was 64.7% at preregistration and 64.8% after the
+batch. No production code changed and no census was needed. The 50 ledger
+rows and five mutation rows were appended as raw tab-separated text. The
+ledger is contiguous through T1788 with 18 columns per row, and the mutation
+file has seven columns per row. There are 203 functions left in the frozen
+1,991-function inventory.
+
+All eleven required gates passed individually on the final code: `make fmt`;
+`GOEXPERIMENT=nojsonv2 go build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`;
+`GOEXPERIMENT=nojsonv2 go test ./...`; `golangci-lint run ./...` (0 issues);
+`make modernize-check`; `make deadcode-ratchet` (35 baselined, 0 new);
+`make string-census` (ratchet clean with the existing stale generated reports
+and four obsolete baseline entries); `make fidelity-depth` (8,282 cases,
+7,968 proven/delegated, one blocked, 297 excluded, 16 approved-divergent);
+`make expected-divergences-check` (exit 0 with the existing unresolved
+selectors); and `make function-index-check` (the expected-red fake association
+was rejected, then the ratchet reported clean).

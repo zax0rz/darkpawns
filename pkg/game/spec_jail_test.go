@@ -7,30 +7,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
-func TestSpecJail_CommandPathFallsThrough(t *testing.T) {
-	w, player, lastMsg := newSpecProcTestWorld(t)
-	player.SetRoom(8118)
-	player.SetGold(100)
-	player.SetMove(100)
-	player.SetLevel(5)
-
-	if specJail(w, player, nil, "say", "release") {
-		t.Fatal("jail room special must reject player commands")
-	}
-	if got := lastMsg(); got != "" {
-		t.Fatalf("jail command emitted %q", got)
-	}
-	if got := player.GetRoomVNum(); got != 8118 {
-		t.Fatalf("jail command moved player to room %d", got)
-	}
-	if got := player.GetGold(); got != 100 {
-		t.Fatalf("jail command changed gold to %d", got)
-	}
-	if got := player.GetMove(); got != 100 {
-		t.Fatalf("jail command changed movement to %d", got)
-	}
-}
-
 func jailTestWorld(t *testing.T) (*World, *Player, *Player, map[string]string) {
 	t.Helper()
 	w, err := NewWorld(&parser.World{Rooms: []parser.Room{
@@ -72,9 +48,11 @@ func TestSpecJailPulseRelease(t *testing.T) {
 			if inmate.GetPosition() != wantPos {
 				t.Fatal("wrong release position")
 			}
-			prefix := "The guard says, 'Time's up, scum!'\r\nThe guard throws you out of the cell!\r\n\r\n"
-			if !strings.HasPrefix(out[inmate.Name], prefix) || !strings.Contains(out[inmate.Name], "Jail entrance") {
-				t.Fatalf("inmate output: %q", out[inmate.Name])
+			wantInmate := "The guard says, 'Time's up, scum!'\r\n" +
+				"The guard throws you out of the cell!\r\n\r\n" +
+				"Jail entrance\r\nOutside the cell.\r\n[ Exits: None! ]\r\n"
+			if got := out[inmate.Name]; got != wantInmate {
+				t.Fatalf("inmate output = %q, want %q", got, wantInmate)
 			}
 			if want := "The guard says, 'Time's up, scum!'\r\nInmate gets thrown out of the cell!\r\n"; out[observer.Name] != want {
 				t.Fatalf("observer: %q want %q", out[observer.Name], want)
@@ -87,7 +65,10 @@ func TestSpecJailPulseGates(t *testing.T) {
 	for _, gate := range []string{"timer", "negative-timer", "immortal", "invisible", "command"} {
 		t.Run(gate, func(t *testing.T) {
 			w, inmate, _, out := jailTestWorld(t)
+			inmate.SetGold(100)
+			inmate.SetMove(100)
 			cmd := ""
+			arg := ""
 			switch gate {
 			case "timer":
 				inmate.JailTimer = 1
@@ -98,10 +79,11 @@ func TestSpecJailPulseGates(t *testing.T) {
 			case "invisible":
 				inmate.SetInvisLevel(LVL_IMMORT)
 			case "command":
-				cmd = "look"
+				cmd = "say"
+				arg = "release"
 			}
-			if specJail(w, inmate, nil, cmd, "") || inmate.GetRoomVNum() != 8118 || len(out) != 0 {
-				t.Fatalf("gate failed: %+v", out)
+			if specJail(w, inmate, nil, cmd, arg) || inmate.GetRoomVNum() != 8118 || inmate.GetGold() != 100 || inmate.GetMove() != 100 || len(out) != 0 {
+				t.Fatalf("gate failed: room=%d gold=%d move=%d output=%+v", inmate.GetRoomVNum(), inmate.GetGold(), inmate.GetMove(), out)
 			}
 		})
 	}

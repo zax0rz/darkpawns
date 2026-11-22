@@ -43,8 +43,15 @@ func TestLookAtCharTattooColorLevelsMatchC(t *testing.T) {
 			}
 
 			got := observationMessageText(w.DoLookTarget(p, "Target"))
-			if !strings.Contains(got, test.want) {
-				t.Fatalf("tattoo line at level %d = %q, want substring %q", test.level, got, test.want)
+			foundExactLine := false
+			for line := range strings.SplitSeq(got, "\n") {
+				if line == test.want {
+					foundExactLine = true
+					break
+				}
+			}
+			if !foundExactLine {
+				t.Fatalf("tattoo line at level %d = %q, want exact line %q", test.level, got, test.want)
 			}
 			if test.level < 3 && strings.Contains(got, "\x1b[37m") {
 				t.Fatalf("tattoo line emitted the white sandwich below C_CMP: %q", got)

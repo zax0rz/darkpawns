@@ -132,3 +132,8 @@ TestHcontrolPayDeliversToActorAndWatcher	pkg/game/house_control.go	295	append EX
 TestJunkCoinsOverflowMatchesC	pkg/game/item_donate.go	121	append EXTRA after C junk-gold refusal	green (old substring matched the refusal with appended bytes)	red (fixed exact-byte assertion rejects the suffix)	yes
 TestKeylessDoorMatchesCNoKeyGuard	pkg/game/act_movement.go	881	append EXTRA after missing-key refusal	green (old substring matched the refusal with appended bytes)	red (fixed exact-byte assertion rejects the suffix)	yes
 TestKeylessDoorMatchesCNoKeyGuard	pkg/game/act_movement.go	682	append EXTRA after unlock and lock click bytes	green (old substring matched both click lines with appended bytes)	red (fixed exact-byte assertion rejects the suffix on unlock)	yes
+TestLookAtCharTattooColorLevelsMatchC	pkg/game/look.go	740	append EXTRA to C tattoo line	green (old substring accepted suffix)	red (exact line rejected suffix)	yes
+TestSpecIra_ExclaimAndHit	pkg/game/spec_procs2.go	1399	append EXTRA after C room exclamation	green (old substring accepted suffix)	red (exact first-line check rejected suffix)	yes
+TestSpecJailPulseRelease	pkg/game/spec_procs2.go	1515	send an extra line after the jail room look	green (old prefix and room-name checks accepted it)	red (exact inmate transcript rejected it)	yes
+TestSpecMallory_Revenge	pkg/game/hunting_mudlog.go	33	append EXTRA to the set_hunting syslog body	green (old substring accepted suffix)	red (exact C hunting line rejected suffix)	yes
+TestSpecMayorWakesAndFallsThroughToMobileActivity	pkg/game/spec_procs.go	985	append EXTRA to the mayor wake act	green (old substring accepted suffix)	red (exact wake transcript rejected suffix)	yes

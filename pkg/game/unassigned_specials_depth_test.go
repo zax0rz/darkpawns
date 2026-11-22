@@ -305,7 +305,7 @@ func TestSpecMayorWakesAndFallsThroughToMobileActivity(t *testing.T) {
 	if mayor.GetPosition() != combat.PosStanding {
 		t.Fatalf("mayor position = %d, want standing", mayor.GetPosition())
 	}
-	if !strings.Contains(observer.msgs, "The mayor awakens and groans loudly.") {
-		t.Fatalf("observer got %q, want C's wake act", observer.msgs)
+	if observer.msgs != "The mayor awakens and groans loudly.\r\n" {
+		t.Fatalf("observer got %q, want C's exact wake act", observer.msgs)
 	}
 }
