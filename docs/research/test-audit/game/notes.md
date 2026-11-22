@@ -730,3 +730,64 @@ C, and no production code changed, so no census was required.
 `GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` measured 64.7% before and
 64.6% after the batch. All 11 repository gates passed individually after the
 batch edits and formatting.
+
+
+## Batch 19 preregistered estimate (before reading tests T1189–T1238)
+
+The forecast remainder after T1188 is R739/F16/C18/D30 across 803 tests. For
+this next 50-test slice I expect R46/F1/C1/D2, with all 50 introduced after
+the 2026-07-12 oracle date and weak marks more likely among older introductions.
+
+The roster is the next 50 unledgered names in inventory order after T1188.
+Inventory lines 1233–1291:
+
+- `TestPlayerToSaveDataReversesLiveAffectList`
+- `TestPlayerToSaveDataTruncatesLiveListAtMaxAffect`
+- `TestPlayerTransferMountVariant`
+- `TestPlayerUnmountClearsAffectWithoutCachedMountName`
+- `TestPlayerWearOffMultiRecordSpeaksOnce`
+- `TestPlayerWearRefusalOutputMatchesC`
+- `TestPLRAccessorsShareOneStore`
+- `TestPointUpdateConditionOutputThresholds`
+- `TestPointUpdateCutthroatDamageTail`
+- `TestPointUpdateDecaysObjectsInCarriedAndContainedLocations`
+- `TestPointUpdateDustAndCircleTimerOutputAcrossLocations`
+- `TestPointUpdateEmptyWorld`
+- `TestPointUpdateExpiresAssignedMoonGateByValueThree`
+- `TestPointUpdateFieldObjectUsesCRealRoomIndex`
+- `TestPointUpdateHeldLightOutputMatchesC`
+- `TestPointUpdateInactiveRegen`
+- `TestPointUpdateMountedPoisonDamageTail`
+- `TestPointUpdateNotifiesObserverOnce`
+- `TestPointUpdatePoisonDamageTail`
+- `TestPointUpdateRegeneratesNPCNana`
+- `TestPointUpdateRunsGlobalObjectPassAfterAllMemoryDraws`
+- `TestPointUpdateWoundedDamageTail`
+- `TestPortalToTempleAndItohUseDoLook`
+- `TestPostmasterDisabledDispatch`
+- `TestPRFAndPLRBitsDoNotOverlap`
+- `TestProbeObjectsStayUnregistered`
+- `TestPulseOnlyTableHasCCommandGate`
+- `TestPutFindsRoomContainer`
+- `TestPutRoomLookupConcurrentWithRoomWrites`
+- `TestQuanLoCancelledMobDeathStillGossips`
+- `TestQuanLoMobDeathSendsFiveFingersToGlobalGossip`
+- `TestQuanLoPlayerDeathSendsFiveFingersToGlobalGossip`
+- `TestQuitMudlogLevelDiscriminators`
+- `TestQuitMudlogProducers`
+- `TestQuitMudlogTypeIsNRM`
+- `TestRaceHateEquipmentRebuildAndRemoval`
+- `TestRaceHateModifierSlotSemantics`
+- `TestRaceSayUsesCControlBytesAndGateOrder`
+- `TestRaceSayUsesCPlayerRaceLanguageTables`
+- `TestRangedDamageConcurrentHPUpdates`
+- `TestRangedDeathExpLimits`
+- `TestRangedDeathHasNoKillerBookkeeping`
+- `TestRangedDirectHPThresholdsWithoutWoundMessages`
+- `TestRangedRetaliationHunterCallback`
+- `TestRangedTransferPreservesPostureAndCircle`
+- `TestRawKillClearsEverySpellAffect`
+- `TestRawKillCombatantPlayerRunsSequence`
+- `TestRawKillCorpseAttackDispatch`
+- `TestRawKillCorpseHoldsEachItemExactlyOnce`
+- `TestRawKillCorpseHoldsInventoryEquipmentAndGold`
