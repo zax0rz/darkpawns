@@ -51,6 +51,11 @@ func TestSpecElementsGaleruAlive_EntryAndExactMobGate(t *testing.T) {
 	if actor.GetRoomVNum() != 1372 || galeru.GetRoom() != 1372 {
 		t.Fatalf("live Galeru gate changed rooms: actor=%d Galeru=%d", actor.GetRoomVNum(), galeru.GetRoom())
 	}
+	for name, msg := range messages {
+		if msg != "" {
+			t.Fatalf("live Galeru gate emitted output for %s: %q", name, msg)
+		}
+	}
 }
 
 func TestSpecElementsGaleruAlive_UsesExactVNumAndMovesNPCs(t *testing.T) {

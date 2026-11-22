@@ -1226,3 +1226,66 @@ ledger:
 - `TestSpecEqThief_GetAndJunkBlackContainerItem`
 - `TestSpecEqThief_StealsFirstVisibleItemAndPreservesDraws`
 - `TestSpecEvilLead_NeverHandles`
+
+## Batch 23 post-read audit (T1389–T1438)
+
+Actual marks: **R39 / F7 / C1 / D3**. All 50 introductions postdate the
+2026-07-12 oracle. The preregistered estimate was R47/F0/C1/D2, so the actual
+variance was R−8/F+7/C0/D+1. The batch reviewed 50 tests and leaves 553 tests after T1438. Junk totals overlap: J3=3, J4=1, J5=1, J9=5.
+
+**False greens repaired and mutation-proven:**
+
+- T1389 `TestSpecConductorFightLinesThroughAct` (J3): the old test sampled
+  only draws 1 and 4 despite its “every fight line” comment, and accepted
+  extra output. It now checks all five C lines as exact per-draw output. A
+  duplicate Act kept the old body green and made the repaired test red.
+- T1409 `TestSpecDumpActorClearsRoomAndDeclines`: the old substring assertion
+  allowed duplicate bytes. It now pins the exact single vanish line. A
+  duplicate room Act kept the old body green and made the repaired test red.
+- T1410 `TestSpecElementalRoomAffectsEveryMortalOccupant` (J3): the old
+  fixture included only one mortal. It now verifies a second mortal's damage
+  and fire/death messages. Skipping that occupant kept the old body green and
+  made the repaired test red.
+- T1411 `TestSpecElementsGaleruAlive_EntryAndExactMobGate`: the live-Galeru
+  refusal previously checked return and location but not silence. It now
+  requires no output; a live-gate warning kept the old body green and made
+  the repaired test red.
+- T1415 `TestSpecElementsGaleruColumn_RequiresAllExactTalismans`: the partial
+  setup previously checked only fallthrough, output, and character locations.
+  It now checks that each placed talisman remains in its original room. An
+  extraction on the incomplete branch kept the old body green and made the
+  repaired test red.
+- T1416 `TestSpecElementsGuardian_CommandlessAndNilEntryGates` (J9): the old
+  test called the player wrapper with a nil actor, so the nil guard masked the
+  commandless gate. It now drives the registered actor adapter with the nonnil
+  mobile pulse actor and checks silent decline. Removing the adapter command
+  gate kept the old body green and made the repaired test red.
+- T1433 `TestSpecEnterCircleCountsPlayersAndConsumesOtherLook` (J3/J9): the
+  previous non-circle look assertion checked only `true`, so the special
+  could consume the command without calling `do_look`. It now clears the
+  crowd response and requires look output. A return-true/no-look mutant kept
+  the old body green and made the repaired test red.
+
+**Fold and deletions:** T1398 `TestSpecConSellerTellArgumentsMatchC` (J4/J5)
+was removed: its internal `do_tell` call seam duplicated player-visible
+responses already asserted by T1395, T1394 and T1397. T1414
+`TestSpecElementsGaleruColumn_RejectsNilActor`, T1424
+`TestSpecElementsMasterColumn_RejectsNilActor`, and T1429
+`TestSpecElementsPlatforms_RejectsNilActor` (J9) were deleted. Each called a
+private Go wrapper with nil where C's active room-command path supplies a
+character; no C/player behavior is associated with that input. The depth
+manifest now points to the reachable command-entry proofs for master column
+and platforms and drops the nil-only Galeru column row. No live behavior was
+left without proof.
+
+All eleven weak-mark introductions (seven F, one C, three D) have `unknown`
+author attribution under PF-152/PF-153: the introducing commit has Zach's git
+identity and no `Co-Authored-By` trailer. The current branch/PR was recorded
+separately and not used to infer an author. No new expected value disagreed
+with C. `TestSpecCuchi_OrodrethNoPromotion` remains the documented,
+owner-approved DP-1373 divergence: the expected purr/no-promotion behavior is
+intentional (PF-051), not an unfiled J10 finding. The batch changes tests,
+test-audit records, and depth evidence only; no census was required.
+
+`pkg/game` coverage was 64.6% at the preregistered commit and remains 64.6%
+after these changes (`GOEXPERIMENT=nojsonv2 go test ./pkg/game -cover`).

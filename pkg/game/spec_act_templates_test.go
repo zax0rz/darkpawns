@@ -209,17 +209,18 @@ func TestSpecConductorFightLinesThroughAct(t *testing.T) {
 		want string
 	}{
 		{1, "The conductor shouts, 'I said give me your ticket!'\r\n"},
+		{2, "The conductor asks, 'Why are you so stupid?'\r\n"},
+		{3, "The conductor shouts 'Get off my train you trash!'\r\n"},
 		{4, "The conductor shouts 'Security!  Help me with this piece of garbage!'\r\n"},
+		{5, "The conductor asks, 'Why wouldn't you just give me your ticket?'\r\n"},
 	} {
 		conductorNumber = func(from, to int) int { return tc.draw }
 		// C evaluates the ticket line on the conductor's autonomous pulse.
 		specConductor(w, nil, conductor, "", "")
-		if !strings.Contains(observer.msgs, tc.want) {
-			t.Errorf("draw %d: observer got %q, want line %q", tc.draw, observer.msgs, tc.want)
+		if observer.msgs != tc.want {
+			t.Errorf("draw %d: observer got %q, want exact line %q", tc.draw, observer.msgs, tc.want)
 		}
-		if strings.Contains(observer.msgs, "$n") {
-			t.Errorf("draw %d: literal $n in %q", tc.draw, observer.msgs)
-		}
+		observer.msgs = ""
 	}
 	conductorNumber = old
 }

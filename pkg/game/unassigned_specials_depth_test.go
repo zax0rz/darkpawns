@@ -102,9 +102,12 @@ func TestSpecElementalRoomAffectsEveryMortalOccupant(t *testing.T) {
 	mortal := NewPlayer(1, "Mortal", 1001)
 	mortal.SetLevel(5)
 	mortal.SetHealth(200)
+	secondMortal := NewPlayer(3, "SecondMortal", 1001)
+	secondMortal.SetLevel(10)
+	secondMortal.SetHealth(250)
 	immortal := NewPlayer(2, "Immortal", 1001)
 	immortal.SetLevel(LVL_IMMORT)
-	for _, p := range []*Player{mortal, immortal} {
+	for _, p := range []*Player{mortal, secondMortal, immortal} {
 		if err := w.AddPlayer(p); err != nil {
 			t.Fatalf("AddPlayer %s: %v", p.GetName(), err)
 		}
@@ -120,11 +123,17 @@ func TestSpecElementalRoomAffectsEveryMortalOccupant(t *testing.T) {
 	if got := mortal.GetHealth(); got != 100 {
 		t.Fatalf("mortal health = %d, want 100", got)
 	}
+	if got := secondMortal.GetHealth(); got != 150 {
+		t.Fatalf("second mortal health = %d, want 150", got)
+	}
 	if !strings.Contains(messages["Mortal"], "Your skin blackens as fire burns you alive...\n\r") || !strings.Contains(messages["Mortal"], "You are DYING!") {
 		t.Fatalf("mortal got %q, want C's fire and dying lines", messages["Mortal"])
 	}
 	if !strings.Contains(messages["Immortal"], "You ignore the elements that barrage you.\n\r") {
 		t.Fatalf("immortal got %q, want the ignore line", messages["Immortal"])
+	}
+	if !strings.Contains(messages["SecondMortal"], "Your skin blackens as fire burns you alive...\n\r") || !strings.Contains(messages["SecondMortal"], "You are DYING!") {
+		t.Fatalf("second mortal got %q, want C's fire and dying lines", messages["SecondMortal"])
 	}
 }
 
@@ -141,8 +150,15 @@ func TestSpecEnterCircleCountsPlayersAndConsumesOtherLook(t *testing.T) {
 	if actor.GetRoomVNum() != 1001 || !strings.Contains(mover.msgs, "You can't fit on the portal, it's too crowded.") {
 		t.Fatalf("mover room/output = %d/%q, want crowd refusal", actor.GetRoomVNum(), mover.msgs)
 	}
+	mover.msgs = ""
+	// C delegates non-circle looks to do_look, whose direction preface is an
+	// observable line even when that room has no north exit
+	// (src/spec_procs.c:1955-1962; src/act.informative.c:851-854).
 	if !specEnterCircle(w, actor, nil, "look", "north") {
 		t.Fatal("a non-circle look should be delegated to do_look and consumed")
+	}
+	if !strings.Contains(mover.msgs, "You look northwards.") {
+		t.Fatalf("non-circle look output = %q, want C's direction-look line", mover.msgs)
 	}
 }
 

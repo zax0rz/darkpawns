@@ -198,8 +198,8 @@ func TestSpecDumpActorClearsRoomAndDeclines(t *testing.T) {
 		t.Fatalf("room still holds %d objects", len(items))
 	}
 	// C's act() CAPs the line and renders $p through OBJS.
-	if got := messages[watcher.GetName()]; !strings.Contains(got, "A barrel vanishes in a puff of smoke!") {
-		t.Fatalf("watcher output = %q, want the capitalised vanish line", got)
+	if got, want := messages[watcher.GetName()], "A barrel vanishes in a puff of smoke!\r\n"; got != want {
+		t.Fatalf("watcher output = %q, want exact capitalised vanish line %q", got, want)
 	}
 	if got := specDumpActor(w, ctx, nil, "drop", " barrel"); got != SpecialUnsupported {
 		t.Fatalf("drop = %v, want SpecialUnsupported (no mobile do_drop)", got)
