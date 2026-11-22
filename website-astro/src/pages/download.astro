@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import ChapterHeader from '../components/ChapterHeader.astro';
 import CopyCommand from '../components/CopyCommand.astro';
-import { releaseVersion, releaseURL, assetBase, unixInstall, windowsInstall, platforms, archiveURL, portableGuide, hostingGuide } from '../lib/download';
+import { releaseVersion, releaseNotesPath, releaseURL, assetBase, unixInstall, windowsInstall, platforms, archiveURL, portableGuide, hostingGuide } from '../lib/download';
 ---
 <Base title="Download & Host Dark Pawns" description="Download Dark Pawns for macOS, Linux, or Windows. Install the game and original world files, create your immortal, and run a world of your own.">
   <Fragment slot="head"><link rel="alternate" type="text/markdown" href="/download.md" title="Download instructions as Markdown" /></Fragment>
@@ -12,7 +12,7 @@ import { releaseVersion, releaseURL, assetBase, unixInstall, windowsInstall, pla
       lede="Download Dark Pawns, create your immortal, and keep the world running on your own machine."
     >
       <Fragment slot="meta">
-        <a href={releaseURL}>Release v{releaseVersion}</a> · macOS, Linux &amp; Windows · <a href="/play/">Just want to play here?</a>
+        <a href={releaseNotesPath}>Release v{releaseVersion}</a> · macOS, Linux &amp; Windows · <a href="/play/">Just want to play here?</a>
       </Fragment>
     </ChapterHeader>
 
@@ -62,7 +62,7 @@ import { releaseVersion, releaseURL, assetBase, unixInstall, windowsInstall, pla
       </div>
       <p class="architecture-note">For Macs, check About This Mac for Apple silicon or Intel. For Linux, <code>uname -m</code> reports <code>x86_64</code> or <code>aarch64</code>. On Windows, check Settings → System → About → System type.</p>
       <p>Before opening a manually downloaded archive, <a href={`${portableGuide}#manual-updates`}>verify it against the signed release manifest</a>. Then extract it and run <code>darkpawns setup</code>, or <code>.\darkpawns.exe setup</code> in PowerShell. Use <code>setup --plain</code> for screen readers.</p>
-      <p class="manifest-links"><a href={`${assetBase}/release-manifest.txt`}>Release manifest</a> · <a href={`${assetBase}/release-manifest.sig`}>Manifest signature</a> · <a href={releaseURL}>Release notes &amp; all assets</a></p>
+      <p class="manifest-links"><a href={`${assetBase}/release-manifest.txt`}>Release manifest</a> · <a href={`${assetBase}/release-manifest.sig`}>Manifest signature</a> · <a href={releaseNotesPath}>Release notes</a> · <a href={releaseURL}>All assets on GitHub</a></p>
     </section>
 
     <section class="running-guide" aria-labelledby="running-heading">

@@ -5,7 +5,7 @@ import EraLedger from '../components/EraLedger.astro';
 import SocialLinks from '../components/SocialLinks.astro';
 import bookPaper from '../assets/paper/book-page.jpg';
 import coverVignette from '../assets/chapter/cover-vignette.png';
-import { unixInstall } from '../lib/download';
+import { unixInstall, windowsInstall } from '../lib/download';
 import { getCollection } from 'astro:content';
 // Counts come from the same generated assets the map and database pages ship,
 // resolved at build time. The front page cannot advertise a world the rest of
@@ -60,7 +60,7 @@ const fieldGuides = [
     <section class="cover container" aria-labelledby="cover-heading">
       <div class="cover-invitation">
         <img class="chapter-vignette" src={coverVignette.src} width={coverVignette.width} height={coverVignette.height} alt="" />
-        <h1 id="cover-heading">You type and<br />the world answers.</h1>
+        <h1 id="cover-heading">When you type,<br />the world answers.</h1>
         <p class="lede">A multiplayer text RPG, first opened in 1994.<br /> Play here, or run a world of your own.</p>
         <a class="btn-primary" href="/play/">Enter the game</a>
         <p class="play-note">Play in your browser.</p>
@@ -83,8 +83,14 @@ const fieldGuides = [
           <p>Install the open-source Go server and original 1994 world files. The setup wizard takes it from there.</p>
           <div class="host-command">
             <CopyCommand command={unixInstall} label="macOS / Linux" id="home-install" />
+            <details class="windows-expander">
+              <summary>Windows (PowerShell 5.1+)</summary>
+              <div class="windows-expander-body">
+                <CopyCommand command={windowsInstall} label="Windows PowerShell" id="home-windows-install" />
+              </div>
+            </details>
             <p class="host-links">
-              <a href="/download/">Windows, all downloads &amp; hosting instructions <span aria-hidden="true">→</span></a>
+              <a href="/download/">All downloads &amp; hosting instructions <span aria-hidden="true">→</span></a>
             </p>
           </div>
         </section>
@@ -303,6 +309,10 @@ const fieldGuides = [
   .entry-options h2 { font-size: 1.25rem; margin-bottom: var(--space-xs); }
   .entry-options section > p { margin: 0; font-size: .95rem; color: var(--ink-muted); }
   .host-command { min-width: 0; margin-top: var(--space-md); }
+  .windows-expander { margin-top: var(--space-sm); border-top: 1px solid color-mix(in srgb, var(--rule) 35%, transparent); padding-top: var(--space-xs); }
+  .windows-expander summary { font-family: var(--font-display); font-size: 0.95rem; color: var(--ink); cursor: pointer; padding-block: var(--space-xs); }
+  .windows-expander summary:hover { color: var(--accent); }
+  .windows-expander-body { margin-top: var(--space-xs); }
   .host-links { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-xs) var(--space-sm); font-size: .95rem; color: var(--ink-muted); margin: var(--space-sm) 0 0; }
   .connection-settings { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm) var(--space-lg); margin: var(--space-md) 0; }
   .connection-host { grid-column: 1 / -1; }
