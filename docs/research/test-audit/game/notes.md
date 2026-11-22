@@ -1549,3 +1549,60 @@ The fidelity-depth gate initially found four Jin manifest rows pointing to the
 deleted duplicate; those rows were redirected to the surviving exact test
 declarations and the gate then passed. No oracle census was needed for this
 test and documentation audit.
+
+## Batch 26 preregistered estimate (before reading tests T1539–T1588)
+
+Continue the frozen inventory-order sweep: select the first 50 test names not already present in any ledger row, scanning from the start of the 1,991-function inventory. T001–T1538 has 1,538 rows and 1,466 unique test names, leaving 525 unique inventory functions unledgered. The selected roster is inventory lines 508–580:
+
+- `TestDoRideMountedGates`
+- `TestDoRideResolvesThroughGetCharRoomVis`
+- `TestDoRideSuccessStateAndAudience`
+- `TestDoRideUsesCOneArgument`
+- `TestDoRoflSelfTargetUsesCCharAutoBytes`
+- `TestDoSaveWritesStoreOfRecordWithNowhere`
+- `TestDoScoutTerrainAndCrowdDescriptions`
+- `TestDoScroungeDepthDeferredImprovePreservesDrawOrder`
+- `TestDoScroungeDepthGatesAndDefault`
+- `TestDoScroungeDepthSectorMapAndMessages`
+- `TestDoSerpentKickGateOrder`
+- `TestDoSerpentKickMissUsesCMessageContract`
+- `TestDoSerpentKickResultContract`
+- `TestDoSerpentKickSleepingTargetAutoHits`
+- `TestDoSharpenConsumesOneCPercentDraw`
+- `TestDoSharpenFailureMutatesEvenWithZeroSkill`
+- `TestDoSharpenFightingGateFollowsObjectGates`
+- `TestDoSharpenMutatesAndScalesSuccessfulWeapon`
+- `TestDoSharpenRejectsNonSlashAndAlreadyAffected`
+- `TestDoSharpenUsesCObjectGatesAndCarriedOnly`
+- `TestDoSleeperDepthGateOrder`
+- `TestDoSleeperMobProtectionAndSuccessShape`
+- `TestDoSleeperPlayerLevelWindow`
+- `TestDoSlug_GateOrderAndMessages`
+- `TestDoSlug_ResultContract`
+- `TestDoSlug_SkillMessageDrawOrder`
+- `TestDoSmackheads_GateOrderAndMessages`
+- `TestDoSmackheads_ResultContract`
+- `TestDoSneakFailedRerollClearsSneakAndStealthAffects`
+- `TestDoSneakMountedGatePrecedesRoll`
+- `TestDoSpellDamageChargePainDraw`
+- `TestDoSpellDamageCircleUsesCircleCorpseType`
+- `TestDoSpellDamageEmitsMeteorSwarmMessages`
+- `TestDoSpellDamageEmitsMeteorSwarmMissToPlayerCaster`
+- `TestDoSpike_ImmortalTargetGate`
+- `TestDoSpike_MissWaitState`
+- `TestDoSpike_MobTarget`
+- `TestDoSpike_SuccessProbability`
+- `TestDoSpike_UsesObjectKeywords`
+- `TestDoSpike_WeaponCheckUsesFirstKeyword`
+- `TestDoStrike_HitContract`
+- `TestDoStrike_MissRoutesThroughSkillMessage`
+- `TestDoStrike_SleepingVictimRaisesProbTo100`
+- `TestDoSubdueDepthGateOrder`
+- `TestDoSubdueImmortalSuccess`
+- `TestDoSubdueMissPinsAndShape`
+- `TestDoSubdueOutlawRefusal`
+- `TestDoSubdueSeededSuccessDrawCount`
+- `TestDoSubdueShopkeeperGate`
+- `TestDoTigerPunchDamage_SelectsVariantAfterHpUpdate`
+
+Before reading these tests, my estimate is **R43 / F5 / C1 / D1**.
