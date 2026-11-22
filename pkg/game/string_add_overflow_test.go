@@ -154,13 +154,15 @@ func TestMailFirstLineOverflowTruncatesAndKeepsWriting(t *testing.T) {
 	player.SetPlrFlag(PlrWriting, true)
 	player.SetPlrFlag(PlrMailing, true)
 
+	line := strings.Repeat("abcdefghij", MailMaxSize/10) + "abcdef"
 	previousMessages := len(sent)
-	if HandleMailInput(player, strings.Repeat("x", MailMaxSize)) {
+	if HandleMailInput(player, line) {
 		t.Fatal("mail editor exited after truncating the first line")
 	}
 	state := mailWriteEntries[player.ID]
-	if len(state.buffer) != MailMaxSize-3 {
-		t.Fatalf("first-line truncation buffer = %d bytes, want %d", len(state.buffer), MailMaxSize-3)
+	want := line[:MailMaxSize-3]
+	if state.buffer != want {
+		t.Fatalf("first-line truncation buffer = %q, want retained prefix %q", state.buffer[len(state.buffer)-min(len(state.buffer), 20):], want[len(want)-20:])
 	}
 	requireNewStringAddNotice(t, sent, previousMessages, "String too long - Truncated.\r\n")
 	if player.GetFlags()&(1<<PlrWriting) == 0 || player.GetFlags()&(1<<PlrMailing) == 0 {

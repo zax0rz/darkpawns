@@ -403,3 +403,65 @@ rows (R509/F22/C2/D1). The forecast from before T639 was R1240/F50/C28/D35
 for the remaining 1,353 tests. Through T888, T639–T888 actuals are R225/F22/C3/D0,
 leaving 1,103 tests and forecast remainder R1015/F28/C25/D35. The remaining
 1,103 tests continue in the next batch; no package summary or PF row is due yet.
+
+
+## Post-oracle redo, batch 13 (T889–T938)
+
+Marks: **R 46 / F 4 / C 0 / D 0.** Junk: J3 4.
+
+The four F tests have detached mutation proofs in `mutations.tsv`; each old
+body stayed green, each repaired body failed under the same mutation, and every
+mutation was restored. No R spot-checks were required because this batch has F
+marks.
+
+**F repairs:**
+
+1. T895, `TestLuaCharTableMobileFields` (J3): the old mobile was at full health,
+   so `hp` and `maxhp` were equal and independently sourced expectations could
+   not detect a swapped binding. The fixture now sets 37/52 and requires both
+   literal values. The test was introduced in PR #1975, whose title describes
+   a field-for-field C char-table match; the weakness was the fixture’s lack of
+   a distinguishing state.
+2. T915, `TestMagicUserSelectsFightingMobVictim` (J3): its previous assertion
+   accepted any utterance, so it did not establish that the fighting mobile was
+   selected. The repaired seed declines the room-candidate roll and chooses
+   shocking grasp; it checks damage to the mobile and unchanged HP for the
+   unrelated player. The introducing PR #2003 was a combat-round special audit,
+   while this test’s earlier body only witnessed a cast.
+3. T916, `TestMailFirstLineOverflowTruncatesAndKeepsWriting` (J3): uniform
+   input plus a length-only assertion could not tell whether the editor kept a
+   prefix or suffix. Patterned input now pins the exact retained prefix. The
+   test arrived with PR #2475’s `string_add` overflow behavior fix.
+4. T923, `TestMailReadWriteSharedFilePositioning` (J3): offset zero made an
+   ignored file position indistinguishable from a correct seek. It now targets
+   the third block and verifies the first block survives; the introducing PR
+   #1392 was the mail modernization/consolidation change.
+
+The audited C call paths agreed with the tests; no C disagreement or J10 was
+found. T914 is a Go-only concurrent charge-consumption contract (C is
+single-threaded), and T921 covers a Go pre-initialization lookup fallback with
+no direct C API equivalent; both have medium confidence. T918 is classified as
+hand-written because the directory-store guard is Go-specific robustness. T920
+is the child-process phase dispatcher required by the surrounding integration
+tests.
+
+Authorship for this batch: OpenClaw 7 (T893, T929, T931–T935), Claude Opus 4.8
+1 (T891), Luna 2 (T895–T896), unknown 40. Weak-test authorship: Luna 1 and
+unknown 3. By introduction date, six rows are pre-oracle (T929, T931–T935):
+R6/F0/C0/D0. The remaining 44 are post-oracle: R40/F4/C0/D0.
+
+Cumulative T001–T938: pre-oracle R355/F4/C1/D0 (360 rows); post-oracle
+R549/F26/C2/D1 (578 rows). The initial T639–T1991 forecast remains
+R1240/F50/C28/D35. Through T938, the audited T639–T938 actual is R271/F26/C3/D0;
+1,053 tests remain, with the forecast remainder now R969/F24/C25/D35. No
+package summary or PF row is due until T1991.
+
+`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` remains at 64.6% statement
+coverage, unchanged from batch 12; this batch improves assertion strength
+without adding production statements.
+
+Batch 12’s first targeted census was setup-refused because its fixture used
+`switch horse` for spawned mob 14410 (Silk), and the attempt had no draw-parity
+artifact. Commit `8546e1df4` corrects the warmup to `switch silk`; a proper
+four-scenario `--draw-parity` recheck is queued in PR #2990 at
+`/home/zach/Archives/darkpawns/oracle-runs/2026-11-21/luna-ta-game-12-conjured-actor-recheck`.

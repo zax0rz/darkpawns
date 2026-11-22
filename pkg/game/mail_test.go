@@ -46,16 +46,25 @@ func TestMailReadWriteSharedFilePositioning(t *testing.T) {
 		t.Fatalf("mkdir data: %v", err)
 	}
 
+	const targetPosition = 2 * MailBlockSize
+	prefix := make([]byte, MailBlockSize)
 	want := make([]byte, MailBlockSize)
 	for i := range want {
+		prefix[i] = byte(255 - i%255)
 		want[i] = byte(i)
 	}
-	writeToFile(want, len(want), 0)
+	writeToFile(prefix, len(prefix), 0)
+	writeToFile(want, len(want), targetPosition)
 
 	got := make([]byte, MailBlockSize)
-	readFromFile(got, len(got), 0)
+	readFromFile(got, len(got), targetPosition)
 	if !bytes.Equal(got, want) {
-		t.Fatalf("read mail block differs from written block")
+		t.Fatalf("read mail block at %d differs from written block", targetPosition)
+	}
+	gotPrefix := make([]byte, MailBlockSize)
+	readFromFile(gotPrefix, len(gotPrefix), 0)
+	if !bytes.Equal(gotPrefix, prefix) {
+		t.Fatalf("write at %d changed mail block zero", targetPosition)
 	}
 }
 
