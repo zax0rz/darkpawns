@@ -1858,3 +1858,63 @@ R1171/F102/C17/D8. The ledger now contains 1,616 unique inventory tests, with
 375 unique tests remaining. The batch branch is stacked on Batch 27 commit
 0132b1847; `origin/main` was fetched at ab14720f9, and both batch PRs target
 `main`. Use PF-168 or later for the final package summary row.
+
+## Batch 29 preregistered estimate (before reading tests T1689–T1738)
+
+Continue the frozen inventory-order sweep, selecting the first 50 test names
+not already present in any ledger row. T001–T1688 has 1,688 ledger rows and
+1,616 unique test names, leaving 375 unique inventory functions unledgered.
+The next roster is:
+
+- `TestHouseBootDropsUnresolvableOwner`
+- `TestHouseLoadExtractsUnrentable`
+- `TestHouseLoadFloorsUnresolvableContainers`
+- `TestHouseLoadLegacyRuntimeIDFilesFloorEverything`
+- `TestHouseLoadNestsNothingIntoWrongObject`
+- `TestHouseMudlogLevelDiscriminators`
+- `TestHouseMudlogProducers`
+- `TestHouseSaveLoadFloorsContainerContents`
+- `TestHouseSaveLoadFloorsDepthTwo`
+- `TestHuntItemsConsumesDrawBeforeHunterEligibility`
+- `TestHuntItemsUsesWearOrderAndFirstAvailableCharacter`
+- `TestHuntVictimAuctionAndShoutReachEveryListener`
+- `TestHuntVictim_CommandArgumentsMatchC`
+- `TestHuntVictimEvasionSayReachesTheRoom`
+- `TestHuntVictimGossipIsGlobalAndRecorded`
+- `TestHuntVictimKeepsPlayerIDWhenDescriptorMissing`
+- `TestHuntVictimKeywordObjectShadowsDoor`
+- `TestHuntVictimLeavesLinklessHuntingIDUnresolved`
+- `TestHuntVictimMultiWordKeywordDoesNotOpen`
+- `TestHuntVictimNonIntelligentRaceDoesNotOpen`
+- `TestHuntVictimOpensClosedUnlockedDoor`
+- `TestHuntVictimOpensMatchingContainer`
+- `TestHuntVictimRefusesLockedDoor`
+- `TestHuntVictimSameKeywordOpensOnlyTravelExit`
+- `TestHuntVictimSayReachesTheRoom`
+- `TestHuntVictimSecretCaseKeywordIsFindable`
+- `TestHuntVictimTellUsesTheTellPath`
+- `TestIdentifierValCost`
+- `TestIdleForceRentMudlogLevelIsLVLGOD`
+- `TestIdleForceRentMudlogProducer`
+- `TestIdleForceRentMudlogTypeIsCMP`
+- `TestIdleForceRentUsesRoomIndexThree`
+- `TestIgnoreLegacyWorldStateIsNotFatalAndKeepsTheFile`
+- `TestInspectLegacyWorldStateCountsTransientSections`
+- `TestInspectLegacyWorldStateToleratesBadInput`
+- `TestInstakillPreservesCrashFlag`
+- `TestInstakillRunsRawKillSequence`
+- `TestInvalidClassAntiClassBitsMatchCStructs`
+- `TestInventoryAccessIsLockedAgainstMoves`
+- `TestInventoryMovesSetCrashFlag`
+- `TestIsRoomDarkSparesCityStreets`
+- `TestJailGuardActorPortsMatchC`
+- `TestJailPointUpdateOnlyDecrements`
+- `TestJanitorAutonomousAssignedDispatch`
+- `TestJunkCoinsOverflowMatchesC`
+- `TestKenderStealCaughtRetaliationDrawsAndEnrols`
+- `TestKenderStealCaughtRetaliationRefusedInPeacefulRoom`
+- `TestKenderStealSetsFlag`
+- `TestKeylessDoorMatchesCNoKeyGuard`
+- `TestLegacySnapshotWithManySyntheticObjectsLogsOnce`
+
+Before reading these tests, my estimate is **R43 / F5 / C1 / D1**.
