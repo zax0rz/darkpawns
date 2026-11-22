@@ -76,11 +76,8 @@ func TestDoLookForSpellGates(t *testing.T) {
 		t.Fatalf("AddPlayer: %v", err)
 	}
 	w.DoLookForSpell(ch)
-	if got := messages[ch.GetName()]; !strings.Contains(got, "You can't see anything but stars!") {
-		t.Fatalf("DoLookForSpell wounded = %q, want stars", got)
-	}
-	if strings.Contains(messages[ch.GetName()], "Look Room") {
-		t.Fatalf("DoLookForSpell leaked the room: %q", messages[ch.GetName()])
+	if got, want := messages[ch.GetName()], "You can't see anything but stars!"; got != want {
+		t.Fatalf("DoLookForSpell wounded = %q, want exact C gate %q", got, want)
 	}
 	// Blind with an awake position gets the blind line, not darkness.
 	ch2 := NewPlayer(2, "BlindMind", 1001)
@@ -90,8 +87,8 @@ func TestDoLookForSpellGates(t *testing.T) {
 		t.Fatalf("AddPlayer: %v", err)
 	}
 	w.DoLookForSpell(ch2)
-	if got := messages[ch2.GetName()]; !strings.Contains(got, "you're blind!") {
-		t.Fatalf("DoLookForSpell blind = %q, want blind line", got)
+	if got, want := messages[ch2.GetName()], "You can't see a damned thing, you're blind!"; got != want {
+		t.Fatalf("DoLookForSpell blind = %q, want exact C gate %q", got, want)
 	}
 }
 

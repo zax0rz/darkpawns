@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -26,8 +25,8 @@ func TestDoInvisUsesLevelAndThresholdAudience(t *testing.T) {
 	if got := actor.GetInvisLevel(); got != LVL_IMPL {
 		t.Fatalf("invis level after toggle on = %d, want %d", got, LVL_IMPL)
 	}
-	if !hasPlayerMessage(received, peer.Name, "You blink and suddenly realize that Player1 is gone.\r\n") {
-		t.Fatalf("threshold audience missing from %v", received)
+	if got, want := messagesForPlayer(received, peer.Name), []string{"You blink and suddenly realize that Player1 is gone.\r\n"}; !equalStrings(got, want) {
+		t.Fatalf("threshold audience messages = %q, want exactly %q", got, want)
 	}
 
 	received = nil
@@ -35,8 +34,8 @@ func TestDoInvisUsesLevelAndThresholdAudience(t *testing.T) {
 	if got := actor.GetInvisLevel(); got != 0 {
 		t.Fatalf("invis level after toggle off = %d, want 0", got)
 	}
-	if !hasPlayerMessage(received, peer.Name, "You feel a strange presence as Player1 appears, seemingly from nowhere.\r\n") {
-		t.Fatalf("appear audience missing from %v", received)
+	if got, want := messagesForPlayer(received, peer.Name), []string{"You feel a strange presence as Player1 appears, seemingly from nowhere.\r\n"}; !equalStrings(got, want) {
+		t.Fatalf("appear audience messages = %q, want exactly %q", got, want)
 	}
 }
 
@@ -57,15 +56,28 @@ func TestCanSeeHonorsWizinvisLevelBeforeImmortalShortcut(t *testing.T) {
 	}
 }
 
-func hasPlayerMessage(messages []struct {
+func messagesForPlayer(messages []struct {
 	player string
 	msg    string
-}, player, want string,
-) bool {
+}, player string,
+) []string {
+	var result []string
 	for _, message := range messages {
-		if message.player == player && strings.Contains(message.msg, want) {
-			return true
+		if message.player == player {
+			result = append(result, message.msg)
 		}
 	}
-	return false
+	return result
+}
+
+func equalStrings(got, want []string) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	for i := range got {
+		if got[i] != want[i] {
+			return false
+		}
+	}
+	return true
 }
