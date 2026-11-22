@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -78,47 +77,29 @@ func TestSpecPortalToTemple_EntryAndExactArgumentGates(t *testing.T) {
 }
 
 func TestSpecPortalToTemple_SayAudienceTeleportAndLandingLook(t *testing.T) {
-	a := newPortalToTempleTestWorld(t)
-
-	if !specPortalToTemple(a.w, a.actor, nil, "say", "setchswayno") {
-		t.Fatal("say portal command was not handled")
-	}
-	actor := a.messages[a.actor.Name]
-	peer := a.messages[a.peer.Name]
-	for _, want := range []string{
-		"You say 'setchswayno'\r\n",
-		"With a blinding flash of light and a crack of thunder, you are teleported...\r\n",
-		"Temple of the Cross\r\n",
-		"A quiet temple.\r\n",
-	} {
-		if !strings.Contains(actor, want) {
-			t.Errorf("actor output %q missing %q", actor, want)
-		}
-	}
-	if got, want := peer, "PortalHero says, 'setchswayno'\r\n"+
-		"With a blinding flash of light and a crack of thunder, PortalHero disappears!\r\n"; got != want {
-		t.Errorf("peer output = %q, want %q", got, want)
-	}
-	if strings.Contains(actor, "PortalHero disappears!") {
-		t.Error("actor received the TO_ROOM disappearance message")
-	}
-	if got := a.actor.GetRoomVNum(); got != 8008 {
-		t.Fatalf("actor room = %d, want 8008", got)
-	}
-	if got := a.peer.GetRoomVNum(); got != 19658 {
-		t.Fatalf("peer room = %d, want 19658", got)
-	}
-}
-
-func TestSpecPortalToTemple_ApostropheAlias(t *testing.T) {
-	a := newPortalToTempleTestWorld(t)
-	if !specPortalToTemple(a.w, a.actor, nil, "'", "setchswayno") {
-		t.Fatal("apostrophe portal command was not handled")
-	}
-	if got := a.actor.GetRoomVNum(); got != 8008 {
-		t.Fatalf("actor room = %d, want 8008", got)
-	}
-	if got := a.messages[a.actor.Name]; !strings.Contains(got, "You say 'setchswayno'\r\n") {
-		t.Fatalf("apostrophe alias did not use do_say output: %q", got)
+	for _, command := range []string{"say", "'"} {
+		t.Run(command, func(t *testing.T) {
+			a := newPortalToTempleTestWorld(t)
+			if !specPortalToTemple(a.w, a.actor, nil, command, "setchswayno") {
+				t.Fatalf("%s portal command was not handled", command)
+			}
+			wantActor := "You say 'setchswayno'\r\n" +
+				"With a blinding flash of light and a crack of thunder, you are teleported...\r\n" +
+				"Temple of the Cross\r\nA quiet temple.\r\n[ Exits: None! ]\r\n"
+			if got := a.messages[a.actor.Name]; got != wantActor {
+				t.Errorf("%s actor transcript = %q, want %q", command, got, wantActor)
+			}
+			wantPeer := "PortalHero says, 'setchswayno'\r\n" +
+				"With a blinding flash of light and a crack of thunder, PortalHero disappears!\r\n"
+			if got := a.messages[a.peer.Name]; got != wantPeer {
+				t.Errorf("%s peer transcript = %q, want %q", command, got, wantPeer)
+			}
+			if got := a.actor.GetRoomVNum(); got != 8008 {
+				t.Fatalf("actor room = %d, want 8008", got)
+			}
+			if got := a.peer.GetRoomVNum(); got != 19658 {
+				t.Fatalf("peer room = %d, want 19658", got)
+			}
+		})
 	}
 }

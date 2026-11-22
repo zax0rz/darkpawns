@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -110,8 +109,9 @@ func TestSpecShopKeeperActorKenderActorShouts(t *testing.T) {
 	if got := specShopKeeperActor(w, CharacterSpecialContext{Actor: kender}, keeper, "steal", ""); got != SpecialHandled {
 		t.Fatalf("steal as a Kender = %v, want SpecialHandled", got)
 	}
-	if got := messages[witness.GetName()]; !strings.Contains(got, "Stinkin' Kender scum!") {
-		t.Fatalf("witness messages = %q, want the keeper's Kender shout", got)
+	wantShout := "A test mob shouts, 'Stinkin' Kender scum!'\r\n"
+	if got := messages[witness.GetName()]; got != wantShout {
+		t.Fatalf("witness messages = %q, want exact keeper shout %q", got, wantShout)
 	}
 
 	for name := range messages {
@@ -121,7 +121,7 @@ func TestSpecShopKeeperActorKenderActorShouts(t *testing.T) {
 	if got := specShopKeeperActor(w, CharacterSpecialContext{Actor: other}, keeper, "steal", ""); got != SpecialHandled {
 		t.Fatalf("steal as a non-Kender = %v, want SpecialHandled", got)
 	}
-	if got := messages[witness.GetName()]; strings.Contains(got, "Stinkin' Kender scum!") {
-		t.Fatalf("witness messages = %q, want no Kender shout for a non-Kender actor", got)
+	if got := messages[witness.GetName()]; got != "" {
+		t.Fatalf("witness messages = %q, want silence for a non-Kender actor", got)
 	}
 }

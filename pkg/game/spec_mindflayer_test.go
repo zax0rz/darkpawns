@@ -36,15 +36,6 @@ func mindflayerSeed(t *testing.T, want int) uint32 {
 	return 0
 }
 
-func TestSpecMindflayer_RngArms(t *testing.T) {
-	for _, want := range []int{0, 5, 15} {
-		seed := mindflayerSeed(t, want)
-		if got := dprng.New(seed).Number(0, 15); got != want {
-			t.Fatalf("mindflayer seed %d produced roll %d, want %d", seed, got, want)
-		}
-	}
-}
-
 func prepareMindflayerCombat(t *testing.T) (*World, *Player, *MobInstance, *mindflayerCombatEngine, *string, func() string) {
 	t.Helper()
 	w, player, lastMessage := newSpecProcTestWorld(t)
@@ -101,25 +92,29 @@ func TestSpecMindflayer_EntryGatesAndFallthrough(t *testing.T) {
 }
 
 func TestSpecMindflayer_SoulLeechUsesDirectDamageAndHeals(t *testing.T) {
-	w, player, mob, _, skillMessage, lastMessage := prepareMindflayerCombat(t)
-	mob.SetHealth(40)
-	player.SetHP(1000)
-	dprng.ResetStream(mindflayerSeed(t, 0))
+	for _, roll := range []int{0, 5} {
+		t.Run(strconv.Itoa(roll), func(t *testing.T) {
+			w, player, mob, _, skillMessage, lastMessage := prepareMindflayerCombat(t)
+			mob.SetHealth(40)
+			player.SetHP(1000)
+			dprng.ResetStream(mindflayerSeed(t, roll))
 
-	if !specMindflayer(w, nil, mob, "", "") {
-		t.Fatal("mindflayer soul-leech roll should be handled")
-	}
-	if got, want := player.GetHP(), 995; got != want {
-		t.Errorf("soul leech victim HP = %d, want %d", got, want)
-	}
-	if got, want := mob.GetHP(), 45; got != want {
-		t.Errorf("soul leech mob HP = %d, want uncapped %d", got, want)
-	}
-	if got, want := *skillMessage, "a test mob|Tester|5|83|1001"; got != want {
-		t.Errorf("soul leech skill message = %q, want %q", got, want)
-	}
-	if got, want := lastMessage(), "The tentacles on a test mob's face surge forward, wrapping around Tester's head!\r\nThe tentacles on a test mob's face surge forward, wrapping around your head!\r\n"; got != want {
-		t.Errorf("soul leech audience Acts = %q, want %q", got, want)
+			if !specMindflayer(w, nil, mob, "", "") {
+				t.Fatal("mindflayer soul-leech roll should be handled")
+			}
+			if got, want := player.GetHP(), 995; got != want {
+				t.Errorf("soul leech victim HP = %d, want %d", got, want)
+			}
+			if got, want := mob.GetHP(), 45; got != want {
+				t.Errorf("soul leech mob HP = %d, want uncapped %d", got, want)
+			}
+			if got, want := *skillMessage, "a test mob|Tester|5|83|1001"; got != want {
+				t.Errorf("soul leech skill message = %q, want %q", got, want)
+			}
+			if got, want := lastMessage(), "The tentacles on a test mob's face surge forward, wrapping around Tester's head!\r\nThe tentacles on a test mob's face surge forward, wrapping around your head!\r\n"; got != want {
+				t.Errorf("soul leech audience Acts = %q, want %q", got, want)
+			}
+		})
 	}
 }
 

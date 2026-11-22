@@ -137,3 +137,11 @@ TestSpecIra_ExclaimAndHit	pkg/game/spec_procs2.go	1399	append EXTRA after C room
 TestSpecJailPulseRelease	pkg/game/spec_procs2.go	1515	send an extra line after the jail room look	green (old prefix and room-name checks accepted it)	red (exact inmate transcript rejected it)	yes
 TestSpecMallory_Revenge	pkg/game/hunting_mudlog.go	33	append EXTRA to the set_hunting syslog body	green (old substring accepted suffix)	red (exact C hunting line rejected suffix)	yes
 TestSpecMayorWakesAndFallsThroughToMobileActivity	pkg/game/spec_procs.go	985	append EXTRA to the mayor wake act	green (old substring accepted suffix)	red (exact wake transcript rejected suffix)	yes
+TestSpecMiniThiefUsesCChanceAndAmountBands	pkg/game/spec_procs.go	1190	append EXTRA to caught-theft room act	green (old Contains assertion accepted suffix)	red (exact room transcript rejected suffix)	yes
+TestSpecPortalRoom_Teleport	pkg/game/spec_procs2.go	1644	append an extra actor line after C teleport line	green (old partial transcript checks accepted suffix)	red (exact actor transcript rejected suffix)	yes
+TestSpecPortalToTemple_SayAudienceTeleportAndLandingLook	pkg/game/spec_procs3.go	919	append EXTRA to the actor teleport line	green (old partial checks accepted suffix)	red (exact actor transcript rejected suffix)	yes
+TestSpecQuanLoActorNamesTheActor	pkg/game/actor_specials_rooms.go	240	append EXTRA to the actor look message	green (old Contains assertion accepted suffix)	red (exact line rejected suffix)	yes
+TestSpecRemorterRejectsPlayerCommandsAtTheCorrectGates	pkg/game/spec_procs2.go	546	append EXTRA to low-level refusal tell	green (old Contains assertion accepted suffix)	red (exact refusal transcript rejected suffix)	yes
+TestSpecRemorterSuccessResetsStateAndSeedsClassSkills	pkg/game/spec_procs2.go	563	append EXTRA to successful remort tell	green (old Contains assertion accepted suffix)	red (exact success transcript rejected suffix)	yes
+TestSpecRoachEntryGates	pkg/game/spec_procs3.go	1115	emit CRLF for a nonmovement command	green (old TrimSpace silence check accepted CRLF)	red (exact empty-output assertion rejected CRLF)	yes
+TestSpecShopKeeperActorKenderActorShouts	pkg/game/actor_specials_shop.go	52	append EXTRA to Kender shout	green (old Contains assertion accepted suffix)	red (exact shout assertion rejected suffix)	yes

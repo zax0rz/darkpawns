@@ -96,8 +96,11 @@ func TestSpecRemorterSuccessResetsStateAndSeedsClassSkills(t *testing.T) {
 	if got := ch.GetPractices(); got != 12 {
 		t.Errorf("practices after level-one advance = %d, want 12", got)
 	}
-	if !strings.Contains(output.String(), "Enjoy your new life") || !strings.Contains(output.String(), "Colors spiral") {
-		t.Errorf("success output = %q", output.String())
+	wantOutput := "The remorter tells you, 'Enjoy your new life...'\r\n" +
+		"The remorter moves his hands over your eyes, closing them with a touch.\r\n" +
+		"Colors spiral in your sight... You open your eyes, feeling refreshed.\r\n"
+	if got := output.String(); got != wantOutput {
+		t.Errorf("success output = %q, want exact C transcript %q", got, wantOutput)
 	}
 }
 
@@ -111,14 +114,13 @@ func TestSpecRemorterRejectsPlayerCommandsAtTheCorrectGates(t *testing.T) {
 	}
 
 	cases := []struct {
-		name  string
-		level int
-		gold  int
-		want  string
+		name, want string
+		level      int
+		gold       int
 	}{
-		{"low level", LVL_IMMORT - 2, 60000, "You can't remort until level 30"},
-		{"immortal", LVL_IMMORT, 60000, "Immortals cannot remort"},
-		{"poor", LVL_IMMORT - 1, 0, "It costs 60000 gold"},
+		{"low level", "The remorter tells you, 'You can't remort until level 30!\r\n'\r\n", LVL_IMMORT - 2, 60000},
+		{"immortal", "The remorter tells you, 'Immortals cannot remort!\r\n'\r\n", LVL_IMMORT, 60000},
+		{"poor", "The remorter tells you, 'It costs 60000 gold to work my magicks.'\r\n", LVL_IMMORT - 1, 0},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
@@ -129,8 +131,8 @@ func TestSpecRemorterRejectsPlayerCommandsAtTheCorrectGates(t *testing.T) {
 			if !specRemorter(w, player, mob, "remort", "") {
 				t.Fatal("gate should consume remort command")
 			}
-			if !strings.Contains(output.String(), test.want) {
-				t.Errorf("gate output = %q, want substring %q", output.String(), test.want)
+			if got := output.String(); got != test.want {
+				t.Errorf("gate output = %q, want exact C transcript %q", got, test.want)
 			}
 		})
 	}

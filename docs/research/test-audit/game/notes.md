@@ -2125,3 +2125,50 @@ is:
 Before reading these tests, my estimate is **R44 / F4 / C1 / D1**. These are
 all drawn from the post-oracle suffix, so the estimate is **0 pre-oracle and
 R44 / F4 / C1 / D1 post-oracle**.
+
+## Batch 31 results (T1789–T1838)
+
+The actual marks are **R40 / F8 / C2 / D0**, versus the preregistered
+estimate R44/F4/C1/D1. All 50 tests are post-oracle. Seven tests carry J3,
+two carry J4, eight carry J7, one carries J9, and one carries J10. T1810
+(`TestSpecPrayForItems_StaffNamesPatched`) pins the already-approved DP-1373
+security divergence from PF-051: C granted immortality to reserved names,
+while Go refuses. Forty-nine tests were introduced by commits with Zach's git
+identity and no model trailer, so their author is unknown; T1810 has a Claude
+Opus 5.5 trailer. All eight F tests have unknown authors.
+
+I tightened the checks in T1792 mini-thief, T1804 portal room, T1807
+portal-to-temple, T1817 Quan Lo actor, T1822 and T1823 remorter, T1825 roach
+entry gates, and T1832 shop keeper Kender shout. Each old assertion stayed
+green under its output mutation, the corrected exact assertion turned red,
+and the source was restored byte-for-byte in the detached mutation worktree.
+The two C tests were folded into T1791 and T1807. Before folding them, I ran
+`git grep -n` over `docs/fidelity` and `cmd/dp-oracle-diff`; the live
+`docs/fidelity/depth/spec-procs.tsv` proofs now name the surviving tests.
+Remaining name hits are in dated evidence only. No D deletion was needed.
+
+The 50 ledger rows were appended as raw tab-separated text, without a CSV
+writer; all have 18 fields, the IDs are contiguous through T1838, and the
+mutation file has 146 seven-field rows. The current `origin/main` is
+`ab14720f9`. Historical rows T360, T377, T387, T391, T394, T395, T455,
+T465, T520, T535, T548, T606, T769, and T1403 match it byte-for-byte,
+including T1403's unquoted row. The frozen inventory has 153 unledgered
+functions remaining.
+
+Package statement coverage was 64.8% at the Batch 30 baseline and remains
+64.8%. No production code changed, so no census was needed.
+
+All eleven required gates passed individually: `make fmt`; `GOEXPERIMENT=nojsonv2
+go build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`; `GOEXPERIMENT=nojsonv2
+go test ./...`; `golangci-lint run ./...` (0 issues); `make modernize-check`;
+`make deadcode-ratchet` (35 baselined, 0 new); `make string-census` (ratchet
+clean, with the existing stale generated reports and four obsolete baseline
+entries); `make fidelity-depth` (8,282 cases, 7,968 proven/delegated, one
+blocked, 297 excluded, 16 approved-divergent); `make
+expected-divergences-check` (exit 0 with existing unresolved selectors); and
+`make function-index-check` (the expected-red fake association was rejected,
+then the ratchet reported clean).
+
+Cumulatively, T001–T1838 has R1681/F124/C24/D9. The pre-oracle segment remains
+R379/F7/C3/D1; post-oracle is R1302/F117/C21/D8. From T639 through T1838 the
+counts are R1048/F120/C24/D8.

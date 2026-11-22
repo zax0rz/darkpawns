@@ -39,6 +39,9 @@ func TestSpecPortalRoom_Teleport(t *testing.T) {
 	w.MessageSink = func(name string, msg []byte) { out[name] += string(msg) }
 	actor := NewPlayer(1, "Actor", 1001)
 	actor.SetPosition(combat.PosStanding)
+	actor.Stats.Int = 10
+	actor.Stats.Wis = 10
+	actor.CopyBaseAttributes()
 	if err := w.AddPlayer(actor); err != nil {
 		t.Fatalf("AddPlayer actor: %v", err)
 	}
@@ -55,31 +58,45 @@ func TestSpecPortalRoom_Teleport(t *testing.T) {
 	out["Actor"] = ""
 	out["Watcher"] = ""
 
-	if !specPortalRoom(w, actor, nil, "say", "kallinistra") {
-		t.Fatal("kallinistra should be handled")
-	}
-	if got := actor.GetRoomVNum(); got != 21264 {
-		t.Fatalf("actor room = %d, want 21264", got)
-	}
-	if got := out["Watcher"]; !strings.Contains(got, "disappears!") {
-		t.Fatalf("origin bytes = %q, want disappears", got)
-	}
-	if got := out["Destwatch"]; !strings.Contains(got, "appears!") {
-		t.Fatalf("dest bytes = %q, want appears", got)
-	}
-	// do_look goes to the actor only, not the destination peer.
-	if got := out["Actor"]; !strings.Contains(got, "Destiny") {
-		t.Fatalf("actor bytes = %q, want destination look", got)
-	}
-	// Gates: wrong command, wrong phrase.
-	for _, tc := range []struct{ cmd, arg string }{{"look", "kallinistra"}, {"say", "other"}, {"'", "other"}} {
+	for _, command := range []string{"say", "'"} {
+		for name := range out {
+			out[name] = ""
+		}
 		actor.SetRoom(1001)
-		out["Actor"] = ""
+		if !specPortalRoom(w, actor, nil, command, "kallinistra") {
+			t.Fatalf("%s kallinistra should be handled", command)
+		}
+		if got := actor.GetRoomVNum(); got != 21264 {
+			t.Fatalf("%s actor room = %d, want 21264", command, got)
+		}
+		if got, want := out["Actor"], "You say 'kallinistra'\r\n\r\n"+
+			"With a blinding flash of light and a crack of thunder, you are teleported...\r\n"+
+			"Destiny\r\n[ Exits: None! ]\r\nDestwatch  is standing here.\r\n"; got != want {
+			t.Errorf("%s actor transcript = %q, want %q", command, got, want)
+		}
+		if got, want := out["Watcher"], "Actor says, 'kallinistra'\r\n\r\n"+
+			"With a blinding flash of light and a crack of thunder, Actor disappears!\r\n\r\n\r\n"; got != want {
+			t.Errorf("%s origin transcript = %q, want %q", command, got, want)
+		}
+		if got, want := out["Destwatch"], "\r\n"+
+			"With a blinding flash of light and a crack of thunder, Actor appears!\r\n\r\n\r\n"; got != want {
+			t.Errorf("%s destination transcript = %q, want %q", command, got, want)
+		}
+	}
+	// Gates: wrong command, wrong phrase, and exact C argument comparison.
+	for _, tc := range []struct{ cmd, arg string }{{"look", "kallinistra"}, {"say", "other"}, {"'", "other"}} {
+		for name := range out {
+			out[name] = ""
+		}
+		actor.SetRoom(1001)
 		if specPortalRoom(w, actor, nil, tc.cmd, tc.arg) {
 			t.Fatalf("%s %q should not be handled", tc.cmd, tc.arg)
 		}
 		if got := actor.GetRoomVNum(); got != 1001 {
 			t.Fatalf("gate moved to %d", got)
+		}
+		if got := out["Actor"] + out["Watcher"] + out["Destwatch"]; got != "" {
+			t.Fatalf("gate %s %q emitted %q", tc.cmd, tc.arg, got)
 		}
 	}
 }

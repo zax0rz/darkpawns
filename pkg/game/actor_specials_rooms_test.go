@@ -260,8 +260,16 @@ func TestSpecQuanLoActorNamesTheActor(t *testing.T) {
 	if got := specQuanLoActor(w, ctx, monk, "look", " quan"); got != SpecialDeclined {
 		t.Fatalf("look = %v, want SpecialDeclined", got)
 	}
-	if got := messages[watcher.GetName()]; !strings.Contains(got, "What is it you seek, a horse?") {
-		t.Fatalf("watcher output = %q, want the pet's name in the monk's speech", got)
+	if got, want := messages[watcher.GetName()], "A test mob says, 'What is it you seek, a horse? Tell me and be gone.'\r\n"; got != want {
+		t.Fatalf("watcher look output = %q, want exact C speech with the pet actor's name", got)
+	}
+
+	messages[watcher.GetName()] = ""
+	if got := specQuanLoActor(w, ctx, monk, "flee", ""); got != SpecialDeclined {
+		t.Fatalf("flee = %v, want SpecialDeclined", got)
+	}
+	if got, want := messages[watcher.GetName()], "A test mob gossips, 'What was that, a horse? This is not a shawade. Try it again. This time with fewing.'\r\n"; got != want {
+		t.Fatalf("watcher flee output = %q, want exact C gossip with the pet actor's name", got)
 	}
 }
 

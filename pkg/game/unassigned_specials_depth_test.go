@@ -226,12 +226,16 @@ func TestSpecMiniThiefUsesCChanceAndAmountBands(t *testing.T) {
 		},
 		{
 			name: "caught after successful theft", skillRoll: 20, amountRoll: 20, gold: 100,
-			wantVictim: 80, wantThief: 20, wantOutput: "coming out of your coin purse",
+			wantVictim: 80, wantThief: 20,
+			wantOutput: "You catch a test mob's hand coming out of your coin purse.\r\n" +
+				"Tester catchs a test mob's hand leaving thier coin purse a little lighter.\r\n",
 			wantDrawRange: [][2]int{{0, 19}, {1, 100}, {10, 25}},
 		},
 		{
 			name: "caught before theft", skillRoll: 50, gold: 100,
-			wantVictim: 100, wantOutput: "going into your coin purse",
+			wantVictim: 100,
+			wantOutput: "You catch a test mob's hand going into your coin purse.\r\n" +
+				"Tester catchs a test mob's hand entering thier coin purse.\r\n",
 			wantDrawRange: [][2]int{{0, 19}, {1, 100}},
 		},
 		{
@@ -282,8 +286,8 @@ func TestSpecMiniThiefUsesCChanceAndAmountBands(t *testing.T) {
 			if tc.wantNoOutput && gotOutput != "" {
 				t.Fatalf("output = %q, want silence", gotOutput)
 			}
-			if tc.wantOutput != "" && !strings.Contains(gotOutput, tc.wantOutput) {
-				t.Fatalf("output = %q, want %q", gotOutput, tc.wantOutput)
+			if tc.wantOutput != "" && gotOutput != tc.wantOutput {
+				t.Fatalf("output = %q, want exact C transcript %q", gotOutput, tc.wantOutput)
 			}
 		})
 	}
