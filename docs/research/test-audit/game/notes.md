@@ -598,3 +598,9 @@ T1991.
 
 `GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` reported 64.6% before and
 after this batch.
+
+## Batch 17 preregistered estimate (before reading tests T1089–T1138)
+
+From the forecast remainder after T1088, I expect this 50-test slice to
+contain R46/F1/C1/D2. I expect 15 tests to predate the oracle and 35 to be
+later, with weak marks more likely in the older group.
