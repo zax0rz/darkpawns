@@ -1489,3 +1489,63 @@ inventory lines 367–507:
 - `TestDoRideDirectGates`
 
 Before reading these tests, my estimate is **R43 / F5 / C1 / D1**.
+
+## Batch 25 post-read audit (T1489–T1538)
+
+Actual marks: **R39 / F10 / C1 / D0**. The preregistered estimate was
+R43/F5/C1/D1 (variance R−4/F+5/C0/D−1). All 50 tests were introduced after
+the 2026-07-12 oracle cutoff. Junk marks overlap: J3=9, J9=1 (T1506), and
+J4=1 (T1508). No all-R spot checks applied because the batch contains F marks.
+The batch’s only C row, T1508 `TestDoKujiKiri_JinGuardMessages`, duplicated the
+common class, fighting, lockout, mounted, and mastery refusals already covered
+by `TestDoKujiKiri_NotNinja`, `TestDoKujiKiri_Fighting`,
+`TestDoKujiKiri_AlreadyAffected`, `TestDoKujiKiri_Mounted`, and
+`TestDoKujiKiri_SealNotMastered`; the Jin pre-mastery draw remains covered by
+`TestDoKujiKiri_JinUnmasteredConsumesCSuccessDraw`. The duplicate was deleted,
+and the live `jin.tsv` rows now cite the surviving guard tests. The ledger has
+1,538 rows; scanning the 1,991 unique inventory names leaves 525 unledgered
+tests.
+
+**False greens repaired and mutation-proven:**
+
+- T1498 `TestDoGenDoorFillWordOnlyArgument`: require the exact fillword-only
+  open/close and empty-open transcripts. An extra refusal line kept the old
+  checks green and made the repaired test red.
+- T1520 `TestDoLookForSpellGates`: require exact stars and blind gate bytes. An
+  added suffix kept the old substring check green and made the repaired test
+  red.
+- T1521 `TestDoLookInHeaderUsesCFName`: compare the exact first container
+  header line. Added header text kept the old substring check green and made
+  the repaired test red.
+- T1530 `TestDoNeckbreakDepthFailureRetaliationContract`: require exact actor,
+  victim, and room act text. Added actor text kept the old nonempty check green
+  and made the repaired test red.
+- T1533 `TestDoNeckbreakDepthResultContractAndDrawOrder`: require the exact
+  seeded 18d(level) result and next draw. Halving damage after consuming the
+  same dice kept the old positive-damage/draw check green and made the repaired
+  test red. The replay consumes the percent and damage rolls once each.
+- T1500 `TestDoGroinripDepthResultContract`: require the exact C room line. An
+  added suffix kept the old substring check green and made the repaired test
+  red.
+- T1505 `TestDoInvisUsesLevelAndThresholdAudience`: compare the complete
+  per-observer message list. A duplicated disappearance act kept the old
+  substring check green and made the repaired test red.
+- T1535 `TestDoOpenRejectsKeywordPrefix`: require only the exact no-door
+  refusal and closed exit state. An extra line kept the old checks green and
+  made the repaired test red.
+- T1536 `TestDoorFarSideNameUsesCFName`: require the exact observer transcript,
+  including C’s blank line. Appended text kept the old substring check green
+  and made the repaired test red.
+- T1506 `TestDoKick_WaitStateAlways22Pulses`: require a deterministic skill-1
+  miss rather than skipping after repeated hits. A forced hit arm kept the old
+  test green and made the repaired test red.
+
+`pkg/game` statement coverage was 64.7% before the batch and remains 64.7%.
+All eleven required PR gates passed: `make fmt`, build, vet, full tests,
+`golangci-lint` v2.15.0, modernize, deadcode ratchet, string census, fidelity
+depth, expected-divergences, and function-index. The string census ratchet
+passed while reporting its generated reports as stale; they were not refreshed.
+The fidelity-depth gate initially found four Jin manifest rows pointing to the
+deleted duplicate; those rows were redirected to the surviving exact test
+declarations and the gate then passed. No oracle census was needed for this
+test and documentation audit.
