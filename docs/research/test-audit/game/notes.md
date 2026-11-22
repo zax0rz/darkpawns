@@ -1360,3 +1360,71 @@ The roster spans inventory lines 234–366 (50 unledgered functions):
 From recent batch results, my prediction is **R43 / F5 / C1 / D1**. I expect all
 50 to postdate the 2026-07-12 oracle cutoff; I will verify dates from their
 introducing commits during the audit.
+
+## Batch 24 post-read audit (T1439–T1488)
+
+Actual marks: **R42 / F7 / C0 / D1**. The preregistered estimate was
+R43/F5/C1/D1 (variance R−1/F+2/C−1/D0). All 50 tests were introduced after
+the 2026-07-12 oracle cutoff. Junk marks overlap: J3=8 (the seven F rows and
+T1457), J8=1 (T1457). No all-R spot checks applied because the batch contains
+F marks. The ledger now has 1,488 rows; scanning the inventory by unique test
+name leaves 575 unledgered tests because 72 earlier rows repeat an existing
+name.
+
+**False greens repaired and mutation-proven:**
+
+- T1443 `TestDamageRefusedProtections` (J3): changed the substring check to
+  exact C CRLF bytes. An extra protection Act kept the old body green and made
+  the repaired test red.
+- T1448 `TestDeathFollowerOwnMasterAndRemoteFollower` (J3): replaced a prefix
+  check with exact outgoing-master bytes. An extra room line kept the old body
+  green and made the repaired test red.
+- T1451 `TestDeathReleasesFollowers` (J3): require exactly one private
+  stop-following line. Duplicating the private Act kept the old body green and
+  made the repaired test red.
+- T1463 `TestDoClanBankOverflowWithdrawMatchesC` (J3): assert the C overflow
+  withdrawal’s player gold and clan treasury state as well as its
+  acknowledgement. Restoring the prior negative-amount no-op kept the old body
+  green and made the repaired test red.
+- T1464 `TestDoClanInfoIncludesDefinedCDetails` (J3): compare the complete
+  detail transcript, including C’s CRLF then LF plan ending. Restoring the
+  extra CRLF kept the old body green and made the repaired test red.
+- T1466 `TestDoClanRenameOverflowRefusesLikeC` and T1467
+  `TestDoClanSetAppfeeOverflowRefusesLikeC` (J3): require exact C refusal
+  bytes. A prefixed refusal kept each old substring assertion green and made
+  each repaired test red.
+
+**Deletion and replacement:** T1457 `TestDisbandWalkIncludesMobAndKeepsCharmedFollow`
+(J3/J8) copied the production follower loop and therefore could not catch a
+regression in the player command. Deleted it and added
+`TestCmdUngroupDisbandIncludesMobileAndPreservesCharmedFollow` in `pkg/session`,
+which drives the actual command and checks exact player output, group flags,
+mobile inclusion, and charm-preserved following. Added
+`TestCharacterUngroupDisbandsMobileFollowers` to retain direct game-layer
+coverage of the production mobile actor body. Both deliberate mutations (skip
+mobile followers; leave the leader’s AFF_GROUP bit set) kept the old handwritten
+body green and made the command-path test red. The production command now uses
+`game.SetGroupedActor` to clear the leader’s group state as C does.
+
+The stricter clan assertions exposed two C-parity defects, both corrected in
+this batch: an overflowing bank withdrawal wraps through C `atoi` to the
+negative amount, so `SpendTreasure` must apply the negative balance change;
+and clan info must end its plan with C’s `\r\n\n`, not an extra CRLF. No
+expected divergence remains unfiled, and no governing fidelity rule was
+changed. The owner-approved DP-1418 death-cry divergence remains documented;
+it is not a new J10 finding.
+
+Weak-test authorship under PF-152/PF-153: T1443 has the Claude Opus 5.5 trailer.
+T1448, T1451, T1457, T1463, T1464, T1466, and T1467 have Zach’s git identity
+without a model trailer and remain `unknown`; branch names were not used to
+infer an author. Two other tests in the batch were authored by Luna, but both
+were R. The weak rows were all post-oracle: pre-oracle 0, post-oracle R42/F7/D1.
+
+`pkg/game` statement coverage was 64.7% before the batch and remains 64.7%.
+All eleven required PR gates passed. `make string-census` passed its ratchet;
+it reported the generated census reports as stale and they were not refreshed.
+The targeted draw-parity census
+`/home/zach/Archives/darkpawns/oracle-runs/2026-11-22/luna-ta-game-24-targeted`
+was CLEAN: `clan-atoi-depth`, `clan-depth`, and `ungroup-disband-depth` all
+passed, with 0 draw divergences. Its frozen source hashes match the production
+and depth files changed by this batch.
