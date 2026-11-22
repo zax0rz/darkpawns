@@ -167,7 +167,15 @@ func New(connString string) (*DB, error) {
 		}
 	}
 
-	conn, err := sql.Open(DriverName, path)
+	// Census-only durability override: production keeps SQLite's default
+	// synchronous = FULL so saves survive a power cut. Accept only exact
+	// "NORMAL" (never "OFF") and log when active so any accidental production
+	// use is visible at startup. Both busy_timeout and synchronous are
+	// connection-scoped in SQLite, so pass them in the driver DSN rather than
+	// one-shot conn.Exec so every replacement connection database/sql opens
+	// receives them.
+	syncNormal := os.Getenv("DP_SQLITE_SYNCHRONOUS") == "NORMAL"
+	conn, err := sql.Open(DriverName, sqliteOpenDSN(path, syncNormal))
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
@@ -185,25 +193,15 @@ func New(connString string) (*DB, error) {
 	}()
 
 	// Single connection plus WAL: SQLite allows one writer at a time, and there
-	// are no explicit transactions in this package to serialize. busy_timeout
-	// keeps event-driven writes from failing on a locked file.
+	// are no explicit transactions in this package to serialize. journal_mode
+	// is persisted in the database file header, so setting it once on open is
+	// durable across connections.
 	conn.SetMaxOpenConns(1)
-	pragmas := []string{
-		"PRAGMA busy_timeout = 5000",
-		"PRAGMA journal_mode = WAL",
-	}
-	// Census-only durability override: production keeps SQLite's default
-	// synchronous = FULL so saves survive a power cut. Accept only exact
-	// "NORMAL" (never "OFF") and log when active so any accidental production
-	// use is visible at startup.
-	if os.Getenv("DP_SQLITE_SYNCHRONOUS") == "NORMAL" {
-		pragmas = append(pragmas, "PRAGMA synchronous = NORMAL")
+	if syncNormal {
 		slog.Info("SQLite synchronous override active", "env", "DP_SQLITE_SYNCHRONOUS", "mode", "NORMAL")
 	}
-	for _, pragma := range pragmas {
-		if _, err := conn.Exec(pragma); err != nil {
-			return nil, fmt.Errorf("set sqlite pragma %q: %w", pragma, err)
-		}
+	if _, err := conn.Exec("PRAGMA journal_mode = WAL"); err != nil {
+		return nil, fmt.Errorf("set sqlite pragma %q: %w", "PRAGMA journal_mode = WAL", err)
 	}
 
 	db := &DB{conn: conn, created: created}
@@ -217,6 +215,17 @@ func New(connString string) (*DB, error) {
 // Close closes the database connection.
 func (db *DB) Close() error {
 	return db.conn.Close()
+}
+
+// sqliteOpenDSN builds a modernc.org/sqlite file: URI carrying per-connection
+// pragmas so database/sql applies them to every opened connection.
+func sqliteOpenDSN(path string, syncNormal bool) string {
+	escaped := strings.NewReplacer("%", "%25", "?", "%3F", "#", "%23").Replace(filepath.ToSlash(path))
+	query := "_pragma=busy_timeout(5000)"
+	if syncNormal {
+		query += "&_pragma=synchronous(NORMAL)"
+	}
+	return "file:" + escaped + "?" + query
 }
 
 // playersMigrationColumns are the columns added to existing installs since the

@@ -313,8 +313,11 @@ func TestSQLiteJournalMode(t *testing.T) {
 
 // TestSQLiteSynchronousOverride proves DP_SQLITE_SYNCHRONOUS accepts only exact
 // "NORMAL" (PRAGMA synchronous = 1) and leaves SQLite's default FULL (2) for
-// unset or any other value including "OFF".
+// unset or any other value including "OFF", and that both PRAGMA synchronous
+// and PRAGMA busy_timeout are applied per connection (surviving connection
+// replacement in database/sql).
 func TestSQLiteSynchronousOverride(t *testing.T) {
+	const wantBusyTimeout = 5000
 	cases := []struct {
 		name string
 		env  string
@@ -325,17 +328,37 @@ func TestSQLiteSynchronousOverride(t *testing.T) {
 		{name: "OFF rejected keeps FULL", env: "OFF", want: 2},
 		{name: "lowercase normal rejected keeps FULL", env: "normal", want: 2},
 	}
+	checkPragmas := func(t *testing.T, database *DB, stage, env string, wantSync int) {
+		t.Helper()
+		var syncMode int
+		if err := database.conn.QueryRow(`PRAGMA synchronous`).Scan(&syncMode); err != nil {
+			t.Fatalf("%s PRAGMA synchronous: %v", stage, err)
+		}
+		if syncMode != wantSync {
+			t.Errorf("%s PRAGMA synchronous = %d, want %d (DP_SQLITE_SYNCHRONOUS=%q)", stage, syncMode, wantSync, env)
+		}
+		var busyTimeout int
+		if err := database.conn.QueryRow(`PRAGMA busy_timeout`).Scan(&busyTimeout); err != nil {
+			t.Fatalf("%s PRAGMA busy_timeout: %v", stage, err)
+		}
+		if busyTimeout != wantBusyTimeout {
+			t.Errorf("%s PRAGMA busy_timeout = %d, want %d", stage, busyTimeout, wantBusyTimeout)
+		}
+	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Setenv("DP_SQLITE_SYNCHRONOUS", tc.env)
 			database := openGameStore(t, "sqlite://"+filepath.Join(t.TempDir(), "game.db"))
-			var syncMode int
-			if err := database.conn.QueryRow(`PRAGMA synchronous`).Scan(&syncMode); err != nil {
-				t.Fatalf("PRAGMA synchronous: %v", err)
+			checkPragmas(t, database, "initial connection", tc.env, tc.want)
+
+			// Drop idle connections so the next query opens a brand-new SQLite
+			// connection through database/sql. Per-connection pragmas set only
+			// via one-shot conn.Exec at startup are lost here (R5h).
+			database.conn.SetMaxIdleConns(0)
+			if open := database.conn.Stats().OpenConnections; open != 0 {
+				t.Fatalf("expected pool to close idle connection, still open=%d", open)
 			}
-			if syncMode != tc.want {
-				t.Errorf("PRAGMA synchronous = %d, want %d (DP_SQLITE_SYNCHRONOUS=%q)", syncMode, tc.want, tc.env)
-			}
+			checkPragmas(t, database, "fresh connection", tc.env, tc.want)
 		})
 	}
 }
