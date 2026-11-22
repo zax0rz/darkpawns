@@ -467,10 +467,11 @@ func TestNoMoveGuardPlayerLaneMatchesC(t *testing.T) {
 		playerLevel int
 		guardPos    int
 		want        bool
+		wantBytes   string
 	}{
-		{name: "mortal blocked west", special: "no_move_west", cmd: "west", playerLevel: 10, guardPos: combat.PosStanding, want: true},
-		{name: "mortal blocked south", special: "no_move_south", cmd: "south", playerLevel: 10, guardPos: combat.PosStanding, want: true},
-		{name: "mortal blocked east", special: "no_move_east", cmd: "east", playerLevel: 10, guardPos: combat.PosStanding, want: true},
+		{name: "mortal blocked west", special: "no_move_west", cmd: "west", playerLevel: 10, guardPos: combat.PosStanding, want: true, wantBytes: "A test mob humiliates you and blocks your way.\r\n"},
+		{name: "mortal blocked south", special: "no_move_south", cmd: "south", playerLevel: 10, guardPos: combat.PosStanding, want: true, wantBytes: "A test mob blocks your way.\r\nA test mob says 'Thou shalt not pass.'\r\n"},
+		{name: "mortal blocked east", special: "no_move_east", cmd: "east", playerLevel: 10, guardPos: combat.PosStanding, want: true, wantBytes: "A test mob humiliates you and blocks your way.\r\n"},
 		{name: "immortal passes", special: "no_move_south", cmd: "south", playerLevel: LVL_IMMORT, guardPos: combat.PosStanding},
 		{name: "sleeping guard passes", special: "no_move_south", cmd: "south", playerLevel: 10, guardPos: combat.PosSleeping},
 		{name: "other direction passes", special: "no_move_south", cmd: "north", playerLevel: 10, guardPos: combat.PosStanding},
@@ -479,7 +480,7 @@ func TestNoMoveGuardPlayerLaneMatchesC(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			w, player, _, _ := newNPCCommandWorld(t)
+			w, player, _, out := newNPCCommandWorld(t)
 			guard := newSpecProcTestMob(t, w, player.GetRoom(), 10)
 			player.Level = test.playerLevel
 			guard.SetPosition(test.guardPos)
@@ -487,6 +488,9 @@ func TestNoMoveGuardPlayerLaneMatchesC(t *testing.T) {
 			got := DispatchCharacterSpecial(test.special, w, CharacterSpecialContext{Actor: player}, guard, test.cmd, "")
 			if want := boolToResult(test.want); got != want {
 				t.Fatalf("%s %s at level %d = %v, want %v", test.special, test.cmd, test.playerLevel, got, want)
+			}
+			if got := out.String(); got != test.wantBytes {
+				t.Fatalf("%s %s bytes = %q, want %q", test.special, test.cmd, got, test.wantBytes)
 			}
 		})
 	}

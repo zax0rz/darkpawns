@@ -11,7 +11,9 @@ import (
 // Design §9: with the observer queue full, MudLog returns at once and the
 // immortal still gets the line. The process feed has no dispatcher during
 // package tests, so DefaultQueue taps fill it exactly; the next MudLog call
-// exercises the drop path on a full queue.
+// exercises the drop path on a full queue. The nonblocking observer queue is a
+// Go-only contract; C's mudlog walks descriptors and writes synchronously
+// (src/utils.c:230-240).
 func TestMudLogTapNeverBlocksTheImmortalLine(t *testing.T) {
 	w, _, _, _, output := newChannelWorld(t)
 	imm := channelPlayer(t, w, len(w.GetAllPlayers())+50, "Immortal", 1001)

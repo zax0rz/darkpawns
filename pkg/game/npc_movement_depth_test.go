@@ -54,7 +54,7 @@ func npcMovementWorld(t *testing.T) (*World, *MobInstance, *Player, *Player, map
 }
 
 // TestNPCPerformMoveLeaveAndArrivalBytes pins perform_move's leave and arrival
-// audiences for the mobile lane (src/act.movement.c:181-183, 210-235). Its
+// audiences for the mobile lane (src/act.movement.c:206-208, 213-240). Its
 // synchronous successful transfer also exercises the world write-lock path
 // and fails if that path deadlocks. The origin room hears "$n leaves north."
 // and the destination room hears
@@ -124,7 +124,7 @@ func TestNPCPerformMoveClosedDoorRefusals(t *testing.T) {
 }
 
 // TestNPCPerformMoveNoExitFailsQuietly pins the missing-exit refusal
-// (src/act.movement.c:318-319): "Alas, you cannot go that way..." goes to a
+// (src/act.movement.c:317-320): "Alas, you cannot go that way..." goes to a
 // descriptor-less mover's send_to_char — dropped — and the body stays.
 func TestNPCPerformMoveNoExitFailsQuietly(t *testing.T) {
 	w, actor, _, _, out := npcMovementWorld(t)
@@ -167,14 +167,13 @@ func TestNPCPerformMoveDragsPlayerFollower(t *testing.T) {
 	if got := out["Local"].String(); !strings.Contains(got, "You follow a guard trainee.") {
 		t.Fatalf("follower bytes = %q, want the follow notice", got)
 	}
-	if got := out["Watcher"].String(); !strings.Contains(got, "A guard trainee arrives from the south.") ||
-		!strings.Contains(got, "Local arrives from the south.") {
-		t.Fatalf("destination bytes = %q, want both arrivals in C order", got)
+	if got, want := out["Watcher"].String(), "A guard trainee arrives from the south.\r\nLocal arrives from the south.\r\n"; got != want {
+		t.Fatalf("destination bytes = %q, want C's exact mover-then-follower order %q", got, want)
 	}
 }
 
 // TestNPCSimpleMoveCharmedRefusal pins do_simple_move's charm gate for the
-// mobile lane (src/act.movement.c:121-125): a charmed mover whose master
+// mobile lane (src/act.movement.c:118-123): a charmed mover whose master
 // shares its room stays put; the weep line is TO_CHAR and reaches no one.
 func TestNPCSimpleMoveCharmedRefusal(t *testing.T) {
 	w, actor, local, _, out := npcMovementWorld(t)
@@ -193,8 +192,8 @@ func TestNPCSimpleMoveCharmedRefusal(t *testing.T) {
 }
 
 // TestNPCSimpleMoveBoatRequirement pins do_simple_move's boat gate for the
-// mobile lane (src/act.movement.c:127-135): water_noswim on either side
-// without a boat refuses the move (has_boat, act.movement.c:59-79).
+// mobile lane (src/act.movement.c:125-132): water_noswim on either side
+// without a boat refuses the move (has_boat, src/act.movement.c:58-82).
 func TestNPCSimpleMoveBoatRequirement(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
@@ -205,6 +204,7 @@ func TestNPCSimpleMoveBoatRequirement(t *testing.T) {
 	}{
 		{name: "water without boat", fromSect: SECT_WATER_NOSWIM, toSect: SECT_FIELD, boat: false, wantMoved: false},
 		{name: "water with boat", fromSect: SECT_WATER_NOSWIM, toSect: SECT_FIELD, boat: true, wantMoved: true},
+		{name: "land to water without boat", fromSect: SECT_FIELD, toSect: SECT_WATER_NOSWIM, boat: false, wantMoved: false},
 		{name: "land to land", fromSect: SECT_FIELD, toSect: SECT_FIELD, boat: false, wantMoved: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

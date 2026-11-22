@@ -1227,14 +1227,14 @@ func TestNegativeMobWaitBlocksAllNonzeroGates(t *testing.T) {
 	w.MobileDescriptorOwner = func(*MobInstance) *Player { return player }
 	w.MobileMessageSink = func(_ *MobInstance, msg []byte) { mobOut.Write(msg) }
 
-	// castSpellC: the Lua caster's cast_spell gate (spell_parser.c:844-848).
+	// castSpellC: the Lua caster's cast_spell gate (src/spell_parser.c:844-848).
 	if castSpellC(w, mob, scripting.CharRef{NPC: true, ID: mob.GetID()}, nil, nil, player, nil, 1) {
 		t.Error("castSpellC passed a negative GET_MOB_WAIT; C's nonzero gate refuses")
 	}
 	if got, want := mobOut.String(), "You can't cast anything yet!\r\n"; got != want {
 		t.Fatalf("castSpellC negative-counter output = %q, want %q", got, want)
 	}
-	// castMobSpell: the native NPC cast_spell gate (spell_parser.c:844-848).
+	// castMobSpell: the native NPC cast_spell gate (src/spell_parser.c:844-848).
 	// This gate refuses silently — C's stc reaches a descriptorless mob's
 	// nobody — so the return value is the observable.
 	mobOut.Reset()
@@ -1242,7 +1242,7 @@ func TestNegativeMobWaitBlocksAllNonzeroGates(t *testing.T) {
 		t.Error("castMobSpell passed a negative GET_MOB_WAIT; C's nonzero gate refuses")
 	}
 	// mobCombatSpecialTarget: SPECIAL(fighter/paladin)'s entry gate
-	// (spec_procs.c:516,544).
+	// (src/spec_procs.c:516-517,544-545).
 	mob.SetPosition(combat.PosFighting)
 	mob.SetFightingBody(player)
 	player.SetFightingBody(mob)

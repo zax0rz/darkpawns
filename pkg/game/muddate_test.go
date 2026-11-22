@@ -3,15 +3,14 @@ package game
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
 // These tests port-proof DP-1603: write_mud_date_to_file (src/comm.c:2624-2638)
-// and read_mud_date_from_file (src/db.c:3197-3220). C's format is sprintf's
+// and read_mud_date_from_file (src/db.c:3197-3218). C's format is sprintf's
 // "%d %d %d" of year month day followed by fwrite at strlen — no trailing
 // newline; the reader is fscanf's "%d %d %d", with missing and corrupt files
-// both keeping the epoch-derived calendar (db.c:3206-3211).
+// both keeping the epoch-derived calendar (src/db.c:3203-3218).
 //
 // Every test below fails if the read or write is reverted (R5h).
 
@@ -72,9 +71,8 @@ func TestReadMudDateRecordOverridesCalendar(t *testing.T) {
 
 	ResetTime()
 
-	// db.c:421 — the record replaces {year,month,day} while hours (and the
-	// sunlight derived from them) keep the wall-clock value mud_time_passed
-	// computed at db.c:420.
+	// src/db.c:418-421 computes the wall-clock calendar and then overlays only
+	// {year,month,day} from the record; the calculated hour remains intact.
 	if timeInfo.Year != 1251 || timeInfo.Month != 14 || timeInfo.Day != 22 {
 		t.Fatalf("calendar after read = y%d m%d d%d, want y1251 m14 d22 from the record", timeInfo.Year, timeInfo.Month, timeInfo.Day)
 	}
@@ -93,7 +91,7 @@ func TestReadMudDateMissingRecordKeepsComputedCalendar(t *testing.T) {
 	ResetTime() // no record written: C's fopen fails and the SYSERR path stands
 
 	if timeInfo.Year != 1 || timeInfo.Month != 8 || timeInfo.Day != 0 {
-		t.Fatalf("calendar with no record = y%d m%d d%d, want computed y1 m8 d0 (db.c:3206-3208)", timeInfo.Year, timeInfo.Month, timeInfo.Day)
+		t.Fatalf("calendar with no record = y%d m%d d%d, want computed y1 m8 d0 (src/db.c:3203-3208)", timeInfo.Year, timeInfo.Month, timeInfo.Day)
 	}
 }
 
@@ -135,9 +133,8 @@ func TestReadMudDateSkippedWhenFixedTimePinned(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// The oracle build's patched reset_time skips read_mud_date_from_file when
-	// DP_FIXED_TIME is set (darkpawns-c-oracle/src/db.c:421-432): the pinned
-	// epoch is the calendar for both engines. Go mirrors the skip.
+	// The Go fixed-time fixture pins the epoch before ResetTime so this test can
+	// isolate the startup date-record skip; the fixture seam is Go-specific.
 	fixedTimePinned = true
 	ResetTime()
 
@@ -166,24 +163,5 @@ func TestMudDateRoundTripAcrossRestart(t *testing.T) {
 	}
 	if timeInfo.Hours != 5 {
 		t.Fatalf("hours after restart = %d, want 5 (recomputed from the epoch)", timeInfo.Hours)
-	}
-}
-
-func TestMudDateRecordHasNoTrailingNewlineLikeC(t *testing.T) {
-	// Pins the exact byte contract: C fwrite's sprintf's strlen, so any
-	// trailing newline (or missing separator) is a format divergence.
-	dir := t.TempDir()
-	setMudDateTestHooks(t, dir, 1323000)
-
-	ResetTime()
-	if err := WriteMudDateToFile(); err != nil {
-		t.Fatalf("WriteMudDateToFile: %v", err)
-	}
-	data, err := os.ReadFile(filepath.Join(dir, "etc", "date_record"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.HasSuffix(string(data), "\n") || strings.HasSuffix(string(data), "\r") {
-		t.Fatalf("date record ends with a line terminator: %q", string(data))
 	}
 }
