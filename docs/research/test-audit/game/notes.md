@@ -2063,3 +2063,65 @@ and four obsolete baseline entries); `make fidelity-depth` (8,282 cases,
 `make expected-divergences-check` (exit 0 with the existing unresolved
 selectors); and `make function-index-check` (the expected-red fake association
 was rejected, then the ratchet reported clean).
+
+## Batch 31 preregistered estimate (before reading tests T1789–T1838)
+
+Continue the frozen inventory-order sweep, selecting the first 50 test names
+not already represented in the ledger. T001–T1788 has 1,788 rows, 1,716
+unique audited names, and 275 unledgered inventory functions. The next roster
+is:
+
+- `TestSpecMindflayer_PsiblastUsesDirectDamage`
+- `TestSpecMindflayer_RngArms`
+- `TestSpecMindflayer_SoulLeechUsesDirectDamageAndHeals`
+- `TestSpecMiniThiefUsesCChanceAndAmountBands`
+- `TestSpecMortician_CommandSurfaceAndTellBranches`
+- `TestSpecMortician_RetrievePredicateGlobalOrderAndState`
+- `TestSpecMortician_SleepingMobStillHandlesCommand`
+- `TestSpecMorticianTellArgumentsMatchC`
+- `TestSpecNewbieZoneEntrance_Gates`
+- `TestSpecNoGetHandStrikeSwings`
+- `TestSpecOroQuartersRoom_GatesAudienceHPAndFallthrough`
+- `TestSpecOroStudyRoom_GatesAudienceHPAndFallthrough`
+- `TestSpecOutOfJailGuard_Audience`
+- `TestSpecOutOfJailGuard_EntryGates`
+- `TestSpecPaladinDirectDisarmResolvesTheBuiltNameArgument`
+- `TestSpecPortalRoom_Teleport`
+- `TestSpecPortalToTemple_ApostropheAlias`
+- `TestSpecPortalToTemple_EntryAndExactArgumentGates`
+- `TestSpecPortalToTemple_SayAudienceTeleportAndLandingLook`
+- `TestSpecPrayForItems_FallsThroughOrdinarySocial`
+- `TestSpecPrayForItems_ItemRewardBranch`
+- `TestSpecPrayForItems_StaffNamesPatched`
+- `TestSpecProstitute_BlindMobUsesHiddenAudience`
+- `TestSpecProstitute_CanSeeUsesC_LightGate`
+- `TestSpecProstitute_DirectTellsOnlyReachActor`
+- `TestSpecProstitute_EntryGatesAndFallthrough`
+- `TestSpecProstitute_InvisibleTargetUsesRoomAudience`
+- `TestSpecProstituteTellArgumentsMatchC`
+- `TestSpecQuanLoActorNamesTheActor`
+- `TestSpecQuanLo_AwakeCommandGate`
+- `TestSpecQuanLo_FleeAliasesUseGlobalMobGossip`
+- `TestSpecQuanLo_LookAndExamineUseExactKeywords`
+- `TestSpecRecruiterTellArgumentsMatchC`
+- `TestSpecRemorterRejectsPlayerCommandsAtTheCorrectGates`
+- `TestSpecRemorterSuccessResetsStateAndSeedsClassSkills`
+- `TestSpecRemorterTellArgumentsMatchC`
+- `TestSpecRoachEntryGates`
+- `TestSpecRoachFoodFailureStillExtractsObject`
+- `TestSpecRoachFoodSuccessGrowthAndExtraction`
+- `TestSpecRoachIdleOutput`
+- `TestSpecRoachSplitResetsOriginalAndSpawnsQuietRoach`
+- `TestSpecRoachStarvationExtractsWithoutCorpse`
+- `TestSpecRoachTeleportSubgateAndAudience`
+- `TestSpecShopKeeperActorKenderActorShouts`
+- `TestSpecShopKeeperActorPortsC`
+- `TestSpecSnake_ActBytesMatchC`
+- `TestSpecStableboyAutonomousEntry`
+- `TestSpecStableboyMountedStableClearsMountAndShowsFollowerStop`
+- `TestSpecStableboyTellArgumentsMatchC`
+- `TestSpecStableboyUsesAnyUnmountedMountableFollower`
+
+Before reading these tests, my estimate is **R44 / F4 / C1 / D1**. These are
+all drawn from the post-oracle suffix, so the estimate is **0 pre-oracle and
+R44 / F4 / C1 / D1 post-oracle**.
