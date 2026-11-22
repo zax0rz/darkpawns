@@ -1658,3 +1658,60 @@ are R1459/F100/C20/D9: the pre-oracle split is R379/F7/C3/D1 and the post-
 oracle split is R1080/F93/C17/D8. No package summary or PF ledger row is due
 until T1991; when it is due, use PF-168 or later because PF-167 is already
 assigned.
+
+## Batch 27 preregistered estimate (before reading tests T1589–T1638)
+
+Continue the frozen inventory-order sweep: select the first 50 test names not already present in any ledger row, scanning from the start of the 1,991-function inventory. T001–T1588 has 1,588 rows and 1,516 unique test names, leaving 475 unique inventory functions unledgered. The selected roster is the next 50:
+
+- `TestDoTigerPunch_HitContract`
+- `TestDoTigerPunch_LegacyGatesPreserved`
+- `TestDoTigerPunch_MissRoutesThroughSkillMessage`
+- `TestDoTransformMatchesCStateMachines`
+- `TestDoTurnDisintegratesEligibleUndeadAtFifteenLevelAdvantage`
+- `TestDoTurnEarlyGatesDoNotDrawRandomness`
+- `TestDoTurnFleesPlayerByNumericRaceThroughPlayerMovement`
+- `TestDoTurnFleeUsesNpcDirectMovementAndPreservesDirectionDraw`
+- `TestDoTurnLowManaSubtractsQuarterCostAfterRoomActs`
+- `TestDoTurnScansCOrderedRoomBodiesByNumericRace`
+- `TestDoUseEquipdQuirkStaffTap`
+- `TestDoUseEquipdQuirkWandPoint`
+- `TestDoUseEquipdQuirkWholeRemainder`
+- `TestDoUseHeldFallbackWhenArgDoesNotMatch`
+- `TestDoUseWandPassesManualSpellArgumentToControlWeather`
+- `TestDoVisibleInvisAndSneakTogether`
+- `TestDoVisiblePreservesCEntryGateOrder`
+- `TestDoVisibleRemovesSneakAndStealthAffects`
+- `TestDoVisibleStripsInvisSpellAffect`
+- `TestDoWimpyUsesCIsdigitAndOneArgument`
+- `TestDoWriteMissingObjectRefusals`
+- `TestDoYank_SuccessRoomLineSkipsVictim`
+- `TestDreamPointUpdateOutputBranches`
+- `TestDreamTravelDrawOrderMatchesC`
+- `TestDrinkDoseConsumedOnce`
+- `TestDropGoldConcurrentWithGive`
+- `TestDropPlacementsPrependInCOrder`
+- `TestDummyMobSkillsUseSharedCState`
+- `TestE2AttrAffectBoundaries`
+- `TestFindObjectByNameUsesCGlobalObjectListOrderAndTokens`
+- `TestFireMobScriptsShareDispatchContext`
+- `TestFirstPlayerGodHasMartialArts`
+- `TestFixedMailTextUsesFirstNULTerminator`
+- `TestFleshAlteredTypeBands`
+- `TestFleshAlterUnwieldSetsFlag`
+- `TestFollowMobBodyCharmedGuardEmitsMasterMessage`
+- `TestFormatCompileTimeMatchesC`
+- `TestFullMoonTransformsWerewolf`
+- `TestGameDiagnosticCrossRoomDamage`
+- `TestGameDiagnosticDeathTrapMovement`
+- `TestGameDiagnosticKillMilestone`
+- `TestGameDiagnosticProtectionEvil`
+- `TestGameDiagnosticProtectionGood`
+- `TestGenBoardActorDeclinesDescriptorlessMobiles`
+- `TestGenBoardEmptyHeadlinesDoNotExhaustSlots`
+- `TestGenBoardFullBoardWriteRefusalOutput`
+- `TestGenCommChannelColorMatchesC`
+- `TestGenCommMobGossipColorMatchesC`
+- `TestGenericFindEquipFirstInventoryBeforeRoom`
+- `TestGenericFindEquipFirstLookAtTarget`
+
+Before reading these tests, my estimate is **R43 / F5 / C1 / D1**.
