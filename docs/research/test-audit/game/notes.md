@@ -2238,3 +2238,17 @@ Continue the frozen inventory-order sweep, selecting the first 50 test names not
 - `TestSpecWallGuardNS_EntryGates`
 
 Before reading these tests, my estimate is **R44 / F4 / C1 / D1**. These are expected from the post-oracle suffix, so the estimate is **0 pre-oracle and R44 / F4 / C1 / D1 post-oracle**.
+
+## Batch 32 result (T1839–T1888)
+
+Actual marks are **R34 / F15 / C0 / D1**, all 50 in the post-oracle segment. The preregistered estimate was R44 / F4 / C1 / D1: ten fewer R, eleven more F, one fewer C, and the D count matched. The F cases were exposed by partial transcript assertions and tattoo IDs expected from Go’s own offers/constants. The repaired checks compare full C transcripts or fixed numeric IDs from `src/constants.c`.
+
+All 15 F proofs passed in the detached mutation worktree: each prior body stayed green, the fixed body went red, and the mutation was restored before the next proof. No production source changed. `TestSpecTurnUndeadObjectRegistered` was deleted as D after `git grep -n TestSpecTurnUndeadObjectRegistered docs/fidelity cmd/dp-oracle-diff` returned no live references. C has no `ASSIGNOBJ` for this special; the direct handler behavior remains tested by `TestSpecTurnUndeadObjectGatesAndAct`.
+
+Package statement coverage was 64.7% on the preregistered base and 64.8% after the assertion repairs and deletion. No census was needed because the PR changes tests and audit data only.
+
+All eleven gates passed individually: `make fmt`; `GOEXPERIMENT=nojsonv2 go build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`; `GOEXPERIMENT=nojsonv2 go test ./...`; `golangci-lint run ./...` (0 issues); `make modernize-check`; `make deadcode-ratchet` (35 baselined, 0 new); `make string-census` (ratchet clean, existing generated reports stale and four obsolete baseline entries); `make fidelity-depth` (8,282 cases, 7,968 proven/delegated, one blocked, 297 excluded, 16 approved-divergent); `make expected-divergences-check` (exit 0, seven rows across five scenarios, existing unresolved selectors); and `make function-index-check` (expected-red fake association rejected, ratchet clean).
+
+The 14 protected historical rows still match `origin/main` byte-for-byte, including raw, unquoted T1403. The ledger now has 1,888 rows and 1,816 unique test names; the frozen inventory leaves 175 unledgered functions. Batch 32 added 50 raw tab-separated ledger rows and 15 seven-field mutation rows. Batch junk counts are J1=4, J3=12, and J5=1. All 15 F tests were authored by `unknown` under the attribution rules (Zach git author, no model trailer); the D test was also unknown.
+
+Cumulatively, T001–T1888 has R1715/F139/C24/D10. The pre-oracle segment remains R379/F7/C3/D1; post-oracle is R1336/F132/C21/D9. From T639 through T1888 the counts are R1082/F135/C24/D9.

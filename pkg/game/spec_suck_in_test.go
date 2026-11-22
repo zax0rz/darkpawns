@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -56,19 +55,13 @@ func TestSpecSuckIn_LookGateAudienceAndRelocation(t *testing.T) {
 	if got := actor.GetRoom(); got != paintingRoom {
 		t.Fatalf("actor room = %d, want %d", got, paintingRoom)
 	}
-	if got := transcript[observer.Name]; got != "Hallprobe suddenly vanishes!\r\n" {
-		t.Errorf("observer output = %q, want actor-excluding TO_ROOM line", got)
+	wantActor := "The painting shows a strange maze.\r\n" +
+		"\r\n\r\n\r\n\r\nYou suddenly feel very dizzy...\r\n\r\n" +
+		"Entrance Tunnel\r\nA strong wind flows outward.\r\n[ Exits: None! ]\r\n"
+	if got := transcript[actor.Name]; got != wantActor {
+		t.Errorf("actor transcript = %q, want exact C look, dizziness, and landing bytes %q", got, wantActor)
 	}
-	if strings.Contains(transcript[actor.Name], "suddenly vanishes") {
-		t.Errorf("actor received TO_ROOM line: %q", transcript[actor.Name])
-	}
-	if !strings.Contains(transcript[actor.Name], "The painting shows a strange maze.\r\n") {
-		t.Errorf("actor missed initial do_look output: %q", transcript[actor.Name])
-	}
-	if !strings.Contains(transcript[actor.Name], "\r\n\r\nYou suddenly feel very dizzy...\r\n\r\n") {
-		t.Errorf("actor missed exact dizziness bytes: %q", transcript[actor.Name])
-	}
-	if !strings.Contains(transcript[actor.Name], "Entrance Tunnel\r\nA strong wind flows outward.\r\n") {
-		t.Errorf("actor missed destination look: %q", transcript[actor.Name])
+	if got, want := transcript[observer.Name], "Hallprobe suddenly vanishes!\r\n"; got != want {
+		t.Errorf("observer output = %q, want exact actor-excluding TO_ROOM line %q", got, want)
 	}
 }

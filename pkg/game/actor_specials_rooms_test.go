@@ -159,12 +159,19 @@ func TestSpecStartRoomSendsBirthAndLookToSwitchedMobile(t *testing.T) {
 	if got := horse.GetRoomVNum(); got != MortalStartRoom {
 		t.Fatalf("horse room = %d, want %d", got, MortalStartRoom)
 	}
-	got := switchedOutput.String()
-	if !strings.HasPrefix(got, startRoomBirthMessage(horse.GetName())) {
-		t.Fatalf("switched output does not start with the birth message: %q", got)
-	}
-	if !strings.Contains(got, "Temple Altar") {
-		t.Fatalf("switched output is missing the destination look: %q", got)
+	want := "   Suddenly the hairs on the back of your neck stand up as if lightning had\n\r" +
+		"struck nearby. A keen wailing fills the air, and an ethereal image appears\n" +
+		"before you.\n\r" +
+		"   'a horse, now is not your time to die,' speaks the figure.\r\n" +
+		"   'Prove your worth and I may well grant you eternal life.'\r\n" +
+		"   'Trust no one, for all here are but dark pawns above which you must \r\n" +
+		"struggle to prove yourself.  All here strive to be a king... at any cost.'\r\n" +
+		"   The figure glows a moment, then disappears, but his voice remains.\r\n" +
+		"   'Your life begins now...' it says, then fades -- just as the world around\r\n" +
+		"you does the same.\r\n\r\n" +
+		"Temple Altar\r\nSwitchOwner  is standing here.\r\n"
+	if got := switchedOutput.String(); got != want {
+		t.Fatalf("switched output = %q, want exact C birth and destination look %q", got, want)
 	}
 	if got := messages[owner.GetName()]; got != "" {
 		t.Fatalf("descriptorless original body received duplicate output: %q", got)

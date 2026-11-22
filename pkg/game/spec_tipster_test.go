@@ -82,10 +82,8 @@ func TestSpecTipsterSpeaksThroughNpcSay(t *testing.T) {
 				}
 				return
 			}
-			for _, line := range tc.want {
-				if !strings.Contains(observer.msgs, line) {
-					t.Fatalf("observer got %q, want line %q", observer.msgs, line)
-				}
+			if got, want := observer.msgs, strings.Join(tc.want, ""); got != want {
+				t.Fatalf("observer transcript = %q, want exact C bytes %q", got, want)
 			}
 			if strings.Contains(observer.msgs, "$n") || strings.Contains(observer.msgs, "says '") {
 				t.Fatalf("observer got a non-do_say line: %q", observer.msgs)

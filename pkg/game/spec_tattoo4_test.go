@@ -164,9 +164,9 @@ func TestSpecTattoo4AppliesEveryOfferedTattoo(t *testing.T) {
 		strDelta   int
 		damroll    int
 	}{
-		{name: "worm", offerIndex: 0, tattoo: TattooWorm, damroll: 2},
-		{name: "dragon", offerIndex: 1, tattoo: TattooDragon, strDelta: 2, damroll: 2},
-		{name: "skull", offerIndex: 2, tattoo: TattooSkull},
+		{name: "worm", offerIndex: 0, tattoo: 5, damroll: 2},
+		{name: "dragon", offerIndex: 1, tattoo: 1, strDelta: 2, damroll: 2},
+		{name: "skull", offerIndex: 2, tattoo: 3},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			w, actor, tattooist, _ := newTattoo4TestWorld(t, false)

@@ -161,6 +161,7 @@ func TestSpecTattoo2AppliesEveryOfferedTattoo(t *testing.T) {
 	for _, test := range []struct {
 		name       string
 		offerIndex int
+		tattoo     int
 		strDelta   int
 		dexDelta   int
 		intDelta   int
@@ -170,10 +171,10 @@ func TestSpecTattoo2AppliesEveryOfferedTattoo(t *testing.T) {
 		wisDelta   int
 		damroll    int
 	}{
-		{name: "tiger", offerIndex: 0, dexDelta: 1, maxMove: 10},
-		{name: "heart", offerIndex: 1, maxHealth: 20},
-		{name: "star", offerIndex: 2, maxMana: 20},
-		{name: "jyhad", offerIndex: 3, damroll: 1},
+		{name: "tiger", offerIndex: 0, tattoo: 4, dexDelta: 1, maxMove: 10},
+		{name: "heart", offerIndex: 1, tattoo: 9, maxHealth: 20},
+		{name: "star", offerIndex: 2, tattoo: 10, maxMana: 20},
+		{name: "jyhad", offerIndex: 3, tattoo: 13, damroll: 1},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			w, actor, tattooist, _ := newTattoo2TestWorld(t, false)
@@ -185,9 +186,8 @@ func TestSpecTattoo2AppliesEveryOfferedTattoo(t *testing.T) {
 			if !specTattoo2(w, actor, tattooist, "buy", strconv.Itoa(test.offerIndex)) {
 				t.Fatal("purchase should be consumed")
 			}
-			offer := tattoo2Offers[test.offerIndex]
-			if actor.Tattoo != offer.number {
-				t.Errorf("tattoo = %d, want %d", actor.Tattoo, offer.number)
+			if actor.Tattoo != test.tattoo {
+				t.Errorf("tattoo = %d, want C tattoo id %d", actor.Tattoo, test.tattoo)
 			}
 			if actor.GetStr() != baseStats.Str+test.strDelta || actor.GetDex() != baseStats.Dex+test.dexDelta || actor.GetInt() != baseStats.Int+test.intDelta || actor.GetWis() != baseStats.Wis+test.wisDelta {
 				t.Errorf("stat effects = %+v, base %+v, want deltas str=%d dex=%d int=%d wis=%d", actor.Stats, baseStats, test.strDelta, test.dexDelta, test.intDelta, test.wisDelta)
