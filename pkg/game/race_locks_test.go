@@ -47,7 +47,9 @@ func TestGiveGoldConservationUnderConcurrency(t *testing.T) {
 }
 
 // Concurrent drop/give interleave was the second double-spend shape: the
-// victim's balance read by the giver races the victim's own deduction.
+// victim's balance read by the giver races the victim's own deduction. The
+// dropped coins must remain represented by one floor object, so all player
+// balances plus the room pile still account for the 200 starting coins.
 func TestDropGoldConcurrentWithGive(t *testing.T) {
 	w := raceLocksWorld(t)
 	ch := NewPlayer(1, "Dropper", 1001)
@@ -63,13 +65,18 @@ func TestDropGoldConcurrentWithGive(t *testing.T) {
 	go func() { defer wg.Done(); w.performGiveGold(other, vict, 60) }()
 	wg.Wait()
 
-	// ch's own drop is internally consistent; the cross-player invariant is
-	// global conservation of the 200 starting gold.
-	if got := ch.GetGold() + other.GetGold() + vict.GetGold(); got > 200 {
-		t.Fatalf("gold minted: total %d > 200", got)
+	if got, want := ch.GetGold(), 40; got != want {
+		t.Fatalf("dropper balance = %d, want %d after dropping 60", got, want)
 	}
-	if ch.GetGold() < 0 || other.GetGold() < 0 {
-		t.Fatalf("negative balance: dropper %d, giver %d", ch.GetGold(), other.GetGold())
+	if got, want := other.GetGold(), 40; got != want {
+		t.Fatalf("giver balance = %d, want %d after giving 60", got, want)
+	}
+	if got, want := vict.GetGold(), 60; got != want {
+		t.Fatalf("victim balance = %d, want %d after receiving 60", got, want)
+	}
+	items := w.GetItemsInRoom(1001)
+	if len(items) != 1 || items[0].GetTypeFlag() != ITEM_MONEY || items[0].GetValue(0) != 60 {
+		t.Fatalf("dropped money = %#v, want one 60-coin floor pile", items)
 	}
 }
 

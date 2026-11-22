@@ -1715,3 +1715,44 @@ Continue the frozen inventory-order sweep: select the first 50 test names not al
 - `TestGenericFindEquipFirstLookAtTarget`
 
 Before reading these tests, my estimate is **R43 / F5 / C1 / D1**.
+
+## Batch 27 audit (T1589–T1638; introductions 2026-09-04–2026-11-16)
+
+The preregistered estimate was R43/F5/C1/D1. Actual: **R46/F4/C0/D0**;
+all 50 introductions are post-oracle. The estimate missed one additional R and
+one fewer false green, and predicted one C and one D that the audit did not
+find. All four weak-test authors are `unknown` under the commit-author and
+trailer attribution rules.
+
+I repaired four assertion gaps and proved each in a detached mutation
+worktree. In every case the original test stayed green, the repaired test went
+red, and the production mutation was restored byte-for-byte:
+
+- T1590 now requires the exact wielded tiger-punch refusal punctuation.
+- T1609 now compares exact output for all three missing-object refusal paths.
+- T1614 checks Dropper, Giver, and Victim balances plus the one 60-coin floor
+  pile, so the concurrent transfer still accounts for all 200 starting coins.
+- T1619 records and checks the Lua-facing actor/mob references, room, and World
+  context for both fight and death dispatches, not only the compatibility
+  `Ch` name.
+
+No tests were deleted or folded, so no live inventory reference needed
+retargeting. T1633 records the approved DP-1388 Go behavior for empty board
+headlines; C reserves the slot before checking an empty heading, while the
+approved Go path releases it. This is recorded as an explicit hand-written
+exception, not a new C parity claim.
+
+The ledger and mutation log were appended as raw tab-separated text. The 13
+corrected rows (T360, T377, T387, T391, T394, T395, T455, T465, T520, T535,
+T548, T606, T769) and T1403 match `origin/main` byte-for-byte. The refreshed
+branch is based on `origin/main` at `ab14720f9` (Batch 26 merged). Package
+statement coverage was 64.7% before and after. All eleven required gates
+passed; `make string-census` reports its existing generated reports as stale,
+`make expected-divergences` exits clean with existing unresolved proof
+selectors, and `make fidelity-depth` reports the current repository-wide
+status. No production code changed and no census was needed.
+
+Through T1638, T639–T1638 totals R872/F100/C20/D8. Cumulative T001–T1638
+totals are R1505/F104/C20/D9: pre-oracle R379/F7/C3/D1 and post-oracle
+R1126/F97/C17/D8. No package summary or PF evidence row is due until T1991;
+use PF-168 or later when that final summary is written.

@@ -10,6 +10,12 @@ type mobScriptCall struct {
 	filename string
 	trigger  string
 	actor    string
+	chRefID  int
+	chRefNPC bool
+	meRefID  int
+	meRefNPC bool
+	roomVNum int
+	worldSet bool
 }
 
 type mobScriptRecorder struct {
@@ -21,7 +27,22 @@ func (r mobScriptRecorder) RunScript(ctx *ScriptContext, filename, trigger strin
 	if ctx.Ch != nil {
 		actor = ctx.Ch.GetName()
 	}
-	*r.calls = append(*r.calls, mobScriptCall{filename: filename, trigger: trigger, actor: actor})
+	call := mobScriptCall{
+		filename: filename,
+		trigger:  trigger,
+		actor:    actor,
+		roomVNum: ctx.RoomVNum,
+		worldSet: ctx.World != nil,
+	}
+	if ctx.ChRef != nil {
+		call.chRefID = ctx.ChRef.ID
+		call.chRefNPC = ctx.ChRef.NPC
+	}
+	if ctx.MeRef != nil {
+		call.meRefID = ctx.MeRef.ID
+		call.meRefNPC = ctx.MeRef.NPC
+	}
+	*r.calls = append(*r.calls, call)
 	return true, nil
 }
 
@@ -58,8 +79,8 @@ func TestFireMobScriptsShareDispatchContext(t *testing.T) {
 	w.FireMobDeathScript(mob, actor, 1001)
 
 	want := []mobScriptCall{
-		{filename: "mob.lua", trigger: "fight", actor: "Target"},
-		{filename: "mob.lua", trigger: "death", actor: "Target"},
+		{filename: "mob.lua", trigger: "fight", actor: "Target", chRefID: actor.ID, meRefID: mob.GetID(), meRefNPC: true, roomVNum: 1001, worldSet: true},
+		{filename: "mob.lua", trigger: "death", actor: "Target", chRefID: actor.ID, meRefID: mob.GetID(), meRefNPC: true, roomVNum: 1001, worldSet: true},
 	}
 	if len(calls) != len(want) {
 		t.Fatalf("script calls = %+v, want %+v", calls, want)

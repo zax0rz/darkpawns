@@ -120,3 +120,7 @@ TestDoSpike_MobTarget	pkg/game/skill_combat.go	705	append EXTRA to spike success
 TestDoSubdueDepthGateOrder	pkg/game/skill_c10_combat.go	183	let mount gate outrank actor-fighting gate	green (old cases had no overlap)	red (overlap expected C fighting refusal)	yes
 TestDoSubdueMissPinsAndShape	pkg/game/skill_c10_combat.go	235	append EXTRA to subdue miss actor line	green (old test did not assert miss bytes)	red (exact miss bytes mismatch)	yes
 TestDoTigerPunchDamage_SelectsVariantAfterHpUpdate	pkg/combat/skill_messages.go	117	make set selection use hit_msg at every HP	green (old test exercised a nonlethal hit)	red (lethal case requires die_msg)	yes
+TestDoTigerPunch_LegacyGatesPreserved	pkg/game/skill_c10_combat.go	147	change wielded refusal period to exclamation mark	green (old substring accepted changed punctuation)	red (exact refusal bytes mismatch)	yes
+TestDoWriteMissingObjectRefusals	pkg/game/act_write.go	42	append EXTRA to missing inventory refusal	green (old substring accepted suffix)	red (exact refusal bytes mismatch)	yes
+TestDropGoldConcurrentWithGive	pkg/game/item_transfer.go	357	credit the dropper again after creating the money pile	green (old checks allowed inflated/lost value)	red (exact balances or floor pile mismatch)	yes
+TestFireMobScriptsShareDispatchContext	pkg/game/world_scriptable.go	611	omit ChRef actor reference from script context	green (old recorder inspected only compatibility Ch)	red (fight/death context reference mismatch)	yes

@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -14,21 +13,17 @@ func TestDoWriteMissingObjectRefusals(t *testing.T) {
 	w, ch, lastMsg := newDonateTestWorld(t)
 
 	w.DoWrite(ch, "")
-	if got := lastMsg(); !strings.Contains(got, "Write?  With what?  ON what?  What are you trying to do?!?") {
-		t.Fatalf("empty write = %q", got)
+	if got, want := lastMsg(), "Write?  With what?  ON what?  What are you trying to do?!?\r\n"; got != want {
+		t.Fatalf("empty write = %q, want %q", got, want)
 	}
 
 	w.DoWrite(ch, "missing")
-	if got := lastMsg(); !strings.Contains(got, "There is no missing in your inventory.") {
-		t.Fatalf("write missing = %q, want the inventory-miss line", got)
+	if got, want := lastMsg(), "There is no missing in your inventory.\r\n"; got != want {
+		t.Fatalf("write missing = %q, want %q", got, want)
 	}
 
 	w.DoWrite(ch, "nothing author")
-	got := lastMsg()
-	if !strings.Contains(got, "You have no nothing.") {
-		t.Fatalf("write nothing author = %q, want the missing paper name", got)
-	}
-	if strings.Contains(got, "author") {
-		t.Fatalf("write nothing author = %q reported the pen name, not the paper name", got)
+	if got, want := lastMsg(), "You have no nothing.\r\n"; got != want {
+		t.Fatalf("write nothing author = %q, want %q", got, want)
 	}
 }
