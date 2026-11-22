@@ -129,7 +129,7 @@ func TestLoadFailureClearsMobRoomAndObjectFlags(t *testing.T) {
 
 // TestRoomEnterScriptFiresOnce proves the enter site fires exactly once per
 // successful move into an RS_ENTER room, with C's context: me is the mover
-// and the run is room-owner typed (act.movement.c:304-305).
+// and the run is room-owner typed (src/act.movement.c:304-305).
 func TestRoomEnterScriptFiresOnce(t *testing.T) {
 	w, err := NewWorld(&parser.World{Rooms: []parser.Room{
 		{VNum: 1001, Name: "Origin", Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 1002}}},
@@ -161,7 +161,7 @@ func TestRoomEnterScriptFiresOnce(t *testing.T) {
 
 // TestRoomOnDropFiresOnlyOnDrop proves ondrop runs on the drop path only —
 // junk and donate vanish the object down their own arms and never reach C's
-// SCMD_DROP trigger site (act.item.c:505-506).
+// SCMD_DROP trigger site (src/act.item.c:505-506).
 func TestRoomOnDropFiresOnlyOnDrop(t *testing.T) {
 	seat := func(t *testing.T) (*World, *Player) {
 		w, ch := scriptedRoomWorld(t, 1<<3) // RS_ONDROP
@@ -202,7 +202,7 @@ func TestRoomOnDropFiresOnlyOnDrop(t *testing.T) {
 
 // TestRoomOnGetFiresFromRoomAndContainer proves onget fires once per gotten
 // object, both from the room floor and from a container
-// (act.item.c:211-212 and 283-284).
+// (src/act.item.c:211-212 and 283-284).
 func TestRoomOnGetFiresFromRoomAndContainer(t *testing.T) {
 	t.Run("from-room", func(t *testing.T) {
 		w, ch := scriptedRoomWorld(t, 1<<4) // RS_ONGET
@@ -259,7 +259,7 @@ func (r pulseOrderRecorder) RunScript(ctx *ScriptContext, filename, trigger stri
 // TestRoomOnPulseRunsBeforeFlamingDamage proves the RS_ONPULSE script is the
 // first arm in room_activity's per-character body: when it runs, the player's
 // HP has not yet been touched by the AFF_FLAMING damage that follows
-// (comm.c:706-715).
+// (src/comm.c:706-715).
 func TestRoomOnPulseRunsBeforeFlamingDamage(t *testing.T) {
 	w, ch := scriptedRoomWorld(t, 1<<2) // RS_ONPULSE
 	ch.AddAffect(&engine.Affect{SpellID: 96, Duration: -1, Flags: engine.AFFFlaming})

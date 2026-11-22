@@ -1016,3 +1016,46 @@ span inventory lines 1356–1440, skipping already-ledgered names in that span:
 - `TestSetLiveObjExtraDescPublishesCloneAndPatchesInstances`
 - `TestSetRoomFlagBitConcurrent`
 - `TestShootRealDuplicateMobRetaliation`
+
+## Post-oracle redo, batch 21 (T1289–T1338)
+
+Marks: **R 43 / F 4 / C 3 / D 0.** All 50 introducing commits are after
+2026-07-12. The preregistered estimate was R45/F3/C1/D1: actual-minus-forecast
+was R−2/F+1/C+2/D−1. The prior remainder forecast was R654/F5/C15/D29 over
+703 tests; after this batch it is R611/F1/C12/D29 over 653 tests.
+
+**F repairs and mutation proofs:**
+
+- `TestRoomLookBracketsTheContentListsOnce` (J5): the old body only inspected
+  the observation result, never the delivered literal bytes. It now renders
+  through the player message sinks and requires one opening and closing raw
+  bracket pair. Routing bare observations through the formatted sink kept the
+  old test green and made the repaired assertion red.
+- `TestRoomLookDescriptionTrailingSpacePrecedesTheBrackets` (J5): the old
+  body likewise did not render the result and could not observe whether the
+  brackets reached the player. Complete-color and color-off cases now inspect
+  the delivered bytes and pin the C trailing-space placement; the same sink
+  mutation kept the old body green and made the fixed test red.
+- `TestScroungeObjectRegistered` (J3): the old city-room, skill-zero setup
+  never reached object creation. A seeded forest success now verifies one
+  inventory object, its nonzero ID, registry growth and pointer identity.
+  Removing the constructor's registry insertion kept the old body green and
+  made the fixed body red.
+- `TestSetLiveObjExtraDescConcurrentReaders` (J3): the old race witness only
+  read slice length. Synchronized readers now inspect both description values
+  while edits publish snapshots. Returning the underlying mutable slice kept
+  the old body green and made the fixed body red under `-race`.
+
+**C folds:** T1293 `TestRiderWalkMovesMountOnceNotTwice` was removed as
+covered by T1061 `TestMountedMovementPairStateAndAudiences` (also recorded at
+T543); its asserted walk outcome could not occur on the cited C path. T1307
+`TestRoomMessageRevertControl` was removed as a redundant control for T1308's
+recipient gate. T1323's unique invisible-caster and sleeping-target cases were
+folded into T1322 `TestSaySpellRendersThroughPerformAct`.
+
+The four weak tests and three folds were checked against the C call paths in
+`src/`; the selected C citations in the ledger and modified tests were checked
+against the named source lines. No expected value disagreed with C. This batch
+changes tests and research records only, so no census was needed. `pkg/game`
+coverage was 64.6% on the preregistered commit and remains 64.6% after this
+batch.

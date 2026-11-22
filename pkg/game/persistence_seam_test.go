@@ -237,7 +237,7 @@ func TestCheckIdlingSavesBeforeVoidTransfer(t *testing.T) {
 
 // TestSavePlayerRecordReplaysEquipmentBadStats: C's char_to_store re-equips
 // worn items via equip_char, firing check_for_bad_stats on every successful
-// save_char (db.c:2632-2637, handler.c:749, DP-1443).
+// save_char (src/db.c:2632-2637, src/handler.c:749, DP-1443).
 func TestSavePlayerRecordReplaysEquipmentBadStats(t *testing.T) {
 	w, p, obj, out := badStatsWorld(t, ApplyDex)
 	if err := w.EquipItem(p, obj, 6); err != nil {

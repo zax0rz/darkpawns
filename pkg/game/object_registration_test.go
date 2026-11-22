@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -149,24 +150,33 @@ func TestExtractionRemovesRegisteredObjects(t *testing.T) {
 	}
 }
 
-// The scrounge path: DoScrounge's found object must be registered.
+// C reads the selected food and hands it to the player's carrying list
+// (src/new_cmds2.c:115-120); read_object links it into C's live object list
+// (src/db.c:1890-1893). The Go object must likewise be reachable by ID.
 func TestScroungeObjectRegistered(t *testing.T) {
-	w := objregWorld(t)
-	p := NewPlayer(1, "Scrounger", 1001)
+	w, p := newScroungeDepthWorld(t, SECT_FOREST)
 	before := registrySize(w)
-	_ = DoScrounge(p, w)
-	// Scrounge may find nothing (skill roll); when it created an object it
-	// must be registered — registry can only grow by registered objects now.
+	dprng.ResetStream(1)
+	if result := DoScrounge(p, w); !result.Success {
+		t.Fatalf("seed-1 forest scrounge failed: %+v", result)
+	}
+	items := p.Inventory.Snapshot()
+	if len(items) != 1 || items[0].VNum != 28 {
+		t.Fatalf("scrounge inventory = %+v, want one forest game object", items)
+	}
+	obj := items[0]
+	if obj.ID == 0 {
+		t.Fatal("scrounged object has zero registry ID")
+	}
 	after := registrySize(w)
-	if after > before {
-		// growth happened; every new ID must be non-zero and resolvable
-		w.mu.RLock()
-		defer w.mu.RUnlock()
-		for id := range w.objectInstances {
-			if id == 0 {
-				t.Fatal("ID 0 present in registry")
-			}
-		}
+	if after != before+1 {
+		t.Fatalf("registry size = %d, want one registered scrounge object added to %d", after, before)
+	}
+	w.mu.RLock()
+	registered := w.objectInstances[obj.ID]
+	w.mu.RUnlock()
+	if registered != obj {
+		t.Fatalf("registry entry %d = %p, want scrounged object %p", obj.ID, registered, obj)
 	}
 }
 

@@ -7,7 +7,7 @@ import (
 )
 
 // ---------------------------------------------------------------------------
-// SelectLoginRoom — C's CON_MENU '1' load-room selection (interpreter.c:2191-2210)
+// SelectLoginRoom — C's CON_MENU '1' load-room selection (src/interpreter.c:2191-2210)
 // ---------------------------------------------------------------------------
 
 func loginRoomTestWorld(t *testing.T) *World {

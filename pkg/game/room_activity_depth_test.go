@@ -1,9 +1,9 @@
 package game
 
 // room_activity_depth_test.go — R5h proofs for the three room_activity arms
-// ported in DP-1426: the CON<=0 croak (comm.c:748-754), loud_mobs
-// (spec_procs2.c:1532-1550) and flow_room (new_cmds2.c:885-955, gated at
-// comm.c:741-742). Every test fails when its arm is reverted: the croak tests
+// ported in DP-1426: the CON<=0 croak (src/comm.c:748-754), loud_mobs
+// (src/spec_procs2.c:1532-1550) and flow_room (src/new_cmds2.c:887-955, gated at
+// src/comm.c:741-742). Every test fails when its arm is reverted: the croak tests
 // assert the death bytes and the HP-1 re-entry state, the loud_mobs tests
 // assert the number(0,20) draw itself, and the flow tests assert the
 // number(0,1) draw and the drift bytes.

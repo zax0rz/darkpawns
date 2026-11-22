@@ -188,8 +188,9 @@ func TestSpecWerewolf_BiteMoveFloorsAtZero(t *testing.T) {
 }
 
 // TestSendToZoneDeliversBareBytesLiterally pins the send_to_zone byte
-// contract (R1): C writes the caller's string verbatim (src/comm.c:2384) and
-// process_output's flush supplies the only terminator (src/comm.c:1630-1632),
+// contract (R1): C visits eligible zone descriptors and queues the caller's
+// string verbatim (src/comm.c:2377-2386), while process_output's flush
+// (src/comm.c:1630-1632) supplies the only terminator,
 // so bare messages must reach the wire bare. SendMessage's ensureLineEnded
 // would add a terminator C never wrote — an extra blank line before the
 // prompt, which the oracle caught on the werewolf howl. Terminated strings

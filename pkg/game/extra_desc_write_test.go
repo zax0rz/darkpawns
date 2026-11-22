@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 
@@ -169,18 +170,32 @@ func TestRefreshLiveObjInstancesDiscardsLiveExtraDescs(t *testing.T) {
 func TestSetLiveObjExtraDescConcurrentReaders(t *testing.T) {
 	w, _, inst := extraDescWorld(t)
 
+	const readerCount = 4
 	var wg sync.WaitGroup
+	ready := make(chan struct{}, readerCount)
+	start := make(chan struct{})
 	stop := make(chan struct{})
-	for range 4 {
+	for range readerCount {
 		wg.Go(func() {
+			ready <- struct{}{}
+			<-start
 			for {
 				select {
 				case <-stop:
 					return
 				default:
 				}
-				if descs := inst.GetExtraDescs(); len(descs) != 2 {
+				descs := inst.GetExtraDescs()
+				if len(descs) != 2 {
 					t.Errorf("reader saw %d extra descriptions", len(descs))
+					return
+				}
+				if description := descs[0].Description; description != "A golden crust." && !strings.HasPrefix(description, "crust ") {
+					t.Errorf("reader saw unexpected crust description %q", description)
+					return
+				}
+				if description := descs[1].Description; description != "A single crumb." {
+					t.Errorf("reader saw unexpected sibling description %q", description)
 					return
 				}
 				if _, ok := w.GetObjPrototype(3001); !ok {
@@ -190,6 +205,10 @@ func TestSetLiveObjExtraDescConcurrentReaders(t *testing.T) {
 			}
 		})
 	}
+	for range readerCount {
+		<-ready
+	}
+	close(start)
 	for i := range 2000 {
 		if !w.SetLiveObjExtraDesc(3001, "crust", fmt.Sprintf("crust %d", i)) {
 			t.Fatalf("write %d refused", i)

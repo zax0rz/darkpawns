@@ -101,8 +101,9 @@ func TestDisarmVictimFlagDirect(t *testing.T) {
 	}
 }
 
-// TestScroungeSetsFlag: C's do_scrounge hands the found object over with
-// obj_to_char (new_cmds2.c:118).
+// TestScroungeSetsFlag: C's do_scrounge reads the food and hands it over with
+// obj_to_char (src/new_cmds2.c:117-125); obj_to_char sets PLR_CRASH for players
+// (src/handler.c:569-571).
 func TestScroungeSetsFlag(t *testing.T) {
 	// A forest room and the forest food prototype (vnum 28) so the find
 	// branch can run.
@@ -130,7 +131,7 @@ func TestScroungeSetsFlag(t *testing.T) {
 		got = res.Success && p.NeedsCrashSave()
 	}
 	if !got {
-		t.Fatal("scrounge never set PLR_CRASH on a successful find in 200 attempts (C new_cmds2.c:118)")
+		t.Fatal("scrounge never set PLR_CRASH on a successful find in 200 attempts (C src/new_cmds2.c:120)")
 	}
 }
 

@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -110,14 +109,5 @@ func TestSpellCreatedObjectRoomActUsesRecipientObjectVisibility(t *testing.T) {
 
 	if got, want := channelOutput(output, blind.Name), "Someone creates something.\r\n"; got != want {
 		t.Fatalf("blind observer output = %q, want %q", got, want)
-	}
-}
-
-func TestRoomMessageRevertControl(t *testing.T) {
-	w, _, sleeping, _, output := newChannelWorld(t)
-	sleeping.SetPosition(combat.PosSleeping)
-	w.roomMessage(1001, "revert control")
-	if got := channelOutput(output, sleeping.Name); strings.Contains(got, "revert control") {
-		t.Fatalf("sleeping observer received message after gate was reverted: %q", got)
 	}
 }

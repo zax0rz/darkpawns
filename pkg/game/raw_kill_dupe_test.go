@@ -43,7 +43,7 @@ func countRefs(w *World, victim *Player, obj *ObjectInstance) int {
 
 // TestScroungeHandoverKeepsObjectUnique pins the hand-over discipline the
 // counting test depends on: do_scrounge is C's read_object + obj_to_char
-// (src/new_cmds2.c:110-119) — the found food joins ch->carrying and is in no
+// (src/new_cmds2.c:115-125) — the found food joins ch->carrying and is in no
 // room list. With the stale room location NewObjectFromProto defaults to, the
 // corpse move cannot detach the object from the inventory and the extraction
 // pass drops a second copy (src/fight.c:399-407 vs handler.c:1134-1142).
@@ -76,7 +76,7 @@ func TestScroungeHandoverKeepsObjectUnique(t *testing.T) {
 		t.Fatalf("carried items after scrounge = %d, want 1", len(food))
 	}
 	if food[0].Location.Kind != ObjInInventory {
-		t.Fatalf("scrounged food location = %+v, want inventory (obj_to_char, new_cmds2.c:119)", food[0].Location)
+		t.Fatalf("scrounged food location = %+v, want inventory (obj_to_char, src/new_cmds2.c:120)", food[0].Location)
 	}
 
 	combat.RawKill(victim, 0)
