@@ -50,8 +50,8 @@ func newNPCCommandWorld(t *testing.T) (*World, *Player, *MobInstance, *strings.B
 	return w, player, mob, out
 }
 
-// command_interpreter draws number(0,3) for AFF_HIDE before anything else,
-// for every line a mobile runs, known command or not (R3).
+// command_interpreter draws number(0,3) for AFF_HIDE before parsing any line
+// (src/interpreter.c:883-895), including empty and unknown commands (R3).
 func TestNPCCommandDrawsHideRollFirst(t *testing.T) {
 	for _, line := range []string{"say hello", "xyzzy", ""} {
 		w, _, mob, _ := newNPCCommandWorld(t)
@@ -67,7 +67,7 @@ func TestNPCCommandDrawsHideRollFirst(t *testing.T) {
 	}
 }
 
-// do_say picks its verb from the line's last character.
+// do_say picks its verb from the line's last character (src/act.comm.c:786-801).
 func TestNPCCommandSay(t *testing.T) {
 	cases := map[string]string{
 		"say I cannot let you pass.": "states, 'I cannot let you pass.'",
@@ -84,6 +84,9 @@ func TestNPCCommandSay(t *testing.T) {
 	}
 }
 
+// C's normal interpreter owns the hide draw and empty-line preamble
+// (src/interpreter.c:883-895); the direct ACMD path must skip it while the
+// command body keeps do_say's bytes (src/act.comm.c:786-801).
 func TestNPCCommandDirectRunsBodyWithoutInterpreterPreamble(t *testing.T) {
 	w, _, mob, out := newNPCCommandWorld(t)
 	mob.SetPosition(combat.PosSleeping)
@@ -106,6 +109,9 @@ func TestNPCCommandDirectRunsBodyWithoutInterpreterPreamble(t *testing.T) {
 	}
 }
 
+// C dispatches a resolved command body with its character and argument
+// (src/interpreter.c:947-949); the session bridge must receive those values
+// without rewriting the player's argument.
 func TestNPCCommandDirectPassesExactKnownBodyAndArgument(t *testing.T) {
 	w, _, mob, _ := newNPCCommandWorld(t)
 	var gotCommand, gotArgument string
@@ -155,7 +161,7 @@ func TestTellFromMobUsesDirectTellArgument(t *testing.T) {
 	}
 }
 
-// A command not ported for mobiles does nothing visible.
+// C's cast command returns immediately for NPCs (src/spell_parser.c:923-924).
 func TestNPCCommandUnportedIsSilent(t *testing.T) {
 	w, _, mob, out := newNPCCommandWorld(t)
 	w.NPCCommand(mob, "cast 'heal' zach")

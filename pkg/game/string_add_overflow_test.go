@@ -12,6 +12,8 @@ func requireNewStringAddNotice(t *testing.T, sent []string, previous int, want s
 	}
 }
 
+// C skips an overflowing later line but keeps the existing text
+// (src/modify.c:145-155).
 func TestNoteStringAddOverflowSkipsLineAndKeepsWriting(t *testing.T) {
 	var sent []string
 	player := NewPlayer(41, "NoteWriter", 1001)
@@ -67,6 +69,8 @@ func TestNoteStringAddOverflowSkipsLineAndKeepsWriting(t *testing.T) {
 	}
 }
 
+// C truncates an oversized first line to max_str-3 and stores it
+// (src/modify.c:132-140).
 func TestNoteFirstLineOverflowTruncatesAndKeepsWriting(t *testing.T) {
 	var sent []string
 	player := NewPlayer(42, "NoteWriter", 1001)
@@ -83,12 +87,14 @@ func TestNoteFirstLineOverflowTruncatesAndKeepsWriting(t *testing.T) {
 	player.SetPlrFlag(PlrWriting, true)
 
 	previousMessages := len(sent)
-	if HandleNoteInput(player, strings.Repeat("x", maxNoteLength)) {
+	line := strings.Repeat("x", maxNoteLength-4) + "TAIL"
+	if HandleNoteInput(player, line) {
 		t.Fatal("note editor exited after truncating the first line")
 	}
 	state := noteWriteEntries[player.ID]
-	if len(state.buffer) != maxNoteLength-3 {
-		t.Fatalf("first-line truncation buffer = %d bytes, want %d", len(state.buffer), maxNoteLength-3)
+	want := line[:maxNoteLength-3]
+	if state.buffer != want {
+		t.Fatalf("first-line truncation buffer = %q, want retained prefix %q", state.buffer, want)
 	}
 	requireNewStringAddNotice(t, sent, previousMessages, "String too long - Truncated.\r\n")
 	if player.GetFlags()&(1<<PlrWriting) == 0 {

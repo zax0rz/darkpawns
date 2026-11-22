@@ -163,6 +163,8 @@ func TestDeathFollowerOwnMasterAndRemoteFollower(t *testing.T) {
 	}
 }
 
+// C extraction calls die_follower when a character has a master or followers
+// (src/handler.c:1116-1117; src/utils.c:447-458).
 func TestNPCDeathReleasesFollowersAtExtraction(t *testing.T) {
 	for _, path := range []string{"death", "raw-kill", "extract", "extract-flag"} {
 		t.Run(path, func(t *testing.T) {

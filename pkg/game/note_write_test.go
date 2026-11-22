@@ -27,9 +27,10 @@ func setupNoteWriter(t *testing.T, id int, paper *ObjectInstance) (*Player, *[]s
 
 // TestNoteCommitIsSilentAndReadable pins C's do_write/string_add contract for
 // notes (DP-1522): '@' prints nothing — playing_string_cleanup has no note
-// branch (src/modify.c:218-236) — and the one per-object field carries the
-// text with C's per-line CRLF. Fails if the invented "Note recorded." or the
-// blank-read regression returns (R1/R4/R5h).
+// branch (src/modify.c:218-236) — and do_write targets the note's own
+// action_description (src/act.comm.c:1089-1102); string_add stores its lines
+// with CRLF (src/modify.c:132-155). Fails if "Note recorded." or blank reads
+// return (R1/R4/R5h).
 func TestNoteCommitIsSilentAndReadable(t *testing.T) {
 	paper := &ObjectInstance{}
 	player, sent := setupNoteWriter(t, 51, paper)
@@ -56,8 +57,9 @@ func TestNoteCommitIsSilentAndReadable(t *testing.T) {
 }
 
 // TestNoteInstancesDoNotShareText pins that writing one copy leaves another
-// copy of the same note blank: C gives each instance its own buffer on the
-// first string_add line, so the text never lands in the shared prototype.
+// copy of the same note blank: read_object copies the prototype into each
+// instance (src/db.c:1947-1953), and C stores action_description on that
+// instance (src/structs.h:743-754; src/modify.c:132-144).
 func TestNoteInstancesDoNotShareText(t *testing.T) {
 	proto := &parser.Obj{VNum: 19510, Keywords: "tome", TypeFlag: ITEM_NOTE}
 	first := &ObjectInstance{Prototype: proto}
@@ -96,26 +98,54 @@ func TestEmptyNoteStaysBlank(t *testing.T) {
 	}
 }
 
-// TestNoteGateReadsWrittenTextAndPrototypeText pins the predicate do_write's
-// "already written" gate reads (src/act.comm.c:1094): non-empty after a write
-// (second write must refuse) and non-empty when the prototype carries an
-// action description, C's non-NULL fresh-instance pointer.
+// TestNoteGateReadsWrittenTextAndPrototypeText pins do_write's "already
+// written" refusal (src/act.comm.c:1089-1095): a prototype description is
+// copied to a fresh object, and text committed to one instance also blocks a
+// later write to that instance.
 func TestNoteGateReadsWrittenTextAndPrototypeText(t *testing.T) {
-	proto := &parser.Obj{VNum: 19511, Keywords: "tablet", TypeFlag: ITEM_NOTE, ActionDesc: "an inscription"}
-	fresh := &ObjectInstance{Prototype: proto}
-	if got := fresh.ActionDescription(); got != "an inscription" {
-		t.Fatalf("fresh instance text = %q, want prototype's", got)
+	w, player, lastMsg := newDonateTestWorld(t)
+	penProto := &parser.Obj{VNum: 19512, Keywords: "pen", ShortDesc: "a pen", TypeFlag: ITEM_PEN}
+	pen := w.NewObjectFromProto(penProto, roomNowhere)
+	if err := w.MoveObjectToPlayerInventory(pen, player); err != nil {
+		t.Fatal(err)
 	}
 
-	written := &ObjectInstance{Prototype: &parser.Obj{VNum: 19510, Keywords: "tome", TypeFlag: ITEM_NOTE}}
-	player, _ := setupNoteWriter(t, 55, written)
+	prototypeNote := w.NewObjectFromProto(&parser.Obj{
+		VNum: 19511, Keywords: "tablet", ShortDesc: "a tablet", TypeFlag: ITEM_NOTE, ActionDesc: "an inscription",
+	}, roomNowhere)
+	if err := w.MoveObjectToPlayerInventory(prototypeNote, player); err != nil {
+		t.Fatal(err)
+	}
+	w.DoWrite(player, "tablet pen")
+	if got, want := lastMsg(), "There's something written on it already.\r\n"; got != want {
+		t.Fatalf("prototype text write gate = %q, want %q", got, want)
+	}
+	if player.GetFlags()&(1<<PlrWriting) != 0 {
+		t.Fatal("prototype text entered the note editor")
+	}
+
+	written := w.NewObjectFromProto(&parser.Obj{
+		VNum: 19510, Keywords: "tome", ShortDesc: "a tome", TypeFlag: ITEM_NOTE,
+	}, roomNowhere)
+	if err := w.MoveObjectToPlayerInventory(written, player); err != nil {
+		t.Fatal(err)
+	}
+	w.DoWrite(player, "tome pen")
+	if got, want := lastMsg(), "Write your note.  End with '@' on a new line.\r\n"; got != want {
+		t.Fatalf("initial note write = %q, want %q", got, want)
+	}
 	if HandleNoteInput(player, "draft") {
 		t.Fatal("note editor exited on a text line")
 	}
 	if !HandleNoteInput(player, "@") {
 		t.Fatal("@ did not complete the note editor")
 	}
-	if written.ActionDescription() == "" {
-		t.Fatal("written note reports blank action description; second write would be allowed")
+	lastMsg()
+	w.DoWrite(player, "tome pen")
+	if got, want := lastMsg(), "There's something written on it already.\r\n"; got != want {
+		t.Fatalf("written text write gate = %q, want %q", got, want)
+	}
+	if player.GetFlags()&(1<<PlrWriting) != 0 {
+		t.Fatal("existing text entered a second note editor")
 	}
 }

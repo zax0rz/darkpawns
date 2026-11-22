@@ -84,7 +84,7 @@ func seatMob(t *testing.T, w *World, proto *parser.Mob, room int) *MobInstance {
 func TestMpSoundRendersSayLineThroughAct(t *testing.T) {
 	// The reported bug: the petitioner's line arrived as "$n says, '...'".
 	// C renders it through do_say's act(): the '!' ending makes it "exclaims"
-	// (src/act.comm.c:787-790; mp_sound delivery at src/mobprog.c:604).
+	// (src/act.comm.c:786-801; mp_sound dispatch at src/mobprog.c:607-610).
 	w := newActTemplateWorld(1001)
 	observer := addCapturedPlayer(t, w, "Pracobserver", 1001)
 	petitioner := NewMob(&parser.Mob{VNum: 8066, Keywords: "petitioner", ShortDesc: "a petitioner", Int: 11, Wis: 11}, 1001)
@@ -102,6 +102,8 @@ func TestMpSoundRendersSayLineThroughAct(t *testing.T) {
 }
 
 func TestMpSoundRendersEmoteLineThroughAct(t *testing.T) {
+	// C sets the carpenter line as an MP_EMOTE and routes it through do_echo
+	// (src/mobprog.c:533-538,607-610).
 	w := newActTemplateWorld(1001)
 	observer := addCapturedPlayer(t, w, "Pracobserver", 1001)
 	carpenter := NewMob(&parser.Mob{VNum: 8067, Keywords: "carpenter", ShortDesc: "a carpenter", Int: 11, Wis: 11}, 1001)
@@ -120,7 +122,7 @@ func TestMpSoundRendersEmoteLineThroughAct(t *testing.T) {
 
 func TestMpSoundAversinEmotesBeforeSaying(t *testing.T) {
 	// C case 8059: do_echo(mob, "looks at you.", emote, SCMD_EMOTE) before
-	// the say (src/mobprog.c:582-584). Case 8059 draws no mana of the RNG.
+	// the say (src/mobprog.c:584-588,607-610). Case 8059 draws no RNG value.
 	w := newActTemplateWorld(1001)
 	observer := addCapturedPlayer(t, w, "Pracobserver", 1001)
 	aversin := NewMob(&parser.Mob{VNum: 8059, Keywords: "aversin", ShortDesc: "the captain", Int: 11, Wis: 11}, 1001)

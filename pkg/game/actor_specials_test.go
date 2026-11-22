@@ -71,6 +71,8 @@ func TestCharacterSpecialRegistryKeepsPlayerLaneAndMarksNPCGaps(t *testing.T) {
 	}
 }
 
+// The east guard's actor-level, hunting, awake, direction, and exact-output
+// arms follow C's SPECIAL(no_move_east) (src/spec_procs2.c:1823-1842).
 func TestNoMoveEastActorSpecialCGuardsAndOutput(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -152,19 +154,8 @@ func TestNoMoveEastActorSpecialCGuardsAndOutput(t *testing.T) {
 	}
 }
 
-func TestNoMoveEastPlayerLegacyLaneRemainsActive(t *testing.T) {
-	w, player, _, peerOutput := newNPCCommandWorld(t)
-	guard := newSpecProcTestMob(t, w, player.GetRoom(), 10)
-
-	result := DispatchCharacterSpecial("no_move_east", w, CharacterSpecialContext{Actor: player}, guard, "east", "")
-	if result != SpecialHandled {
-		t.Fatalf("player legacy result = %v, want handled", result)
-	}
-	if got, want := peerOutput.String(), "A test mob humiliates you and blocks your way.\r\n"; got != want {
-		t.Fatalf("player output = %q, want %q", got, want)
-	}
-}
-
+// C's east guard sends the blocking line to peers and to the actor descriptor
+// (src/spec_procs2.c:1833-1839); a descriptor-less mobile gets only the peer line.
 func TestNoMoveEastActorWithoutDescriptorOnlyEmitsToPeers(t *testing.T) {
 	w, _, actor, peerOutput := newNPCCommandWorld(t)
 	guard := newSpecProcTestMob(t, w, actor.GetRoom(), 10)

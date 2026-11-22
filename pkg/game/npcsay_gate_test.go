@@ -43,7 +43,8 @@ func npcSayGateWorld(t *testing.T, intel, wis int) (*World, *MobInstance, *strin
 // TestNPCSayStupidGate pins C's do_say refusal (src/act.comm.c:766-771):
 // GET_WIS==0 or GET_INT==0 makes the speaker too stupid to use language, the
 // refusal is TO_CHAR only, and a descriptor-less mobile therefore emits
-// nothing. Revert proof: without the gate every row below spoke.
+// nothing. The capable row reaches the speak path; each zero-stat row reaches
+// the refusal.
 func TestNPCSayStupidGate(t *testing.T) {
 	cases := []struct {
 		name       string

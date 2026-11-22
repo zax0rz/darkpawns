@@ -236,7 +236,11 @@ func TestHuntVictimAuctionAndShoutReachEveryListener(t *testing.T) {
 // TestNPCCommandUsesTheMobileSpeechPaths is DP-1440's class audit
 // (R5c): the session-less NPCCommand fallback's say, emote, gossip, tell,
 // shout and auction cases must reach the same sinks as the native mobile
-// commands, not hand-built lines of their own.
+// commands, not hand-built lines of their own. C's Lua action forwards its
+// command text to command_interpreter (src/scripts.c:122-136); the command
+// bodies use do_say (src/act.comm.c:759-801), do_tell
+// (src/act.comm.c:901-930), do_gen_comm (src/act.comm.c:1146-1296), and
+// do_echo (src/act.wizard.c:130-154).
 func TestNPCCommandUsesTheMobileSpeechPaths(t *testing.T) {
 	for _, tc := range []struct {
 		name    string

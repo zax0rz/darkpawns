@@ -8,6 +8,8 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
+// C's mp_sound falls through to the dog and demon tails after the per-mobile
+// sound switch (src/mobprog.c:517,612-645); these rows pin their draw ranges.
 func TestMpSoundRunsDefaultMobileTail(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
@@ -37,6 +39,8 @@ func TestMpSoundRunsDefaultMobileTail(t *testing.T) {
 	}
 }
 
+// C draws before toggling the demon's alignment and returns from that tail
+// (src/mobprog.c:612-627); the spoken branch uses do_say (src/act.comm.c:766-801).
 func TestMpSoundDemonAdvancesStateAfterTailDraw(t *testing.T) {
 	w := newMobactDrawTestWorld()
 	demon := NewMob(&parser.Mob{VNum: 14401, Keywords: "demon", ShortDesc: "a demon", Int: 11, Wis: 11}, 1001)

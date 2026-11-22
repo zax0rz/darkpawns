@@ -9,6 +9,8 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
+// C creates portals only for matching moon phases and removes only blue gate
+// portals from those rooms (src/gate.c:180-195,207-230).
 func TestNightGateCreatesAndRemovesOnlyMoonPhasePortal(t *testing.T) {
 	w, err := NewWorld(&parser.World{
 		Rooms: []parser.Room{{VNum: 4004}, {VNum: 4005}},

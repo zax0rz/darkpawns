@@ -17,7 +17,7 @@ func (s *testSessions) EachSession(fn func(player any, send func(msg string))) {
 
 // mudlog's syslog level is PRF_LOG1 (1) + PRF_LOG2 (2); a message reaches an
 // immortal at or above its level whose syslog level is at least its type,
-// unless they are writing (utils.c:258-270).
+// unless they are writing (src/utils.c:230-238).
 func TestMudLogSyslogLevels(t *testing.T) {
 	w, _, _, _, output := newChannelWorld(t)
 	mk := func(name string, level int, log1, log2, writing bool) *Player {

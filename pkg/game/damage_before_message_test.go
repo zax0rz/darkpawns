@@ -92,6 +92,8 @@ func TestSpellLowLevelStopBeforeMessage(t *testing.T) {
 	}
 }
 
+// C performs neutral-room rescue after damage updates the victim's position
+// (src/fight.c:1489-1519).
 func TestNeutralRescueDamageTailClass(t *testing.T) {
 	for _, path := range []string{"melee", "mob skill", "room", "affect", "breath", "numbered skill", "engine"} {
 		t.Run(path, func(t *testing.T) {
@@ -151,6 +153,8 @@ func TestNeutralRescueDamageTailClass(t *testing.T) {
 	}
 }
 
+// C resets the victim, emits rescue acts, unmounts, and transfers the victim
+// to room 8004 (src/fight.c:1491-1519; src/utils.c:378-384).
 func TestNeutralRescueActorAndMount(t *testing.T) {
 	w, p, mount := damageRescueWorld(t)
 	caster := NewPlayer(3, "Caster", 1001)
@@ -178,6 +182,8 @@ func TestNeutralRescueActorAndMount(t *testing.T) {
 	}
 }
 
+// C transfers the rescued victim with char_from_room/char_to_room; those
+// update room light and prepend the arrival (src/handler.c:503-553).
 func TestNeutralRescueRoomTransfer(t *testing.T) {
 	w, p, mob := damageRescueWorld(t)
 	resident := NewPlayer(2, "Resident", 8004)

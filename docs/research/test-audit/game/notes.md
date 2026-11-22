@@ -598,3 +598,40 @@ T1991.
 
 `GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` reported 64.6% before and
 after this batch.
+
+## Batch 17 preregistered estimate (before reading tests T1089–T1138)
+
+From the forecast remainder after T1088, I expect this 50-test slice to
+contain R46/F1/C1/D2. I expect 15 tests to predate the oracle and 35 to be
+later, with weak marks more likely in the older group.
+
+### Batch 17 roster correction, before adjudication
+
+The preregistration used raw `inventory.txt` lines 1089–1138. Reconciliation
+against the ledger found 11 functions in that slice already recorded at earlier
+IDs: `TestMudTimePassedMatchesC`, `TestMudTimePassedSubHourDoesNotCarry`,
+`TestNewbieHometownRoom`, `TestNewCharacterConstructorConsumesZeroLevelDraws`,
+`TestNewCharacterGetsDefaultClassTitle`, `TestNewMobAppliesLoadpos`,
+`TestNewMobCarriesActFlags`, `TestNewMobDoesNotReRollStatBoosts`,
+`TestNewMobLowLevelStatsEqualPrototype`, `TestNewMobSeedsInnateAffects`, and
+`TestNonTakeNameDescriptionUnchangedByEquipCycle`. No duplicate ledger rows
+will be added. The 39 unledgered functions in that raw slice remain in their
+inventory order, followed by the next 11 unledgered functions, inventory lines
+1139–1149, to retain a 50-function batch. The preregistered estimate applies
+to the original raw slice; the corrected roster makes it a forecast only, not
+a target for marks.
+
+
+## Post-oracle redo, batch 17 (T1089–T1138)
+
+The roster correction was recorded before adjudication: eleven names in raw inventory lines 1089–1138 already had ledger rows, so this batch contains the 39 unledgered names from that slice followed by the next 11 unledgered inventory entries. All 50 were introduced after the 2026-07-12 oracle date.
+
+Marks: **R 43 / F 5 / C 2 / D 0.** Junk: **J3 5 / J4 2.** The initial estimate (R46/F1/C1/D2; 15 pre-oracle and 35 later) was for the original raw slice. On the corrected roster it overestimated R by 3 and D by 2, and underestimated F by 4 and C by 1; the date split was also wrong because every corrected-roster test is post-oracle.
+
+Five F checks were repaired and mutation-proven in the detached worktree. T1109 now pins the full compile-time string; the old nonempty/year-only assertion stayed green when the formatter moved one day. T1117 now checks the exact retained first-line prefix; the old length-only assertion stayed green when truncation kept the suffix. T1118 now calls World.DoWrite against prototype-written and instance-written notes; the old ActionDescription-only assertion stayed green when the refusal was disabled. T1132 now pins the complete mover-then-follower arrival bytes; the old substring checks stayed green when a duplicate leader arrival was added. T1137 now tests land-to-water refusal without a boat; the old rows stayed green when the destination-sector gate was removed. Each fixed test went red under its mutation, and each mutation was restored; detail is in `mutations.tsv`.
+
+T1097 (`TestMudDateRecordHasNoTrailingNewlineLikeC`) is C/J4 and folds into `TestWriteMudDateFormatMatchesC`, which pins the exact three-integer date record bytes. T1113 (`TestNoMoveEastPlayerLegacyLaneRemainsActive`) is C/J4 and folds into the east row of `TestNoMoveGuardPlayerLaneMatchesC`; that row now asserts the exact player line. The other 43 rows are R.
+
+All seven non-R tests were introduced by Zach Greene with no `Co-Authored-By` trailer, so PF-152/PF-153 attribution is **unknown**: T1097, T1109, T1113, T1117, T1118, T1132, and T1137. No C disagreement was found. The selected C references and test comments were checked against `src/`; changes are test and audit documentation only, so no census was required.
+
+`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` rose from 64.6% before the batch to 64.7% after it; the DoWrite gate test now reaches additional production statements. All 11 repository gates passed individually. No census was required because the changes are tests and audit documentation only.

@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 	"time"
 
@@ -79,8 +78,8 @@ func restoreCompileTimeClock(t *testing.T) {
 }
 
 // TestNewWorldStampsTheCompileTime pins the boot hook: C's boot_db calls
-// load_compile_time() before boot_world (src/db.c:313), so constructing a
-// world must leave the string set.
+// load_compile_time() before boot_world (src/db.c:313); the C formatter pins
+// month, day, year, and zero-padded time (src/version.c:16-66).
 func TestNewWorldStampsTheCompileTime(t *testing.T) {
 	restoreCompileTimeClock(t)
 
@@ -93,7 +92,7 @@ func TestNewWorldStampsTheCompileTime(t *testing.T) {
 	}
 	t.Cleanup(w.StopAITicker)
 
-	if got := CompileTimeString(); got == "" || !strings.Contains(got, "2000") {
-		t.Fatalf("CompileTimeString after NewWorld = %q, want the boot stamp", got)
+	if got, want := CompileTimeString(), "January 2, 2000   03:04"; got != want {
+		t.Fatalf("CompileTimeString after NewWorld = %q, want %q", got, want)
 	}
 }

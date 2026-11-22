@@ -236,9 +236,9 @@ func TestMpGiveObjectJanitorJunkPredicate(t *testing.T) {
 	}
 }
 
-// TestNpcPerformGiveRunsMpGive proves the R5c class wiring: the mobile-giver
-// perform_give port (scripted action(me, "give ...")) runs mp_give for its
-// NPC victim just as the player-giver path does.
+// TestNpcPerformGiveRunsMpGive proves the R5c class wiring: C transfers the
+// object and then dispatches mp_give for an NPC recipient
+// (src/act.item.c:670-704; src/mobprog.c:162-168).
 func TestNpcPerformGiveRunsMpGive(t *testing.T) {
 	w, _, lastMsg := newMpGiveTestWorld(t)
 	warg := spawnMpGiveTestMob(t, w, 1001, 8063)

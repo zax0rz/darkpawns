@@ -24,7 +24,8 @@ func spawnSocialTestMob(t *testing.T, w *World) *MobInstance {
 // carries three messages (char/others no-arg, then "#"), so the unguarded
 // mob path indexed past the table on both target shapes and killed the whole
 // process on the recover-less telnet input goroutine (order <pet> blush
-// <word>). The unified npcSocial path renders it like C's do_action instead.
+// <word>). C's do_action reads optional target slots and renders the selected
+// social messages (src/act.social.c:119-145).
 func TestNPCCommandShortSocialDoesNotPanic(t *testing.T) {
 	w, actor, local, _, output := newChannelWorld(t)
 	mob := spawnSocialTestMob(t, w)
