@@ -48,6 +48,14 @@ func TestDoSleeperDepthGateOrder(t *testing.T) {
 			want: "You can't do this while fighting!",
 		},
 		{
+			name: "actor fighting precedes mount",
+			setup: func(_ *World, ch *Player, _ combat.Combatant) {
+				ch.SetFightingBody(NewPlayer(99999, "someone", 1001))
+				ch.MountName = "horse"
+			},
+			want: "You can't do this while fighting!",
+		},
+		{
 			name: "mounted",
 			setup: func(_ *World, ch *Player, _ combat.Combatant) {
 				ch.MountName = "horse"
@@ -150,6 +158,12 @@ func TestDoSleeperMobProtectionAndSuccessShape(t *testing.T) {
 	if result.WaitCh != 2 {
 		t.Fatalf("failure wait = %d, want 2 violence rounds", result.WaitCh)
 	}
+	if result.MessageToCh != "You try to grab an aware target in a sleeper hold but fail!" ||
+		result.MessageToVict != "Sleeper tries to put a sleeper hold on you, but you break free!" ||
+		result.MessageToRoom != "Sleeper tries to put an aware target in a sleeper hold..." {
+		t.Fatalf("aware-mob miss messages = actor %q, victim %q, room %q",
+			result.MessageToCh, result.MessageToVict, result.MessageToRoom)
+	}
 
 	noSleepMob := NewMob(&parser.Mob{
 		VNum:        990193,
@@ -160,6 +174,11 @@ func TestDoSleeperMobProtectionAndSuccessShape(t *testing.T) {
 	}, 1001)
 	if result := DoSleeper(sleeperTestPlayer("Sleeper"), noSleepMob, nil); result.Success || !result.RetaliateHit {
 		t.Fatalf("nosleep mob result = %+v, want forced failure and retaliation", result)
+	} else if result.MessageToCh != "You try to grab a nosleep target in a sleeper hold but fail!" ||
+		result.MessageToVict != "Sleeper tries to put a sleeper hold on you, but you break free!" ||
+		result.MessageToRoom != "Sleeper tries to put a nosleep target in a sleeper hold..." {
+		t.Fatalf("nosleep-mob miss messages = actor %q, victim %q, room %q",
+			result.MessageToCh, result.MessageToVict, result.MessageToRoom)
 	}
 
 	dprng.ResetStream(1)
@@ -176,6 +195,13 @@ func TestDoSleeperMobProtectionAndSuccessShape(t *testing.T) {
 	}
 	if result.MessageToRoomSecond == "" || !result.RoomIncludesTarget || result.WaitCh != 2 || !result.SleepTarget {
 		t.Fatalf("success audience shape = %+v", result)
+	}
+	if result.MessageToCh != "You put a target in a sleeper hold." ||
+		result.MessageToVict != "You feel very sleepy... Zzzzz.." ||
+		result.MessageToRoom != "Sleeper puts a target in a sleeper hold." ||
+		result.MessageToRoomSecond != "a target goes to sleep." {
+		t.Fatalf("success messages = actor %q, victim %q, room %q / %q",
+			result.MessageToCh, result.MessageToVict, result.MessageToRoom, result.MessageToRoomSecond)
 	}
 	if len(result.DeferredImprove) != 1 || result.DeferredImprove[0] != SkillSleeper || !result.DeferredImproveAfterRoom {
 		t.Fatalf("success improvement shape = %+v", result)

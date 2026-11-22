@@ -76,6 +76,14 @@ func TestDoSubdueDepthGateOrder(t *testing.T) {
 			want: "You're too busy right now!",
 		},
 		{
+			name: "actor fighting precedes mount",
+			setup: func(_ *World, ch *Player, _ *Player) {
+				ch.SetFightingBody(NewPlayer(99999, "someone", 1001))
+				ch.MountName = "horse"
+			},
+			want: "You're too busy right now!",
+		},
+		{
 			name:  "nil target",
 			setup: func(_ *World, _ *Player, _ *Player) {},
 			want:  "Subdue who?",
@@ -219,6 +227,11 @@ func TestDoSubdueMissPinsAndShape(t *testing.T) {
 	if result.WaitCh != 3 {
 		t.Fatalf("failure wait = %d, want 3 violence rounds", result.WaitCh)
 	}
+	if result.MessageToVict != "Subduer misses a blow to the back of your head." ||
+		result.MessageToCh != "an aware target avoids your misplaced blow to the back of its head." ||
+		result.MessageToRoom != "an aware target avoids Subduer's misplaced blow to the back of its head." {
+		t.Fatalf("aware-mob miss messages = actor %q, victim %q, room %q", result.MessageToCh, result.MessageToVict, result.MessageToRoom)
+	}
 
 	ch = subdueTestPlayer("Subduer")
 	ch.SetPlrFlag(PlrOutlaw, true)
@@ -227,6 +240,12 @@ func TestDoSubdueMissPinsAndShape(t *testing.T) {
 	result = DoSubdue(ch, target, nil)
 	if result.Success || !result.RetaliateHit {
 		t.Fatalf("out-of-window player result = %+v, want forced failure and retaliation", result)
+	}
+	if result.MessageToVict != "Subduer misses a blow to the back of your head." ||
+		result.MessageToCh != "Target avoids your misplaced blow to the back of his head." ||
+		result.MessageToRoom != "Target avoids Subduer's misplaced blow to the back of his head." {
+		t.Fatalf("out-of-window player miss messages = actor %q, victim %q, room %q",
+			result.MessageToCh, result.MessageToVict, result.MessageToRoom)
 	}
 }
 

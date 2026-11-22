@@ -100,11 +100,10 @@ func TestDoTigerPunch_LegacyGatesPreserved(t *testing.T) {
 	}
 }
 
-// TestDoTigerPunchDamage_SelectsVariantAfterHpUpdate — the damage() boundary
-// must apply HP before skill_message runs: an ordinary hit selects the hit
-// variant, which a pre-damage selection would also reach, but the draw and the
-// audience bytes must come from the same seam the command tail drives
-// (fight.c:1484-1534).
+// TestDoTigerPunchDamage_SelectsVariantAfterHpUpdate — damage() updates the
+// victim's position before skill_message selects set 189's die_msg. The lethal
+// HP threshold makes a pre-damage selection choose the distinct hit_msg instead
+// (fight.c:1484-1534; 1023-1058).
 func TestDoTigerPunchDamage_SelectsVariantAfterHpUpdate(t *testing.T) {
 	w, ch := newCombatTestWorld(t)
 	mob := spawnTargetMob(t, w)
@@ -114,12 +113,12 @@ func TestDoTigerPunchDamage_SelectsVariantAfterHpUpdate(t *testing.T) {
 	wired := wireTigerPunchMessages(t, mob)
 	defer wired.teardown()
 
-	mob.SetHealth(500)
+	mob.SetHealth(8)
 	if handled := w.DoTigerPunchDamage(ch, mob, 20); !handled {
 		t.Fatal("tiger punch damage was not applied")
 	}
-	if !strings.Contains(wired.attacker(), "uppercut connects with") {
-		t.Errorf("non-lethal hit message = %q, want set 189's hit_msg", wired.attacker())
+	if got, want := wired.attacker(), "Your powerful uppercut sends a training dummy's jaw through his skull, killing him!"; got != want {
+		t.Errorf("lethal hit attacker message = %q, want set 189 die_msg %q", got, want)
 	}
 }
 

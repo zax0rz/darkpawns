@@ -1,33 +1,45 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
-// TestDoSlug_ResultContract pins do_slug's damage() boundary: both outcome
-// arms use skill-message set 146, enroll combat, and wait two violence pulses.
-// The miss improves the skill only after damage() returns (new_cmds.c:850-875).
+// TestDoSlug_ResultContract pins do_slug's damage() boundary: the hit uses the
+// exact level*(1..4)*.5 damage roll, both arms use skill-message set 146,
+// enroll combat, and wait two violence pulses. The miss improves the skill only
+// after damage() returns (new_cmds.c:864-876).
 func TestDoSlug_ResultContract(t *testing.T) {
 	w, ch := newCombatTestWorld(t)
 	mob := spawnTargetMob(t, w)
+	ch.Level = 20
 	ch.SetSkill(SkillSlug, 100)
 
-	var hit SkillResult
-	for seed := uint32(1); seed < 100; seed++ {
-		dprng.ResetStream(seed)
-		hit = DoSlug(ch, mob)
-		if hit.Success {
-			break
+	var seed uint32
+	var wantDamage int
+	for candidate := uint32(1); candidate < 100; candidate++ {
+		stream := dprng.New(candidate)
+		if stream.Number(1, 101) > ch.GetSkill(SkillSlug) {
+			continue
 		}
+		candidateDamage := ch.GetLevel() * stream.Number(1, 4) / 2
+		if candidateDamage == ch.GetLevel()/2 {
+			continue
+		}
+		seed, wantDamage = candidate, candidateDamage
+		break
 	}
+	if seed == 0 {
+		t.Fatal("no deterministic slug success seed found")
+	}
+	dprng.ResetStream(seed)
+	hit := DoSlug(ch, mob)
 	if !hit.Success {
-		t.Fatal("no slug hit observed in 99 deterministic seeds")
+		t.Fatalf("seed %d did not reach the slug hit arm", seed)
 	}
-	if hit.Damage < ch.GetLevel()/2 || hit.Damage > ch.GetLevel()*2 {
-		t.Fatalf("hit damage = %d, want C level*{1/2,1,3/2,2} range", hit.Damage)
+	if hit.Damage != wantDamage {
+		t.Fatalf("seed %d hit damage = %d, want C level*number(1,4)*.5 = %d", seed, hit.Damage, wantDamage)
 	}
 	if hit.SkillMsgType != SkillSlugNum || hit.DamageSkill != SkillSlug {
 		t.Fatalf("hit message contract = set %d damage skill %q, want %d/%q", hit.SkillMsgType, hit.DamageSkill, SkillSlugNum, SkillSlug)
@@ -138,8 +150,8 @@ func TestDoSlug_SkillMessageDrawOrder(t *testing.T) {
 	if *attackerMsg != "You miss your swing at a training dummy." {
 		t.Fatalf("set-146 miss attacker message = %q, want C miss text", *attackerMsg)
 	}
-	if !strings.Contains(*roomMsg, "ducks as TestPlayer swings") {
-		t.Fatalf("set-146 miss room message = %q, want C room text", *roomMsg)
+	if *roomMsg != "A training dummy ducks as TestPlayer swings at him." {
+		t.Fatalf("set-146 miss room message = %q, want exact C room text", *roomMsg)
 	}
 
 	dprng.ResetStream(seed)

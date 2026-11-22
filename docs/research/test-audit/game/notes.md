@@ -1549,3 +1549,112 @@ The fidelity-depth gate initially found four Jin manifest rows pointing to the
 deleted duplicate; those rows were redirected to the surviving exact test
 declarations and the gate then passed. No oracle census was needed for this
 test and documentation audit.
+
+## Batch 26 preregistered estimate (before reading tests T1539–T1588)
+
+Continue the frozen inventory-order sweep: select the first 50 test names not already present in any ledger row, scanning from the start of the 1,991-function inventory. T001–T1538 has 1,538 rows and 1,466 unique test names, leaving 525 unique inventory functions unledgered. The selected roster is inventory lines 508–580:
+
+- `TestDoRideMountedGates`
+- `TestDoRideResolvesThroughGetCharRoomVis`
+- `TestDoRideSuccessStateAndAudience`
+- `TestDoRideUsesCOneArgument`
+- `TestDoRoflSelfTargetUsesCCharAutoBytes`
+- `TestDoSaveWritesStoreOfRecordWithNowhere`
+- `TestDoScoutTerrainAndCrowdDescriptions`
+- `TestDoScroungeDepthDeferredImprovePreservesDrawOrder`
+- `TestDoScroungeDepthGatesAndDefault`
+- `TestDoScroungeDepthSectorMapAndMessages`
+- `TestDoSerpentKickGateOrder`
+- `TestDoSerpentKickMissUsesCMessageContract`
+- `TestDoSerpentKickResultContract`
+- `TestDoSerpentKickSleepingTargetAutoHits`
+- `TestDoSharpenConsumesOneCPercentDraw`
+- `TestDoSharpenFailureMutatesEvenWithZeroSkill`
+- `TestDoSharpenFightingGateFollowsObjectGates`
+- `TestDoSharpenMutatesAndScalesSuccessfulWeapon`
+- `TestDoSharpenRejectsNonSlashAndAlreadyAffected`
+- `TestDoSharpenUsesCObjectGatesAndCarriedOnly`
+- `TestDoSleeperDepthGateOrder`
+- `TestDoSleeperMobProtectionAndSuccessShape`
+- `TestDoSleeperPlayerLevelWindow`
+- `TestDoSlug_GateOrderAndMessages`
+- `TestDoSlug_ResultContract`
+- `TestDoSlug_SkillMessageDrawOrder`
+- `TestDoSmackheads_GateOrderAndMessages`
+- `TestDoSmackheads_ResultContract`
+- `TestDoSneakFailedRerollClearsSneakAndStealthAffects`
+- `TestDoSneakMountedGatePrecedesRoll`
+- `TestDoSpellDamageChargePainDraw`
+- `TestDoSpellDamageCircleUsesCircleCorpseType`
+- `TestDoSpellDamageEmitsMeteorSwarmMessages`
+- `TestDoSpellDamageEmitsMeteorSwarmMissToPlayerCaster`
+- `TestDoSpike_ImmortalTargetGate`
+- `TestDoSpike_MissWaitState`
+- `TestDoSpike_MobTarget`
+- `TestDoSpike_SuccessProbability`
+- `TestDoSpike_UsesObjectKeywords`
+- `TestDoSpike_WeaponCheckUsesFirstKeyword`
+- `TestDoStrike_HitContract`
+- `TestDoStrike_MissRoutesThroughSkillMessage`
+- `TestDoStrike_SleepingVictimRaisesProbTo100`
+- `TestDoSubdueDepthGateOrder`
+- `TestDoSubdueImmortalSuccess`
+- `TestDoSubdueMissPinsAndShape`
+- `TestDoSubdueOutlawRefusal`
+- `TestDoSubdueSeededSuccessDrawCount`
+- `TestDoSubdueShopkeeperGate`
+- `TestDoTigerPunchDamage_SelectsVariantAfterHpUpdate`
+
+Before reading these tests, my estimate is **R43 / F5 / C1 / D1**.
+
+## Batch 26 audit (T1539–T1588; introductions 2026-08-30–2026-11-08)
+
+The preregistered estimate was R43/F5/C1/D1. Actual: **R40/F10/C0/D0**;
+all 50 tests were introduced after the 2026-07-12 oracle start. The estimate
+missed five additional false greens and predicted one C and one D that the
+review did not find. All ten weak tests were J3 assertion gaps, and their
+introducing commits attribute to `unknown` under the audit rules.
+
+I strengthened ten tests and proved each one in a detached mutation worktree
+based on the refreshed Batch 25 tip. For every case the original body was
+green under the mutation, the repaired body went red, and both production and
+test files were restored byte-for-byte:
+
+- T1559 combines fighting and mounted states so sleeper must keep C's earlier
+  fighting refusal.
+- T1560 now checks the aware/nosleep failure and success messages for all
+  audiences exactly.
+- T1563 derives slug damage from the same seeded C `number(1,4)` draw instead
+  of accepting a broad interval; T1564 pins the exact set-146 room line as well
+  as draw order.
+- T1571 checks exact meteor-swarm hit/death output, including C's death-room
+  tail. T1572 checks exact caster and room miss bytes.
+- T1575 checks spike's exact three-audience acts before its raw-kill tail.
+- T1582 combines fighting and mounted states so subdue preserves C's busy gate
+  precedence. T1584 checks all three exact miss acts before retaliation.
+- T1588 crosses the POS_DEAD threshold and requires set 189's exact death line,
+  so selecting hit_msg before the HP update now fails.
+
+No tests were deleted or folded, so no live inventory references needed
+retargeting. The new ledger citations were checked against `src/` and the
+read-only C message files. No production behavior changed and no oracle census
+was needed. `pkg/game` statement coverage was 64.7% before and after.
+
+I rebased this stack on refreshed Batch 25 tip `98715c15c` after its main merge.
+The thirteen previously corrected rows match `origin/main` byte-for-byte, and
+T1403 remains raw tab-separated text without spreadsheet quoting.
+
+All eleven gates passed on the refreshed branch: `make fmt`, `go build ./...`,
+`go vet ./...`, `go test ./...`, `golangci-lint` v2.15.0,
+`make modernize-check`, `make deadcode-ratchet`, `make string-census`,
+`make fidelity-depth`, `make expected-divergences`, and
+`make function-index-check`. The string census ratchet passed with its
+pre-existing generated reports marked stale. Expected-divergences exited 0
+while reporting its existing unresolved proof selectors; the function-index
+ratchet's expected fake-association red was caught and the ratchet ended clean.
+
+Through T1588, T639–T1588 totals R826/F96/C20/D8. Cumulative T001–T1588 totals
+are R1459/F100/C20/D9: the pre-oracle split is R379/F7/C3/D1 and the post-
+oracle split is R1080/F93/C17/D8. No package summary or PF ledger row is due
+until T1991; when it is due, use PF-168 or later because PF-167 is already
+assigned.
