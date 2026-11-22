@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -93,8 +92,10 @@ func TestDoSpike_MobTarget(t *testing.T) {
 	if !result.RawKill {
 		t.Fatal("successful spike must request the C raw_kill tail")
 	}
-	if !strings.Contains(result.MessageToCh, "drive") {
-		t.Errorf("success message = %q, want authored drive act", result.MessageToCh)
+	if result.MessageToCh != "You drive a sharp spike into its chest!" ||
+		result.MessageToVict != "Hunter drives a sharp spike into your chest with a solid blow!" ||
+		result.MessageToRoom != "Hunter drives a sharp spike into the chest of a werewolf dummy!" {
+		t.Errorf("success messages = actor %q, victim %q, room %q", result.MessageToCh, result.MessageToVict, result.MessageToRoom)
 	}
 	if got := len(w.GetMobsInRoom(victim.GetRoom())); got != 1 {
 		t.Fatalf("DoSpike extracted NPC before authored acts were sent: active mobs = %d, want 1", got)

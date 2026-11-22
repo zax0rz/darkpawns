@@ -39,7 +39,7 @@ func TestDoSpellDamageEmitsMeteorSwarmMessages(t *testing.T) {
 		wantRoom   string
 	}{
 		{name: "hit", wantVictim: "Meteors from the heavens rain down upon you!", wantRoom: "Meteors from the heavens rain down all around you!"},
-		{name: "death", lethal: true, wantVictim: "ending your life.", wantRoom: "killing"},
+		{name: "death", lethal: true, wantVictim: "A meteor sent by TestPlayer slams straight into you, ending your life.", wantRoom: "A meteor sent by TestPlayer slams straight into a training dummy, killing it."},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			w, attacker := newCombatTestWorld(t)
@@ -66,11 +66,24 @@ func TestDoSpellDamageEmitsMeteorSwarmMessages(t *testing.T) {
 			if !w.DoSpellDamage(attacker, victim, dam, "meteor swarm") {
 				t.Fatal("DoSpellDamage returned false")
 			}
-			if got := strings.Join(victimMessages, ""); !strings.Contains(got, tc.wantVictim) {
-				t.Errorf("victim message = %q, want substring %q", got, tc.wantVictim)
+			if len(victimMessages) != 1 || victimMessages[0] != tc.wantVictim {
+				t.Errorf("victim messages = %#v, want exactly [%q]", victimMessages, tc.wantVictim)
 			}
-			if got := strings.Join(roomMessages, ""); !strings.Contains(got, tc.wantRoom) {
-				t.Errorf("room message = %q, want substring %q", got, tc.wantRoom)
+			wantRoomMessages := []string{tc.wantRoom}
+			if tc.lethal {
+				wantRoomMessages = append(wantRoomMessages,
+					"A training dummy is dead!  R.I.P.",
+					"Your blood freezes as you hear a training dummy's death cry.",
+				)
+			}
+			if len(roomMessages) != len(wantRoomMessages) {
+				t.Errorf("room messages = %#v, want exactly %#v", roomMessages, wantRoomMessages)
+			} else {
+				for i := range wantRoomMessages {
+					if roomMessages[i] != wantRoomMessages[i] {
+						t.Errorf("room message %d = %q, want %q", i, roomMessages[i], wantRoomMessages[i])
+					}
+				}
 			}
 		})
 	}
@@ -102,11 +115,11 @@ func TestDoSpellDamageEmitsMeteorSwarmMissToPlayerCaster(t *testing.T) {
 	// C damage() emits skill_message for nonpositive damage before returning
 	// false; DoSpellDamage preserves that return value after the message.
 	w.DoSpellDamage(attacker, mob, -6, "meteor swarm")
-	if got := strings.Join(attackerMessages, ""); !strings.Contains(got, "Meteor miss vict - tell a god.") {
-		t.Errorf("attacker miss message = %q, want C's M@0189 miss line", got)
+	if len(attackerMessages) != 1 || attackerMessages[0] != "Meteor miss vict - tell a god." {
+		t.Errorf("attacker miss messages = %#v, want exact C M@0189 ch line", attackerMessages)
 	}
-	if got := strings.Join(roomMessages, ""); !strings.Contains(got, "Meteor miss room - tell a god.") {
-		t.Errorf("room miss message = %q, want C's M@0189 miss line", got)
+	if len(roomMessages) != 1 || roomMessages[0] != "Meteor miss room - tell a god." {
+		t.Errorf("room miss messages = %#v, want exact C M@0189 room line", roomMessages)
 	}
 }
 

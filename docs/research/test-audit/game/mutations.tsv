@@ -110,3 +110,13 @@ TestDoInvisUsesLevelAndThresholdAudience	pkg/game/invis.go	69	send the threshold
 TestDoOpenRejectsKeywordPrefix	pkg/game/act_movement.go	632	append an extra line after the no-matching-door refusal	green (old Contains and no-Okay checks accepted the extra line)	red (fixed exact refusal rejected it)	yes
 TestDoorFarSideNameUsesCFName	pkg/game/act_movement.go	716	append EXTRA to the far-side open notice	green (old Contains check found the C notice before the suffix)	red (fixed exact observer transcript rejected the extra line)	yes
 TestDoKick_WaitStateAlways22Pulses	pkg/game/skill_combat.go	272	force the DoKick hit arm so a skill-1 miss cannot occur	green (old test skipped after 50 successes)	red (fixed test requires the deterministic miss)	yes
+TestDoSlug_ResultContract	pkg/game/skill_special.go	317	replace level*number(1,4)/2 with level/2	green (old broad range accepted mutant)	red (exact seeded damage mismatch)	yes
+TestDoSlug_SkillMessageDrawOrder	pkg/combat/skill_messages.go	151	append EXTRA to set-146 room line	green (old substring accepted suffix)	red (exact room bytes mismatch)	yes
+TestDoSleeperDepthGateOrder	pkg/game/skill_c10_combat.go	264	let mount gate outrank actor-fighting gate	green (old cases had no overlap)	red (overlap expected C fighting refusal)	yes
+TestDoSleeperMobProtectionAndSuccessShape	pkg/game/skill_c10_combat.go	322	append EXTRA to sleeper success actor line	green (old test did not assert actor bytes)	red (exact actor bytes mismatch)	yes
+TestDoSpellDamageEmitsMeteorSwarmMessages	pkg/combat/skill_messages.go	138	append EXTRA to rendered set-41 messages	green (old substrings accepted suffix)	red (exact transcript mismatch)	yes
+TestDoSpellDamageEmitsMeteorSwarmMissToPlayerCaster	pkg/combat/skill_messages.go	138	append EXTRA to rendered set-41 messages	green (old substrings accepted suffix)	red (exact audience bytes mismatch)	yes
+TestDoSpike_MobTarget	pkg/game/skill_combat.go	705	append EXTRA to spike success actor line	green (old drive substring accepted suffix)	red (exact actor/victim/room bytes mismatch)	yes
+TestDoSubdueDepthGateOrder	pkg/game/skill_c10_combat.go	183	let mount gate outrank actor-fighting gate	green (old cases had no overlap)	red (overlap expected C fighting refusal)	yes
+TestDoSubdueMissPinsAndShape	pkg/game/skill_c10_combat.go	235	append EXTRA to subdue miss actor line	green (old test did not assert miss bytes)	red (exact miss bytes mismatch)	yes
+TestDoTigerPunchDamage_SelectsVariantAfterHpUpdate	pkg/combat/skill_messages.go	117	make set selection use hit_msg at every HP	green (old test exercised a nonlethal hit)	red (lethal case requires die_msg)	yes
