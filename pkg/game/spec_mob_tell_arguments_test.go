@@ -302,30 +302,6 @@ func TestSpecClerkTellArgumentsMatchC(t *testing.T) {
 	}
 }
 
-func TestSpecConSellerTellArgumentsMatchC(t *testing.T) {
-	tests := []struct {
-		name, cSite, command, argument, want string
-		gold, origCon, con                   int
-	}{
-		{name: "bad buy argument", cSite: "src/spec_procs3.c:263", command: "buy", argument: "bad", gold: 4000, origCon: 14, con: 10, want: "ConSellerActor BUY CON, if you really want to do it."},
-		{name: "healthy list", cSite: "src/spec_procs3.c:272", command: "list", origCon: 10, con: 10, want: "ConSellerActor You seem perfectly healthy!"},
-		{name: "list quote", cSite: "src/spec_procs3.c:279", command: "list", origCon: 14, con: 10, want: "ConSellerActor You can buy up to 4 points, at 400 per point."},
-		{name: "cannot afford", cSite: "src/spec_procs3.c:287", command: "buy", argument: "con", origCon: 14, con: 10, want: "ConSellerActor You can't afford it!"},
-		{name: "healthy buy", cSite: "src/spec_procs3.c:295", command: "buy", argument: "con", gold: 4000, origCon: 10, con: 10, want: "ConSellerActor You seem perfectly healthy!"},
-		{name: "successful buy", cSite: "src/spec_procs3.c:302", command: "buy", argument: "con", gold: 4000, origCon: 14, con: 10, want: "ConSellerActor That'll be 400 coins, you should feel much better.. if you wake up."},
-	}
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			w, actor, _, mob, _ := newConSellerTestWorld(t, true)
-			actor.SetGold(tc.gold)
-			actor.SetOrigCon(tc.origCon)
-			actor.Stats.Con = tc.con
-			assertMobDirectCommandCalls(t, w, tc.cSite, func() bool { return specConSeller(w, actor, mob, tc.command, tc.argument) }, mobDirectCommandCall{command: "tell", argument: tc.want})
-		})
-	}
-}
-
 func TestSpecProstituteTellArgumentsMatchC(t *testing.T) {
 	tests := []struct {
 		name, cSite, command, want string

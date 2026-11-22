@@ -33,14 +33,11 @@ func TestSpecElementsGuardian_CommandlessAndNilEntryGates(t *testing.T) {
 	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 80)
 	_ = lastMsg()
 
-	if specElementsGuardian(w, nil, mob, "", "") {
-		t.Fatal("commandless guardian should fall through")
+	if got := specElementsGuardianActor(w, CharacterSpecialContext{Actor: mob}, mob, "", ""); got != SpecialDeclined {
+		t.Fatalf("commandless mobile pulse = %v, want SpecialDeclined", got)
 	}
 	if got := lastMsg(); got != "" {
 		t.Fatalf("commandless guardian emitted %q", got)
-	}
-	if specElementsGuardian(w, nil, mob, "say", "hello") {
-		t.Fatal("guardian with no command actor should fall through")
 	}
 }
 

@@ -54,6 +54,9 @@ func TestSpecCastleGuardEast_BlockAndHit(t *testing.T) {
 		if len(engine.starts) != 1 {
 			t.Fatalf("starts = %#v, want one hit at %q", engine.starts, player.GetName())
 		}
+		if got, want := engine.starts[0], [2]string{guard.GetName(), player.GetName()}; got != want {
+			t.Fatalf("combat start = %#v, want guard attacking eastbound player %#v", got, want)
+		}
 	})
 	t.Run("grouped owner snaps without hit", func(t *testing.T) {
 		w, player, lastMsg := newSpecProcTestWorld(t)
@@ -108,6 +111,9 @@ func TestSpecCastleGuardEast_AssistsOnlyEast(t *testing.T) {
 		}
 		if len(engine.starts) != 1 {
 			t.Fatalf("starts = %#v, want one", engine.starts)
+		}
+		if got, want := engine.starts[0], [2]string{guard.GetName(), player.GetName()}; got != want {
+			t.Fatalf("combat start = %#v, want east guard assisting against its peer's target %#v", got, want)
 		}
 	})
 	t.Run("ignores north peer", func(t *testing.T) {

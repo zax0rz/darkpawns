@@ -198,7 +198,7 @@ func TestWorldBridgeCharFields(t *testing.T) {
 	}
 }
 
-// The pulse triggers' people scans (mobact.c:148-192).
+// The pulse triggers' people scans (src/mobact.c:148-192).
 func TestRoomHasOtherOccupant(t *testing.T) {
 	w, player, mob, _ := newNPCCommandWorld(t)
 	if !w.roomHasOtherOccupant(mob, true) || !w.roomHasOtherOccupant(mob, false) {

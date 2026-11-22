@@ -373,20 +373,19 @@ func TestDoGenDoorFillWordOnlyArgument(t *testing.T) {
 
 	w.DoOpen(p, "the")
 	got := joinedDoorMessages(messages, "DoorTester")
-	if !strings.Contains(got, "What is it you want to open?") {
-		t.Fatalf("`open the` = %q, want C's find_door wording", got)
-	}
-	if strings.Contains(got, "Open what?") {
-		t.Fatal("`open the` took the empty-argument arm")
+	if got != "What is it you want to open?\r\n" {
+		t.Fatalf("`open the` = %q, want only C's find_door wording", got)
 	}
 
+	messages[p.Name] = nil
 	w.DoClose(p, "the")
-	if got := joinedDoorMessages(messages, "DoorTester"); !strings.Contains(got, "What is it you want to close?") {
-		t.Fatalf("`close the` = %q", got)
+	if got := joinedDoorMessages(messages, "DoorTester"); got != "What is it you want to close?\r\n" {
+		t.Fatalf("`close the` = %q, want only C's find_door wording", got)
 	}
 
+	messages[p.Name] = nil
 	w.DoOpen(p, "")
-	if got := joinedDoorMessages(messages, "DoorTester"); !strings.Contains(got, "Open what?") {
-		t.Fatalf("`open` = %q, want 'Open what?'", got)
+	if got := joinedDoorMessages(messages, "DoorTester"); got != "Open what?\r\n" {
+		t.Fatalf("`open` = %q, want only 'Open what?'", got)
 	}
 }

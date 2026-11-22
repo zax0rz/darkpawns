@@ -635,3 +635,917 @@ T1097 (`TestMudDateRecordHasNoTrailingNewlineLikeC`) is C/J4 and folds into `Tes
 All seven non-R tests were introduced by Zach Greene with no `Co-Authored-By` trailer, so PF-152/PF-153 attribution is **unknown**: T1097, T1109, T1113, T1117, T1118, T1132, and T1137. No C disagreement was found. The selected C references and test comments were checked against `src/`; changes are test and audit documentation only, so no census was required.
 
 `GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` rose from 64.6% before the batch to 64.7% after it; the DoWrite gate test now reaches additional production statements. All 11 repository gates passed individually. No census was required because the changes are tests and audit documentation only.
+
+## Batch 18 preregistered estimate (before reading tests T1139–T1188)
+
+The forecast remainder after T1088 was R831/F18/C20/D34 across 903 rows. Batch 17’s preregistered slice was R46/F1/C1/D2; subtracting that forecast leaves R785/F17/C19/D32 over 853 tests. For this next 50-test batch I expect R46/F1/C1/D2, with all 50 post-oracle and weak marks more likely among older introductions.
+
+### Batch 18 roster correction, before adjudication
+
+The next 50 unledgered functions start after the prior corrected slice: inventory lines 1150–1210 contain 61 names, 11 of which already have ledger rows. Skipped duplicates are `TestObjNameUsesRuntimeKeywords`, `TestPerformDispose`, `TestPerformDisposeGold`, `TestPerformDropNoDrop`, `TestPerformGiveNoDrop`, `TestPerformMove_Exhausted`, `TestPerformMove_FollowersFollow`, `TestPerformMove_Sneak`, `TestPerformMove_TunnelFull`, `TestPerformRemoveNoDrop`, and `TestPerformWearTwoHanded`. The batch roster is the other 50 names in inventory order; no duplicate ledger rows will be added.
+
+### Batch 18 roster correction, superseding the preceding correction (before adjudication)
+
+The preceding correction also used the wrong inventory span. T1138 is
+`TestNPCSimpleMoveCharmedRefusal` at inventory line 1149. Scanning forward and
+skipping every function already present in the ledger, the next 50 are the
+following tests in inventory order, from line 1150 through line 1232:
+
+`TestNPCSimpleMoveTunnelLimit`, `TestNPCSocialCharLineReachesSwitchedBody`,
+`TestNpcSpecialDeclineNeedsANonEmptyCommand`,
+`TestNPCsShareDummyMobKillCountForBrag`, `TestNpcStealRejectsImmortalLevelVictim`,
+`TestNPCTellReachesSwitchedMobileDescriptor`,
+`TestObjectActivityLogsContainerWeightFloorAfterGet`,
+`TestObjectActivityRunsOSOnPulseScripts`, `TestObjectActivityWeightMudlog`,
+`TestObjectExtraFlagsStartFromPrototype`, `TestObjectLaneConsultsDeclineTables`,
+`TestOrderedGroupFollowersWalksNewestFirst`, `TestPalmEntryDrawPrecedesEveryGate`,
+`TestPCRaceAndClassTablesMatchC`, `TestPeekImmortalConsumesPercentDraw`,
+`TestPeekPreservesCLeadingActLineBreakBytes`,
+`TestPendingAttackerSwingsWithoutEnrolling`,
+`TestPendingBodyPeacefulRefusalStillSkipsEnrollment`,
+`TestPendingBodySecondDeathRunsFullDeathBranch`,
+`TestPendingBodyStaysAddressableUntilExtractionPass`,
+`TestPerformGetFromRoomQuietSuppressesRoomAct`,
+`TestPerformWearWieldWeightBeforeTwoHanded`,
+`TestPhysicalAffectsEquipRemoveAllLocations`,
+`TestPhysicalAffectsMultipleItemsAndRemovalOrder`,
+`TestPhysicalAffectsSerializationBoundary`, `TestPhysicalAffectsTimedAffectFolds`,
+`TestPhysicalAffectsWrap`, `TestPissedAlchemistAttacksMageAfterDirectSay`,
+`TestPissedAlchemistFirstPulseUsesDirectSayCommand`,
+`TestPissedAlchemistRejectsPlayerCommandAndFightingMob`,
+`TestPKDeathMudlogLevelIsLVLIMMORT`, `TestPKDeathMudlogMobKillerArm`,
+`TestPKDeathMudlogProducer`, `TestPKDeathMudlogThroughCombatCallback`,
+`TestPKDeathMudlogTypeIsBRF`, `TestPlacementDrawsSurviveCNumberOverflow`,
+`TestPlayerAffectExpiryRemovesOneRecord`,
+`TestPlayerDeathCountersStillRunWithNegativeCon`,
+`TestPlayerEquipmentBadStatEntryPoints`, `TestPlayerEquipmentBadStatPriority`,
+`TestPlayerEquipmentBadStats`, `TestPlayerEquipmentCharismaHunting`,
+`TestPlayerEquipmentDexUsesDamageTail`, `TestPlayer_HitModifiers`,
+`TestPlayerJoinAffectUsesNewestMatchingRecord`,
+`TestPlayerPersistenceIsSeparateFromWorldSnapshot`,
+`TestPlayerPresenceLineUsesTitleWithoutInventedClassFallback`,
+`TestPlayerSaveData_ConcurrentSnapshot`,
+`TestPlayerSelfDeathMudlogThroughCombatCallback`,
+`TestPlayerToSaveDataKeepsStoredArrayOrder`.
+
+The 33 skipped entries already have ledger rows; no T1139–T1188 rows were
+written before this correction. This roster supersedes both earlier batch 18
+roster descriptions above.
+
+## Post-oracle redo, batch 18 (T1139–T1188)
+
+The superseding roster correction above was applied before adjudication: 50
+unledgered functions in inventory order, with already-ledgered names skipped.
+All 50 were introduced after the 2026-07-12 oracle date. Earlier ledger and
+notes rows remain unchanged; this batch appends T1139–T1188.
+
+Marks: **R 42 / F 6 / C 1 / D 1.** Junk: **J3 5 / J2 1 / J4 1 / J9 1.**
+The forecast was R46/F1/C1/D2 with all 50 post-oracle. Actuals had four fewer
+R, five more F, the same C count, and one fewer D; the date split matched.
+
+The six F rows were repaired and mutation-proven in the detached worktree.
+T1146 now distinguishes object script order, carried/floor contexts, and the
+fountain skip. T1147 reaches room 0 by extracting a carried object, rather
+than assigning its location directly. T1151 adds the full-inventory palm gate.
+T1152 compares the complete race and class tables. T1156 checks the exact
+peaceful refusal line. T1163 checks effective birth before and after
+serialization/re-equip. Every old body stayed green, every fixed body went red,
+and all seven mutations were restored byte-for-byte; see `mutations.tsv`.
+
+T1143 (`TestNpcStealRejectsImmortalLevelVictim`) is D/J9: its direct helper
+branch is unreachable through C's `SPECIAL(thief)` caller, which filters
+immortal victims before invoking the helper (`src/spec_procs.c:301-308,389-405`).
+The test was deleted; `TestSpecThief_Golden` covers the reachable caller gate.
+T1173 is C/J4 and folds into T1171, whose producer assertions include BRF
+routing and negative observer boundaries. The remaining weak rows' PF-152 /
+PF-153 attribution is unknown for T1146, T1147, T1151, T1156, T1163, and T1173;
+T1152 is Claude Opus 5.5; T1143 is Cline.
+
+The object actor lane has a separately tracked C/Go gap: C's bank and horn
+object specials accept named commands, while Go does not dispatch them for NPC
+actors. The decline-table test now asserts only unrelated command declines;
+issue #3011 records the missing actor-aware path. No test pins Go bytes against
+C, and no production code changed, so no census was required.
+
+`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` measured 64.7% before and
+64.6% after the batch. All 11 repository gates passed individually after the
+batch edits and formatting.
+
+
+## Batch 19 preregistered estimate (before reading tests T1189–T1238)
+
+The forecast remainder after T1188 is R739/F16/C18/D30 across 803 tests. For
+this next 50-test slice I expect R46/F1/C1/D2, with all 50 introduced after
+the 2026-07-12 oracle date and weak marks more likely among older introductions.
+
+The roster is the next 50 unledgered names in inventory order after T1188.
+Inventory lines 1233–1291:
+
+- `TestPlayerToSaveDataReversesLiveAffectList`
+- `TestPlayerToSaveDataTruncatesLiveListAtMaxAffect`
+- `TestPlayerTransferMountVariant`
+- `TestPlayerUnmountClearsAffectWithoutCachedMountName`
+- `TestPlayerWearOffMultiRecordSpeaksOnce`
+- `TestPlayerWearRefusalOutputMatchesC`
+- `TestPLRAccessorsShareOneStore`
+- `TestPointUpdateConditionOutputThresholds`
+- `TestPointUpdateCutthroatDamageTail`
+- `TestPointUpdateDecaysObjectsInCarriedAndContainedLocations`
+- `TestPointUpdateDustAndCircleTimerOutputAcrossLocations`
+- `TestPointUpdateEmptyWorld`
+- `TestPointUpdateExpiresAssignedMoonGateByValueThree`
+- `TestPointUpdateFieldObjectUsesCRealRoomIndex`
+- `TestPointUpdateHeldLightOutputMatchesC`
+- `TestPointUpdateInactiveRegen`
+- `TestPointUpdateMountedPoisonDamageTail`
+- `TestPointUpdateNotifiesObserverOnce`
+- `TestPointUpdatePoisonDamageTail`
+- `TestPointUpdateRegeneratesNPCNana`
+- `TestPointUpdateRunsGlobalObjectPassAfterAllMemoryDraws`
+- `TestPointUpdateWoundedDamageTail`
+- `TestPortalToTempleAndItohUseDoLook`
+- `TestPostmasterDisabledDispatch`
+- `TestPRFAndPLRBitsDoNotOverlap`
+- `TestProbeObjectsStayUnregistered`
+- `TestPulseOnlyTableHasCCommandGate`
+- `TestPutFindsRoomContainer`
+- `TestPutRoomLookupConcurrentWithRoomWrites`
+- `TestQuanLoCancelledMobDeathStillGossips`
+- `TestQuanLoMobDeathSendsFiveFingersToGlobalGossip`
+- `TestQuanLoPlayerDeathSendsFiveFingersToGlobalGossip`
+- `TestQuitMudlogLevelDiscriminators`
+- `TestQuitMudlogProducers`
+- `TestQuitMudlogTypeIsNRM`
+- `TestRaceHateEquipmentRebuildAndRemoval`
+- `TestRaceHateModifierSlotSemantics`
+- `TestRaceSayUsesCControlBytesAndGateOrder`
+- `TestRaceSayUsesCPlayerRaceLanguageTables`
+- `TestRangedDamageConcurrentHPUpdates`
+- `TestRangedDeathExpLimits`
+- `TestRangedDeathHasNoKillerBookkeeping`
+- `TestRangedDirectHPThresholdsWithoutWoundMessages`
+- `TestRangedRetaliationHunterCallback`
+- `TestRangedTransferPreservesPostureAndCircle`
+- `TestRawKillClearsEverySpellAffect`
+- `TestRawKillCombatantPlayerRunsSequence`
+- `TestRawKillCorpseAttackDispatch`
+- `TestRawKillCorpseHoldsEachItemExactlyOnce`
+- `TestRawKillCorpseHoldsInventoryEquipmentAndGold`
+
+## Post-oracle redo, batch 19 (T1189–T1238)
+
+The batch contains R40/F8/C1/D1. Junk codes are J3=8, J4=1, and J9=1; all
+50 tests were introduced after the 2026-07-12 oracle date. The preregistered
+forecast was R46/F1/C1/D2, so actual-minus-forecast was R−6/F+7/C0/D−1.
+Attribution is unknown for 46 rows and Claude Opus 5.5 for four. Among the ten
+weak rows, nine are unknown and T1218 is Claude Opus 5.5.
+
+All eight F tests were repaired in this PR and mutation-proven in the separate
+detached worktree: T1191, T1194, T1197, T1205, T1211, T1218, T1219, and T1220.
+Each original body passed, each fixed body failed the corresponding mutant,
+and every mutation was restored byte-for-byte; see `mutations.tsv`. T1191 now
+checks both rider and mount movement. T1194 and T1197 assert full output bytes;
+T1205 checks dismount ordering; T1211 excludes destination-room output; and
+T1218–T1220 require exactly one gossip delivery.
+
+T1192 is D/J9: `Player.Unmount()` has no production callers. Its test was
+deleted, with the production `Unmount(rider, mount)` behavior still covered by
+`TestLegacyUnmountClearsAffectsButRetainsMasterLinks`. The dismount depth
+manifest was updated to remove the deleted test from its proof list. T1237 is
+C/J4 and duplicates the corpse-content uniqueness proof in T1238, which now
+checks all four distinct object references. T1235 continues to cover callback
+cleanup.
+
+Every C citation in the batch and new comments was checked against `src/`.
+`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` reports 64.6% coverage. No
+census was required because the batch changes tests and research manifests but
+does not change production behavior.
+
+All 11 repository gates passed individually: `make fmt`, `GOEXPERIMENT=nojsonv2
+go build ./...`, `GOEXPERIMENT=nojsonv2 go vet ./...`, `GOEXPERIMENT=nojsonv2
+go test ./...`, `golangci-lint run ./...`, `make modernize-check`, `make
+deadcode-ratchet`, `make string-census`, `make fidelity-depth`, `make
+expected-divergences`, and `make function-index`. The first fidelity-depth run
+identified the stale T1192 manifest reference; the manifest update was followed
+by a clean rerun. `make expected-divergences` exited 0 with its existing
+unresolved-proof notices.
+
+## Batch 20 preregistered estimate (before reading tests T1239–T1288)
+
+The prior working forecast after T1188 was R739/F16/C18/D30 across 803 tests.
+Subtracting batch 19's actual R40/F8/C1/D1 leaves a forecast remainder of
+R699/F8/C17/D29 across 753 tests. For this next 50-test slice I expect
+R46/F2/C1/D1, with all 50 introduced after the 2026-07-12 oracle date.
+
+The roster is the next 50 unledgered names in inventory order after T1238.
+Fourteen previously audited names encountered in this inventory span were
+skipped (T191, T192–T195, T456, T462–T465, T476, and T482–T484). The selected
+names span inventory lines 1292–1355:
+
+- `TestRawKillDeathCryPrecedesCorpse`
+- `TestRawKillDisintegrateDispatchesDust`
+- `TestRawKillLuaBinding`
+- `TestRawKillProtectionBackfire`
+- `TestRawKillRaceDust`
+- `TestRawKillRemovesTattoo`
+- `TestRawKillTeardownOrder`
+- `TestRawKillUndeadAndVampireDispatchDust`
+- `TestRawKillVampireManaClamp`
+- `TestReadDisposableMobRollsReadMobileDraws`
+- `TestReadDisposableObjectRollsRareVariance`
+- `TestReadMudDateCorruptRecordKeepsComputedCalendar`
+- `TestReadMudDateMissingRecordKeepsComputedCalendar`
+- `TestReadMudDateRecordOverridesCalendar`
+- `TestReadMudDateSkippedWhenFixedTimePinned`
+- `TestRealLevel`
+- `TestRecallUnmountsBeforeTransferAndLeavesMountBehind`
+- `TestRecruiterDirectTellUsesTellDeliveryGates`
+- `TestReditWorldPublicationConcurrentSnapshots`
+- `TestRefreshLiveObjInstancesDiscardsLiveExtraDescs`
+- `TestRegenActiveSpellFlags`
+- `TestRegisteredObjectsHaveUniqueIDs`
+- `TestRemorterClassMatchesCMapping`
+- `TestRemorterRefusalCarriesCsLineEnding`
+- `TestRemoveAffectBitRetainsTimedRecordWithoutRestoringBit`
+- `TestRemoveSetsCrashFlag`
+- `TestRenderSkillListImmortalCatalogAndOverflow`
+- `TestRenderSkillListManaColumn`
+- `TestRenderSkillListMappedSkills`
+- `TestRenderSkillListNinjaLearnedArts`
+- `TestRenderSkillListPracticeHeader`
+- `TestRentOutDropsHeldLightOnce`
+- `TestRenumConvertsLegacyRemoveToObject`
+- `TestRenumDisablesInvalidCommandsAndTheirDependents`
+- `TestReplacingShopPreservesRuntimeBank`
+- `TestReplayCrashLoadBadStatsBleedingLineIsRedAtSparseColor`
+- `TestReplayCrashLoadBadStatsFiresPerEquippedItem`
+- `TestReplayCrashLoadBadStatsHoldsRoomAtNowhere`
+- `TestReplayCrashLoadBadStatsLethalConLossDraw`
+- `TestReplayCrashLoadBadStatsLethalConLossSecondDraw`
+- `TestReplayCrashLoadBadStatsLethalExpLossClamp`
+- `TestReplayCrashLoadBadStatsLethalStopsAtRawKill`
+- `TestReplayEquipmentBadStatsFiresPerWornItem`
+- `TestResolveCharInRoomUsesAuthoredKeywords`
+- `TestResolvePlayerWorldRefusesInvisible`
+- `TestRestartDoesNotRestoreLegacyWorldSnapshot`
+- `TestRestoreSkillsMigratesCatalogNames`
+- `TestReviewButlerZoneLoadedOrder`
+- `TestReviewCannotShowPreRestartGossip`
+- `TestReviewCorpseSpillDoesNotRetickEarlierObject`
+
+## Post-oracle redo, batch 20 (T1239–T1288)
+
+Marks: **R 45 / F 3 / C 2 / D 0.** Junk: J3 3, J4 2, J7 1. All 50
+introducing commits are after 2026-07-12, matching the batch forecast.
+
+The preregistered batch estimate was R46/F2/C1/D1. Actuals were R45/F3/C2/D0:
+one fewer R, one more F, one more C, and one fewer D than predicted. The
+remaining forecast moves from R699/F8/C17/D29 over 753 tests to
+R654/F5/C15/D29 over 703.
+
+**F repairs and mutation proofs:**
+
+- `TestReadDisposableObjectRollsRareVariance` (J3): seed 3 rolled 29, so the
+  old body never reached C's conditional sign draw. Added a hit seed 5 (roll
+  14) alongside the miss case. Omitting the sign draw kept the old test green
+  and made the repaired test red.
+- `TestReditWorldPublicationConcurrentSnapshots` (J3): the old concurrent
+  readers checked only room VNUM/order while writers changed room names and
+  other fields. Readers now inspect changed names and compare the final
+  lock-free room with the locked snapshot. Mutating a published room name in
+  place kept the old body green under `-race` and made the repaired body red
+  with a data race.
+- `TestRemorterRefusalCarriesCsLineEnding` (J3): `HasSuffix` accepted extra
+  bytes before C's single refusal line. Exact output equality now pins the
+  complete write. A prefixed extra send kept the old test green and made the
+  repaired test red.
+
+**C folds:** T1246 `TestRawKillUndeadAndVampireDispatchDust` was deleted as a
+subset of `TestRawKillRaceDust`, which also checks carried/worn scatter and
+output. T1286 `TestReviewButlerZoneLoadedOrder` was deleted as a duplicate of
+`TestSpecButler_CanGetPredicateAndFourItemCap/four item cap`. The corpse-spill
+decay regression remains.
+
+Attribution of the five weak tests: four `unknown` (Zach-authored without a
+model trailer) and one DeepSeek. The J7 row is `TestReadMudDateSkippedWhenFixedTimePinned`: it protects the Go `DP_FIXED_TIME` harness seam,
+which has no C counterpart. No expected value disagreed with C. C paths and
+line ranges cited in the reviewed test files were checked; the stale mud-date
+comment range `src/comm.c:2624-2638` was corrected to the file's final line,
+2637. This batch changes tests, research ledgers and notes only, so no census
+was needed.
+
+Batch 20 verification: `make fmt`, `GOEXPERIMENT=nojsonv2 go build ./...`,
+`go vet ./...`, `go test ./...`, `golangci-lint run ./...`,
+`make modernize-check`, `make deadcode-ratchet`, `make string-census`,
+`make fidelity-depth`, `make expected-divergences`, and `make function-index`
+all exited successfully, each run separately. `make fidelity-depth` initially
+reported the deleted duplicate as a missing unit-test symbol; the corpse depth
+row now names the retained `TestRawKillRaceDust`, and the rerun passed.
+`make function-index-check` also passed after restoring generated index churn.
+The `pkg/game` coverage report is 64.6%. `make expected-divergences` exited 0
+with its existing unresolved-proof notices. All new ledger citations and
+selected-test C comment ranges resolve to source lines. No census was needed.
+
+Call-order clarification for T1255: C `spell_recall` transfers the player with
+`char_to_room` and then unmounts. Go clears mounted state before
+`PlayerTransfer` because that API follows mounted bodies. The test asserts the
+C-equivalent final placement/affect/link state; Go comments now state this
+adapter difference accurately rather than attributing Go's internal order to C.
+The 11 gates were rerun after the recall call-order comment correction and
+passed again; the two Go comments and test comment now cite C's actual
+`char_to_room`-then-unmount order.
+
+
+## Batch 21 preregistered estimate (before reading tests T1289–T1338)
+
+The prior remainder forecast after T1288 is R654/F5/C15/D29 across 703 tests.
+For this 50-test slice I predict R45/F3/C1/D1, with all 50 introduced after
+the 2026-07-12 oracle date. That leaves a forecast of R609/F2/C14/D28 across
+653 tests.
+
+The roster is the next 50 unledgered names in inventory order after T1288. They
+span inventory lines 1356–1440, skipping already-ledgered names in that span:
+
+- `TestReviewGossipColorsAtComplete`
+- `TestReviewGossipHidesHigherInvisibility`
+- `TestReviewGossipRetainsTheCappedHistoryWindow`
+- `TestReviewGossipTraversesHistoryOldestFirst`
+- `TestRiderWalkMovesMountOnceNotTwice`
+- `TestRollMaximumUsesCArgumentParser`
+- `TestRollNumberUsesCUnsignedConversion`
+- `TestRoomActivityConCroakControls`
+- `TestRoomActivityConCroakKillsMortalInPlace`
+- `TestRoomActivityConCroakUsesEffectiveCon`
+- `TestRoomActivityEarlyReturnTopology`
+- `TestRoomActivityFlowRoom`
+- `TestRoomActivityLoudMobs`
+- `TestRoomEnterScriptFiresOnce`
+- `TestRoomFlagReadersAgreeOnRealHighFlagRooms`
+- `TestRoomHasOtherOccupant`
+- `TestRoomLookBracketsTheContentListsOnce`
+- `TestRoomLookDescriptionTrailingSpacePrecedesTheBrackets`
+- `TestRoomMessageRevertControl`
+- `TestRoomMessageUsesActRecipientGate`
+- `TestRoomObjectLinesPadToC63Bytes`
+- `TestRoomObjectLinesStackIdenticalObjectsWithCountPrefix`
+- `TestRoomOnDropFiresOnlyOnDrop`
+- `TestRoomOnGetFiresFromRoomAndContainer`
+- `TestRoomOnPulseRunsBeforeFlamingDamage`
+- `TestRoomShownFiresOnlyWhenARoomIsRendered`
+- `TestRoomSpecialLoopsIncludePendingBodies`
+- `TestRoutineMutationConcurrentDoorWritersAndReaders`
+- `TestRoutineMutationSkipsStructuralRebuild`
+- `TestSameShopObjectComparesCRNUMCostExtraFlagsAndAffects`
+- `TestSaveDataToPlayerHydratesAutoGoldMirrorsFromFlags`
+- `TestSavePlayer_CreateFailureReturnsError`
+- `TestSavePlayerRecordReplaysEquipmentBadStats`
+- `TestSaySpellRendersThroughPerformAct`
+- `TestSaySpellTargetLineRendersThroughAct`
+- `TestScriptableGiveSetsFlag`
+- `TestScriptAdapterLogIsBriefImmortalNoFile`
+- `TestScriptZoneEchoOnlyVisitsAwakePlayingDescriptors`
+- `TestScroungeHandoverKeepsObjectUnique`
+- `TestScroungeObjectRegistered`
+- `TestScroungeSetsFlag`
+- `TestSelectLoginRoom`
+- `TestSendToRoomUsesCRecipientGate`
+- `TestSendToZoneDeliversBareBytesLiterally`
+- `TestSetLevelRefreshesCarryCapacity`
+- `TestSetLiveObjExtraDescConcurrentReaders`
+- `TestSetLiveObjExtraDescPatchesAPreexistingSnapshot`
+- `TestSetLiveObjExtraDescPublishesCloneAndPatchesInstances`
+- `TestSetRoomFlagBitConcurrent`
+- `TestShootRealDuplicateMobRetaliation`
+
+## Post-oracle redo, batch 21 (T1289–T1338)
+
+Marks: **R 43 / F 4 / C 3 / D 0.** All 50 introducing commits are after
+2026-07-12. The preregistered estimate was R45/F3/C1/D1: actual-minus-forecast
+was R−2/F+1/C+2/D−1. The prior remainder forecast was R654/F5/C15/D29 over
+703 tests; after this batch it is R611/F1/C12/D29 over 653 tests.
+
+**F repairs and mutation proofs:**
+
+- `TestRoomLookBracketsTheContentListsOnce` (J5): the old body only inspected
+  the observation result, never the delivered literal bytes. It now renders
+  through the player message sinks and requires one opening and closing raw
+  bracket pair. Routing bare observations through the formatted sink kept the
+  old test green and made the repaired assertion red.
+- `TestRoomLookDescriptionTrailingSpacePrecedesTheBrackets` (J5): the old
+  body likewise did not render the result and could not observe whether the
+  brackets reached the player. Complete-color and color-off cases now inspect
+  the delivered bytes and pin the C trailing-space placement; the same sink
+  mutation kept the old body green and made the fixed test red.
+- `TestScroungeObjectRegistered` (J3): the old city-room, skill-zero setup
+  never reached object creation. A seeded forest success now verifies one
+  inventory object, its nonzero ID, registry growth and pointer identity.
+  Removing the constructor's registry insertion kept the old body green and
+  made the fixed body red.
+- `TestSetLiveObjExtraDescConcurrentReaders` (J3): the old race witness only
+  read slice length. Synchronized readers now inspect both description values
+  while edits publish snapshots. Returning the underlying mutable slice kept
+  the old body green and made the fixed body red under `-race`.
+
+**C folds:** T1293 `TestRiderWalkMovesMountOnceNotTwice` was removed as
+covered by T1061 `TestMountedMovementPairStateAndAudiences` (also recorded at
+T543); its asserted walk outcome could not occur on the cited C path. T1307
+`TestRoomMessageRevertControl` was removed as a redundant control for T1308's
+recipient gate. T1323's unique invisible-caster and sleeping-target cases were
+folded into T1322 `TestSaySpellRendersThroughPerformAct`.
+
+The four weak tests and three folds were checked against the C call paths in
+`src/`; the selected C citations in the ledger and modified tests were checked
+against the named source lines. No expected value disagreed with C. This batch
+changes tests and research records only, so no census was needed. `pkg/game`
+coverage was 64.6% on the preregistered commit and remains 64.6% after this
+batch.
+
+## Batch 22 preregistered estimate (before reading tests T1339–T1388)
+
+The remainder forecast after T1338 is R611/F1/C12/D29 across 653 tests. For
+this 50-test slice I predict R46/F1/C1/D2, with all 50 introduced after the
+2026-07-12 oracle date. That leaves a forecast of R565/F0/C11/D27 across 603
+tests.
+
+The roster is the next 50 unledgered names in inventory order after T1338.
+They span inventory lines 1441–1543, skipping names already recorded in the
+ledger:
+
+- `TestShootTargetCMatcherAndRoomOrder`
+- `TestShootTargetConcurrentMovement`
+- `TestShopAccountPurchaseAndSaleBanking`
+- `TestShopNPCGodLevelPaysAndPrefixSale`
+- `TestShopPricesUseCFloatMarkup`
+- `TestShopPriceUsesCIntegerOrder`
+- `TestShopProducesObjectRejectsPrototypeLessObject`
+- `TestShopRoomWildcardUsesCRealRoomIndex`
+- `TestShopTradeExpressionMatchesCStackSemantics`
+- `TestShopTradeWithMatchesCRefusalOrder`
+- `TestShopTransactionAmountUsesDigitOnlyLeadingCount`
+- `TestShowShopsKeeperRNumZeroCollision`
+- `TestSkillDamageAttackTypeMatchesC`
+- `TestSkillDamageNilAttacker`
+- `TestSkillDamageSeamRunsFullJailGuardRedirect`
+- `TestSkillDeathOrderExactBytes`
+- `TestSkillKillCorpseUsesCSkillAttackType`
+- `TestSkillResultDamageAttackTypePrefersCSkillMessageKey`
+- `TestSkillStorageName_AllKujiSealsUseCommandSkillKeys`
+- `TestSkillStorageName_JinUsesCommandSkillKey`
+- `TestSkillToAttackTypePreservesDamageSpellIDs`
+- `TestSleepingVisibilityNamesCharactersAndObjects`
+- `TestSnakeSpecialDrawsOnlyWithSameRoomVictim`
+- `TestSpawnMobWithLevelIAppliesCreateMobileScaling`
+- `TestSpawnObjectToPlayerInventoryIUsesObjToCharPlacement`
+- `TestSpawnObjectToRoomForSpellUsesObjToRoomPlacement`
+- `TestSpecAlienElevatorMovesOnlyOpenEastRoom`
+- `TestSpecAssignmentsHaveLegacyLanesForThePlayerWalk`
+- `TestSpecBackstabber_MissSetsVictimFightingPosition`
+- `TestSpecBat_Arms`
+- `TestSpecBatRoom_WakesSleeping`
+- `TestSpecBeholderFightingArmDraws`
+- `TestSpecBeholderPeacefulLoneRoomDoesNotDraw`
+- `TestSpecBeholderPeacefulPulseDraws`
+- `TestSpecBrainEater_BeheadsCorpseAndLevelsInstance`
+- `TestSpecBrainEater_DamrollGrowthAtLevelThirty`
+- `TestSpecBrainEater_EntryGates`
+- `TestSpecBrainEater_SkipsNonQualifyingObjects`
+- `TestSpecBrassDragonBlocksThroughAct`
+- `TestSpecBrassDragonUsesMoverRoomAndImmortalGate`
+- `TestSpecButler_GenDoorCallBytesMatchC`
+- `TestSpecButler_GenDoorUsesGenericFindInventoryFirst`
+- `TestSpecCarrionActorSpawnsForTheActor`
+- `TestSpecCastleGuardEast_AssistsOnlyEast`
+- `TestSpecCastleGuardEast_BlockAndHit`
+- `TestSpecCleric_Lspell12FallsToDefaultHarm`
+- `TestSpecClerk_HometownZoneNames`
+- `TestSpecClerkTellArgumentsMatchC`
+- `TestSpecClerk_VisibilityAndUnknownZone`
+- `TestSpecConductorAsksTicketOnAutonomousPulse`
+
+## Batch 22 post-read audit (T1339–T1388)
+
+Actual marks: **R44 / F4 / C1 / D1**. All 50 tests were introduced after the
+2026-07-12 oracle date. The preregistered estimate was R46/F1/C1/D2, so the
+actual variance was R−2/F+3/C0/D−1. Junk totals were J3=4, J4=1 and J9=1.
+The planned remainder forecast after T1388 remains R565/F0/C11/D27 across
+603 tests.
+
+**False greens repaired and mutation-proven:**
+
+- T1340 `TestShootTargetConcurrentMovement` (J3): the former loop allowed
+  every lookup to return nil. A start barrier and a positive-hit assertion
+  now require the concurrent lookup to find the moving player. An always-nil
+  resolver kept the old body green and made the repaired test red.
+- T1382 `TestSpecCastleGuardEast_AssistsOnlyEast` (J3): the former test only
+  counted combat starts. It now pins the guard-to-peer-target pair; replacing
+  the C target with the peer itself kept the old body green and made the new
+  assertion red.
+- T1383 `TestSpecCastleGuardEast_BlockAndHit` (J3): the former test likewise
+  counted a combat start without checking its defender. It now pins
+  guard-to-mover combat; a self-target mutation kept the old body green and
+  made the repaired test red.
+- T1384 `TestSpecCleric_Lspell12FallsToDefaultHarm` (J3): the old utterance
+  substring accepted any spell. It now also requires the target's HP to fall;
+  replacing default harm with poison kept the old body green and made the
+  repaired assertion red.
+
+**Fold and deletion:** T1358 `TestSkillStorageName_JinUsesCommandSkillKey`
+(J4) was removed because T1357's all-seals table already asserts the Jin
+mapping. T1352 `TestSkillDamageNilAttacker` (J9) was deleted: no production
+caller passes nil, and the C `damage()` path dereferences `ch->in_room`
+(`src/fight.c:1328-1333`), so this Go-only nil case has no reachable C or
+player behavior to protect. No unique behavior was removed.
+
+Attribution for the six weak-mark introductions (T1340, T1352, T1358, and
+T1382–T1384) is **unknown** under PF-152/PF-153: each commit has Zach's git
+identity and no `Co-Authored-By` trailer. All selected C citations in these
+rows and the touched test comments were checked against the named source
+lines and call paths. No expected value disagreed with C. The batch changes
+tests and research records only; no census was required.
+
+`pkg/game` coverage was 64.6% at the preregistered commit; the post-change
+coverage remains 64.6% (`GOEXPERIMENT=nojsonv2 go test ./pkg/game -cover`).
+
+## Batch 23 preregistered estimate (before reading tests T1389–T1438)
+
+The planned remainder forecast after T1388 is R565/F0/C11/D27 across 603
+tests. For this 50-test slice I predict R47/F0/C1/D2, with all 50 introduced
+after the 2026-07-12 oracle date.
+
+The roster is the next 50 unledgered names in inventory order after T1388.
+They span inventory lines 1544–1590, skipping tests already present in the
+ledger:
+
+- `TestSpecConductorFightLinesThroughAct`
+- `TestSpecConjured_AutonomousRegisteredDispatch`
+- `TestSpecConjured_DefaultSpeechAudienceAndExtraction`
+- `TestSpecConjured_EntryAndCharmGates`
+- `TestSpecConjured_FizzleAudienceAndExtraction`
+- `TestSpecConSeller_BranchOrderAndSuccessAudience`
+- `TestSpecConSeller_DirectTellVisibilityAndOriginalCon`
+- `TestSpecConSeller_EntryGatesAndCommandSurface`
+- `TestSpecConSeller_InvisibleActorRoomWarning`
+- `TestSpecConSellerTellArgumentsMatchC`
+- `TestSpecCouchActPreservesCLineBreakBytes`
+- `TestSpecCouch_ExactGate`
+- `TestSpecCouch_ExtractsCouch`
+- `TestSpecCouch_LookerRoom`
+- `TestSpecCuchi_CommandGate`
+- `TestSpecCuchi_OrdinaryPat`
+- `TestSpecCuchi_OrodrethNoPromotion`
+- `TestSpecDracula_EntryGatesAndDelegation`
+- `TestSpecDracula_ExistingVampireOrWerewolfSkipsTransformation`
+- `TestSpecDracula_LookBiteAudienceAndVampireState`
+- `TestSpecDumpActorClearsRoomAndDeclines`
+- `TestSpecElementalRoomAffectsEveryMortalOccupant`
+- `TestSpecElementsGaleruAlive_EntryAndExactMobGate`
+- `TestSpecElementsGaleruAlive_UsesExactVNumAndMovesNPCs`
+- `TestSpecElementsGaleruColumn_AudienceLookAndRelocation`
+- `TestSpecElementsGaleruColumn_RejectsNilActor`
+- `TestSpecElementsGaleruColumn_RequiresAllExactTalismans`
+- `TestSpecElementsGuardian_CommandlessAndNilEntryGates`
+- `TestSpecElementsGuardian_PairUsesRoomOrderAudienceAndHit`
+- `TestSpecElementsGuardian_SoloUsesSelfDamageAndActPronouns`
+- `TestSpecElementsLoadCylinders_GetRemovesOnlyCurrentRoomCylinder`
+- `TestSpecElementsLoadCylinders_MapsAllRegisteredPillars`
+- `TestSpecElementsLoadCylinders_RejectsWrongTalismanAndExistingCylinder`
+- `TestSpecElementsMasterColumn_EntryAndTalismanDestinations`
+- `TestSpecElementsMasterColumn_PreservesCStaleCarryStateAndAudience`
+- `TestSpecElementsMasterColumn_RejectsNilActor`
+- `TestSpecElementsMinionActorPortsC`
+- `TestSpecElementsMinion_UsesKeywordsNotVnumsAndSkipsInvisibleObjects`
+- `TestSpecElementsMinion_UsesOrderedVisibleKeywordPasses`
+- `TestSpecElementsPlatforms_EntryAudienceAndRelocation`
+- `TestSpecElementsPlatformsMovesMobiles`
+- `TestSpecElementsPlatforms_RejectsNilActor`
+- `TestSpecElevatorMovesOnlyFirstTwoCharacters`
+- `TestSpecElevatorThroughAct`
+- `TestSpecEnterCircleCountsPlayersAndConsumesOtherLook`
+- `TestSpecEnterCircleThroughAct`
+- `TestSpecEqThief_EntryGates`
+- `TestSpecEqThief_GetAndJunkBlackContainerItem`
+- `TestSpecEqThief_StealsFirstVisibleItemAndPreservesDraws`
+- `TestSpecEvilLead_NeverHandles`
+
+## Batch 23 post-read audit (T1389–T1438)
+
+Actual marks: **R39 / F7 / C1 / D3**. All 50 introductions postdate the
+2026-07-12 oracle. The preregistered estimate was R47/F0/C1/D2, so the actual
+variance was R−8/F+7/C0/D+1. The batch reviewed 50 tests and leaves 553 tests after T1438. Junk totals overlap: J3=3, J4=1, J5=1, J9=5.
+
+**False greens repaired and mutation-proven:**
+
+- T1389 `TestSpecConductorFightLinesThroughAct` (J3): the old test sampled
+  only draws 1 and 4 despite its “every fight line” comment, and accepted
+  extra output. It now checks all five C lines as exact per-draw output. A
+  duplicate Act kept the old body green and made the repaired test red.
+- T1409 `TestSpecDumpActorClearsRoomAndDeclines`: the old substring assertion
+  allowed duplicate bytes. It now pins the exact single vanish line. A
+  duplicate room Act kept the old body green and made the repaired test red.
+- T1410 `TestSpecElementalRoomAffectsEveryMortalOccupant` (J3): the old
+  fixture included only one mortal. It now verifies a second mortal's damage
+  and fire/death messages. Skipping that occupant kept the old body green and
+  made the repaired test red.
+- T1411 `TestSpecElementsGaleruAlive_EntryAndExactMobGate`: the live-Galeru
+  refusal previously checked return and location but not silence. It now
+  requires no output; a live-gate warning kept the old body green and made
+  the repaired test red.
+- T1415 `TestSpecElementsGaleruColumn_RequiresAllExactTalismans`: the partial
+  setup previously checked only fallthrough, output, and character locations.
+  It now checks that each placed talisman remains in its original room. An
+  extraction on the incomplete branch kept the old body green and made the
+  repaired test red.
+- T1416 `TestSpecElementsGuardian_CommandlessAndNilEntryGates` (J9): the old
+  test called the player wrapper with a nil actor, so the nil guard masked the
+  commandless gate. It now drives the registered actor adapter with the nonnil
+  mobile pulse actor and checks silent decline. Removing the adapter command
+  gate kept the old body green and made the repaired test red.
+- T1433 `TestSpecEnterCircleCountsPlayersAndConsumesOtherLook` (J3/J9): the
+  previous non-circle look assertion checked only `true`, so the special
+  could consume the command without calling `do_look`. It now clears the
+  crowd response and requires look output. A return-true/no-look mutant kept
+  the old body green and made the repaired test red.
+
+**Fold and deletions:** T1398 `TestSpecConSellerTellArgumentsMatchC` (J4/J5)
+was removed: its internal `do_tell` call seam duplicated player-visible
+responses already asserted by T1395, T1394 and T1397. T1414
+`TestSpecElementsGaleruColumn_RejectsNilActor`, T1424
+`TestSpecElementsMasterColumn_RejectsNilActor`, and T1429
+`TestSpecElementsPlatforms_RejectsNilActor` (J9) were deleted. Each called a
+private Go wrapper with nil where C's active room-command path supplies a
+character; no C/player behavior is associated with that input. The depth
+manifest now points to the reachable command-entry proofs for master column
+and platforms and drops the nil-only Galeru column row. No live behavior was
+left without proof.
+
+All eleven weak-mark introductions (seven F, one C, three D) have `unknown`
+author attribution under PF-152/PF-153: the introducing commit has Zach's git
+identity and no `Co-Authored-By` trailer. The current branch/PR was recorded
+separately and not used to infer an author. No new expected value disagreed
+with C. `TestSpecCuchi_OrodrethNoPromotion` remains the documented,
+owner-approved DP-1373 divergence: the expected purr/no-promotion behavior is
+intentional (PF-051), not an unfiled J10 finding. The batch changes tests,
+test-audit records, and depth evidence only; no census was required.
+
+`pkg/game` coverage was 64.6% at the preregistered commit and remains 64.6%
+after these changes (`GOEXPERIMENT=nojsonv2 go test ./pkg/game -cover`).
+
+
+## Batch 24 preregistered estimate (before reading tests T1439–T1488)
+
+Before reading this batch, I compared the frozen inventory against all ledger
+base names. The inventory has 1,991 distinct functions. T001–T1438 has 1,438
+rows but only 1,366 distinct function names: 72 rows repeat a function already
+recorded. That leaves **625 unique inventory functions** without a ledger row,
+not the 553 forecast after T1438. I will preserve all prior rows under the
+append-only rule and audit every remaining function, so the ledger will end at
+T2063 if the inventory stays unchanged. The first-50 roster is the earliest
+unledgered names in inventory order, scanning from the beginning and skipping
+all functions already in the ledger; this supersedes the implicit cursor at
+inventory line 1601 used by the prior roster.
+
+The roster spans inventory lines 234–366 (50 unledgered functions):
+
+- `TestDamageEntryBreaksFollower`
+- `TestDamageNewbieExperienceBeforeMessage`
+- `TestDamageRefusedNPCAttackerIsSilent`
+- `TestDamageRefusedPeacefulRetaliation`
+- `TestDamageRefusedProtections`
+- `TestDamageRefusedShopkeeperSpecials`
+- `TestDeathCryBoundedCallers`
+- `TestDeathCryMuffledBehindClosedDoors`
+- `TestDeathFollowerCleanupBeforeDropAndRemoval`
+- `TestDeathFollowerOwnMasterAndRemoteFollower`
+- `TestDeathObservationCoversGuardedAndRawPaths`
+- `TestDeathPreservesCrashFlag`
+- `TestDeathReleasesFollowers`
+- `TestDeserializeMigratesVersion1Flags`
+- `TestDiagConditionMatchesCThresholds`
+- `TestDieWithKillerBothConLossDrawsAreUnfloored`
+- `TestDieWithKillerConLossHasNoFloor`
+- `TestDisarmVictimFlagDirect`
+- `TestDisbandWalkIncludesMobAndKeepsCharmedFollow`
+- `TestDismountDepthMatchesCOrderAndAffectUnmount`
+- `TestDoActionFlirtSleepingTargetHitsPositionGate`
+- `TestDoActionFondleSleepingTargetHitsPositionGate`
+- `TestDoBearhug_SignedCharRollAbove127HitsLikeReferenceC`
+- `TestDoCircle_PositionMultiplier`
+- `TestDoClanBankOverflowWithdrawMatchesC`
+- `TestDoClanInfoIncludesDefinedCDetails`
+- `TestDoClanInfoListIncludesDefinedCHeading`
+- `TestDoClanRenameOverflowRefusesLikeC`
+- `TestDoClanSetAppfeeOverflowRefusesLikeC`
+- `TestDoCutthroatGateOrder`
+- `TestDoCutthroatImmortalTargetOverridesCaster`
+- `TestDoCutthroatNoSkillDoesNotDraw`
+- `TestDoCutthroatSuccessAndFailureContracts`
+- `TestDoDamage_WornApplySpellProvidesSanctuary`
+- `TestDoDetectDepthFailureMessageWaitAndRollRange`
+- `TestDoDetectDepthGatesAndOutput`
+- `TestDoDetectDepthSuccessOrderAndSecretMark`
+- `TestDoDiagnoseUsesFightingFallbackAndPrivateOutput`
+- `TestDoDisarmDepthFailureState`
+- `TestDoDisarmDepthPlayerSuccess`
+- `TestDoDisarmDepthRetaliatesWhenVictimWasNotFighting`
+- `TestDoDisarmDepthWeaponGatePrecedesCombatGate`
+- `TestDoDisembowelDepthUsesCMessageAndDrawOrder`
+- `TestDoDisembowel_Mounted`
+- `TestDoDisembowel_NoWeapon`
+- `TestDoDisembowel_SkillRollFailureUsesDamageMessagePath`
+- `TestDoDisembowel_WrongWeapon`
+- `TestDoDragonKick_BlocksInsufficientMove`
+- `TestDoDragonKick_MissDrawOrder`
+- `TestDoDragonKick_WaitStateAlways22Pulses`
+
+From recent batch results, my prediction is **R43 / F5 / C1 / D1**. I expect all
+50 to postdate the 2026-07-12 oracle cutoff; I will verify dates from their
+introducing commits during the audit.
+
+## Batch 24 post-read audit (T1439–T1488)
+
+Actual marks: **R42 / F7 / C0 / D1**. The preregistered estimate was
+R43/F5/C1/D1 (variance R−1/F+2/C−1/D0). All 50 tests were introduced after
+the 2026-07-12 oracle cutoff. Junk marks overlap: J3=8 (the seven F rows and
+T1457), J8=1 (T1457). No all-R spot checks applied because the batch contains
+F marks. The ledger now has 1,488 rows; scanning the inventory by unique test
+name leaves 575 unledgered tests because 72 earlier rows repeat an existing
+name.
+
+**False greens repaired and mutation-proven:**
+
+- T1443 `TestDamageRefusedProtections` (J3): changed the substring check to
+  exact C CRLF bytes. An extra protection Act kept the old body green and made
+  the repaired test red.
+- T1448 `TestDeathFollowerOwnMasterAndRemoteFollower` (J3): replaced a prefix
+  check with exact outgoing-master bytes. An extra room line kept the old body
+  green and made the repaired test red.
+- T1451 `TestDeathReleasesFollowers` (J3): require exactly one private
+  stop-following line. Duplicating the private Act kept the old body green and
+  made the repaired test red.
+- T1463 `TestDoClanBankOverflowWithdrawMatchesC` (J3): assert the C overflow
+  withdrawal’s player gold and clan treasury state as well as its
+  acknowledgement. Restoring the prior negative-amount no-op kept the old body
+  green and made the repaired test red.
+- T1464 `TestDoClanInfoIncludesDefinedCDetails` (J3): compare the complete
+  detail transcript, including C’s CRLF then LF plan ending. Restoring the
+  extra CRLF kept the old body green and made the repaired test red.
+- T1466 `TestDoClanRenameOverflowRefusesLikeC` and T1467
+  `TestDoClanSetAppfeeOverflowRefusesLikeC` (J3): require exact C refusal
+  bytes. A prefixed refusal kept each old substring assertion green and made
+  each repaired test red.
+
+**Deletion and replacement:** T1457 `TestDisbandWalkIncludesMobAndKeepsCharmedFollow`
+(J3/J8) copied the production follower loop and therefore could not catch a
+regression in the player command. Deleted it and added
+`TestCmdUngroupDisbandIncludesMobileAndPreservesCharmedFollow` in `pkg/session`,
+which drives the actual command and checks exact player output, group flags,
+mobile inclusion, and charm-preserved following. Added
+`TestCharacterUngroupDisbandsMobileFollowers` to retain direct game-layer
+coverage of the production mobile actor body. Both deliberate mutations (skip
+mobile followers; leave the leader’s AFF_GROUP bit set) kept the old handwritten
+body green and made the command-path test red. The production command now uses
+`game.SetGroupedActor` to clear the leader’s group state as C does.
+
+The stricter clan assertions exposed two C-parity defects, both corrected in
+this batch: an overflowing bank withdrawal wraps through C `atoi` to the
+negative amount, so `SpendTreasure` must apply the negative balance change;
+and clan info must end its plan with C’s `\r\n\n`, not an extra CRLF. No
+expected divergence remains unfiled, and no governing fidelity rule was
+changed. The owner-approved DP-1418 death-cry divergence remains documented;
+it is not a new J10 finding.
+
+Weak-test authorship under PF-152/PF-153: T1443 has the Claude Opus 5.5 trailer.
+T1448, T1451, T1457, T1463, T1464, T1466, and T1467 have Zach’s git identity
+without a model trailer and remain `unknown`; branch names were not used to
+infer an author. Two other tests in the batch were authored by Luna, but both
+were R. The weak rows were all post-oracle: pre-oracle 0, post-oracle R42/F7/D1.
+
+`pkg/game` statement coverage was 64.7% before the batch and remains 64.7%.
+All eleven required PR gates passed. `make string-census` passed its ratchet;
+it reported the generated census reports as stale and they were not refreshed.
+The targeted draw-parity census
+`/home/zach/Archives/darkpawns/oracle-runs/2026-11-22/luna-ta-game-24-targeted`
+was CLEAN: `clan-atoi-depth`, `clan-depth`, and `ungroup-disband-depth` all
+passed, with 0 draw divergences. Its frozen source hashes match the production
+and depth files changed by this batch.
+
+## Batch 25 preregistered estimate (before reading tests T1489–T1538)
+
+The batch continues the frozen inventory-order sweep: select the first 50 test
+names not already present in any ledger row, scanning from the start of the
+1,991-function inventory. T001–T1488 has 1,488 rows but 1,416 unique names,
+leaving 575 unique inventory functions unledgered. The selected roster is
+inventory lines 367–507:
+
+- `TestDoDreamMatchesCOrderAudienceAndVisibility`
+- `TestDoExitsBlindnessGate`
+- `TestDoExitsInfravisionSeesDarkDestination`
+- `TestDoFleeNpcWaitGateDoesNotDrawRandomness`
+- `TestDoFollowShadowConsumesSkillRollDraw`
+- `TestDoFollowShadowFailureUsesOrdinaryFollowAudience`
+- `TestDoFollowShadowSuccessAppliesQuietAffect`
+- `TestDoFollowShadowSwitchReplacesPriorAffect`
+- `TestDoGenDoorFarSideActSkipsSleepingAndWritingObservers`
+- `TestDoGenDoorFillWordOnlyArgument`
+- `TestDoGroinripDepthGateOrder`
+- `TestDoGroinripDepthResultContract`
+- `TestDoHideDaytimeSectorGates`
+- `TestDoHouseHandlesMalformedAndFullGuestControls`
+- `TestDoHouseMatchesCArgumentAndStateBoundaries`
+- `TestDoInactiveToggleState`
+- `TestDoInvisUsesLevelAndThresholdAudience`
+- `TestDoKick_WaitStateAlways22Pulses`
+- `TestDoKujiKiri_JinFailureJoinsAsInertRecord`
+- `TestDoKujiKiri_JinGuardMessages`
+- `TestDoKujiKiri_JinSuccessPreservesCDefaultSecondAffect`
+- `TestDoKujiKiri_JinUnmasteredConsumesCSuccessDraw`
+- `TestDoKujiKiri_KaiFailureKeepsPrimaryLockout`
+- `TestDoKujiKiri_KaiSuccessPreservesTwoCRecords`
+- `TestDoKujiKiri_KyoFailureKeepsPrimaryLockout`
+- `TestDoKujiKiri_KyoSuccessPreservesTwoCRecords`
+- `TestDoKujiKiri_RinFailureMessages`
+- `TestDoKujiKiri_RinSuccessMessages`
+- `TestDoKujiKiriShaCapsAtMaxHP`
+- `TestDoKujiKiriShaFailureLeavesNoLockout`
+- `TestDoKujiKiriShaUsesLowLevelHealFloor`
+- `TestDoLookForSpellGates`
+- `TestDoLookInHeaderUsesCFName`
+- `TestDoLookTargetSyntheticExtraDescHasNoExtraBlankLine`
+- `TestDoMindlinkDepthGates`
+- `TestDoMindlinkDrainedLineIsBare`
+- `TestDoMoldRewritesLiveObjectFields`
+- `TestDonateArrivalUsesActObjectVisibilityAndSleepAudience`
+- `TestDonateGoldArrivalUsesActDarknessVisibility`
+- `TestDonateGoldConcurrentJunksOnce`
+- `TestDonatePlacementPrependsInDonationRoom`
+- `TestDoNeckbreakDepthFailureRetaliationContract`
+- `TestDoNeckbreakDepthGateOrder`
+- `TestDoNeckbreakDepthPeacefulUsesCanonicalRoomBit`
+- `TestDoNeckbreakDepthResultContractAndDrawOrder`
+- `TestDoNewbieChannelDepthGatesAndFanout`
+- `TestDoOpenRejectsKeywordPrefix`
+- `TestDoorFarSideNameUsesCFName`
+- `TestDoQuitRecordsLoadRoomThroughLVLIMMORT`
+- `TestDoRideDirectGates`
+
+Before reading these tests, my estimate is **R43 / F5 / C1 / D1**.
+
+## Batch 25 post-read audit (T1489–T1538)
+
+Actual marks: **R39 / F10 / C1 / D0**. The preregistered estimate was
+R43/F5/C1/D1 (variance R−4/F+5/C0/D−1). All 50 tests were introduced after
+the 2026-07-12 oracle cutoff. Junk marks overlap: J3=9, J9=1 (T1506), and
+J4=1 (T1508). No all-R spot checks applied because the batch contains F marks.
+The batch’s only C row, T1508 `TestDoKujiKiri_JinGuardMessages`, duplicated the
+common class, fighting, lockout, mounted, and mastery refusals already covered
+by `TestDoKujiKiri_NotNinja`, `TestDoKujiKiri_Fighting`,
+`TestDoKujiKiri_AlreadyAffected`, `TestDoKujiKiri_Mounted`, and
+`TestDoKujiKiri_SealNotMastered`; the Jin pre-mastery draw remains covered by
+`TestDoKujiKiri_JinUnmasteredConsumesCSuccessDraw`. The duplicate was deleted,
+and the live `jin.tsv` rows now cite the surviving guard tests. The ledger has
+1,538 rows; scanning the 1,991 unique inventory names leaves 525 unledgered
+tests.
+
+**False greens repaired and mutation-proven:**
+
+- T1498 `TestDoGenDoorFillWordOnlyArgument`: require the exact fillword-only
+  open/close and empty-open transcripts. An extra refusal line kept the old
+  checks green and made the repaired test red.
+- T1520 `TestDoLookForSpellGates`: require exact stars and blind gate bytes. An
+  added suffix kept the old substring check green and made the repaired test
+  red.
+- T1521 `TestDoLookInHeaderUsesCFName`: compare the exact first container
+  header line. Added header text kept the old substring check green and made
+  the repaired test red.
+- T1530 `TestDoNeckbreakDepthFailureRetaliationContract`: require exact actor,
+  victim, and room act text. Added actor text kept the old nonempty check green
+  and made the repaired test red.
+- T1533 `TestDoNeckbreakDepthResultContractAndDrawOrder`: require the exact
+  seeded 18d(level) result and next draw. Halving damage after consuming the
+  same dice kept the old positive-damage/draw check green and made the repaired
+  test red. The replay consumes the percent and damage rolls once each.
+- T1500 `TestDoGroinripDepthResultContract`: require the exact C room line. An
+  added suffix kept the old substring check green and made the repaired test
+  red.
+- T1505 `TestDoInvisUsesLevelAndThresholdAudience`: compare the complete
+  per-observer message list. A duplicated disappearance act kept the old
+  substring check green and made the repaired test red.
+- T1535 `TestDoOpenRejectsKeywordPrefix`: require only the exact no-door
+  refusal and closed exit state. An extra line kept the old checks green and
+  made the repaired test red.
+- T1536 `TestDoorFarSideNameUsesCFName`: require the exact observer transcript,
+  including C’s blank line. Appended text kept the old substring check green
+  and made the repaired test red.
+- T1506 `TestDoKick_WaitStateAlways22Pulses`: require a deterministic skill-1
+  miss rather than skipping after repeated hits. A forced hit arm kept the old
+  test green and made the repaired test red.
+
+`pkg/game` statement coverage was 64.7% before the batch and remains 64.7%.
+All eleven required PR gates passed: `make fmt`, build, vet, full tests,
+`golangci-lint` v2.15.0, modernize, deadcode ratchet, string census, fidelity
+depth, expected-divergences, and function-index. The string census ratchet
+passed while reporting its generated reports as stale; they were not refreshed.
+The fidelity-depth gate initially found four Jin manifest rows pointing to the
+deleted duplicate; those rows were redirected to the surviving exact test
+declarations and the gate then passed. No oracle census was needed for this
+test and documentation audit.

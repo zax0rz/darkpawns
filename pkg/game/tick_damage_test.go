@@ -122,8 +122,8 @@ func TestPointUpdateCutthroatDamageTail(t *testing.T) {
 	if p.GetHP() != 87 {
 		t.Fatalf("cutthroat HP=%d, want 87", p.GetHP())
 	}
-	if outputOf(out, p.Name) == "" {
-		t.Fatal("cutthroat omitted skill_message")
+	if got, want := outputOf(out, p.Name), "TestPlayer gasps for air as blood spurts from his slit throat.Blood spurts from your jugular, soaking you."; got != want {
+		t.Fatalf("cutthroat output = %q, want %q", got, want)
 	}
 }
 
@@ -135,6 +135,8 @@ func (tickLowRoller) Number(low, high int) int  { return low }
 func (tickLowRoller) Dice(number, size int) int { return number }
 
 func TestPointUpdateMountedPoisonDamageTail(t *testing.T) {
+	// The C damage tail sends the knock, runs do_dismount, then sends the
+	// landing result (src/fight.c:1547-1555; src/limits.c:503-506).
 	w, p, _, out := tickDamageWorld(t)
 	original := combat.GetRoller()
 	combat.SetRoller(tickLowRoller{})
@@ -156,10 +158,11 @@ func TestPointUpdateMountedPoisonDamageTail(t *testing.T) {
 		t.Fatalf("C do_dismount removed the retained mount master: rider=%q following=%q", mount.GetMountRider(), mount.GetFollowing())
 	}
 	got := outputOf(out, p.Name)
-	for _, line := range []string{"The hit knocks you off of your mount!\r\n\r\n", "You hop off your mount.\r\n", "You land on your feet!\r\n"} {
-		if !strings.Contains(got, line) {
-			t.Fatalf("dismount bytes=%q missing %q", got, line)
-		}
+	knock := strings.Index(got, "The hit knocks you off of your mount!\r\n\r\n")
+	hop := strings.Index(got, "You hop off your mount.\r\n")
+	land := strings.Index(got, "You land on your feet!\r\n")
+	if knock < 0 || hop < 0 || land < 0 || knock >= hop || hop >= land {
+		t.Fatalf("dismount byte order = %q, want knock < hop < land", got)
 	}
 }
 

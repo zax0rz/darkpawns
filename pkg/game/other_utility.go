@@ -147,8 +147,9 @@ func (w *World) doRecall(ch *Player, me *MobInstance, cmd string, arg string) bo
 		recallRoom = 21258
 	}
 
-	// C unmounts in place and the mount stays behind; unmount before the
-	// transfer so CharTransfer's mount-follow does not bring it along.
+	// C spell_recall unmounts after char_to_room (src/spells.c:143-157). Go
+	// clears mounted state first because PlayerTransfer follows a mounted body;
+	// that keeps the mount in the original room and preserves C's final state.
 	if ch.IsMounted() {
 		Unmount(ch, w.GetMount(ch))
 		ch.SetAffect(affMounted, false)
@@ -210,8 +211,9 @@ func (w *World) ExecuteWordOfRecall(ch, victim any) {
 		recallRoom = 21258
 	}
 
-	// C unmounts in place and the mount stays behind; unmount before the
-	// transfer so CharTransfer's mount-follow does not bring it along.
+	// C spell_recall unmounts after char_to_room (src/spells.c:143-157). Go
+	// clears mounted state first because PlayerTransfer follows a mounted body;
+	// that keeps the mount in the original room and preserves C's final state.
 	if v.IsMounted() {
 		Unmount(v, w.GetMount(v))
 		v.SetAffect(affMounted, false)

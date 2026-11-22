@@ -366,7 +366,7 @@ func TestMobCommandGiveSetsRecipientFlag(t *testing.T) {
 }
 
 // TestScriptableGiveSetsFlag drives GiveItemToCharScriptable — the lua
-// objto/oload "char" path, C's obj_to_char (handler.c:569-571).
+// objto/oload "char" path, C's obj_to_char (src/handler.c:569-571).
 func TestScriptableGiveSetsFlag(t *testing.T) {
 	w, p := newFlagWorld(t)
 	obj := newFlagItem(w, 7117, 1)
@@ -379,7 +379,7 @@ func TestScriptableGiveSetsFlag(t *testing.T) {
 		t.Fatal("scriptable give did not deliver the object")
 	}
 	if !p.NeedsCrashSave() {
-		t.Fatal("scriptable give did not set PLR_CRASH (C obj_to_char, handler.c:569-571)")
+		t.Fatal("scriptable give did not set PLR_CRASH (C obj_to_char, src/handler.c:569-571)")
 	}
 }
 

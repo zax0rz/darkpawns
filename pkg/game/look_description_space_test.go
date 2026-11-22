@@ -54,13 +54,19 @@ func TestRoomLookDescriptionTrailingSpacePrecedesTheBrackets(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		events := renderRoomLook(w, ch)
 		var bares []string
-		var literals []string
-		for _, message := range w.DoLookRoomAt(ch, 1001, true).Messages {
-			if message.Bare {
-				bares = append(bares, message.Format)
-			} else if message.Literal {
-				literals = append(literals, message.Format)
+		greenIndex, resetIndex := -1, -1
+		for i, event := range events {
+			if !event.bare {
+				continue
+			}
+			bares = append(bares, event.text)
+			switch event.text {
+			case " \x1b[32m":
+				greenIndex = i
+			case "\x1b[0m":
+				resetIndex = i
 			}
 		}
 
@@ -71,10 +77,13 @@ func TestRoomLookDescriptionTrailingSpacePrecedesTheBrackets(t *testing.T) {
 		if want := []string{" \x1b[32m", "\x1b[33m", "\x1b[0m"}; strings.Join(bares, "|") != strings.Join(want, "|") {
 			t.Fatalf("bare writes = %q, want %q", bares, want)
 		}
-		// The space must not have survived onto a list entry.
-		for _, line := range literals {
-			if strings.HasPrefix(line, " ") && !strings.HasPrefix(line, " A dusty room.") {
-				t.Fatalf("line %q starts with the description's trailing space; C puts it before the bracket", line)
+		// The space must not have survived onto a list entry in delivered output.
+		if greenIndex < 0 || resetIndex <= greenIndex {
+			t.Fatalf("delivered writes omitted C's list brackets: %+v", events)
+		}
+		for _, event := range events[greenIndex+1 : resetIndex] {
+			if !event.bare && strings.HasPrefix(event.text, " ") {
+				t.Fatalf("delivered list line %q starts with the description's trailing space", event.text)
 			}
 		}
 	})
@@ -87,13 +96,13 @@ func TestRoomLookDescriptionTrailingSpacePrecedesTheBrackets(t *testing.T) {
 
 		// C's send_to_char("") writes nothing, so the space stands alone and the
 		// list lines stay clean.
+		events := renderRoomLook(w, ch)
 		var bares []string
-		for _, message := range w.DoLookRoomAt(ch, 1001, true).Messages {
-			if message.Bare {
-				bares = append(bares, message.Format)
-			}
-			if message.Literal && strings.HasPrefix(message.Format, " ") {
-				t.Fatalf("colour off: line %q carries the description's space", message.Format)
+		for _, event := range events {
+			if event.bare {
+				bares = append(bares, event.text)
+			} else if len(bares) > 0 && strings.HasPrefix(event.text, " ") {
+				t.Fatalf("colour off: delivered line %q carries the description's space", event.text)
 			}
 		}
 		if len(bares) != 1 || bares[0] != " " {
@@ -112,9 +121,9 @@ func TestRoomLookDescriptionTrailingSpacePrecedesTheBrackets(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		for _, message := range w.DoLookRoomAt(ch, 1001, true).Messages {
+		for _, event := range renderRoomLook(w, ch) {
 			// The space precedes the exit line's own CCCYN, so it is the first byte.
-			if message.Literal && strings.HasPrefix(message.Format, " ") && strings.Contains(message.Format, "[ Exits:") {
+			if !event.bare && strings.HasPrefix(event.text, " ") && strings.Contains(event.text, "[ Exits:") {
 				return
 			}
 		}
@@ -135,12 +144,12 @@ func TestRoomLookDescriptionTrailingSpacePrecedesTheBrackets(t *testing.T) {
 		}
 
 		// num_extras == 0 sends the description alone: no space, no prefix.
-		for _, message := range w.DoLookRoomAt(ch, 1001, true).Messages {
-			if message.Bare && strings.HasPrefix(message.Format, " ") {
-				t.Fatalf("bare write %q carries a space with no extra descriptions", message.Format)
+		for _, event := range renderRoomLook(w, ch) {
+			if event.bare && strings.HasPrefix(event.text, " ") {
+				t.Fatalf("bare write %q carries a space with no extra descriptions", event.text)
 			}
-			if message.Literal && strings.HasPrefix(message.Format, " ") {
-				t.Fatalf("line %q carries a space with no extra descriptions", message.Format)
+			if !event.bare && strings.HasPrefix(event.text, " ") {
+				t.Fatalf("delivered line %q carries a space with no extra descriptions", event.text)
 			}
 		}
 	})

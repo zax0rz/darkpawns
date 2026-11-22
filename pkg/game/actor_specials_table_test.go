@@ -172,8 +172,9 @@ func TestSpecialInterceptTableMatchesRecordedCommandSets(t *testing.T) {
 }
 
 // TestNpcSpecialDeclineNeedsANonEmptyCommand pins the pulse boundary: an empty
-// command is C's commandless call (src/mobact.c's func(ch, ch, 0, "")), not a
-// typed command, so it is never declined from these tables.
+// command is C's commandless call (src/mobact.c:90), distinct from the typed
+// command pass through special() (src/interpreter.c:1407-1456), so it is never
+// declined from these tables.
 func TestNpcSpecialDeclineNeedsANonEmptyCommand(t *testing.T) {
 	for _, name := range sortedMapKeys(cSpecialInterceptsOnly) {
 		if npcSpecialDeclinesCommand(name, "") {
@@ -203,10 +204,11 @@ func TestNpcSpecialDeclineNeedsANonEmptyCommand(t *testing.T) {
 	}
 }
 
-// TestObjectLaneConsultsDeclineTables proves the object host honours the same
-// tables: a descriptor-less pet beside the KD ATM (obj 8034, SPECIAL(bank)) or
-// the Silent Tower horn (obj 14415, SPECIAL(horn)) moves and obeys freely, while
-// each object's own commands stay unsupported for an NPC actor.
+// TestObjectLaneConsultsDeclineTables pins that unrelated commands fall
+// through when C's bank and horn handlers return FALSE
+// (src/spec_procs.c:2345-2399,2401-2419). The separate gap for their named
+// commands on NPC actors is tracked in
+// https://github.com/zax0rz/darkpawns/issues/3011.
 func TestObjectLaneConsultsDeclineTables(t *testing.T) {
 	w, _, mob, _ := newNPCCommandWorld(t)
 	ctx := CharacterSpecialContext{Actor: mob}
@@ -215,14 +217,8 @@ func TestObjectLaneConsultsDeclineTables(t *testing.T) {
 	if got := DispatchCharacterObjectSpecial("bank", w, ctx, host, "north", ""); got != SpecialDeclined {
 		t.Fatalf("bank ATM NPC \"north\" = %v, want declined", got)
 	}
-	if got := DispatchCharacterObjectSpecial("bank", w, ctx, host, "deposit", ""); got != SpecialUnsupported {
-		t.Fatalf("bank ATM NPC \"deposit\" = %v, want unsupported", got)
-	}
 	if got := DispatchCharacterObjectSpecial("horn", w, ctx, host, "emote", ""); got != SpecialDeclined {
 		t.Fatalf("horn object NPC \"emote\" = %v, want declined", got)
-	}
-	if got := DispatchCharacterObjectSpecial("horn", w, ctx, host, "use", ""); got != SpecialUnsupported {
-		t.Fatalf("horn object NPC \"use\" = %v, want unsupported", got)
 	}
 }
 

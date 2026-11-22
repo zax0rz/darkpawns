@@ -55,6 +55,7 @@ func newQuanLoTestWorld(t *testing.T) (*World, *MobInstance, *Player, *Player, m
 }
 
 func TestQuanLoPlayerDeathSendsFiveFingersToGlobalGossip(t *testing.T) {
+	// C's Quan Lo death tail broadcasts once after death handling (src/fight.c:1699-1706).
 	w, mob, victim, peer, messages := newQuanLoTestWorld(t)
 	clearQuanLoMessages(messages)
 
@@ -62,13 +63,14 @@ func TestQuanLoPlayerDeathSendsFiveFingersToGlobalGossip(t *testing.T) {
 
 	want := "Quan Lo gossips, 'QuanActor has just learned the Five Fingers of Enlightenment. Who else wishes to learn from the master?'\r\n"
 	for _, recipient := range []*Player{victim, peer} {
-		if got := messages[recipient.GetName()]; !strings.Contains(got, want) {
-			t.Errorf("%s output = %q, want global Five Fingers line %q", recipient.GetName(), got, want)
+		if got := messages[recipient.GetName()]; strings.Count(got, want) != 1 {
+			t.Errorf("%s output = %q, want one global Five Fingers line %q", recipient.GetName(), got, want)
 		}
 	}
 }
 
 func TestQuanLoMobDeathSendsFiveFingersToGlobalGossip(t *testing.T) {
+	// C's Quan Lo death tail broadcasts once after death handling (src/fight.c:1699-1706).
 	w, mob, actor, peer, messages := newQuanLoTestWorld(t)
 	victim, err := w.SpawnMob(16303, actor.GetRoom())
 	if err != nil {
@@ -81,8 +83,8 @@ func TestQuanLoMobDeathSendsFiveFingersToGlobalGossip(t *testing.T) {
 
 	want := "Quan Lo gossips, 'a guard trainee has just learned the Five Fingers of Enlightenment. Who else wishes to learn from the master?'\r\n"
 	for _, recipient := range []*Player{actor, peer} {
-		if got := messages[recipient.GetName()]; !strings.Contains(got, want) {
-			t.Errorf("%s output = %q, want global Five Fingers line %q", recipient.GetName(), got, want)
+		if got := messages[recipient.GetName()]; strings.Count(got, want) != 1 {
+			t.Errorf("%s output = %q, want one global Five Fingers line %q", recipient.GetName(), got, want)
 		}
 	}
 }
@@ -102,8 +104,8 @@ func TestQuanLoCancelledMobDeathStillGossips(t *testing.T) {
 
 	want := "Quan Lo gossips, 'a guard trainee has just learned the Five Fingers of Enlightenment. Who else wishes to learn from the master?'\r\n"
 	for _, recipient := range []*Player{actor, peer} {
-		if got := messages[recipient.GetName()]; !strings.Contains(got, want) {
-			t.Errorf("%s output = %q, want global Five Fingers line %q", recipient.GetName(), got, want)
+		if got := messages[recipient.GetName()]; strings.Count(got, want) != 1 {
+			t.Errorf("%s output = %q, want one global Five Fingers line %q", recipient.GetName(), got, want)
 		}
 	}
 }

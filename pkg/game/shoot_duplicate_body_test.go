@@ -7,6 +7,8 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
+// C moves a surviving hit mobile into the shooter's room and immediately
+// starts retaliation against that shooter (src/act.offensive.c:947-955).
 func TestShootRealDuplicateMobRetaliation(t *testing.T) {
 	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001}}, Mobs: []parser.Mob{{VNum: 3001, Keywords: "guard", ShortDesc: "a guard", Level: 10}}})
 	if err != nil {

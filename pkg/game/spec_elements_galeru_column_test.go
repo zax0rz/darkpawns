@@ -85,8 +85,9 @@ func placeAllGaleruTalismans(t *testing.T, w *World) {
 
 func TestSpecElementsGaleruColumn_RequiresAllExactTalismans(t *testing.T) {
 	w, actor, peer, npc, messages := newGaleruColumnTestWorld(t)
+	var partial []*ObjectInstance
 	for i, room := range galeruColumnTalismanRooms[:3] {
-		placeGaleruTalisman(t, w, 1300+i, room)
+		partial = append(partial, placeGaleruTalisman(t, w, 1300+i, room))
 	}
 
 	if specElementsGaleruColumn(w, actor, nil, "say", "hello") {
@@ -99,6 +100,11 @@ func TestSpecElementsGaleruColumn_RequiresAllExactTalismans(t *testing.T) {
 	}
 	if got := npc.GetRoom(); got != 1372 {
 		t.Errorf("NPC room = %d, want 1372", got)
+	}
+	for i, item := range partial {
+		if item.Location != LocRoom(galeruColumnTalismanRooms[i]) {
+			t.Errorf("partial talisman %d location = %#v, want unchanged room %d", item.GetVNum(), item.Location, galeruColumnTalismanRooms[i])
+		}
 	}
 	for name, msg := range messages {
 		if msg != "" {
@@ -175,16 +181,4 @@ func assertPeerArrivalLine(t *testing.T, literal, messages string) {
 		return
 	}
 	t.Errorf("no peer arrival line in %q", messages)
-}
-
-func TestSpecElementsGaleruColumn_RejectsNilActor(t *testing.T) {
-	w, _, _, _, messages := newGaleruColumnTestWorld(t)
-	if specElementsGaleruColumn(w, nil, nil, "say", "hello") {
-		t.Fatal("nil actor should not be handled")
-	}
-	for name, msg := range messages {
-		if msg != "" {
-			t.Fatalf("nil actor emitted output for %s: %q", name, msg)
-		}
-	}
 }

@@ -1,8 +1,9 @@
 package game
 
 import (
-	"strings"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // TestCIsNameTable pins C's isname() (src/handler.c:81-111): the typed word must
@@ -69,7 +70,7 @@ func TestCIsNumberTable(t *testing.T) {
 
 // TestDoOpenRejectsKeywordPrefix proves the door path uses cIsName: a door keyed
 // "door" does not respond to the prefix "d". C answers as if no door matched
-// (find_door, src/act.movement.c:413-420). Revert proof: the pre-fix prefix
+// (find_door, src/act.movement.c:413-422). Revert proof: the pre-fix prefix
 // matcher opened/locked the door instead of refusing.
 func TestDoOpenRejectsKeywordPrefix(t *testing.T) {
 	w, p, messages := newDoorHandlerTestWorld(t)
@@ -83,11 +84,14 @@ func TestDoOpenRejectsKeywordPrefix(t *testing.T) {
 	w.DoOpen(p, "d")
 
 	got := joinedDoorMessages(messages, p.Name)
-	if !strings.Contains(got, "There doesn't seem to be a d here.") {
-		t.Fatalf("open d output = %q, want a no-such-door refusal", got)
+	if got != "There doesn't seem to be a d here.\r\n" {
+		t.Fatalf("open d output = %q, want only C's no-such-door refusal", got)
 	}
-	if strings.Contains(got, "Okay.") {
-		t.Fatalf("open d opened the door on a prefix match: %q", got)
+	w.mu.RLock()
+	current := w.rooms[100].Exits["north"]
+	w.mu.RUnlock()
+	if current.ExitInfo&parser.ExitClosed == 0 {
+		t.Fatal("open d changed the door on a keyword-prefix match")
 	}
 }
 

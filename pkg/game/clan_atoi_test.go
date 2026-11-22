@@ -46,38 +46,45 @@ func TestDoClanRenameOverflowRefusesLikeC(t *testing.T) {
 
 	w.doClanRename(p, "99999999999999999999 Ravens")
 
-	if !strings.Contains(output.String(), "There is no clan with that number.") {
-		t.Fatalf("rename(20-digit) output = %q, want C's refusal", output.String())
+	if got, want := output.String(), "There is no clan with that number.\r\n"; got != want {
+		t.Fatalf("rename(20-digit) output = %q, want %q", got, want)
 	}
 	if got := w.Clans.GetClanByIndex(0).Name; got != "Wolves" {
 		t.Fatalf("clan 0 renamed to %q, want untouched (C refuses before any rename)", got)
 	}
 }
 
-// TestDoClanBankOverflowWithdrawMatchesC pins do_clan_bank's amount parse
-// (src/clan.c:940-954): C withdraws with the wrapped negative amount and
-// answers "You withdraw from the clan's treasure." — strconv.Atoi's error
-// arm instead withdrew 0, which C never does.
+// TestDoClanBankOverflowWithdrawMatchesC pins do_clan_bank's overflow result
+// (src/clan.c:940-965): C's atoi returns the wrapped negative amount, which is
+// added to the player's gold and subtracted from clan treasure before the
+// withdrawal acknowledgement. Atoi's previous error arm withdrew 0, while the
+// previous treasury guard also dropped C's negative subtraction.
 func TestDoClanBankOverflowWithdrawMatchesC(t *testing.T) {
 	w, p, output := newClanTestWorld(t)
 
 	w.doClanBank(p, "99999999999999999999 Wolves", CBWithdraw)
 
-	if !strings.Contains(output.String(), "You withdraw from the clan's treasure.") {
-		t.Fatalf("withdraw(20-digit) output = %q, want C's wrapped-negative ack", output.String())
+	if got, want := output.String(), "You withdraw from the clan's treasure.\r\n"; got != want {
+		t.Fatalf("withdraw(20-digit) output = %q, want %q", got, want)
+	}
+	if got := p.GetGold(); got != -1 {
+		t.Fatalf("withdraw(20-digit) player gold = %d, want -1", got)
+	}
+	if got := w.Clans.GetClanByIndex(0).TreasureBalance(); got != 1 {
+		t.Fatalf("withdraw(20-digit) clan treasure = %d, want 1", got)
 	}
 }
 
 // TestDoClanSetAppfeeOverflowRefusesLikeC pins the app-fee parse
-// (src/clan.c:1029-1034): the wrapped negative amount takes "Please pick a
+// (src/clan.c:1029-1039): the wrapped negative amount takes "Please pick a
 // number between 0 and 10,000 coins." rather than being stored as 0.
 func TestDoClanSetAppfeeOverflowRefusesLikeC(t *testing.T) {
 	w, p, output := newClanTestWorld(t)
 
 	w.doClanMoney(p, "99999999999999999999 Wolves", 2)
 
-	if !strings.Contains(output.String(), "Please pick a number between 0 and 10,000 coins.") {
-		t.Fatalf("appfee(20-digit) output = %q, want C's range refusal", output.String())
+	if got, want := output.String(), "Please pick a number between 0 and 10,000 coins.\r\n"; got != want {
+		t.Fatalf("appfee(20-digit) output = %q, want %q", got, want)
 	}
 	if got := w.Clans.GetClanByIndex(0).AppFee; got != 0 {
 		t.Fatalf("appfee stored %d, want 0 untouched (C refuses)", got)

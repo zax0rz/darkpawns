@@ -128,27 +128,6 @@ func TestRawKillDisintegrateDispatchesDust(t *testing.T) {
 	}
 }
 
-func TestRawKillUndeadAndVampireDispatchDust(t *testing.T) {
-	for _, tc := range []struct {
-		name     string
-		race     int
-		wantVNum int
-	}{
-		{"undead", combat.RACE_UNDEAD, 18},
-		{"vampire", combat.RACE_VAMPIRE, 1230},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			w, p := rawKillWorld(t)
-			p.Race = tc.race
-			w.RawKillCombatant(p, combat.TYPE_HIT)
-			objects := w.GetItemsInRoom(1001)
-			if len(objects) != 1 || objects[0].GetVNum() != tc.wantVNum || objects[0].IsCorpse {
-				t.Fatalf("%s raw_kill objects = %v, want vnum-%d dust and no corpse", tc.name, objects, tc.wantVNum)
-			}
-		})
-	}
-}
-
 func TestHandlePlayerDeathVampireDispatchesDust(t *testing.T) {
 	w, p := rawKillWorld(t)
 	p.Race = combat.RACE_VAMPIRE

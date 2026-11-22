@@ -85,27 +85,41 @@ func TestReadDisposableObjectRollsRareVariance(t *testing.T) {
 	}
 	t.Cleanup(func() { w.StopAITicker() })
 
-	const seed = 3
-	dprng.ResetStream(seed)
-	obj, ok := w.ReadDisposableObject(300)
-	if !ok || obj == nil {
-		t.Fatalf("ReadDisposableObject(300) = %v, %v; want an instance", obj, ok)
-	}
+	for _, tc := range []struct {
+		name string
+		seed uint32
+		hit  bool
+	}{
+		{name: "miss skips sign draw", seed: 3},              // Number(1,100) = 29
+		{name: "hit consumes sign draw", seed: 5, hit: true}, // Number(1,100) = 14
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dprng.ResetStream(tc.seed)
+			obj, ok := w.ReadDisposableObject(300)
+			if !ok || obj == nil {
+				t.Fatalf("ReadDisposableObject(300) = %v, %v; want an instance", obj, ok)
+			}
 
-	ref := dprng.New(seed)
-	if ref.Number(1, 100) <= 20 {
-		ref.Number(0, 1)
-	}
-	if got, want := dprng.Next(), ref.Next(); got != want {
-		t.Errorf("stream after a rare read = %d, want %d (dice(1,100), sign only on a hit)", got, want)
+			ref := dprng.New(tc.seed)
+			roll := ref.Number(1, 100)
+			if gotHit := roll <= 20; gotHit != tc.hit {
+				t.Fatalf("seed %d rare roll = %d, hit=%t; want hit=%t", tc.seed, roll, gotHit, tc.hit)
+			}
+			if tc.hit {
+				ref.Number(0, 1)
+			}
+			if got, want := dprng.Next(), ref.Next(); got != want {
+				t.Errorf("stream after a rare read = %d, want %d (dice(1,100), sign only on a hit)", got, want)
+			}
+		})
 	}
 
 	// A non-rare object draws nothing (db.c:1960 guards init_rare).
-	dprng.ResetStream(seed)
+	dprng.ResetStream(uint32(3))
 	if _, ok := w.ReadDisposableObject(301); !ok {
 		t.Fatal("ReadDisposableObject(301) reported no instance")
 	}
-	plain := dprng.New(seed)
+	plain := dprng.New(3)
 	if got, want := dprng.Next(), plain.Next(); got != want {
 		t.Errorf("stream after a non-rare read = %d, want untouched %d", got, want)
 	}

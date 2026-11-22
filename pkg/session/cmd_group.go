@@ -155,7 +155,7 @@ func cmdUngroup(s *Session, args []string) error {
 				}
 			}
 		}
-		s.player.InGroup = false
+		game.SetGroupedActor(s.player, false)
 		s.sendText("You disband the group.")
 		return nil
 	}

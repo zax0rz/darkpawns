@@ -8,7 +8,7 @@ import (
 )
 
 // TestDoLookInHeaderUsesCFName proves the look-in container header renders
-// fname(obj->name) (src/act.informative.c:942) with C's letters-only rule: a
+// fname(obj->name) and its carried suffix (src/act.informative.c:942,946) with C's letters-only rule: a
 // container keyed "climber's pack" prints "climber", not "climber's". The old
 // space-splitting fname() yielded "climber's", so this test fails on revert.
 func TestDoLookInHeaderUsesCFName(t *testing.T) {
@@ -23,11 +23,9 @@ func TestDoLookInHeaderUsesCFName(t *testing.T) {
 	}
 
 	got := observationMessageText(w.DoLookIn(p, "pack"))
-	if !strings.Contains(got, "climber (carried):") {
-		t.Fatalf("look-in header = %q, want it to contain %q", got, "climber (carried):")
-	}
-	if strings.Contains(got, "climber's (carried):") {
-		t.Fatalf("look-in header used the first space-word instead of fname(): %q", got)
+	gotHeader, _, hasLineEnding := strings.Cut(got, "\r\n")
+	if !hasLineEnding || gotHeader != "climber (carried): " {
+		t.Fatalf("look-in first line = %q, want exact C fname header", gotHeader)
 	}
 }
 
@@ -58,8 +56,8 @@ func TestDoorFarSideNameUsesCFName(t *testing.T) {
 	w.DoUnlock(p, "door north")
 	w.DoOpen(p, "door north")
 
-	const want = "The iron is opened from the other side.\r\n"
-	if got := joinedDoorMessages(messages, observer.Name); !strings.Contains(got, want) {
-		t.Fatalf("far observer = %q, want substring %q", got, want)
+	const want = "The iron is opened from the other side.\r\n\r\n"
+	if got := joinedDoorMessages(messages, observer.Name); got != want {
+		t.Fatalf("far observer = %q, want exact C line %q", got, want)
 	}
 }

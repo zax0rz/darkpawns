@@ -5,8 +5,25 @@ import (
 	"testing"
 )
 
+type roomLookDelivery struct {
+	bare bool
+	text string
+}
+
+func renderRoomLook(w *World, ch *Player) []roomLookDelivery {
+	events := make([]roomLookDelivery, 0)
+	w.MessageSink = func(_ string, msg []byte) {
+		events = append(events, roomLookDelivery{text: string(msg)})
+	}
+	w.LiteralMessageSink = func(_ string, msg []byte) {
+		events = append(events, roomLookDelivery{bare: true, text: string(msg)})
+	}
+	w.RenderObservationMessages(w.DoLookRoomAt(ch, 1001, true))
+	return events
+}
+
 // C's look_at_room brackets the two room-content lists once each
-// (src/act.informative.c:823-833):
+// (src/act.informative.c:823-837):
 //
 //	send_to_char(CCGRN(ch, C_NRM), ch);   /* once, before the object list   */
 //	list_obj_to_char(world[ch->in_room].contents, ch, 20, FALSE);
@@ -26,13 +43,18 @@ func TestRoomLookBracketsTheContentListsOnce(t *testing.T) {
 	ch.SetPlrFlag(PrfColor1, true)
 	ch.SetPlrFlag(PrfColor2, true)
 
-	result := w.DoLookRoomAt(ch, 1001, true)
-
+	events := renderRoomLook(w, ch)
 	var bares []string
-	for _, message := range result.Messages {
-		switch {
-		case message.Bare:
-			bares = append(bares, message.Format)
+	greenIndex, resetIndex := -1, -1
+	for i, event := range events {
+		if event.bare {
+			bares = append(bares, event.text)
+			switch event.text {
+			case "\x1b[32m":
+				greenIndex = i
+			case "\x1b[0m":
+				resetIndex = i
+			}
 		}
 	}
 
@@ -41,28 +63,22 @@ func TestRoomLookBracketsTheContentListsOnce(t *testing.T) {
 		t.Fatalf("bare writes = %q, want C's three list brackets %q", bares, want)
 	}
 
-	// Everything the two lists contribute must be escape-free: the bracketing
-	// is the only colour they carry. The room name keeps its own CCCYN/CCNRM
-	// pair (src/act.informative.c:806-810), so only the messages from the first
-	// bracket onward are checked.
-	seenBracket := false
-	for _, message := range result.Messages {
-		if message.Bare {
-			seenBracket = true
-			continue
-		}
-		if seenBracket && message.Literal && strings.Contains(message.Format, "\x1b") {
-			t.Fatalf("list line %q carries its own colour; C brackets the list, not the entry", message.Format)
+	if greenIndex < 0 || resetIndex <= greenIndex {
+		t.Fatalf("delivered writes omitted C's list brackets: %+v", events)
+	}
+	for _, event := range events[greenIndex+1 : resetIndex] {
+		if !event.bare && strings.Contains(event.text, "\x1b") {
+			t.Fatalf("delivered list line %q carries its own colour; C brackets the list, not the entry", event.text)
 		}
 	}
 
 	// Below C_NRM every macro expands to the empty string, so no bare write is
-	// queued at all — the same look at `color off` or `color sparse` is plain.
+	// delivered — the same look at `color off` or `color sparse` is plain.
 	ch.SetPlrFlag(PrfColor1, false)
 	ch.SetPlrFlag(PrfColor2, false)
-	for _, message := range w.DoLookRoomAt(ch, 1001, true).Messages {
-		if message.Bare {
-			t.Fatalf("bare write %q at colour level 0; C's macros are empty below C_NRM", message.Format)
+	for _, event := range renderRoomLook(w, ch) {
+		if event.bare {
+			t.Fatalf("bare write %q at colour level 0; C's macros are empty below C_NRM", event.text)
 		}
 	}
 }
