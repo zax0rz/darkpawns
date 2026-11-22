@@ -2509,7 +2509,7 @@ Coverage remained **64.8% before and after** (GOEXPERIMENT=nojsonv2 go test -cov
 
 ## pkg/game audit summary (T001–T2063)
 
-The frozen inventory has **1,991 test functions**, represented by **2,063 ledger rows** because some table-driven functions have separately adjudicated subtest rows. At function level, marks are **R 1,788 / F 155 / C 37 / D 11**. At ledger-row level, marks are R 1,860 / F 155 / C 37 / D 11; the extra 72 rows are additional R subcases. Overlapping junk annotations total J3=137, J4=38, J7=27, J9=15, J2=11, J5=6, J1=5, J10=4, and J8=3.
+The frozen inventory has **1,991 test functions**, represented by **2,063 ledger rows** because 72 functions were audited twice: once in the early pass (T001–T638) and again in the post-oracle redo, with 8 of the 72 pairs marked differently. At function level, marks are **R 1,788 / F 155 / C 37 / D 11**. At ledger-row level, marks are R 1,860 / F 155 / C 37 / D 11; the extra 72 rows are the R row of each twice-audited function (where the two marks differ, the non-R one sets the function mark). Overlapping junk annotations total J3=137, J4=38, J7=27, J9=15, J2=11, J5=6, J1=5, J10=4, and J8=3.
 
 For function-level totals, any F/C/D subrow determines that function's mark; a function with only R subrows counts as R. Junk totals count annotations on ledger rows and can overlap.
 
