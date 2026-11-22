@@ -221,15 +221,6 @@ func TestNeutralRescueRoomTransfer(t *testing.T) {
 	}
 }
 
-func TestSkillDamageNilAttacker(t *testing.T) {
-	w, p, _ := damageRescueWorld(t)
-	p.SetRoom(8004)
-	p.SetHP(100)
-	if !w.ApplySkillDamage(nil, p, 3, SkillKickNum) || p.GetHP() != 97 {
-		t.Fatalf("source-less skill HP = %d, want 97", p.GetHP())
-	}
-}
-
 // The real MagDamage boundary must rescue before skill_message and death.
 func TestSpellNeutralRescueBeforeMessage(t *testing.T) {
 	w, p, mob := damageRescueWorld(t)

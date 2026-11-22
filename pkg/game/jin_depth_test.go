@@ -7,12 +7,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
-func TestSkillStorageName_JinUsesCommandSkillKey(t *testing.T) {
-	if got := SkillStorageName(skillNumKkJin); got != SkillKkJin {
-		t.Fatalf("SkillStorageName(%d) = %q, want %q", skillNumKkJin, got, SkillKkJin)
-	}
-}
-
 func TestDoKujiKiri_JinSuccessPreservesCDefaultSecondAffect(t *testing.T) {
 	p := NewPlayer(1, "Jin", 8162)
 	p.Class = ClassNinja

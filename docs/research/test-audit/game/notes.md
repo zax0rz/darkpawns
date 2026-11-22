@@ -1121,3 +1121,47 @@ ledger:
 - `TestSpecClerkTellArgumentsMatchC`
 - `TestSpecClerk_VisibilityAndUnknownZone`
 - `TestSpecConductorAsksTicketOnAutonomousPulse`
+
+## Batch 22 post-read audit (T1339–T1388)
+
+Actual marks: **R44 / F4 / C1 / D1**. All 50 tests were introduced after the
+2026-07-12 oracle date. The preregistered estimate was R46/F1/C1/D2, so the
+actual variance was R−2/F+3/C0/D−1. Junk totals were J3=4, J4=1 and J9=1.
+The planned remainder forecast after T1388 remains R565/F0/C11/D27 across
+603 tests.
+
+**False greens repaired and mutation-proven:**
+
+- T1340 `TestShootTargetConcurrentMovement` (J3): the former loop allowed
+  every lookup to return nil. A start barrier and a positive-hit assertion
+  now require the concurrent lookup to find the moving player. An always-nil
+  resolver kept the old body green and made the repaired test red.
+- T1382 `TestSpecCastleGuardEast_AssistsOnlyEast` (J3): the former test only
+  counted combat starts. It now pins the guard-to-peer-target pair; replacing
+  the C target with the peer itself kept the old body green and made the new
+  assertion red.
+- T1383 `TestSpecCastleGuardEast_BlockAndHit` (J3): the former test likewise
+  counted a combat start without checking its defender. It now pins
+  guard-to-mover combat; a self-target mutation kept the old body green and
+  made the repaired test red.
+- T1384 `TestSpecCleric_Lspell12FallsToDefaultHarm` (J3): the old utterance
+  substring accepted any spell. It now also requires the target's HP to fall;
+  replacing default harm with poison kept the old body green and made the
+  repaired assertion red.
+
+**Fold and deletion:** T1358 `TestSkillStorageName_JinUsesCommandSkillKey`
+(J4) was removed because T1357's all-seals table already asserts the Jin
+mapping. T1352 `TestSkillDamageNilAttacker` (J9) was deleted: no production
+caller passes nil, and the C `damage()` path dereferences `ch->in_room`
+(`src/fight.c:1328-1333`), so this Go-only nil case has no reachable C or
+player behavior to protect. No unique behavior was removed.
+
+Attribution for the six weak-mark introductions (T1340, T1352, T1358, and
+T1382–T1384) is **unknown** under PF-152/PF-153: each commit has Zach's git
+identity and no `Co-Authored-By` trailer. All selected C citations in these
+rows and the touched test comments were checked against the named source
+lines and call paths. No expected value disagreed with C. The batch changes
+tests and research records only; no census was required.
+
+`pkg/game` coverage was 64.6% at the preregistered commit; the post-change
+coverage remains 64.6% (`GOEXPERIMENT=nojsonv2 go test ./pkg/game -cover`).
