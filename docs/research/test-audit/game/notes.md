@@ -2380,22 +2380,6 @@ Continue the frozen inventory-order sweep. T001–T1938 has 1,938 ledger rows an
 
 Before reading these tests, my estimate is **R43 / F5 / C1 / D1**, all in the post-oracle segment.
 
-## Batch 35 actuals (T1989–T2038)
-
-The preregistered estimate was R43/F5/C1/D1. Actual marks are **R45/F3/C2/D0**, all post-oracle (variance R+2/F−2/C+1/D−1). The three F rows are J3 weak assertions: the wall-guard actor test now proves the fighter delegation and selected direct command, the WHOD greeting test compares all 509 C bytes, and the AFK name-only fixture now reaches the title gate. Three detached mutations kept each old body green and made its fixed assertion red; each source file was restored byte-for-byte. The two J4 folds are the WHOD empty-host case, covered by `TestWhodBuildWhoListInvisibleAndSite`, and the zone-clock concurrency case, covered by `TestZoneResetConcurrentClockManualAndReaders`.
-
-The actual 50 names match the first 50 unledgered frozen-inventory names. The preregistered list had a two-name tail error: it advanced `TestZoneResetGPrependsToMobInventory` from the next batch and omitted `TestZoneResetGiveWithoutLastMob`; the ledger follows the frozen inventory and records `TestZoneResetGiveGlobalCapAndConditionalFailure` followed by `TestZoneResetGiveWithoutLastMob`. The next batch begins with `TestZoneResetGPrependsToMobInventory`.
-
-Before deleting or folding tests, `git grep -n <TestName> docs/fidelity cmd/dp-oracle-diff` was checked. The live WHOD inventory proof now names `TestWhodBuildWhoListInvisibleAndSite`; the only remaining hit for `TestZoneClockConcurrentManualAndHeartbeat` is in a dated handoff, which may remain. No live inventory reference to either deleted test remains.
-
-The wall-guard actor change affects switched-body command handling, so it received a targeted census rather than relying only on the unit mutation. Final run `/home/zach/Archives/darkpawns/oracle-runs/2026-11-22/luna-game-b35-wallguard-final` is CLEAN for its single scenario with zero draw divergence. The pre-fight emote has exact visible actor and peer bytes. The fighting emote is a hollow block on both engines; no player-output claim is made for that step. The unit mutation remains the assertion that forces the fighter/headbutt arm and goes red when delegation is removed.
-
-Coverage moved from **64.7% to 64.8%** (`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game`). C references were corrected where the earlier comments did not match the source path: whisper/ask line breaks and the second `act()` break (`src/act.comm.c:1013-1014; src/comm.c:2473-2477`), conjured vanish formatting (`src/spec_procs3.c:880-883`), real-level macros (`src/utils.h:285-287,528-530`), WHOD greeting bytes (`src/config.c:221-233`), and the carried-versus-worn crash-save path (`src/handler.c:1005-1018,577-603`). The function-index baseline now records the wall guard's direct C association with `fighter`.
-
-All eleven required gates passed separately on the final Go source: `make fmt`; `GOEXPERIMENT=nojsonv2 go build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`; `GOEXPERIMENT=nojsonv2 go test ./...`; CI-pinned `golangci-lint v2.15.0` (0 issues); `make modernize-check`; `make deadcode-ratchet` (35 baselined, 0 new); `make string-census` (ratchet clean, 9 known and 0 unreviewed; existing generated reports are stale and four old baseline entries are obsolete); `make fidelity-depth` (8,282 cases, 7,968 proven/delegated, 1 blocked, 297 excluded, 16 approved-divergent); `make expected-divergences-check` (exit 0, existing unresolved selectors); and `make function-index-check` (expected-red fake association rejected, then ratchet clean).
-
-The cumulative ledger has **2,038 rows and 1,966 unique inventory names**: R1838/F155/C35/D10. B35 adds three mutation rows (177 total). All 50 introductions are post-oracle; all five weak findings have unknown test-author attribution. Historical T360, T377, T387, T391, T394, T395, T455, T465, T520, T535, T548, T606, T769, and T1403 match `origin/main` byte-for-byte, including raw TSV quoting. **25 tests remain**, beginning with `TestZoneResetGPrependsToMobInventory`.
-
 ## Batch 34 actuals (T1939–T1988)
 
 The preregistered estimate was R43/F5/C1/D1. Actual marks are **R38/F5/C7/D0**, all post-oracle (variance R−5/F0/C+6/D−1). The five F rows are J3 weak output checks, tightened to exact C bytes. Five detached mutations kept each former assertion green and made its fixed assertion red; every mutated production file was restored byte-for-byte. The J4 folds are the standalone synthetic-money predicate, four tattoo offer-name snapshots, the direct no-magic act helper test, and the tattoo state-matrix aggregator. Each surviving command-path test now named in the ledger covers its contract.
@@ -2466,3 +2450,51 @@ T001–T1988 contains 1,988 ledger rows and 1,916 unique frozen-inventory names.
 - TestZoneResetGiveGlobalCapAndConditionalFailure
 
 Before reading these tests, my estimate is **R43 / F5 / C1 / D1**, all in the post-oracle segment.
+
+## Batch 35 actuals (T1989–T2038)
+
+The preregistered estimate was R43/F5/C1/D1. Actual marks are **R45/F3/C2/D0**, all post-oracle (variance R+2/F−2/C+1/D−1). The three F rows are J3 weak assertions: the wall-guard actor test now proves the fighter delegation and selected direct command, the WHOD greeting test compares all 509 C bytes, and the AFK name-only fixture now reaches the title gate. Three detached mutations kept each old body green and made its fixed assertion red; each source file was restored byte-for-byte. The two J4 folds are the WHOD empty-host case, covered by `TestWhodBuildWhoListInvisibleAndSite`, and the zone-clock concurrency case, covered by `TestZoneResetConcurrentClockManualAndReaders`.
+
+The actual 50 names match the first 50 unledgered frozen-inventory names. The preregistered list had a two-name tail error: it advanced `TestZoneResetGPrependsToMobInventory` from the next batch and omitted `TestZoneResetGiveWithoutLastMob`; the ledger follows the frozen inventory and records `TestZoneResetGiveGlobalCapAndConditionalFailure` followed by `TestZoneResetGiveWithoutLastMob`. The next batch begins with `TestZoneResetGPrependsToMobInventory`.
+
+Before deleting or folding tests, `git grep -n <TestName> docs/fidelity cmd/dp-oracle-diff` was checked. The live WHOD inventory proof now names `TestWhodBuildWhoListInvisibleAndSite`; the only remaining hit for `TestZoneClockConcurrentManualAndHeartbeat` is in a dated handoff, which may remain. No live inventory reference to either deleted test remains.
+
+The wall-guard actor change affects switched-body command handling, so it received a targeted census rather than relying only on the unit mutation. Final run `/home/zach/Archives/darkpawns/oracle-runs/2026-11-22/luna-game-b35-wallguard-final` is CLEAN for its single scenario with zero draw divergence. The pre-fight emote has exact visible actor and peer bytes. The fighting emote is a hollow block on both engines; no player-output claim is made for that step. The unit mutation remains the assertion that forces the fighter/headbutt arm and goes red when delegation is removed.
+
+Coverage moved from **64.7% to 64.8%** (`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game`). C references were corrected where the earlier comments did not match the source path: whisper/ask line breaks and the second `act()` break (`src/act.comm.c:1013-1014; src/comm.c:2473-2477`), conjured vanish formatting (`src/spec_procs3.c:880-883`), real-level macros (`src/utils.h:285-287,528-530`), WHOD greeting bytes (`src/config.c:221-233`), and the carried-versus-worn crash-save path (`src/handler.c:1005-1018,577-603`). The function-index baseline now records the wall guard's direct C association with `fighter`.
+
+All eleven required gates passed separately on the final Go source: `make fmt`; `GOEXPERIMENT=nojsonv2 go build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`; `GOEXPERIMENT=nojsonv2 go test ./...`; CI-pinned `golangci-lint v2.15.0` (0 issues); `make modernize-check`; `make deadcode-ratchet` (35 baselined, 0 new); `make string-census` (ratchet clean, 9 known and 0 unreviewed; existing generated reports are stale and four old baseline entries are obsolete); `make fidelity-depth` (8,282 cases, 7,968 proven/delegated, 1 blocked, 297 excluded, 16 approved-divergent); `make expected-divergences-check` (exit 0, existing unresolved selectors); and `make function-index-check` (expected-red fake association rejected, then ratchet clean).
+
+The cumulative ledger has **2,038 rows and 1,966 unique inventory names**: R1838/F155/C35/D10. B35 adds three mutation rows (177 total). All 50 introductions are post-oracle; all five weak findings have unknown test-author attribution. Historical T360, T377, T387, T391, T394, T395, T455, T465, T520, T535, T548, T606, T769, and T1403 match `origin/main` byte-for-byte, including raw TSV quoting. **25 tests remain**, beginning with `TestZoneResetGPrependsToMobInventory`.
+
+## Batch 36 preregistered estimate (before reading tests T2039–T2063)
+
+T001–T2038 contains 2,038 ledger rows and 1,966 unique frozen-inventory names. The inventory leaves 25 unledgered tests; this final batch takes those remaining names in inventory order:
+
+- TestZoneResetGPrependsToMobInventory
+- TestZoneResetInitializationIsDeterministic
+- TestZoneResetLoopIterationMatrix
+- TestZoneResetLoopUsesSingleCounter
+- TestZoneResetMissingDoorPreservesSecretMark
+- TestZoneResetMobileBothRandomPlacements
+- TestZoneResetMobileCapCountsOutsideSpawner
+- TestZoneResetMobileCapRetainsLastMob
+- TestZoneResetMobilePlacementFlagMatrix
+- TestZoneResetMobileRemovalIsDeferredAndGlobal
+- TestZoneResetMobileRemovalReplacesLastMob
+- TestZoneResetMobileRemovalSkipsFightingAndMarked
+- TestZoneResetObjectRemovalExtractsAllContents
+- TestZoneResetObjectRoomOrderAndOwnership
+- TestZoneResetPAllowsNonContainerTarget
+- TestZoneResetPSelfTargetStaysFloating
+- TestZoneResetPUsesNewestGlobalObject
+- TestZoneResetRandZonUsesResetZone
+- TestZoneResetRemoveFindsAnyObjectInRoom
+- TestZoneResetSkippedLoopDoesNotStart
+- TestZoneResetUnknownCommandConditionalSkip
+- TestZoneResetUnknownCommandDisabledOnce
+- TestZoneResetUnknownConcurrentEditorAndReaders
+- TestZoneResetUnknownDisablePreservesEditedTable
+- TestZzzCanaryTwo
+
+Before reading these tests, my estimate is **R22 / F2 / C1 / D0**, expected in the post-oracle segment.
