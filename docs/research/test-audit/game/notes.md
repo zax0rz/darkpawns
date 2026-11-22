@@ -1165,3 +1165,64 @@ tests and research records only; no census was required.
 
 `pkg/game` coverage was 64.6% at the preregistered commit; the post-change
 coverage remains 64.6% (`GOEXPERIMENT=nojsonv2 go test ./pkg/game -cover`).
+
+## Batch 23 preregistered estimate (before reading tests T1389–T1438)
+
+The planned remainder forecast after T1388 is R565/F0/C11/D27 across 603
+tests. For this 50-test slice I predict R47/F0/C1/D2, with all 50 introduced
+after the 2026-07-12 oracle date.
+
+The roster is the next 50 unledgered names in inventory order after T1388.
+They span inventory lines 1544–1590, skipping tests already present in the
+ledger:
+
+- `TestSpecConductorFightLinesThroughAct`
+- `TestSpecConjured_AutonomousRegisteredDispatch`
+- `TestSpecConjured_DefaultSpeechAudienceAndExtraction`
+- `TestSpecConjured_EntryAndCharmGates`
+- `TestSpecConjured_FizzleAudienceAndExtraction`
+- `TestSpecConSeller_BranchOrderAndSuccessAudience`
+- `TestSpecConSeller_DirectTellVisibilityAndOriginalCon`
+- `TestSpecConSeller_EntryGatesAndCommandSurface`
+- `TestSpecConSeller_InvisibleActorRoomWarning`
+- `TestSpecConSellerTellArgumentsMatchC`
+- `TestSpecCouchActPreservesCLineBreakBytes`
+- `TestSpecCouch_ExactGate`
+- `TestSpecCouch_ExtractsCouch`
+- `TestSpecCouch_LookerRoom`
+- `TestSpecCuchi_CommandGate`
+- `TestSpecCuchi_OrdinaryPat`
+- `TestSpecCuchi_OrodrethNoPromotion`
+- `TestSpecDracula_EntryGatesAndDelegation`
+- `TestSpecDracula_ExistingVampireOrWerewolfSkipsTransformation`
+- `TestSpecDracula_LookBiteAudienceAndVampireState`
+- `TestSpecDumpActorClearsRoomAndDeclines`
+- `TestSpecElementalRoomAffectsEveryMortalOccupant`
+- `TestSpecElementsGaleruAlive_EntryAndExactMobGate`
+- `TestSpecElementsGaleruAlive_UsesExactVNumAndMovesNPCs`
+- `TestSpecElementsGaleruColumn_AudienceLookAndRelocation`
+- `TestSpecElementsGaleruColumn_RejectsNilActor`
+- `TestSpecElementsGaleruColumn_RequiresAllExactTalismans`
+- `TestSpecElementsGuardian_CommandlessAndNilEntryGates`
+- `TestSpecElementsGuardian_PairUsesRoomOrderAudienceAndHit`
+- `TestSpecElementsGuardian_SoloUsesSelfDamageAndActPronouns`
+- `TestSpecElementsLoadCylinders_GetRemovesOnlyCurrentRoomCylinder`
+- `TestSpecElementsLoadCylinders_MapsAllRegisteredPillars`
+- `TestSpecElementsLoadCylinders_RejectsWrongTalismanAndExistingCylinder`
+- `TestSpecElementsMasterColumn_EntryAndTalismanDestinations`
+- `TestSpecElementsMasterColumn_PreservesCStaleCarryStateAndAudience`
+- `TestSpecElementsMasterColumn_RejectsNilActor`
+- `TestSpecElementsMinionActorPortsC`
+- `TestSpecElementsMinion_UsesKeywordsNotVnumsAndSkipsInvisibleObjects`
+- `TestSpecElementsMinion_UsesOrderedVisibleKeywordPasses`
+- `TestSpecElementsPlatforms_EntryAudienceAndRelocation`
+- `TestSpecElementsPlatformsMovesMobiles`
+- `TestSpecElementsPlatforms_RejectsNilActor`
+- `TestSpecElevatorMovesOnlyFirstTwoCharacters`
+- `TestSpecElevatorThroughAct`
+- `TestSpecEnterCircleCountsPlayersAndConsumesOtherLook`
+- `TestSpecEnterCircleThroughAct`
+- `TestSpecEqThief_EntryGates`
+- `TestSpecEqThief_GetAndJunkBlackContainerItem`
+- `TestSpecEqThief_StealsFirstVisibleItemAndPreservesDraws`
+- `TestSpecEvilLead_NeverHandles`
