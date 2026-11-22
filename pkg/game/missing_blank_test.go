@@ -3,9 +3,10 @@ package game
 // missing_blank_test.go — PF-063 cluster 5 proofs for the game side: C
 // composes these act strings with their own trailing "\r\n" and act()
 // appends the second — the blank line the audience sees before the prompt.
-// whisper/ask TO_CHAR: act.comm.c:1010-1012; guild_guard's room line:
-// spec_procs.c:580; the conjured vanish line: spec_procs3.c:878-882. Exact
-// sink bytes; reverting any fix fails (mutation checks).
+// whisper/ask TO_CHAR: act.comm.c:1013-1014; guild_guard's room line:
+// spec_procs.c:580-581; the conjured vanish line: spec_procs3.c:880-883.
+// perform_act appends its own CRLF (comm.c:2473-2477). Exact sink bytes;
+// reverting any fix fails (mutation checks).
 
 import (
 	"testing"
@@ -40,8 +41,8 @@ func newMissingBlankWorld(t *testing.T) (*World, map[string]*string) {
 }
 
 // TestWhisperAskSelfReplyCarriesOwnBreak — do_spec_comm's TO_CHAR reply is
-// sprintf'd with its own \r\n and act() appends the second (act.comm.c:1010-
-// 1012). Covers both verbs.
+// sprintf'd with its own \r\n and act() appends the second
+// (act.comm.c:1013-1014; comm.c:2473-2477). Covers both verbs.
 func TestWhisperAskSelfReplyCarriesOwnBreak(t *testing.T) {
 	cases := []struct {
 		ask  bool
@@ -98,7 +99,7 @@ func TestGuildGuardRoomActCarriesOwnBreak(t *testing.T) {
 	}
 }
 
-// TestConjuredVanishActCarriesOwnBreak — spec_procs3.c:878-882: the say
+// TestConjuredVanishActCarriesOwnBreak — spec_procs3.c:880-883: the say
 // line is single-terminated, the vanish line is sprintf'd with its own
 // \r\n and act() appends the second.
 func TestConjuredVanishActCarriesOwnBreak(t *testing.T) {

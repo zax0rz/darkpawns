@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -86,7 +85,7 @@ func TestGossipObserverReceivesLuaBridge(t *testing.T) {
 	var line string
 	w.SetGossipObserver(func(value string) { line = value })
 	NewWorldScriptableAdapter(w).Gossip(scripting.CharRef{NPC: true, ID: mob.GetID()}, "scripted gossip")
-	if line == "" || !strings.Contains(line, "gossips, 'scripted gossip'") {
-		t.Fatalf("Lua bridge skipped observer: %q", line)
+	if got, want := line, "The healer gossips, 'scripted gossip'\r\n"; got != want {
+		t.Fatalf("Lua bridge observer line = %q, want %q", got, want)
 	}
 }

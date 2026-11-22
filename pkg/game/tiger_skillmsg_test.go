@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -95,8 +94,8 @@ func TestDoTigerPunch_LegacyGatesPreserved(t *testing.T) {
 	ch.SetSkill(SkillTigerPunch, 100)
 	weapon := makeCircleWeapon()
 	equipWeapon(t, ch, weapon)
-	if got := DoTigerPunch(ch, mob).MessageToCh; !strings.Contains(got, "while wielding a weapon") {
-		t.Errorf("wielded tiger punch = %q, want the bare-hands refusal", got)
+	if got, want := DoTigerPunch(ch, mob).MessageToCh, "That's pretty tough to do while wielding a weapon."; got != want {
+		t.Errorf("wielded tiger punch = %q, want C's bare-hands refusal %q", got, want)
 	}
 }
 

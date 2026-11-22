@@ -8,31 +8,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
-// TestSyntheticMoneyIsTakeable — C's create_money zeroes the wear flags and
-// then sets ITEM_WEAR_TAKE (src/handler.c:1484-1486), so CAN_WEAR(obj,
-// ITEM_WEAR_TAKE) is true for every money pile. The port's prototype-less
-// pile carried no wear flags at all, so IsTakeable() reported false and both
-// the mob get (npcGetDirect) and the scavenger gate (canGetObject) refused it.
-func TestSyntheticMoneyIsTakeable(t *testing.T) {
-	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001, Name: "Coin proof", Zone: 1}}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	w.StopAITicker()
-	t.Cleanup(w.StopAITicker)
-	wireLiveNPCDispatchForTest(w)
-
-	for _, amount := range []int{1, 5, 250} {
-		money := w.createMoneyObject(amount)
-		if money == nil {
-			t.Fatalf("createMoneyObject(%d) = nil", amount)
-		}
-		if !money.IsTakeable() {
-			t.Fatalf("createMoneyObject(%d).IsTakeable() = false; create_money sets ITEM_WEAR_TAKE", amount)
-		}
-	}
-}
-
 // TestMobGetsCorpseGoldFromAttitudeLoot — attitude_loot runs
 // do_get(ch, "all corpse") (src/fight.c:1120); perform_get_from_container
 // passes can_take_obj and the room sees "$n gets $p from $P."

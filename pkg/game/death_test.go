@@ -877,7 +877,7 @@ func TestHandlePlayerDeathPenaltiesAreSilent(t *testing.T) {
 	if victim.GetExp() >= 100000 {
 		t.Fatalf("exp = %d, want the death penalty applied", victim.GetExp())
 	}
-	if got := out.String(); strings.Contains(got, "You lose") {
-		t.Fatalf("victim output = %q, want no death-penalty line", got)
+	if got := out.String(); got != "" {
+		t.Fatalf("victim output = %q, want no death-penalty bytes", got)
 	}
 }

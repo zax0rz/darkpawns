@@ -18,8 +18,8 @@ func TestSplitOverflowRefusesLikeC(t *testing.T) {
 	w.doSplit(p, nil, "split", "99999999999999999999")
 
 	got := strings.Join(sent, "")
-	if !strings.Contains(got, "Sorry, you can't do that.") {
-		t.Fatalf("split(20-digit) output = %q, want C's <= 0 refusal", got)
+	if want := "Sorry, you can't do that.\r\n"; got != want {
+		t.Fatalf("split(20-digit) output = %q, want exact C refusal %q", got, want)
 	}
 }
 
@@ -36,7 +36,8 @@ func TestJunkCoinsOverflowMatchesC(t *testing.T) {
 	w.doDispose(p, "99999999999999999999 coins", scmdJunk, "junk", 0)
 
 	got := strings.Join(sent, "")
-	if !strings.Contains(got, "Heh heh heh.. we are jolly funny today, eh?") {
-		t.Fatalf("junk(20-digit coins) output = %q, want C's jolly refusal", got)
+	want := "Heh heh heh.. we are jolly funny today, eh?\r\n"
+	if got != want {
+		t.Fatalf("junk(20-digit coins) output = %q, want exact C refusal %q", got, want)
 	}
 }

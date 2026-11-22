@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -102,18 +101,16 @@ func TestSpecTeleportVictim_ScoffSpeechTeleportAndLandingLook(t *testing.T) {
 		t.Fatal("teleport should clear both sides of combat")
 	}
 
-	got := lastMsg()
-	for _, want := range []string{
-		"A test mob scoffs at the idea.",
-		"A test mob says, 'You can't harm me, mortal. Begone.'",
-		"The world around you turns black and you suddenly find yourself..",
-		"Tester slowly fades out of existence and is gone.",
-		"Tester slowly fades into existence.",
-		"Destination",
-	} {
-		if !strings.Contains(got, want) {
-			t.Errorf("teleport victim output missing %q: %q", want, got)
-		}
+	want := "A test mob scoffs at the idea.\r\n" +
+		"A test mob scoffs at the idea.\r\n" +
+		"A test mob says, 'You can't harm me, mortal. Begone.'\r\n" +
+		"A test mob says, 'You can't harm me, mortal. Begone.'\r\n" +
+		"The world around you turns black and you suddenly find yourself..\r\n" +
+		"Tester slowly fades out of existence and is gone.\r\n" +
+		"Tester slowly fades into existence.\r\n" +
+		"Destination\r\n[ Exits: None! ]\r\nNewObserver  is standing here.\r\n"
+	if got := lastMsg(); got != want {
+		t.Errorf("teleport victim transcript = %q, want exact C bytes %q", got, want)
 	}
 }
 
@@ -130,12 +127,11 @@ func TestSpecTeleportVictim_NonIntelligentMobSkipsSpeech(t *testing.T) {
 	if !specTeleportVictim(w, nil, mob, "", "") {
 		t.Fatal("standing fighting teleport victim should handle")
 	}
-	got := lastMsg()
-	if !strings.Contains(got, "A test mob scoffs at the idea.") {
-		t.Fatalf("missing scoff social: %q", got)
-	}
-	if strings.Contains(got, "You can't harm me, mortal. Begone.") {
-		t.Fatalf("non-intelligent mob spoke: %q", got)
+	want := "A test mob scoffs at the idea.\r\n" +
+		"The world around you turns black and you suddenly find yourself..\r\n" +
+		"Destination\r\n[ Exits: None! ]\r\n"
+	if got := lastMsg(); got != want {
+		t.Fatalf("non-intelligent mob transcript = %q, want exact C bytes %q", got, want)
 	}
 	if got, want := player.GetRoomVNum(), 1002; got != want {
 		t.Fatalf("victim room = %d, want %d", got, want)
@@ -168,9 +164,9 @@ func TestSpecTeleportVictim_SittingStopsAtNativeCallMagicGate(t *testing.T) {
 	if got, want := player.GetRoomVNum(), 1001; got != want {
 		t.Fatalf("sitting call_magic gate moved victim to %d, want %d", got, want)
 	}
-	if got := lastMsg(); !strings.Contains(got, "A test mob scoffs at the idea.") ||
-		!strings.Contains(got, "A test mob says, 'You can't harm me, mortal. Begone.'") ||
-		strings.Contains(got, "The world around you turns black") {
-		t.Fatalf("sitting call_magic gate output = %q", got)
+	want := "A test mob scoffs at the idea.\r\n" +
+		"A test mob says, 'You can't harm me, mortal. Begone.'\r\n"
+	if got := lastMsg(); got != want {
+		t.Fatalf("sitting call_magic gate output = %q, want exact C bytes %q", got, want)
 	}
 }

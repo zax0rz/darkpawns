@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -96,15 +95,10 @@ func TestSpecTeleporter_LowHealthTeleportsMobAndUsesRoomActs(t *testing.T) {
 		t.Fatalf("teleport should stop mob combat, still fighting %q", got)
 	}
 
-	got := lastMsg()
-	for _, want := range []string{
-		"My work here is done.",
-		"slowly fades out of existence and is gone.",
-		"slowly fades into existence.",
-	} {
-		if !strings.Contains(got, want) {
-			t.Errorf("teleporter output missing %q: %q", want, got)
-		}
+	if got, want := lastMsg(), "A test mob says, 'My work here is done.'\r\n"+
+		"A test mob slowly fades out of existence and is gone.\r\n"+
+		"A test mob slowly fades into existence.\r\n"; got != want {
+		t.Errorf("teleporter transcript = %q, want exact C bytes %q", got, want)
 	}
 }
 
@@ -144,7 +138,7 @@ func TestSpecTeleporter_SittingMobStopsAtNativeCallMagicGate(t *testing.T) {
 	if got, want := mob.GetRoomVNum(), 1001; got != want {
 		t.Fatalf("sitting teleporter room = %d, want %d", got, want)
 	}
-	if got := lastMsg(); !strings.Contains(got, "My work here is done.") || strings.Contains(got, "fades out") {
-		t.Fatalf("sitting call_magic gate output = %q", got)
+	if got, want := lastMsg(), "A test mob says, 'My work here is done.'\r\n"; got != want {
+		t.Fatalf("sitting call_magic gate output = %q, want exact C bytes %q", got, want)
 	}
 }

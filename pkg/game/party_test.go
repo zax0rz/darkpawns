@@ -140,8 +140,8 @@ func TestUngroupedFollowerKillUsesSoloXP(t *testing.T) {
 	if got := leader.GetExp(); got != 0 {
 		t.Fatalf("grouped leader XP = %d, want 0 for an ungrouped killer", got)
 	}
-	if got := output[killer.Name].String(); !strings.Contains(got, "You receive 1000 experience points.\r\n") {
-		t.Fatalf("killer output = %q, want solo XP message", got)
+	if got, want := output[killer.Name].String(), "You receive 1000 experience points.\r\n"; got != want {
+		t.Fatalf("killer output = %q, want exact C solo XP bytes %q", got, want)
 	}
 	if got := output[leader.Name]; got != nil && got.String() != "" {
 		t.Fatalf("leader output = %q, want no XP message", got.String())

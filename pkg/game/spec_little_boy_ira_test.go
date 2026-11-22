@@ -116,8 +116,8 @@ func TestSpecIra_ExclaimAndHit(t *testing.T) {
 		if !specIra(w, nil, mob, "", "") {
 			t.Fatal("ira should handle the first player")
 		}
-		if got := out["Watcher"]; !strings.Contains(got, "exclaims, 'Dirty Orange Scum!'") {
-			t.Fatalf("watcher = %q, want Dirty Orange Scum", got)
+		if got := strings.SplitN(out["Watcher"], "\r\n", 2)[0] + "\r\n"; got != "Ira exclaims, 'Dirty Orange Scum!'\r\n" {
+			t.Fatalf("watcher first line = %q, want exact C exclaim line", got)
 		}
 		if len(engine.initialAttacks) != 1 {
 			t.Fatalf("initial attacks = %d, want 1", len(engine.initialAttacks))

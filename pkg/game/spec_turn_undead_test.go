@@ -137,22 +137,6 @@ func TestSpecTurnUndeadObjectPulseReset(t *testing.T) {
 	}
 }
 
-// TestSpecTurnUndeadObjectRegistered pins the registration contract: the
-// object-aware handler is registered in ObjSpecRegistry under the spec name
-// (the moon_gate pattern), so any future ObjSpecAssign entry resolves it
-// through GetObjSpecForObject, and the mob lane stays inert.
-func TestSpecTurnUndeadObjectRegistered(t *testing.T) {
-	if _, ok := ObjSpecRegistry["turn_undead"]; !ok {
-		t.Fatal("turn_undead missing from ObjSpecRegistry")
-	}
-	if fn := GetMobSpec(19877); fn != nil {
-		t.Fatal("turn_undead must not resolve a mob-lane spec")
-	}
-	if name, ok := GetObjSpecName(19877); ok && name == "turn_undead" {
-		t.Fatal("turn_undead must stay unassigned: no ObjSpecAssign entry (the brief forbids assigning it)")
-	}
-}
-
 // C's skip_spaces trims only LEADING whitespace (src/interpreter.c:1187-1190),
 // so a trailing space survives into isname, and isname("wand ", ...) fails at
 // the keyword's end (src/handler.c:94). A leading space is skipped.

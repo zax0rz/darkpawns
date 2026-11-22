@@ -1658,3 +1658,861 @@ are R1459/F100/C20/D9: the pre-oracle split is R379/F7/C3/D1 and the post-
 oracle split is R1080/F93/C17/D8. No package summary or PF ledger row is due
 until T1991; when it is due, use PF-168 or later because PF-167 is already
 assigned.
+
+## Batch 27 preregistered estimate (before reading tests T1589–T1638)
+
+Continue the frozen inventory-order sweep: select the first 50 test names not already present in any ledger row, scanning from the start of the 1,991-function inventory. T001–T1588 has 1,588 rows and 1,516 unique test names, leaving 475 unique inventory functions unledgered. The selected roster is the next 50:
+
+- `TestDoTigerPunch_HitContract`
+- `TestDoTigerPunch_LegacyGatesPreserved`
+- `TestDoTigerPunch_MissRoutesThroughSkillMessage`
+- `TestDoTransformMatchesCStateMachines`
+- `TestDoTurnDisintegratesEligibleUndeadAtFifteenLevelAdvantage`
+- `TestDoTurnEarlyGatesDoNotDrawRandomness`
+- `TestDoTurnFleesPlayerByNumericRaceThroughPlayerMovement`
+- `TestDoTurnFleeUsesNpcDirectMovementAndPreservesDirectionDraw`
+- `TestDoTurnLowManaSubtractsQuarterCostAfterRoomActs`
+- `TestDoTurnScansCOrderedRoomBodiesByNumericRace`
+- `TestDoUseEquipdQuirkStaffTap`
+- `TestDoUseEquipdQuirkWandPoint`
+- `TestDoUseEquipdQuirkWholeRemainder`
+- `TestDoUseHeldFallbackWhenArgDoesNotMatch`
+- `TestDoUseWandPassesManualSpellArgumentToControlWeather`
+- `TestDoVisibleInvisAndSneakTogether`
+- `TestDoVisiblePreservesCEntryGateOrder`
+- `TestDoVisibleRemovesSneakAndStealthAffects`
+- `TestDoVisibleStripsInvisSpellAffect`
+- `TestDoWimpyUsesCIsdigitAndOneArgument`
+- `TestDoWriteMissingObjectRefusals`
+- `TestDoYank_SuccessRoomLineSkipsVictim`
+- `TestDreamPointUpdateOutputBranches`
+- `TestDreamTravelDrawOrderMatchesC`
+- `TestDrinkDoseConsumedOnce`
+- `TestDropGoldConcurrentWithGive`
+- `TestDropPlacementsPrependInCOrder`
+- `TestDummyMobSkillsUseSharedCState`
+- `TestE2AttrAffectBoundaries`
+- `TestFindObjectByNameUsesCGlobalObjectListOrderAndTokens`
+- `TestFireMobScriptsShareDispatchContext`
+- `TestFirstPlayerGodHasMartialArts`
+- `TestFixedMailTextUsesFirstNULTerminator`
+- `TestFleshAlteredTypeBands`
+- `TestFleshAlterUnwieldSetsFlag`
+- `TestFollowMobBodyCharmedGuardEmitsMasterMessage`
+- `TestFormatCompileTimeMatchesC`
+- `TestFullMoonTransformsWerewolf`
+- `TestGameDiagnosticCrossRoomDamage`
+- `TestGameDiagnosticDeathTrapMovement`
+- `TestGameDiagnosticKillMilestone`
+- `TestGameDiagnosticProtectionEvil`
+- `TestGameDiagnosticProtectionGood`
+- `TestGenBoardActorDeclinesDescriptorlessMobiles`
+- `TestGenBoardEmptyHeadlinesDoNotExhaustSlots`
+- `TestGenBoardFullBoardWriteRefusalOutput`
+- `TestGenCommChannelColorMatchesC`
+- `TestGenCommMobGossipColorMatchesC`
+- `TestGenericFindEquipFirstInventoryBeforeRoom`
+- `TestGenericFindEquipFirstLookAtTarget`
+
+Before reading these tests, my estimate is **R43 / F5 / C1 / D1**.
+
+## Batch 27 audit (T1589–T1638; introductions 2026-09-04–2026-11-16)
+
+The preregistered estimate was R43/F5/C1/D1. Actual: **R46/F4/C0/D0**;
+all 50 introductions are post-oracle. The estimate missed one additional R and
+one fewer false green, and predicted one C and one D that the audit did not
+find. All four weak-test authors are `unknown` under the commit-author and
+trailer attribution rules.
+
+I repaired four assertion gaps and proved each in a detached mutation
+worktree. In every case the original test stayed green, the repaired test went
+red, and the production mutation was restored byte-for-byte:
+
+- T1590 now requires the exact wielded tiger-punch refusal punctuation.
+- T1609 now compares exact output for all three missing-object refusal paths.
+- T1614 checks Dropper, Giver, and Victim balances plus the one 60-coin floor
+  pile, so the concurrent transfer still accounts for all 200 starting coins.
+- T1619 records and checks the Lua-facing actor/mob references, room, and World
+  context for both fight and death dispatches, not only the compatibility
+  `Ch` name.
+
+No tests were deleted or folded, so no live inventory reference needed
+retargeting. T1633 records the approved DP-1388 Go behavior for empty board
+headlines; C reserves the slot before checking an empty heading, while the
+approved Go path releases it. This is recorded as an explicit hand-written
+exception, not a new C parity claim.
+
+The ledger and mutation log were appended as raw tab-separated text. The 13
+corrected rows (T360, T377, T387, T391, T394, T395, T455, T465, T520, T535,
+T548, T606, T769) and T1403 match `origin/main` byte-for-byte. The refreshed
+branch is based on `origin/main` at `ab14720f9` (Batch 26 merged). Package
+statement coverage was 64.7% before and after. All eleven required gates
+passed; `make string-census` reports its existing generated reports as stale,
+`make expected-divergences` exits clean with existing unresolved proof
+selectors, and `make fidelity-depth` reports the current repository-wide
+status. No production code changed and no census was needed.
+
+Through T1638, T639–T1638 totals R872/F100/C20/D8. Cumulative T001–T1638
+totals are R1505/F104/C20/D9: pre-oracle R379/F7/C3/D1 and post-oracle
+R1126/F97/C17/D8. No package summary or PF evidence row is due until T1991;
+use PF-168 or later when that final summary is written.
+
+## Batch 28 preregistered estimate (before reading tests T1639–T1688)
+
+Continue the frozen inventory-order sweep: select the first 50 test names not
+already present in any ledger row, scanning from the start of the 1,991-function
+inventory. T001–T1638 has 1,638 rows and 1,566 unique test names, leaving 425
+unique inventory functions unledgered. The selected roster is the next 50:
+
+- `TestGenericFindEquipFirstLookInObj`
+- `TestGenericFindEquipFirstMagObjectMagic`
+- `TestGetACIncludesWornApplyAC`
+- `TestGetAllCharsInRoomUsesCPrependOrderAcrossBodyTypes`
+- `TestGetArmorClassAppliesCSlotFactors`
+- `TestGetCharVisRoomThenCharacterList`
+- `TestGetCheckMoneyConsumesOnce`
+- `TestGetDrinkAffectsColumnOrder`
+- `TestGetFollowerActorsUsesCPrependOrder`
+- `TestGetFromRoomStaleSnapshotCreditedOnce`
+- `TestGetItemsInRoomSnapshotVsWriter`
+- `TestGetWeaponInfoFleshAlter`
+- `TestGhostShipOpensAndClosesMatchingRuntimeExits`
+- `TestGhostShipSecondDockDepartureAnnouncedOnFirstDock`
+- `TestGiveGoldConservationUnderConcurrency`
+- `TestGo126JSONBytes`
+- `TestGossipChannelHistoryKeepsSpeakerInvisibility`
+- `TestGossipObserverMatchesMortalAndLeavesGameBytes`
+- `TestGossipObserverOnlyPublicGossipAndIncludesNPC`
+- `TestGossipObserverReceivesLuaBridge`
+- `TestGroupedNPCKillerAwardsPlayerShares`
+- `TestGroupExcludesOutOfRoomMembers`
+- `TestGroupPenaltyRoundsAfterSubtraction`
+- `TestGroupShareMessageOrderFollowsCFollowerList`
+- `TestGroupSplitNoGoldLeaderSilent`
+- `TestGuildGuardActorPortsDoorwayAndDeclines`
+- `TestGuildGuardActorPortsFleeArm`
+- `TestGuildGuardRoomActCarriesOwnBreak`
+- `TestHandleDeathDrainsMobVictimExpBy37`
+- `TestHandleDeathDyingSpecArmPuffSaysLine`
+- `TestHandleDeathNeverDieCancelsDeathTail`
+- `TestHandleDeathRunsRawKillSequence`
+- `TestHandleMailAndNoteSlashAAbort`
+- `TestHandleMobDeathClearsMemoryAndHunting`
+- `TestHandlePlayerDeathPenaltiesAreSilent`
+- `TestHandlePlayerDeathVampireDispatchesDust`
+- `TestHcontrolBuildHouseRejects`
+- `TestHcontrolBuildHouseWithoutLookup`
+- `TestHcontrolBuildHouseWithWiredLookup`
+- `TestHcontrolPayDeliversToActorAndWatcher`
+- `TestHeldLightMovesWithPlayer`
+- `TestHiddenAffectRestoredAtEveryTotalBoundary`
+- `TestHitAndMoveRegenGearMatchC`
+- `TestHitrollDamrollStorageIsSByte`
+- `TestHoldLitLanternLightsDarkRoom`
+- `TestHomeLoadRoomUsesExistingSaveRoomField`
+- `TestHorseAppearsInRoomLook`
+- `TestHorseFollowsPlayerAndStaysVisible`
+- `TestHorseReappearsInLookAfterDismount`
+- `TestHorseVisibleToInfravisionAfterDismount`
+
+Before reading these tests, my estimate is **R43 / F5 / C1 / D1**.
+
+## Batch 28 results (T1639–T1688)
+
+The preregistered roster matched the next 50 unledgered inventory tests. The
+actual marks are **R45 / F5 / C0 / D0**, against the estimate R43 / F5 / C1 /
+D1. The five F rows are T1658, T1663, T1668, T1673, and T1678; all are J3
+substring or partial-output checks strengthened to exact bytes or exact
+silence. The batch adds five J3 marks and no other junk codes. Their introducing
+commit attribution is unknown for T1658, T1663, T1668, and T1678 (Zach git
+author, no model trailer); T1673 is Claude Opus 5.5 from its co-author trailer.
+
+Each original weak assertion stayed green under a narrow output mutation, and
+each fixed assertion failed. The five production mutations and old/fixed
+results are recorded in `mutations.tsv`; the detached worktree was clean after
+each restoration. The Puff mutation adds ` EXTRA.` while retaining the final
+period, so its failure isolates the changed spoken line. No tests were deleted
+or folded, so no live inventory references needed retargeting.
+
+The ledger and mutation log were appended as raw tab-separated text. T1639–T1688
+have 18 columns each; the ledger has 1,688 contiguous IDs, and the mutation log
+has seven columns per row. The five tightened tests and the full `go test ./...`
+pass. Package statement coverage is 64.8% before and after the batch. No
+production code changed and no census was needed.
+
+All eleven gates passed individually: `make fmt`; `GOEXPERIMENT=nojsonv2 go
+build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`; `GOEXPERIMENT=nojsonv2 go
+test ./...`; `golangci-lint run ./...` (v2.15.0, 0 issues); `make
+modernize-check`; `make deadcode-ratchet`; `make string-census`; `make
+fidelity-depth`; `make expected-divergences-check`; and `make
+function-index-check`. The string-census check reports its existing generated
+reports as stale, the expected-divergence check reports existing unresolved
+selectors, and the function-index check's intentional fake association is
+rejected before the ratchet reports clean. `make fidelity-depth` reports 8,282
+cases, with 7,968 proven/delegated, one blocked, 297 excluded, and 16
+approved-divergent.
+
+Through T1688, T639–T1688 totals R917/F105/C20/D8. Cumulative T001–T1688
+totals are R1550/F109/C20/D9: pre-oracle R379/F7/C3/D1 and post-oracle
+R1171/F102/C17/D8. The ledger now contains 1,616 unique inventory tests, with
+375 unique tests remaining. The batch branch is stacked on Batch 27 commit
+0132b1847; `origin/main` was fetched at ab14720f9, and both batch PRs target
+`main`. Use PF-168 or later for the final package summary row.
+
+## Batch 29 preregistered estimate (before reading tests T1689–T1738)
+
+Continue the frozen inventory-order sweep, selecting the first 50 test names
+not already present in any ledger row. T001–T1688 has 1,688 ledger rows and
+1,616 unique test names, leaving 375 unique inventory functions unledgered.
+The next roster is:
+
+- `TestHouseBootDropsUnresolvableOwner`
+- `TestHouseLoadExtractsUnrentable`
+- `TestHouseLoadFloorsUnresolvableContainers`
+- `TestHouseLoadLegacyRuntimeIDFilesFloorEverything`
+- `TestHouseLoadNestsNothingIntoWrongObject`
+- `TestHouseMudlogLevelDiscriminators`
+- `TestHouseMudlogProducers`
+- `TestHouseSaveLoadFloorsContainerContents`
+- `TestHouseSaveLoadFloorsDepthTwo`
+- `TestHuntItemsConsumesDrawBeforeHunterEligibility`
+- `TestHuntItemsUsesWearOrderAndFirstAvailableCharacter`
+- `TestHuntVictimAuctionAndShoutReachEveryListener`
+- `TestHuntVictim_CommandArgumentsMatchC`
+- `TestHuntVictimEvasionSayReachesTheRoom`
+- `TestHuntVictimGossipIsGlobalAndRecorded`
+- `TestHuntVictimKeepsPlayerIDWhenDescriptorMissing`
+- `TestHuntVictimKeywordObjectShadowsDoor`
+- `TestHuntVictimLeavesLinklessHuntingIDUnresolved`
+- `TestHuntVictimMultiWordKeywordDoesNotOpen`
+- `TestHuntVictimNonIntelligentRaceDoesNotOpen`
+- `TestHuntVictimOpensClosedUnlockedDoor`
+- `TestHuntVictimOpensMatchingContainer`
+- `TestHuntVictimRefusesLockedDoor`
+- `TestHuntVictimSameKeywordOpensOnlyTravelExit`
+- `TestHuntVictimSayReachesTheRoom`
+- `TestHuntVictimSecretCaseKeywordIsFindable`
+- `TestHuntVictimTellUsesTheTellPath`
+- `TestIdentifierValCost`
+- `TestIdleForceRentMudlogLevelIsLVLGOD`
+- `TestIdleForceRentMudlogProducer`
+- `TestIdleForceRentMudlogTypeIsCMP`
+- `TestIdleForceRentUsesRoomIndexThree`
+- `TestIgnoreLegacyWorldStateIsNotFatalAndKeepsTheFile`
+- `TestInspectLegacyWorldStateCountsTransientSections`
+- `TestInspectLegacyWorldStateToleratesBadInput`
+- `TestInstakillPreservesCrashFlag`
+- `TestInstakillRunsRawKillSequence`
+- `TestInvalidClassAntiClassBitsMatchCStructs`
+- `TestInventoryAccessIsLockedAgainstMoves`
+- `TestInventoryMovesSetCrashFlag`
+- `TestIsRoomDarkSparesCityStreets`
+- `TestJailGuardActorPortsMatchC`
+- `TestJailPointUpdateOnlyDecrements`
+- `TestJanitorAutonomousAssignedDispatch`
+- `TestJunkCoinsOverflowMatchesC`
+- `TestKenderStealCaughtRetaliationDrawsAndEnrols`
+- `TestKenderStealCaughtRetaliationRefusedInPeacefulRoom`
+- `TestKenderStealSetsFlag`
+- `TestKeylessDoorMatchesCNoKeyGuard`
+- `TestLegacySnapshotWithManySyntheticObjectsLogsOnce`
+
+Before reading these tests, my estimate is **R43 / F5 / C1 / D1**.
+
+## Batch 29 results (T1689–T1738)
+
+The preregistered roster matched the next 50 unledgered inventory functions.
+The estimate was R43/F5/C1/D1; the result is **R47/F2/C1/D0**. The two F
+rows are T1733 and T1737, both J3 partial-output assertions now pinned to the
+complete C response. Their introducing commits carry Zach's personal git
+identity without a model trailer, so both authors are recorded as unknown.
+The one C row is T1704: its same-room linkless hunting ID check duplicated
+T1706's descriptorless unresolved-ID contract. I folded the same-room case
+into `TestHuntVictimLeavesLinklessHuntingIDUnresolved`, retaining both
+same-room and unreachable-room subtests, and removed the duplicate function.
+Before removing it, I searched `git grep` in `docs/fidelity` and
+`cmd/dp-oracle-diff`; the live hit in `docs/fidelity/depth/hunt-items.tsv`
+now names the surviving test. The dated handoff remains historical evidence.
+
+Both F tests went green under their old assertions after adding ` EXTRA` to
+the C output, then red under the exact fixed assertions. T1737 has separate
+refusal and click mutations; the click-only mutant also stays green under the
+old body and fails the fixed assertion. All three mutations were restored
+byte-for-byte in the detached mutation worktree. The 50 ledger rows and three
+mutation rows were appended as raw tab-separated text, with no CSV quoting.
+The ledger is contiguous through T1738, has 18 columns per row, and the
+mutation file has seven columns per row. There are 325 unledgered functions
+left in the frozen 1,991-function inventory.
+
+Package statement coverage measured 64.7% on Batch 28 commit `0f8c26fc8` and
+64.8% after this batch. No production code changed. The duplicate proof row
+remains in the ledger as C and names T1706; its live fidelity inventory entry
+was updated before the function was removed. No census was needed.
+
+All eleven gates passed individually: `make fmt`; `GOEXPERIMENT=nojsonv2 go
+build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`; `GOEXPERIMENT=nojsonv2 go
+test ./...`; `golangci-lint run ./...` (0 issues); `make modernize-check`;
+`make deadcode-ratchet` (35 baselined, 0 new); `make string-census` (ratchet
+clean with existing stale generated reports and four obsolete baseline
+entries); `make fidelity-depth` (8,282 cases, 7,968 proven/delegated, one
+blocked, 297 excluded, 16 approved-divergent); `make
+expected-divergences-check` (clean with existing unresolved selectors); and
+`make function-index-check` (the expected-red fake association was rejected,
+then the ratchet reported clean).
+
+The fetched `origin/main` is `ab14720f9`. Historical rows T360, T377, T387,
+T391, T394, T395, T455, T465, T520, T535, T548, T606, T769, and T1403 match
+`origin/main` byte-for-byte, including the mainline unquoting of T1403.
+Through T1738, T639–T1738 totals R964/F107/C21/D8. Cumulative T001–T1738
+is R1597/F111/C21/D9: pre-oracle R379/F7/C3/D1 and post-oracle
+R1218/F104/C18/D8. This batch adds two J3 rows and one J4 row.
+
+## Batch 30 preregistered estimate (before reading tests T1739–T1788)
+
+Continue the frozen inventory-order sweep, selecting the first 50 test names
+not already represented in the ledger. T001–T1738 has 1,738 rows, 1,666
+unique audited names, and 325 unledgered inventory functions. The next roster
+is:
+
+- `TestLegacySwitchedCommandRefusalsUseBodyOutput`
+- `TestLegacyUnmountClearsAffectsButRetainsMasterLinks`
+- `TestLegacyUnmountClearsMountWithNilRider`
+- `TestLiquidTablesMatchC`
+- `TestListsHiddenBodyMatchesCHolylightClause`
+- `TestLiveObjectsInCOrder`
+- `TestLoadCompileTimeIgnoresThePinnedGameClock`
+- `TestLoadCompileTimeUsesTheBootClock`
+- `TestLoadFailureClearsMobRoomAndObjectFlags`
+- `TestLocateObjectInvisibleOwnerReusesSaySpellBuffer`
+- `TestLocateObjectResultsMatchCOutputAndNoLocateOrder`
+- `TestLogHuntingStartGates`
+- `TestLookAtCharacterNotifiesTheRoom`
+- `TestLookAtCharTattooColorLevelsMatchC`
+- `TestLookAtMobDescriptionIsNotCapitalized`
+- `TestSpecEviltradeTellArgumentsMatchC`
+- `TestSpecFighterHeadbuttRefusesImmortalDirectTarget`
+- `TestSpecFlyExitUp_EntryGatesAndAudience`
+- `TestSpecGuildPracticeListUsesDescriptorPagerCallback`
+- `TestSpecHiscDelegatesAutonomousPulseToCleric`
+- `TestSpecHornObjectReceiverAudienceAndGates`
+- `TestSpecialActorLanesRegistered`
+- `TestSpecialInterceptTableMatchesRecordedCommandSets`
+- `TestSpecIdentifierEntryGatesAndValue`
+- `TestSpecIdentifierGiveGatesAndPrice`
+- `TestSpecIdentifierSuccessAudienceAndState`
+- `TestSpecIdentifierTellArgumentsMatchC`
+- `TestSpecIra_ExclaimAndHit`
+- `TestSpecItohActPreservesCLineBreakBytesAndAudience`
+- `TestSpecJail_CommandPathFallsThrough`
+- `TestSpecJailGuard_Audience`
+- `TestSpecJailGuard_EntryGates`
+- `TestSpecJailPulseGates`
+- `TestSpecJailPulseRelease`
+- `TestSpecJailReleaseLeavesMountInCell`
+- `TestSpecKeySellerTellArgumentsMatchC`
+- `TestSpecLittleBoy_Exclaim`
+- `TestSpecMallory_FightingBarks`
+- `TestSpecMallory_Revenge`
+- `TestSpecMallory_StandAndRevengeGate`
+- `TestSpecMayorWakesAndFallsThroughToMobileActivity`
+- `TestSpecMedusa_EntryGatesAndFightingDelegation`
+- `TestSpecMedusa_PetrifyAudienceAndState`
+- `TestSpecMedusa_SaveFallsThrough`
+- `TestSpecMickey_ApproachBeats`
+- `TestSpecMickey_ApproachPeaceful`
+- `TestSpecMickey_EntryGates`
+- `TestSpecMickey_FightingBarks`
+- `TestSpecMickey_VictimChangeResets`
+- `TestSpecMindflayer_EntryGatesAndFallthrough`
+
+Before reading these tests, my estimate is **R44 / F4 / C1 / D1**.
+
+## Batch 30 results (T1739–T1788)
+
+The actual marks are R44 / F5 / C1 / D0 versus the preregistered estimate of
+R44 / F4 / C1 / D1. There are five F rows, all J3, and the single C row is
+J4. I found no D row. All 50 tests were introduced after the 2026-07-12
+oracle cutoff. The batch authors are unknown for 49 tests and DeepSeek for
+T1753; among the five weak tests, four are unknown-authored and one is
+DeepSeek-authored.
+
+I tightened five weak output checks: T1753 tattoo color, T1766 Ira's room
+act, T1772 jail release transcript, T1777 Mallory's hunting log, and T1779
+the mayor's wake act. For each, the old assertion stayed green with an extra
+output mutant and the exact assertion turned red; all five mutants were
+restored byte-for-byte in the detached mutation worktree. The C-marked
+T1768 command-fallthrough test is folded into T1771's jail pulse-gate table,
+which checks the same return, silence, room, gold, and movement contract. I
+checked for live documentation/oracle-harness citations before folding it;
+there were no hits. No D deletion or C divergence was needed.
+
+Package statement coverage was 64.7% at preregistration and 64.8% after the
+batch. No production code changed and no census was needed. The 50 ledger
+rows and five mutation rows were appended as raw tab-separated text. The
+ledger is contiguous through T1788 with 18 columns per row, and the mutation
+file has seven columns per row. There are 203 functions left in the frozen
+1,991-function inventory.
+
+All eleven required gates passed individually on the final code: `make fmt`;
+`GOEXPERIMENT=nojsonv2 go build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`;
+`GOEXPERIMENT=nojsonv2 go test ./...`; `golangci-lint run ./...` (0 issues);
+`make modernize-check`; `make deadcode-ratchet` (35 baselined, 0 new);
+`make string-census` (ratchet clean with the existing stale generated reports
+and four obsolete baseline entries); `make fidelity-depth` (8,282 cases,
+7,968 proven/delegated, one blocked, 297 excluded, 16 approved-divergent);
+`make expected-divergences-check` (exit 0 with the existing unresolved
+selectors); and `make function-index-check` (the expected-red fake association
+was rejected, then the ratchet reported clean).
+
+## Batch 31 preregistered estimate (before reading tests T1789–T1838)
+
+Continue the frozen inventory-order sweep, selecting the first 50 test names
+not already represented in the ledger. T001–T1788 has 1,788 rows, 1,716
+unique audited names, and 275 unledgered inventory functions. The next roster
+is:
+
+- `TestSpecMindflayer_PsiblastUsesDirectDamage`
+- `TestSpecMindflayer_RngArms`
+- `TestSpecMindflayer_SoulLeechUsesDirectDamageAndHeals`
+- `TestSpecMiniThiefUsesCChanceAndAmountBands`
+- `TestSpecMortician_CommandSurfaceAndTellBranches`
+- `TestSpecMortician_RetrievePredicateGlobalOrderAndState`
+- `TestSpecMortician_SleepingMobStillHandlesCommand`
+- `TestSpecMorticianTellArgumentsMatchC`
+- `TestSpecNewbieZoneEntrance_Gates`
+- `TestSpecNoGetHandStrikeSwings`
+- `TestSpecOroQuartersRoom_GatesAudienceHPAndFallthrough`
+- `TestSpecOroStudyRoom_GatesAudienceHPAndFallthrough`
+- `TestSpecOutOfJailGuard_Audience`
+- `TestSpecOutOfJailGuard_EntryGates`
+- `TestSpecPaladinDirectDisarmResolvesTheBuiltNameArgument`
+- `TestSpecPortalRoom_Teleport`
+- `TestSpecPortalToTemple_ApostropheAlias`
+- `TestSpecPortalToTemple_EntryAndExactArgumentGates`
+- `TestSpecPortalToTemple_SayAudienceTeleportAndLandingLook`
+- `TestSpecPrayForItems_FallsThroughOrdinarySocial`
+- `TestSpecPrayForItems_ItemRewardBranch`
+- `TestSpecPrayForItems_StaffNamesPatched`
+- `TestSpecProstitute_BlindMobUsesHiddenAudience`
+- `TestSpecProstitute_CanSeeUsesC_LightGate`
+- `TestSpecProstitute_DirectTellsOnlyReachActor`
+- `TestSpecProstitute_EntryGatesAndFallthrough`
+- `TestSpecProstitute_InvisibleTargetUsesRoomAudience`
+- `TestSpecProstituteTellArgumentsMatchC`
+- `TestSpecQuanLoActorNamesTheActor`
+- `TestSpecQuanLo_AwakeCommandGate`
+- `TestSpecQuanLo_FleeAliasesUseGlobalMobGossip`
+- `TestSpecQuanLo_LookAndExamineUseExactKeywords`
+- `TestSpecRecruiterTellArgumentsMatchC`
+- `TestSpecRemorterRejectsPlayerCommandsAtTheCorrectGates`
+- `TestSpecRemorterSuccessResetsStateAndSeedsClassSkills`
+- `TestSpecRemorterTellArgumentsMatchC`
+- `TestSpecRoachEntryGates`
+- `TestSpecRoachFoodFailureStillExtractsObject`
+- `TestSpecRoachFoodSuccessGrowthAndExtraction`
+- `TestSpecRoachIdleOutput`
+- `TestSpecRoachSplitResetsOriginalAndSpawnsQuietRoach`
+- `TestSpecRoachStarvationExtractsWithoutCorpse`
+- `TestSpecRoachTeleportSubgateAndAudience`
+- `TestSpecShopKeeperActorKenderActorShouts`
+- `TestSpecShopKeeperActorPortsC`
+- `TestSpecSnake_ActBytesMatchC`
+- `TestSpecStableboyAutonomousEntry`
+- `TestSpecStableboyMountedStableClearsMountAndShowsFollowerStop`
+- `TestSpecStableboyTellArgumentsMatchC`
+- `TestSpecStableboyUsesAnyUnmountedMountableFollower`
+
+Before reading these tests, my estimate is **R44 / F4 / C1 / D1**. These are
+all drawn from the post-oracle suffix, so the estimate is **0 pre-oracle and
+R44 / F4 / C1 / D1 post-oracle**.
+
+## Batch 31 results (T1789–T1838)
+
+The actual marks are **R40 / F8 / C2 / D0**, versus the preregistered
+estimate R44/F4/C1/D1. All 50 tests are post-oracle. Seven tests carry J3,
+two carry J4, eight carry J7, one carries J9, and one carries J10. T1810
+(`TestSpecPrayForItems_StaffNamesPatched`) pins the already-approved DP-1373
+security divergence from PF-051: C granted immortality to reserved names,
+while Go refuses. Forty-nine tests were introduced by commits with Zach's git
+identity and no model trailer, so their author is unknown; T1810 has a Claude
+Opus 5.5 trailer. All eight F tests have unknown authors.
+
+I tightened the checks in T1792 mini-thief, T1804 portal room, T1807
+portal-to-temple, T1817 Quan Lo actor, T1822 and T1823 remorter, T1825 roach
+entry gates, and T1832 shop keeper Kender shout. Each old assertion stayed
+green under its output mutation, the corrected exact assertion turned red,
+and the source was restored byte-for-byte in the detached mutation worktree.
+The two C tests were folded into T1791 and T1807. Before folding them, I ran
+`git grep -n` over `docs/fidelity` and `cmd/dp-oracle-diff`; the live
+`docs/fidelity/depth/spec-procs.tsv` proofs now name the surviving tests.
+Remaining name hits are in dated evidence only. No D deletion was needed.
+
+The 50 ledger rows were appended as raw tab-separated text, without a CSV
+writer; all have 18 fields, the IDs are contiguous through T1838, and the
+mutation file has 146 seven-field rows. The current `origin/main` is
+`ab14720f9`. Historical rows T360, T377, T387, T391, T394, T395, T455,
+T465, T520, T535, T548, T606, T769, and T1403 match it byte-for-byte,
+including T1403's unquoted row. The frozen inventory has 153 unledgered
+functions remaining.
+
+Package statement coverage was 64.8% at the Batch 30 baseline and remains
+64.8%. No production code changed, so no census was needed.
+
+All eleven required gates passed individually: `make fmt`; `GOEXPERIMENT=nojsonv2
+go build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`; `GOEXPERIMENT=nojsonv2
+go test ./...`; `golangci-lint run ./...` (0 issues); `make modernize-check`;
+`make deadcode-ratchet` (35 baselined, 0 new); `make string-census` (ratchet
+clean, with the existing stale generated reports and four obsolete baseline
+entries); `make fidelity-depth` (8,282 cases, 7,968 proven/delegated, one
+blocked, 297 excluded, 16 approved-divergent); `make
+expected-divergences-check` (exit 0 with existing unresolved selectors); and
+`make function-index-check` (the expected-red fake association was rejected,
+then the ratchet reported clean).
+
+Cumulatively, T001–T1838 has R1681/F124/C24/D9. The pre-oracle segment remains
+R379/F7/C3/D1; post-oracle is R1302/F117/C21/D8. From T639 through T1838 the
+counts are R1048/F120/C24/D8.
+
+## Inventory-count erratum
+
+Recomputing directly from the frozen 1,991-name inventory and unique test names
+in `ledger.tsv`: after T1838 there are **225** unledgered functions
+(1,991 − 1,766). The Batch 30 result's 203 and this batch's 153 were arithmetic
+errors. The prior checkpoints are 325 after T1738 and 275 after T1788. Batch 32
+was preregistered from the direct inventory/ledger difference of 225 and starts
+with the first 50 unledgered names, leaving 175 after its roster is audited.
+
+## Batch 32 preregistered estimate (before reading tests T1839–T1888)
+
+Continue the frozen inventory-order sweep, selecting the first 50 test names not already represented in the ledger. T001–T1838 has 1838 ledger rows, 1766 unique audited names, and 225 unledgered inventory functions. The next roster is:
+
+- `TestSpecStartRoom_BirthTransitionAndImmortalGate`
+- `TestSpecStartRoomMovesMobilesUpToTheImmortalStop`
+- `TestSpecStartRoomSendsBirthAndLookToSwitchedMobile`
+- `TestSpecSuckIn_LookGateAudienceAndRelocation`
+- `TestSpecSummonerPrioritizesHuntingOverMemory`
+- `TestSpecSummonerUsesDescriptorOrderCanSeeAndNumber0To3`
+- `TestSpecTakeToJailAlignmentInterventionOutput`
+- `TestSpecTakeToJail_EntryGatesAndOutlawWarning`
+- `TestSpecTakeToJail_ReturnContractAndProtectionDelegation`
+- `TestSpecTakeToJailSubdueStateAndAudience`
+- `TestSpecTattoo1AppliesEveryOfferedTattoo`
+- `TestSpecTattoo1AutonomousEntry`
+- `TestSpecTattoo1ListAndEntryGates`
+- `TestSpecTattoo1NegativeChoiceDoesNotPanic`
+- `TestSpecTattoo1PriceAndSuccessAudience`
+- `TestSpecTattoo1TellArgumentsMatchC`
+- `TestSpecTattoo2AppliesEveryOfferedTattoo`
+- `TestSpecTattoo2AutonomousEntry`
+- `TestSpecTattoo2ListAndEntryGates`
+- `TestSpecTattoo2PriceAndSuccessAudience`
+- `TestSpecTattoo2TellArgumentsMatchC`
+- `TestSpecTattoo3AppliesEveryOfferedTattoo`
+- `TestSpecTattoo3AutonomousEntry`
+- `TestSpecTattoo3ListAndEntryGates`
+- `TestSpecTattoo3PriceAndSuccessAudience`
+- `TestSpecTattoo3TellArgumentsMatchC`
+- `TestSpecTattoo4AppliesEveryOfferedTattoo`
+- `TestSpecTattoo4ListEntryOwnedAndPriceGates`
+- `TestSpecTattoo4SuccessAudienceAndState`
+- `TestSpecTattoo4TellArgumentsMatchC`
+- `TestSpecTeleporter_EntryGates`
+- `TestSpecTeleporter_LowHealthTeleportsMobAndUsesRoomActs`
+- `TestSpecTeleporter_RestingMobUsesNativeCallMagicPositionGate`
+- `TestSpecTeleporter_SittingMobStopsAtNativeCallMagicGate`
+- `TestSpecTeleportVictim_EntryGates`
+- `TestSpecTeleportVictim_NonIntelligentMobSkipsSpeech`
+- `TestSpecTeleportVictim_ResolvesMobCombatTarget`
+- `TestSpecTeleportVictim_ScoffSpeechTeleportAndLandingLook`
+- `TestSpecTeleportVictim_SittingStopsAtNativeCallMagicGate`
+- `TestSpecTipsterSpeaksThroughNpcSay`
+- `TestSpecTroll_EntryGates`
+- `TestSpecTroll_FightingUsesCombatNumberArm`
+- `TestSpecTroll_HideInvisibleSuppressesGlowForObserver`
+- `TestSpecTroll_InjuredIdleGlowUsesCNumberArm`
+- `TestSpecTurnUndeadObjectGatesAndAct`
+- `TestSpecTurnUndeadObjectPulseReset`
+- `TestSpecTurnUndeadObjectRegistered`
+- `TestSpecTurnUndeadObjectRoomGate`
+- `TestSpecTurnUndeadObjectSkipSpacesLeadingOnly`
+- `TestSpecWallGuardNS_EntryGates`
+
+Before reading these tests, my estimate is **R44 / F4 / C1 / D1**. These are expected from the post-oracle suffix, so the estimate is **0 pre-oracle and R44 / F4 / C1 / D1 post-oracle**.
+
+## Batch 32 result (T1839–T1888)
+
+Actual marks are **R34 / F15 / C0 / D1**, all 50 in the post-oracle segment. The preregistered estimate was R44 / F4 / C1 / D1: ten fewer R, eleven more F, one fewer C, and the D count matched. The F cases were exposed by partial transcript assertions and tattoo IDs expected from Go’s own offers/constants. The repaired checks compare full C transcripts or fixed numeric IDs from `src/constants.c`.
+
+All 15 F proofs passed in the detached mutation worktree: each prior body stayed green, the fixed body went red, and the mutation was restored before the next proof. No production source changed. `TestSpecTurnUndeadObjectRegistered` was deleted as D after `git grep -n TestSpecTurnUndeadObjectRegistered docs/fidelity cmd/dp-oracle-diff` returned no live references. C has no `ASSIGNOBJ` for this special; the direct handler behavior remains tested by `TestSpecTurnUndeadObjectGatesAndAct`.
+
+Package statement coverage was 64.7% on the preregistered base and 64.8% after the assertion repairs and deletion. No census was needed because the PR changes tests and audit data only.
+
+All eleven gates passed individually: `make fmt`; `GOEXPERIMENT=nojsonv2 go build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`; `GOEXPERIMENT=nojsonv2 go test ./...`; `golangci-lint run ./...` (0 issues); `make modernize-check`; `make deadcode-ratchet` (35 baselined, 0 new); `make string-census` (ratchet clean, existing generated reports stale and four obsolete baseline entries); `make fidelity-depth` (8,282 cases, 7,968 proven/delegated, one blocked, 297 excluded, 16 approved-divergent); `make expected-divergences-check` (exit 0, seven rows across five scenarios, existing unresolved selectors); and `make function-index-check` (expected-red fake association rejected, ratchet clean).
+
+The 14 protected historical rows still match `origin/main` byte-for-byte, including raw, unquoted T1403. The ledger now has 1,888 rows and 1,816 unique test names; the frozen inventory leaves 175 unledgered functions. Batch 32 added 50 raw tab-separated ledger rows and 15 seven-field mutation rows. Batch junk counts are J1=4, J3=12, and J5=1. All 15 F tests were authored by `unknown` under the attribution rules (Zach git author, no model trailer); the D test was also unknown.
+
+Cumulatively, T001–T1888 has R1715/F139/C24/D10. The pre-oracle segment remains R379/F7/C3/D1; post-oracle is R1336/F132/C21/D9. From T639 through T1888 the counts are R1082/F135/C24/D9.
+
+
+## Batch 33 preregistered estimate (before reading tests T1889–T1938)
+
+Continue the frozen inventory-order sweep. The ledger has 1,888 rows and 1,816 unique test names; the 1,991-name frozen inventory has 175 unledgered functions. The next roster is:
+
+- `TestSpecWallGuardNS_GreetingAudienceAndPerCallReset`
+- `TestSpecWallGuardNS_PatrolsBothOneWayEnds`
+- `TestSpecWerewolf_BiteAudienceAndMoveState`
+- `TestSpecWerewolf_BiteMoveFloorsAtZero`
+- `TestSpecWerewolf_EntryGates`
+- `TestSpecWerewolf_HowlAudience`
+- `TestSpecWhirlpoolActorDeclinesWithoutAVictim`
+- `TestSpecWhirlpoolPulseCallPullsThePlayer`
+- `TestSpellActTerminatorsPreserveEmbeddedCLineBreakBytes`
+- `TestSpellActToVictimRendersCasterThroughPers`
+- `TestSpellAddFollowerRendersCFollowerAudiences`
+- `TestSpellCreatedObjectRoomActUsesActRecipientGate`
+- `TestSpellCreatedObjectRoomActUsesRecipientObjectVisibility`
+- `TestSpellDamageEnrollsPlayerVictimInCombat`
+- `TestSpellDamageFadesHiddenAttacker`
+- `TestSpellDBPreservesCompletePreKeyingTable`
+- `TestSpellGateStoresCountdownInObjectValueThree`
+- `TestSpellLowLevelStopBeforeMessage`
+- `TestSpellNeutralRescueBeforeMessage`
+- `TestSpellTeleportLevelRefusalNeverTeleports`
+- `TestSpellTeleportSaveRefusalCounterattacks`
+- `TestSpendManaConsumedOnce`
+- `TestSpendManaUpToNeverNegative`
+- `TestSpendPracticesConsumedOnce`
+- `TestSplitOverflowRefusesLikeC`
+- `TestSprintbitArraySignExtendsBit31`
+- `TestSprintbitArraySignExtensionStillAppendsFollowingWords`
+- `TestSprintbitArrayWithoutBit31DoesNotExtend`
+- `TestStableHorseGetsCMovementPool`
+- `TestStartRoomBirthMessageExactBytes`
+- `TestStartRoomBlindPlayerGetsDamned`
+- `TestStartRoomWoundedPlayerGetsStars`
+- `TestStealCarriedFlagsBoth`
+- `TestStealCarriedFlagsThief`
+- `TestStealCarriedFlagsVictim`
+- `TestStealCarriedLeavesOneCopy`
+- `TestStealCarriedTransferHoldsWorldLock`
+- `TestStealCoinsConcurrentConservesGold`
+- `TestStealEquippedConcurrentMoveKeepsOneCopy`
+- `TestStealEquippedFlagsThiefOnly`
+- `TestStealEquippedTransferHoldsWorldLock`
+- `TestStealFullInventoryFlagsNobody`
+- `TestStopFightingPositionBands`
+- `TestStopFollowerMobClearsCharmAndGroup`
+- `TestStopFollowerMobRemovesMountedMasterCacheAfterClearingAffects`
+- `TestStopFollowerShadowClearsAffectAndSuppressesAudience`
+- `TestStoreMailLogsErrorOnlyForInvalidInput`
+- `TestSummonerIgnoresNonPlayingMemoryTargetWithoutRNGDraw`
+- `TestSwitchedGetDropRoomScriptsReceiveNPCBody`
+- `TestSwitchedMobileMovementLooksAtDestination`
+
+Before reading these tests, my estimate is **R42 / F6 / C1 / D1**. All 50 are in the post-oracle segment, so the estimate is **0 pre-oracle and R42 / F6 / C1 / D1 post-oracle**.
+
+## Batch 33 result (T1889–T1938)
+
+The actual marks are **R 40 / F 8 / C 2 / D 0**, all post-oracle. The preregistered estimate was R42 / F6 / C1 / D1: two fewer R, two more F, one more C, and no D. Junk tags were J3=7, J4=2, J2=1 and J8=1.
+
+All eight F fixes passed both mutation halves in the detached mutation worktree: the old assertion stayed green, the fixed assertion went red, and each source mutation was restored byte-for-byte. The fixes tighten werewolf bite, hidden-attacker reveal, teleport refusals, split overflow, and start-room blind/wounded gate bytes. The look-gate audit also found that Go's `do_look` position and blindness messages omitted C's CRLF; `look.go` now emits those bytes, and the start-room checks pin the exact combined birth-plus-gate transcripts. Before deleting either folded steal test, I searched `docs/fidelity` and `cmd/dp-oracle-diff`; no live references remained. The surviving `TestStealCarriedFlagsBoth` runs the real `DoSteal` path and checks both players' crash flags. The removed tests were `TestStealCarriedFlagsThief` and `TestStealCarriedFlagsVictim`.
+
+The targeted `look-stars-score-depth` oracle census passed CLEAN with draw parity and no divergent draws. The package statement coverage was **64.8% before / 64.8% after** (`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game`).
+
+The 50 ledger rows were written as raw tab-separated text, with 18 fields each and no spreadsheet quoting. The mutation ledger now has 170 seven-field rows. The historical rows T360, T377, T387, T391, T394, T395, T455, T465, T520, T535, T548, T606, T769 and T1403 match `origin/main` byte-for-byte. The cumulative ledger has R1755/F147/C26/D10 across T001–T1938. Its 1,866 unique test names leave 125 names from the frozen 1,991-name inventory to audit.
+
+All eleven required gates passed separately: `make fmt`; `GOEXPERIMENT=nojsonv2 go build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`; `GOEXPERIMENT=nojsonv2 go test ./...`; `golangci-lint run ./...` (0 issues); `make modernize-check`; `make deadcode-ratchet` (35 baselined, 0 new); `make string-census` (ratchet clean, with the existing stale generated reports and four obsolete baseline entries); `make fidelity-depth` (8,282 cases, 7,968 proven/delegated, one blocked, 297 excluded and 16 approved-divergent); `make expected-divergences-check` (exit 0, existing unresolved selectors); and `make function-index-check` (expected-red fake association rejected, then ratchet clean).
+
+## Batch 34 preregistered estimate (before reading tests T1939–T1988)
+
+Continue the frozen inventory-order sweep. T001–T1938 has 1,938 ledger rows and 1,866 unique audited test names; the frozen inventory has 1,991 functions, leaving 125 unledgered. The next 50 names are:
+
+- `TestSyntheticMoneyIsTakeable`
+- `TestTakeDamageMatchesCHitPoints`
+- `TestTakeToJailBreedCallerAndRoomOrder`
+- `TestTakeToJailBreedCallerEntryGates`
+- `TestTattoo1OfferDataIsStable`
+- `TestTattoo2OfferDataIsStable`
+- `TestTattoo3OfferDataIsStable`
+- `TestTattoo4OfferDataIsStable`
+- `TestTattooNoMagicRoomMirrorsAct`
+- `TestTellFromMobUsesDirectTellArgument`
+- `TestTellFromMobUsesTellDeliveryGates`
+- `TestTHAC0ClassIDsMatchCOrder`
+- `TestTHAC0TablePreservesEveryCell`
+- `TestTrackArgumentAndLookupGates`
+- `TestTrackBFSSentinels`
+- `TestTrackClassGate`
+- `TestTrackEvasionRoll`
+- `TestTrackFailureRollPicksRandomDirection`
+- `TestTrackNotrackAndSentinel`
+- `TestTrackNoWayOut`
+- `TestTrackRainPenalty`
+- `TestTrackSkillGate`
+- `TestTrackSuccessNamesDirection`
+- `TestUnassignedScriptAudienceFilters`
+- `TestUnassignedScriptMobProducer`
+- `TestUnassignedScriptNamedControl`
+- `TestUnassignedScriptObjOnCmdConsumes`
+- `TestUnassignedScriptObjOnCmdSwitchedMobActor`
+- `TestUnassignedScriptObjOnPulseIsSilentDivergence`
+- `TestUnassignedScriptRoomOnCmdConsumes`
+- `TestUndeadKnightTauntTexts`
+- `TestUngroupedFollowerKillUsesSoloXP`
+- `TestUngroupedLeaderStillReceivesAutosplitGold`
+- `TestUngroupedMobKillerAwardsNothing`
+- `TestUntimedCarriedObjectTimerStaysZero`
+- `TestUseTattooCooldownAndUnsupported`
+- `TestUseTattooDepth`
+- `TestUseTattooDrawParity`
+- `TestUseTattooEyeAudienceGates`
+- `TestUseTattooHeldKeywordBoundaries`
+- `TestUseTattooHeldPrecedenceAndExpiry`
+- `TestUseTattooNoMagic`
+- `TestUseTattooNoMagicAudienceNames`
+- `TestUseTattooNoMagicPrecedesSitting`
+- `TestUseTattooSkullAudienceAndIdentity`
+- `TestUseTattooSkullVisibility`
+- `TestUseTattooSpellStateAndPosition`
+- `TestUseWandPointSelfIgnoresActionDescription`
+- `TestVampireConsumableDepth`
+- `TestVisibilitySitesUseRealLevel`
+
+Before reading these tests, my estimate is **R43 / F5 / C1 / D1**, all in the post-oracle segment.
+
+## Batch 34 actuals (T1939–T1988)
+
+The preregistered estimate was R43/F5/C1/D1. Actual marks are **R38/F5/C7/D0**, all post-oracle (variance R−5/F0/C+6/D−1). The five F rows are J3 weak output checks, tightened to exact C bytes. Five detached mutations kept each former assertion green and made its fixed assertion red; every mutated production file was restored byte-for-byte. The J4 folds are the standalone synthetic-money predicate, four tattoo offer-name snapshots, the direct no-magic act helper test, and the tattoo state-matrix aggregator. Each surviving command-path test now named in the ledger covers its contract.
+
+The tracking tests that replace the trackNumber draw seam are tagged J7 (five tests). The object-onpulse test records the Zach-approved DP-1416 divergence as J10: C dereferences NULL in the unassigned diagnostic before output, while Go intentionally remains silent.
+
+The weak tests were introduced by DeepSeek (two: the synthetic-money C fold and undead-knight F) or have Zach's git identity with no model trailer (ten: the other three F fixes and six remaining C folds). Luna authored the unbounded-damage R test. All 50 rows were added as raw tab-separated text; historical rows were not rewritten.
+
+Before deleting/folding, git grep -n <TestName> docs/fidelity cmd/dp-oracle-diff was checked for all seven removed tests. The live corpse and tattoo inventory rows now name survivors; the only remaining TestUseTattooDepth hit is the dated 2026-10-01 handoff, which can remain. No other live inventory hits remain.
+
+Coverage stayed **64.7% before / 64.7% after** (GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game). The package test and all eleven gates passed separately: GOEXPERIMENT=nojsonv2 go test ./pkg/game/...; make fmt; GOEXPERIMENT=nojsonv2 go build ./...; GOEXPERIMENT=nojsonv2 go vet ./...; GOEXPERIMENT=nojsonv2 go test ./...; CI-pinned golangci-lint v2.15.0 (0 issues); make modernize-check; make deadcode-ratchet (35 baselined, 0 new); make string-census (ratchet clean; existing stale reports and four obsolete baseline entries); make fidelity-depth (8,282 cases, 7,968 proven/delegated, 1 blocked, 297 excluded, 16 approved-divergent); make expected-divergences-check (exit 0, existing unresolved selectors); and make function-index-check (expected-red fake association rejected, then ratchet clean).
+
+This batch changes tests and fidelity inventory records only, so no census was required. The cumulative ledger now has R1793/F152/C33/D10 across T001–T1988. It contains 1,916 unique frozen-inventory names; **75 tests remain**.
+
+## Batch 35 preregistered estimate (before reading tests T1989–T2038)
+
+T001–T1988 contains 1,988 ledger rows and 1,916 unique frozen-inventory names. The inventory leaves 75 unledgered tests; this batch takes the next 50 names in the remaining inventory order:
+
+- TestVisibilitySkipsSwitchLookupWithoutInvisLevel
+- TestVitalsSnapshotMatchesStoredFields
+- TestWallGuardNSActorPortsDelegateLikeC
+- TestWanderMobMovesFromDryRoom
+- TestWanderMobNeedsBoatInNoswimRoom
+- TestWanderMobStopsAtClosedDoor
+- TestWeatherAndTimePreservesWeatherDrawOrder
+- TestWeatherEvents_SynchronizedDirectEntryPoints
+- TestWeatherLockReentryRegression
+- TestWeatherLockReentryRegressionWorker
+- TestWeatherSynchronizationRace
+- TestWerewolfBiteMobVictimDeathRunsKillSeam
+- TestWerewolfBiteReducesMobVictimMoveWithFloatTruncation
+- TestWerewolfCorpseConsumeStateAndAudience
+- TestWerewolfCorpseEntryGates
+- TestWerewolfCorpseFullBoundariesAndTaste
+- TestWhisperAskSelfReplyCarriesOwnBreak
+- TestWhodBuildWhoListAfkMarker
+- TestWhodBuildWhoListDefaultMode
+- TestWhodBuildWhoListGodTokenLadder
+- TestWhodBuildWhoListInvisibleAndSite
+- TestWhodBuildWhoListUnknownSite
+- TestWhodGreetingMatchesConfigBytes
+- TestWhodHeaderPinsMudName
+- TestWorldBridgeCharFields
+- TestWorldBridgeMobileActionsDispatchTheCCommandAndArgument
+- TestWorldBridgeTimerIsMobWait
+- TestWorldCombatWimpyFleeUsesMobileDirectCommand
+- TestWorldModifyWeatherChangeUpdatesCanonicalState
+- TestWornExtractionLeavesFlag
+- TestWornTimerDecrementsByTwo
+- TestWoundActHidesInvisibleVictimFromRoom
+- TestWoundActVisibleVictimReachesRoom
+- TestWriteAliasesRefusesUnsafeNameWithoutWriting
+- TestWriteMudDateFormatMatchesC
+- TestZoneClockConcurrentManualAndHeartbeat
+- TestZoneClockManualResetPreservesQueue
+- TestZoneClockMinuteModesAndQueue
+- TestZoneClockPumpedHeartbeatExecutesReset
+- TestZoneClockTrackingConcurrentRestore
+- TestZoneErrorMudlogBranches
+- TestZoneResetCapIsNotAWarning
+- TestZoneResetConcurrentClockManualAndReaders
+- TestZoneResetConditionalStateMatrix
+- TestZoneResetDoorClearsSecretMark
+- TestZoneResetEquipmentAttributeBoundary
+- TestZoneResetEquipmentLoadGates
+- TestZoneResetEquipmentOwnershipAndOccupiedSlot
+- TestZoneResetGPrependsToMobInventory
+- TestZoneResetGiveGlobalCapAndConditionalFailure
+
+Before reading these tests, my estimate is **R43 / F5 / C1 / D1**, all in the post-oracle segment.
+
+## Batch 35 actuals (T1989–T2038)
+
+The preregistered estimate was R43/F5/C1/D1. Actual marks are **R45/F3/C2/D0**, all post-oracle (variance R+2/F−2/C+1/D−1). The three F rows are J3 weak assertions: the wall-guard actor test now proves the fighter delegation and selected direct command, the WHOD greeting test compares all 509 C bytes, and the AFK name-only fixture now reaches the title gate. Three detached mutations kept each old body green and made its fixed assertion red; each source file was restored byte-for-byte. The two J4 folds are the WHOD empty-host case, covered by `TestWhodBuildWhoListInvisibleAndSite`, and the zone-clock concurrency case, covered by `TestZoneResetConcurrentClockManualAndReaders`.
+
+The actual 50 names match the first 50 unledgered frozen-inventory names. The preregistered list had a two-name tail error: it advanced `TestZoneResetGPrependsToMobInventory` from the next batch and omitted `TestZoneResetGiveWithoutLastMob`; the ledger follows the frozen inventory and records `TestZoneResetGiveGlobalCapAndConditionalFailure` followed by `TestZoneResetGiveWithoutLastMob`. The next batch begins with `TestZoneResetGPrependsToMobInventory`.
+
+Before deleting or folding tests, `git grep -n <TestName> docs/fidelity cmd/dp-oracle-diff` was checked. The live WHOD inventory proof now names `TestWhodBuildWhoListInvisibleAndSite`; the only remaining hit for `TestZoneClockConcurrentManualAndHeartbeat` is in a dated handoff, which may remain. No live inventory reference to either deleted test remains.
+
+The wall-guard actor change affects switched-body command handling, so it received a targeted census rather than relying only on the unit mutation. Final run `/home/zach/Archives/darkpawns/oracle-runs/2026-11-22/luna-game-b35-wallguard-final` is CLEAN for its single scenario with zero draw divergence. The pre-fight emote has exact visible actor and peer bytes. The fighting emote is a hollow block on both engines; no player-output claim is made for that step. The unit mutation remains the assertion that forces the fighter/headbutt arm and goes red when delegation is removed.
+
+Coverage moved from **64.7% to 64.8%** (`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game`). C references were corrected where the earlier comments did not match the source path: whisper/ask line breaks and the second `act()` break (`src/act.comm.c:1013-1014; src/comm.c:2473-2477`), conjured vanish formatting (`src/spec_procs3.c:880-883`), real-level macros (`src/utils.h:285-287,528-530`), WHOD greeting bytes (`src/config.c:221-233`), and the carried-versus-worn crash-save path (`src/handler.c:1005-1018,577-603`). The function-index baseline now records the wall guard's direct C association with `fighter`.
+
+All eleven required gates passed separately on the final Go source: `make fmt`; `GOEXPERIMENT=nojsonv2 go build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`; `GOEXPERIMENT=nojsonv2 go test ./...`; CI-pinned `golangci-lint v2.15.0` (0 issues); `make modernize-check`; `make deadcode-ratchet` (35 baselined, 0 new); `make string-census` (ratchet clean, 9 known and 0 unreviewed; existing generated reports are stale and four old baseline entries are obsolete); `make fidelity-depth` (8,282 cases, 7,968 proven/delegated, 1 blocked, 297 excluded, 16 approved-divergent); `make expected-divergences-check` (exit 0, existing unresolved selectors); and `make function-index-check` (expected-red fake association rejected, then ratchet clean).
+
+The cumulative ledger has **2,038 rows and 1,966 unique inventory names**: R1838/F155/C35/D10. B35 adds three mutation rows (177 total). All 50 introductions are post-oracle; all five weak findings have unknown test-author attribution. Historical T360, T377, T387, T391, T394, T395, T455, T465, T520, T535, T548, T606, T769, and T1403 match `origin/main` byte-for-byte, including raw TSV quoting. **25 tests remain**, beginning with `TestZoneResetGPrependsToMobInventory`.
+
+## Batch 36 preregistered estimate (before reading tests T2039–T2063)
+
+T001–T2038 contains 2,038 ledger rows and 1,966 unique frozen-inventory names. The inventory leaves 25 unledgered tests; this final batch takes those remaining names in inventory order:
+
+- TestZoneResetGPrependsToMobInventory
+- TestZoneResetInitializationIsDeterministic
+- TestZoneResetLoopIterationMatrix
+- TestZoneResetLoopUsesSingleCounter
+- TestZoneResetMissingDoorPreservesSecretMark
+- TestZoneResetMobileBothRandomPlacements
+- TestZoneResetMobileCapCountsOutsideSpawner
+- TestZoneResetMobileCapRetainsLastMob
+- TestZoneResetMobilePlacementFlagMatrix
+- TestZoneResetMobileRemovalIsDeferredAndGlobal
+- TestZoneResetMobileRemovalReplacesLastMob
+- TestZoneResetMobileRemovalSkipsFightingAndMarked
+- TestZoneResetObjectRemovalExtractsAllContents
+- TestZoneResetObjectRoomOrderAndOwnership
+- TestZoneResetPAllowsNonContainerTarget
+- TestZoneResetPSelfTargetStaysFloating
+- TestZoneResetPUsesNewestGlobalObject
+- TestZoneResetRandZonUsesResetZone
+- TestZoneResetRemoveFindsAnyObjectInRoom
+- TestZoneResetSkippedLoopDoesNotStart
+- TestZoneResetUnknownCommandConditionalSkip
+- TestZoneResetUnknownCommandDisabledOnce
+- TestZoneResetUnknownConcurrentEditorAndReaders
+- TestZoneResetUnknownDisablePreservesEditedTable
+- TestZzzCanaryTwo
+
+Before reading these tests, my estimate is **R22 / F2 / C1 / D0**, expected in the post-oracle segment.
+
+## Batch 36 actuals (T2039–T2063)
+
+The preregistered estimate was R22/F2/C1/D0. Actual marks are **R22/F0/C2/D1**, all post-oracle (variance R0/F−2/C+1/D+1). The two J4 folds are T2039 TestZoneResetGPrependsToMobInventory, covered by T2037 TestZoneResetGiveGlobalCapAndConditionalFailure, and T2057 TestZoneResetRemoveFindsAnyObjectInRoom, covered by T2051 TestZoneResetObjectRemovalExtractsAllContents. The latter removes a newer world-created room object, recursively extracts its contents, and runs the conditional successor. Before deletion, git grep -n <TestName> docs/fidelity cmd/dp-oracle-diff found the two live wizard.tsv proof rows; both now name only surviving tests. There were no live references to T2063 TestZzzCanaryTwo, whose body only logs a constant and protects no behavior. The frozen inventory remains unchanged.
+
+T2061 carries J2 for its immediate local command copy compared with the same snapshot field. Its concurrent reset/editor workload still has independent final assertions for the object cap and canonical equipped ownership. No F row or regression-claiming D row was found, so no mutation rows were added; mutations.tsv remains at 177 data rows. No C disagreement was found. Changes are test and fidelity-inventory edits only, so no oracle census was needed.
+
+Coverage remained **64.8% before and after** (GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game). GOEXPERIMENT=nojsonv2 go test ./pkg/game/... and the full GOEXPERIMENT=nojsonv2 go test ./... both passed. All eleven gates passed separately: make fmt; GOEXPERIMENT=nojsonv2 go build ./...; GOEXPERIMENT=nojsonv2 go vet ./...; full Go tests; CI's golangci-lint v2.15.0 (0 issues); make modernize-check (clean); make deadcode-ratchet (35 baselined, 0 new); make string-census (ratchet clean, 9 known and 0 unreviewed; generated reports remain stale and four old baseline entries are obsolete); make fidelity-depth (8,282 cases, 7,968 proven/delegated, 1 blocked, 297 excluded, 16 approved-divergent); make expected-divergences-check (exit 0 with existing unresolved selectors); and make function-index-check (the fake association was rejected as expected, then the ratchet was clean).
+
+## pkg/game audit summary (T001–T2063)
+
+The frozen inventory has **1,991 test functions**, represented by **2,063 ledger rows** because 72 functions were audited twice: once in the early pass (T001–T638) and again in the post-oracle redo, with 8 of the 72 pairs marked differently. At function level, marks are **R 1,788 / F 155 / C 37 / D 11**. At ledger-row level, marks are R 1,860 / F 155 / C 37 / D 11; the extra 72 rows are the R row of each twice-audited function (where the two marks differ, the non-R one sets the function mark). Overlapping junk annotations total J3=137, J4=38, J7=27, J9=15, J2=11, J5=6, J1=5, J10=4, and J8=3.
+
+For function-level totals, any F/C/D subrow determines that function's mark; a function with only R subrows counts as R. Junk totals count annotations on ledger rows and can overlap.
+
+The opening forecast was R1,802/F120/C32/D37 across the 1,991 functions. Actual function-level results were R1,788/F155/C37/D11: 14 fewer R, 35 more F, 5 more C, and 26 fewer D than forecast. For the date split, 338 pre-oracle functions (390 ledger rows) classify as R327/F7/C3/D1; 1,653 later functions (1,673 rows) classify as R1,461/F148/C34/D10. Functions with any non-R row are 11/338 (3.3%) pre-oracle and 192/1,653 (11.6%) later. This time split is descriptive, not evidence that oracle access caused the difference: the eras also differ in auditors, test style, and coverage.
+
+Among F rows, introduction-author attribution is unknown for 132, DeepSeek for 10, OpenClaw for 8, Claude Opus 5.5 for 4, and Luna for 1. Among C/D rows it is unknown for 40, OpenClaw for 5, DeepSeek for 1, Claude Opus 5.5 for 1, and Cline for 1. These labels follow the introducing commit identity and trailers under PF-152/PF-153, not branch names.

@@ -35,19 +35,24 @@ func TestSpecStartRoom_BirthTransitionAndImmortalGate(t *testing.T) {
 		level       int
 		wantHandled bool
 		wantRoom    int
-		wantPrefix  string
+		wantOutput  string
 	}{
 		{
 			name:        "mortal",
 			level:       1,
 			wantHandled: true,
 			wantRoom:    8162,
-			// The CR LF before the vision is process_output's interruption of
-			// the showing prompt, added by the terminal writer (DP-1307).
-			wantPrefix: "   Suddenly the hairs on the back of your neck stand up as if lightning had\n\r" +
+			wantOutput: "   Suddenly the hairs on the back of your neck stand up as if lightning had\n\r" +
 				"struck nearby. A keen wailing fills the air, and an ethereal image appears\n" +
 				"before you.\n\r" +
-				"   'Startroom, now is not your time to die,' speaks the figure.",
+				"   'Startroom, now is not your time to die,' speaks the figure.\r\n" +
+				"   'Prove your worth and I may well grant you eternal life.'\r\n" +
+				"   'Trust no one, for all here are but dark pawns above which you must \r\n" +
+				"struggle to prove yourself.  All here strive to be a king... at any cost.'\r\n" +
+				"   The figure glows a moment, then disappears, but his voice remains.\r\n" +
+				"   'Your life begins now...' it says, then fades -- just as the world around\r\n" +
+				"you does the same.\r\n\r\n" +
+				"Temple Infirmary\r\nInfirmary\r\n[ Exits: None! ]\r\n",
 		},
 		{
 			name:        "immortal",
@@ -86,9 +91,9 @@ func TestSpecStartRoom_BirthTransitionAndImmortalGate(t *testing.T) {
 			if got := player.GetRoomVNum(); got != tt.wantRoom {
 				t.Errorf("room = %d, want %d", got, tt.wantRoom)
 			}
-			if tt.wantPrefix != "" {
-				if got := output.String(); !strings.HasPrefix(got, tt.wantPrefix) {
-					t.Errorf("output = %q, want prefix %q", got, tt.wantPrefix)
+			if tt.wantOutput != "" {
+				if got := output.String(); got != tt.wantOutput {
+					t.Errorf("output = %q, want exact C transcript %q", got, tt.wantOutput)
 				}
 			} else if got := output.String(); got != "" {
 				t.Errorf("output = %q, want empty output", got)

@@ -341,8 +341,8 @@ func TestKeylessDoorMatchesCNoKeyGuard(t *testing.T) {
 	}
 	messages[p.Name] = nil
 	w.DoUnlock(p, "door east")
-	if got := joinedDoorMessages(messages, p.Name); !strings.Contains(got, "You don't seem to have the proper key.") {
-		t.Fatalf("unlock message after picking up coins = %q, want proper-key rejection", got)
+	if got, want := joinedDoorMessages(messages, p.Name), "You don't seem to have the proper key.\r\n"; got != want {
+		t.Fatalf("unlock message after picking up coins = %q, want exact C rejection %q", got, want)
 	}
 
 	// A VNum -1 object actually in inventory (like C's NOTHING=-1 corpse/note)
@@ -353,13 +353,13 @@ func TestKeylessDoorMatchesCNoKeyGuard(t *testing.T) {
 	}
 	messages[p.Name] = nil
 	w.DoUnlock(p, "door east")
-	if got := joinedDoorMessages(messages, p.Name); !strings.Contains(got, "*Click*") {
-		t.Fatalf("unlock message with VNum -1 item = %q, want *Click*", got)
+	if got, want := joinedDoorMessages(messages, p.Name), "*Click*\r\n"; got != want {
+		t.Fatalf("unlock message with VNum -1 item = %q, want exact C click %q", got, want)
 	}
 	messages[p.Name] = nil
 	w.DoLock(p, "door east")
-	if got := joinedDoorMessages(messages, p.Name); !strings.Contains(got, "*Click*") {
-		t.Fatalf("lock message with VNum -1 item = %q, want *Click*", got)
+	if got, want := joinedDoorMessages(messages, p.Name), "*Click*\r\n"; got != want {
+		t.Fatalf("lock message with VNum -1 item = %q, want exact C click %q", got, want)
 	}
 }
 

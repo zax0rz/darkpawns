@@ -392,8 +392,16 @@ func TestSpecMallory_Revenge(t *testing.T) {
 		t.Fatalf("hunting = %q, want %q", got, victim.GetName())
 	}
 	logged := out["Logwatch"]
-	if !strings.Contains(logged, "started hunting "+victim.GetName()) {
-		t.Fatalf("syslog = %q, want hunting line for %q", logged, victim.GetName())
+	wantLog := "[ " + mickey.GetName() + " started hunting " + victim.GetName() + " ]\r\n"
+	foundExactHuntLine := false
+	for _, line := range strings.Split(logged, "\r\n") {
+		if line+"\r\n" == wantLog {
+			foundExactHuntLine = true
+			break
+		}
+	}
+	if !foundExactHuntLine {
+		t.Fatalf("syslog = %q, want exact C hunting line %q", logged, wantLog)
 	}
 	// Already hunting: a second Mallory pulse changes nothing.
 	oldHunt := mickey.GetHunting()

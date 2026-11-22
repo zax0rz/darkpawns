@@ -224,7 +224,7 @@ func (w *Whod) activeModesString() string {
 // WhodMudName is C's MUDNAME (#define at src/whod.c:27).
 const WhodMudName = "Dark Pawns"
 
-// WhodGreeting returns C's SHORT_GREETINGS (src/config.c:221-231) byte for
+// WhodGreeting returns C's SHORT_GREETINGS (src/config.c:221-233) byte for
 // byte. C writes it to the accepted socket before the list (src/whod.c:337-339).
 func WhodGreeting() string {
 	return "\n\r\n\r" +

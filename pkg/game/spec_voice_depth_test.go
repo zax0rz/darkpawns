@@ -52,8 +52,9 @@ func seedForFirstDraw(t *testing.T, want int) uint32 {
 
 // TestUndeadKnightTauntTexts pins C's taunt texts verbatim, including the
 // typos the port had corrected: "your going" (:1163), the double space in
-// "scoundrel.  I'm" (:1166), "what your thinking" (:1171) and "more that one
-// way" (:1240). The sink is act() to the room, so an observer hears the line.
+// "scoundrel.  I'm" (:1167-1169), "what your thinking" (:1172) and "more that
+// one way" (:1235-1238). The sink is act() to the room, so an observer hears
+// the line.
 func TestUndeadKnightTauntTexts(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -68,7 +69,10 @@ func TestUndeadKnightTauntTexts(t *testing.T) {
 			text: map[int]string{
 				2: "The black knight shouts, 'If I'm going to hell, your going with me!'\r\n",
 				3: "The black knight says, 'You dirty rotten scoundrel.  I'm gonna make you very sorry.'\r\n",
-				4: "The black knight says, 'I know what your thinking...'\r\n",
+				4: "The black knight says, 'I know what your thinking...'\r\n" +
+					"The black knight says, 'Did he fire five shots, or did he fire six.'\r\n" +
+					"The black knight says, 'Well let me ask you...'\r\n" +
+					"The black knight asks, 'Do you feel lucky PUNK?  Well... DO YOU?'\r\n",
 			},
 		},
 		{
@@ -76,7 +80,8 @@ func TestUndeadKnightTauntTexts(t *testing.T) {
 			desc: "the red knight",
 			spec: specRedUndeadKnight,
 			text: map[int]string{
-				4: "The red knight says, 'There's more that one way to skin a cat:'\r\n",
+				4: "The red knight says, 'There's more that one way to skin a cat:'\r\n" +
+					"The red knight continues: 'Way number 15 -- Krazy Glue and a toothbrush.'\r\n",
 			},
 		},
 	} {
@@ -90,8 +95,8 @@ func TestUndeadKnightTauntTexts(t *testing.T) {
 
 				tc.spec(w, nil, mob, "", "")
 
-				if got := out["Watcher"]; !strings.Contains(got, want) {
-					t.Fatalf("room bytes = %q, want %q among them", got, want)
+				if got := out["Watcher"]; got != want {
+					t.Fatalf("room bytes = %q, want exact C taunt bytes %q", got, want)
 				}
 			})
 		}

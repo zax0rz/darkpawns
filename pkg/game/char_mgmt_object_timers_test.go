@@ -74,7 +74,7 @@ func TestWornTimerDecrementsByTwo(t *testing.T) {
 }
 
 // TestUntimedCarriedObjectTimerStaysZero pins update_object's guard
-// (src/handler.c:1041-1042): timers at or below zero are untouched, so the
+// (src/handler.c:1035-1042): timers at or below zero are untouched, so the
 // walk never invents decay for ordinary carried inventory.
 func TestUntimedCarriedObjectTimerStaysZero(t *testing.T) {
 	proto := &parser.Obj{VNum: 7003, Keywords: "bread"}

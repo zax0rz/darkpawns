@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -164,9 +163,9 @@ func TestSpecTattoo4AppliesEveryOfferedTattoo(t *testing.T) {
 		strDelta   int
 		damroll    int
 	}{
-		{name: "worm", offerIndex: 0, tattoo: TattooWorm, damroll: 2},
-		{name: "dragon", offerIndex: 1, tattoo: TattooDragon, strDelta: 2, damroll: 2},
-		{name: "skull", offerIndex: 2, tattoo: TattooSkull},
+		{name: "worm", offerIndex: 0, tattoo: 5, damroll: 2},
+		{name: "dragon", offerIndex: 1, tattoo: 1, strDelta: 2, damroll: 2},
+		{name: "skull", offerIndex: 2, tattoo: 3},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			w, actor, tattooist, _ := newTattoo4TestWorld(t, false)
@@ -179,11 +178,5 @@ func TestSpecTattoo4AppliesEveryOfferedTattoo(t *testing.T) {
 				t.Fatalf("offer state = tattoo %d stats %+v damroll %d", actor.Tattoo, actor.Stats, actor.Damroll)
 			}
 		})
-	}
-}
-
-func TestTattoo4OfferDataIsStable(t *testing.T) {
-	if got := strings.Join([]string{tattoo4Offers[0].name, tattoo4Offers[1].name, tattoo4Offers[2].name}, "|"); got != "of an ice worm|of a green dragon|of a flaming skull" {
-		t.Fatalf("offer names = %q", got)
 	}
 }

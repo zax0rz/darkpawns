@@ -32,11 +32,8 @@ func TestSpecTakeToJail_EntryGatesAndOutlawWarning(t *testing.T) {
 	specTakeToJail(w, nil, guard, "", "")
 
 	got := lastMsg()
-	if !strings.Contains(got, "A test mob says 'We don't like OUTLAWS like you in this city!'") {
-		t.Fatalf("outlaw warning = %q", got)
-	}
-	if strings.Contains(got, ", 'We don't like") {
-		t.Fatal("take_to_jail warning retained cityguard's comma")
+	if want := "A test mob says 'We don't like OUTLAWS like you in this city!'\r\n"; got != want {
+		t.Fatalf("outlaw warning = %q, want exact C bytes %q", got, want)
 	}
 	if got, want := len(engine.starts), 1; got != want {
 		t.Fatalf("combat starts = %d, want %d", got, want)
@@ -95,8 +92,8 @@ func TestSpecTakeToJail_ReturnContractAndProtectionDelegation(t *testing.T) {
 	pcVillain.SetFightingBody(goodMob)
 	specTakeToJail(w, nil, guard, "", "")
 
-	if got := lastMsg(); !strings.Contains(got, "You just pissed me off") {
-		t.Fatalf("protection warning = %q", got)
+	if got, want := lastMsg(), strings.Repeat("A test mob says, 'You just pissed me off, PcVillain!'\r\n", 3); got != want {
+		t.Fatalf("protection warning = %q, want exact C bytes %q", got, want)
 	}
 	if got, want := len(engine.starts), 1; got != want {
 		t.Fatalf("protection combat starts = %d, want %d", got, want)
@@ -386,15 +383,13 @@ func TestTakeToJailBreedCallerAndRoomOrder(t *testing.T) {
 			handled := specTakeToJail(w, nil, guard, "", "")
 			got := output()
 			want := victim.GetName()
+			wantOutput := "A test mob exclaims, 'Die, nightbreed!!'\r\n"
 			if outlawFirst {
 				want = player.GetName()
-				if strings.Contains(got, "nightbreed") || !strings.Contains(got, "OUTLAWS") {
-					t.Fatalf("first outlaw did not keep priority: %q", got)
-				}
-			} else {
-				if !handled || !strings.Contains(got, "Die, nightbreed!!") || strings.Contains(got, "OUTLAWS") {
-					t.Fatalf("earlier breed handoff did not consume before later outlaw: handled=%t output=%q", handled, got)
-				}
+				wantOutput = "A test mob says 'We don't like OUTLAWS like you in this city!'\r\n"
+			}
+			if got != wantOutput || (!outlawFirst && !handled) {
+				t.Fatalf("room-order result: handled=%t output=%q, want exact C transcript %q", handled, got, wantOutput)
 			}
 			if len(engine.starts) != 1 || engine.starts[0][1] != want {
 				t.Fatalf("selected combat starts=%v, want only %s", engine.starts, want)

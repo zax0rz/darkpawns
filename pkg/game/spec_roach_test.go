@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -91,19 +90,37 @@ func setRoachDraws(t *testing.T, draws ...int) {
 
 func TestSpecRoachEntryGates(t *testing.T) {
 	r := newRoachTestWorld(t, 1001)
-	setRoachDraws(t, 1, 5)
+	old := roachNumber
+	draws := 0
+	roachNumber = func(_, _ int) int {
+		draws++
+		return 5
+	}
+	t.Cleanup(func() { roachNumber = old })
 	if got := specRoach(r.w, r.actor, r.mob, "look", ""); got {
 		t.Fatal("command invocation was handled")
 	}
+	if draws != 0 {
+		t.Fatalf("command gate consumed %d RNG draws, want none", draws)
+	}
 	if got := specRoach(r.w, nil, r.mob, "", ""); got {
 		t.Fatal("sleep-free commandless invocation unexpectedly handled")
+	}
+	if draws != 2 {
+		t.Fatalf("quiet awake pulse consumed %d RNG draws, want starvation gate and idle roll", draws)
 	}
 	r.mob.SetPosition(combat.PosSleeping)
 	if got := specRoach(r.w, nil, r.mob, "", ""); got {
 		t.Fatal("sleeping roach was handled")
 	}
-	if got := strings.TrimSpace(r.message[r.actor.Name]); got != "" {
+	if draws != 2 {
+		t.Fatalf("sleeping gate consumed %d RNG draws, want none", draws-2)
+	}
+	if got := r.message[r.actor.Name]; got != "" {
 		t.Fatalf("entry gate emitted %q", got)
+	}
+	if got := r.message[r.peer.Name]; got != "" {
+		t.Fatalf("entry gate emitted to peer %q", got)
 	}
 }
 
