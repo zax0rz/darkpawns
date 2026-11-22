@@ -1966,3 +1966,63 @@ T391, T394, T395, T455, T465, T520, T535, T548, T606, T769, and T1403 match
 Through T1738, T639–T1738 totals R964/F107/C21/D8. Cumulative T001–T1738
 is R1597/F111/C21/D9: pre-oracle R379/F7/C3/D1 and post-oracle
 R1218/F104/C18/D8. This batch adds two J3 rows and one J4 row.
+
+## Batch 30 preregistered estimate (before reading tests T1739–T1788)
+
+Continue the frozen inventory-order sweep, selecting the first 50 test names
+not already represented in the ledger. T001–T1738 has 1,738 rows, 1,666
+unique audited names, and 325 unledgered inventory functions. The next roster
+is:
+
+- `TestLegacySwitchedCommandRefusalsUseBodyOutput`
+- `TestLegacyUnmountClearsAffectsButRetainsMasterLinks`
+- `TestLegacyUnmountClearsMountWithNilRider`
+- `TestLiquidTablesMatchC`
+- `TestListsHiddenBodyMatchesCHolylightClause`
+- `TestLiveObjectsInCOrder`
+- `TestLoadCompileTimeIgnoresThePinnedGameClock`
+- `TestLoadCompileTimeUsesTheBootClock`
+- `TestLoadFailureClearsMobRoomAndObjectFlags`
+- `TestLocateObjectInvisibleOwnerReusesSaySpellBuffer`
+- `TestLocateObjectResultsMatchCOutputAndNoLocateOrder`
+- `TestLogHuntingStartGates`
+- `TestLookAtCharacterNotifiesTheRoom`
+- `TestLookAtCharTattooColorLevelsMatchC`
+- `TestLookAtMobDescriptionIsNotCapitalized`
+- `TestSpecEviltradeTellArgumentsMatchC`
+- `TestSpecFighterHeadbuttRefusesImmortalDirectTarget`
+- `TestSpecFlyExitUp_EntryGatesAndAudience`
+- `TestSpecGuildPracticeListUsesDescriptorPagerCallback`
+- `TestSpecHiscDelegatesAutonomousPulseToCleric`
+- `TestSpecHornObjectReceiverAudienceAndGates`
+- `TestSpecialActorLanesRegistered`
+- `TestSpecialInterceptTableMatchesRecordedCommandSets`
+- `TestSpecIdentifierEntryGatesAndValue`
+- `TestSpecIdentifierGiveGatesAndPrice`
+- `TestSpecIdentifierSuccessAudienceAndState`
+- `TestSpecIdentifierTellArgumentsMatchC`
+- `TestSpecIra_ExclaimAndHit`
+- `TestSpecItohActPreservesCLineBreakBytesAndAudience`
+- `TestSpecJail_CommandPathFallsThrough`
+- `TestSpecJailGuard_Audience`
+- `TestSpecJailGuard_EntryGates`
+- `TestSpecJailPulseGates`
+- `TestSpecJailPulseRelease`
+- `TestSpecJailReleaseLeavesMountInCell`
+- `TestSpecKeySellerTellArgumentsMatchC`
+- `TestSpecLittleBoy_Exclaim`
+- `TestSpecMallory_FightingBarks`
+- `TestSpecMallory_Revenge`
+- `TestSpecMallory_StandAndRevengeGate`
+- `TestSpecMayorWakesAndFallsThroughToMobileActivity`
+- `TestSpecMedusa_EntryGatesAndFightingDelegation`
+- `TestSpecMedusa_PetrifyAudienceAndState`
+- `TestSpecMedusa_SaveFallsThrough`
+- `TestSpecMickey_ApproachBeats`
+- `TestSpecMickey_ApproachPeaceful`
+- `TestSpecMickey_EntryGates`
+- `TestSpecMickey_FightingBarks`
+- `TestSpecMickey_VictimChangeResets`
+- `TestSpecMindflayer_EntryGatesAndFallthrough`
+
+Before reading these tests, my estimate is **R44 / F4 / C1 / D1**.
