@@ -2322,3 +2322,60 @@ The targeted `look-stars-score-depth` oracle census passed CLEAN with draw parit
 The 50 ledger rows were written as raw tab-separated text, with 18 fields each and no spreadsheet quoting. The mutation ledger now has 170 seven-field rows. The historical rows T360, T377, T387, T391, T394, T395, T455, T465, T520, T535, T548, T606, T769 and T1403 match `origin/main` byte-for-byte. The cumulative ledger has R1755/F147/C26/D10 across T001–T1938. Its 1,866 unique test names leave 125 names from the frozen 1,991-name inventory to audit.
 
 All eleven required gates passed separately: `make fmt`; `GOEXPERIMENT=nojsonv2 go build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`; `GOEXPERIMENT=nojsonv2 go test ./...`; `golangci-lint run ./...` (0 issues); `make modernize-check`; `make deadcode-ratchet` (35 baselined, 0 new); `make string-census` (ratchet clean, with the existing stale generated reports and four obsolete baseline entries); `make fidelity-depth` (8,282 cases, 7,968 proven/delegated, one blocked, 297 excluded and 16 approved-divergent); `make expected-divergences-check` (exit 0, existing unresolved selectors); and `make function-index-check` (expected-red fake association rejected, then ratchet clean).
+
+## Batch 34 preregistered estimate (before reading tests T1939–T1988)
+
+Continue the frozen inventory-order sweep. T001–T1938 has 1,938 ledger rows and 1,866 unique audited test names; the frozen inventory has 1,991 functions, leaving 125 unledgered. The next 50 names are:
+
+- `TestSyntheticMoneyIsTakeable`
+- `TestTakeDamageMatchesCHitPoints`
+- `TestTakeToJailBreedCallerAndRoomOrder`
+- `TestTakeToJailBreedCallerEntryGates`
+- `TestTattoo1OfferDataIsStable`
+- `TestTattoo2OfferDataIsStable`
+- `TestTattoo3OfferDataIsStable`
+- `TestTattoo4OfferDataIsStable`
+- `TestTattooNoMagicRoomMirrorsAct`
+- `TestTellFromMobUsesDirectTellArgument`
+- `TestTellFromMobUsesTellDeliveryGates`
+- `TestTHAC0ClassIDsMatchCOrder`
+- `TestTHAC0TablePreservesEveryCell`
+- `TestTrackArgumentAndLookupGates`
+- `TestTrackBFSSentinels`
+- `TestTrackClassGate`
+- `TestTrackEvasionRoll`
+- `TestTrackFailureRollPicksRandomDirection`
+- `TestTrackNotrackAndSentinel`
+- `TestTrackNoWayOut`
+- `TestTrackRainPenalty`
+- `TestTrackSkillGate`
+- `TestTrackSuccessNamesDirection`
+- `TestUnassignedScriptAudienceFilters`
+- `TestUnassignedScriptMobProducer`
+- `TestUnassignedScriptNamedControl`
+- `TestUnassignedScriptObjOnCmdConsumes`
+- `TestUnassignedScriptObjOnCmdSwitchedMobActor`
+- `TestUnassignedScriptObjOnPulseIsSilentDivergence`
+- `TestUnassignedScriptRoomOnCmdConsumes`
+- `TestUndeadKnightTauntTexts`
+- `TestUngroupedFollowerKillUsesSoloXP`
+- `TestUngroupedLeaderStillReceivesAutosplitGold`
+- `TestUngroupedMobKillerAwardsNothing`
+- `TestUntimedCarriedObjectTimerStaysZero`
+- `TestUseTattooCooldownAndUnsupported`
+- `TestUseTattooDepth`
+- `TestUseTattooDrawParity`
+- `TestUseTattooEyeAudienceGates`
+- `TestUseTattooHeldKeywordBoundaries`
+- `TestUseTattooHeldPrecedenceAndExpiry`
+- `TestUseTattooNoMagic`
+- `TestUseTattooNoMagicAudienceNames`
+- `TestUseTattooNoMagicPrecedesSitting`
+- `TestUseTattooSkullAudienceAndIdentity`
+- `TestUseTattooSkullVisibility`
+- `TestUseTattooSpellStateAndPosition`
+- `TestUseWandPointSelfIgnoresActionDescription`
+- `TestVampireConsumableDepth`
+- `TestVisibilitySitesUseRealLevel`
+
+Before reading these tests, my estimate is **R43 / F5 / C1 / D1**, all in the post-oracle segment.
