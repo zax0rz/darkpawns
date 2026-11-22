@@ -84,7 +84,7 @@ func horseInRoom(t *testing.T, w *World, room int) *MobInstance {
 
 // TestMountedTravelSpendsTheMountPool reproduces the reported route class with
 // C's arithmetic: need = avg(sector loss of source and destination)
-// (src/act.movement.c:137-141), the gate reads GET_MOVE(get_mount(ch))
+// (src/act.movement.c:134-136), the gate reads GET_MOVE(get_mount(ch))
 // (:163), and the spend hits GET_MOVE(mount) (:202). A 230-point stable horse
 // therefore covers 76 field steps (3 points each), not the 16 a read_mobile
 // 50-point pool allows.

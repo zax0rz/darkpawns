@@ -550,3 +550,51 @@ unchanged from batch 14.
 Based on the cumulative forecast remainder after T1038, I expect this 50-test
 slice to contain R46/F1/C1/D2. I expect all 50 to be post-oracle, continuing
 the introduction-date pattern from batch 15.
+
+
+## Batch 16 audit (T1039–T1088; introductions 2026-04-25–2026-11-18)
+
+The preregistered estimate was R46/F1/C1/D2, with all 50 expected after the
+oracle date. Actual: **R44/F5/C1/D0**. Introduction dates split the batch into
+20 pre-oracle tests (R16/F3/C1/D0) and 30 later tests (R28/F2/C0/D0). The
+forecast missed by four F marks and two D marks; its date split missed 20
+pre-oracle rows.
+
+Five F checks were repaired and mutation-proven. T1047 and T1048 had called
+`emitMobSkillSurvival` directly, so they stayed green if the real mob-skill
+damage seam stopped dispatching survival behavior. Both now enter through
+`mobSkillDamage` and distinguish the player wimp-level gate from the
+wounded-band message. T1074 checked the container-to-room location tag but not
+room membership; T1075 checked invalid-destination errors but not source
+preservation; T1077 checked the equipped location tag but not the equipment
+slot. The mutations and old-green/fixed-red results are in `mutations.tsv`.
+
+T1052, `TestMobStayZonePreventsWander`, only repeated the case-insensitive
+flag helper check in T781; it never attempted a wander. I deleted it. T781
+keeps the flag lookup check and T1908 reaches the actual STAY_ZONE wander gate.
+T1079 remains R: transactional ObjectLocation rollback is a real Go state
+invariant even though C has no matching centralized rollback API.
+
+The object-movement fixtures now use World movement/equipment methods rather
+than direct location/slice writes. I expanded the mob position loops to all
+values 0..14. I corrected C references for prototype copying in `mob.go` and
+`mob_position_test.go`, and corrected the red-gate selection citation in
+`moon_gate_mount_test.go` to `src/gate.c:273-276` (mount transfer is
+`:281-292`). No runtime behavior changed; no oracle census is needed.
+
+Weak-test attribution in this batch: DeepSeek wrote T1047 and T1048; OpenClaw
+wrote the duplicate T1052 and the three object-movement checks T1074, T1075,
+and T1077.
+
+The T639–T1088 segment totals R409/F32/C8/D1. Cumulative ledger totals are
+**R1042/F36/C8/D2**. By the row-level introduction-date field, T001–T1088 now
+contains 390 pre-oracle tests (R379/F7/C3/D1) and 698 later tests
+(R663/F29/C5/D1). Recounting the ledger exposed a one-R pre/post split error
+in the preceding batch-15 prose: through T1038 the rows are pre R363/F4/C2/D1
+and post R635/F27/C5/D1; no earlier ledger rows were changed. Against the
+initial T639–T1991 forecast (R1240/F50/C28/D35), the 903 remaining tests have
+forecast remainder R831/F18/C20/D34. No package summary or PF row is due until
+T1991.
+
+`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` reported 64.6% before and
+after this batch.

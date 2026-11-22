@@ -9,11 +9,11 @@ import (
 
 // TestMobSpawnPreservesDeadAndFloating pins DP-1553: a prototype built with
 // medit (src/medit.c:1061, src/olc.h:46 NUM_POSITIONS=15) and copied by
-// read_mobile (src/db.c:1757) keeps POS_DEAD (0) and floating (9..14) as
-// spawn positions. do_score must then print DEAD / floating
-// (src/act.informative.c:1325,1355), not standing.
+// read_mobile (src/db.c:1092,1742-1746) keeps POS_DEAD (0) and floating
+// (9..14) as spawn positions. C reports position 0 as dead and otherwise
+// falls through to floating for unlisted positions (src/act.informative.c:1322-1356).
 func TestMobSpawnPreservesDeadAndFloating(t *testing.T) {
-	for _, pos := range []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14} {
+	for pos := 0; pos < 15; pos++ {
 		mob := NewMob(&parser.Mob{
 			VNum: 9000, Keywords: "trainee", ShortDesc: "a trainee",
 			Position: pos, DefaultPos: 8,
@@ -37,7 +37,7 @@ func TestMobSetPositionPreservesDeadAndFloating(t *testing.T) {
 		VNum: 9001, Keywords: "trainee", ShortDesc: "a trainee",
 		Position: combat.PosStanding, DefaultPos: combat.PosStanding,
 	}, 1001)
-	for _, pos := range []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 14} {
+	for pos := 0; pos < 15; pos++ {
 		mob.SetPosition(pos)
 		if got := mob.GetPosition(); got != pos {
 			t.Errorf("SetPosition(%d): GetPosition() = %d, want %d", pos, got, pos)
