@@ -1289,3 +1289,74 @@ test-audit records, and depth evidence only; no census was required.
 
 `pkg/game` coverage was 64.6% at the preregistered commit and remains 64.6%
 after these changes (`GOEXPERIMENT=nojsonv2 go test ./pkg/game -cover`).
+
+
+## Batch 24 preregistered estimate (before reading tests T1439–T1488)
+
+Before reading this batch, I compared the frozen inventory against all ledger
+base names. The inventory has 1,991 distinct functions. T001–T1438 has 1,438
+rows but only 1,366 distinct function names: 72 rows repeat a function already
+recorded. That leaves **625 unique inventory functions** without a ledger row,
+not the 553 forecast after T1438. I will preserve all prior rows under the
+append-only rule and audit every remaining function, so the ledger will end at
+T2063 if the inventory stays unchanged. The first-50 roster is the earliest
+unledgered names in inventory order, scanning from the beginning and skipping
+all functions already in the ledger; this supersedes the implicit cursor at
+inventory line 1601 used by the prior roster.
+
+The roster spans inventory lines 234–366 (50 unledgered functions):
+
+- `TestDamageEntryBreaksFollower`
+- `TestDamageNewbieExperienceBeforeMessage`
+- `TestDamageRefusedNPCAttackerIsSilent`
+- `TestDamageRefusedPeacefulRetaliation`
+- `TestDamageRefusedProtections`
+- `TestDamageRefusedShopkeeperSpecials`
+- `TestDeathCryBoundedCallers`
+- `TestDeathCryMuffledBehindClosedDoors`
+- `TestDeathFollowerCleanupBeforeDropAndRemoval`
+- `TestDeathFollowerOwnMasterAndRemoteFollower`
+- `TestDeathObservationCoversGuardedAndRawPaths`
+- `TestDeathPreservesCrashFlag`
+- `TestDeathReleasesFollowers`
+- `TestDeserializeMigratesVersion1Flags`
+- `TestDiagConditionMatchesCThresholds`
+- `TestDieWithKillerBothConLossDrawsAreUnfloored`
+- `TestDieWithKillerConLossHasNoFloor`
+- `TestDisarmVictimFlagDirect`
+- `TestDisbandWalkIncludesMobAndKeepsCharmedFollow`
+- `TestDismountDepthMatchesCOrderAndAffectUnmount`
+- `TestDoActionFlirtSleepingTargetHitsPositionGate`
+- `TestDoActionFondleSleepingTargetHitsPositionGate`
+- `TestDoBearhug_SignedCharRollAbove127HitsLikeReferenceC`
+- `TestDoCircle_PositionMultiplier`
+- `TestDoClanBankOverflowWithdrawMatchesC`
+- `TestDoClanInfoIncludesDefinedCDetails`
+- `TestDoClanInfoListIncludesDefinedCHeading`
+- `TestDoClanRenameOverflowRefusesLikeC`
+- `TestDoClanSetAppfeeOverflowRefusesLikeC`
+- `TestDoCutthroatGateOrder`
+- `TestDoCutthroatImmortalTargetOverridesCaster`
+- `TestDoCutthroatNoSkillDoesNotDraw`
+- `TestDoCutthroatSuccessAndFailureContracts`
+- `TestDoDamage_WornApplySpellProvidesSanctuary`
+- `TestDoDetectDepthFailureMessageWaitAndRollRange`
+- `TestDoDetectDepthGatesAndOutput`
+- `TestDoDetectDepthSuccessOrderAndSecretMark`
+- `TestDoDiagnoseUsesFightingFallbackAndPrivateOutput`
+- `TestDoDisarmDepthFailureState`
+- `TestDoDisarmDepthPlayerSuccess`
+- `TestDoDisarmDepthRetaliatesWhenVictimWasNotFighting`
+- `TestDoDisarmDepthWeaponGatePrecedesCombatGate`
+- `TestDoDisembowelDepthUsesCMessageAndDrawOrder`
+- `TestDoDisembowel_Mounted`
+- `TestDoDisembowel_NoWeapon`
+- `TestDoDisembowel_SkillRollFailureUsesDamageMessagePath`
+- `TestDoDisembowel_WrongWeapon`
+- `TestDoDragonKick_BlocksInsufficientMove`
+- `TestDoDragonKick_MissDrawOrder`
+- `TestDoDragonKick_WaitStateAlways22Pulses`
+
+From recent batch results, my prediction is **R43 / F5 / C1 / D1**. I expect all
+50 to postdate the 2026-07-12 oracle cutoff; I will verify dates from their
+introducing commits during the audit.
