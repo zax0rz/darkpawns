@@ -503,3 +503,9 @@ No package summary or PF row is due until T1991.
 
 `GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` reported 64.6% both before
 and after this batch.
+
+## Batch 15 preregistered estimate (before reading tests T989–T1038)
+
+Based on the cumulative forecast remainder after T988, I expect this 50-test
+slice to contain R46/F1/C1/D2. I expect roughly two pre-oracle tests and 48
+post-oracle tests, with any weak cases concentrated in the older tests.
