@@ -160,11 +160,11 @@ func TestSpecWerewolf_BiteAudienceAndMoveState(t *testing.T) {
 	}
 	wantVictim := "The werewolf tears into your leg with his huge fangs!\r\n"
 	wantPeer := "The werewolf rips apart WolfVictim's leg with his fangs!\r\n"
-	if got := a.message[a.victim.Name]; !strings.Contains(got, wantVictim) {
-		t.Fatalf("victim bite = %q, missing %q", got, wantVictim)
+	if got := a.message[a.victim.Name]; got != wantVictim {
+		t.Fatalf("victim bite = %q, want exact C bytes %q", got, wantVictim)
 	}
-	if got := a.message[a.peer.Name]; !strings.Contains(got, wantPeer) {
-		t.Fatalf("peer bite = %q, missing %q", got, wantPeer)
+	if got := a.message[a.peer.Name]; got != wantPeer {
+		t.Fatalf("peer bite = %q, want exact C bytes %q", got, wantPeer)
 	}
 	if got := a.message[a.remote.Name]; got != "" {
 		t.Fatalf("remote bite = %q, want empty", got)

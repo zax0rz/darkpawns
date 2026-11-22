@@ -148,7 +148,7 @@ func TestSpellDamageFadesHiddenAttacker(t *testing.T) {
 	if leader.IsAffected(affHide) {
 		t.Fatal("hidden attacker kept AFF_HIDE through damage()")
 	}
-	if got := captured(output, "Victim"); !strings.Contains(got, "Leader slowly fades into existence.") {
-		t.Fatalf("victim stream = %q, want %q", got, "Leader slowly fades into existence.")
+	if got, want := captured(output, "Victim"), "Leader slowly fades into existence."; got != want {
+		t.Fatalf("victim stream = %q, want exact C bytes %q", got, want)
 	}
 }

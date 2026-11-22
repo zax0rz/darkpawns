@@ -28,8 +28,8 @@ func TestStartRoomWoundedPlayerGetsStars(t *testing.T) {
 		t.Fatal("start_room declined for a wounded mortal")
 	}
 	got := messages[player.GetName()]
-	if !strings.Contains(got, "You can't see anything but stars!") {
-		t.Fatalf("wounded start_room look = %q, want the stars line", got)
+	if want := startRoomBirthMessage("Wounded") + "You can't see anything but stars!\r\n"; got != want {
+		t.Fatalf("wounded start_room look = %q, want exact C bytes %q", got, want)
 	}
 	if strings.Contains(got, "Temple Infirmary") {
 		t.Fatalf("wounded start_room look leaked the room: %q", got)
@@ -55,8 +55,8 @@ func TestStartRoomBlindPlayerGetsDamned(t *testing.T) {
 		t.Fatal("start_room declined for a blind mortal")
 	}
 	got := messages[player.GetName()]
-	if !strings.Contains(got, "You're blind!") && !strings.Contains(got, "you're blind!") {
-		t.Fatalf("blind start_room look = %q, want the blind line", got)
+	if want := startRoomBirthMessage("Blindarr") + "You can't see a damned thing, you're blind!\r\n"; got != want {
+		t.Fatalf("blind start_room look = %q, want exact C bytes %q", got, want)
 	}
 	if strings.Contains(got, "Temple Infirmary") {
 		t.Fatalf("blind start_room look leaked the room: %q", got)
@@ -76,7 +76,7 @@ func TestDoLookForSpellGates(t *testing.T) {
 		t.Fatalf("AddPlayer: %v", err)
 	}
 	w.DoLookForSpell(ch)
-	if got, want := messages[ch.GetName()], "You can't see anything but stars!"; got != want {
+	if got, want := messages[ch.GetName()], "You can't see anything but stars!\r\n"; got != want {
 		t.Fatalf("DoLookForSpell wounded = %q, want exact C gate %q", got, want)
 	}
 	// Blind with an awake position gets the blind line, not darkness.
@@ -87,7 +87,7 @@ func TestDoLookForSpellGates(t *testing.T) {
 		t.Fatalf("AddPlayer: %v", err)
 	}
 	w.DoLookForSpell(ch2)
-	if got, want := messages[ch2.GetName()], "You can't see a damned thing, you're blind!"; got != want {
+	if got, want := messages[ch2.GetName()], "You can't see a damned thing, you're blind!\r\n"; got != want {
 		t.Fatalf("DoLookForSpell blind = %q, want exact C gate %q", got, want)
 	}
 }

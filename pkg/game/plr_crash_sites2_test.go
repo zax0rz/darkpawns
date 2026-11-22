@@ -61,52 +61,6 @@ func driveCarriedSteal(t *testing.T, w *World, thief, victim *Player, itemName s
 	return stealDriveResult{}
 }
 
-// TestStealCarriedFlagsVictim drives stealInventoryItem via DoSteal and
-// asserts the victim's flag alone (C obj_from_char, src/act.other.c:471).
-func TestStealCarriedFlagsVictim(t *testing.T) {
-	w, thief := newFlagWorld(t)
-	victim := NewPlayer(2, "Victimus", 1001)
-	if err := w.AddPlayer(victim); err != nil {
-		t.Fatalf("AddPlayer victim: %v", err)
-	}
-	obj := newFlagItem(w, 7104, 1)
-	if err := w.MoveObjectToPlayerInventory(obj, victim); err != nil {
-		t.Fatalf("carry: %v", err)
-	}
-
-	got := driveCarriedSteal(t, w, thief, victim, "thing")
-
-	if !got.success {
-		t.Fatal("steal did not succeed")
-	}
-	if !got.victimFlag {
-		t.Fatal("carried steal did not flag the victim (C obj_from_char, act.other.c:471)")
-	}
-}
-
-// TestStealCarriedFlagsThief drives the same path and asserts the thief's
-// flag alone (C obj_to_char, src/act.other.c:472).
-func TestStealCarriedFlagsThief(t *testing.T) {
-	w, thief := newFlagWorld(t)
-	victim := NewPlayer(2, "Victimus", 1001)
-	if err := w.AddPlayer(victim); err != nil {
-		t.Fatalf("AddPlayer victim: %v", err)
-	}
-	obj := newFlagItem(w, 7105, 1)
-	if err := w.MoveObjectToPlayerInventory(obj, victim); err != nil {
-		t.Fatalf("carry: %v", err)
-	}
-
-	got := driveCarriedSteal(t, w, thief, victim, "thing")
-
-	if !got.success {
-		t.Fatal("steal did not succeed")
-	}
-	if !got.thiefFlagged {
-		t.Fatal("carried steal did not flag the thief (C obj_to_char, act.other.c:472)")
-	}
-}
-
 // TestStealFullInventoryFlagsNobody: C checks the thief's capacity BEFORE
 // obj_from_char (src/act.other.c:468-470); the port checks it after the
 // removal, so the failure path flags nobody.

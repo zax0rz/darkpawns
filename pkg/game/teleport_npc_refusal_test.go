@@ -83,8 +83,8 @@ func TestSpellTeleportSaveRefusalCounterattacks(t *testing.T) {
 	combat.SetRoller(fixedNumberRoller{value: 50})
 	spells.CastFromSpecial(caster, victim, spells.SpellTeleport, 30, w)
 
-	if got := casterSink.String(); !strings.HasPrefix(got, "The magic words fail to form properly.\r\n") {
-		t.Fatalf("caster bytes = %q, want the save-refusal line first", got)
+	if got, want := casterSink.String(), "The magic words fail to form properly.\r\n"; got != want {
+		t.Fatalf("caster bytes = %q, want exact C refusal %q", got, want)
 	}
 	if !strings.Contains(room.String(), "stalker") && victim.GetFightingBody() == nil {
 		t.Fatal("save refusal did not counterattack: victim never enrolled")
@@ -123,8 +123,8 @@ func TestSpellTeleportLevelRefusalNeverTeleports(t *testing.T) {
 	roomBefore := victim.GetRoomVNum()
 	spells.CastFromSpecial(caster, victim, spells.SpellTeleport, 30, w)
 
-	if got := casterSink.String(); !strings.HasPrefix(got, "The magic fails utterly!\r\n") {
-		t.Fatalf("caster bytes = %q, want the level-refusal line first", got)
+	if got, want := casterSink.String(), "The magic fails utterly!\r\n"; got != want {
+		t.Fatalf("caster bytes = %q, want exact C refusal %q", got, want)
 	}
 	if victim.GetRoomVNum() != roomBefore {
 		t.Fatalf("level-refused victim teleported to room %d, want %d", victim.GetRoomVNum(), roomBefore)

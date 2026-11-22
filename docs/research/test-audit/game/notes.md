@@ -2310,3 +2310,15 @@ Continue the frozen inventory-order sweep. The ledger has 1,888 rows and 1,816 u
 - `TestSwitchedMobileMovementLooksAtDestination`
 
 Before reading these tests, my estimate is **R42 / F6 / C1 / D1**. All 50 are in the post-oracle segment, so the estimate is **0 pre-oracle and R42 / F6 / C1 / D1 post-oracle**.
+
+## Batch 33 result (T1889–T1938)
+
+The actual marks are **R 40 / F 8 / C 2 / D 0**, all post-oracle. The preregistered estimate was R42 / F6 / C1 / D1: two fewer R, two more F, one more C, and no D. Junk tags were J3=7, J4=2, J2=1 and J8=1.
+
+All eight F fixes passed both mutation halves in the detached mutation worktree: the old assertion stayed green, the fixed assertion went red, and each source mutation was restored byte-for-byte. The fixes tighten werewolf bite, hidden-attacker reveal, teleport refusals, split overflow, and start-room blind/wounded gate bytes. The look-gate audit also found that Go's `do_look` position and blindness messages omitted C's CRLF; `look.go` now emits those bytes, and the start-room checks pin the exact combined birth-plus-gate transcripts. Before deleting either folded steal test, I searched `docs/fidelity` and `cmd/dp-oracle-diff`; no live references remained. The surviving `TestStealCarriedFlagsBoth` runs the real `DoSteal` path and checks both players' crash flags. The removed tests were `TestStealCarriedFlagsThief` and `TestStealCarriedFlagsVictim`.
+
+The targeted `look-stars-score-depth` oracle census passed CLEAN with draw parity and no divergent draws. The package statement coverage was **64.8% before / 64.8% after** (`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game`).
+
+The 50 ledger rows were written as raw tab-separated text, with 18 fields each and no spreadsheet quoting. The mutation ledger now has 170 seven-field rows. The historical rows T360, T377, T387, T391, T394, T395, T455, T465, T520, T535, T548, T606, T769 and T1403 match `origin/main` byte-for-byte. The cumulative ledger has R1755/F147/C26/D10 across T001–T1938. Its 1,866 unique test names leave 125 names from the frozen 1,991-name inventory to audit.
+
+All eleven required gates passed separately: `make fmt`; `GOEXPERIMENT=nojsonv2 go build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`; `GOEXPERIMENT=nojsonv2 go test ./...`; `golangci-lint run ./...` (0 issues); `make modernize-check`; `make deadcode-ratchet` (35 baselined, 0 new); `make string-census` (ratchet clean, with the existing stale generated reports and four obsolete baseline entries); `make fidelity-depth` (8,282 cases, 7,968 proven/delegated, one blocked, 297 excluded and 16 approved-divergent); `make expected-divergences-check` (exit 0, existing unresolved selectors); and `make function-index-check` (expected-red fake association rejected, then ratchet clean).

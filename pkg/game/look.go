@@ -196,11 +196,11 @@ func (w *World) DoLook(ch combat.Combatant, cmd, arg string) ObservationResult {
 		// C sends these with send_to_char (src/act.informative.c:1107,1112),
 		// which has no SENDOK gate: a sub-sleeping looker still receives
 		// the stars line. Act ToChar would drop it for a sleeper.
-		result.raw(ch, "You can't see anything but stars!")
+		result.raw(ch, "You can't see anything but stars!\r\n")
 		return result
 	}
 	if observationBodyAffected(ch, affBlind) {
-		result.raw(ch, "You can't see a damned thing, you're blind!")
+		result.raw(ch, "You can't see a damned thing, you're blind!\r\n")
 		return result
 	}
 

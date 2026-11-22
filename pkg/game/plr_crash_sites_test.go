@@ -177,19 +177,12 @@ func TestStealCarriedFlagsBoth(t *testing.T) {
 	thief.SetPlrFlag(PlrCrash, false)
 	victim.SetPlrFlag(PlrCrash, false)
 
-	// Drive the two halves of C's carried steal exactly:
-	// obj_from_char (victim) then obj_to_char (thief), act.other.c:471-472.
-	if !removeCarriedItem(victim, obj) {
-		t.Fatal("removeCarriedItem failed")
+	got := driveCarriedSteal(t, w, thief, victim, "thing")
+	if !got.success {
+		t.Fatal("carried steal did not succeed")
 	}
-	victim.MarkCrashNeeded() // C obj_from_char — handler.c:596-598
-	if err := thief.Inventory.AddItem(obj); err != nil {
-		t.Fatalf("thief carry: %v", err)
-	}
-	thief.MarkCrashNeeded() // C obj_to_char — handler.c:569-571
-
-	if !victim.NeedsCrashSave() || !thief.NeedsCrashSave() {
-		t.Fatal("carried steal must flag both sides (C obj_from_char + obj_to_char)")
+	if !got.victimFlag || !got.thiefFlagged {
+		t.Fatalf("carried steal flags: victim=%t thief=%t, want both set by DoSteal", got.victimFlag, got.thiefFlagged)
 	}
 }
 
