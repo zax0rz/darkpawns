@@ -1,6 +1,7 @@
 package session
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -116,15 +117,32 @@ func TestForcedMobileHitRefusalBodies(t *testing.T) {
 
 	// Self: "You hit yourself...OUCH!." reaches the forced body's private
 	// output (a switched descriptor in production), plus the room act.
-	w.MessageSink = func(name string, message []byte) {}
+	watcher := makeCommandTestSession(t, manager, "Mobwatch", 10, 1001)
+	watcher.isSwitched = true
+	watcher.switchedMob = gil
+	watcher.switchedOriginal = watcher.player
+	registerTestSession(t, manager, watcher, "Mobwatch")
+
+	var roomOut strings.Builder
+	w.MessageSink = func(_ string, message []byte) { roomOut.Write(message) }
 	if err := cmdForce(caster, []string{"gil", "hit", "gil"}); err != nil {
 		t.Fatalf("force self-hit: %v", err)
 	}
 	if gil.GetFightingBody() != nil {
 		t.Fatal("self-hit enrolled a fight")
 	}
+	if got := gil.GetWaitState(); got != 0 {
+		t.Fatalf("self-hit set wait state = %d, want 0", got)
+	}
+	if got := drainSendChannel(t, watcher); !strings.Contains(got, "You hit yourself...OUCH!.") {
+		t.Fatalf("self-hit private output = %q, want OUCH line", got)
+	}
+	if got := roomOut.String(); !strings.Contains(got, "Gil hits itself, and says OUCH!\r\n") {
+		t.Fatalf("self-hit room output = %q, want room OUCH act", got)
+	}
 
-	// Already fighting: no second target swing.
+	// Already fighting: C refuses with "You do the best you can!\r\n" and does
+	// not swing again or apply do_hit's post-swing wait state.
 	stalker, err := w.SpawnMob(99002, 1001)
 	if err != nil {
 		t.Fatal(err)
@@ -132,12 +150,18 @@ func TestForcedMobileHitRefusalBodies(t *testing.T) {
 	if err := cmdForce(caster, []string{"gil", "hit", "stalker"}); err != nil {
 		t.Fatal(err)
 	}
+	if gil.GetFightingBody() != stalker {
+		t.Fatalf("first hit did not enroll gil against stalker: %v", gil.GetFightingBody())
+	}
+	gil.SetWaitStatePulses(0)
+	_ = drainSendChannel(t, watcher)
 	if err := cmdForce(caster, []string{"gil", "hit", "stalker"}); err != nil {
 		t.Fatal(err)
 	}
-	if gil.GetFightingBody() != nil && stalker.GetHP() == stalker.GetMaxHP() && gil.GetPosition() == combat.PosFighting {
-		// A second forced hit while fighting prints C's refusal and does not
-		// swing again: assert through the body's state rather than bytes.
-		t.Log("second forced hit while fighting produced no new swing (C: You do the best you can!)")
+	if got := drainSendChannel(t, watcher); !strings.Contains(got, "You do the best you can!") {
+		t.Fatalf("second forced hit private output = %q, want C refusal", got)
+	}
+	if got := gil.GetWaitState(); got != 0 {
+		t.Fatalf("second forced hit while fighting swung again and set wait state = %d, want 0", got)
 	}
 }

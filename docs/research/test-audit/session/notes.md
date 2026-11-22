@@ -534,3 +534,99 @@ All-R spot-checks (random draw, seed 20261116, from T1346–T1445): T1372
 and T1427 `TestBankHiddenTransactionsThroughDispatch`
 (`pkg/game/spec_procs4.go:683`). All three went red with assertion failures and
 were restored byte for byte (`mutations.tsv`).
+
+
+## Batch 17 results (later tests 1301–1392, 2026-10-26..11-19, T1446–T1537)
+
+Marks: R 90, F 1, C 1, D 0. Junk: J2 ×1, J4 ×1.
+Running total: 1537/1537 (R 1529, F 4, C 4, D 0).
+
+The 90 R tests cover shop trade-expression and value dispatch, room exit
+post-newline space, telemetry login/creation activity, async prompt and link-loss
+deferral, do_set sbyte wrapping, forced mobile hit/group and group color/leader
+identity, combat message boot wiring, stat color levels and sprintbitarray
+trailing space, APPLY_AGE effective birth, last host format and save-detach
+host rules, switched specials/fallthrough/bridges/teleport/users/order/who,
+complex alias editor routing, Go 1.26 GMCP JSON byte golden, REDIT overflow,
+idle-password menu timeout, pager idle reset, C atoi wrap, race-hate lookup,
+PLR_IT load clearing, 255-byte input truncation, DP_CLOCK heartbeat delivery,
+switched-mob input timing, olist gate, do_string extra-desc write-through,
+direct berserk subcmd, dotted scripts root, milestone notifications, same-pulse
+quit+switch, 11-state login disconnect mudlogs, register takeover deadlock,
+acText/positionText full sweeps, alias write-failure C output, graceful shutdown,
+force/drain/who/where/wiznet descriptor ordering, offline house DB lookups, OLC
+target-directory failure, immortal practice paging, and wizhelp C command rows.
+
+F fix (1 test, J2):
+- `TestForcedMobileHitRefusalBodies` (`pkg/session/character_hit_actor_test.go:89`,
+  `T1454`): the already-fighting half ran `force gil hit stalker` twice and only
+  logged via `t.Log` inside an `if`, so bypassing `pkg/game/character_command.go:371`
+  left the old test green. Fixed to attach a switched descriptor watcher and
+  assert `"You hit yourself...OUCH!."`, `"Gil hits itself, and says OUCH!\r\n"`,
+  `"You do the best you can!"`, and zero post-refusal wait state. Confirmed red
+  under the same mutation (`mutations.tsv`).
+
+C merge (1 test, J4):
+- `TestCmdAbilsHeaderTrailingSpace` (`pkg/session/cmd_info_test.go:280`, `T1511`;
+  `grep -rn TestCmdAbilsHeaderTrailingSpace docs/fidelity/` returned 0 hits):
+  strict subset duplicate of `TestCmdAbils` (`cmd_info_test.go:210`), which
+  already asserts exact full output including `"Your current ability scores: \r\n"`.
+  Removed; surviving `TestCmdAbils` confirmed red when the trailing space is
+  removed at `pkg/session/cmd_info.go:64` (`mutations.tsv`).
+
+No J10 divergences.
+
+## Package summary (pkg/session, T001–T1537)
+
+- **Inventory**: 1,537 / 1,537 test functions audited (`comm -23` against
+  `inventory.txt` empty; 1,537 contiguous 18-column rows in `ledger.tsv`).
+- **Coverage**: **74.4%** of statements before audit (`b2e884aca`) → **74.6%**
+  of statements after audit (+0.2 pp; deletions/merges offset by strengthened
+  assertions across the 4 `F` fixes).
+
+### Final marks vs predictions
+
+| Mark | Predicted pre-oracle (145) | Actual pre-oracle (145) | Predicted later (1392) | Actual later (1392) | Predicted total (1537) | Actual total (1537) |
+|---|---|---|---|---|---|---|
+| R keep | 116 (80.0%) | 139 (95.86%) | 1330 (95.5%) | 1390 (99.86%) | 1446 (94.1%) | 1529 (99.48%) |
+| F fix | 18 (12.4%) | 3 (2.07%) | 40 (2.9%) | 1 (0.07%) | 58 (3.8%) | 4 (0.26%) |
+| C merge | 6 (4.1%) | 3 (2.07%) | 12 (0.9%) | 1 (0.07%) | 18 (1.2%) | 4 (0.26%) |
+| D delete | 5 (3.4%) | 0 (0.00%) | 10 (0.7%) | 0 (0.00%) | 15 (1.0%) | 0 (0.00%) |
+
+Pre-oracle tests (`born_before_oracle=yes`, 145 tests, May–July 2026) had a
+**4.14%** non-R rate (6/145: 3 `F`, 3 `C`), compared to **0.14%** (2/1,392: 1
+`F`, 1 `C`) in the post-oracle depth-testing era — a ~30× drop in weak/duplicate
+test rate, sharper than the predicted ~3.6× drop.
+
+### Junk-code counts
+
+| Junk code | Count | Tests |
+|---|---|---|
+| J2 (cannot fail / no-op assertion) | 1 | `T1454` `TestForcedMobileHitRefusalBodies` (`F`) |
+| J3 (name promises more than asserted) | 2 | `T020` `TestBuildRoomItems_KeywordDisambiguation` (`F`), `T135` `TestInstakillSendsVictimMessage` (`F`) |
+| J4 (strict subset duplicate) | 4 | `T008` `TestManager_GetSession_Lookup` (`C`), `T051` `TestAcText` (`C`), `T096` `TestPositionText` (`C`), `T1511` `TestCmdAbilsHeaderTrailingSpace` (`C`) |
+| J8 (fixture supplies asserted behavior) | 1 | `T009` `TestSetCommandExecFunc` (`F`) |
+| J10 (unapproved Go/C divergence pinned) | 0 | none |
+
+### Author-agent breakdown
+
+| `author_agent` | Total | R | F | C | D |
+|---|---|---|---|---|---|
+| `glm` | 542 | 541 | 1 | 0 | 0 |
+| `unknown` | 273 | 271 | 1 | 1 | 0 |
+| `codex` | 250 | 250 | 0 | 0 | 0 |
+| `sol` | 225 | 225 | 0 | 0 | 0 |
+| `deepseek` | 121 | 121 | 0 | 0 | 0 |
+| `OpenClaw (multi-model orchestrator)` | 101 | 96 | 2 | 3 | 0 |
+| `claude` | 13 | 13 | 0 | 0 | 0 |
+| `neon` | 7 | 7 | 0 | 0 | 0 |
+| `kimi` | 3 | 3 | 0 | 0 | 0 |
+| `mimo` | 2 | 2 | 0 | 0 | 0 |
+
+### J10 divergences
+
+**None (0).** Every Go-only behavior pinned by a `pkg/session` test (entry IP
+admission DP-1387, `TestWiznetListApprovedFreshBuffer` R1a, operator greeting
+overlay 2026-10-20, alias cap 2026-10-22, opt-in Discord gossip MOTD overlay,
+and WebSocket capacity/teardown caps) is either explicitly approved or preserves
+C's default bytes verbatim.
