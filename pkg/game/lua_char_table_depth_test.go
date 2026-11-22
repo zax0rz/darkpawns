@@ -3,7 +3,6 @@ package game
 import (
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -178,8 +177,6 @@ func (f *luaCharTableFixture) said(t *testing.T) string {
 	return strings.TrimSuffix(strings.TrimPrefix(line, prefix), suffix)
 }
 
-var _ = strconv.Itoa
-
 // TestLuaCharTablePlayerFields pins C's player arm field for field, including
 // nil for the mobile-only keys and the absence of the invented skills table.
 // Source: src/scripts.c:1832-1890.
@@ -206,9 +203,12 @@ end
 
 // TestLuaCharTableMobileFields pins C's mobile arm, including the carried and
 // worn object lists the legacy builder used to leave empty.
-// Source: src/scripts.c:1885-1888.
+// Source: src/scripts.c:1832-1890.
 func TestLuaCharTableMobileFields(t *testing.T) {
 	f := newLuaCharTableFixture(t)
+	// Distinct HP values make the two exposed fields observable independently.
+	f.npc.SetMaxHP(52)
+	f.npc.SetHealth(37)
 	f.runScript(t, `function oncmd()
   say("npc|" .. me.name .. "|" .. me.align .. "|" .. me.gold .. "|" .. me.level ..
       "|" .. me.hp .. "|" .. me.maxhp .. "|" .. me.pos .. "|" .. me.alias ..
@@ -219,9 +219,7 @@ func TestLuaCharTableMobileFields(t *testing.T) {
   return TRUE
 end
 `)
-	want := "npc|the healer|-400|7|20|" + strconv.Itoa(f.npc.GetHP()) + "|" +
-		strconv.Itoa(f.npc.GetMaxHP()) +
-		"|8|healer probe|an npc bauble|an npc helm|1|Chainleader|9001|0|nil|nil|nil|nil|nil"
+	want := "npc|the healer|-400|7|20|37|52|8|healer probe|an npc bauble|an npc helm|1|Chainleader|9001|0|nil|nil|nil|nil|nil"
 	if got := f.said(t); got != want {
 		t.Fatalf("mobile table = %q, want %q", got, want)
 	}
