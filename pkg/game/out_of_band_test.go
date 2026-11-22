@@ -110,16 +110,24 @@ func TestChannelMirrorKeepsSpeakerVisibility(t *testing.T) {
 // TestChannelMirrorSkipsNoRepeatAcknowledgement: PRF_NOREPEAT replaces the
 // echo with "Okay.", which is not a channel line.
 func TestChannelMirrorSkipsNoRepeatAcknowledgement(t *testing.T) {
-	w, actor, _, _ := newDirectedSpeechWorld(t)
+	w, actor, target, _ := newDirectedSpeechWorld(t)
 	observer := &recordingObserver{}
 	w.OutOfBand = observer
 	actor.SetLevel(levelCanShout)
 	actor.SetPlrFlag(PrfNoRepeat, true)
 	w.DoChannel(actor, "quietly", "gossip")
+	var targetLines []channelRecord
 	for _, record := range observer.lines {
 		if record.to == actor.Name {
 			t.Fatalf("norepeat acknowledgement was mirrored: %+v", record)
 		}
+		if record.to == target.Name {
+			targetLines = append(targetLines, record)
+		}
+	}
+	want := channelRecord{to: target.Name, channel: "gossip", talker: "Actor", line: "Actor gossips, 'quietly'\r\n"}
+	if !reflect.DeepEqual(targetLines, []channelRecord{want}) {
+		t.Fatalf("recipient channel lines = %+v, want %+v", targetLines, []channelRecord{want})
 	}
 }
 
