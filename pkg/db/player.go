@@ -188,10 +188,19 @@ func New(connString string) (*DB, error) {
 	// are no explicit transactions in this package to serialize. busy_timeout
 	// keeps event-driven writes from failing on a locked file.
 	conn.SetMaxOpenConns(1)
-	for _, pragma := range []string{
+	pragmas := []string{
 		"PRAGMA busy_timeout = 5000",
 		"PRAGMA journal_mode = WAL",
-	} {
+	}
+	// Census-only durability override: production keeps SQLite's default
+	// synchronous = FULL so saves survive a power cut. Accept only exact
+	// "NORMAL" (never "OFF") and log when active so any accidental production
+	// use is visible at startup.
+	if os.Getenv("DP_SQLITE_SYNCHRONOUS") == "NORMAL" {
+		pragmas = append(pragmas, "PRAGMA synchronous = NORMAL")
+		slog.Info("SQLite synchronous override active", "env", "DP_SQLITE_SYNCHRONOUS", "mode", "NORMAL")
+	}
+	for _, pragma := range pragmas {
 		if _, err := conn.Exec(pragma); err != nil {
 			return nil, fmt.Errorf("set sqlite pragma %q: %w", pragma, err)
 		}

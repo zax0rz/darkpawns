@@ -123,7 +123,9 @@ The file is the whole state of the game. Put it on local durable storage — not
 NFS, not a container layer, not a directory a deploy step prunes — with the
 directory at mode `700` and the file at `600`, owned by the service account.
 Back it up by copying the file while the server is stopped, or with SQLite's
-own online backup (`VACUUM INTO`).
+own online backup (`VACUUM INTO`). Never set `DP_SQLITE_SYNCHRONOUS` on a
+production server — it is a census-only harness override that trades crash
+durability for speed.
 
 Keep the signing secret private and stable across restarts. Startup rejects a
 missing or short `JWT_SECRET` unless `ENVIRONMENT=development`, which uses an
