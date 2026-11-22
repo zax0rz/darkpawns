@@ -31,28 +31,38 @@ func TestSummonerIgnoresNonPlayingMemoryTargetWithoutRNGDraw(t *testing.T) {
 }
 
 func TestHuntVictimLeavesLinklessHuntingIDUnresolved(t *testing.T) {
-	parsed := &parser.World{Rooms: []parser.Room{
-		{VNum: 1001, Name: "Hunter room", Zone: 1},
-		{VNum: 1002, Name: "Prey room", Zone: 1},
-	}}
-	w, err := NewWorld(parsed)
-	if err != nil {
-		t.Fatalf("NewWorld: %v", err)
-	}
-	t.Cleanup(func() { w.StopAITicker() })
-	target := NewPlayer(1, "Linkless", 1002)
-	if err := w.AddPlayer(target); err != nil {
-		t.Fatalf("AddPlayer target: %v", err)
-	}
-	w.PlayerHasPlayingDescriptor = func(*Player) bool { return false }
-	mob := newSpecProcTestMob(t, w, 1001, 20)
-	w.SetHuntingTarget(mob, target)
+	for _, tc := range []struct {
+		name       string
+		targetRoom int
+	}{
+		{name: "same room", targetRoom: 1001},
+		{name: "unreachable room", targetRoom: 1002},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			parsed := &parser.World{Rooms: []parser.Room{
+				{VNum: 1001, Name: "Hunter room", Zone: 1},
+				{VNum: 1002, Name: "Prey room", Zone: 1},
+			}}
+			w, err := NewWorld(parsed)
+			if err != nil {
+				t.Fatalf("NewWorld: %v", err)
+			}
+			t.Cleanup(func() { w.StopAITicker() })
+			target := NewPlayer(1, "Linkless", tc.targetRoom)
+			if err := w.AddPlayer(target); err != nil {
+				t.Fatalf("AddPlayer target: %v", err)
+			}
+			w.PlayerHasPlayingDescriptor = func(*Player) bool { return false }
+			mob := newSpecProcTestMob(t, w, 1001, 20)
+			w.SetHuntingTarget(mob, target)
 
-	w.huntVictim(mob)
-	if got, want := mob.GetHunting(), target.Name; got != want {
-		t.Fatalf("hunting lookup after missing descriptor = %q, want C's unresolved ID %q retained", got, want)
-	}
-	if got, want := mob.GetHuntingID(), "1"; got != want {
-		t.Fatalf("linkless player hunting ID = %q, want %q", got, want)
+			w.huntVictim(mob)
+			if got, want := mob.GetHunting(), target.Name; got != want {
+				t.Fatalf("hunting lookup after missing descriptor = %q, want C's unresolved ID %q retained", got, want)
+			}
+			if got, want := mob.GetHuntingID(), "1"; got != want {
+				t.Fatalf("linkless player hunting ID = %q, want %q", got, want)
+			}
+		})
 	}
 }

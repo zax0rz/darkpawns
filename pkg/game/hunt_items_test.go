@@ -157,20 +157,3 @@ func TestHuntItemsConsumesDrawBeforeHunterEligibility(t *testing.T) {
 		})
 	}
 }
-
-func TestHuntVictimKeepsPlayerIDWhenDescriptorMissing(t *testing.T) {
-	w, player, _ := newHuntItemsTestWorld(t)
-	mob, err := w.SpawnMob(14203, 1001)
-	if err != nil {
-		t.Fatal(err)
-	}
-	w.PlayerHasPlayingDescriptor = func(*Player) bool { return false }
-	w.SetHuntingTarget(mob, player)
-	if got := mob.GetHuntingID(); got != "11" {
-		t.Fatalf("stored hunting player ID=%q, want 11", got)
-	}
-	w.huntVictim(mob)
-	if mob.GetHuntingID() != "11" {
-		t.Fatalf("same-room hunt cleared player ID %q", mob.GetHuntingID())
-	}
-}

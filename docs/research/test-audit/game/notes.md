@@ -1918,3 +1918,51 @@ The next roster is:
 - `TestLegacySnapshotWithManySyntheticObjectsLogsOnce`
 
 Before reading these tests, my estimate is **R43 / F5 / C1 / D1**.
+
+## Batch 29 results (T1689–T1738)
+
+The preregistered roster matched the next 50 unledgered inventory functions.
+The estimate was R43/F5/C1/D1; the result is **R47/F2/C1/D0**. The two F
+rows are T1733 and T1737, both J3 partial-output assertions now pinned to the
+complete C response. Their introducing commits carry Zach's personal git
+identity without a model trailer, so both authors are recorded as unknown.
+The one C row is T1704: its same-room linkless hunting ID check duplicated
+T1706's descriptorless unresolved-ID contract. I folded the same-room case
+into `TestHuntVictimLeavesLinklessHuntingIDUnresolved`, retaining both
+same-room and unreachable-room subtests, and removed the duplicate function.
+Before removing it, I searched `git grep` in `docs/fidelity` and
+`cmd/dp-oracle-diff`; the live hit in `docs/fidelity/depth/hunt-items.tsv`
+now names the surviving test. The dated handoff remains historical evidence.
+
+Both F tests went green under their old assertions after adding ` EXTRA` to
+the C output, then red under the exact fixed assertions. T1737 has separate
+refusal and click mutations; the click-only mutant also stays green under the
+old body and fails the fixed assertion. All three mutations were restored
+byte-for-byte in the detached mutation worktree. The 50 ledger rows and three
+mutation rows were appended as raw tab-separated text, with no CSV quoting.
+The ledger is contiguous through T1738, has 18 columns per row, and the
+mutation file has seven columns per row. There are 325 unledgered functions
+left in the frozen 1,991-function inventory.
+
+Package statement coverage measured 64.7% on Batch 28 commit `0f8c26fc8` and
+64.8% after this batch. No production code changed. The duplicate proof row
+remains in the ledger as C and names T1706; its live fidelity inventory entry
+was updated before the function was removed. No census was needed.
+
+All eleven gates passed individually: `make fmt`; `GOEXPERIMENT=nojsonv2 go
+build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`; `GOEXPERIMENT=nojsonv2 go
+test ./...`; `golangci-lint run ./...` (0 issues); `make modernize-check`;
+`make deadcode-ratchet` (35 baselined, 0 new); `make string-census` (ratchet
+clean with existing stale generated reports and four obsolete baseline
+entries); `make fidelity-depth` (8,282 cases, 7,968 proven/delegated, one
+blocked, 297 excluded, 16 approved-divergent); `make
+expected-divergences-check` (clean with existing unresolved selectors); and
+`make function-index-check` (the expected-red fake association was rejected,
+then the ratchet reported clean).
+
+The fetched `origin/main` is `ab14720f9`. Historical rows T360, T377, T387,
+T391, T394, T395, T455, T465, T520, T535, T548, T606, T769, and T1403 match
+`origin/main` byte-for-byte, including the mainline unquoting of T1403.
+Through T1738, T639–T1738 totals R964/F107/C21/D8. Cumulative T001–T1738
+is R1597/F111/C21/D9: pre-oracle R379/F7/C3/D1 and post-oracle
+R1218/F104/C18/D8. This batch adds two J3 rows and one J4 row.
