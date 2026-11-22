@@ -36,3 +36,6 @@ TestPasswordChangeUpdatesCharacterSaveMetadata	pkg/session/menu.go	299	n/a (R sp
 TestCloseSocketMudlogTypeIsNRM	pkg/session/manager.go	1815	n/a (R spot-check)	Closing link to: mudlog type game.MudlogNormal mutated to game.MudlogBrief	red (LOG1-only observer received "[ Closing link to: Linkless. ]\r\n")	yes
 TestZeditOpenParentMudlog	pkg/session/zedit.go	123	n/a (R spot-check)	zedit_save_to_disk double space mutated to single space	red (missing open producer: calls=0)	yes
 TestFileEditorSaveCleanupRace	pkg/session/tedit.go	263,407	n/a (R spot-check)	handleTextEditInput and cancelTextEdit nil guard inverted (== nil -> != nil)	red (editor retained after concurrent cleanup)	yes
+TestClanTellOnlyBroadcastsToConPlayingDescriptors	pkg/session/comm_cmds.go	269	n/a (R spot-check)	cmdCTell appended "!" to message before ExecCTell	red (actor ctell bytes = ["You tell your clan, 'proof!'\r\n"], want ["You tell your clan, 'proof'\r\n"])	yes
+TestRegisteredActorRoomVisibilityMatchesSitAndStandActFlags	pkg/game/movement_commands.go	50	n/a (R spot-check)	standing sit arm gained hideRoom: true	red (room bytes = "", want "Someone sits down.\r\n")	yes
+TestPurgeMobRetainsListsUntilHeartbeat	pkg/session/wiz_object.go	231	n/a (R spot-check)	single-target mob purge called drainPendingExtractions immediately after ExtractMob	red (mob is not marked for extraction)	yes

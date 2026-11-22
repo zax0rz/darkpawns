@@ -483,3 +483,29 @@ single-space), and `T1157` `TestFileEditorSaveCleanupRace`
 (`pkg/session/tedit.go:263,407` nil guard inverted). All three went red with
 assertion failures and were restored byte for byte (`mutations.tsv`). No J10
 divergences.
+
+
+## Batch 15 results (later tests 1101–1200, 2026-10-11..15, T1246–T1345)
+
+Marks: R 100, F 0, C 0, D 0. Junk: none.
+Running total: 1345/1537 (R 1339, F 3, C 3, D 0).
+
+All 100 tests are assertive, non-duplicate keepers covering LFCR rendering,
+prompt frame and sendText contracts, character actor commands and NPC shared
+executor/specials ordering, WHOD TCP listener lifecycle and producers,
+wizutil/skillset mudlog discriminators and tap metadata, interpreter batch 8/9
+connect/reconnect/new-player/denial/bad-pw/self-delete mudlogs, the 9-state
+CON_PLAYING descriptor fanout suite (broadcast, communication, counts, wizard
+info, wiznet), Crash_load bad-stats and lethal-entry replay, deferred extchar
+and purge extraction lifecycles, combat hit/assist/cast fumble RNG draw parity,
+detailed shop reports and keeper bank overflow, cast/will and clan output gates,
+and stat/where/set/unaffect/checkload/circle depth pins. No fixes, no merges,
+no deletions, no J10 divergences.
+
+All-R spot-checks (random draw, seed 20261115, from T1246–T1345): T1284
+`TestClanTellOnlyBroadcastsToConPlayingDescriptors` (`pkg/session/comm_cmds.go:269`),
+T1249 `TestRegisteredActorRoomVisibilityMatchesSitAndStandActFlags`
+(`pkg/game/movement_commands.go:50`), T1306
+`TestPurgeMobRetainsListsUntilHeartbeat` (`pkg/session/wiz_object.go:231`).
+All three went red with assertion failures and were restored byte for byte
+(`mutations.tsv`).
