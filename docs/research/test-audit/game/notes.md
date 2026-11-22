@@ -954,3 +954,65 @@ adapter difference accurately rather than attributing Go's internal order to C.
 The 11 gates were rerun after the recall call-order comment correction and
 passed again; the two Go comments and test comment now cite C's actual
 `char_to_room`-then-unmount order.
+
+
+## Batch 21 preregistered estimate (before reading tests T1289–T1338)
+
+The prior remainder forecast after T1288 is R654/F5/C15/D29 across 703 tests.
+For this 50-test slice I predict R45/F3/C1/D1, with all 50 introduced after
+the 2026-07-12 oracle date. That leaves a forecast of R609/F2/C14/D28 across
+653 tests.
+
+The roster is the next 50 unledgered names in inventory order after T1288. They
+span inventory lines 1356–1440, skipping already-ledgered names in that span:
+
+- `TestReviewGossipColorsAtComplete`
+- `TestReviewGossipHidesHigherInvisibility`
+- `TestReviewGossipRetainsTheCappedHistoryWindow`
+- `TestReviewGossipTraversesHistoryOldestFirst`
+- `TestRiderWalkMovesMountOnceNotTwice`
+- `TestRollMaximumUsesCArgumentParser`
+- `TestRollNumberUsesCUnsignedConversion`
+- `TestRoomActivityConCroakControls`
+- `TestRoomActivityConCroakKillsMortalInPlace`
+- `TestRoomActivityConCroakUsesEffectiveCon`
+- `TestRoomActivityEarlyReturnTopology`
+- `TestRoomActivityFlowRoom`
+- `TestRoomActivityLoudMobs`
+- `TestRoomEnterScriptFiresOnce`
+- `TestRoomFlagReadersAgreeOnRealHighFlagRooms`
+- `TestRoomHasOtherOccupant`
+- `TestRoomLookBracketsTheContentListsOnce`
+- `TestRoomLookDescriptionTrailingSpacePrecedesTheBrackets`
+- `TestRoomMessageRevertControl`
+- `TestRoomMessageUsesActRecipientGate`
+- `TestRoomObjectLinesPadToC63Bytes`
+- `TestRoomObjectLinesStackIdenticalObjectsWithCountPrefix`
+- `TestRoomOnDropFiresOnlyOnDrop`
+- `TestRoomOnGetFiresFromRoomAndContainer`
+- `TestRoomOnPulseRunsBeforeFlamingDamage`
+- `TestRoomShownFiresOnlyWhenARoomIsRendered`
+- `TestRoomSpecialLoopsIncludePendingBodies`
+- `TestRoutineMutationConcurrentDoorWritersAndReaders`
+- `TestRoutineMutationSkipsStructuralRebuild`
+- `TestSameShopObjectComparesCRNUMCostExtraFlagsAndAffects`
+- `TestSaveDataToPlayerHydratesAutoGoldMirrorsFromFlags`
+- `TestSavePlayer_CreateFailureReturnsError`
+- `TestSavePlayerRecordReplaysEquipmentBadStats`
+- `TestSaySpellRendersThroughPerformAct`
+- `TestSaySpellTargetLineRendersThroughAct`
+- `TestScriptableGiveSetsFlag`
+- `TestScriptAdapterLogIsBriefImmortalNoFile`
+- `TestScriptZoneEchoOnlyVisitsAwakePlayingDescriptors`
+- `TestScroungeHandoverKeepsObjectUnique`
+- `TestScroungeObjectRegistered`
+- `TestScroungeSetsFlag`
+- `TestSelectLoginRoom`
+- `TestSendToRoomUsesCRecipientGate`
+- `TestSendToZoneDeliversBareBytesLiterally`
+- `TestSetLevelRefreshesCarryCapacity`
+- `TestSetLiveObjExtraDescConcurrentReaders`
+- `TestSetLiveObjExtraDescPatchesAPreexistingSnapshot`
+- `TestSetLiveObjExtraDescPublishesCloneAndPatchesInstances`
+- `TestSetRoomFlagBitConcurrent`
+- `TestShootRealDuplicateMobRetaliation`
