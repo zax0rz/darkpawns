@@ -57,7 +57,7 @@ type MobInstance struct {
 	// floatingPos preserves the exact C position for Status == "floating"
 	// (src/act.informative.c:1355 default arm). C accepts 9..14 via medit
 	// (src/olc.h:46 NUM_POSITIONS=15, src/medit.c:1061) and loadpos copies
-	// the prototype verbatim (src/db.c:1757); collapsing them to one byte
+	// the prototype verbatim (src/db.c:1744); collapsing them to one byte
 	// would invent equality for GET_POS vs GET_DEFAULT_POS look checks.
 	floatingPos int
 	Level       int // Level override (0 = use prototype level)
@@ -207,19 +207,19 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		MaxHP:     hp,
 		// C read_mobile initializes every ordinary mob's mana fields to 10
 		// (src/db.c:1069-1072), then copies that prototype state into the
-		// instance (src/db.c:1757).
+		// instance (src/db.c:1744).
 		CurrentMana: 10,
 		MaxMana:     10,
 		CurrentMove: 50,
 		MaxMove:     50,
-		// C read_mobile copies the whole prototype struct (db.c:1757), so the
+		// C read_mobile copies the whole prototype struct (db.c:1744), so the
 		// mob file's loadpos (line-11 first field) is the spawn position — a
 		// sleeping loader like 2109 must spawn asleep or mobile_activity's
 		// position gate lets it wander on the very first settle pulses.
 		// medit writes any 0..14 (src/medit.c:1061), so POS_DEAD (0) and
 		// floating (9..14) are reachable load positions (DP-1553).
 		Status: positionStatus(effectiveSpawnPos),
-		// C read_mobile copies the whole prototype struct (db.c:1757), so the
+		// C read_mobile copies the whole prototype struct (db.c:1744), so the
 		// mob file's act flags ride along. Without this, HasMobFlag reads a
 		// zero mask for every world-loaded mob and C's MOB_AWARE backstab
 		// guard (act.offensive.c:212) never fires.
@@ -1378,9 +1378,9 @@ func (m *MobInstance) IsAffected(bit int) bool {
 	return m.Affects&(1<<bit) != 0
 }
 
-// IsInGroup reports the mobile's AFF_GROUP state (src/utils.c:655-674).
-// Spell-side room traversals use the same character capability for players
-// and mobiles.
+// IsInGroup reports the mobile's AFF_GROUP state, as tested by C callers such
+// as spell_parser.c:894. C's are_grouped helper adds the leader/follower
+// relationship checks (src/utils.c:655-674).
 func (m *MobInstance) IsInGroup() bool {
 	return m.IsAffected(affGroup)
 }

@@ -7,7 +7,7 @@ import (
 )
 
 // C moon_gate moves a mounted player's mount through the portal with its
-// rider (src/gate.c:282-290). PlayerTransfer carries the mount; this pins it.
+// rider (src/gate.c:281-292). PlayerTransfer carries the mount; this pins it.
 func TestMoonGateCarriesMount(t *testing.T) {
 	w, err := NewWorld(&parser.World{
 		Rooms: []parser.Room{{VNum: 1001, Name: "Grove"}, {VNum: 4000, Name: "Beyond"}},
@@ -32,7 +32,7 @@ func TestMoonGateCarriesMount(t *testing.T) {
 	mount.SetFollowing(p.Name)
 	mount.SetAffected(affMounted)
 
-	// A red portal (not blue, cost 0) leads to room 4000 (src/gate.c:268-271).
+	// A red portal (not blue, cost 0) leads to room 4000 (src/gate.c:273-276).
 	portal := w.NewObjectFromProto(&parser.Obj{VNum: RedPortalVNum, Keywords: "portal gate", ShortDesc: "a red portal"}, 1001)
 	if !specMoonGate(w, p, portal, "enter", "portal") {
 		t.Fatal("enter portal was not handled")

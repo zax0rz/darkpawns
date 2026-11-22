@@ -442,8 +442,9 @@ func TestMoveObjectInventoryToRoom(t *testing.T) {
 	w, player := newTestWorld(t)
 
 	obj, _ := w.SpawnObject(3001, 1001)
-	_ = player.Inventory.AddItem(obj)
-	obj.Location = LocInventoryPlayer(player.Name)
+	if err := w.MoveObjectToPlayerInventory(obj, player); err != nil {
+		t.Fatalf("setup: MoveObjectToPlayerInventory failed: %v", err)
+	}
 
 	err := w.MoveObjectToRoom(obj, 1001)
 	if err != nil {
@@ -465,8 +466,9 @@ func TestMoveObjectInventoryToEquipment(t *testing.T) {
 	w, player := newTestWorld(t)
 
 	obj, _ := w.SpawnObject(3002, 1001) // wieldable weapon
-	_ = player.Inventory.AddItem(obj)
-	obj.Location = LocInventoryPlayer(player.Name)
+	if err := w.MoveObjectToPlayerInventory(obj, player); err != nil {
+		t.Fatalf("setup: MoveObjectToPlayerInventory failed: %v", err)
+	}
 
 	err := w.MoveObject(obj, LocEquippedPlayer(player.Name, SlotWield))
 	if err != nil {
@@ -479,14 +481,18 @@ func TestMoveObjectInventoryToEquipment(t *testing.T) {
 	if player.Inventory.GetItemCount() != 0 {
 		t.Errorf("expected 0 items in inventory, got %d", player.Inventory.GetItemCount())
 	}
+	if got, ok := player.Equipment.GetItemInSlot(SlotWield); !ok || got != obj {
+		t.Errorf("wield slot = %v, want object %d", got, obj.ID)
+	}
 }
 
 func TestMoveObjectToNowhere(t *testing.T) {
 	w, player := newTestWorld(t)
 
 	obj, _ := w.SpawnObject(3001, 1001)
-	_ = player.Inventory.AddItem(obj)
-	obj.Location = LocInventoryPlayer(player.Name)
+	if err := w.MoveObjectToPlayerInventory(obj, player); err != nil {
+		t.Fatalf("setup: MoveObjectToPlayerInventory failed: %v", err)
+	}
 
 	err := w.MoveObjectToNowhere(obj)
 	if err != nil {
@@ -507,7 +513,9 @@ func TestMoveObjectInventoryFull(t *testing.T) {
 	// Fill inventory
 	for i := 0; i < player.Inventory.Capacity; i++ {
 		o, _ := w.SpawnObject(3001, 1001)
-		_ = player.Inventory.AddItem(o)
+		if err := w.PlaceObjectInPlayerInventory(o, player); err != nil {
+			t.Fatalf("setup: PlaceObjectInPlayerInventory: %v", err)
+		}
 	}
 
 	extra, _ := w.SpawnObject(3001, 1001)
@@ -528,18 +536,32 @@ func TestMoveObjectInvalidDestination(t *testing.T) {
 	w, _ := newTestWorld(t)
 
 	obj, _ := w.SpawnObject(3001, 1001)
+	w.AddItemToRoom(obj, 1001)
+	initial := obj.Location
+	assertRoomSource := func() {
+		t.Helper()
+		if obj.Location != initial {
+			t.Fatalf("invalid move changed object location to %+v, want %+v", obj.Location, initial)
+		}
+		items := w.GetItemsInRoom(1001)
+		if len(items) != 1 || items[0] != obj {
+			t.Fatalf("invalid move changed room contents: got %v, want only object %d", items, obj.ID)
+		}
+	}
 
 	// Invalid: ObjInRoom with roomVNum <= 0
 	err := w.MoveObject(obj, LocRoom(-1))
 	if err == nil {
 		t.Fatal("expected error for invalid room VNum")
 	}
+	assertRoomSource()
 
 	// Invalid: ObjInInventory with empty player name
 	err = w.MoveObject(obj, LocInventoryPlayer(""))
 	if err == nil {
 		t.Fatal("expected error for empty player name")
 	}
+	assertRoomSource()
 }
 
 // ---------------------------------------------------------------------------
@@ -674,9 +696,12 @@ func TestMobUnequipToInventory(t *testing.T) {
 		t.Fatalf("SpawnObject failed: %v", err)
 	}
 
-	// Equip directly via mob method (bypasses MoveObject, item in Equipment only)
-	obj.Location = LocEquippedMob(mob.GetID(), EquipmentSlot(mobWearWield))
-	mob.Equipment[mobWearWield] = obj
+	if err := w.MoveObjectToMobInventory(obj, mob); err != nil {
+		t.Fatalf("setup: MoveObjectToMobInventory: %v", err)
+	}
+	if !mob.EquipItem(obj, mobWearWield) {
+		t.Fatal("setup: EquipItem failed")
+	}
 
 	// Unequip: move to mob inventory via MoveObject
 	if err := w.MoveObjectToMobInventory(obj, mob); err != nil {
@@ -684,13 +709,13 @@ func TestMobUnequipToInventory(t *testing.T) {
 	}
 
 	// Equipment slot must be empty
-	if _, ok := mob.Equipment[mobWearWield]; ok {
+	if got := mob.Equipped(mobWearWield); got != nil {
 		t.Error("item still in Equipment map after unequip to inventory")
 	}
 
 	// Item must be in Inventory
 	found := false
-	for _, invItem := range mob.Inventory {
+	for _, invItem := range mob.InventorySnapshot() {
 		if invItem == obj {
 			found = true
 			break
@@ -708,12 +733,9 @@ func TestMobUnequipToInventory(t *testing.T) {
 // ---------------------------------------------------------------------------
 // TestMoveObjectRollbackStrandedLocation — both attach and rollback-attach fail
 // ---------------------------------------------------------------------------
-//
-// BUG: This test currently FAILS. When MoveObject's primary attach fails AND
-// the rollback re-attach also fails, obj.Location retains the original (stale)
-// value even though the object is in neither location.  Correct behavior:
-// obj.Location should be set to LocNowhere() so callers know the object is
-// stranded and not to trust the old pointer.
+// This regression proof forces both the primary attach and rollback attach to
+// fail. The object must leave both inventories and report LocNowhere, instead
+// of retaining a stale owner. C has no equivalent transactional rollback path.
 
 func TestMoveObjectRollbackStrandedLocation(t *testing.T) {
 	w, playerA := newTestWorld(t)
@@ -723,24 +745,29 @@ func TestMoveObjectRollbackStrandedLocation(t *testing.T) {
 		t.Fatalf("AddPlayer B failed: %v", err)
 	}
 
-	// Fill playerA to capacity so any addItem call fails
+	// Fill playerA to capacity so a transactional attach into it fails.
 	for i := 0; i < playerA.Inventory.Capacity; i++ {
 		o, _ := w.SpawnObject(3001, 1001)
-		_ = playerA.Inventory.addItem(o)
+		if err := w.PlaceObjectInPlayerInventory(o, playerA); err != nil {
+			t.Fatalf("setup playerA inventory: %v", err)
+		}
 	}
 
-	// Fill playerB to capacity
+	// Fill playerB to capacity before adding the rollback target.
 	for i := 0; i < playerB.Inventory.Capacity; i++ {
 		o, _ := w.SpawnObject(3001, 1001)
-		_ = playerB.Inventory.addItem(o)
+		if err := w.PlaceObjectInPlayerInventory(o, playerB); err != nil {
+			t.Fatalf("setup playerB inventory: %v", err)
+		}
 	}
 
-	// Force target into playerB beyond the capacity check by direct slice append.
-	// After detach, playerB will again be exactly at capacity, so the rollback
-	// addItem will also return ErrInventoryFull — stranding the item.
+	// C's obj_to_char-style placement does not enforce carry capacity. After
+	// detach, playerB will again be exactly at capacity, so rollback attachment
+	// fails and the object must report LocNowhere.
 	target, _ := w.SpawnObject(3001, 1001)
-	playerB.Inventory.RestoreItem(target)
-	target.Location = LocInventoryPlayer(playerB.Name)
+	if err := w.PlaceObjectInPlayerInventory(target, playerB); err != nil {
+		t.Fatalf("setup rollback target: %v", err)
+	}
 
 	// Attempt move: detach from B (succeeds), attach to A (fails: full),
 	// rollback to B (fails: B is now exactly at Capacity after the detach).
@@ -761,10 +788,8 @@ func TestMoveObjectRollbackStrandedLocation(t *testing.T) {
 		}
 	}
 
-	// Expected invariant: stranded object gets Location = LocNowhere
-	// Actual (bug): Location is stale LocInventoryPlayer(playerB)
 	if !target.Location.IsNowhere() {
-		t.Errorf("BUG: stranded object Location = %+v, want LocNowhere", target.Location)
+		t.Errorf("stranded object Location = %+v, want LocNowhere", target.Location)
 	}
 }
 
@@ -934,6 +959,15 @@ func TestMoveObjectContainerToRoom(t *testing.T) {
 	}
 	if obj.Location.RoomVNum != 1001 {
 		t.Errorf("expected RoomVNum=1001, got %d", obj.Location.RoomVNum)
+	}
+	roomItems := w.GetItemsInRoom(1001)
+	foundContainer, foundObject := false, false
+	for _, item := range roomItems {
+		foundContainer = foundContainer || item == container
+		foundObject = foundObject || item == obj
+	}
+	if len(roomItems) != 2 || !foundContainer || !foundObject {
+		t.Errorf("room contents = %v, want container %d and moved object %d", roomItems, container.ID, obj.ID)
 	}
 	if len(container.Contains) != 0 {
 		t.Errorf("expected 0 items in container, got %d", len(container.Contains))

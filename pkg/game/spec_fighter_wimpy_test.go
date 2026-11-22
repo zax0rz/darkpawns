@@ -7,25 +7,18 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
-// C's damage() default arm calls two wimpy blocks, for every attack type
-// (src/fight.c:1596-1611):
+// C's damage() default arm includes a separate player wimp-level gate
+// (src/fight.c:1601-1610):
 //
-//	if (GET_HIT(victim) < (GET_MAX_HIT(victim) / 4)) {
-//	    ...wounded-band line...
-//	    if (MOB_FLAGGED(victim, MOB_WIMPY) && (ch != victim))
-//	        do_flee(victim, "", 0, 0);
-//	}
 //	if (!IS_NPC(victim) && GET_WIMP_LEV(victim) && (victim != ch) &&
 //	    GET_POS(victim) >= POS_FIGHTING && GET_HIT(victim) < GET_WIMP_LEV(victim)) {
 //	    send_to_char("You wimp out, and attempt to flee!\r\n", victim);
 //	    ...do_retreat or do_flee...
 //	}
 //
-// SPECIAL(fighter) reaches damage() through do_headbutt/do_bash with subcmd 1
-// (src/spec_procs.c:509-535) — the native mob-skill seam, not a command — and
-// that seam printed the wounded-band line but neither wimpy block, so a victim
-// of a mob special never wimped out and the flee's draws never reached the
-// shared stream.
+// The native mob damage seam used by SPECIAL(fighter) must carry that gate
+// through damage's surviving-victim arm. These tests enter through
+// mobSkillDamage, then distinguish the player wimp-level threshold below.
 func TestMobSkillSurvivalRunsDamageWimpyBlocks(t *testing.T) {
 	w, victim := newCombatTestWorld(t)
 	attacker := spawnTargetMob(t, w)
@@ -50,14 +43,15 @@ func TestMobSkillSurvivalRunsDamageWimpyBlocks(t *testing.T) {
 	}
 	combat.SetCallbacks(cb)
 
-	// 20 hit points is under a quarter of 100 (the wounded band) and under the
-	// wimp level of 30, and the victim is fighting, so both wimpy blocks apply.
+	// 20 hit points is under the wimp level of 30, and the victim is fighting.
 	victim.SetMaxHP(100)
 	victim.SetHP(20)
 	victim.WimpLevel = 30
 	victim.SetPosition(combat.PosFighting)
 
-	w.emitMobSkillSurvival(attacker, victim, 10, combat.PosStanding)
+	if !w.mobSkillDamage(attacker, victim, 1, SkillHeadbuttNum) {
+		t.Fatal("mob skill damage did not reach the surviving-victim arm")
+	}
 
 	if got := strings.Join(lines, ""); !strings.Contains(got, "You wimp out, and attempt to flee!") {
 		t.Fatalf("victim lines = %q, want C's wimpy line", got)
@@ -95,13 +89,19 @@ func TestMobSkillSurvivalSkipsWimpyAboveTheWimpLevel(t *testing.T) {
 	combat.SetCallbacks(cb)
 
 	victim.SetMaxHP(100)
-	victim.SetHP(60) // above the wimp level below, still inside the wounded band
-	victim.WimpLevel = 30
+	victim.SetHP(20) // below the wounded band, but above the wimp level after damage
+	victim.WimpLevel = 10
 	victim.SetPosition(combat.PosFighting)
 
-	w.emitMobSkillSurvival(attacker, victim, 10, combat.PosStanding)
+	if !w.mobSkillDamage(attacker, victim, 1, SkillHeadbuttNum) {
+		t.Fatal("mob skill damage did not reach the surviving-victim arm")
+	}
 
-	if got := strings.Join(lines, ""); strings.Contains(got, "You wimp out") {
+	got := strings.Join(lines, "")
+	if !strings.Contains(got, "You wish that your wounds would stop BLEEDING so much!") {
+		t.Fatalf("victim lines = %q, want the wounded-band line from the survival arm", got)
+	}
+	if strings.Contains(got, "You wimp out") {
 		t.Fatalf("victim lines = %q, want no wimpy line above the wimp level", got)
 	}
 	if fled {
