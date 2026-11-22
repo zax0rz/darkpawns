@@ -2252,3 +2252,61 @@ All eleven gates passed individually: `make fmt`; `GOEXPERIMENT=nojsonv2 go buil
 The 14 protected historical rows still match `origin/main` byte-for-byte, including raw, unquoted T1403. The ledger now has 1,888 rows and 1,816 unique test names; the frozen inventory leaves 175 unledgered functions. Batch 32 added 50 raw tab-separated ledger rows and 15 seven-field mutation rows. Batch junk counts are J1=4, J3=12, and J5=1. All 15 F tests were authored by `unknown` under the attribution rules (Zach git author, no model trailer); the D test was also unknown.
 
 Cumulatively, T001–T1888 has R1715/F139/C24/D10. The pre-oracle segment remains R379/F7/C3/D1; post-oracle is R1336/F132/C21/D9. From T639 through T1888 the counts are R1082/F135/C24/D9.
+
+
+## Batch 33 preregistered estimate (before reading tests T1889–T1938)
+
+Continue the frozen inventory-order sweep. The ledger has 1,888 rows and 1,816 unique test names; the 1,991-name frozen inventory has 175 unledgered functions. The next roster is:
+
+- `TestSpecWallGuardNS_GreetingAudienceAndPerCallReset`
+- `TestSpecWallGuardNS_PatrolsBothOneWayEnds`
+- `TestSpecWerewolf_BiteAudienceAndMoveState`
+- `TestSpecWerewolf_BiteMoveFloorsAtZero`
+- `TestSpecWerewolf_EntryGates`
+- `TestSpecWerewolf_HowlAudience`
+- `TestSpecWhirlpoolActorDeclinesWithoutAVictim`
+- `TestSpecWhirlpoolPulseCallPullsThePlayer`
+- `TestSpellActTerminatorsPreserveEmbeddedCLineBreakBytes`
+- `TestSpellActToVictimRendersCasterThroughPers`
+- `TestSpellAddFollowerRendersCFollowerAudiences`
+- `TestSpellCreatedObjectRoomActUsesActRecipientGate`
+- `TestSpellCreatedObjectRoomActUsesRecipientObjectVisibility`
+- `TestSpellDamageEnrollsPlayerVictimInCombat`
+- `TestSpellDamageFadesHiddenAttacker`
+- `TestSpellDBPreservesCompletePreKeyingTable`
+- `TestSpellGateStoresCountdownInObjectValueThree`
+- `TestSpellLowLevelStopBeforeMessage`
+- `TestSpellNeutralRescueBeforeMessage`
+- `TestSpellTeleportLevelRefusalNeverTeleports`
+- `TestSpellTeleportSaveRefusalCounterattacks`
+- `TestSpendManaConsumedOnce`
+- `TestSpendManaUpToNeverNegative`
+- `TestSpendPracticesConsumedOnce`
+- `TestSplitOverflowRefusesLikeC`
+- `TestSprintbitArraySignExtendsBit31`
+- `TestSprintbitArraySignExtensionStillAppendsFollowingWords`
+- `TestSprintbitArrayWithoutBit31DoesNotExtend`
+- `TestStableHorseGetsCMovementPool`
+- `TestStartRoomBirthMessageExactBytes`
+- `TestStartRoomBlindPlayerGetsDamned`
+- `TestStartRoomWoundedPlayerGetsStars`
+- `TestStealCarriedFlagsBoth`
+- `TestStealCarriedFlagsThief`
+- `TestStealCarriedFlagsVictim`
+- `TestStealCarriedLeavesOneCopy`
+- `TestStealCarriedTransferHoldsWorldLock`
+- `TestStealCoinsConcurrentConservesGold`
+- `TestStealEquippedConcurrentMoveKeepsOneCopy`
+- `TestStealEquippedFlagsThiefOnly`
+- `TestStealEquippedTransferHoldsWorldLock`
+- `TestStealFullInventoryFlagsNobody`
+- `TestStopFightingPositionBands`
+- `TestStopFollowerMobClearsCharmAndGroup`
+- `TestStopFollowerMobRemovesMountedMasterCacheAfterClearingAffects`
+- `TestStopFollowerShadowClearsAffectAndSuppressesAudience`
+- `TestStoreMailLogsErrorOnlyForInvalidInput`
+- `TestSummonerIgnoresNonPlayingMemoryTargetWithoutRNGDraw`
+- `TestSwitchedGetDropRoomScriptsReceiveNPCBody`
+- `TestSwitchedMobileMovementLooksAtDestination`
+
+Before reading these tests, my estimate is **R42 / F6 / C1 / D1**. All 50 are in the post-oracle segment, so the estimate is **0 pre-oracle and R42 / F6 / C1 / D1 post-oracle**.
