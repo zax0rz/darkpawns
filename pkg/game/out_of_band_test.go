@@ -189,19 +189,19 @@ func TestPointUpdateNotifiesObserverOnce(t *testing.T) {
 	}
 }
 
-// TestPCRaceAndClassTablesMatchC pins the two name tables to C's
-// constants.c races[] and class.c pc_class_types[], in constant order.
+// TestPCRaceAndClassTablesMatchC compares every playable label against C's
+// tables in constant order (src/class.c:68-81; src/constants.c:126-135).
 func TestPCRaceAndClassTablesMatchC(t *testing.T) {
-	races := map[int]string{
-		RaceHuman: "Human", RaceElf: "Elven", RaceDwarf: "Dwarven", RaceKender: "Kenderkin",
-		RaceMinotaur: "Minotauran", RaceRakshasa: "Rakshasan", RaceSsaur: "Ssauran",
+	wantRaces := []string{"Human", "Elven", "Dwarven", "Kenderkin", "Minotauran", "Rakshasan", "Ssauran"}
+	if !reflect.DeepEqual(PCRaceTypes, wantRaces) {
+		t.Fatalf("PCRaceTypes = %q, want %q", PCRaceTypes, wantRaces)
 	}
-	for index, name := range races {
-		if PCRaceTypes[index] != name {
-			t.Fatalf("PCRaceTypes[%d] = %q, want %q", index, PCRaceTypes[index], name)
-		}
+
+	wantClasses := []string{
+		"Magic User", "Cleric", "Thief", "Warrior", "Magus", "Avatar",
+		"Assassin", "Paladin", "Ninja", "Psionic", "Ranger", "Mystic",
 	}
-	if PCClassTypes[ClassMageUser] != "Magic User" || PCClassTypes[ClassMystic] != "Mystic" || len(PCClassTypes) != 12 {
-		t.Fatalf("PCClassTypes = %q", PCClassTypes)
+	if !reflect.DeepEqual(PCClassTypes, wantClasses) {
+		t.Fatalf("PCClassTypes = %q, want %q", PCClassTypes, wantClasses)
 	}
 }

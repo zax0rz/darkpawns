@@ -237,7 +237,7 @@ func TestNPCSimpleMoveBoatRequirement(t *testing.T) {
 }
 
 // TestNPCSimpleMoveTunnelLimit pins do_simple_move's tunnel gate for the
-// mobile lane (src/act.movement.c:170-173): ROOM_TUNNEL with one player
+// mobile lane (src/act.movement.c:180-183): ROOM_TUNNEL with one player
 // already inside refuses the move.
 func TestNPCSimpleMoveTunnelLimit(t *testing.T) {
 	w, actor, _, watcher, _ := npcMovementWorld(t)

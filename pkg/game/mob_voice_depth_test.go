@@ -220,6 +220,9 @@ func TestMobOnMobKillLootsAndBrags(t *testing.T) {
 	}
 }
 
+// C stores every mobile's player-special pointer in the shared dummy_mob
+// record (src/db.c:104,1281); attitude_loot's case 6 reads that record's kill
+// count for the brag (src/fight.c:1203-1206).
 func TestNPCsShareDummyMobKillCountForBrag(t *testing.T) {
 	w, out := croakTestWorld(t)
 	killerOne := voiceMob(t, w, 9615, 1001, "a dune stalker", 1, 20, -500, "AGGR24")

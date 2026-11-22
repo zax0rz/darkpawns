@@ -7,6 +7,7 @@ package game
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -285,16 +286,27 @@ func TestRoomOnPulseRunsBeforeFlamingDamage(t *testing.T) {
 	}
 }
 
-// TestObjectActivityRunsOSOnPulseScripts proves object_activity's script arm:
-// every live object with a prototype carrying OS_ONPULSE runs onpulse each
-// pass, drink containers/fountains/corpses are skipped, the flag gate holds,
-// and the room is the carrier's room or the object's own room
-// (comm.c:789-793).
+// TestObjectActivityRunsOSOnPulseScripts proves object_activity's script arm
+// calls each flagged object in its own location context (src/comm.c:789-794).
+// C's object_list is newest-first (src/db.c:1892-1893,1950-1951); drink
+// containers, fountains, and corpses are skipped before the flag gate.
 func TestObjectActivityRunsOSOnPulseScripts(t *testing.T) {
-	w, ch := scriptedRoomWorld(t, 0)
+	w, err := NewWorld(&parser.World{Rooms: []parser.Room{
+		{VNum: 1001, Name: "Object floor", Zone: 1},
+		{VNum: 1002, Name: "Object carrier", Zone: 1},
+	}})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+	w.MessageSink = func(string, []byte) {}
+	ch := NewPlayer(1, "Actor", 1002)
+	if err := w.AddPlayer(ch); err != nil {
+		t.Fatalf("AddPlayer: %v", err)
+	}
 
 	mkObj := func(vnum int, scriptFuncs int, typ int) *ObjectInstance {
-		proto := &parser.Obj{VNum: vnum, Keywords: "thing", ShortDesc: "a thing", TypeFlag: typ, ScriptName: "obj.lua", LuaFunctions: scriptFuncs}
+		proto := &parser.Obj{VNum: vnum, Keywords: "thing", ShortDesc: "a thing", TypeFlag: typ, ScriptName: fmt.Sprintf("obj-%d.lua", vnum), LuaFunctions: scriptFuncs}
 		obj := NewObjectInstance(proto, -1)
 		registerTransferObject(w, obj)
 		return obj
@@ -305,9 +317,10 @@ func TestObjectActivityRunsOSOnPulseScripts(t *testing.T) {
 	drinkcon := mkObj(3003, 1<<2, ITEM_DRINKCON) // skipped: drink container
 	corpse := mkObj(3004, 1<<2, ITEM_CONTAINER)  // skipped: corpse (val3=1)
 	corpse.Prototype.Values[3] = 1
-	unflagged := mkObj(3005, 0, ITEM_OTHER) // no OS_ONPULSE bit
+	unflagged := mkObj(3005, 0, ITEM_OTHER)      // no OS_ONPULSE bit
+	fountain := mkObj(3006, 1<<2, ITEM_FOUNTAIN) // skipped: fountain
 
-	for _, obj := range []*ObjectInstance{floor, drinkcon, corpse, unflagged} {
+	for _, obj := range []*ObjectInstance{floor, drinkcon, corpse, unflagged, fountain} {
 		if err := w.MoveObjectToRoom(obj, 1001); err != nil {
 			t.Fatalf("floor %d: %v", obj.VNum, err)
 		}
@@ -320,8 +333,8 @@ func TestObjectActivityRunsOSOnPulseScripts(t *testing.T) {
 	w.ObjectActivity()
 
 	want := []string{
-		"obj.lua:onpulse:owner=obj:objref:room=1001", // floor object, its own room
-		"obj.lua:onpulse:owner=obj:objref:room=1001", // carried object, carrier's room
+		"obj-3002.lua:onpulse:owner=obj:objref:room=1002", // newest live script object first, in the carrier's room
+		"obj-3001.lua:onpulse:owner=obj:objref:room=1001", // then floor object, in its own room
 	}
 	if len(*calls) != len(want) {
 		t.Fatalf("onpulse calls = %v, want %v", *calls, want)

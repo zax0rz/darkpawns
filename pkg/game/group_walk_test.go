@@ -66,9 +66,9 @@ func groupWalkFixture(t *testing.T) (*World, *Player, *Player, *Player, *MobInst
 }
 
 // TestOrderedGroupFollowersWalksNewestFirst pins add_follower's prepend
-// order (src/utils.c:472-476): the disband walks followers newest-first with
-// mobiles included (act.other.c:758). The pre-fix walk ranged over the player
-// map — random order, no mobiles (DP-1495).
+// order (src/utils.c:472-476): C's disband walks that list in order and
+// includes mobile followers (src/act.other.c:758-765). The pre-fix walk ranged
+// over the player map — random order, no mobiles (DP-1495).
 func TestOrderedGroupFollowersWalksNewestFirst(t *testing.T) {
 	w, leader, _, _, mob, _ := groupWalkFixture(t)
 

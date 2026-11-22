@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // weightProbe stages the BRF (1) at LVL_IMMORT (31), file TRUE contract of C's
@@ -35,7 +37,7 @@ func weightProbe(t *testing.T) (*milestoneProvider, *bytes.Buffer, *Player, *Pla
 	return provider, file, watch, below, off
 }
 
-// TestObjectActivityWeightMudlog proves comm.c:773-787 at every location
+// TestObjectActivityWeightMudlog proves src/comm.c:773-787 at every location
 // wording C can reach and at its three exemptions (src/comm.c:770-771 and
 // :774). The wordings are C's truthiness reading of carried_by/in_room/worn_by,
 // not a one-to-one map of the port's location union: see repairObjectWeight. A
@@ -112,7 +114,13 @@ func TestObjectActivityWeightMudlog(t *testing.T) {
 				t.Fatalf("AddPlayer: %v", err)
 			}
 			obj := spawn(t, w, 200, 100)
-			obj.Location = LocEquippedPlayer(p.GetName(), EquipmentSlot(0))
+			obj.Prototype.WearFlags = [4]int{1 << 4}
+			if err := w.MoveObjectToPlayerInventory(obj, p); err != nil {
+				t.Fatalf("move to inventory: %v", err)
+			}
+			if err := w.EquipItem(p, obj, eqWearHead); err != nil {
+				t.Fatalf("equip object: %v", err)
+			}
 			return weighted(obj)
 		}, true, "in room")
 	})
@@ -136,7 +144,7 @@ func TestObjectActivityWeightMudlog(t *testing.T) {
 	})
 	t.Run("corpse is exempt", func(t *testing.T) {
 		// C's IS_CORPSE is GET_OBJ_TYPE == ITEM_CONTAINER && GET_OBJ_VAL(obj,3)
-		// == 1 (src/utils.h, and the port sets exactly that on a real corpse:
+		// == 1 (src/utils.h:490-491, and the port sets exactly that on a real corpse:
 		// pkg/game/death.go:1090-1101), so the predicate is exercised here
 		// without the corpse builder's world prerequisites.
 		run(t, func(t *testing.T, w *World) *ObjectInstance {
@@ -157,22 +165,65 @@ func TestObjectActivityWeightMudlog(t *testing.T) {
 			return weighted(container)
 		}, false, "")
 	})
-	t.Run("object on room 0's floor prints unknown", func(t *testing.T) {
-		// Only a real room 0 takes C's fallback wording (src/comm.c:775-782);
-		// NOWHERE (-1) is truthy and prints "in room".
-		run(t, func(t *testing.T, w *World) *ObjectInstance {
-			obj := spawn(t, w, 200, 100)
-			obj.Location = LocRoom(0)
-			return weighted(obj)
-		}, true, "unknown")
-	})
 	t.Run("shop stock prints carried", func(t *testing.T) {
 		// A shop's stock sits in the keeper's inventory in C.
 		run(t, func(t *testing.T, w *World) *ObjectInstance {
 			obj := spawn(t, w, 200, 100)
-			obj.Location = LocShop(1)
+			if err := w.MoveObject(obj, LocShop(1)); err != nil {
+				t.Fatalf("move to shop stock: %v", err)
+			}
 			return weighted(obj)
 		}, true, "carried")
+	})
+	t.Run("room zero after extraction prints unknown", func(t *testing.T) {
+		w, err := NewWorld(&parser.World{
+			Rooms: []parser.Room{{VNum: 0, Name: "The Void", Zone: 0}},
+			Objs:  []parser.Obj{{VNum: 200, Keywords: "weighted", ShortDesc: "a weighted thing", Weight: 1}},
+		})
+		if err != nil {
+			t.Fatalf("NewWorld: %v", err)
+		}
+		t.Cleanup(w.StopAITicker)
+		provider, file, watch, below, off := weightProbe(t)
+		carrier := NewPlayer(706, "Wtvoid", 0)
+		if err := w.AddPlayer(carrier); err != nil {
+			t.Fatalf("AddPlayer: %v", err)
+		}
+		obj, err := w.SpawnObject(200, -1)
+		if err != nil {
+			t.Fatalf("SpawnObject: %v", err)
+		}
+		if err := w.MoveObjectToPlayerInventory(obj, carrier); err != nil {
+			t.Fatalf("move to inventory: %v", err)
+		}
+		obj.SetWeight(obj.Prototype.Weight + 5)
+
+		// C extract_char drops carried objects into the character's current room
+		// (src/handler.c:1132-1137). The Go extraction pass likewise inserts the
+		// item into room 0 (pkg/game/char_mgmt.go:249-290), where C's falsy
+		// in_room value makes object_activity call it "unknown" (src/comm.c:775-782).
+		w.QueuePlayerExtraction(carrier)
+		if got := w.ExtractPendingPlayers(); len(got) != 1 || got[0] != carrier {
+			t.Fatalf("extracted players = %v, want Wtvoid", got)
+		}
+		if got := obj.Location; got != LocRoom(0) {
+			t.Fatalf("object after extraction = %+v, want room 0", got)
+		}
+		w.ObjectActivity()
+
+		payload := fmt.Sprintf("SYSERR: Object '%s' weight incorrect, location 'unknown'", obj.GetShortDesc())
+		if got := strings.Count(file.String(), payload); got != 1 {
+			t.Fatalf("file payload count=%d want 1; log=%q", got, file.String())
+		}
+		if want := "[ " + payload + " ]\r\n"; !strings.Contains(provider.lines[watch.Name], want) {
+			t.Fatalf("observer bytes=%q want %q", provider.lines[watch.Name], want)
+		}
+		if strings.Contains(provider.lines[below.Name], payload) || strings.Contains(provider.lines[off.Name], payload) {
+			t.Fatal("level or type filter leak")
+		}
+		if obj.GetWeight() != obj.Prototype.Weight {
+			t.Fatalf("weight not repaired: %d want %d", obj.GetWeight(), obj.Prototype.Weight)
+		}
 	})
 }
 

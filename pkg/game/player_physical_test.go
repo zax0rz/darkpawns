@@ -146,8 +146,8 @@ func TestPhysicalAffectsMultipleItemsAndRemovalOrder(t *testing.T) {
 func TestPhysicalAffectsTimedAffectFolds(t *testing.T) {
 	p := physicalPlayer()
 	base := p.Weight
-	// C affect_modify reaches the same switch for timed affects
-	// (src/handler.c:280-292), so a timed APPLY_CHAR_WEIGHT folds too.
+	// C affect_modify reaches the physical apply cases for timed affects
+	// (src/handler.c:136-166,280-292), so APPLY_CHAR_WEIGHT folds too.
 	p.AddAffect(engine.NewAffectDirect(1, engine.ApplyCharWeight, 1, 12, 0, "test"))
 	if got, want := p.GetWeight(), base+12; got != want {
 		t.Fatalf("timed weight = %d, want %d", got, want)
@@ -158,10 +158,9 @@ func TestPhysicalAffectsTimedAffectFolds(t *testing.T) {
 	}
 }
 
-// char_to_store unwinds every modifier before writing, so the persisted
-// weight, height, and birth are the base values, and a load + re-equip
-// rebuilds the effective values without double-counting
-// (src/db.c:2531-2637; src/objsave.c:344-443).
+// C char_to_store removes modifiers before writing the raw physical fields and
+// re-equips worn items afterwards (src/db.c:2537-2599,2624-2637). Go keeps the
+// same base fields for serialization and folds current modifiers in getters.
 func TestPhysicalAffectsSerializationBoundary(t *testing.T) {
 	p := physicalPlayer()
 	baseWeight, baseHeight, baseBirth := p.Weight, p.Height, p.Birth
@@ -176,6 +175,9 @@ func TestPhysicalAffectsSerializationBoundary(t *testing.T) {
 	}
 	if got, want := p.GetWeight(), baseWeight+20; got != want {
 		t.Fatalf("equipped weight = %d, want %d", got, want)
+	}
+	if got, want := p.EffectiveBirth(), baseBirth+2*int64(SECS_PER_MUD_YEAR); got != want {
+		t.Fatalf("equipped birth = %d, want %d", got, want)
 	}
 
 	data, err := SerializePlayer(p)
@@ -200,11 +202,16 @@ func TestPhysicalAffectsSerializationBoundary(t *testing.T) {
 	if err := loaded.Equipment.Equip(physicalItem(engine.ApplyCharHeight, -15, 1<<4), loaded.Inventory); err != nil {
 		t.Fatal(err)
 	}
+	if err := loaded.Equipment.Equip(physicalItem(engine.ApplyAge, -2, 1<<6), loaded.Inventory); err != nil {
+		t.Fatal(err)
+	}
 	if got, want := loaded.GetWeight(), baseWeight+20; got != want {
 		t.Fatalf("post-load weight = %d, want %d", got, want)
 	}
 	if got, want := loaded.GetHeight(), baseHeight-15; got != want {
 		t.Fatalf("post-load height = %d, want %d", got, want)
 	}
-	_ = baseBirth
+	if got, want := loaded.EffectiveBirth(), baseBirth+2*int64(SECS_PER_MUD_YEAR); got != want {
+		t.Fatalf("post-load birth = %d, want %d", got, want)
+	}
 }

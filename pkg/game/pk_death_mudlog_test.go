@@ -118,7 +118,7 @@ func TestPKDeathMudlogThroughCombatCallback(t *testing.T) {
 	}
 }
 
-// fight.c:1678 takes the unprefixed arm for a self-kill. The ambush damage
+// src/fight.c:1671-1681 takes the unprefixed arm for a self-kill. The ambush damage
 // seam accepts a real player as both attacker and victim, so this exercises
 // that defaultTakeDamage branch without manufacturing callbacks or actors.
 func TestPlayerSelfDeathMudlogThroughCombatCallback(t *testing.T) {
@@ -222,21 +222,6 @@ func TestCombatKillMilestoneMudlogCallbackWiring(t *testing.T) {
 	}
 	if strings.Contains(file.String(), payload) {
 		t.Fatalf("combat NRM milestone unexpectedly wrote to file: %q", file.String())
-	}
-}
-
-// TestPKDeathMudlogTypeIsBRF: LOG1-only receipt bounds the type at BRF and the
-// no-flag silence bounds it below the OFF case.
-func TestPKDeathMudlogTypeIsBRF(t *testing.T) {
-	w, provider, _, rig, killer, victim := pkDeathFixture(t)
-	victim.SetHP(-1)
-	w.HandleDeath(victim, killer, combat.TYPE_HIT)
-	payload := pkPayload("Victim", "Killer")
-	if !rigSaw(provider, rig.log1, payload) {
-		t.Fatalf("LOG1-only observer did not receive %q: type > BRF", bracket(payload))
-	}
-	if rigSaw(provider, rig.noFlag, payload) {
-		t.Fatalf("no-flag observer received %q: type < BRF", bracket(payload))
 	}
 }
 

@@ -643,3 +643,90 @@ The forecast remainder after T1088 was R831/F18/C20/D34 across 903 rows. Batch 1
 ### Batch 18 roster correction, before adjudication
 
 The next 50 unledgered functions start after the prior corrected slice: inventory lines 1150–1210 contain 61 names, 11 of which already have ledger rows. Skipped duplicates are `TestObjNameUsesRuntimeKeywords`, `TestPerformDispose`, `TestPerformDisposeGold`, `TestPerformDropNoDrop`, `TestPerformGiveNoDrop`, `TestPerformMove_Exhausted`, `TestPerformMove_FollowersFollow`, `TestPerformMove_Sneak`, `TestPerformMove_TunnelFull`, `TestPerformRemoveNoDrop`, and `TestPerformWearTwoHanded`. The batch roster is the other 50 names in inventory order; no duplicate ledger rows will be added.
+
+### Batch 18 roster correction, superseding the preceding correction (before adjudication)
+
+The preceding correction also used the wrong inventory span. T1138 is
+`TestNPCSimpleMoveCharmedRefusal` at inventory line 1149. Scanning forward and
+skipping every function already present in the ledger, the next 50 are the
+following tests in inventory order, from line 1150 through line 1232:
+
+`TestNPCSimpleMoveTunnelLimit`, `TestNPCSocialCharLineReachesSwitchedBody`,
+`TestNpcSpecialDeclineNeedsANonEmptyCommand`,
+`TestNPCsShareDummyMobKillCountForBrag`, `TestNpcStealRejectsImmortalLevelVictim`,
+`TestNPCTellReachesSwitchedMobileDescriptor`,
+`TestObjectActivityLogsContainerWeightFloorAfterGet`,
+`TestObjectActivityRunsOSOnPulseScripts`, `TestObjectActivityWeightMudlog`,
+`TestObjectExtraFlagsStartFromPrototype`, `TestObjectLaneConsultsDeclineTables`,
+`TestOrderedGroupFollowersWalksNewestFirst`, `TestPalmEntryDrawPrecedesEveryGate`,
+`TestPCRaceAndClassTablesMatchC`, `TestPeekImmortalConsumesPercentDraw`,
+`TestPeekPreservesCLeadingActLineBreakBytes`,
+`TestPendingAttackerSwingsWithoutEnrolling`,
+`TestPendingBodyPeacefulRefusalStillSkipsEnrollment`,
+`TestPendingBodySecondDeathRunsFullDeathBranch`,
+`TestPendingBodyStaysAddressableUntilExtractionPass`,
+`TestPerformGetFromRoomQuietSuppressesRoomAct`,
+`TestPerformWearWieldWeightBeforeTwoHanded`,
+`TestPhysicalAffectsEquipRemoveAllLocations`,
+`TestPhysicalAffectsMultipleItemsAndRemovalOrder`,
+`TestPhysicalAffectsSerializationBoundary`, `TestPhysicalAffectsTimedAffectFolds`,
+`TestPhysicalAffectsWrap`, `TestPissedAlchemistAttacksMageAfterDirectSay`,
+`TestPissedAlchemistFirstPulseUsesDirectSayCommand`,
+`TestPissedAlchemistRejectsPlayerCommandAndFightingMob`,
+`TestPKDeathMudlogLevelIsLVLIMMORT`, `TestPKDeathMudlogMobKillerArm`,
+`TestPKDeathMudlogProducer`, `TestPKDeathMudlogThroughCombatCallback`,
+`TestPKDeathMudlogTypeIsBRF`, `TestPlacementDrawsSurviveCNumberOverflow`,
+`TestPlayerAffectExpiryRemovesOneRecord`,
+`TestPlayerDeathCountersStillRunWithNegativeCon`,
+`TestPlayerEquipmentBadStatEntryPoints`, `TestPlayerEquipmentBadStatPriority`,
+`TestPlayerEquipmentBadStats`, `TestPlayerEquipmentCharismaHunting`,
+`TestPlayerEquipmentDexUsesDamageTail`, `TestPlayer_HitModifiers`,
+`TestPlayerJoinAffectUsesNewestMatchingRecord`,
+`TestPlayerPersistenceIsSeparateFromWorldSnapshot`,
+`TestPlayerPresenceLineUsesTitleWithoutInventedClassFallback`,
+`TestPlayerSaveData_ConcurrentSnapshot`,
+`TestPlayerSelfDeathMudlogThroughCombatCallback`,
+`TestPlayerToSaveDataKeepsStoredArrayOrder`.
+
+The 33 skipped entries already have ledger rows; no T1139–T1188 rows were
+written before this correction. This roster supersedes both earlier batch 18
+roster descriptions above.
+
+## Post-oracle redo, batch 18 (T1139–T1188)
+
+The superseding roster correction above was applied before adjudication: 50
+unledgered functions in inventory order, with already-ledgered names skipped.
+All 50 were introduced after the 2026-07-12 oracle date. Earlier ledger and
+notes rows remain unchanged; this batch appends T1139–T1188.
+
+Marks: **R 42 / F 6 / C 1 / D 1.** Junk: **J3 5 / J2 1 / J4 1 / J9 1.**
+The forecast was R46/F1/C1/D2 with all 50 post-oracle. Actuals had four fewer
+R, five more F, the same C count, and one fewer D; the date split matched.
+
+The six F rows were repaired and mutation-proven in the detached worktree.
+T1146 now distinguishes object script order, carried/floor contexts, and the
+fountain skip. T1147 reaches room 0 by extracting a carried object, rather
+than assigning its location directly. T1151 adds the full-inventory palm gate.
+T1152 compares the complete race and class tables. T1156 checks the exact
+peaceful refusal line. T1163 checks effective birth before and after
+serialization/re-equip. Every old body stayed green, every fixed body went red,
+and all seven mutations were restored byte-for-byte; see `mutations.tsv`.
+
+T1143 (`TestNpcStealRejectsImmortalLevelVictim`) is D/J9: its direct helper
+branch is unreachable through C's `SPECIAL(thief)` caller, which filters
+immortal victims before invoking the helper (`src/spec_procs.c:301-308,389-405`).
+The test was deleted; `TestSpecThief_Golden` covers the reachable caller gate.
+T1173 is C/J4 and folds into T1171, whose producer assertions include BRF
+routing and negative observer boundaries. The remaining weak rows' PF-152 /
+PF-153 attribution is unknown for T1146, T1147, T1151, T1156, T1163, and T1173;
+T1152 is Claude Opus 5.5; T1143 is Cline.
+
+The object actor lane has a separately tracked C/Go gap: C's bank and horn
+object specials accept named commands, while Go does not dispatch them for NPC
+actors. The decline-table test now asserts only unrelated command declines;
+issue #3011 records the missing actor-aware path. No test pins Go bytes against
+C, and no production code changed, so no census was required.
+
+`GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` measured 64.7% before and
+64.6% after the batch. All 11 repository gates passed individually after the
+batch edits and formatting.

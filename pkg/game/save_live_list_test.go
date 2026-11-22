@@ -8,8 +8,8 @@ import (
 
 // DP-1533: C char_to_store strips the live affects and re-adds the stored
 // array in order (src/db.c:2576-2577, 2627-2631); affect_to_char prepends
-// (src/handler.c:415-416), so every save_char leaves the live list reversed
-// and truncated at MAX_AFFECT (src/structs.h:655; db.c:2547's copy bound).
+// (src/handler.c:400-419), so every save_char leaves the live list reversed
+// and truncated at MAX_AFFECT (src/structs.h:655; src/db.c:2547's copy bound).
 // The stored bytes keep the pre-strip list order (st->affected[]).
 func TestPlayerToSaveDataReversesLiveAffectList(t *testing.T) {
 	p := NewPlayer(1, "Flip", 1001)
@@ -29,7 +29,7 @@ func TestPlayerToSaveDataReversesLiveAffectList(t *testing.T) {
 	}
 }
 
-// The stored array keeps the pre-strip list order (db.c:2547-2558 copies
+// The stored array keeps the pre-strip list order (src/db.c:2547-2558 copies
 // ch->affected head-first), so the file's first slot is the newest record.
 func TestPlayerToSaveDataKeepsStoredArrayOrder(t *testing.T) {
 	p := NewPlayer(1, "Flip", 1001)

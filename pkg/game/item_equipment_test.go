@@ -305,7 +305,8 @@ func TestDoGrabRejectsNonHoldableItem(t *testing.T) {
 // TestPerformWearWieldWeightBeforeTwoHanded pins C's WEAR_WIELD ordering and
 // the exceptional-strength wield_w (src/act.item.c:1492-1502): the weight
 // refusal precedes the two-handed refusal, and str_app[STRENGTH_APPLY_INDEX]
-// (src/structs.h:440) gives an 18/70 wielder wield_w 24, so a weight-26
+// (src/utils.h:440-446; src/constants.c:1050-1052) gives an 18/70 wielder
+// wield_w 24, so a weight-26
 // two-handed axe is refused for weight even while a hand is held. Go read the
 // raw Strength field (25 here, as `set str` leaves it before affect_total), not
 // the effective 18/70, and took the two-handed branch (DP-1516 item 4).
