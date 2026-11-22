@@ -544,3 +544,9 @@ T639–T1991 estimate (R1240/F50/C28/D35), 953 tests remain with a forecast
 remainder of R875/F23/C21/D34. No package summary or PF row is due until
 T1991. `GOEXPERIMENT=nojsonv2 go test -cover ./pkg/game` reports 64.6%,
 unchanged from batch 14.
+
+## Batch 16 preregistered estimate (before reading tests T1039–T1088)
+
+Based on the cumulative forecast remainder after T1038, I expect this 50-test
+slice to contain R46/F1/C1/D2. I expect all 50 to be post-oracle, continuing
+the introduction-date pattern from batch 15.
