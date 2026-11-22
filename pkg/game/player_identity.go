@@ -63,10 +63,12 @@ func (p *Player) SetGold(gold int) {
 // double-spend: two check-then-deduct interleavings both passed GetGold()
 // (VULN-020). Follows the raw-field-under-p.mu convention (DP-347, mail.go's
 // stamp path) — the locking accessors must never be nested under p.mu.
+// Compares p.Gold < amount directly without an amount > 0 bypass, as its C
+// callers do (DP-1625).
 func (p *Player) SpendGold(amount int) bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if amount > 0 && p.Gold < amount {
+	if p.Gold < amount {
 		return false
 	}
 	p.Gold -= amount
