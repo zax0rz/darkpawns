@@ -218,6 +218,18 @@ decide something, stop and report to Zach. Never invoke another agent, model or
 paid service yourself (`claude`, `ultrareview`, other CLIs or APIs) to obtain
 it. Taught 2026-10-26, when an agent read "Claude reviews" as a command to run.
 
+### Markdown-only changes go straight to main
+
+A commit that changes only standard Markdown documentation under `docs/` (research and field notes, plans, briefs, roadmap status), plus the `EVIDENCE_LEDGER.tsv` row that goes with a research note, may be pushed directly to `main` without a PR.
+
+- Markdown only. A commit that also touches Go, scripts, scenarios, manifests or other TSV/JSON files needs a PR.
+- Not the governing documents (`AGENTS.md`, `docs/fidelity/RULEBOOK.md`, `docs/fidelity/north-star-1to1.md`). Those stay Zach's.
+- Not website content under `website-astro/`, which follows the site process and `make site-check`.
+- Fetch and rebase on `origin/main` first. Never force-push `main`, and never skip the pre-push hook with `--no-verify`.
+- Report that you pushed directly, with the commit SHA.
+
+Taught 2026-11-22: a single research note doesn't need the PR ritual (Zach, 2026-10-03), but the rule lived only in one agent's memory.
+
 ## Project Overview
 
 Dark Pawns is a Go MUD server, ported from the C original: CircleMUD 3.0, of the DikuMUD family (`src/config.c:249`). About 165K lines of Go and 196K lines of tests; the 66 C files in `src/` are the reference. Every C file has a Go counterpart, so don't start a fresh port of a whole file. But ported is not faithful: see *Ported is not faithful* under Fidelity Work.
