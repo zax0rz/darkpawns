@@ -2181,3 +2181,60 @@ in `ledger.tsv`: after T1838 there are **225** unledgered functions
 errors. The prior checkpoints are 325 after T1738 and 275 after T1788. Batch 32
 was preregistered from the direct inventory/ledger difference of 225 and starts
 with the first 50 unledgered names, leaving 175 after its roster is audited.
+
+## Batch 32 preregistered estimate (before reading tests T1839–T1888)
+
+Continue the frozen inventory-order sweep, selecting the first 50 test names not already represented in the ledger. T001–T1838 has 1838 ledger rows, 1766 unique audited names, and 225 unledgered inventory functions. The next roster is:
+
+- `TestSpecStartRoom_BirthTransitionAndImmortalGate`
+- `TestSpecStartRoomMovesMobilesUpToTheImmortalStop`
+- `TestSpecStartRoomSendsBirthAndLookToSwitchedMobile`
+- `TestSpecSuckIn_LookGateAudienceAndRelocation`
+- `TestSpecSummonerPrioritizesHuntingOverMemory`
+- `TestSpecSummonerUsesDescriptorOrderCanSeeAndNumber0To3`
+- `TestSpecTakeToJailAlignmentInterventionOutput`
+- `TestSpecTakeToJail_EntryGatesAndOutlawWarning`
+- `TestSpecTakeToJail_ReturnContractAndProtectionDelegation`
+- `TestSpecTakeToJailSubdueStateAndAudience`
+- `TestSpecTattoo1AppliesEveryOfferedTattoo`
+- `TestSpecTattoo1AutonomousEntry`
+- `TestSpecTattoo1ListAndEntryGates`
+- `TestSpecTattoo1NegativeChoiceDoesNotPanic`
+- `TestSpecTattoo1PriceAndSuccessAudience`
+- `TestSpecTattoo1TellArgumentsMatchC`
+- `TestSpecTattoo2AppliesEveryOfferedTattoo`
+- `TestSpecTattoo2AutonomousEntry`
+- `TestSpecTattoo2ListAndEntryGates`
+- `TestSpecTattoo2PriceAndSuccessAudience`
+- `TestSpecTattoo2TellArgumentsMatchC`
+- `TestSpecTattoo3AppliesEveryOfferedTattoo`
+- `TestSpecTattoo3AutonomousEntry`
+- `TestSpecTattoo3ListAndEntryGates`
+- `TestSpecTattoo3PriceAndSuccessAudience`
+- `TestSpecTattoo3TellArgumentsMatchC`
+- `TestSpecTattoo4AppliesEveryOfferedTattoo`
+- `TestSpecTattoo4ListEntryOwnedAndPriceGates`
+- `TestSpecTattoo4SuccessAudienceAndState`
+- `TestSpecTattoo4TellArgumentsMatchC`
+- `TestSpecTeleporter_EntryGates`
+- `TestSpecTeleporter_LowHealthTeleportsMobAndUsesRoomActs`
+- `TestSpecTeleporter_RestingMobUsesNativeCallMagicPositionGate`
+- `TestSpecTeleporter_SittingMobStopsAtNativeCallMagicGate`
+- `TestSpecTeleportVictim_EntryGates`
+- `TestSpecTeleportVictim_NonIntelligentMobSkipsSpeech`
+- `TestSpecTeleportVictim_ResolvesMobCombatTarget`
+- `TestSpecTeleportVictim_ScoffSpeechTeleportAndLandingLook`
+- `TestSpecTeleportVictim_SittingStopsAtNativeCallMagicGate`
+- `TestSpecTipsterSpeaksThroughNpcSay`
+- `TestSpecTroll_EntryGates`
+- `TestSpecTroll_FightingUsesCombatNumberArm`
+- `TestSpecTroll_HideInvisibleSuppressesGlowForObserver`
+- `TestSpecTroll_InjuredIdleGlowUsesCNumberArm`
+- `TestSpecTurnUndeadObjectGatesAndAct`
+- `TestSpecTurnUndeadObjectPulseReset`
+- `TestSpecTurnUndeadObjectRegistered`
+- `TestSpecTurnUndeadObjectRoomGate`
+- `TestSpecTurnUndeadObjectSkipSpacesLeadingOnly`
+- `TestSpecWallGuardNS_EntryGates`
+
+Before reading these tests, my estimate is **R44 / F4 / C1 / D1**. These are expected from the post-oracle suffix, so the estimate is **0 pre-oracle and R44 / F4 / C1 / D1 post-oracle**.
