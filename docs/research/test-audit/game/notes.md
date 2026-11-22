@@ -1816,3 +1816,45 @@ unique inventory functions unledgered. The selected roster is the next 50:
 - `TestHorseVisibleToInfravisionAfterDismount`
 
 Before reading these tests, my estimate is **R43 / F5 / C1 / D1**.
+
+## Batch 28 results (T1639–T1688)
+
+The preregistered roster matched the next 50 unledgered inventory tests. The
+actual marks are **R45 / F5 / C0 / D0**, against the estimate R43 / F5 / C1 /
+D1. The five F rows are T1658, T1663, T1668, T1673, and T1678; all are J3
+substring or partial-output checks strengthened to exact bytes or exact
+silence. The batch adds five J3 marks and no other junk codes. Their introducing
+commit attribution is unknown for T1658, T1663, T1668, and T1678 (Zach git
+author, no model trailer); T1673 is Claude Opus 5.5 from its co-author trailer.
+
+Each original weak assertion stayed green under a narrow output mutation, and
+each fixed assertion failed. The five production mutations and old/fixed
+results are recorded in `mutations.tsv`; the detached worktree was clean after
+each restoration. The Puff mutation adds ` EXTRA.` while retaining the final
+period, so its failure isolates the changed spoken line. No tests were deleted
+or folded, so no live inventory references needed retargeting.
+
+The ledger and mutation log were appended as raw tab-separated text. T1639–T1688
+have 18 columns each; the ledger has 1,688 contiguous IDs, and the mutation log
+has seven columns per row. The five tightened tests and the full `go test ./...`
+pass. Package statement coverage is 64.8% before and after the batch. No
+production code changed and no census was needed.
+
+All eleven gates passed individually: `make fmt`; `GOEXPERIMENT=nojsonv2 go
+build ./...`; `GOEXPERIMENT=nojsonv2 go vet ./...`; `GOEXPERIMENT=nojsonv2 go
+test ./...`; `golangci-lint run ./...` (v2.15.0, 0 issues); `make
+modernize-check`; `make deadcode-ratchet`; `make string-census`; `make
+fidelity-depth`; `make expected-divergences-check`; and `make
+function-index-check`. The string-census check reports its existing generated
+reports as stale, the expected-divergence check reports existing unresolved
+selectors, and the function-index check's intentional fake association is
+rejected before the ratchet reports clean. `make fidelity-depth` reports 8,282
+cases, with 7,968 proven/delegated, one blocked, 297 excluded, and 16
+approved-divergent.
+
+Through T1688, T639–T1688 totals R917/F105/C20/D8. Cumulative T001–T1688
+totals are R1550/F109/C20/D9: pre-oracle R379/F7/C3/D1 and post-oracle
+R1171/F102/C17/D8. The ledger now contains 1,616 unique inventory tests, with
+375 unique tests remaining. The batch branch is stacked on Batch 27 commit
+0132b1847; `origin/main` was fetched at ab14720f9, and both batch PRs target
+`main`. Use PF-168 or later for the final package summary row.

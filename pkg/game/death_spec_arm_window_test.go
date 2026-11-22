@@ -61,8 +61,8 @@ func TestHandleDeathDyingSpecArmPuffSaysLine(t *testing.T) {
 
 	w.HandleDeath(mob, killer, TypeSlash)
 
-	if got := lastMsg(); !strings.Contains(got, "Shit, I'm dead.") {
-		t.Fatalf("dying spec arm output = %q, want puff's dying line (spec_procs.c:619-623)", got)
+	if got, want := lastMsg(), "You receive one lousy experience point.\r\nPuff states, 'Shit, I'm dead.'\r\n"; got != want {
+		t.Fatalf("dying spec arm output = %q, want exact C death transcript %q (spec_procs.c:619-623)", got, want)
 	}
 	if mob.IsAlive() {
 		t.Error("puff should still die after the dying line")

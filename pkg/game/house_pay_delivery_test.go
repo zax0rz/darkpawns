@@ -2,7 +2,6 @@ package game
 
 import (
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -72,11 +71,11 @@ func TestHcontrolPayDeliversToActorAndWatcher(t *testing.T) {
 		t.Fatal("HcontrolPayHouse deadlocked: actor and watcher delivery did not finish")
 	}
 
-	if !strings.Contains(lines["Houselord"], "Payment recorded.") {
-		t.Fatalf("actor lines = %q, want Payment recorded", lines["Houselord"])
+	if got, want := lines["Houselord"], "Payment recorded.\r\n"; got != want {
+		t.Fatalf("actor lines = %q, want %q", got, want)
 	}
-	if !strings.Contains(lines["Watcher"], "[ Payment for house 1001 collected by Houselord. ]") {
-		t.Fatalf("watcher lines = %q, want the bracketed audit line", lines["Watcher"])
+	if got, want := lines["Watcher"], "[ Payment for house 1001 collected by Houselord. ]\r\n"; got != want {
+		t.Fatalf("watcher lines = %q, want %q", got, want)
 	}
 	if w.HouseControl[0].LastPayment == 0 {
 		t.Fatal("LastPayment was not stamped")

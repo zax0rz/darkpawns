@@ -192,21 +192,11 @@ func TestGroupSplitNoGoldLeaderSilent(t *testing.T) {
 	// The follower is the killer; the leader is k != ch with share 0: C's
 	// leader block is skipped entirely and only the killer's own
 	// no-gold line plus the leftover keep appear.
-	kmsg := output[follower.Name].String()
-	for _, want := range []string{
-		"You loot 1 coins from the corpse of .\r\n",
-		"When you split no gold, you got none.\r\n",
-		"You keep 1 gold leftover.\r\n",
-	} {
-		if !strings.Contains(kmsg, want) {
-			t.Errorf("killer output missing %q; got %q", want, kmsg)
-		}
+	if got, want := output[follower.Name].String(), "You receive your share of experience -- 495 points.\r\nYou loot 1 coins from the corpse of .\r\nWhen you split no gold, you got none.\r\nYou keep 1 gold leftover.\r\n"; got != want {
+		t.Errorf("killer output = %q, want exact C no-gold transcript %q", got, want)
 	}
-	if strings.Contains(kmsg, "none to split") {
-		t.Errorf("killer output has a none-to-split notice for the leader; C's leader arm is gpm>0 only: %q", kmsg)
-	}
-	if lmsg := output[leader.Name].String(); strings.Contains(lmsg, "gold") || strings.Contains(lmsg, "split") {
-		t.Errorf("leader output = %q, want the XP share only (leader gold arm is gpm>0 only)", lmsg)
+	if got, want := output[leader.Name].String(), "You receive your share of experience -- 495 points.\r\n"; got != want {
+		t.Errorf("leader output = %q, want only the XP share %q", got, want)
 	}
 	if got, want := follower.GetGold(), 1; got != want {
 		t.Fatalf("killer gold = %d, want %d leftover", got, want)
