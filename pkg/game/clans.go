@@ -91,17 +91,15 @@ type Clan struct {
 	Private     int        `json:"private"`
 }
 
-// SpendTreasure atomically debits the clan treasury, returning false when the
-// balance is short. The withdraw path read Treasure, compared it, and then
-// subtracted it, so two concurrent withdrawals could both pass the check and
-// pay out of an empty treasury (CWE-367).
+// SpendTreasure atomically subtracts from the clan treasury, returning false
+// when a positive debit exceeds the balance. Negative C atoi results add to
+// the treasury, as do_clan_bank's direct `treasure -= amount` does. Keeping
+// the check and subtraction under one lock prevents concurrent withdrawals
+// from both spending the same balance (CWE-367).
 func (c *Clan) SpendTreasure(n int64) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if n <= 0 {
-		return true
-	}
-	if c.Treasure < n {
+	if n > 0 && c.Treasure < n {
 		return false
 	}
 	c.Treasure -= n

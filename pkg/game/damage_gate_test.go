@@ -28,7 +28,7 @@ func outputOf(out map[string]*strings.Builder, name string) string {
 }
 
 // TestDamageRefusedProtections pins the refusal bytes of damage()'s
-// protection block (fight.c:1318-1368), the gate every damage seam shares
+// protection block (src/fight.c:1318-1368), the gate every damage seam shares
 // (DP-1327).
 func TestDamageRefusedProtections(t *testing.T) {
 	cases := []struct {
@@ -42,11 +42,11 @@ func TestDamageRefusedProtections(t *testing.T) {
 	}{
 		{
 			name: "newbie attacker", attackerLvl: 10, victimLvl: 30, wantRefused: true,
-			wantOutput: "You are not experienced enough to attack Victim!",
+			wantOutput: "You are not experienced enough to attack Victim!\r\n",
 		},
 		{
 			name: "newbie victim", attackerLvl: 30, victimLvl: 10, wantRefused: true,
-			wantOutput: "Ancient forces protect Victim from your wrath!",
+			wantOutput: "Ancient forces protect Victim from your wrath!\r\n",
 		},
 		{name: "outlaw newbie victim", attackerLvl: 30, victimLvl: 10, outlaw: true},
 		{
@@ -80,7 +80,7 @@ func TestDamageRefusedProtections(t *testing.T) {
 			if tc.wantOutput == "" && got != "" {
 				t.Fatalf("attacker output = %q, want none", got)
 			}
-			if !strings.Contains(got, tc.wantOutput) {
+			if got != tc.wantOutput {
 				t.Fatalf("attacker output = %q, want %q", got, tc.wantOutput)
 			}
 			if v := outputOf(out, victim.Name); v != "" {

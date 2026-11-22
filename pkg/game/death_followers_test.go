@@ -71,6 +71,8 @@ func TestDamageBreaksMountCharmAndGroup(t *testing.T) {
 	}
 }
 
+// Extraction's die_follower walk must notify each outgoing player exactly
+// once (src/handler.c:1116-1117; src/utils.c:447-458,419-426).
 func TestDeathReleasesFollowers(t *testing.T) {
 	for _, path := range []string{"combat", "noncombat", "instakill", "extract-flag"} {
 		t.Run(path, func(t *testing.T) {
@@ -120,8 +122,9 @@ func TestDeathReleasesFollowers(t *testing.T) {
 				if p.GetFollowing() != "" || w.FollowingBody(p) != nil || p.IsInGroup() || p.IsAffected(affGroup) {
 					t.Fatalf("player %s remains a follower/group member", p.Name)
 				}
-				if got := capture[p.Name].String(); !strings.Contains(got, "You stop following Rider.\r\n") {
-					t.Fatalf("follower bytes=%q", got)
+				got := capture[p.Name].String()
+				if count := strings.Count(got, "You stop following Rider.\r\n"); count != 1 {
+					t.Fatalf("follower bytes=%q, want one private stop-following line", got)
 				}
 			}
 			if w.FollowingBody(mob) != nil || mob.IsAffected(affCharm) || mob.IsAffected(affGroup) {
@@ -158,8 +161,8 @@ func TestDeathFollowerOwnMasterAndRemoteFollower(t *testing.T) {
 	if got := capture[remote.Name].String(); got != "You stop following Rider.\r\n" {
 		t.Fatalf("remote bytes=%q", got)
 	}
-	if got := capture[elder.Name].String(); !strings.HasPrefix(got, "Rider stops following you.\r\n") {
-		t.Fatalf("outgoing master bytes=%q", got)
+	if got, want := capture[elder.Name].String(), "Rider stops following you.\r\n"; got != want {
+		t.Fatalf("outgoing master bytes=%q want=%q", got, want)
 	}
 }
 

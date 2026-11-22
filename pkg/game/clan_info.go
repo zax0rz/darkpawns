@@ -137,7 +137,7 @@ func (w *World) doClanInfo(ch Actor, arg string) {
 	} else {
 		msg.WriteString(c.Plan)
 	}
-	msg.WriteString("\r\n\r\n")
+	msg.WriteString("\r\n\n")
 
 	atWar := false
 	for j := range 4 {

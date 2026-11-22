@@ -84,45 +84,55 @@ func TestOrderedGroupFollowersWalksNewestFirst(t *testing.T) {
 	}
 }
 
-// TestDisbandWalkIncludesMobAndKeepsCharmedFollow pins the disband arm
-// (act.other.c:757-765) over the ordered walk: every grouped follower loses
-// AFF_GROUP and is told, and stop_follower runs only for the non-charmed —
-// the charmed mobile stays following. The pre-fix walk never reached the
-// mobile, so its AFF_GROUP survived the disband (DP-1495).
-func TestDisbandWalkIncludesMobAndKeepsCharmedFollow(t *testing.T) {
-	w, _, alpha, beta, mob, _ := groupWalkFixture(t)
+// TestCharacterUngroupDisbandsMobileFollowers exercises the production mobile
+// command body (the player command is covered by the session-level
+// TestDisbandWalkIncludesMobAndKeepsCharmedFollow). A charmed mobile follower
+// loses AFF_GROUP but keeps its master, while an ordinary player follower is
+// detached (src/act.other.c:757-765; src/utils.c:419-426).
+func TestCharacterUngroupDisbandsMobileFollowers(t *testing.T) {
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Test Room", Zone: 1}},
+		Mobs: []parser.Mob{
+			{VNum: 9001, Keywords: "leader", ShortDesc: "the leader", Level: 10},
+			{VNum: 9002, Keywords: "rat", ShortDesc: "a giant rat", Level: 1},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
 
-	for _, member := range w.OrderedGroupFollowers("Leader") {
-		if !GroupedActor(member) {
-			continue
-		}
-		SetGroupedActor(member, false)
-		switch body := member.(type) {
-		case *Player:
-			body.SendMessage("Leader has disbanded the group.\r\n")
-			if !body.IsAffected(AffCharm) {
-				StopFollower(w, body)
-			}
-		case *MobInstance:
-			body.SendMessage("Leader has disbanded the group.\r\n")
-			if !body.IsAffected(AffCharm) {
-				StopFollowerMob(w, body)
-			}
-		}
+	leader, err := w.SpawnMob(9001, 1001)
+	if err != nil {
+		t.Fatal(err)
 	}
+	leader.SetAffected(AffGroup)
+	follower := NewPlayer(1, "Follower", 1001)
+	if err := w.AddPlayer(follower); err != nil {
+		t.Fatal(err)
+	}
+	follower.SetFollowingBody(leader)
+	follower.SetInGroup(true)
+	follower.SetAffect(AffGroup, true)
 
-	if mob.IsAffected(AffGroup) {
-		t.Fatal("charmed mobile still grouped after the disband walk")
+	pet, err := w.SpawnMob(9002, 1001)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if mob.GetFollowing() != "Leader" {
-		t.Fatalf("charmed mobile follow = %q, want Leader (charm keeps the follow, act.other.c:761-762)", mob.GetFollowing())
+	pet.SetFollowingBody(leader)
+	pet.SetAffected(AffCharm)
+	pet.SetAffected(AffGroup)
+
+	if got := CharacterUngroup(CharacterCommandContext{Actor: leader, World: w}); got != CharacterCommandHandled {
+		t.Fatalf("CharacterUngroup result = %v, want handled", got)
 	}
-	for _, p := range []*Player{alpha, beta} {
-		if p.InGroup || p.IsAffected(AffGroup) {
-			t.Fatalf("%s still grouped after disband", p.Name)
-		}
-		if p.GetFollowing() != "" {
-			t.Fatalf("%s still following after disband (stop_follower ran for the non-charmed)", p.Name)
-		}
+	if leader.IsAffected(AffGroup) {
+		t.Fatal("mobile leader remained grouped after disband")
+	}
+	if follower.IsAffected(AffGroup) || follower.GetFollowing() != "" {
+		t.Fatalf("ordinary player follower remains grouped/following: group=%v following=%q", follower.IsAffected(AffGroup), follower.GetFollowing())
+	}
+	if pet.IsAffected(AffGroup) || pet.GetFollowing() != leader.GetName() {
+		t.Fatalf("charmed mobile state after disband: group=%v following=%q", pet.IsAffected(AffGroup), pet.GetFollowing())
 	}
 }
