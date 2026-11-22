@@ -453,3 +453,33 @@ All-R spot-checks (random draw, seed 20261113, from T1046–T1137): T1068
 `TestPasswordChangeUpdatesCharacterSaveMetadata` (`pkg/session/menu.go:299`).
 All three went red with assertion failures and were restored byte for byte
 (`mutations.tsv`). No J10 divergences.
+
+
+## Batch 14 results (later tests 1001–1100, 2026-10-07..11, T1146–T1245)
+
+Marks: R 100, F 0, C 0, D 0.
+Running total: 1245/1537 (R 1239, F 3, C 3, D 0).
+
+The 100 R tests cover origin/localhost gate (VULN-007), concurrent first-creation
+God latch (VULN-023), per-account lockout removal (VULN-024), input queue cap
+and lagged editor/board paste bypass (DP-1400), agent vars R4 hygiene (no
+integer enemy HP, sight gating, closed doors, no VNums, stable instance IDs),
+OLC save-all/control/insertion/unknown-command/file-editor mudlogs, C host
+zero-padding and ban/unban/autowiz/hunting/crash-load/close-socket mudlogs
+(including `T1235` `TestCloseSocketMudlogTypeIsNRM`, retained as R because it is
+cited by `docs/fidelity/depth/handoff/2026-10-11-dp-1371-pr6-quit-losteq-close-controls.sh:122`),
+arena emote broadcast, color confirmation/expansion, combat prompt and infobar
+color levels, oedit extra-description NULL vs allocated-empty presence, accuse
+social wire bytes, PF-063 bare-send and literal seam proofs, NormalizeCRLF
+pair preservation, character command dispatch/prepare, and the remaining 3
+static C-unreachability proofs (`T1146`–`T1148` in
+`zedit_argument_reachability_test.go`) cited by `docs/fidelity/depth/mudlog.tsv:96-107`
+(retained as R; by design they cannot fail on Go).
+
+All-R spot-checks (seed 20261114): `T1235` `TestCloseSocketMudlogTypeIsNRM`
+(`pkg/session/manager.go:1815` `MudlogNormal` -> `MudlogBrief`), `T1179`
+`TestZeditOpenParentMudlog` (`pkg/session/zedit.go:123` double-space ->
+single-space), and `T1157` `TestFileEditorSaveCleanupRace`
+(`pkg/session/tedit.go:263,407` nil guard inverted). All three went red with
+assertion failures and were restored byte for byte (`mutations.tsv`). No J10
+divergences.
