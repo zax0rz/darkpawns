@@ -1428,3 +1428,64 @@ The targeted draw-parity census
 was CLEAN: `clan-atoi-depth`, `clan-depth`, and `ungroup-disband-depth` all
 passed, with 0 draw divergences. Its frozen source hashes match the production
 and depth files changed by this batch.
+
+## Batch 25 preregistered estimate (before reading tests T1489–T1538)
+
+The batch continues the frozen inventory-order sweep: select the first 50 test
+names not already present in any ledger row, scanning from the start of the
+1,991-function inventory. T001–T1488 has 1,488 rows but 1,416 unique names,
+leaving 575 unique inventory functions unledgered. The selected roster is
+inventory lines 367–507:
+
+- `TestDoDreamMatchesCOrderAudienceAndVisibility`
+- `TestDoExitsBlindnessGate`
+- `TestDoExitsInfravisionSeesDarkDestination`
+- `TestDoFleeNpcWaitGateDoesNotDrawRandomness`
+- `TestDoFollowShadowConsumesSkillRollDraw`
+- `TestDoFollowShadowFailureUsesOrdinaryFollowAudience`
+- `TestDoFollowShadowSuccessAppliesQuietAffect`
+- `TestDoFollowShadowSwitchReplacesPriorAffect`
+- `TestDoGenDoorFarSideActSkipsSleepingAndWritingObservers`
+- `TestDoGenDoorFillWordOnlyArgument`
+- `TestDoGroinripDepthGateOrder`
+- `TestDoGroinripDepthResultContract`
+- `TestDoHideDaytimeSectorGates`
+- `TestDoHouseHandlesMalformedAndFullGuestControls`
+- `TestDoHouseMatchesCArgumentAndStateBoundaries`
+- `TestDoInactiveToggleState`
+- `TestDoInvisUsesLevelAndThresholdAudience`
+- `TestDoKick_WaitStateAlways22Pulses`
+- `TestDoKujiKiri_JinFailureJoinsAsInertRecord`
+- `TestDoKujiKiri_JinGuardMessages`
+- `TestDoKujiKiri_JinSuccessPreservesCDefaultSecondAffect`
+- `TestDoKujiKiri_JinUnmasteredConsumesCSuccessDraw`
+- `TestDoKujiKiri_KaiFailureKeepsPrimaryLockout`
+- `TestDoKujiKiri_KaiSuccessPreservesTwoCRecords`
+- `TestDoKujiKiri_KyoFailureKeepsPrimaryLockout`
+- `TestDoKujiKiri_KyoSuccessPreservesTwoCRecords`
+- `TestDoKujiKiri_RinFailureMessages`
+- `TestDoKujiKiri_RinSuccessMessages`
+- `TestDoKujiKiriShaCapsAtMaxHP`
+- `TestDoKujiKiriShaFailureLeavesNoLockout`
+- `TestDoKujiKiriShaUsesLowLevelHealFloor`
+- `TestDoLookForSpellGates`
+- `TestDoLookInHeaderUsesCFName`
+- `TestDoLookTargetSyntheticExtraDescHasNoExtraBlankLine`
+- `TestDoMindlinkDepthGates`
+- `TestDoMindlinkDrainedLineIsBare`
+- `TestDoMoldRewritesLiveObjectFields`
+- `TestDonateArrivalUsesActObjectVisibilityAndSleepAudience`
+- `TestDonateGoldArrivalUsesActDarknessVisibility`
+- `TestDonateGoldConcurrentJunksOnce`
+- `TestDonatePlacementPrependsInDonationRoom`
+- `TestDoNeckbreakDepthFailureRetaliationContract`
+- `TestDoNeckbreakDepthGateOrder`
+- `TestDoNeckbreakDepthPeacefulUsesCanonicalRoomBit`
+- `TestDoNeckbreakDepthResultContractAndDrawOrder`
+- `TestDoNewbieChannelDepthGatesAndFanout`
+- `TestDoOpenRejectsKeywordPrefix`
+- `TestDoorFarSideNameUsesCFName`
+- `TestDoQuitRecordsLoadRoomThroughLVLIMMORT`
+- `TestDoRideDirectGates`
+
+Before reading these tests, my estimate is **R43 / F5 / C1 / D1**.
