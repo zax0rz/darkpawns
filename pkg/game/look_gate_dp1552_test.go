@@ -76,11 +76,8 @@ func TestDoLookForSpellGates(t *testing.T) {
 		t.Fatalf("AddPlayer: %v", err)
 	}
 	w.DoLookForSpell(ch)
-	if got := messages[ch.GetName()]; !strings.Contains(got, "You can't see anything but stars!") {
-		t.Fatalf("DoLookForSpell wounded = %q, want stars", got)
-	}
-	if strings.Contains(messages[ch.GetName()], "Look Room") {
-		t.Fatalf("DoLookForSpell leaked the room: %q", messages[ch.GetName()])
+	if got, want := messages[ch.GetName()], "You can't see anything but stars!"; got != want {
+		t.Fatalf("DoLookForSpell wounded = %q, want exact C gate %q", got, want)
 	}
 	// Blind with an awake position gets the blind line, not darkness.
 	ch2 := NewPlayer(2, "BlindMind", 1001)
@@ -90,13 +87,15 @@ func TestDoLookForSpellGates(t *testing.T) {
 		t.Fatalf("AddPlayer: %v", err)
 	}
 	w.DoLookForSpell(ch2)
-	if got := messages[ch2.GetName()]; !strings.Contains(got, "you're blind!") {
-		t.Fatalf("DoLookForSpell blind = %q, want blind line", got)
+	if got, want := messages[ch2.GetName()], "You can't see a damned thing, you're blind!"; got != want {
+		t.Fatalf("DoLookForSpell blind = %q, want exact C gate %q", got, want)
 	}
 }
 
 // TestPortalToTempleAndItohUseDoLook pins the R5c class: both specials call
-// do_look (src/spec_procs3.c:537, 606), so a sub-sleeping arrival gets stars.
+// do_look (src/spec_procs3.c:537, 606), so a sub-sleeping arrival gets stars
+// without revealing the destination room; C's position gate returns before
+// room output (src/act.informative.c:1106-1108).
 func TestPortalToTempleAndItohUseDoLook(t *testing.T) {
 	cases := []struct {
 		name string
@@ -123,6 +122,13 @@ func TestPortalToTempleAndItohUseDoLook(t *testing.T) {
 			got := messages[ch.GetName()]
 			if !strings.Contains(got, "You can't see anything but stars!") {
 				t.Fatalf("sub-sleeping %s look = %q, want stars", tc.name, got)
+			}
+			roomName := "Temple"
+			if tc.name == "itoh" {
+				roomName = "Itoh"
+			}
+			if strings.Contains(got, roomName) {
+				t.Fatalf("sub-sleeping %s look leaked destination room %q: %q", tc.name, roomName, got)
 			}
 		})
 	}

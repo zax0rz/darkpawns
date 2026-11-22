@@ -6,9 +6,9 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
-// GET_OBJ_EXTRA is per object (read_object copies the prototype's): a change
-// keeps the prototype's other flags, a prototype flag can be removed, and an
-// object can end up with no flags at all.
+// GET_OBJ_EXTRA is per object (read_object copies the prototype at
+// src/db.c:1947-1953): a change keeps the prototype's other flags, a prototype
+// flag can be removed, and an object can end up with no flags at all.
 func TestObjectExtraFlagsStartFromPrototype(t *testing.T) {
 	const glow, hum, magic = 0, 1, 6
 	newObj := func() *ObjectInstance {
@@ -30,7 +30,8 @@ func TestObjectExtraFlagsStartFromPrototype(t *testing.T) {
 		t.Fatalf("an object whose only flag was removed should have none: %v", obj.GetExtraFlags())
 	}
 
-	// spell_enchant_weapon's SET_BIT(GET_OBJ_EXTRA(obj), ITEM_MAGIC) path.
+	// spell_enchant_weapon's SET_BIT(GET_OBJ_EXTRA(obj), ITEM_MAGIC) path
+	// (src/spells.c:621-638).
 	obj = newObj()
 	obj.SetExtraFlags(obj.ExtraFlagWord(0) | 1<<magic)
 	if !obj.HasExtraFlag(0, glow) || !obj.HasExtraFlag(0, magic) {

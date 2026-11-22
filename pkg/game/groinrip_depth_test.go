@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -31,8 +30,8 @@ func TestDoGroinripDepthResultContract(t *testing.T) {
 	if len(result.DeferredImprove) != 1 || result.DeferredImprove[0] != SkillGroinrip || !result.DeferredImproveAfterRoom {
 		t.Fatalf("improvement contract = %#v after-room %v, want [%q]/true", result.DeferredImprove, result.DeferredImproveAfterRoom, SkillGroinrip)
 	}
-	if !result.RoomIncludesActor || !result.SpawnPuke || !strings.Contains(result.MessageToRoom, "\r\neverywhere!") {
-		t.Fatalf("post-damage contract = actor %v puke %v room %q, want actor/puke and C line break", result.RoomIncludesActor, result.SpawnPuke, result.MessageToRoom)
+	if !result.RoomIncludesActor || !result.SpawnPuke || result.MessageToRoom != "Victim falls to his knees, clutching his groin and throwing up\r\neverywhere!" {
+		t.Fatalf("post-damage contract = actor %v puke %v room %q, want C's exact room line", result.RoomIncludesActor, result.SpawnPuke, result.MessageToRoom)
 	}
 
 	gotNext := dprng.Number(0, 999)

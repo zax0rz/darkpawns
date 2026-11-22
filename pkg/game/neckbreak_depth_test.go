@@ -113,6 +113,7 @@ func TestDoNeckbreakDepthResultContractAndDrawOrder(t *testing.T) {
 
 	dprng.ResetStream(seed)
 	result := DoNeckbreak(ch, target, nil)
+	gotNext := dprng.Number(0, 999)
 	if !result.Success || result.Damage <= 0 {
 		t.Fatalf("result = %#v, want successful damaging arm", result)
 	}
@@ -125,11 +126,13 @@ func TestDoNeckbreakDepthResultContractAndDrawOrder(t *testing.T) {
 	if len(result.DeferredImprove) != 1 || result.DeferredImprove[0] != SkillNeckbreak {
 		t.Fatalf("deferred improvement = %#v, want [%q]", result.DeferredImprove, SkillNeckbreak)
 	}
-
-	gotNext := dprng.Number(0, 999)
 	dprng.ResetStream(seed)
-	dprng.Number(1, 101)          // do_neckbreak percent
-	dprng.Dice(18, ch.GetLevel()) // neckbreak damage before damage()/skill_message
+	dprng.Number(1, 101) // do_neckbreak percent
+	wantDamage := dprng.Dice(18, ch.GetLevel())
+	if result.Damage != wantDamage {
+		t.Fatalf("neckbreak damage = %d, want C's 18d(level) result %d", result.Damage, wantDamage)
+	}
+
 	wantNext := dprng.Number(0, 999)
 	if gotNext != wantNext {
 		t.Fatalf("neckbreak consumed the wrong draws: next=%d want=%d", gotNext, wantNext)
@@ -150,8 +153,18 @@ func TestDoNeckbreakDepthFailureRetaliationContract(t *testing.T) {
 	if result.WaitCh != 3 || !result.RetaliateHit || !result.RetaliateHitAfterMessages {
 		t.Fatalf("failure contract = wait %d retaliate %v after %v, want 3/true/true", result.WaitCh, result.RetaliateHit, result.RetaliateHitAfterMessages)
 	}
-	if result.MessageToCh == "" || result.MessageToVict == "" || result.MessageToRoom == "" {
-		t.Fatalf("failure messages = %#v, want all three C act branches", result)
+	wantMessages := []struct {
+		got  string
+		want string
+	}{
+		{result.MessageToCh, "You try to break his neck, but he is too strong!"},
+		{result.MessageToVict, "Hero tries to break your neck, but can't!"},
+		{result.MessageToRoom, "Hero tries to break Victim's neck, but Victim slips free!"},
+	}
+	for _, message := range wantMessages {
+		if message.got != message.want {
+			t.Fatalf("failure message = %q, want exact C act text %q", message.got, message.want)
+		}
 	}
 }
 

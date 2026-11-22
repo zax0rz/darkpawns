@@ -117,6 +117,9 @@ func TestRecallHometownTargets(t *testing.T) {
 	}
 }
 
+// C calls char_to_room before unmount; Go clears mounted state before its
+// PlayerTransfer, which otherwise follows the mounted body. The assertion
+// pins their shared final player/mount state (src/spells.c:143-157).
 func TestRecallUnmountsBeforeTransferAndLeavesMountBehind(t *testing.T) {
 	w, outputs := newRecallTestWorld(t)
 	recaller := addRecallPlayer(t, w, outputs, 1, "Recaller", 8162)

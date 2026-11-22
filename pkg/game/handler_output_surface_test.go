@@ -1,7 +1,6 @@
 package game
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -30,6 +29,8 @@ func addHandlerOutputSurfacePlayer(t *testing.T, w *World, id int, name string) 
 }
 
 func TestPlayerWearRefusalOutputMatchesC(t *testing.T) {
+	// C act.item.c:1339-1411 sends the wear announcement first, then
+	// handler.c:704-713 emits the anti-alignment actor and room refusal.
 	w := newHandlerOutputSurfaceWorld(t, []parser.Obj{
 		{
 			VNum: 99001, Keywords: "shield", ShortDesc: "a shield", TypeFlag: ITEM_ARMOR,
@@ -56,10 +57,10 @@ func TestPlayerWearRefusalOutputMatchesC(t *testing.T) {
 		t.Fatalf("PlaceObjectInPlayerInventory(shield): %v", err)
 	}
 	w.DoWear(actor, "shield")
-	if got := outputs[actor.Name]; !strings.Contains(got, "You are zapped by a shield and instantly let go of it.\r\n") {
+	if got := outputs[actor.Name]; got != "You start to use a shield as a shield.\r\nYou are zapped by a shield and instantly let go of it.\r\n" {
 		t.Fatalf("anti-alignment actor output = %q", got)
 	}
-	if got := outputs[observer.Name]; !strings.Contains(got, "Wearer is zapped by a shield and instantly lets go of it.\r\n") {
+	if got := outputs[observer.Name]; got != "Wearer straps a shield around his arm as a shield.\r\nWearer is zapped by a shield and instantly lets go of it.\r\n" {
 		t.Fatalf("anti-alignment room output = %q", got)
 	}
 	if shield.Location != LocInventoryPlayer(actor.Name) || w.IsEquipped(actor, eqWearShield) {

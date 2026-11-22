@@ -2,6 +2,8 @@ package game
 
 import "testing"
 
+// C's pulse gate and first reveal use do_say, then return FALSE
+// (src/spec_procs2.c:551-570).
 func TestPissedAlchemistFirstPulseUsesDirectSayCommand(t *testing.T) {
 	w, _, lastMsg := newSpecProcTestWorld(t)
 	me := newSpecProcTestMob(t, w, 1001, 20)
@@ -19,6 +21,8 @@ func TestPissedAlchemistFirstPulseUsesDirectSayCommand(t *testing.T) {
 	}
 }
 
+// C attacks the first player mage after its direct-say line and returns TRUE
+// (src/spec_procs2.c:572-579).
 func TestPissedAlchemistAttacksMageAfterDirectSay(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
 	me := newSpecProcTestMob(t, w, 1001, 20)
@@ -39,6 +43,8 @@ func TestPissedAlchemistAttacksMageAfterDirectSay(t *testing.T) {
 	}
 }
 
+// C declines typed commands and already-fighting pulse calls before speaking
+// (src/spec_procs2.c:551-555).
 func TestPissedAlchemistRejectsPlayerCommandAndFightingMob(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
 	me := newSpecProcTestMob(t, w, 1001, 20)

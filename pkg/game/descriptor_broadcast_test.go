@@ -39,7 +39,8 @@ func TestScriptZoneEchoOnlyVisitsAwakePlayingDescriptors(t *testing.T) {
 	}
 	messages := make(map[string][]string)
 	w.MessageSink = func(name string, msg []byte) { messages[name] = append(messages[name], string(msg)) }
-	// send_to_zone traffic is verbatim (src/comm.c:2384): the literal sink is
+	// send_to_zone visits awake, playing descriptors in other rooms of the
+	// actor's zone (src/comm.c:2377-2386): the literal sink is
 	// the delivery path, the framed sink must stay silent (R1).
 	literal := make(map[string][]string)
 	w.LiteralMessageSink = func(name string, msg []byte) { literal[name] = append(literal[name], string(msg)) }

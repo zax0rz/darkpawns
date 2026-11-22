@@ -7,8 +7,9 @@ import (
 )
 
 // TestShowShopsKeeperRNumZeroCollision pins DP-1527's keeper resolution:
-// C's get_char_num (src/shop.c:1345-1350) scans character_list newest-first
-// for nr == keeper rnum; players' nr is 0 (clear_char, src/db.c), so with a
+// C's show_shops calls get_char_num (src/shop.c:1345-1351), which scans
+// character_list newest-first for nr == keeper rnum (src/handler.c:887-895);
+// players' nr is 0 after clear_char (src/db.c:2974-2984), so with a
 // keeper at proto rnum 0 -- Puff, the first mobile in the database -- the
 // logged-in player wins and show shops prints the player's gold. Fails if
 // the resolver reverts to a mobile-only scan (R5h).

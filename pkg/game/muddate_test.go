@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// These tests port-proof DP-1603: write_mud_date_to_file (src/comm.c:2624-2638)
+// These tests port-proof DP-1603: write_mud_date_to_file (src/comm.c:2624-2637)
 // and read_mud_date_from_file (src/db.c:3197-3218). C's format is sprintf's
 // "%d %d %d" of year month day followed by fwrite at strlen — no trailing
 // newline; the reader is fscanf's "%d %d %d", with missing and corrupt files

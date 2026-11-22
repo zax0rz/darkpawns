@@ -101,12 +101,18 @@ func TestSpecCleric_Lspell12FallsToDefaultHarm(t *testing.T) {
 	mob := prepareClericTestCombat(t, w, player, 15)
 	_ = lastMsg()              // discard the spawn-room line
 	scriptClericRolls(t, 9, 1) // min(9+level/5,15) = 12; offense branch
+	dprng.ResetStream(1)
+	t.Cleanup(func() { dprng.ResetStream(1) })
+	initialHP := player.GetHP()
 
 	if got := specCleric(w, nil, mob, "", ""); !got {
 		t.Fatal("eligible cleric should consume its special tick")
 	}
 	if got := lastMsg(); !strings.Contains(got, "utters the words") {
 		t.Errorf("lspell=12 should fall to default's harm cast, got %q", got)
+	}
+	if got := player.GetHP(); got >= initialHP {
+		t.Errorf("lspell=12 default harm did not damage its target: HP %d -> %d", initialHP, got)
 	}
 }
 

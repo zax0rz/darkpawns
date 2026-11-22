@@ -1139,17 +1139,10 @@ func TestDoKick_WaitStateAlways22Pulses(t *testing.T) {
 	}
 
 	ch.SetSkill(SkillKick, 1)
-	var missResult SkillResult
-	var missed bool
-	for i := 0; i < 50; i++ {
-		missResult = DoKick(ch, mob)
-		if !missResult.Success {
-			missed = true
-			break
-		}
-	}
-	if !missed {
-		t.Skip("no miss observed in 50 tries (RNG)")
+	dprng.ResetStream(1)
+	missResult := DoKick(ch, mob)
+	if missResult.Success {
+		t.Fatalf("skill 1 against the training dummy should miss, got %+v", missResult)
 	}
 	if missResult.WaitChPulses != engine.PULSE_VIOLENCE+2 {
 		t.Errorf("expected WaitChPulses 22 on miss, got %d", missResult.WaitChPulses)

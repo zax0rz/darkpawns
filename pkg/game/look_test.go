@@ -84,6 +84,8 @@ func observationMessageText(result ObservationResult) string {
 	return b.String()
 }
 
+// C builds a player line as name + space + title, then appends its position;
+// a missing title therefore leaves the doubled space (src/act.informative.c:551-566).
 func TestPlayerPresenceLineUsesTitleWithoutInventedClassFallback(t *testing.T) {
 	w := &World{}
 	viewer := NewPlayer(1, "Viewer", 1001)

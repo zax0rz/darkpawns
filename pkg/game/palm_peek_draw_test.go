@@ -42,25 +42,36 @@ func palmPeekWorld(t *testing.T) (*World, *Player, *MobInstance) {
 
 // TestPalmEntryDrawPrecedesEveryGate pins DP-1436 (R3): do_palm consumes
 // number(1,101) before its no-argument return and before get_from_room
-// (src/new_cmds.c:2110-2122), so every refusal still burns the draw. The
+// (src/new_cmds.c:2108-2122), so every refusal still burns the draw. The
 // no-argument line is returned by DoPalm; the miss line now comes from the
 // real get_from_room (C's "You don't see a <arg> here."), which DoPalm
 // delegates to, so the sink captures it.
 func TestPalmEntryDrawPrecedesEveryGate(t *testing.T) {
-	w, p, _ := palmPeekWorld(t)
 	seed := uint32(163)
-	var out strings.Builder
-	w.MessageSink = func(_ string, msg []byte) { out.Write(msg) }
 
 	for _, tc := range []struct {
-		name    string
-		objName string
-		want    string
+		name          string
+		objName       string
+		fillInventory bool
+		want          string
 	}{
+		{name: "full inventory", objName: "nothing", fillInventory: true, want: "Your arms are already full!\r\n"},
 		{name: "no argument", objName: "", want: "Palm what?\r\n"},
 		{name: "nothing matches", objName: "nothing", want: "You don't see a nothing here.\r\n"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			w, p, _ := palmPeekWorld(t)
+			if tc.fillInventory {
+				for i := 0; i < p.MaxCarryItems(); i++ {
+					item := NewObjectInstance(&parser.Obj{VNum: 50000 + i, Keywords: "filler", ShortDesc: "a filler"}, -1)
+					if err := p.Inventory.AddItem(item); err != nil {
+						t.Fatalf("fill inventory item %d: %v", i, err)
+					}
+				}
+			}
+			var out strings.Builder
+			w.MessageSink = func(_ string, msg []byte) { out.Write(msg) }
+
 			out.Reset()
 			dprng.ResetStream(seed)
 			_ = dprng.Number(1, 101) // reference: the entry draw

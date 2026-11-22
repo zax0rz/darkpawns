@@ -410,9 +410,9 @@ func TestIgnoreLegacyWorldStateIsNotFatalAndKeepsTheFile(t *testing.T) {
 }
 
 // TestPlayerPersistenceIsSeparateFromWorldSnapshot shows durable player data
-// still round-trips while no world snapshot is produced: C keeps player files
-// (src/comm.c fclose(player_fl), src/db.c save_char) and rebuilds everything
-// else.
+// still round-trips while no world snapshot is produced: C closes its player
+// file at shutdown and calls save_char for player persistence
+// (src/comm.c:293,2130; src/db.c:2366 and following), then rebuilds the world.
 func TestPlayerPersistenceIsSeparateFromWorldSnapshot(t *testing.T) {
 	_ = os.Remove(filepath.Clean(worldStateFile))
 

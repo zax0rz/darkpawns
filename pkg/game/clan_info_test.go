@@ -7,6 +7,8 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
+// This test pins the complete detail transcript, including war state, money
+// fields, application level, and C's CRLF+LF plan ending (src/clan.c:758-783).
 func TestDoClanInfoIncludesDefinedCDetails(t *testing.T) {
 	w, err := NewWorld(&parser.World{})
 	if err != nil {
@@ -22,6 +24,8 @@ func TestDoClanInfoIncludesDefinedCDetails(t *testing.T) {
 		Members:   3,
 		Power:     4,
 		Treasure:  5,
+		AppFee:    6,
+		Dues:      7,
 		ApplLevel: 8,
 		Plan:      "Mortal member plan.",
 	}
@@ -46,17 +50,28 @@ func TestDoClanInfoIncludesDefinedCDetails(t *testing.T) {
 
 	w.doClanInfo(p, "Wolves")
 
-	got := output.String()
-	for _, want := range []string{
-		"Ranks      : 2\r\nTitles     : Member Leader ",
-		"Members    : 3\r\nPower      : 4\t\nTreasure   : 5",
-		"Spells     : 17 ",
-		"Clan privileges:\r\n   setplan   : 2",
-		"Description:\r\nMortal member plan.",
-	} {
-		if !strings.Contains(got, want) {
-			t.Fatalf("clan info missing %q:\n%q", want, got)
-		}
+	want := "Info for the clan Wolves :\r\n" +
+		"Ranks      : 2\r\nTitles     : Member Leader \r\n" +
+		"Members    : 3\r\nPower      : 4\t\nTreasure   : 5\r\n" +
+		"Spells     : 17 \r\n" +
+		"Clan privileges:\r\n" +
+		"   setplan   : 2\r\n   enroll    : 2\r\n   expel     : 2\r\n" +
+		"   promote   : 2\r\n   demote    : 2\r\n   setfees   : 2\r\n" +
+		"   withdraw  : 2\r\n   setapplev : 2\r\n\r\n" +
+		"Description:\r\nMortal member plan.\r\n\n" +
+		"This clan is at peace with all others.\r\n" +
+		"Application fee  : 6 gold\r\nMonthly Dues     : 7 gold\r\n" +
+		"Application level: 8\r\n"
+	if got := output.String(); got != want {
+		t.Fatalf("clan info output = %q, want %q", got, want)
+	}
+
+	c.AtWar[0] = 1
+	output.Reset()
+	w.doClanInfo(p, "Wolves")
+	wantWar := strings.Replace(want, "This clan is at peace with all others.", "This clan is at war.", 1)
+	if got := output.String(); got != wantWar {
+		t.Fatalf("clan info at-war output = %q, want %q", got, wantWar)
 	}
 }
 

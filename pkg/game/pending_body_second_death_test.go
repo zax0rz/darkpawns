@@ -145,8 +145,8 @@ func TestPendingBodySecondDeathRunsFullDeathBranch(t *testing.T) {
 	if !strings.Contains(messages["Twodiegod"], "Your blood freezes as you hear fish's death cry.") {
 		t.Fatalf("bytes missing the second death cry (TO_ROOM act, src/fight.c:516-517): %q", messages["Twodiegod"])
 	}
-	// die_with_killer enrolls then stops both sides: the killer's exchange
-	// ends with no dangling pair (fight.c:612-616).
+	// damage() enrolls both sides after protections (src/fight.c:1443-1445), then
+	// die_with_killer stops both sides (src/fight.c:612-616).
 	if god.GetFightingBody() != nil {
 		t.Fatal("killer still fighting after die_with_killer")
 	}
@@ -168,7 +168,7 @@ func TestPendingBodyPeacefulRefusalStillSkipsEnrollment(t *testing.T) {
 	origRoller := combat.GetRoller()
 	t.Cleanup(func() { combat.SetRoller(origRoller) })
 	combat.SetRoller(combat.NewSeededRoller(3))
-	w, god, mob, _, _ := secondDeathWorld(t)
+	w, god, mob, _, messages := secondDeathWorld(t)
 	w.mu.Lock()
 	w.rooms[1001].Flags = []string{"peaceful"} // ROOM_PEACEFUL (src/structs.h:60)
 	w.mu.Unlock()
@@ -184,6 +184,9 @@ func TestPendingBodyPeacefulRefusalStillSkipsEnrollment(t *testing.T) {
 	}
 	if err := swing.PerformPendingBodySwing(god, mob); err != nil {
 		t.Fatalf("pending-body swing: %v", err)
+	}
+	if got := messages[god.Name]; !strings.Contains(got, "This room just has such a peaceful, easy feeling...\r\n") {
+		t.Fatalf("peaceful refusal bytes = %q, want C's damage-gate message", got)
 	}
 
 	if mob.GetHP() != before {
@@ -232,7 +235,7 @@ func TestPendingAttackerSwingsWithoutEnrolling(t *testing.T) {
 	// implementor's damage is zeroed, so the bytes are the proof the draws
 	// flowed), and the ATTACKER was not re-enrolled by its own swing — it is
 	// extracted before any violence pass. The defender's enrolment against
-	// the flagged body IS C's set_fighting(victim, ch) (fight.c:1441-1445);
+	// the flagged body IS C's set_fighting(victim, ch) (src/fight.c:1441-1445);
 	// the extraction pass stops it, as extract_char_final does
 	// (src/handler.c:1147-1151).
 	if !strings.Contains(room.String(), "fish") && !strings.Contains(room.String(), "testmob") {

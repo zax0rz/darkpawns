@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 
@@ -173,6 +174,9 @@ func TestReditWorldPublicationConcurrentSnapshots(t *testing.T) {
 		t.Fatalf("NewWorld: %v", err)
 	}
 	t.Cleanup(w.StopAITicker)
+	validName := func(name string) bool {
+		return name == "Room A" || strings.HasPrefix(name, "writer-") || strings.HasPrefix(name, "admin-name-")
+	}
 
 	const iterations = 200
 	var wg sync.WaitGroup
@@ -189,7 +193,11 @@ func TestReditWorldPublicationConcurrentSnapshots(t *testing.T) {
 					t.Errorf("snapshot rooms = %+v", rooms)
 					return
 				}
-				if live, ok := w.GetRoom(1001); !ok || live.VNum != 1001 {
+				if !validName(rooms[0].Name) {
+					t.Errorf("snapshot room name = %q", rooms[0].Name)
+					return
+				}
+				if live, ok := w.GetRoom(1001); !ok || live.VNum != 1001 || !validName(live.Name) {
 					t.Errorf("lock-free room = (%+v, %v)", live, ok)
 					return
 				}
@@ -236,4 +244,12 @@ func TestReditWorldPublicationConcurrentSnapshots(t *testing.T) {
 		}(writer)
 	}
 	wg.Wait()
+	snapshot, ok := w.SnapshotRoom(1001)
+	if !ok || !strings.HasPrefix(snapshot.Name, "writer-") {
+		t.Fatalf("final snapshot room = (%+v, %v), want the last structural edit", snapshot, ok)
+	}
+	live, ok := w.GetRoom(1001)
+	if !ok || live.Name != snapshot.Name {
+		t.Fatalf("lock-free room name = (%q, %v), snapshot name = %q", live.Name, ok, snapshot.Name)
+	}
 }

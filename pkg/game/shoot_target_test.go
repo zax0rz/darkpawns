@@ -67,10 +67,15 @@ func TestShootTargetConcurrentMovement(t *testing.T) {
 	if err := w.AddPlayer(p); err != nil {
 		t.Fatal(err)
 	}
+	const workersCount = 2
+	ready := make(chan struct{}, workersCount)
+	start := make(chan struct{})
 	var workers sync.WaitGroup
 	workers.Add(2)
 	go func() {
 		defer workers.Done()
+		ready <- struct{}{}
+		<-start
 		for i := range 1000 {
 			if err := w.PlayerTransfer(p, 1001+i%2); err != nil {
 				t.Error(err)
@@ -80,14 +85,27 @@ func TestShootTargetConcurrentMovement(t *testing.T) {
 	}()
 	go func() {
 		defer workers.Done()
+		ready <- struct{}{}
+		<-start
+		hits := 0
 		for range 1000 {
 			for room := 1001; room <= 1002; room++ {
-				if got := w.ResolveShootTarget(room, "Traveler"); got != nil && got != p {
-					t.Error("unexpected body", got)
-					return
+				if got := w.ResolveShootTarget(room, "Traveler"); got != nil {
+					if got != p {
+						t.Error("unexpected body", got)
+						return
+					}
+					hits++
 				}
 			}
 		}
+		if hits == 0 {
+			t.Error("concurrent lookups never found the player in either room")
+		}
 	}()
+	for range workersCount {
+		<-ready
+	}
+	close(start)
 	workers.Wait()
 }

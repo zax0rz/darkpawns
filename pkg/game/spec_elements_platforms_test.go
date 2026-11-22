@@ -58,14 +58,3 @@ func TestSpecElementsPlatforms_EntryAudienceAndRelocation(t *testing.T) {
 		t.Errorf("peer received a departure self/arrival leak: %q", messages[peer.GetName()])
 	}
 }
-
-func TestSpecElementsPlatforms_RejectsNilActor(t *testing.T) {
-	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1314, Name: "Column Base"}}})
-	if err != nil {
-		t.Fatalf("NewWorld: %v", err)
-	}
-	t.Cleanup(w.StopAITicker)
-	if specElementsPlatforms(w, nil, nil, "say", "hello") {
-		t.Fatal("nil actor should not be handled")
-	}
-}

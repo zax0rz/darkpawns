@@ -269,6 +269,8 @@ func TestBackstabMult(t *testing.T) {
 	}
 }
 
+// C's hit path subtracts one to-hit for a blessed wielded weapon and adds two
+// for DRUNK > 1 before drawing the attack roll (src/fight.c:1790-1815).
 func TestPlayer_HitModifiers(t *testing.T) {
 	player := NewPlayer(1, "Hero", 1001)
 	mods := player.HitModifiers()

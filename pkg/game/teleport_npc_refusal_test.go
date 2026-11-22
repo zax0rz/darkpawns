@@ -167,7 +167,7 @@ func TestCanSeeIgnoresAFFHide(t *testing.T) {
 }
 
 // TestNPCSocialCharLineReachesSwitchedBody pins do_action's char-directed
-// lines for a mobile (src/act.social.c:35-73): scoff is a no-char_found
+// lines for a mobile (src/act.social.c:121-130): scoff is a no-char_found
 // social, so the special's named argument takes the no-arg branch and the
 // actor's own "You scoff at the idea." goes to send_to_char — delivered to a
 // switched body's wizard through MobInstance.SendMessage's descriptor

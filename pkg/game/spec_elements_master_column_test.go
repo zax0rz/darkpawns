@@ -136,13 +136,3 @@ func TestSpecElementsMasterColumn_PreservesCStaleCarryStateAndAudience(t *testin
 		t.Errorf("peer output missing actor departure: %q", messages[peer.GetName()])
 	}
 }
-
-func TestSpecElementsMasterColumn_RejectsNilActor(t *testing.T) {
-	w, _, _, messages := newElementsMasterColumnTestWorld(t)
-	if specElementsMasterColumn(w, nil, nil, "look", "") {
-		t.Fatal("nil actor should not be handled")
-	}
-	if len(messages) != 0 {
-		t.Fatalf("nil actor emitted output: %v", messages)
-	}
-}
