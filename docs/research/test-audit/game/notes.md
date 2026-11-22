@@ -303,14 +303,25 @@ The four F tests were strengthened in this batch:
   attribution: unknown (Zach identity, no model trailer).
 - T824 (`clan_plan_overflow_test.go:12`): PR #2139,
   `fix: review follow-ups — C's clan plan editor semantics, stream race,
-  ceiling refresh`, appears to have been a C-boundary follow-up, but the old
-  “boundary” input was three bytes below the exact C equality. The corrected
-  test asserts the accepted buffer at equality and no overflow notice.
+  ceiling refresh`, appears to have been a C-boundary follow-up. The prior
+  “boundary” case exercised the first-line branch and did not test equality in
+  the later-line comparison at `src/modify.c:146`. The corrected test starts
+  with a three-byte buffer, accepts a 1018-byte line where
+  `3 + 1018 + 3 == MaxClanPlanBytes`, then skips a 1019-byte line.
   Git author/trailer attribution: unknown (Zach identity, no model trailer).
 
-Each F has a detached production mutation on base `3229914ce`: old body green,
-fixed test red, and restoration checked byte-for-byte. The four rows are in
-`mutations.tsv`; no all-R spot checks apply.
+Mutation correction for T824 (2026-11-21): the earlier `mutations.tsv` row said
+that changing the later-line comparison from `>` to `>=` made the fixed test
+red. That was not reproducible: the earlier body's equality case hit the
+first-line branch, so the old body and the pre-fix T789 body both passed under
+the mutant. I cannot explain the earlier recorded red; its output was not
+retained. On the rebased branch, the old body passed under the mutant and the
+fixed later-line equality test failed (`got 3 buffer bytes, want 1023`). The
+unmutated test passes. The accurate rerun is recorded in `mutations.tsv`.
+
+The other three F rows have detached production mutations on base `3229914ce`:
+old body green, fixed test red, and restoration checked byte-for-byte. All four
+rows are in `mutations.tsv`; no all-R spot checks apply.
 
 By introducing identity: **unknown=41, Claude Opus 5.5=7, DeepSeek=1, Luna=1**.
 All 50 are post-oracle. No test was found with expected bytes or numbers that

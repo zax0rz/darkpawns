@@ -34,4 +34,4 @@ TestBanManagerConcurrentReadWrite	pkg/game/bans.go	205	return nil before appendi
 TestChannelMirrorSkipsNoRepeatAcknowledgement	pkg/game/out_of_band.go	53	bypass observer.ChannelLine delivery	green	red	yes
 TestCityguardBribeRefusalSwings	pkg/game/mobprogs.go	182	change cityguard refusal OR gate to AND	green	red	yes
 TestClanIsPlayingGates	pkg/game/clan_membership.go	35	suppress live applicant emission	green	red	yes
-TestClanPlanEditorOverflowMatchesC	pkg/game/clans.go	328	change max_str comparison from > to >=	green	red	yes
+TestClanPlanEditorOverflowMatchesC	pkg/game/clans.go	328	change later-line max_str comparison from > to >=	green (old body rerun: verbose PASS; no later-line equality case)	red (fixed body rerun: equality rejected; got 3 buffer bytes, wanted 1023; verbose FAIL)	yes
