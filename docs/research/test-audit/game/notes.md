@@ -639,3 +639,7 @@ All seven non-R tests were introduced by Zach Greene with no `Co-Authored-By` tr
 ## Batch 18 preregistered estimate (before reading tests T1139–T1188)
 
 The forecast remainder after T1088 was R831/F18/C20/D34 across 903 rows. Batch 17’s preregistered slice was R46/F1/C1/D2; subtracting that forecast leaves R785/F17/C19/D32 over 853 tests. For this next 50-test batch I expect R46/F1/C1/D2, with all 50 post-oracle and weak marks more likely among older introductions.
+
+### Batch 18 roster correction, before adjudication
+
+The next 50 unledgered functions start after the prior corrected slice: inventory lines 1150–1210 contain 61 names, 11 of which already have ledger rows. Skipped duplicates are `TestObjNameUsesRuntimeKeywords`, `TestPerformDispose`, `TestPerformDisposeGold`, `TestPerformDropNoDrop`, `TestPerformGiveNoDrop`, `TestPerformMove_Exhausted`, `TestPerformMove_FollowersFollow`, `TestPerformMove_Sneak`, `TestPerformMove_TunnelFull`, `TestPerformRemoveNoDrop`, and `TestPerformWearTwoHanded`. The batch roster is the other 50 names in inventory order; no duplicate ledger rows will be added.
