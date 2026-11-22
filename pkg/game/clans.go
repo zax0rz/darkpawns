@@ -95,8 +95,8 @@ type Clan struct {
 // balance is short. The withdraw path read Treasure, compared it, and then
 // subtracted it, so two concurrent withdrawals could both pass the check and
 // pay out of an empty treasury (CWE-367). Compares c.Treasure < n directly and
-// subtracts n without short-circuiting non-positive amounts, matching C's
-// do_clan_bank CB_WITHDRAW (src/clan.c:958-963, DP-1625).
+// subtracts n without short-circuiting non-positive amounts, as its C callers
+// do (DP-1625).
 func (c *Clan) SpendTreasure(n int64) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
