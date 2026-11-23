@@ -1,9 +1,6 @@
 [![CI](https://github.com/zax0rz/darkpawns/actions/workflows/ci.yml/badge.svg)](https://github.com/zax0rz/darkpawns/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/zax0rz/darkpawns)](https://github.com/zax0rz/darkpawns/releases/latest)
 [![Go version](https://img.shields.io/github/go-mod/go-version/zax0rz/darkpawns)](go.mod)
-[![HUMA Powered](https://img.shields.io/badge/Powered%20By-HUMA-f40273)](https://huma.rocks/)
-![Lua](https://img.shields.io/badge/Lua-2C2D72?style=flat&logo=lua&logoColor=white)
-[![Discord](https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white)](https://discord.gg/supVzU9yN)
 [![License: DikuMUD/CircleMUD + MIT](https://img.shields.io/badge/License-DikuMUD%20%2F%20CircleMUD%20%2B%20MIT-yellow.svg)](LICENSE)
 
 ```
@@ -20,11 +17,11 @@
 
 # Dark Pawns MUD
 
-**A 1994 CircleMUD 3.0 world, ported 1:1 to a single Go binary.** Dark Pawns is a multiplayer text RPG in the DikuMUD lineage: 91 zones, six base classes, remort classes, clans, Death Traps, and a world outside the city walls that does not care you are level 1.
+**A 1994 CircleMUD 3.0 world, ported 1:1 to a single Go binary and verified byte-for-byte against the original C server.** Dark Pawns is a multiplayer text RPG in the DikuMUD lineage: 91 zones, 9,590 rooms, six base classes, six remort classes, clans, Death Traps, and a world outside the city walls that does not care you are level 1.
 
-This repository replaces the 1990s C server with a self-contained Go binary that emits the exact same player-facing bytes as the original, while adding an embedded SQLite database, a browser client, a full web admin console, and a browser-based world editor (webOLC). Play on the public server at [darkpawns.org](https://darkpawns.org), or spin up your own world on Linux, macOS, or Windows in under a minute.
+This repository replaces the 1990s C server with a self-contained Go binary (~165K lines of Go, ~196K lines of tests) that emits the exact same player-facing bytes and advances the RNG in lockstep with the C oracle across 6,200+ scenario/seed runs, while adding embedded SQLite, a browser client, a web admin console, Lua scripting, and a browser-based world editor (webOLC). Play on the public server at [darkpawns.org](https://darkpawns.org), or spin up your own world on Linux, macOS, or Windows in under a minute.
 
-[**Play in your browser**](https://darkpawns.org/play/) · [**Documentation**](https://darkpawns.org/docs/) · [**World Map**](https://darkpawns.org/map/) · [**Mob & Item Database**](https://darkpawns.org/database/) · [**Discord**](https://discord.gg/supVzU9yN)
+[**Play in your browser**](https://darkpawns.org/play/) · [**Blog & Field Notes**](https://darkpawns.org/blog/) · [**Documentation**](https://darkpawns.org/docs/) · [**World Map**](https://darkpawns.org/map/) · [**Mob & Item Database**](https://darkpawns.org/database/) · [**Restoration Activity**](https://darkpawns.org/about/project/) · [**Discord**](https://discord.gg/supVzU9yN)
 
 > *Like a great game of chess, the world has become a board filled with bishops and kings, stately queens, white knights and dark pawns striving to rise through the ranks into godhood.*
 >
@@ -48,7 +45,32 @@ openssl s_client -quiet -connect darkpawns.org:7778
 ```
 
 > [!TIP]
-> **Bring a party (even if all three of them are you).** Dark Pawns lets you play up to three characters at once (`help MULTI`). A level 1 character can trade punches with a level 1 guard trainee, but by level 15 a solo adventurer is mostly dragon food. See [Your first hour](https://darkpawns.org/docs/play/first-hour/), [Connect a client](https://darkpawns.org/docs/play/connect-client/), and [Color](https://darkpawns.org/docs/play/color/) to get started.
+> **Bring a party (even if all three of them are you).** Dark Pawns lets you play up to three characters at once (`help MULTI`). A level 1 character can trade punches with a level 1 guard trainee, but by level 15 a solo adventurer is mostly dragon food. See [Your first hour](https://darkpawns.org/docs/play/first-hour/), [Connect a client](https://darkpawns.org/docs/play/connect-client/), [Directions](https://darkpawns.org/docs/play/directions/), and [Color](https://darkpawns.org/docs/play/color/) to get started.
+
+## The Fidelity Law: "The game is the game"
+
+Most ports "fix" the old game on the way over. Dark Pawns treats any change to player-observable behavior as a bug.
+
+The original C source in [`src/`](src/) is our read-only oracle. Under the [Fidelity Rulebook](https://darkpawns.org/docs/project/port-fidelity/) (R1 through R5), the Go server must emit the exact same bytes, preserve every command and quirk (down to `who` printing raw `&r` tags when ANSI color is off, and `DEATH` rooms killing you without a saving throw and leaving your gear where nobody can reach it), and advance the random number generator in lockstep with the C binary.
+
+```mermaid
+flowchart LR
+  S["Scenario Corpus\n(6,200+ scenario/seed runs)"] --> C["Original C Binary\n(src/ reference oracle)"]
+  S --> G["Go Server\n(cmd/server)"]
+  C --> D{"dp-oracle-diff\nByte & RNG Draw Parity"}
+  G --> D
+```
+
+Before a release ships, `cmd/dp-oracle-diff` drives both engines through more than six thousand scenario and seed runs, verifying every output byte and every RNG draw.
+
+## Field Notes & Deep Dives
+
+The engineering notes, oracle postmortems, and archival recoveries behind the port live at **[darkpawns.org/blog](https://darkpawns.org/blog/)**:
+
+- [**The Oracle**](https://darkpawns.org/blog/the-oracle/) — Porting a 30-year-old C MUD to Go one byte at a time, and why the bug that mattered most was one no player could ever have seen.
+- [**The Long Middle**](https://darkpawns.org/blog/the-long-middle/) — The difference between covering a codebase and actually proving it, told in the data.
+- [**Welcome Back, Serapis**](https://darkpawns.org/blog/welcome-back-serapis/) — Room 8008 had a prayer that made three staff names immortal; we ported it faithfully and wrote a test proving it worked.
+- [**What the Wayback Machine Kept**](https://darkpawns.org/blog/what-the-wayback-machine-kept/) — Walking 342 archived URLs from the 2004 community sites to recover 77 surviving pages.
 
 ## Host your own world in 60 seconds
 
@@ -79,7 +101,7 @@ scoop bucket add darkpawns https://github.com/darkpawns/scoop-bucket && scoop in
 docker run -d --name darkpawns \
   --network host \
   -v darkpawns-data:/data \
-  ghcr.io/darkpawns/darkpawns:v0.1.8
+  ghcr.io/darkpawns/darkpawns:v0.1.9
 ```
 
 ![Terminal recording of darkpawns setup creating a local world and starting the server.](docs/images/generated/install-and-setup.gif)
@@ -124,29 +146,13 @@ flowchart LR
 | ![The webOLC room editor open on Temple Square in Kir Drax'in.](docs/images/generated/admin-room-editor.png) | ![The notifications page configuring Pushover and Discord alerts for game events.](docs/images/generated/admin-notifications.png) |
 | Edit rooms, objects, mobs, zones, and Lua triggers with draft leases, or build in-game with `redit`, `oedit`, `medit`, `zedit`, and `sedit`. | Route logins, deaths, and level-ups to Discord or Pushover, and ping a [Healthchecks.io](https://healthchecks.io) dead-man's switch every minute. |
 
-## The Fidelity Law: "The game is the game"
-
-Most ports "fix" the old game on the way over. Dark Pawns treats any change to player-observable behavior as a bug.
-
-The original C source in [`src/`](src/) is our read-only oracle. Under the [Fidelity Rulebook](https://darkpawns.org/docs/project/port-fidelity/) (R1 through R5), the Go server must emit the exact same bytes, preserve every command and quirk (down to `who` printing raw `&r` tags when ANSI color is off, and `DEATH` rooms killing you without a saving throw and leaving your gear where nobody can reach it), and advance the random number generator in lockstep with the C binary.
-
-```mermaid
-flowchart LR
-  S["Scenario Corpus\n(6,200+ scenario/seed runs)"] --> C["Original C Binary\n(src/ reference oracle)"]
-  S --> G["Go Server\n(cmd/server)"]
-  C --> D{"dp-oracle-diff\nByte & RNG Draw Parity"}
-  G --> D
-```
-
-Before a release ships, `cmd/dp-oracle-diff` drives both engines through more than six thousand scenario and seed runs, verifying every output byte and every RNG draw.
-
 ## Documentation & Developer Quickstart
 
 Full documentation lives at **[darkpawns.org/docs](https://darkpawns.org/docs/)** (with clean `.md` twins at every URL and [`llms.txt`](https://darkpawns.org/llms.txt) for agents):
 
 | Section | What's inside |
 | --- | --- |
-| [**Play**](https://darkpawns.org/docs/play/) | [Your first hour](https://darkpawns.org/docs/play/first-hour/), [Connect a client](https://darkpawns.org/docs/play/connect-client/), and [ANSI Color levels](https://darkpawns.org/docs/play/color/). |
+| [**Play**](https://darkpawns.org/docs/play/) | [Your first hour](https://darkpawns.org/docs/play/first-hour/), [Connect a client](https://darkpawns.org/docs/play/connect-client/), [Directions](https://darkpawns.org/docs/play/directions/), and [ANSI Color levels](https://darkpawns.org/docs/play/color/). |
 | [**Host**](https://darkpawns.org/docs/host/) | [Hosting overview](https://darkpawns.org/docs/host/hosting-overview/), [Install](https://darkpawns.org/docs/host/install/), [First login](https://darkpawns.org/docs/host/first-login/), [Admin console](https://darkpawns.org/docs/host/admin-console/), [Player management](https://darkpawns.org/docs/host/player-management/), [Updates](https://darkpawns.org/docs/host/update-server/), and [Troubleshooting](https://darkpawns.org/docs/host/players-cannot-connect/). |
 | [**Build**](https://darkpawns.org/docs/build/) | [Run a local server](https://darkpawns.org/docs/build/local-server/), and editing [Rooms](https://darkpawns.org/docs/build/edit-rooms/), [Objects](https://darkpawns.org/docs/build/edit-objects/), [Mobs](https://darkpawns.org/docs/build/edit-mobs/), [Zones](https://darkpawns.org/docs/build/edit-zones/), and [Lua scripts](https://darkpawns.org/docs/build/edit-lua-scripts/). |
 | [**Reference**](https://darkpawns.org/docs/reference/) | [Glossary](https://darkpawns.org/docs/reference/glossary/), all [429 verbatim in-game help topics](https://darkpawns.org/docs/reference/commands/), and the [Public](https://darkpawns.org/docs/reference/api/public/) & [Admin](https://darkpawns.org/docs/reference/api/admin/) HTTP APIs. |
@@ -158,14 +164,14 @@ To build and run the server directly from source:
 git clone https://github.com/zax0rz/darkpawns.git
 cd darkpawns
 export JWT_SECRET="$(openssl rand -hex 32)"
-go build -o server ./cmd/server && ./server
+GOEXPERIMENT=nojsonv2 go build -o server ./cmd/server && ./server
 ```
 
-Before opening a pull request, read [`AGENTS.md`](AGENTS.md) and [`docs/fidelity/RULEBOOK.md`](docs/fidelity/RULEBOOK.md), install the pre-push hook (`make hooks`), and run `make fmt`, `go build ./...`, `go vet ./...`, `go test ./...`, and `golangci-lint run ./...`.
+Before opening a pull request, read [`AGENTS.md`](AGENTS.md) and [`docs/fidelity/RULEBOOK.md`](docs/fidelity/RULEBOOK.md), install the pre-push hook (`make hooks`), and run `make fmt`, `GOEXPERIMENT=nojsonv2 go build ./...`, `GOEXPERIMENT=nojsonv2 go vet ./...`, `GOEXPERIMENT=nojsonv2 go test ./...`, and `golangci-lint run ./...`.
 
 ## Credits & License
 
-Dark Pawns grew from the work of its original developers, world builders, and players. The preserved [in-game credits](lib/text/credits) honor CircleMUD 3.0 (Jeremy Elson) and its DikuMUD creators (Katja Nyboe, Tom Madsen, Hans Henrik Staerfeldt, Michael Seifert, and Sebastian Hammer). The [original C codebase](https://github.com/rparet/darkpawns) was published by R.E. Paret (Frontline). The Go restoration is maintained by [zax0rz](https://github.com/zax0rz) (Aiko / Aidan).
+Dark Pawns grew from the work of its original developers, world builders, and players. The preserved [in-game credits](lib/text/credits) honor CircleMUD 3.0 (Jeremy Elson) and its DikuMUD creators (Katja Nyboe, Tom Madsen, Hans Henrik Stærfeldt, Michael Seifert, and Sebastian Hammer). The [original C codebase](https://github.com/rparet/darkpawns) was published by R.E. Paret (Frontline). The Go restoration is maintained by [zax0rz](https://github.com/zax0rz) (Aiko / Aidan).
 
 > [!CAUTION]
 > **Strictly non-commercial.** Because Dark Pawns derives from CircleMUD 3.0 and DikuMUD, the entire combined work is bound by the [CircleMUD](LICENSE.CircleMUD) and [DikuMUD](LICENSE.DikuMUD) licenses: you may run, modify, and host it freely, but you may **never** charge players fees, accept donations, or take reimbursement for hosting costs under any circumstances. Standalone new code (web admin, tooling, website) is additionally MIT-licensed. See [`LICENSE`](LICENSE) for the full terms (and the story of the 1999 Usenet flamewar that made them necessary).
