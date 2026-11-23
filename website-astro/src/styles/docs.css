@@ -34,19 +34,15 @@
   --sl-color-hairline-shade: var(--ink);
   --sl-content-width: 45rem;
   --sl-sidebar-width: 17rem;
-  --sl-nav-height: 7.5rem;
-  --sl-text-h1: clamp(2.5rem, 5vw + 1rem, 3rem);
+  --sl-nav-height: 8.66rem;
+  --sl-text-h1: clamp(2.25rem, 4.5vw, 3.25rem);
   --sl-line-height: 1.65;
   --sl-shadow-sm: none;
   --sl-shadow-md: none;
   --sl-shadow-lg: none;
 }
 .docs-masthead { position: relative; width: 100%; }
-.docs-masthead .masthead-row { padding-block: .7rem; }
-.docs-masthead .masthead-meta { margin-inline-end: 22rem; }
-.docs-search { position: absolute; right: max(1rem, calc((100vw - 72rem) / 2)); top: .9rem; width: 20rem; }
-.docs-masthead .nav-search-btn { display: none; }
-header.header { padding: 0 !important; border: 0 !important; }
+header.header { padding: 0 !important; border: 0 !important; background: var(--paper) !important; }
 .docs-breadcrumb { font-size: .9rem; margin-block: 0 1rem; color: var(--ink-muted); }
 .docs-breadcrumb a { color: var(--ink-muted); }
 .docs-summary { color: var(--ink-muted); font-size: 1rem; max-width: 55ch; margin-block: 1rem 0; }
@@ -79,20 +75,17 @@ dialog, [data-pagefind-ui] { border-radius: 2px !important; box-shadow: none !im
 .docs-paths > section { margin-top: 0; border-top: 1px solid var(--ink); padding-block: 1rem; }
 .docs-paths h2 { margin: 0 0 .5rem; }
 @media (max-width: 799px) {
-  :root, :root[data-theme='light'] { --sl-nav-height: 8rem; }
-  .docs-masthead .masthead-meta { display: none; }
-  .docs-masthead .brand { transform-origin: left center; transform: scale(.8); }
-  .docs-masthead .masthead-row { min-height: 4rem; }
-  .docs-search { width: 2.5rem; right: 4.2rem; top: 1.15rem; }
-  .docs-masthead .sectionbar { margin-top: -.2rem; }
+  :root, :root[data-theme='light'] { --sl-nav-height: 8.66rem; }
   .docs-paths { grid-template-columns: 1fr; }
-}
-@media print { .docs-masthead, .sidebar { display: none; } }
-
-@media (max-width: 799px) {
-  .sl-menu-button { position: fixed; z-index: var(--sl-z-index-navbar); top: 5.1rem; right: 1rem; min-height: 44px; padding: .4rem .6rem; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); }
+  .sl-menu-button { position: fixed; z-index: var(--sl-z-index-navbar); top: 5.5rem; right: 1rem; min-height: 44px; padding: .4rem .6rem; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); }
   .docs-masthead .nav-toggle-inner { gap: .5rem; font-size: .9rem; }
 }
+@media (max-width: 640px) {
+  :root, :root[data-theme='light'] { --sl-nav-height: 10.25rem; }
+  .sl-menu-button { top: 7.35rem; }
+}
+starlight-tabs [role='tab'] { white-space: nowrap; }
+@media print { .docs-masthead, .sidebar { display: none; } }
 
 .right-sidebar h2 { font-size: 1rem; }
 /* Machine examples keep the same flat paper and ink as the surrounding page. */
@@ -114,8 +107,6 @@ dialog, [data-pagefind-ui] { border-radius: 2px !important; box-shadow: none !im
 }
 .expressive-code .frame { box-shadow: none; }
 .expressive-code .ec-line span { color: var(--ink); }
-.docs-search dialog::backdrop { backdrop-filter: none; background: color-mix(in srgb, var(--ink) 40%, transparent); }
-.docs-search .pagefind-ui__result, .docs-search .pagefind-ui__result-title { border-radius: 2px; }
 :root[data-theme='light'] .sl-openapi-operation-method-badge {
   background: var(--ink);
   border-color: var(--ink);
@@ -123,21 +114,3 @@ dialog, [data-pagefind-ui] { border-radius: 2px !important; box-shadow: none !im
   font-family: var(--font-mono);
 }
 .mermaid-diagram svg * { filter: none !important; }
-
-.docs-search { width: auto; }
-.docs-search button[data-open-modal] { width: auto; }
-.docs-search button[data-open-modal] > svg { width: 1rem; height: 1rem; }
-.docs-search button[data-open-modal] > kbd { margin-inline-start: .5rem; color: var(--ink); background: var(--paper); border: 1px solid var(--ink); border-radius: 2px; }
-.docs-search {
-  --pagefind-ui-primary: var(--accent);
-  --pagefind-ui-text: var(--ink);
-  --pagefind-ui-background: var(--paper);
-  --pagefind-ui-border: var(--ink);
-  --pagefind-ui-border-width: 1px;
-  --pagefind-ui-border-radius: 2px;
-  --pagefind-ui-font: var(--font-body);
-}
-.docs-search .pagefind-ui__search-input { color: var(--ink); border-color: var(--ink); background: var(--paper); font-family: var(--font-body); }
-.docs-search .pagefind-ui__search-input:focus { outline: 3px solid var(--accent); outline-offset: 2px; }
-.docs-search .pagefind-ui__search-clear { color: var(--accent); background: var(--paper); font-family: var(--font-display); }
-.docs-search dialog { border: 1px solid var(--ink); background: var(--paper); }

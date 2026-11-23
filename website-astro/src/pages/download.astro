@@ -1,16 +1,20 @@
 ---
 import Base from '../layouts/Base.astro';
+import ChapterHeader from '../components/ChapterHeader.astro';
 import CopyCommand from '../components/CopyCommand.astro';
-import { releaseVersion, releaseURL, assetBase, unixInstall, windowsInstall, platforms, archiveURL, portableGuide, hostingGuide } from '../lib/download';
+import { releaseVersion, releaseNotesPath, releaseURL, assetBase, unixInstall, windowsInstall, platforms, archiveURL, portableGuide, hostingGuide } from '../lib/download';
 ---
 <Base title="Download & Host Dark Pawns" description="Download Dark Pawns for macOS, Linux, or Windows. Install the game and original world files, create your immortal, and run a world of your own.">
   <Fragment slot="head"><link rel="alternate" type="text/markdown" href="/download.md" title="Download instructions as Markdown" /></Fragment>
   <article class="download-page container">
-    <header class="download-heading">
-      <h1>A world of your own.</h1>
-      <p class="lede">Download Dark Pawns, create your immortal, and keep the world running on your own machine.</p>
-      <p class="release-note"><a href={releaseURL}>Release v{releaseVersion}</a> · macOS, Linux &amp; Windows · <a href="/play/">Just want to play here?</a></p>
-    </header>
+    <ChapterHeader
+      title="A world of your own."
+      lede="Download Dark Pawns, create your immortal, and keep the world running on your own machine."
+    >
+      <Fragment slot="meta">
+        <a href={releaseNotesPath}>Release v{releaseVersion}</a> · macOS, Linux &amp; Windows · <a href="/play/">Just want to play here?</a>
+      </Fragment>
+    </ChapterHeader>
 
     <div class="installation-layout">
       <section class="installation" aria-labelledby="install-heading">
@@ -20,8 +24,8 @@ import { releaseVersion, releaseURL, assetBase, unixInstall, windowsInstall, pla
         <p class="requirements">Uses curl, OpenSSL, and tar. No administrator rights or compiler needed.</p>
         <details class="windows-install">
           <summary>Windows installer (PowerShell 5.1 or newer)</summary>
-          <p>Open PowerShell, then copy and paste the complete command.</p>
-          <CopyCommand command={windowsInstall} label="Windows PowerShell" id="windows-install" multiline />
+          <p>Open PowerShell, then copy and paste the command.</p>
+          <CopyCommand command={windowsInstall} label="Windows PowerShell" id="windows-install" />
         </details>
         <p class="manual-link">Prefer to install by hand? <a href="#archives">Choose an archive below.</a></p>
       </section>
@@ -58,7 +62,7 @@ import { releaseVersion, releaseURL, assetBase, unixInstall, windowsInstall, pla
       </div>
       <p class="architecture-note">For Macs, check About This Mac for Apple silicon or Intel. For Linux, <code>uname -m</code> reports <code>x86_64</code> or <code>aarch64</code>. On Windows, check Settings → System → About → System type.</p>
       <p>Before opening a manually downloaded archive, <a href={`${portableGuide}#manual-updates`}>verify it against the signed release manifest</a>. Then extract it and run <code>darkpawns setup</code>, or <code>.\darkpawns.exe setup</code> in PowerShell. Use <code>setup --plain</code> for screen readers.</p>
-      <p class="manifest-links"><a href={`${assetBase}/release-manifest.txt`}>Release manifest</a> · <a href={`${assetBase}/release-manifest.sig`}>Manifest signature</a> · <a href={releaseURL}>Release notes &amp; all assets</a></p>
+      <p class="manifest-links"><a href={`${assetBase}/release-manifest.txt`}>Release manifest</a> · <a href={`${assetBase}/release-manifest.sig`}>Manifest signature</a> · <a href={releaseNotesPath}>Release notes</a> · <a href={releaseURL}>All assets on GitHub</a></p>
     </section>
 
     <section class="running-guide" aria-labelledby="running-heading">
@@ -78,12 +82,9 @@ import { releaseVersion, releaseURL, assetBase, unixInstall, windowsInstall, pla
   </article>
 </Base>
 <style>
-  .download-page { padding-block: var(--space-lg); }
-  .download-heading { max-width: 48rem; margin-bottom: var(--space-lg); }
-  h1 { font-size: clamp(2.5rem, 5vw, 4.5rem); }
-  .lede { font-size: 1.25rem; }
-  .release-note, .requirements, .architecture-note, .manifest-links { font-size: .95rem; color: var(--ink-muted); }
-  .installation-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); border-block: 1px solid var(--rule); }
+  .download-page { padding-bottom: var(--space-xl); }
+  .requirements, .architecture-note, .manifest-links { font-size: .95rem; color: var(--ink-muted); }
+  .installation-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); border-bottom: 1px solid var(--rule); }
   .installation { min-width: 0; padding: var(--space-lg) var(--space-lg) var(--space-lg) 0; }
   .requirements { margin-top: var(--space-sm); }
   .windows-install { border-block: 1px solid var(--rule); padding-block: var(--space-sm); }
