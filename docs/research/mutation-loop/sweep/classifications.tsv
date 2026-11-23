@@ -1,0 +1,999 @@
+row	func	file	line	source_offset	literal	class	class_evidence
+0	*BoardSystem.WriteMessage	pkg/boards/boards.go	615	19629	"You are not holy enough to write on this board.\r\n"	c-reachable	C Board_write_message uses the matching output literal at src/boards.c:221.
+1	*BoardSystem.WriteMessage	pkg/boards/boards.go	619	19766	"The board is full.\r\n"	c-reachable	C Board_write_message uses the matching output literal at src/boards.c:225.
+2	*BoardSystem.WriteMessage	pkg/boards/boards.go	624	19864	"The board is malfunctioning - sorry.\r\n"	c-reachable	C Board_write_message uses the matching output literal at src/boards.c:229.
+3	*BoardSystem.WriteMessage	pkg/boards/boards.go	636	20180	"We must have a headline!\r\n"	c-reachable	C Board_write_message uses the matching output literal at src/boards.c:241.
+4	*BoardSystem.WriteMessage	pkg/boards/boards.go	654	21073	"The board is malfunctioning - sorry.\r\n"	c-reachable	C Board_write_message uses the matching output literal at src/boards.c:229.
+5	*BoardSystem.WriteMessage	pkg/boards/boards.go	676	21681	"Write your message.\r\n"	c-reachable	C Board_write_message uses the matching output literal at src/boards.c:261.
+6	*BoardSystem.WriteMessage	pkg/boards/boards.go	677	21724	"Instructions: /s or @ to save, /h for more options.\r\n"	c-reachable	C send_editor_help uses the matching output literal at src/improved-edit.c:20.
+7	*BoardSystem.WriteMessage	pkg/boards/boards.go	681	21862	"%s starts to write a message."	c-reachable	C Board_write_message has the matching output format at src/boards.c:263 (text score 93; C formatting supplies the variable text).
+8	*CombatEngine.prepareRoundDefense	pkg/combat/engine.go	851	34154	"With a dazzling show of swordplay, you move into defensive position...\r\n"	c-reachable	C perform_violence has the matching output format at src/fight.c:1957 (text score 80; C formatting supplies the variable text).
+9	*CombatEngine.prepareRoundDefense	pkg/combat/engine.go	865	34955	"%s displays a dazzling show of swordplay, fending off your every blow!\r\n"	c-reachable	C perform_violence has the matching output format at src/fight.c:1961 (text score 91; C formatting supplies the variable text).
+10	*CombatEngine.prepareRoundDefense	pkg/combat/engine.go	868	35172	"You dodge!\r\n"	c-reachable	C perform_violence uses the matching output literal at src/fight.c:1969.
+11	*CombatEngine.prepareRoundDefense	pkg/combat/engine.go	869	35255	"%s dodges your attack!\r\n"	c-reachable	C perform_violence has the matching output format at src/fight.c:1971 (text score 86; C formatting supplies the variable text).
+12	*CombatEngine.prepareRoundDefense	pkg/combat/engine.go	874	35451	"%s dodges %s's attack!\r\n"	c-reachable	C dodge branch emits “$n dodges $N's attack!” at src/fight.c:1970-1971; PERS and the command target render the two actor placeholders.
+13	UpdatePositionAfterDamage	pkg/combat/fight_core.go	181	5847	"You are mortally wounded, and will die soon, if not aided.\r\n"	c-reachable	C damage has the matching output format at src/fight.c:1566 (text score 92; C formatting supplies the variable text).
+14	UpdatePositionAfterDamage	pkg/combat/fight_core.go	184	6060	"You are incapacitated an will slowly die, if not aided.\r\n"	c-reachable	C damage has the matching output format at src/fight.c:1570 (text score 88; C formatting supplies the variable text).
+15	UpdatePositionAfterDamage	pkg/combat/fight_core.go	187	6270	"You're stunned, but will probably regain consciousness again.\r\n"	c-reachable	C damage has the matching output format at src/fight.c:1578 (text score 93; C formatting supplies the variable text).
+16	emitWoundBand	pkg/combat/fight_core.go	354	12325	"You are mortally wounded, and will die soon, if not aided.\r\n"	c-reachable	C update_pos prints this wound band at src/fight.c:1566.
+17	emitWoundBand	pkg/combat/fight_core.go	356	12435	"You are incapacitated an will slowly die, if not aided.\r\n"	c-reachable	C update_pos prints this wound band at src/fight.c:1570-1572.
+18	emitWoundBand	pkg/combat/fight_core.go	358	12544	"You're stunned, but will probably regain consciousness again.\r\n"	c-reachable	C update_pos prints this wound band at src/fight.c:1578.
+19	ApplySurvivingVictimDefaultArm	pkg/combat/fight_core.go	523	19622	"That really did HURT!\r\n"	c-reachable	C damage has the matching output format at src/fight.c:1589 (text score 95; C formatting supplies the variable text).
+20	ApplySurvivingVictimDefaultArm	pkg/combat/fight_core.go	539	20222	"You wimp out, and attempt to flee!\r\n"	c-reachable	C damage uses the matching output literal at src/fight.c:1605.
+21	executeShoot	pkg/command/shoot.go	19	723	"$n fires %s %s with %s."	c-reachable	C do_shoot uses the matching output literal at src/act.offensive.c:904.
+22	executeShoot	pkg/command/shoot.go	20	849	"Twang... your projectile flies into the distance.\r\n"	c-reachable	C do_shoot uses the matching output literal at src/act.offensive.c:908.
+23	executeShoot	pkg/command/shoot.go	31	1342	"Some kind of %s streaks in from %s and just misses you!\r\n"	c-reachable	C do_shoot has the matching output format at src/act.offensive.c:980 (text score 87; C formatting supplies the variable text).
+24	executeShoot	pkg/command/shoot.go	32	1478	"Some kind of %s streaks in from %s and narrowly misses $n!"	c-reachable	C do_shoot has the matching output format at src/act.offensive.c:983 (text score 90; C formatting supplies the variable text).
+25	executeShoot	pkg/command/shoot.go	39	1890	"You hear a roar of pain!\r\n"	c-reachable	C do_shoot uses the matching output literal at src/act.offensive.c:928.
+26	executeShoot	pkg/command/shoot.go	44	2067	"Some kind of %s streaks in from %s and strikes $n!"	c-reachable	C do_shoot has the matching output format at src/act.offensive.c:980 (text score 89; C formatting supplies the variable text).
+27	executeShoot	pkg/command/shoot.go	46	2188	"Some kind of %s streaks in from %s and hits you!\r\n"	c-reachable	C do_shoot has the matching output format at src/act.offensive.c:935 (text score 87; C formatting supplies the variable text).
+28	executeShoot	pkg/command/shoot.go	52	2500	"Suddenly some kind of projectile pierces your arm!\r\n"	c-reachable	C do_shoot has the matching output format at src/act.offensive.c:938 (text score 93; C formatting supplies the variable text).
+29	executeShoot	pkg/command/shoot.go	56	2650	"You decide to go investigate...\r\n"	c-reachable	C do_shoot uses the matching output literal at src/act.offensive.c:947.
+30	executeShoot	pkg/command/shoot.go	64	2964	"$n bursts into the room and scowls at $N.\r\n"	c-reachable	C do_shoot uses the matching output literal at src/act.offensive.c:950.
+31	executeShoot	pkg/command/shoot.go	65	3070	"%s bursts into the room and scowls at you!\r\n"	c-reachable	C do_shoot has the matching output format at src/act.offensive.c:952 (text score 92; C formatting supplies the variable text).
+32	CmdBash	pkg/command/skill_commands.go	107	3141	"This room just has such a peaceful, easy feeling...\r\n"	c-reachable	C do_bash uses the matching output literal at src/act.offensive.c:436.
+33	CmdBash	pkg/command/skill_commands.go	118	3572	"Bash who?\r\n"	c-reachable	C do_bash uses the matching output literal at src/act.offensive.c:446.
+34	CmdBash	pkg/command/skill_commands.go	123	3713	"Bash who?\r\n"	c-reachable	C do_bash uses the matching output literal at src/act.offensive.c:446.
+35	CmdBash	pkg/command/skill_commands.go	126	3767	"Bash who?\r\n"	c-reachable	C do_bash uses the matching output literal at src/act.offensive.c:446.
+36	CmdBash	pkg/command/skill_commands.go	130	3830	"Aren't we funny today...\r\n"	c-reachable	C do_bash uses the matching output literal at src/act.offensive.c:452.
+37	CmdTigerPunch	pkg/command/skill_commands.go	359	10308	"That's pretty tough to do while wielding a weapon.\r\n"	c-reachable	C do_tiger_punch uses the matching output literal at src/act.offensive.c:705.
+38	CmdTigerPunch	pkg/command/skill_commands.go	363	10454	"Hit who?\r\n"	c-reachable	C do_tiger_punch uses the matching output literal at src/act.offensive.c:717.
+39	CmdTigerPunch	pkg/command/skill_commands.go	366	10538	"Aren't we funny today...\r\n"	c-reachable	C do_tiger_punch uses the matching output literal at src/act.offensive.c:723.
+40	CmdTigerPunch	pkg/command/skill_commands.go	369	10617	"Dismount first!\r\n"	c-reachable	C do_tiger_punch uses the matching output literal at src/act.offensive.c:728.
+41	shootTargetGate	pkg/command/skill_commands.go	499	15351	"Maybe that isn't such a great idea...\r\n"	c-reachable	C do_shoot uses the matching output literal at src/act.offensive.c:883.
+42	shootTargetGate	pkg/command/skill_commands.go	504	15583	"It looks like they are fighting, you can't aim properly.\r\n"	c-reachable	C do_shoot has the matching output format at src/act.offensive.c:890 (text score 85; C formatting supplies the variable text).
+43	shootTargetGate	pkg/command/skill_commands.go	507	15760	"You cannot see well enough to aim...\r\n"	c-reachable	C do_shoot uses the matching output literal at src/act.offensive.c:898.
+44	CmdSubdue	pkg/command/skill_commands.go	527	16473	"You're too busy right now!\r\n"	c-reachable	C do_subdue uses the matching output literal at src/act.offensive.c:1098.
+45	CmdSubdue	pkg/command/skill_commands.go	530	16554	"Subdue who?\r\n"	c-reachable	C do_subdue uses the matching output literal at src/act.offensive.c:1103.
+46	CmdSubdue	pkg/command/skill_commands.go	537	16853	"Subdue who?\r\n"	c-reachable	C do_subdue uses the matching output literal at src/act.offensive.c:1103.
+47	CmdSubdue	pkg/command/skill_commands.go	540	16917	"Aren't we funny today...\r\n"	c-reachable	C do_subdue uses the matching output literal at src/act.offensive.c:1108.
+48	CmdAmbush	pkg/command/skill_commands.go	603	19078	"Ambush who?\r\n"	c-reachable	C do_ambush uses the matching output literal at src/act.offensive.c:1463.
+49	CmdAmbush	pkg/command/skill_commands.go	608	19252	"Ambush who?\r\n"	c-reachable	C do_ambush uses the matching output literal at src/act.offensive.c:1463.
+50	CmdAmbush	pkg/command/skill_commands.go	614	19410	"You are a little busy for that right now!\r\n"	c-reachable	C do_ambush uses the matching output literal at src/act.offensive.c:1475.
+51	CmdAmbush	pkg/command/skill_commands.go	617	19504	"Ambush yourself? You idiot!\r\n"	c-reachable	C do_ambush uses the matching output literal at src/act.offensive.c:1481.
+52	CmdAmbush	pkg/command/skill_commands.go	622	19770	"Ambush someone here? Impossible!\r\n"	c-reachable	C do_ambush uses the matching output literal at src/act.offensive.c:1490.
+53	CmdAmbush	pkg/command/skill_commands.go	625	19874	"They're too alert for that, currently.\r\n"	c-reachable	C do_ambush uses the matching output literal at src/act.offensive.c:1496.
+54	CmdSteal	pkg/command/skill_commands.go	709	22466	"Steal what from who?\r\n"	c-reachable	C do_steal uses the matching output literal at src/act.other.c:332.
+55	CmdSteal	pkg/command/skill_commands.go	716	22638	"Steal what from who?\r\n"	c-reachable	C do_steal uses the matching output literal at src/act.other.c:332.
+56	CmdCarve	pkg/command/skill_commands.go	730	22997	"How can you think of food at a time like this?!?\r\n"	c-reachable	C do_carve uses the matching output literal at src/new_cmds.c:126.
+57	CmdCarve	pkg/command/skill_commands.go	735	23163	"You want to carve what?!?\r\n"	c-reachable	C do_carve uses the matching output literal at src/new_cmds.c:131.
+58	CmdFirstAid	pkg/command/skill_commands.go	922	28969	"Aid who?\r\n"	c-reachable	C do_first_aid uses the matching output literal at src/new_cmds2.c:153.
+59	CmdFirstAid	pkg/command/skill_commands.go	929	29171	"They don't seem to be here.\r\n"	c-reachable	C do_first_aid uses the matching output literal at src/new_cmds2.c:155.
+60	CmdDisarm	pkg/command/skill_commands.go	959	30185	"Disarm who?\r\n"	c-reachable	C do_disarm uses the matching output literal at src/new_cmds2.c:209.
+61	CmdDisarm	pkg/command/skill_commands.go	965	30357	"Disarm who?\r\n"	c-reachable	C do_disarm uses the matching output literal at src/new_cmds2.c:209.
+62	CmdDisarm	pkg/command/skill_commands.go	970	30519	"Disarm who?\r\n"	c-reachable	C do_disarm uses the matching output literal at src/new_cmds2.c:209.
+63	CmdSerpentKick	pkg/command/skill_commands.go	1029	31992	"Kick who?\r\n"	c-reachable	C do_serpent_kick uses the matching output literal at src/new_cmds2.c:711.
+64	CmdSerpentKick	pkg/command/skill_commands.go	1041	32502	"Kick who?\r\n"	c-reachable	C do_serpent_kick uses the matching output literal at src/new_cmds2.c:711.
+65	sendSkillResult::func@1410	pkg/command/skill_commands.go	1419	49546	"$n falls to $s knees, clutching $s groin and throwing up\r\neverywhere!"	c-reachable	C do_groinrip has the matching output format at src/new_cmds.c:2643 (text score 91; C formatting supplies the variable text).
+66	CmdSlug	pkg/command/skill_commands.go	1607	55396	"Slug who?\r\n"	c-reachable	C do_slug has the matching output format at src/new_cmds.c:840 (text score 90; C formatting supplies the variable text).
+67	CmdBite	pkg/command/skill_commands.go	1658	56613	"Bite who?!\r\n"	c-reachable	C do_bite uses the matching output literal at src/new_cmds.c:1218.
+68	CmdBite	pkg/command/skill_commands.go	1667	56984	"Bite who?!\r\n"	c-reachable	C do_bite uses the matching output literal at src/new_cmds.c:1218.
+69	cmdSpikeOrStake	pkg/command/skill_commands.go	1826	61726	"Whom do you wish to %s?\r\n"	c-reachable	C do_spike uses the matching output literal at src/new_cmds.c:1119.
+70	cmdSpikeOrStake	pkg/command/skill_commands.go	1833	61946	"No-one by that name here.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:93.
+71	CmdCharge	pkg/command/skill_commands.go	1895	63772	"Great! Fine! Charge who?!?!\r\n"	c-reachable	C do_charge uses the matching output literal at src/new_cmds.c:901.
+72	CmdCharge	pkg/command/skill_commands.go	1900	63931	"Great! Fine! Charge who?!?!\r\n"	c-reachable	C do_charge uses the matching output literal at src/new_cmds.c:901.
+73	CmdCharge	pkg/command/skill_commands.go	1903	64003	"Great! Fine! Charge who?!?!\r\n"	c-reachable	C do_charge uses the matching output literal at src/new_cmds.c:901.
+74	CmdCharge	pkg/command/skill_commands.go	1907	64084	"You charge headlong into the ground, impressing everyone..\r\n"	c-reachable	C do_charge emits this composed line at src/new_cmds.c:908-909.
+75	*World.kenderStealItem	pkg/game/act_informative.go	170	5871	"$N catches you trying to steal something..."	c-reachable	C do_steal uses the matching output literal at src/act.other.c:457.
+76	*World.kenderStealItem	pkg/game/act_informative.go	171	5965	"$n tried to steal something from you!"	c-reachable	C do_steal uses the matching output literal at src/act.other.c:459.
+77	*World.kenderStealItem	pkg/game/act_informative.go	172	6052	"$n tries to steal something from $N."	c-reachable	C do_steal uses the matching output literal at src/act.other.c:461.
+78	*World.kenderStealItem	pkg/game/act_informative.go	215	7738	"Somehow $p makes it's way into your pack."	c-reachable	C do_steal uses the matching output literal at src/act.other.c:483.
+79	*World.DoMove	pkg/game/act_movement.go	212	5621	"Alas, you cannot go that way..."	c-reachable	C perform_move emits this no-exit response at src/act.movement.c:320-325.
+80	okPick	pkg/game/act_movement.go	765	22624	"Odd - you can't seem to find a keyhole."	c-reachable	C ok_pick has the matching output format at src/act.movement.c:545 (text score 97; C formatting supplies the variable text).
+81	okPick	pkg/game/act_movement.go	767	22757	"You'll need to hold a set of lockpicks before you can pick a lock!"	c-reachable	C ok_pick has the matching output format at src/act.movement.c:547 (text score 90; C formatting supplies the variable text).
+82	okPick	pkg/game/act_movement.go	769	22861	"It resists your attempts to pick it."	c-reachable	C ok_pick has the matching output format at src/act.movement.c:551 (text score 97; C formatting supplies the variable text).
+83	okPick	pkg/game/act_movement.go	772	22977	"You failed to pick the lock."	c-reachable	C ok_pick has the matching output format at src/act.movement.c:556 (text score 96; C formatting supplies the variable text).
+84	okPick	pkg/game/act_movement.go	779	23169	"$n curses as $e bends some of $s lockpicks."	c-reachable	C ok_pick uses the matching output literal at src/act.movement.c:564.
+85	okPick	pkg/game/act_movement.go	780	23245	"You ruin your lockpicks in the process."	c-reachable	C ok_pick has the matching output format at src/act.movement.c:566 (text score 97; C formatting supplies the variable text).
+86	specNewbieZoneEntranceActor	pkg/game/actor_specials_guards.go	207	9545	"Nah, you're too much of a badass to go in there!\r\n"	c-reachable	C newbie_zone_entrance uses the matching output literal at src/spec_procs.c:2269.
+87	specChosenGuardActor	pkg/game/actor_specials_guards.go	353	15485	"$n blocks $N's way."	c-reachable	C no_move_north uses the matching output literal at src/spec_procs2.c:2066.
+88	specChosenGuardActor	pkg/game/actor_specials_guards.go	354	15609	"$n blocks your way."	c-reachable	C no_move_north uses the matching output literal at src/spec_procs2.c:2067.
+89	specChosenGuardActor	pkg/game/actor_specials_guards.go	355	15723	"$n says 'Thou shalt not pass.'"	c-reachable	C no_move_south uses the matching output literal at src/spec_procs2.c:2106.
+90	specCarrionBody	pkg/game/actor_specials_rooms.go	458	16604	"Suddenly $n skitters from out of a corpse!"	c-reachable	C carrion uses the matching output literal at src/spec_procs2.c:1747.
+91	*World.wanderMobWithDoor	pkg/game/ai.go	198	8029	"$n leaves %s."	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:207.
+92	*World.wanderMobWithDoor	pkg/game/ai.go	210	8369	"$n flies in from the %s."	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:232.
+93	*World.wanderMobWithDoor	pkg/game/ai.go	212	8477	"$n swims in from the %s."	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:234.
+94	*World.wanderMobWithDoor	pkg/game/ai.go	214	8551	"$n arrives from the %s."	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:238.
+95	*World.wanderMobWithDoor	pkg/game/ai.go	219	8659	"$n flies in from below."	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:245.
+96	*World.wanderMobWithDoor	pkg/game/ai.go	221	8745	"$n swims in from below."	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:247.
+97	*World.wanderMobWithDoor	pkg/game/ai.go	223	8797	"$n climbs in from below."	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:251.
+98	*World.wanderMobWithDoor	pkg/game/ai.go	228	8897	"$n flies in from above."	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:255.
+99	*World.wanderMobWithDoor	pkg/game/ai.go	230	8983	"$n swims in from above."	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:257.
+100	*World.wanderMobWithDoor	pkg/game/ai.go	232	9035	"$n climbs in from above."	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:261.
+101	*World.attitudeLootMob	pkg/game/attitude_loot.go	27	850	"You junk $p. It vanishes in a puff of smoke!"	c-reachable	C attitude_loot uses the matching output literal at src/fight.c:1129.
+102	*World.attitudeLootMob	pkg/game/attitude_loot.go	29	955	"$n junks $p. It vanishes in a puff of smoke!"	c-reachable	C attitude_loot uses the matching output literal at src/fight.c:1130.
+103	*BanManager.DoBan	pkg/game/bans.go	340	10780	"Usage: ban {all | select | new} site_name\r\n"	c-reachable	C do_ban uses the matching output literal at src/ban.c:175.
+104	*BanManager.DoBan	pkg/game/bans.go	345	10905	"Flag must be ALL, SELECT, or NEW.\r\n"	c-reachable	C do_ban uses the matching output literal at src/ban.c:179.
+105	*BanManager.DoBan	pkg/game/bans.go	361	11449	"That site has already been banned -- unban it to change the ban type.\r\n"	c-reachable	C do_ban uses the matching output literal at src/ban.c:184.
+106	*BanManager.DoBan	pkg/game/bans.go	368	11762	"Site banned.\r\n"	c-reachable	C do_ban uses the matching output literal at src/ban.c:208.
+107	CharacterFollow	pkg/game/character_command.go	113	4230	"No-one by that name here."	c-reachable	C source has the matching output format at src/config.c:93 (text score 96; C formatting supplies the variable text).
+108	*World.doClanRename	pkg/game/clan_admin.go	13	206	"You need to specify a clan number.\r\n"	c-reachable	C do_clan_rename uses the matching output literal at src/clan.c:136.
+109	*World.doClanRename	pkg/game/clan_admin.go	18	360	"There is no clan with that number.\r\n"	c-reachable	C do_clan_rename uses the matching output literal at src/clan.c:141.
+110	*World.doClanRename	pkg/game/clan_admin.go	23	449	"What do you want to rename it?\r\n"	c-reachable	C do_clan_rename uses the matching output literal at src/clan.c:147.
+111	*World.doClanRename	pkg/game/clan_admin.go	29	570	"There is no clan with that number.\r\n"	c-reachable	C do_clan_rename uses the matching output literal at src/clan.c:141.
+112	*World.doClanRename	pkg/game/clan_admin.go	37	726	"Clan renamed.\r\n"	c-reachable	C do_clan_rename uses the matching output literal at src/clan.c:152.
+113	*World.doClanBank	pkg/game/clan_bank.go	20	321	"You don't belong to any clan!\r\n"	c-reachable	C do_clan_bank uses the matching output literal at src/clan.c:900.
+114	*World.doClanBank	pkg/game/clan_bank.go	28	489	"You're not influent enough in the clan to do that!\r\n"	c-reachable	C do_clan_bank uses the matching output literal at src/clan.c:922.
+115	*World.doClanBank	pkg/game/clan_bank.go	35	630	"Deposit how much?\r\n"	c-reachable	C do_clan_bank uses the matching output literal at src/clan.c:929.
+116	*World.doClanBank	pkg/game/clan_bank.go	37	692	"Withdraw how much?\r\n"	c-reachable	C do_clan_bank uses the matching output literal at src/clan.c:932.
+117	*World.doClanBank	pkg/game/clan_bank.go	39	747	"Bad clan banking call, please report to a God.\r\n"	c-reachable	C do_clan_bank uses the matching output literal at src/clan.c:935.
+118	*World.doClanBank	pkg/game/clan_bank.go	47	894	"Deposit what?\r\n"	c-reachable	C do_clan_bank uses the matching output literal at src/clan.c:943.
+119	*World.doClanBank	pkg/game/clan_bank.go	49	952	"Withdraw what?\r\n"	c-reachable	C do_clan_bank uses the matching output literal at src/clan.c:946.
+120	*World.doClanBank	pkg/game/clan_bank.go	51	1003	"Bad clan banking call, please report to a God.\r\n"	c-reachable	C do_clan_bank uses the matching output literal at src/clan.c:935.
+121	*World.doClanBank	pkg/game/clan_bank.go	61	1196	"The clan is not wealthy enough for your needs!\r\n"	c-reachable	C do_clan_bank uses the matching output literal at src/clan.c:959.
+122	*World.doClanBank	pkg/game/clan_bank.go	65	1302	"You withdraw from the clan's treasure.\r\n"	c-reachable	C do_clan_bank uses the matching output literal at src/clan.c:964.
+123	*World.doClanBank	pkg/game/clan_bank.go	69	1555	"You do not have that kind of money!\r\n"	c-reachable	C do_clan_bank uses the matching output literal at src/clan.c:970.
+124	*World.doClanBank	pkg/game/clan_bank.go	73	1660	"You add to the clan's treasure.\r\n"	c-reachable	C do_clan_bank uses the matching output literal at src/clan.c:975.
+125	*World.doClanAppLevel	pkg/game/clan_economy.go	72	1421	"You're not influent enough in the clan to do that!\r\n"	c-reachable	C do_clan_enroll uses the matching output literal at src/clan.c:317.
+126	*World.doClanAppLevel	pkg/game/clan_economy.go	77	1525	"Set to which level?\r\n"	c-reachable	C do_clan_application uses the matching output literal at src/clan.c:1309.
+127	*World.doClanAppLevel	pkg/game/clan_economy.go	82	1604	"Set the application level to what?\r\n"	c-reachable	C do_clan_application uses the matching output literal at src/clan.c:1314.
+128	*World.doClanAppLevel	pkg/game/clan_economy.go	89	1744	"The application level can go from 1 to 30.\r\n"	c-reachable	C do_clan_application uses the matching output literal at src/clan.c:1321.
+129	*World.doClanApply	pkg/game/clan_info.go	47	1068	"Gods cannot apply for any clan.\r\n"	c-reachable	C do_clan_apply uses the matching output literal at src/clan.c:695.
+130	*World.doClanApply	pkg/game/clan_info.go	51	1158	"You already belong to a clan!\r\n"	c-reachable	C do_clan_apply uses the matching output literal at src/clan.c:699.
+131	*World.doClanApply	pkg/game/clan_info.go	57	1271	"Unknown clan.\r\n"	c-reachable	C do_clan_apply uses the matching output literal at src/clan.c:703.
+132	*World.doClanApply	pkg/game/clan_info.go	62	1356	"You are not mighty enough to apply to this clan.\r\n"	c-reachable	C do_clan_apply uses the matching output literal at src/clan.c:707.
+133	*World.doClanApply	pkg/game/clan_info.go	66	1471	"You cannot afford the application fee!\r\n"	c-reachable	C do_clan_apply uses the matching output literal at src/clan.c:711.
+134	*World.doClanApply	pkg/game/clan_info.go	76	1692	"You've applied to the clan!\r\n"	c-reachable	C do_clan_apply uses the matching output literal at src/clan.c:719.
+135	*World.doClanInfo	pkg/game/clan_info.go	85	2017	"No clans have formed yet.\r\n"	c-reachable	C do_clan_info uses the matching output literal at src/clan.c:730.
+136	*World.doClanInfo	pkg/game/clan_info.go	93	2263	"\t\t\tooO Clans of Dark Pawns Ooo\r\n"	c-reachable	C do_clan_info uses the matching output literal at src/clan.c:737.
+137	*World.doClanInfo	pkg/game/clan_info.go	100	2504	"[%-2d]  %-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\r\n"	c-reachable	C do_clan_info has the matching output format at src/clan.c:741 (text score 98; C formatting supplies the variable text).
+138	*World.doClanInfo	pkg/game/clan_info.go	103	2687	"%-17s Members: %3d  Power: %3d  Appfee: %d Applvl: %d\r\n"	c-reachable	C do_clan_info has the matching output format at src/clan.c:745 (text score 98; C formatting supplies the variable text).
+139	*World.doClanInfo	pkg/game/clan_info.go	113	2920	"Unknown clan.\r\n"	c-reachable	C do_clan_info uses the matching output literal at src/clan.c:754.
+140	*World.doClanInfo	pkg/game/clan_info.go	118	2998	"Info for the clan %s :\r\n"	c-reachable	C do_clan_info uses the matching output literal at src/clan.c:758.
+141	*World.doClanInfo	pkg/game/clan_info.go	119	3055	"Ranks      : %d\r\nTitles     : "	c-reachable	C do_clan_info uses the matching output literal at src/clan.c:760.
+142	*World.doClanInfo	pkg/game/clan_info.go	121	3152	"%s "	c-reachable	C do_description uses the matching output literal at src/act.informative.c:2784.
+143	*World.doClanInfo	pkg/game/clan_info.go	123	3196	"\r\nMembers    : %d\r\nPower      : %d\t\nTreasure   : %d\r\nSpells     : "	c-reachable	C do_clan_info has the matching output format at src/clan.c:763 (text score 97; C formatting supplies the variable text).
+144	*World.doClanInfo	pkg/game/clan_info.go	127	3390	"%d "	c-reachable	C oedit_save_to_disk uses the matching output literal at src/oedit.c:378.
+145	*World.doClanInfo	pkg/game/clan_info.go	130	3428	"\r\nClan privileges:\r\n"	c-reachable	C do_clan_privilege uses the matching output literal at src/clan.c:1489.
+146	*World.doClanInfo	pkg/game/clan_info.go	132	3500	"   %-10s: %d\r\n"	c-reachable	C do_clan_info has the matching output format at src/clan.c:771 (text score 93; C formatting supplies the variable text).
+147	*World.doClanInfo	pkg/game/clan_info.go	134	3575	"\r\nDescription:\r\n"	c-reachable	C do_clan_info has the matching output format at src/clan.c:774 (text score 80; C formatting supplies the variable text).
+148	*World.doClanInfo	pkg/game/clan_info.go	136	3636	"(null)"	ask-zach	C clan_info passes clan[i].plan to %s at src/clan.c:774; a NULL plan invokes undefined printf behavior, so the reference output class is unresolved.
+149	*World.doClanInfo	pkg/game/clan_info.go	150	3837	"This clan is at peace with all others.\r\n"	c-reachable	C do_clan_info uses the matching output literal at src/clan.c:777.
+150	*World.doClanInfo	pkg/game/clan_info.go	152	3911	"This clan is at war.\r\n"	c-reachable	C do_clan_info uses the matching output literal at src/clan.c:779.
+151	*World.doClanInfo	pkg/game/clan_info.go	154	3961	"Application fee  : %d gold\r\nMonthly Dues     : %d gold\r\n"	c-reachable	C do_clan_info uses the matching output literal at src/clan.c:780.
+152	*World.doClanInfo	pkg/game/clan_info.go	155	4062	"Application level: %d\r\n"	c-reachable	C do_clan_info uses the matching output literal at src/clan.c:782.
+153	*World.doClanMembers	pkg/game/clan_membership.go	294	7498	"You aren't in a clan!\r\n"	c-reachable	C do_clan_members uses the matching output literal at src/clan.c:587.
+154	*World.doClanMembers	pkg/game/clan_membership.go	300	7613	"You aren't in a clan!\r\n"	c-reachable	C do_clan_members uses the matching output literal at src/clan.c:587.
+155	*World.doClanMembers	pkg/game/clan_membership.go	304	7671	"\r\nList of your clan members\r\n"	c-reachable	C do_clan_members uses the matching output literal at src/clan.c:592.
+156	*World.doClanMembers	pkg/game/clan_membership.go	313	7977	"%s %s \r\n"	c-reachable	C do_clan_members uses the matching output literal at src/clan.c:603.
+157	*World.doClanMembers	pkg/game/clan_membership.go	328	8403	"%s %s \r\n"	c-reachable	C do_clan_members uses the matching output literal at src/clan.c:603.
+158	*World.doClanPlan	pkg/game/clan_settings.go	70	1975	"You're not influent enough in the clan to do that!\r\n"	c-reachable	C do_clan_plan uses the matching output literal at src/clan.c:1402.
+159	*World.doClanPlan	pkg/game/clan_settings.go	75	2094	"Enter the description, or plan for clan <<%s>>.\r\n"	c-reachable	C do_clan_plan uses the matching output literal at src/clan.c:1422.
+160	*World.doClanPlan	pkg/game/clan_settings.go	77	2197	"Old plan for clan <<%s>>:\r\n%s\r\n"	c-reachable	C do_clan_plan uses the matching output literal at src/clan.c:1427.
+161	*World.doClanPlan	pkg/game/clan_settings.go	78	2270	"Enter new plan:\r\n"	c-reachable	C do_clan_plan uses the matching output literal at src/clan.c:1430.
+162	*World.doClanPlan	pkg/game/clan_settings.go	80	2312	"End with @ on a line by itself.\r\n"	c-reachable	C do_clan_plan uses the matching output literal at src/clan.c:1432.
+163	*World.doClanRanks	pkg/game/clan_settings.go	101	2766	"You're not influent enough in the clan to do that!\r\n"	c-reachable	C do_clan_ranks uses the matching output literal at src/clan.c:1097.
+164	*World.doClanRanks	pkg/game/clan_settings.go	106	2870	"Set how many ranks?\r\n"	c-reachable	C do_clan_ranks uses the matching output literal at src/clan.c:1102.
+165	*World.doClanRanks	pkg/game/clan_settings.go	111	2949	"Set the ranks to what?\r\n"	c-reachable	C do_clan_ranks uses the matching output literal at src/clan.c:1107.
+166	*World.doClanRanks	pkg/game/clan_settings.go	118	3067	"The clan already has this number of ranks.\r\n"	c-reachable	C do_clan_ranks uses the matching output literal at src/clan.c:1114.
+167	*World.doClanRanks	pkg/game/clan_settings.go	123	3183	"Clans must have from 2 to 20 ranks.\r\n"	c-reachable	C do_clan_ranks uses the matching output literal at src/clan.c:1119.
+168	*World.doClanRanks	pkg/game/clan_settings.go	128	3293	"Changing the clan hierarchy requires 5,000 coins!\r\n"	c-reachable	C do_clan_ranks uses the matching output literal at src/clan.c:1124.
+169	*World.doClanTitles	pkg/game/clan_settings.go	201	4961	"You don't belong to any clan!\r\n"	c-reachable	C do_clan_titles uses the matching output literal at src/clan.c:1176.
+170	*World.doClanTitles	pkg/game/clan_settings.go	205	5060	"You're not influent enough in the clan to do that!\r\n"	c-reachable	C do_clan_titles uses the matching output literal at src/clan.c:1180.
+171	*World.doClanTitles	pkg/game/clan_settings.go	210	5191	"You do not have clan privileges.\r\n"	c-reachable	C do_clan_titles uses the matching output literal at src/clan.c:1186.
+172	*World.doClanTitles	pkg/game/clan_settings.go	216	5322	"You need to specify a clan number.\r\n"	c-reachable	C do_clan_titles uses the matching output literal at src/clan.c:1191.
+173	*World.doClanTitles	pkg/game/clan_settings.go	222	5472	"There is no clan with that number.\r\n"	c-reachable	C do_clan_titles uses the matching output literal at src/clan.c:1195.
+174	*World.doClanTitles	pkg/game/clan_settings.go	231	5612	"You need to specify a rank number.\r\n"	c-reachable	C do_clan_titles uses the matching output literal at src/clan.c:1203.
+175	*World.doClanTitles	pkg/game/clan_settings.go	238	5744	"This clan has no such rank number.\r\n"	c-reachable	C do_clan_titles uses the matching output literal at src/clan.c:1209.
+176	*World.doClanTitles	pkg/game/clan_settings.go	243	5850	"You need a clan title of under 20 characters.\r\n"	c-reachable	C do_clan_titles uses the matching output literal at src/clan.c:1213.
+177	*World.doClanTitles	pkg/game/clan_settings.go	251	5986	"Done.\r\n"	c-reachable	C do_clan_titles uses the matching output literal at src/clan.c:1218.
+178	*World.doClanSP	pkg/game/clan_settings.go	322	7527	"You're not influent enough in the clan to do that!\r\n"	c-reachable	C do_clan_sp uses the matching output literal at src/clan.c:1364.
+179	*World.doClanSP	pkg/game/clan_settings.go	327	7631	"Set the privilege to which rank?\r\n"	c-reachable	C do_clan_sp uses the matching output literal at src/clan.c:1369.
+180	*World.doClanSP	pkg/game/clan_settings.go	332	7723	"Set the privilege to what?\r\n"	c-reachable	C do_clan_sp uses the matching output literal at src/clan.c:1374.
+181	*World.doClanSP	pkg/game/clan_settings.go	339	7848	"There is no such rank in the clan.\r\n"	c-reachable	C do_clan_sp uses the matching output literal at src/clan.c:1381.
+182	*World.sendClanFormat	pkg/game/clans.go	368	9787	"Clan commands available to you:\r\n"	c-reachable	C send_clan_format has the matching output format at src/clan.c:67 (text score 96; C formatting supplies the variable text).
+183	*World.sendClanFormat	pkg/game/clans.go	369	9829	"   clan status\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:68.
+184	*World.sendClanFormat	pkg/game/clans.go	370	9854	"   clan info <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:69.
+185	*World.sendClanFormat	pkg/game/clans.go	379	10033	"   clan create     <leader> <clan name>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:71.
+186	*World.sendClanFormat	pkg/game/clans.go	380	10084	"   clan destroy    <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:72.
+187	*World.sendClanFormat	pkg/game/clans.go	381	10121	"   clan rename     <#> <name>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:73.
+188	*World.sendClanFormat	pkg/game/clans.go	382	10162	"   clan enroll     <player> <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:74.
+189	*World.sendClanFormat	pkg/game/clans.go	383	10208	"   clan expel      <player> <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:75.
+190	*World.sendClanFormat	pkg/game/clans.go	384	10254	"   clan promote    <player> <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:76.
+191	*World.sendClanFormat	pkg/game/clans.go	385	10300	"   clan demote     <player> <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:77.
+192	*World.sendClanFormat	pkg/game/clans.go	386	10346	"   clan withdraw   <amount> <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:78.
+193	*World.sendClanFormat	pkg/game/clans.go	387	10392	"   clan deposit    <amount> <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:79.
+194	*World.sendClanFormat	pkg/game/clans.go	388	10438	"   clan set ranks  <rank>   <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:80.
+195	*World.sendClanFormat	pkg/game/clans.go	389	10484	"   clan set appfee <amount> <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:81.
+196	*World.sendClanFormat	pkg/game/clans.go	390	10530	"   clan set dues   <amount> <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:82.
+197	*World.sendClanFormat	pkg/game/clans.go	391	10576	"   clan set applev <level>  <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:83.
+198	*World.sendClanFormat	pkg/game/clans.go	392	10622	"   clan set plan   <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:84.
+199	*World.sendClanFormat	pkg/game/clans.go	393	10659	"   clan private <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:85.
+200	*World.sendClanFormat	pkg/game/clans.go	394	10693	"   clan set privilege  <privilege>   <rank> <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:86.
+201	*World.sendClanFormat	pkg/game/clans.go	395	10755	"   clan set title  <clan number> <rank> <title>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:87.
+202	*World.sendClanFormat	pkg/game/clans.go	398	10859	"   clan apply      <clan>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:93.
+203	*World.sendClanFormat	pkg/game/clans.go	403	10995	"   clan who\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:96.
+204	*World.sendClanFormat	pkg/game/clans.go	404	11033	"   clan members\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:97.
+205	*World.sendClanFormat	pkg/game/clans.go	405	11075	"   clan quit\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:98.
+206	*World.sendClanFormat	pkg/game/clans.go	406	11114	"   clan deposit    <amount>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:99.
+207	*World.sendClanFormat	pkg/game/clans.go	408	11207	"   clan withdraw   <amount>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:101.
+208	*World.sendClanFormat	pkg/game/clans.go	411	11304	"   clan enroll     <player>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:103.
+209	*World.sendClanFormat	pkg/game/clans.go	414	11400	"   clan expel      <player>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:105.
+210	*World.sendClanFormat	pkg/game/clans.go	417	11498	"   clan promote    <player>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:107.
+211	*World.sendClanFormat	pkg/game/clans.go	420	11595	"   clan demote     <player>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:109.
+212	*World.sendClanFormat	pkg/game/clans.go	423	11695	"   clan set applev <level>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:111.
+213	*World.sendClanFormat	pkg/game/clans.go	426	11792	"   clan set appfee <amount>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:113.
+214	*World.sendClanFormat	pkg/game/clans.go	427	11834	"   clan set dues   <amount>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:114.
+215	*World.sendClanFormat	pkg/game/clans.go	430	11932	"   clan set plan\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:116.
+216	*World.sendClanFormat	pkg/game/clans.go	433	12004	"   clan private\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:118.
+217	*World.sendClanFormat	pkg/game/clans.go	434	12034	"   clan set ranks  <rank>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:119.
+218	*World.sendClanFormat	pkg/game/clans.go	435	12074	"   clan set title  <rank> <title>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:120.
+219	*World.sendClanFormat	pkg/game/clans.go	436	12122	"   clan set privilege  <privilege> <rank>\r\n"	c-reachable	C send_clan_format uses the matching output literal at src/clan.c:121.
+220	*World.mobGenCommBody	pkg/game/comm_channel.go	248	7938	"The walls seem to absorb your words.\r\n"	c-reachable	C do_tell uses the matching output literal at src/act.comm.c:920.
+221	*World.mobGenCommBody	pkg/game/comm_channel.go	255	8188	"You must be at least level %d before you can %s.\r\n"	c-reachable	C do_gen_comm uses the matching output literal at src/act.comm.c:1217.
+222	*World.mobGenCommBody	pkg/game/comm_channel.go	260	8369	"You are too stupid to communicate with language!\r\n"	c-reachable	C do_race_say uses the matching output literal at src/act.comm.c:647.
+223	*World.mobGenCommBody	pkg/game/comm_channel.go	267	8649	"Yes, %s, fine, %s we must, but WHAT???"	c-reachable	C do_gen_comm has the matching output format at src/act.comm.c:1241 (text score 97; C formatting supplies the variable text).
+224	*World.mobGenCommBody	pkg/game/comm_channel.go	272	8868	"You're too exhausted to holler.\r\n"	c-reachable	C do_gen_comm uses the matching output literal at src/act.comm.c:1250.
+225	*World.mobGenCommBody	pkg/game/comm_channel.go	281	9265	"You %s, '%s'"	c-reachable	C do_gen_comm uses the matching output literal at src/act.comm.c:1268.
+226	*World.doCTell	pkg/game/comm_channel.go	343	11912	"There is no clan with that number.\r\n"	c-reachable	C do_ctell uses the matching output literal at src/act.comm.c:1469.
+227	*World.doCTell	pkg/game/comm_channel.go	349	12061	"You're not part of a clan.\r\n"	c-reachable	C do_ctell uses the matching output literal at src/act.comm.c:1478.
+228	*World.doCTell	pkg/game/comm_channel.go	356	12207	"You aren't currently on your clan channel.\r\n"	c-reachable	C do_ctell uses the matching output literal at src/act.comm.c:1484.
+229	*World.doCTell	pkg/game/comm_channel.go	360	12338	"You cannot clan-tell anything!\r\n"	c-reachable	C do_ctell uses the matching output literal at src/act.comm.c:1490.
+230	*World.doCTell	pkg/game/comm_channel.go	366	12450	"What do you want to tell your clan?\r\n"	c-reachable	C do_ctell uses the matching output literal at src/act.comm.c:1497.
+231	*World.doCTell	pkg/game/comm_channel.go	373	12634	"Try entering in a number.\r\n"	c-reachable	C do_ctell uses the matching output literal at src/act.comm.c:1507.
+232	*World.doCTell	pkg/game/comm_channel.go	384	13039	"No one has a clan rank high enough to hear you!\r\n"	c-reachable	C do_ctell uses the matching output literal at src/act.comm.c:1515.
+233	*World.doCTell	pkg/game/comm_channel.go	389	13178	"What do you want to tell them?\r\n"	c-reachable	C do_ctell uses the matching output literal at src/act.comm.c:1522.
+234	*World.doCTell	pkg/game/comm_channel.go	392	13263	" (%d) "	c-reachable	C do_ctell uses the matching output literal at src/act.comm.c:1525.
+235	*World.doCTell	pkg/game/comm_channel.go	397	13383	"Okay.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:92.
+236	*World.doCTell	pkg/game/comm_channel.go	399	13428	"You tell your clan%s, '%s'\r\n"	c-reachable	C do_ctell uses the matching output literal at src/act.comm.c:1533.
+237	*World.doCTell	pkg/game/comm_channel.go	413	13810	"Someone"	c-reachable	C do_ctell uses the matching output literal at src/act.comm.c:1553.
+238	*World.doCTell	pkg/game/comm_channel.go	415	13846	"%s tells your clan%s, '%s'\r\n"	c-reachable	C do_ctell uses the matching output literal at src/act.comm.c:1551.
+239	*World.NPCDoRaceSay	pkg/game/comm_say.go	100	2596	"You are too stupid to communicate with language!\r\n"	c-reachable	C do_race_say uses the matching output literal at src/act.comm.c:647.
+240	*World.NPCDoRaceSay	pkg/game/comm_say.go	104	2697	"Yes, but WHAT do you want to say?\n\r"	c-reachable	C do_race_say uses the matching output literal at src/act.comm.c:678.
+241	*World.NPCDoRaceSay	pkg/game/comm_say.go	115	2944	"Human"	c-reachable	C source uses the matching output literal at src/constants.c:128.
+242	*World.NPCDoRaceSay	pkg/game/comm_say.go	117	3003	"Elven"	c-reachable	C speak_elven uses the matching output literal at src/act.comm.c:171.
+243	*World.NPCDoRaceSay	pkg/game/comm_say.go	119	3066	"Dwarven"	c-reachable	C source uses the matching output literal at src/constants.c:130.
+244	*World.NPCDoRaceSay	pkg/game/comm_say.go	121	3131	"Kenderkin"	c-reachable	C source uses the matching output literal at src/constants.c:131.
+245	*World.NPCDoRaceSay	pkg/game/comm_say.go	123	3202	"Minotauran"	c-reachable	C source uses the matching output literal at src/constants.c:132.
+246	*World.NPCDoRaceSay	pkg/game/comm_say.go	125	3275	"Rakshasan"	c-reachable	C source uses the matching output literal at src/constants.c:133.
+247	*World.NPCDoRaceSay	pkg/game/comm_say.go	127	3340	"Ssauran"	c-reachable	C source uses the matching output literal at src/constants.c:134.
+248	*World.NPCDoRaceSay	pkg/game/comm_say.go	133	3454	" %s, "	c-reachable	C boot_social_messages has the matching output format at src/act.social.c:242 (text score 88; C formatting supplies the variable text).
+249	*World.NPCDoRaceSay	pkg/game/comm_say.go	139	3701	"%s%s'(In %s) %s'\r\n"	c-reachable	C do_race_say builds the same language-tagged utterance in src/act.comm.c:708-720.
+250	*World.NPCDoRaceSay	pkg/game/comm_say.go	141	3809	"%s%s'%s'\r\n"	c-reachable	C do_race_say formats the untagged utterance at src/act.comm.c:720-744.
+251	*World.NPCDoRaceSay	pkg/game/comm_say.go	148	4027	"%s%s'(In %s) %s'\r\n"	c-reachable	C do_race_say builds the same language-tagged utterance in src/act.comm.c:708-720.
+252	*World.NPCDoRaceSay	pkg/game/comm_say.go	151	4154	"You %s, '(In %s) %s'\r\n"	c-reachable	C do_race_say formats the speaker prompt at src/act.comm.c:736-744.
+253	*World.okDamageShopkeeper	pkg/game/damage_gate.go	119	4527	"$n slaps $N."	c-reachable	C shopkeeper damage calls do_action with cmd_slap at src/shop.c:976; C do_action routes the configured action text through act() at src/act.social.c:128-137.
+254	*World.okDamageShopkeeper	pkg/game/damage_gate.go	120	4602	"You are slapped by $n."	c-reachable	C shopkeeper damage calls do_action with cmd_slap at src/shop.c:976; C do_action routes the configured victim text through act() at src/act.social.c:128-137.
+255	*World.okDamageShopkeeper	pkg/game/damage_gate.go	122	4687	"$n tells you, 'Get out of here before I call the guards!'"	c-reachable	C source has the matching output format at src/shop.h:195 (text score 83; C formatting supplies the variable text).
+256	*World.counter_procs	pkg/game/death.go	1406	54988	"The gods reward your many victories!\n\r"	c-reachable	C counter_procs uses the matching output literal at src/fight.c:1278.
+257	*World.counter_procs	pkg/game/death.go	1423	55710	"The gods reward your glory in battle!\n\r"	c-reachable	C counter_procs uses the matching output literal at src/fight.c:1267.
+258	*World.counter_procs	pkg/game/death.go	1433	56036	"The gods of war and death bestow a blessing upon you.\r\n"	c-reachable	C counter_procs uses the matching output literal at src/fight.c:1303.
+259	*World.DoTell	pkg/game/directed_speech.go	202	5217	"Who do you wish to tell what??"	c-reachable	C do_tell has the matching output format at src/act.comm.c:908 (text score 96; C formatting supplies the variable text).
+260	*World.DoTell	pkg/game/directed_speech.go	207	5343	"No-one by that name here."	c-reachable	C source has the matching output format at src/config.c:93 (text score 96; C formatting supplies the variable text).
+261	*World.DoTell	pkg/game/directed_speech.go	213	5534	"No-one by that name here."	c-reachable	C source has the matching output format at src/config.c:93 (text score 96; C formatting supplies the variable text).
+262	*World.DoTell	pkg/game/directed_speech.go	217	5672	"You can't tell other people while you have notell on."	c-reachable	C do_tell has the matching output format at src/act.comm.c:916 (text score 98; C formatting supplies the variable text).
+263	*World.DoTell	pkg/game/directed_speech.go	221	5810	"You cannot tell anyone anything!"	c-reachable	C do_tell has the matching output format at src/act.comm.c:918 (text score 96; C formatting supplies the variable text).
+264	*World.DoTell	pkg/game/directed_speech.go	225	5934	"The walls seem to absorb your words."	c-reachable	C do_tell has the matching output format at src/act.comm.c:920 (text score 97; C formatting supplies the variable text).
+265	*World.DoTell	pkg/game/directed_speech.go	231	6231	"$E can't hear you."	c-reachable	C do_tell uses the matching output literal at src/act.comm.c:928.
+266	*World.DoTell	pkg/game/directed_speech.go	239	6406	"No-one by that name here."	c-reachable	C source has the matching output format at src/config.c:93 (text score 96; C formatting supplies the variable text).
+267	*World.DoTell	pkg/game/directed_speech.go	244	6537	"You try to tell yourself something."	c-reachable	C do_tell has the matching output format at src/act.comm.c:914 (text score 97; C formatting supplies the variable text).
+268	*World.DoTell	pkg/game/directed_speech.go	248	6666	"You can't tell other people while you have notell on."	c-reachable	C do_tell has the matching output format at src/act.comm.c:916 (text score 98; C formatting supplies the variable text).
+269	*World.DoTell	pkg/game/directed_speech.go	252	6785	"You cannot tell anyone anything!"	c-reachable	C do_tell has the matching output format at src/act.comm.c:918 (text score 96; C formatting supplies the variable text).
+270	*World.DoTell	pkg/game/directed_speech.go	256	6886	"The walls seem to absorb your words."	c-reachable	C do_tell has the matching output format at src/act.comm.c:920 (text score 97; C formatting supplies the variable text).
+271	*World.DoTell	pkg/game/directed_speech.go	260	7004	"$E's linkless at the moment."	c-reachable	C do_tell uses the matching output literal at src/act.comm.c:922.
+272	*World.DoTell	pkg/game/directed_speech.go	264	7134	"$E's writing a message right now; try again later."	c-reachable	C do_tell uses the matching output literal at src/act.comm.c:924.
+273	*World.DoTell	pkg/game/directed_speech.go	268	7342	"$E can't hear you."	c-reachable	C do_tell uses the matching output literal at src/act.comm.c:928.
+274	*World.mobWake	pkg/game/dream_mob.go	50	1705	"You can't wake up!\r\n"	c-reachable	C do_wake uses the matching output literal at src/act.movement.c:870.
+275	*World.mobWake	pkg/game/dream_mob.go	51	1764	"$n tosses and turns uncomfortably."	c-reachable	C do_wake uses the matching output literal at src/act.movement.c:871.
+276	*World.mobWake	pkg/game/dream_mob.go	55	1878	"You are already awake...\r\n"	c-reachable	C do_wake uses the matching output literal at src/act.movement.c:874.
+277	*World.mobWake	pkg/game/dream_mob.go	58	1937	"You awaken, and sit up.\r\n"	c-reachable	C do_wake uses the matching output literal at src/act.movement.c:876.
+278	*World.mobWake	pkg/game/dream_mob.go	59	2000	"$n awakens."	c-reachable	C do_wake uses the matching output literal at src/act.movement.c:877.
+279	dreamLevelFlavor	pkg/game/dreams.go	161	5924	"You have dreams of showing this world what you are really made of.\r\n"	c-reachable	C dream has the matching output format at src/dream.c:114 (text score 85; C formatting supplies the variable text).
+280	dreamLevelFlavor	pkg/game/dreams.go	162	6015	"$n smiles in $s sleep."	c-reachable	C dream uses the matching output literal at src/dream.c:116.
+281	dreamLevelFlavor	pkg/game/dreams.go	168	6189	"You have a pleasant dream of safe travels to far places and a hero's welcome when you return.\r\n"	c-reachable	C dream() builds this line from adjacent string fragments at src/dream.c:125-126.
+282	dreamLevelFlavor	pkg/game/dreams.go	169	6307	"$n begins to hum a happy ditty in $s sleep."	c-reachable	C dream uses the matching output literal at src/dream.c:127.
+283	dreamLevelFlavor	pkg/game/dreams.go	175	6503	"You dream of your conquest of the world.\r\n"	c-reachable	C dream uses the matching output literal at src/dream.c:139.
+284	dreamLevelFlavor	pkg/game/dreams.go	176	6568	"$n begins to grin in $s sleep."	c-reachable	C dream uses the matching output literal at src/dream.c:140.
+285	dreamLevelFlavor	pkg/game/dreams.go	182	6751	"You dream of slaying the dark creatures of the night.\r\n"	c-reachable	C dream uses the matching output literal at src/dream.c:150.
+286	dreamLevelFlavor	pkg/game/dreams.go	183	6829	"$n smirks in $s sleep."	c-reachable	C dream uses the matching output literal at src/dream.c:152.
+287	dreamLevelFlavor	pkg/game/dreams.go	189	7004	"You have a fantastic dream of one day attaining immortality.\r\n"	c-reachable	C dream has the matching output format at src/dream.c:159 (text score 87; C formatting supplies the variable text).
+288	dreamLevelFlavor	pkg/game/dreams.go	190	7089	"$n looks like $e is having big dreams."	c-reachable	C dream uses the matching output literal at src/dream.c:161.
+289	dreamLevelFlavor	pkg/game/dreams.go	196	7274	"You have big, grand dreams of the power of the Gods.\r\n"	c-reachable	C dream uses the matching output literal at src/dream.c:168.
+290	dreamLevelFlavor	pkg/game/dreams.go	197	7351	"$n glows in $s sleep."	c-reachable	C dream uses the matching output literal at src/dream.c:170.
+291	dreamLevelFlavor	pkg/game/dreams.go	204	7531	"You toss and turn under the constant fear of the wrath of Orodreth :-)\r\n"	c-reachable	C dream has the matching output format at src/dream.c:177 (text score 86; C formatting supplies the variable text).
+292	dreamLevelFlavor	pkg/game/dreams.go	205	7626	"You find yourself wide awake!\r\n"	c-reachable	C dream uses the matching output literal at src/dream.c:179.
+293	dreamLevelFlavor	pkg/game/dreams.go	206	7680	"$n awakens with fear in $s eyes."	c-reachable	C dream uses the matching output literal at src/dream.c:180.
+294	DreamTravelFn	pkg/game/dreams.go	236	9016	"You have a dream %s \r\n"	c-reachable	C dream_travel uses the matching output literal at src/dream.c:196.
+295	DreamTravelFn	pkg/game/dreams.go	237	9074	"The sleeping body of $n fades from existence."	c-reachable	C dream_travel uses the matching output literal at src/dream.c:198.
+296	DreamTravelFn	pkg/game/dreams.go	239	9169	"The sleeping body of $n fades into existence."	c-reachable	C dream_travel uses the matching output literal at src/dream.c:202.
+297	DreamTravelFn	pkg/game/dreams.go	246	9418	"You have a dream %s \r\n"	c-reachable	C dream_travel uses the matching output literal at src/dream.c:196.
+298	DreamTravelFn	pkg/game/dreams.go	247	9476	"The sleeping body of $n fades from existence."	c-reachable	C dream_travel uses the matching output literal at src/dream.c:198.
+299	DreamTravelFn	pkg/game/dreams.go	249	9571	"The sleeping body of $n fades into existence."	c-reachable	C dream_travel uses the matching output literal at src/dream.c:202.
+300	*World.doSimpleMoveMob	pkg/game/flee.go	139	4508	"The thought of leaving your master makes you weep.\r\n"	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:121.
+301	*World.doSimpleMoveMob	pkg/game/flee.go	157	5008	"You need a boat to go there.\r\n"	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:129.
+302	*World.doSimpleMoveMob	pkg/game/flee.go	171	5491	"You're in no position to go ANYWHERE!\r\n"	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:150.
+303	*World.doSimpleMoveMob	pkg/game/flee.go	175	5617	"You are too exhausted to carry your rider further.\r\n"	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:157.
+304	*World.doSimpleMoveMob	pkg/game/flee.go	176	5696	"Your mount is too exhausted to carry you further.\r\n"	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:159.
+305	*World.doSimpleMoveMob	pkg/game/flee.go	181	5906	"There isn't enough room there!\r\n"	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:182.
+306	*World.doSimpleMoveMob	pkg/game/flee.go	185	6078	"You can't ride in there! Dismount first!\r\n"	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:188.
+307	*World.doSimpleMoveMob	pkg/game/flee.go	191	6245	"$n leaves %s."	c-reachable	C do_simple_move uses the matching output literal at src/act.movement.c:207.
+308	*World.performMoveMob	pkg/game/flee.go	276	9009	"Alas, you cannot go that way...\r\n"	c-reachable	C perform_move uses the matching output literal at src/act.movement.c:320.
+309	*World.performMoveMob	pkg/game/flee.go	285	9439	"Alas, you cannot go that way...\r\n"	c-reachable	C perform_move uses the matching output literal at src/act.movement.c:320.
+310	*World.performMoveMob	pkg/game/flee.go	287	9529	"The %s seems to be closed.\r\n"	c-reachable	C perform_move uses the matching output literal at src/act.movement.c:328.
+311	*World.performMoveMob	pkg/game/flee.go	290	9629	"It seems to be closed.\r\n"	c-reachable	C perform_move uses the matching output literal at src/act.movement.c:333.
+312	*World.performMoveMob	pkg/game/flee.go	314	10418	"You follow $N."	c-reachable	C perform_move has the matching output format at src/act.movement.c:347 (text score 93; C formatting supplies the variable text).
+313	AddFollowerMob	pkg/game/follow.go	76	2645	"$n starts following you."	c-reachable	C add_follower uses the matching output literal at src/utils.c:496.
+314	AddFollowerMob	pkg/game/follow.go	77	2722	"$n starts to follow $N."	c-reachable	C add_follower uses the matching output literal at src/utils.c:497.
+315	StopFollower	pkg/game/follow.go	182	6041	"You realize that $N is a jerk!"	c-reachable	C stop_follower uses the matching output literal at src/utils.c:412.
+316	StopFollower	pkg/game/follow.go	184	6127	"$n realizes that $N is a jerk!"	c-reachable	C stop_follower uses the matching output literal at src/utils.c:413.
+317	StopFollower	pkg/game/follow.go	187	6239	"$n hates your guts!"	c-reachable	C stop_follower uses the matching output literal at src/utils.c:414.
+318	StopFollower	pkg/game/follow.go	193	6422	"You stop shadowing $N."	c-reachable	C stop_follower uses the matching output literal at src/utils.c:418.
+319	StopFollower	pkg/game/follow.go	196	6511	"You stop following $N."	c-reachable	C stop_follower uses the matching output literal at src/utils.c:420.
+320	StopFollower	pkg/game/follow.go	198	6589	"$n stops following $N."	c-reachable	C stop_follower uses the matching output literal at src/utils.c:421.
+321	StopFollower	pkg/game/follow.go	201	6760	"$n stops following you."	c-reachable	C stop_follower uses the matching output literal at src/utils.c:423.
+322	*World.doTrack	pkg/game/graph.go	137	3761	"You have no idea how.\r\n"	c-reachable	C do_track uses the matching output literal at src/graph.c:194.
+323	*World.doTrack	pkg/game/graph.go	142	3857	"You have no idea how.\r\n"	c-reachable	C do_track uses the matching output literal at src/graph.c:194.
+324	*World.doTrack	pkg/game/graph.go	148	3967	"Whom are you trying to track?\r\n"	c-reachable	C do_track uses the matching output literal at src/graph.c:204.
+325	*World.doTrack	pkg/game/graph.go	155	4166	"You can't sense a trail to them from here.\r\n"	c-reachable	C do_track uses the matching output literal at src/graph.c:208.
+326	*World.doTrack	pkg/game/graph.go	167	4479	"You sense no trail.\r\n"	c-reachable	C do_track uses the matching output literal at src/graph.c:212.
+327	*World.doTrack	pkg/game/graph.go	176	4794	"You sense no trail.\r\n"	c-reachable	C do_track uses the matching output literal at src/graph.c:212.
+328	*World.doTrack	pkg/game/graph.go	186	4965	"Hmm.. something seems to be wrong.\r\n"	c-reachable	C do_track uses the matching output literal at src/graph.c:227.
+329	*World.doTrack	pkg/game/graph.go	188	5049	"You're already in the same room!!\r\n"	c-reachable	C do_track uses the matching output literal at src/graph.c:230.
+330	*World.doTrack	pkg/game/graph.go	190	5138	"You can't sense a trail to %s from here.\r\n"	c-reachable	C do_track uses the matching output literal at src/graph.c:233.
+331	*World.doTrack	pkg/game/graph.go	216	5859	"You sense a trail %s from here!\r\n"	c-reachable	C do_track uses the matching output literal at src/graph.c:251.
+332	*World.doTrack	pkg/game/graph.go	218	5942	"There doesn't seem to be any way out of here!\r\n"	c-reachable	C do_track uses the matching output literal at src/graph.c:253.
+333	*World.HcontrolSetKey	pkg/game/house_control.go	314	8147	"That house doesn't exist!\r\n"	c-reachable	C hcontrol_set_key uses the matching output literal at src/house.c:489.
+334	*World.HcontrolSetKey	pkg/game/house_control.go	321	8293	"That object doesn't exist!\r\n"	c-reachable	C hcontrol_set_key uses the matching output literal at src/house.c:504.
+335	*World.HcontrolSetKey	pkg/game/house_control.go	329	8427	"House key set.\r\n"	c-reachable	C hcontrol_set_key uses the matching output literal at src/house.c:510.
+336	*World.doHouseGuest	pkg/game/house_player.go	65	1599	"No such player.\r\n"	c-reachable	C do_house uses the matching output literal at src/house.c:658.
+337	*World.doHouseGuest	pkg/game/house_player.go	79	1900	"Guest deleted.\r\n"	c-reachable	C do_house uses the matching output literal at src/house.c:668.
+338	*World.doHouseGuest	pkg/game/house_player.go	85	2005	"You've already reached the maximum number of guests in your house!\r\n"	c-reachable	C do_house uses the matching output literal at src/house.c:673.
+339	*World.doHouseGuest	pkg/game/house_player.go	92	2191	"Guest added.\r\n"	c-reachable	C do_house uses the matching output literal at src/house.c:679.
+340	*World.listHouseGuests	pkg/game/house_player.go	123	2998	"Guests of your house:\r\n"	c-reachable	C do_house uses the matching output literal at src/house.c:647.
+341	*World.listHouseGuests	pkg/game/house_player.go	125	3069	"  None.\r\n"	c-reachable	C do_house uses the matching output literal at src/house.c:649.
+342	applyDrinkSustenance	pkg/game/item_consumable.go	138	4514	"The vampirism in your body is not satiated by mere %s...\r\n"	c-reachable	C do_drink uses the matching output literal at src/act.item.c:987.
+343	applyDrinkSustenance	pkg/game/item_consumable.go	144	4760	"You feel drunk.\r\n"	c-reachable	C do_drink uses the matching output literal at src/act.item.c:1000.
+344	applyDrinkSustenance	pkg/game/item_consumable.go	147	4845	"You don't feel thirsty any more.\r\n"	c-reachable	C do_drink uses the matching output literal at src/act.item.c:1003.
+345	applyDrinkSustenance	pkg/game/item_consumable.go	151	4946	"You are full.\r\n"	c-reachable	C do_drink uses the matching output literal at src/act.item.c:1007.
+346	*World.eatWerewolfCorpse	pkg/game/item_consumable.go	285	8958	"You savagely rip into $p, feeding your insatiable appetite."	c-reachable	C do_eat uses the matching output literal at src/act.item.c:1062.
+347	*World.eatWerewolfCorpse	pkg/game/item_consumable.go	286	9069	"$n savagely rips into $p, crunching through flesh and bone alike."	c-reachable	C do_eat uses the matching output literal at src/act.item.c:1064.
+348	*World.DoPour	pkg/game/item_consumable.go	326	10359	"From what do you want to pour?"	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1172.
+349	*World.DoPour	pkg/game/item_consumable.go	331	10516	"You can't find it!"	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1177.
+350	*World.DoPour	pkg/game/item_consumable.go	335	10648	"You can't pour from that!"	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1182.
+351	*World.DoPour	pkg/game/item_consumable.go	340	10761	"What do you want to fill?  And what are you filling it from?\r\n"	c-reachable	C do_pour has the matching output format at src/act.item.c:1190 (text score 83; C formatting supplies the variable text).
+352	*World.DoPour	pkg/game/item_consumable.go	347	11057	"You can't find it!"	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1177.
+353	*World.DoPour	pkg/game/item_consumable.go	351	11177	"You can't fill $p!"	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1201.
+354	*World.DoPour	pkg/game/item_consumable.go	355	11283	"What do you want to fill $p from?"	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1206.
+355	*World.DoPour	pkg/game/item_consumable.go	360	11459	"There doesn't seem to be %s %s here.\r\n"	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1213.
+356	*World.DoPour	pkg/game/item_consumable.go	364	11622	"You can't fill something from $p."	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1220.
+357	*World.DoPour	pkg/game/item_consumable.go	370	11761	"The $p is empty."	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1227.
+358	*World.DoPour	pkg/game/item_consumable.go	376	11887	"Where do you want it?  Out or in what?"	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1234.
+359	*World.DoPour	pkg/game/item_consumable.go	386	12127	"You can't find it!"	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1177.
+360	*World.DoPour	pkg/game/item_consumable.go	390	12297	"You can't pour anything into that."	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1273.
+361	*World.DoPour	pkg/game/item_consumable.go	396	12425	"A most unproductive effort."	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1279.
+362	*World.DoPour	pkg/game/item_consumable.go	400	12590	"There is already another liquid in it!"	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1285.
+363	*World.DoPour	pkg/game/item_consumable.go	404	12738	"There is no room for more."	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1290.
+364	*World.DoPour	pkg/game/item_consumable.go	411	12986	"You pour the %s into the %s."	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1295.
+365	*World.DoPour	pkg/game/item_consumable.go	414	13128	"You gently fill $p from $P."	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1301.
+366	*World.DoPour	pkg/game/item_consumable.go	415	13211	"$n gently fills $p from $P."	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1302.
+367	*World.putAll	pkg/game/item_container.go	139	4009	"You don't seem to have anything to put in it.\r\n"	c-reachable	C do_put has the matching output format at src/act.item.c:142 (text score 85; C formatting supplies the variable text).
+368	*World.putAll	pkg/game/item_container.go	141	4103	"You don't seem to have any %ss.\r\n"	c-reachable	C do_put uses the matching output literal at src/act.item.c:146.
+369	*World.performWear	pkg/game/item_equipment.go	116	2914	"You can't wear $p there."	c-reachable	C perform_wear uses the matching output literal at src/act.item.c:1461.
+370	*World.performWear	pkg/game/item_equipment.go	149	3615	"You can't wield that.\r\n"	c-reachable	C perform_wear uses the matching output literal at src/act.item.c:1482.
+371	*World.performWear	pkg/game/item_equipment.go	153	3712	"Your flesh is altered, you can't wield anything!\r\n"	c-reachable	C perform_wear uses the matching output literal at src/act.item.c:1488.
+372	*World.performWear	pkg/game/item_equipment.go	157	3850	"It is too heavy for you to use.\r\n"	c-reachable	C perform_wear uses the matching output literal at src/act.item.c:1494.
+373	*World.performWear	pkg/game/item_equipment.go	162	4062	"Both hands must be free to wield that.\r\n"	c-reachable	C perform_wear uses the matching output literal at src/act.item.c:1500.
+374	*World.performWear	pkg/game/item_equipment.go	170	4357	"Both your hands are occupied with your weapon at the moment.\r\n"	c-reachable	C perform_wear uses the matching output literal at src/act.item.c:1508.
+375	*World.performWear	pkg/game/item_equipment.go	181	4592	"You are zapped by $p and instantly let go of it."	c-reachable	C equip_char uses the matching output literal at src/handler.c:705.
+376	*World.performWear	pkg/game/item_equipment.go	182	4672	"$n is zapped by $p and instantly lets go of it."	c-reachable	C equip_char uses the matching output literal at src/handler.c:707.
+377	*World.performWear	pkg/game/item_equipment.go	186	4789	"You cannot use $p."	c-reachable	C equip_char uses the matching output literal at src/handler.c:715.
+378	*World.performWear	pkg/game/item_equipment.go	192	4992	"You can't wear that right now.\r\n"	go-only-in-game	Go emits this only after EquipItem returns an error (pkg/game/item_equipment.go:192); C do_wear has no matching error branch and uses explicit wear refusals such as src/act.item.c:1461-1485.
+379	*World.DoWear	pkg/game/item_equipment.go	397	11289	"Wear what?\r\n"	c-reachable	C do_wear uses the matching output literal at src/act.item.c:1595.
+380	*World.DoWear	pkg/game/item_equipment.go	403	11408	"You can't specify the same body location for more than one item!\r\n"	c-reachable	C do_wear has the matching output format at src/act.item.c:1602 (text score 80; C formatting supplies the variable text).
+381	*World.DoWear	pkg/game/item_equipment.go	419	11782	"You don't seem to have anything wearable.\r\n"	c-reachable	C do_wear uses the matching output literal at src/act.item.c:1618.
+382	*World.DoWear	pkg/game/item_equipment.go	427	11961	"Wear all of what?\r\n"	c-reachable	C do_wear uses the matching output literal at src/act.item.c:1624.
+383	*World.DoWear	pkg/game/item_equipment.go	439	12297	"You can't wear $p."	c-reachable	C do_wear uses the matching output literal at src/act.item.c:1639.
+384	*World.DoWear	pkg/game/item_equipment.go	443	12382	"You don't seem to have any %ss.\r\n"	c-reachable	C do_wear uses the matching output literal at src/act.item.c:1629.
+385	*World.DoWear	pkg/game/item_equipment.go	450	12527	"You don't seem to have %s %s.\r\n"	c-reachable	C do_wear uses the matching output literal at src/act.item.c:1647.
+386	*World.DoWear	pkg/game/item_equipment.go	457	12715	"You can't wear $p."	c-reachable	C do_wear uses the matching output literal at src/act.item.c:1639.
+387	*World.DoWear	pkg/game/item_equipment.go	459	12786	"'%s'?  What part of your body is THAT?\r\n"	c-reachable	C find_eq_pos uses the matching output literal at src/act.item.c:1575.
+388	*World.DoGrab	pkg/game/item_equipment.go	486	13597	"Hold what?\r\n"	c-reachable	C do_grab uses the matching output literal at src/act.item.c:1692.
+389	*World.DoGrab	pkg/game/item_equipment.go	491	13706	"You don't seem to have %s %s.\r\n"	c-reachable	C do_grab uses the matching output literal at src/act.item.c:1695.
+390	*World.DoGrab	pkg/game/item_equipment.go	496	13963	"You can't hold that.\r\n"	c-reachable	C do_grab uses the matching output literal at src/act.item.c:1705.
+391	*World.performRemove	pkg/game/item_equipment.go	516	14373	"You can't remove $p, it must be CURSED!"	c-reachable	C perform_remove uses the matching output literal at src/act.item.c:1720.
+392	*World.performRemove	pkg/game/item_equipment.go	520	14520	"$p: you can't carry that many items!"	c-reachable	C perform_remove uses the matching output literal at src/act.item.c:1722.
+393	*World.performRemove	pkg/game/item_equipment.go	526	14738	"You can't remove that right now.\r\n"	go-only-in-game	Go emits this only after UnequipItem returns an error (pkg/game/item_equipment.go:526); C do_remove calls perform_remove without a matching error message (src/act.item.c:1732-1778).
+394	*World.performRemove	pkg/game/item_equipment.go	530	14808	"You stop using $p."	c-reachable	C perform_remove uses the matching output literal at src/act.item.c:1726.
+395	*World.performRemove	pkg/game/item_equipment.go	531	14857	"$n stops using $p."	c-reachable	C perform_remove uses the matching output literal at src/act.item.c:1727.
+396	*World.getFromRoom	pkg/game/item_transfer.go	183	6393	"You can't reach it from your mount.\r\n"	c-reachable	C get_from_room uses the matching output literal at src/act.item.c:299.
+397	*World.getFromRoom	pkg/game/item_transfer.go	195	6779	"You don't see %s %s here.\r\n"	c-reachable	C do_put uses the matching output literal at src/act.item.c:105.
+398	*World.getFromRoom	pkg/game/item_transfer.go	201	6946	"Get all of what?\r\n"	c-reachable	C get_from_container uses the matching output literal at src/act.item.c:243.
+399	*World.getFromRoom	pkg/game/item_transfer.go	215	7258	"There doesn't seem to be anything here.\r\n"	c-reachable	C get_from_room uses the matching output literal at src/act.item.c:335.
+400	*World.getFromRoom	pkg/game/item_transfer.go	217	7344	"You don't see any %ss here.\r\n"	c-reachable	C get_from_room uses the matching output literal at src/act.item.c:338.
+401	*World.performGiveToMob	pkg/game/item_transfer.go	487	15737	"$N doesn't seem to be interested in $p."	c-reachable	C perform_give uses the matching output literal at src/act.item.c:676.
+402	*World.performGiveToMob	pkg/game/item_transfer.go	491	15913	"You can't let go of $p!!  Yeech!"	c-reachable	C perform_give uses the matching output literal at src/act.item.c:682.
+403	*World.performGiveToMob	pkg/game/item_transfer.go	495	16087	"$E can't carry that much weight."	c-reachable	C perform_give uses the matching output literal at src/act.item.c:692.
+404	*World.performGiveToMob	pkg/game/item_transfer.go	500	16371	"$E can't carry that much weight."	c-reachable	C perform_give uses the matching output literal at src/act.item.c:692.
+405	*World.performGiveToMob	pkg/game/item_transfer.go	504	16469	"You give $p to $N."	c-reachable	C perform_give uses the matching output literal at src/act.item.c:697.
+406	*World.performGiveToMob	pkg/game/item_transfer.go	505	16540	"$n gives you $p."	c-reachable	C perform_give uses the matching output literal at src/act.item.c:698.
+407	*World.performGiveToMob	pkg/game/item_transfer.go	506	16606	"$n gives $p to $N."	c-reachable	C perform_give uses the matching output literal at src/act.item.c:699.
+408	performDropMobile	pkg/game/item_transfer_actor.go	325	10121	"$n drops $p."	c-reachable	C perform_drop emits the corresponding room act at src/act.item.c:459.
+409	*World.DoEquipment	pkg/game/item_views.go	84	2591	"You are using:\r\n"	c-reachable	C do_equipment uses the matching output literal at src/act.informative.c:1474.
+410	*World.DoEquipment	pkg/game/item_views.go	99	3005	"Something.\r\n"	c-reachable	C do_equipment uses the matching output literal at src/act.informative.c:1488.
+411	*World.DoEquipment	pkg/game/item_views.go	104	3060	" Nothing.\r\n"	c-reachable	C do_equipment uses the matching output literal at src/act.informative.c:1494.
+412	*World.pullIdlePlayerToVoid	pkg/game/limits_misc.go	68	1832	"$n disappears into the void."	c-reachable	C check_idling uses the matching output literal at src/limits.c:432.
+413	*World.pullIdlePlayerToVoid	pkg/game/limits_misc.go	69	1891	"You have been idle, and are pulled into a void.\r\n"	c-reachable	C check_idling uses the matching output literal at src/limits.c:433.
+414	*World.mobAssist	pkg/game/mobact.go	593	18831	"$N assists you!"	c-reachable	C do_assist uses the matching output literal at src/act.offensive.c:93.
+415	*World.mobAssist	pkg/game/mobact.go	595	18963	"$n assists $N."	c-reachable	C do_assist uses the matching output literal at src/act.offensive.c:94.
+416	*World.MpGreetActor	pkg/game/mobprogs.go	66	2121	"$n mutters something about filthy animals in $s shop..."	c-reachable	C mp_greet uses the matching output literal at src/mobprog.c:83.
+417	*World.MpGreetActor	pkg/game/mobprogs.go	73	2517	"$n says, 'Have a seat there! Stay a while, rest your bones and warm your feet by the fire!'"	c-reachable	C mobile-program greeting emits this line at src/mobprog.c:89-90.
+418	*World.DoFollow	pkg/game/movement_commands.go	207	7785	"Whom do you wish to follow?\r\n"	c-reachable	C do_follow uses the matching output literal at src/act.movement.c:900.
+419	*World.DoFollow	pkg/game/movement_commands.go	221	8217	"No-one by that name here.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:93.
+420	*World.DoFollow	pkg/game/movement_commands.go	226	8364	"You are already following $M."	c-reachable	C do_follow uses the matching output literal at src/act.movement.c:905.
+421	*World.DoFollow	pkg/game/movement_commands.go	231	8566	"But you only feel like following $N!"	c-reachable	C do_follow uses the matching output literal at src/act.movement.c:909.
+422	*World.DoFollow	pkg/game/movement_commands.go	237	8707	"You are already following yourself.\r\n"	c-reachable	C do_follow uses the matching output literal at src/act.movement.c:914.
+423	*World.DoFollow	pkg/game/movement_commands.go	245	8887	"Sorry, but following in loops is not allowed.\r\n"	c-reachable	C do_follow has the matching output format at src/act.movement.c:920 (text score 97; C formatting supplies the variable text).
+424	*World.DoFollow	pkg/game/movement_commands.go	274	9820	"You now follow $N."	c-reachable	C do_follow uses the matching output literal at src/act.movement.c:944.
+425	*World.DoFollow	pkg/game/movement_commands.go	287	10204	"You now follow $N."	c-reachable	C do_follow uses the matching output literal at src/act.movement.c:944.
+426	*World.DoFollow	pkg/game/movement_commands.go	289	10347	"$n starts following you."	c-reachable	C add_follower uses the matching output literal at src/utils.c:496.
+427	*World.DoFollow	pkg/game/movement_commands.go	291	10426	"$n starts to follow $N."	c-reachable	C add_follower uses the matching output literal at src/utils.c:497.
+428	*World.DoEnter	pkg/game/movement_commands.go	326	11404	"There is no "	c-reachable	C do_enter formats “There is no %s here.” at src/act.movement.c:657.
+429	*World.DoEnter	pkg/game/movement_commands.go	326	11428	" here.\r\n"	c-reachable	C do_enter formats “There is no %s here.” at src/act.movement.c:657.
+430	*World.DoEnter	pkg/game/movement_commands.go	330	11552	"You are already indoors.\r\n"	c-reachable	C do_enter uses the matching output literal at src/act.movement.c:660.
+431	*World.DoEnter	pkg/game/movement_commands.go	342	11951	"You can't seem to find anything to enter.\r\n"	c-reachable	C do_enter uses the matching output literal at src/act.movement.c:671.
+432	*World.DoLeave	pkg/game/movement_commands.go	353	12312	"You are outside.. where do you want to go?\r\n"	c-reachable	C do_leave uses the matching output literal at src/act.movement.c:681.
+433	*World.DoLeave	pkg/game/movement_commands.go	365	12752	"I see no obvious exits to the outside.\r\n"	c-reachable	C do_leave uses the matching output literal at src/act.movement.c:691.
+434	*World.npcStand	pkg/game/npc_command.go	131	5519	"$n clambers to $s feet."	c-reachable	C do_stand uses the matching output literal at src/act.movement.c:709.
+435	*World.npcStand	pkg/game/npc_command.go	133	5617	"$n stops resting, and clambers on $s feet."	c-reachable	C do_stand uses the matching output literal at src/act.movement.c:714.
+436	*World.npcStand	pkg/game/npc_command.go	135	5719	"$n stops floating around, and puts $s feet on the ground."	c-reachable	C do_stand uses the matching output literal at src/act.movement.c:726.
+437	*World.npcTell	pkg/game/npc_command.go	194	8196	"Who do you wish to tell what??"	c-reachable	C do_tell has the matching output format at src/act.comm.c:908 (text score 96; C formatting supplies the variable text).
+438	*World.npcTell	pkg/game/npc_command.go	200	8383	"No-one by that name here."	c-reachable	C source has the matching output format at src/config.c:93 (text score 96; C formatting supplies the variable text).
+439	*World.npcTell	pkg/game/npc_command.go	207	8666	"No-one by that name here."	c-reachable	C source has the matching output format at src/config.c:93 (text score 96; C formatting supplies the variable text).
+440	*World.npcTell	pkg/game/npc_command.go	211	8774	"You try to tell yourself something."	c-reachable	C do_tell has the matching output format at src/act.comm.c:914 (text score 97; C formatting supplies the variable text).
+441	*World.npcTell	pkg/game/npc_command.go	215	8926	"The walls seem to absorb your words."	c-reachable	C do_tell has the matching output format at src/act.comm.c:920 (text score 97; C formatting supplies the variable text).
+442	*World.npcTell	pkg/game/npc_command.go	219	9109	"$E can't hear you."	c-reachable	C do_tell uses the matching output literal at src/act.comm.c:928.
+443	*World.npcTell	pkg/game/npc_command.go	227	9296	"No-one by that name here."	c-reachable	C source has the matching output format at src/config.c:93 (text score 96; C formatting supplies the variable text).
+444	*World.npcTell	pkg/game/npc_command.go	231	9434	"The walls seem to absorb your words."	c-reachable	C do_tell has the matching output format at src/act.comm.c:920 (text score 97; C formatting supplies the variable text).
+445	*World.npcTell	pkg/game/npc_command.go	235	9562	"$E's linkless at the moment."	c-reachable	C do_tell uses the matching output literal at src/act.comm.c:922.
+446	*World.npcTell	pkg/game/npc_command.go	239	9715	"$E's writing a message right now; try again later."	c-reachable	C do_tell uses the matching output literal at src/act.comm.c:924.
+447	*World.npcTell	pkg/game/npc_command.go	244	9973	"$E can't hear you."	c-reachable	C do_tell uses the matching output literal at src/act.comm.c:928.
+448	*World.npcPutDirect	pkg/game/npc_command_items.go	62	2174	"Put what in what?\r\n"	c-reachable	C do_put uses the matching output literal at src/act.item.c:90.
+449	*World.npcPutDirect	pkg/game/npc_command_items.go	66	2278	"You can only put things into one container at a time.\r\n"	c-reachable	C do_put uses the matching output literal at src/act.item.c:92.
+450	*World.npcPutDirect	pkg/game/npc_command_items.go	70	2410	"it"	c-reachable	C do_put uses the matching output literal at src/act.item.c:97.
+451	*World.npcPutDirect	pkg/game/npc_command_items.go	72	2454	"them"	c-reachable	C do_put uses the matching output literal at src/act.item.c:97.
+452	*World.npcPutDirect	pkg/game/npc_command_items.go	74	2475	"What do you want to put "	c-reachable	C do_put formats “What do you want to put %s in?” at src/act.item.c:96.
+453	*World.npcPutDirect	pkg/game/npc_command_items.go	74	2511	" in?\r\n"	c-reachable	C do_put formats “What do you want to put %s in?” at src/act.item.c:96.
+454	*World.npcPutDirect	pkg/game/npc_command_items.go	94	3054	"You don't see "	c-reachable	C do_put formats this missing-object message at src/act.item.c:105.
+455	*World.npcPutDirect	pkg/game/npc_command_items.go	94	3113	" here.\r\n"	c-reachable	C do_put formats the missing-object message at src/act.item.c:105.
+456	*World.npcPutDirect	pkg/game/npc_command_items.go	98	3252	"$p is not a container."	c-reachable	C do_put uses the matching output literal at src/act.item.c:109.
+457	*World.npcPutDirect	pkg/game/npc_command_items.go	102	3366	"You'd better open it first!\r\n"	c-reachable	C do_put uses the matching output literal at src/act.item.c:111.
+458	*World.npcPutDirect	pkg/game/npc_command_items.go	114	3722	"You aren't carrying "	c-reachable	C do_put has the matching output format at src/act.item.c:118 (text score 83; C formatting supplies the variable text).
+459	*World.npcPutDirect	pkg/game/npc_command_items.go	118	3862	"You attempt to fold it into itself, but fail.\r\n"	c-reachable	C do_put has the matching output format at src/act.item.c:122 (text score 86; C formatting supplies the variable text).
+460	*World.npcPutDirect	pkg/game/npc_command_items.go	137	4424	"You don't seem to have anything to put in it.\r\n"	c-reachable	C do_put has the matching output format at src/act.item.c:142 (text score 85; C formatting supplies the variable text).
+461	*World.npcPutDirect	pkg/game/npc_command_items.go	139	4499	"You don't seem to have any "	c-reachable	C do_put has the matching output format at src/act.item.c:146 (text score 90; C formatting supplies the variable text).
+462	*World.npcPutDirect	pkg/game/npc_command_items.go	139	4541	"s.\r\n"	c-reachable	C do_put formats the plural missing-object message at src/act.item.c:146.
+463	*World.npcWearAtDirect	pkg/game/npc_command_items.go	161	5367	" what?\r\n"	c-reachable	C do_wear emits “Wear what?” at src/act.item.c:1595.
+464	*World.npcWearAtDirect	pkg/game/npc_command_items.go	172	5669	"You don't seem to have "	c-reachable	C do_wear formats the missing-item message at src/act.item.c:1647-1648.
+465	*World.npcRemoveDirect	pkg/game/npc_command_items.go	208	6901	"Remove what?\r\n"	c-reachable	C do_remove uses the matching output literal at src/act.item.c:1741.
+466	*World.npcRemoveDirect	pkg/game/npc_command_items.go	236	7639	"You can't remove $p, it must be CURSED!"	c-reachable	C perform_remove uses the matching output literal at src/act.item.c:1720.
+467	*World.npcRemoveDirect	pkg/game/npc_command_items.go	242	7791	"You stop using $p."	c-reachable	C perform_remove uses the matching output literal at src/act.item.c:1726.
+468	*World.npcRemoveDirect	pkg/game/npc_command_items.go	243	7862	"$n stops using $p."	c-reachable	C perform_remove uses the matching output literal at src/act.item.c:1727.
+469	*World.npcRemoveDirect	pkg/game/npc_command_items.go	247	7956	"You're not using anything.\r\n"	c-reachable	C do_remove uses the matching output literal at src/act.item.c:1756.
+470	*World.npcRemoveDirect	pkg/game/npc_command_items.go	249	8086	"Remove all of what?\r\n"	c-reachable	C do_remove uses the matching output literal at src/act.item.c:1761.
+471	*World.npcRemoveDirect	pkg/game/npc_command_items.go	251	8167	"You don't seem to be using any "	c-reachable	C do_remove has the matching output format at src/act.item.c:1774 (text score 91; C formatting supplies the variable text).
+472	*World.npcRemoveDirect	pkg/game/npc_command_items.go	251	8228	"all."	ask-zach	The collector includes this parser prefix inside the output expression, but Go uses it to parse remove-all syntax (pkg/game/npc_command_items.go:251); no C player-facing line corresponds to the token. Keep it in the denominator pending Zach’s ruling.
+473	*World.npcRemoveDirect	pkg/game/npc_command_items.go	251	8238	"s.\r\n"	c-reachable	C do_remove formats the plural missing-equipment message at src/act.item.c:1774.
+474	*World.npcRemoveDirect	pkg/game/npc_command_items.go	253	8277	"You don't seem to be using "	c-reachable	C do_remove has the matching output format at src/act.item.c:1783 (text score 87; C formatting supplies the variable text).
+475	*World.npcWearDirect	pkg/game/npc_command_items.go	265	8719	"Wear what?\r\n"	c-reachable	C do_wear uses the matching output literal at src/act.item.c:1595.
+476	*World.npcWearDirect	pkg/game/npc_command_items.go	269	8863	"Wear all of what?\r\n"	c-reachable	C do_wear uses the matching output literal at src/act.item.c:1624.
+477	*World.npcWearDirect	pkg/game/npc_command_items.go	273	8989	"You can't specify the same body location for more than one item!\r\n"	c-reachable	C do_wear has the matching output format at src/act.item.c:1602 (text score 80; C formatting supplies the variable text).
+478	*World.npcWearDirect	pkg/game/npc_command_items.go	292	9700	"'?  What part of your body is THAT?\r\n"	c-reachable	C find_eq_pos has the matching output format at src/act.item.c:1575 (text score 96; C formatting supplies the variable text).
+479	*World.npcWearDirect	pkg/game/npc_command_items.go	295	9846	"You can't wear $p."	c-reachable	C do_wear uses the matching output literal at src/act.item.c:1639.
+480	*World.npcWearDirect	pkg/game/npc_command_items.go	300	9947	"You don't seem to have any "	c-reachable	C do_wear formats the plural missing-item message at src/act.item.c:1627-1630.
+481	*World.npcWearDirect	pkg/game/npc_command_items.go	300	9989	"s.\r\n"	c-reachable	C do_wear formats the plural missing-equipment message at src/act.item.c:1618.
+482	*World.npcWearDirect	pkg/game/npc_command_items.go	302	10052	"You don't seem to have "	c-reachable	C do_wear formats the missing-item message at src/act.item.c:1647-1648.
+483	*World.npcWearDirect	pkg/game/npc_command_items.go	304	10166	"You don't seem to have anything wearable.\r\n"	c-reachable	C do_wear uses the matching output literal at src/act.item.c:1618.
+484	*World.npcWearDirect	pkg/game/npc_command_items.go	307	10286	"You don't seem to have anything wearable.\r\n"	c-reachable	C do_wear uses the matching output literal at src/act.item.c:1618.
+485	*World.characterMobPourOut	pkg/game/npc_command_utility.go	190	6191	"$n empties $p."	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1241.
+486	*World.characterMobPourOut	pkg/game/npc_command_utility.go	191	6262	"You empty $p."	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1242.
+487	*World.characterMobPourOut	pkg/game/npc_command_utility.go	198	6552	"Error, please tell a god.\r\n"	c-reachable	C do_pour uses the matching output literal at src/act.item.c:1251.
+488	*World.doUse	pkg/game/other_economy.go	115	2875	"What do you want to %s?\r\n"	c-reachable	C do_use uses the matching output literal at src/act.other.c:903.
+489	*World.doUse	pkg/game/other_economy.go	132	3619	"s"	c-reachable	C source uses the matching output literal at src/spell_parser.c:251.
+490	*World.doUse	pkg/game/other_economy.go	136	3703	"You can't use your tattoo's magick for %d more hour%s.\r\n"	c-reachable	C use_tattoo has the matching output format at src/tattoo.c:40 (text score 82; C formatting supplies the variable text).
+491	*World.doUse	pkg/game/other_economy.go	142	3874	"You don't have a tattoo.\r\n"	c-reachable	C use_tattoo uses the matching output literal at src/tattoo.c:48.
+492	*World.doUse	pkg/game/other_economy.go	159	4493	"$n's tattoo glows brightly for a second, and $N appears!"	c-reachable	C use_tattoo uses the matching output literal at src/tattoo.c:67.
+493	*World.doUse	pkg/game/other_economy.go	160	4589	"Your tattoo glows brightly for a second, and $N appears!"	c-reachable	C use_tattoo uses the matching output literal at src/tattoo.c:69.
+494	*World.doUse	pkg/game/other_economy.go	168	4887	"Your tattoo can't be 'use'd.\r\n"	c-reachable	C use_tattoo uses the matching output literal at src/tattoo.c:85.
+495	*World.doUse	pkg/game/other_economy.go	179	5120	"You don't seem to have %s %s.\r\n"	c-reachable	C do_use uses the matching output literal at src/act.other.c:915.
+496	*World.doUse	pkg/game/other_economy.go	186	5306	"You can't seem to figure out how to use it.\r\nTry holding it.(?)\r\n"	c-reachable	C do_use prints this two-line message at src/act.other.c:964-967.
+497	*World.useStaff	pkg/game/other_economy.go	415	13871	"$n's $p sparks blindingly, bathing you in its glow."	c-reachable	C mag_objectmagic uses the matching output literal at src/spell_parser.c:789.
+498	*World.useStaff	pkg/game/other_economy.go	425	14353	"$P"	c-reachable	This is an act-template placeholder, not a printed token: C perform_act handles $P by rendering the referenced object at src/comm.c:2441-2445.
+499	*World.useStaff	pkg/game/other_economy.go	425	14359	"<NULL>"	c-reachable	C send_to_zone uses the matching output literal at src/comm.c:2390.
+500	*World.useStaff	pkg/game/other_economy.go	430	14485	"Your $p radiates an ethereal glow that lights the room."	c-reachable	C mag_objectmagic uses the matching output literal at src/spell_parser.c:791.
+501	*World.useStaff	pkg/game/other_economy.go	433	14630	"It seems powerless."	c-reachable	C mag_objectmagic uses the matching output literal at src/spell_parser.c:589.
+502	*World.useStaff	pkg/game/other_economy.go	434	14701	"Nothing seems to happen."	c-reachable	C mag_objectmagic uses the matching output literal at src/spell_parser.c:590.
+503	*World.useStaffTap	pkg/game/other_economy.go	482	16699	"You tap $p three times on the ground."	c-reachable	C mag_objectmagic uses the matching output literal at src/spell_parser.c:580.
+504	*World.useStaffTap	pkg/game/other_economy.go	486	16936	"$n taps $p three times on the ground."	c-reachable	C mag_objectmagic uses the matching output literal at src/spell_parser.c:584.
+505	*World.useStaffTap	pkg/game/other_economy.go	489	17065	"It seems powerless."	c-reachable	C mag_objectmagic uses the matching output literal at src/spell_parser.c:589.
+506	*World.useStaffTap	pkg/game/other_economy.go	490	17136	"Nothing seems to happen."	c-reachable	C mag_objectmagic uses the matching output literal at src/spell_parser.c:590.
+507	*World.doYank	pkg/game/other_mount.go	233	7449	"Who do you wish to yank?\r\n"	c-reachable	C do_yank uses the matching output literal at src/act.other.c:1629.
+508	*World.doYank	pkg/game/other_mount.go	242	7814	"No-one by that name here.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:93.
+509	*World.doYank	pkg/game/other_mount.go	277	9015	"That's wierd.\r\n"	c-reachable	C do_yank uses the matching output literal at src/act.other.c:1633.
+510	*World.doYank	pkg/game/other_mount.go	283	9207	"That probably wouldn't be appreciated.\r\n"	c-reachable	C do_yank uses the matching output literal at src/act.other.c:1638.
+511	*World.doYank	pkg/game/other_mount.go	291	9507	"$N is already on $S feet."	c-reachable	C do_yank uses the matching output literal at src/act.other.c:1644.
+512	*World.doYank	pkg/game/other_mount.go	293	9602	"You can't yank $M off $S mount!"	c-reachable	C do_yank uses the matching output literal at src/act.other.c:1646.
+513	*World.doYank	pkg/game/other_mount.go	301	9867	"$N is is no position to be yanked around!"	c-reachable	C do_yank uses the matching output literal at src/act.other.c:1652.
+514	*World.doYank	pkg/game/other_mount.go	307	10124	"You yank $M to $S feet."	c-reachable	C do_yank uses the matching output literal at src/act.other.c:1656.
+515	*World.doYank	pkg/game/other_mount.go	308	10204	"$n yanks you to your feet."	c-reachable	C do_yank uses the matching output literal at src/act.other.c:1657.
+516	*World.doYank	pkg/game/other_mount.go	309	10287	"$n yanks $N to $S feet."	c-reachable	C do_yank uses the matching output literal at src/act.other.c:1658.
+517	*World.doWimpy	pkg/game/other_settings.go	27	539	"Your current wimp level is %d hit points.\r\n"	c-reachable	C do_wimpy uses the matching output literal at src/act.other.c:986.
+518	*World.doWimpy	pkg/game/other_settings.go	29	632	"At the moment, you're not a wimp. (sure, sure...)\r\n"	c-reachable	C do_wimpy uses the matching output literal at src/act.other.c:991.
+519	*World.doWimpy	pkg/game/other_settings.go	38	983	"Specify at how many hit points you want to wimp out at.  (0 to disable)\r\n"	c-reachable	C do_wimpy has the matching output format at src/act.other.c:1016 (text score 87; C formatting supplies the variable text).
+520	*World.doWimpy	pkg/game/other_settings.go	49	1383	"Heh, heh, heh.. we are jolly funny today, eh?\r\n"	c-reachable	C do_wimpy uses the matching output literal at src/act.other.c:998.
+521	*World.doWimpy	pkg/game/other_settings.go	51	1488	"That doesn't make much sense, now does it?\r\n"	c-reachable	C do_wimpy uses the matching output literal at src/act.other.c:1000.
+522	*World.doWimpy	pkg/game/other_settings.go	53	1596	"You can't set your wimp level above one third your hit points.\r\n"	c-reachable	C do_wimpy has the matching output format at src/act.other.c:1002 (text score 83; C formatting supplies the variable text).
+523	*World.doWimpy	pkg/game/other_settings.go	56	1735	"Okay, you'll wimp out if you drop below %d hit points.\r\n"	c-reachable	C do_wimpy has the matching output format at src/act.other.c:1005 (text score 86; C formatting supplies the variable text).
+524	*World.doWimpy	pkg/game/other_settings.go	60	1859	"Okay, you'll now tough out fights to the bitter end.\r\n"	c-reachable	C do_wimpy uses the matching output literal at src/act.other.c:1011.
+525	*World.doAuto	pkg/game/other_status.go	54	1884	"You have the following autos set:\r\n"	c-reachable	C do_auto uses the matching output literal at src/act.other.c:1308.
+526	*World.doAuto	pkg/game/other_status.go	56	1971	"Exits "	c-reachable	C do_auto has the matching output format at src/act.other.c:1311 (text score 85; C formatting supplies the variable text).
+527	*World.doAuto	pkg/game/other_status.go	59	2050	"Loot "	c-reachable	C do_auto has the matching output format at src/act.other.c:1316 (text score 83; C formatting supplies the variable text).
+528	*World.doAuto	pkg/game/other_status.go	62	2128	"Gold "	c-reachable	C do_auto has the matching output format at src/act.other.c:1321 (text score 83; C formatting supplies the variable text).
+529	*World.doAuto	pkg/game/other_status.go	65	2207	"Split"	c-reachable	C do_auto has the matching output format at src/act.other.c:1326 (text score 83; C formatting supplies the variable text).
+530	*World.doAuto	pkg/game/other_status.go	68	2310	"None."	c-reachable	C do_stat_room has the matching output format at src/act.wizard.c:433 (text score 88; C formatting supplies the variable text).
+531	*World.doAuto	pkg/game/other_status.go	79	2508	"You will no longer see room exits.\r\n"	c-reachable	C do_auto uses the matching output literal at src/act.other.c:1347.
+532	*World.doAuto	pkg/game/other_status.go	82	2603	"You will now see room exits.\r\n"	c-reachable	C do_auto uses the matching output literal at src/act.other.c:1352.
+533	*World.doAuto	pkg/game/other_status.go	87	2755	"You will no longer loot corpses.\r\n"	c-reachable	C do_auto uses the matching output literal at src/act.other.c:1363.
+534	*World.doAuto	pkg/game/other_status.go	90	2860	"You will now automatically loot corpses.\r\n"	c-reachable	C do_auto uses the matching output literal at src/act.other.c:1368.
+535	*World.doAuto	pkg/game/other_status.go	95	3024	"You will no longer get the gold from corpses.\r\n"	c-reachable	C do_auto uses the matching output literal at src/act.other.c:1379.
+536	*World.doAuto	pkg/game/other_status.go	98	3142	"You will now get the gold from corpses.\r\n"	c-reachable	C do_auto uses the matching output literal at src/act.other.c:1385.
+537	*World.doAuto	pkg/game/other_status.go	103	3308	"You will no longer split gold with your group.\r\n"	c-reachable	C do_auto uses the matching output literal at src/act.other.c:1396.
+538	*World.doAuto	pkg/game/other_status.go	106	3428	"You will now split gold with your group.\r\n"	c-reachable	C do_auto uses the matching output literal at src/act.other.c:1402.
+539	*World.doAuto	pkg/game/other_status.go	109	3507	"What do you want to make automatic?\r\n"	c-reachable	C do_auto uses the matching output literal at src/act.other.c:1408.
+540	*World.doScout	pkg/game/other_utility.go	318	10793	"Scout where?\r\n"	c-reachable	C do_scout uses the matching output literal at src/act.other.c:1836.
+541	*World.doScout	pkg/game/other_utility.go	324	10899	"Scout in which direction?\r\n"	c-reachable	C do_scout uses the matching output literal at src/act.other.c:1841.
+542	*World.doScout	pkg/game/other_utility.go	329	10999	"You have no idea how!\r\n"	c-reachable	C do_scout uses the matching output literal at src/act.other.c:1846.
+543	*World.doScout	pkg/game/other_utility.go	335	11179	"You can only do this outdoors.\r\n"	c-reachable	C do_scout uses the matching output literal at src/act.other.c:1851.
+544	*World.doScout	pkg/game/other_utility.go	341	11308	"There is nothing of interest there.\r\n"	c-reachable	C do_scout uses the matching output literal at src/act.other.c:1856.
+545	*World.doScout	pkg/game/other_utility.go	347	11450	"There is nothing of interest there.\r\n"	c-reachable	C do_scout uses the matching output literal at src/act.other.c:1856.
+546	*World.doScout	pkg/game/other_utility.go	353	11652	"You see %s to the %s.\r\n"	c-reachable	C do_scout uses the matching output literal at src/act.other.c:1900.
+547	*World.doScout	pkg/game/other_utility.go	357	11773	"It looks pretty dark there.\r\n"	c-reachable	C do_scout uses the matching output literal at src/act.other.c:1903.
+548	*World.doScout	pkg/game/other_utility.go	360	11863	"You sense that it is not safe to travel there.\r\n"	c-reachable	C do_scout uses the matching output literal at src/act.other.c:1905.
+549	*World.doScout	pkg/game/other_utility.go	363	11973	"It looks like a very narrow passage.\r\n"	c-reachable	C do_scout uses the matching output literal at src/act.other.c:1907.
+550	*World.doScout	pkg/game/other_utility.go	367	12083	"It looks like there is something on the ground there.\r\n"	c-reachable	C do_scout uses the matching output literal at src/act.other.c:1917.
+551	*World.doScout	pkg/game/other_utility.go	371	12287	"It looks like there is %s over there.\r\n"	c-reachable	C do_scout uses the matching output literal at src/act.other.c:1919.
+552	*World.mobReplyToTeller	pkg/game/reply_body.go	99	3734	"They are no longer playing.\r\n"	c-reachable	C do_reply uses the matching output literal at src/act.comm.c:957.
+553	*World.mobReplyToTeller	pkg/game/reply_body.go	103	3843	"They are writing now, try later.\r\n"	c-reachable	C do_reply uses the matching output literal at src/act.comm.c:959.
+554	*World.mobReplyToTeller	pkg/game/reply_body.go	107	3956	"They can't hear you.\r\n"	c-reachable	C do_reply uses the matching output literal at src/act.comm.c:963.
+555	*World.mobReplyToTeller	pkg/game/reply_body.go	111	4061	"The walls seem to absorb your words.\r\n"	c-reachable	C do_tell uses the matching output literal at src/act.comm.c:920.
+556	*World.mobReplyToTeller	pkg/game/reply_body.go	115	4226	"$E's linkless at the moment."	c-reachable	C do_tell uses the matching output literal at src/act.comm.c:922.
+557	*World.mobReplyToTeller	pkg/game/reply_body.go	119	4423	"$E can't hear you."	c-reachable	C do_tell uses the matching output literal at src/act.comm.c:928.
+558	*World.mobPerformTell	pkg/game/reply_body.go	140	5200	"$n tells you, '%s'"	c-reachable	C perform_tell uses the matching output literal at src/act.comm.c:876.
+559	*World.mobPerformTell	pkg/game/reply_body.go	141	5299	"You tell $N, '%s'"	c-reachable	C perform_tell uses the matching output literal at src/act.comm.c:888.
+560	*World.selfDamage	pkg/game/room_activity.go	296	10885	"$n slowly fades into existence."	c-reachable	C appear uses the matching output literal at src/fight.c:117.
+561	*World.selfDamage	pkg/game/room_activity.go	313	11535	"The hit knocks you off of your mount!\r\n"	c-reachable	C damage uses the matching output literal at src/fight.c:1549.
+562	*World.selfDamage	pkg/game/room_activity.go	314	11626	"$n gets knocked off of his mount."	c-reachable	C damage uses the matching output literal at src/fight.c:1550.
+563	*World.selfDamage	pkg/game/room_activity.go	317	11806	"You land on your feet!\r\n"	c-reachable	C damage uses the matching output literal at src/fight.c:1553.
+564	*World.selfDamage	pkg/game/room_activity.go	319	11864	"You hit the ground with a thud.\r\n"	c-reachable	C damage uses the matching output literal at src/fight.c:1555.
+565	*World.SpellCreatedObjectAct	pkg/game/say_spell_act.go	99	3651	"$n creates $p."	c-reachable	C mag_creations uses the matching output literal at src/magic.c:1997.
+566	characterDisarm	pkg/game/skill_actor_combat.go	493	16067	"$E doesn't have anything to disarm."	c-reachable	C do_disarm uses the matching output literal at src/new_cmds2.c:219.
+567	characterDisarm	pkg/game/skill_actor_combat.go	506	16543	"You disarm $N and $p goes flying!"	c-reachable	C do_disarm uses the matching output literal at src/new_cmds2.c:233.
+568	characterDisarm	pkg/game/skill_actor_combat.go	507	16665	"$n knocks $p from $N's hand!"	c-reachable	C do_disarm uses the matching output literal at src/new_cmds2.c:234.
+569	characterDisarm	pkg/game/skill_actor_combat.go	508	16761	"$n deftly disarms you, knocking $p from your hand!"	c-reachable	C do_disarm uses the matching output literal at src/new_cmds2.c:235.
+570	characterDisarm	pkg/game/skill_actor_combat.go	517	17056	"You try to disarm $N but fail, tumbling to the ground in the process!"	c-reachable	C do_disarm uses the matching output literal at src/new_cmds2.c:244.
+571	characterDisarm	pkg/game/skill_actor_combat.go	518	17211	"$n tries to disarm you but fails and falls flat on $s face instead!"	c-reachable	C do_disarm uses the matching output literal at src/new_cmds2.c:245.
+572	characterDisarm	pkg/game/skill_actor_combat.go	519	17340	"$n tries to disarm $N, but fails and falls flat on $s face!"	c-reachable	C do_disarm uses the matching output literal at src/new_cmds2.c:246.
+573	characterGroinrip	pkg/game/skill_actor_combat.go	670	22431	"$n falls to $s knees, clutching $s groin and throwing up\r\neverywhere!"	c-reachable	C do_groinrip has the matching output format at src/new_cmds.c:2643 (text score 91; C formatting supplies the variable text).
+574	characterNeckbreak	pkg/game/skill_actor_combat_next.go	82	2619	"You try to break $S neck, but $E is too strong!"	c-reachable	C do_neckbreak uses the matching output literal at src/act.offensive.c:1361.
+575	characterNeckbreak	pkg/game/skill_actor_combat_next.go	84	2755	"$n tries to break your neck, but can't!"	c-reachable	C do_neckbreak uses the matching output literal at src/act.offensive.c:1363.
+576	characterNeckbreak	pkg/game/skill_actor_combat_next.go	86	2859	"$n tries to break $N's neck, but $N slips free!"	c-reachable	C do_neckbreak uses the matching output literal at src/act.offensive.c:1365.
+577	characterRescue	pkg/game/skill_actor_combat_next.go	272	9380	"But nobody is fighting $M!"	c-reachable	C do_rescue uses the matching output literal at src/act.offensive.c:549.
+578	characterRescue	pkg/game/skill_actor_combat_next.go	287	9775	"You are rescued by $N, you are confused!"	c-reachable	C do_rescue uses the matching output literal at src/act.offensive.c:564.
+579	characterRescue	pkg/game/skill_actor_combat_next.go	289	9888	"$n heroically rescues $N!"	c-reachable	C do_rescue uses the matching output literal at src/act.offensive.c:566.
+580	characterSmackheads	pkg/game/skill_actor_combat_next.go	446	16100	"%s and %s duck as %s lunges at them!"	c-reachable	C do_smackheads builds this line from strcat fragments at src/new_cmds.c:1053-1057.
+581	characterSmackheads	pkg/game/skill_actor_combat_next.go	453	16644	"%s grabs the heads of %s and %s and bangs them together with a sickening *SMACK*."	c-reachable	C do_smackheads builds this line from strcat fragments at src/new_cmds.c:1070-1075.
+582	characterSpikeStake	pkg/game/skill_actor_combat_next.go	536	20379	"You drive $p into $S chest!"	c-reachable	C do_spike uses the matching output literal at src/new_cmds.c:1159.
+583	characterSpikeStake	pkg/game/skill_actor_combat_next.go	537	20505	"$n drives $p into the chest of $N!"	c-reachable	C do_spike uses the matching output literal at src/new_cmds.c:1161.
+584	characterSpikeStake	pkg/game/skill_actor_combat_next.go	538	20617	"$n drives $p into your chest with a solid blow!"	c-reachable	C do_spike uses the matching output literal at src/new_cmds.c:1163.
+585	characterSpikeStake	pkg/game/skill_actor_combat_next.go	554	21279	"$N twists at the last moment, and you miss!"	c-reachable	C do_spike uses the matching output literal at src/new_cmds.c:1179.
+586	characterSpikeStake	pkg/game/skill_actor_combat_next.go	555	21421	"$N growls in anger as $n tries to drive a $p into $M!"	c-reachable	C do_spike uses the matching output literal at src/new_cmds.c:1181.
+587	characterSpikeStake	pkg/game/skill_actor_combat_next.go	556	21552	"$n comes at you with a $p, but you dodge the attempt!"	c-reachable	C do_spike uses the matching output literal at src/new_cmds.c:1183.
+588	characterSleeper	pkg/game/skill_actor_combat_next.go	595	22995	" failed to sleeper you because "	c-reachable	C do_sleeper formats this phrase with the actor name at src/act.offensive.c:1237.
+589	characterSleeper	pkg/game/skill_actor_combat_next.go	595	23047	" is not an Outlaw.\r\n"	c-reachable	C do_sleeper formats this suffix with the actor name at src/act.offensive.c:1237.
+590	characterSleeper	pkg/game/skill_actor_combat_next.go	618	23898	"You try to grab $N in a sleeper hold but fail!"	c-reachable	C do_sleeper uses the matching output literal at src/act.offensive.c:1272.
+591	characterSleeper	pkg/game/skill_actor_combat_next.go	620	24042	"$n tries to put a sleeper hold on you, but you break free!"	c-reachable	C do_sleeper uses the matching output literal at src/act.offensive.c:1273.
+592	characterSleeper	pkg/game/skill_actor_combat_next.go	622	24174	"$n tries to put $N in a sleeper hold..."	c-reachable	C do_sleeper uses the matching output literal at src/act.offensive.c:1274.
+593	characterSleeper	pkg/game/skill_actor_combat_next.go	629	24399	"You put $N in a sleeper hold."	c-reachable	C do_sleeper uses the matching output literal at src/act.offensive.c:1277.
+594	characterSleeper	pkg/game/skill_actor_combat_next.go	631	24524	"You feel very sleepy... Zzzzz.."	c-reachable	C do_sleeper uses the matching output literal at src/act.offensive.c:1278.
+595	characterSleeper	pkg/game/skill_actor_combat_next.go	633	24627	"$n puts $N in a sleeper hold."	c-reachable	C do_sleeper uses the matching output literal at src/act.offensive.c:1279.
+596	characterSleeper	pkg/game/skill_actor_combat_next.go	635	24728	"$N goes to sleep."	c-reachable	C do_sleeper uses the matching output literal at src/act.offensive.c:1280.
+597	characterStrike	pkg/game/skill_actor_combat_next.go	673	25915	"You beat yourself about the face and neck."	c-reachable	C do_strike has the matching output format at src/new_cmds.c:1460 (text score 97; C formatting supplies the variable text).
+598	characterStrike	pkg/game/skill_actor_combat_next.go	675	26044	"$n slaps $mself around a little."	c-reachable	C do_strike uses the matching output literal at src/new_cmds.c:1461.
+599	characterStrike	pkg/game/skill_actor_combat_next.go	680	26276	"$N is just such a good friend, you simply can't strike $M."	c-reachable	C do_strike uses the matching output literal at src/new_cmds.c:1466.
+600	characterSubdue	pkg/game/skill_actor_combat_next.go	734	28074	" failed to subdue you because "	c-reachable	C do_subdue formats this phrase with the actor name at src/act.offensive.c:1130.
+601	characterSubdue	pkg/game/skill_actor_combat_next.go	734	28125	" is not an Outlaw.\r\n"	c-reachable	C do_subdue formats this suffix with the actor name at src/act.offensive.c:1130.
+602	characterSubdue	pkg/game/skill_actor_combat_next.go	756	28808	"$n misses a blow to the back of your head."	c-reachable	C do_subdue uses the matching output literal at src/act.offensive.c:1162.
+603	characterSubdue	pkg/game/skill_actor_combat_next.go	758	28939	"$N avoids your misplaced blow to the back of $S head."	c-reachable	C do_subdue uses the matching output literal at src/act.offensive.c:1164.
+604	characterSubdue	pkg/game/skill_actor_combat_next.go	760	29090	"$N avoids $n's misplaced blow to the back of $S head."	c-reachable	C do_subdue uses the matching output literal at src/act.offensive.c:1166.
+605	characterSubdue	pkg/game/skill_actor_combat_next.go	763	29230	"Someone sneaks up behind you and knocks you out!\r\n"	c-reachable	C do_subdue uses the matching output literal at src/act.offensive.c:1172.
+606	characterSubdue	pkg/game/skill_actor_combat_next.go	765	29359	"You knock $M out cold."	c-reachable	C do_subdue uses the matching output literal at src/act.offensive.c:1174.
+607	characterSubdue	pkg/game/skill_actor_combat_next.go	767	29479	"$n knocks out $N with a well-placed blow to the back of the head."	c-reachable	C do_subdue uses the matching output literal at src/act.offensive.c:1175.
+608	mobileStaffTap	pkg/game/skill_actor_itemmagic.go	286	10120	"Nothing seems to happen."	c-reachable	C mag_objectmagic uses the matching output literal at src/spell_parser.c:590.
+609	CharacterBehead::func@301	pkg/game/skill_actor_selected.go	303	11056	"$n beheads $p!"	c-reachable	C do_behead uses the matching output literal at src/new_cmds.c:277.
+610	CharacterBehead::func@301	pkg/game/skill_actor_selected.go	305	11151	"You behead $p!"	c-reachable	C do_behead uses the matching output literal at src/new_cmds.c:278.
+611	CharacterBehead::func@301	pkg/game/skill_actor_selected.go	308	11265	"$n rips the head off $p!"	c-reachable	C do_behead uses the matching output literal at src/new_cmds.c:286.
+612	CharacterBehead::func@301	pkg/game/skill_actor_selected.go	310	11368	"You rip the head off $p with your bare hands!"	c-reachable	C do_behead uses the matching output literal at src/new_cmds.c:288.
+613	characterShoot	pkg/game/skill_actor_shoot.go	127	4656	"$n fires %s %s with %s."	c-reachable	C do_shoot uses the matching output literal at src/act.offensive.c:904.
+614	characterShoot	pkg/game/skill_actor_shoot.go	140	5486	"Some kind of %s streaks in from %s and narrowly misses $n!"	c-reachable	C do_shoot has the matching output format at src/act.offensive.c:983 (text score 90; C formatting supplies the variable text).
+615	characterShoot	pkg/game/skill_actor_shoot.go	152	6126	"Some kind of %s streaks in from %s and strikes $n!"	c-reachable	C do_shoot has the matching output format at src/act.offensive.c:980 (text score 89; C formatting supplies the variable text).
+616	characterShoot	pkg/game/skill_actor_shoot.go	167	6817	"$n bursts into the room and scowls at $N.\r\n"	c-reachable	C do_shoot uses the matching output literal at src/act.offensive.c:950.
+617	characterShoot	pkg/game/skill_actor_shoot.go	180	7526	"Some kind of %s streaks in from %s and strikes $n!"	c-reachable	C do_shoot has the matching output format at src/act.offensive.c:980 (text score 89; C formatting supplies the variable text).
+618	CharacterSteal	pkg/game/skill_actor_steal.go	45	1561	"%s failed to steal from you because %s is not an Outlaw!\r\n"	c-reachable	C do_steal uses the matching output literal at src/act.other.c:357.
+619	CharacterSteal	pkg/game/skill_actor_steal.go	74	2799	"$N catches you trying to steal something..."	c-reachable	C do_steal uses the matching output literal at src/act.other.c:457.
+620	CharacterSteal	pkg/game/skill_actor_steal.go	76	2945	"$n tried to steal something from you!"	c-reachable	C do_steal uses the matching output literal at src/act.other.c:459.
+621	CharacterSteal	pkg/game/skill_actor_steal.go	78	3060	"$n tries to steal something from $N."	c-reachable	C do_steal uses the matching output literal at src/act.other.c:461.
+622	CharacterSteal	pkg/game/skill_actor_steal.go	90	3718	"Somehow $p makes it's way into your pack."	c-reachable	C do_steal uses the matching output literal at src/act.other.c:483.
+623	CharacterSteal	pkg/game/skill_actor_steal.go	105	4346	"You try to unequip $p, but fail!"	c-reachable	C do_steal uses the matching output literal at src/act.other.c:415.
+624	CharacterSteal	pkg/game/skill_actor_steal.go	107	4482	"$n tries to steal $p from $N, but fails!"	c-reachable	C do_steal uses the matching output literal at src/act.other.c:417.
+625	CharacterSteal	pkg/game/skill_actor_steal.go	121	5245	"You unequip $p and steal it."	c-reachable	C do_steal uses the matching output literal at src/act.other.c:437.
+626	CharacterSteal	pkg/game/skill_actor_steal.go	123	5378	"$n steals $p from $N."	c-reachable	C do_steal uses the matching output literal at src/act.other.c:439.
+627	CharacterSteal	pkg/game/skill_actor_steal.go	130	5643	"$E hasn't got that item."	c-reachable	C do_steal uses the matching output literal at src/act.other.c:402.
+628	CharacterSteal	pkg/game/skill_actor_steal.go	137	5917	"You discover that $n has $s hands in your wallet."	c-reachable	C do_steal uses the matching output literal at src/act.other.c:499.
+629	CharacterSteal	pkg/game/skill_actor_steal.go	139	6040	"$n tries to steal gold from $N."	c-reachable	C do_steal uses the matching output literal at src/act.other.c:501.
+630	characterSneak	pkg/game/skill_actor_utility.go	55	1726	"Dismount first!\r\n"	c-reachable	C do_sneak uses the matching output literal at src/act.other.c:221.
+631	characterSneak	pkg/game/skill_actor_utility.go	58	1818	"Okay, you'll try to move silently for a while.\r\n"	c-reachable	C do_sneak uses the matching output literal at src/act.other.c:225.
+632	characterHide	pkg/game/skill_actor_utility.go	83	2529	"Dismount first!\r\n"	c-reachable	C do_hide uses the matching output literal at src/act.other.c:253.
+633	characterHide	pkg/game/skill_actor_utility.go	91	2792	"You attempt to practice the art of kabuki.\r\n"	c-reachable	C do_hide uses the matching output literal at src/act.other.c:284.
+634	characterHide	pkg/game/skill_actor_utility.go	93	2886	"You attempt to hide yourself.\r\n"	c-reachable	C do_hide uses the matching output literal at src/act.other.c:286.
+635	characterMindlink	pkg/game/skill_actor_utility.go	110	3402	"Link your mind to whose?\r\n"	c-reachable	C do_mindlink uses the matching output literal at src/new_cmds2.c:262.
+636	characterMindlink	pkg/game/skill_actor_utility.go	115	3580	"They don't seem to be here.\r\n"	c-reachable	C do_mindlink uses the matching output literal at src/new_cmds2.c:264.
+637	characterMindlink	pkg/game/skill_actor_utility.go	119	3715	"You wish you could.\r\n"	c-reachable	C do_mindlink uses the matching output literal at src/new_cmds2.c:266.
+638	characterMindlink	pkg/game/skill_actor_utility.go	123	3886	"Yeah, right.\r\n"	c-reachable	C do_mindlink uses the matching output literal at src/new_cmds2.c:268.
+639	characterCarve	pkg/game/skill_actor_utility.go	326	12670	"How can you think of food at a time like this?!?\r\n"	c-reachable	C do_carve uses the matching output literal at src/new_cmds.c:126.
+640	characterCarve	pkg/game/skill_actor_utility.go	331	12857	"You want to carve what?!?\r\n"	c-reachable	C do_carve uses the matching output literal at src/new_cmds.c:131.
+641	characterCarve	pkg/game/skill_actor_utility.go	336	13067	"This game doesn't support self-mutilation!\r\n"	c-reachable	C do_carve uses the matching output literal at src/new_cmds.c:136.
+642	characterCarve	pkg/game/skill_actor_utility.go	338	13163	"You kill it first and THEN you can eat it!\r\n"	c-reachable	C do_carve uses the matching output literal at src/new_cmds.c:141.
+643	characterCarve	pkg/game/skill_actor_utility.go	344	13377	"You can't seem to find a %s to carve!\r\n"	c-reachable	C do_carve uses the matching output literal at src/new_cmds.c:146.
+644	characterCarve	pkg/game/skill_actor_utility.go	348	13561	"Your initials are about all you can carve in that!\r\n"	c-reachable	C do_carve uses the matching output literal at src/new_cmds.c:152.
+645	characterCarve	pkg/game/skill_actor_utility.go	352	13745	"There's no way you could ever eat THAT!!!\r\n"	c-reachable	C do_carve uses the matching output literal at src/new_cmds.c:158.
+646	characterCarve	pkg/game/skill_actor_utility.go	356	13920	"Your arms are already full!\r\n"	c-reachable	C do_carve uses the matching output literal at src/new_cmds.c:164.
+647	characterCarve	pkg/game/skill_actor_utility.go	376	14551	"You carve %s from %s.\r\n"	go-only-in-game	Go mobile carve emits this line at pkg/game/skill_actor_utility.go:376; C do_carve instead tells the actor “You carve up some meat from the $p.” at src/new_cmds.c:201.
+648	characterCarve	pkg/game/skill_actor_utility.go	377	14671	"$n carves $p from $P."	go-only-in-game	Go mobile carve emits this room act at pkg/game/skill_actor_utility.go:377; C do_carve instead emits “$n carves up some meat from the $p.” at src/new_cmds.c:201.
+649	*World.roomCleanup	pkg/game/spec_procs.go	114	4431	"$p vanishes in a puff of smoke!"	c-reachable	C dump uses the matching output literal at src/spec_procs.c:264.
+650	specGuild	pkg/game/spec_procs.go	171	6316	"You do not seem to be able to practice now."	c-reachable	C guild has the matching output format at src/spec_procs.c:220 (text score 97; C formatting supplies the variable text).
+651	specGuild	pkg/game/spec_procs.go	178	6536	"You do not know of that %s."	c-reachable	C guild has the matching output format at src/spec_procs.c:229 (text score 96; C formatting supplies the variable text).
+652	specGuild	pkg/game/spec_procs.go	186	6741	"You are already learned in that area."	c-reachable	C guild has the matching output format at src/spec_procs.c:235 (text score 97; C formatting supplies the variable text).
+653	specGuild	pkg/game/spec_procs.go	190	6816	"You practice for a while..."	c-reachable	C guild has the matching output format at src/spec_procs.c:238 (text score 96; C formatting supplies the variable text).
+654	specGuild	pkg/game/spec_procs.go	207	7242	"You are now learned in that area."	c-reachable	C guild has the matching output format at src/spec_procs.c:247 (text score 97; C formatting supplies the variable text).
+655	specJanitor	pkg/game/spec_procs.go	762	23931	"$n picks up some trash."	c-reachable	C janitor uses the matching output literal at src/spec_procs.c:761.
+656	specDragonBreath	pkg/game/spec_procs.go	1061	34425	"$n looks at you."	c-reachable	C dragon_breath uses the matching output literal at src/spec_procs.c:977.
+657	specDragonBreath	pkg/game/spec_procs.go	1062	34491	"$n growls, 'So, you have found my lair...'"	c-reachable	C dragon_breath uses the matching output literal at src/spec_procs.c:978.
+658	specDragonBreath	pkg/game/spec_procs.go	1063	34583	"$n exclaims, 'For that you must die!'"	c-reachable	C dragon_breath uses the matching output literal at src/spec_procs.c:979.
+659	specStableboy	pkg/game/spec_procs2.go	258	9466	"You can buy a horse for 300 gold coins."	c-reachable	C stableboy has the matching output format at src/spec_procs2.c:334 (text score 96; C formatting supplies the variable text).
+660	specStableboy	pkg/game/spec_procs2.go	286	10195	"How do you expect to stable a mount, you don't have a mount!"	c-reachable	C stableboy has the matching output format at src/spec_procs2.c:382 (text score 85; C formatting supplies the variable text).
+661	specStableboy	pkg/game/spec_procs2.go	294	10465	"$N takes $n out back to the stables."	c-reachable	C stableboy uses the matching output literal at src/spec_procs2.c:405.
+662	specStableboy	pkg/game/spec_procs2.go	296	10576	"I will take good care of 'em, for %d coins a day."	c-reachable	C stableboy has the matching output format at src/spec_procs2.c:407 (text score 97; C formatting supplies the variable text).
+663	specStableboy	pkg/game/spec_procs2.go	301	10730	"Hey now, you need to have stabled a mount to pick one up."	c-reachable	C stableboy has the matching output format at src/spec_procs2.c:413 (text score 94; C formatting supplies the variable text).
+664	specStableboy	pkg/game/spec_procs2.go	311	11031	"Hey man, you can't afford the %d gold you need to get your mount outa' hock."	c-reachable	C stableboy has the matching output format at src/spec_procs2.c:426 (text score 81; C formatting supplies the variable text).
+665	specStableboy	pkg/game/spec_procs2.go	316	11241	"Sorry, we are unable to gather your mount, try back later."	c-reachable	C stableboy has the matching output format at src/spec_procs2.c:452 (text score 92; C formatting supplies the variable text).
+666	specStableboy	pkg/game/spec_procs2.go	324	11523	"$N brings $n up from the stables out back."	c-reachable	C stableboy uses the matching output literal at src/spec_procs2.c:353.
+667	specStableboy	pkg/game/spec_procs2.go	328	11714	"Here ya go pal, all patted down and ready to go... cost ya %d to keep 'em here."	c-reachable	C stableboy formats and tells the player this line at src/spec_procs2.c:447-448.
+668	specRemorter	pkg/game/spec_procs2.go	558	20707	"You must come unto me naked, wearing only thy old body.\r\n"	c-reachable	C remorter has the matching output format at src/spec_procs2.c:728 (text score 93; C formatting supplies the variable text).
+669	specRemorter	pkg/game/spec_procs2.go	564	20878	"The remorter moves his hands over your eyes, closing them with a touch.\r\nColors spiral in your sight... You open your eyes, feeling refreshed.\r\n"	c-reachable	C remorter sends this composed text to the player at src/spec_procs2.c:838-844.
+670	specTattoo1	pkg/game/spec_procs2.go	1057	34732	"Your magickal center is already tattooed. Get a new arm or get rid of that tattoo then come back."	c-reachable	C tattoo1 builds the same player tell at src/spec_procs2.c:975-977.
+671	specTattoo1	pkg/game/spec_procs2.go	1068	35040	"You look a little short on the price there, kid."	c-reachable	C tattoo1 has the matching output format at src/spec_procs2.c:998 (text score 96; C formatting supplies the variable text).
+672	giveTattoo	pkg/game/spec_procs2.go	1084	35575	"$n starts to work on $N's tattoo..."	c-reachable	C give_tat uses the matching output literal at src/spec_procs2.c:931.
+673	giveTattoo	pkg/game/spec_procs2.go	1085	35661	"A ghastly scream is ripped from $N's lips just before $E blacks out."	c-reachable	C give_tat has the matching output format at src/spec_procs2.c:932 (text score 88; C formatting supplies the variable text).
+674	giveTattoo	pkg/game/spec_procs2.go	1086	35782	"$n starts to work on your tattoo..."	c-reachable	C give_tat uses the matching output literal at src/spec_procs2.c:934.
+675	giveTattoo	pkg/game/spec_procs2.go	1087	35849	"The pain is incredible; it seems to eat into your soul.\r\nA scream is ripped from your lips...\r\n"	c-reachable	C give_tat sends this two-line message at src/spec_procs2.c:935-936.
+676	giveTattoo	pkg/game/spec_procs2.go	1089	36025	"You black out.\r\n"	c-reachable	C give_tat uses the matching output literal at src/spec_procs2.c:938.
+677	specEviltrade	pkg/game/spec_procs2.go	1299	43072	"Don't give me that crap."	c-reachable	C eviltrade has the matching output format at src/spec_procs2.c:1158 (text score 94; C formatting supplies the variable text).
+678	specEviltrade	pkg/game/spec_procs2.go	1303	43170	"Get lost, goody-goody."	c-reachable	C eviltrade has the matching output format at src/spec_procs2.c:1164 (text score 93; C formatting supplies the variable text).
+679	specEviltrade	pkg/game/spec_procs2.go	1310	43436	"eneeswseswseswseswsesw"	c-reachable	C eviltrade has the matching output format at src/spec_procs2.c:1171 (text score 93; C formatting supplies the variable text).
+680	specIra	pkg/game/spec_procs2.go	1399	47083	"$n exclaims, 'Dirty Orange Scum!'"	c-reachable	C ira uses the matching output literal at src/spec_procs2.c:1417.
+681	specJail	pkg/game/spec_procs2.go	1507	51362	"The guard says, 'Time's up, scum!'"	c-reachable	C jail uses the matching output literal at src/spec_procs2.c:1482.
+682	specJail	pkg/game/spec_procs2.go	1508	51444	"The guard says, 'Time's up, scum!'"	c-reachable	C jail uses the matching output literal at src/spec_procs2.c:1482.
+683	specJail	pkg/game/spec_procs2.go	1509	51526	"$N gets thrown out of the cell!"	c-reachable	C jail uses the matching output literal at src/spec_procs2.c:1484.
+684	specJail	pkg/game/spec_procs2.go	1510	51608	"The guard throws you out of the cell!\r\n"	c-reachable	C jail uses the matching output literal at src/spec_procs2.c:1485.
+685	specMedusa	pkg/game/spec_procs2.go	1548	52993	"With a sound like that of a crashing wave, $N slowly turns to stone!"	c-reachable	C medusa has the matching output format at src/spec_procs2.c:1567 (text score 87; C formatting supplies the variable text).
+686	specMedusa	pkg/game/spec_procs2.go	1550	53118	"With growing horror and increasing agony, your body slowly turns to stone!"	c-reachable	C medusa has the matching output format at src/spec_procs2.c:1569 (text score 92; C formatting supplies the variable text).
+687	specPortalRoom	pkg/game/spec_procs2.go	1644	56776	"\r\nWith a blinding flash of light and a crack of thunder, you are teleported...\r\n"	c-reachable	C portal_room has the matching output format at src/spec_procs2.c:1665 (text score 88; C formatting supplies the variable text).
+688	specPortalRoom	pkg/game/spec_procs2.go	1646	56900	"\r\nWith a blinding flash of light and a crack of thunder, $n disappears!\r\n\r\n"	c-reachable	C portal_room has the matching output format at src/spec_procs2.c:1667 (text score 88; C formatting supplies the variable text).
+689	specPortalRoom	pkg/game/spec_procs2.go	1651	57172	"\r\nWith a blinding flash of light and a crack of thunder, $n appears!\r\n\r\n"	c-reachable	C portal_room has the matching output format at src/spec_procs2.c:1667 (text score 90; C formatting supplies the variable text).
+690	specBat	pkg/game/spec_procs2.go	1793	62438	"$n swoops down, narrowly missing your face."	c-reachable	C bat uses the matching output literal at src/spec_procs2.c:1780.
+691	specBat	pkg/game/spec_procs2.go	1795	62543	"$n lets out a shrill, piercing scream."	c-reachable	C bat uses the matching output literal at src/spec_procs2.c:1785.
+692	specBat	pkg/game/spec_procs2.go	1797	62643	"Circling around your head, $n lets out a high-pitched shriek."	c-reachable	C bat uses the matching output literal at src/spec_procs2.c:1790.
+693	specBat	pkg/game/spec_procs2.go	1813	63229	"$n wakes $n up with it's flapping!"	c-reachable	C bat uses the matching output literal at src/spec_procs2.c:1812.
+694	specBrainEater	pkg/game/spec_procs3.go	507	16754	"$n pulls the brain out of the head and eats it with a noisy\r\nslurp, blood and drool flying everywhere."	c-reachable	C brain_eater builds this line from adjacent act strings at src/spec_procs3.c:212-213.
+695	specTroll	pkg/game/spec_procs3.go	695	23348	"$n's wounds glow brightly for a moment, then disappear!"	c-reachable	C troll uses the matching output literal at src/spec_procs3.c:355.
+696	specTroll	pkg/game/spec_procs3.go	708	23751	"$n's wounds glow brightly for a moment, then disappear!"	c-reachable	C troll uses the matching output literal at src/spec_procs3.c:355.
+697	specTurnUndeadObject	pkg/game/spec_procs3.go	948	32336	"A ray of flame bursts out of $p, consuming the undead!"	c-unreachable	C declares SPECIAL(turn_undead) in the object table, but src/spec_assign.c:525 has no ASSIGNOBJ for it; exhaustive search of assign_objects confirms the C body is never assigned.
+698	specProstitute	pkg/game/spec_procs3.go	1032	35374	"$n says, 'If I could see you, we could do business..'"	c-reachable	C prostitute uses the matching output literal at src/spec_procs3.c:680.
+699	specProstitute	pkg/game/spec_procs3.go	1033	35477	"$n winks coyly."	c-reachable	C prostitute uses the matching output literal at src/spec_procs3.c:682.
+700	specProstitute	pkg/game/spec_procs3.go	1039	35578	"I ain't for sale, just rent. Give me 5 gold for a good time."	c-reachable	C prostitute builds this tell from adjacent strings and sends it to the player at src/spec_procs3.c:691-693.
+701	specProstitute	pkg/game/spec_procs3.go	1042	35695	"For five coins, I'll show you a good time."	c-reachable	C prostitute has the matching output format at src/spec_procs3.c:699 (text score 96; C formatting supplies the variable text).
+702	specConjured	pkg/game/spec_procs3.go	1238	42976	"You lose control and %s fizzles away!\r\n"	c-reachable	C conjured uses the matching output literal at src/spec_procs3.c:873.
+703	specConjured	pkg/game/spec_procs3.go	1241	43079	"$n returns to its own plane of existence."	c-reachable	C conjured uses the matching output literal at src/spec_procs3.c:877.
+704	specConjured	pkg/game/spec_procs3.go	1246	43390	"%s disappears in a flash of white light!\r\n"	c-reachable	C conjured uses the matching output literal at src/spec_procs3.c:881.
+705	specConductor	pkg/game/spec_procs4.go	73	2189	"$n shouts, 'I said give me your ticket!'"	c-reachable	C conductor uses the matching output literal at src/spec_procs.c:1643.
+706	specConductor	pkg/game/spec_procs4.go	75	2253	"$n asks, 'Why are you so stupid?'"	c-reachable	C conductor uses the matching output literal at src/spec_procs.c:1647.
+707	specConductor	pkg/game/spec_procs4.go	77	2310	"$n shouts 'Get off my train you trash!'"	c-reachable	C conductor uses the matching output literal at src/spec_procs.c:1651.
+708	specConductor	pkg/game/spec_procs4.go	79	2373	"$n shouts 'Security!  Help me with this piece of garbage!'"	c-reachable	C conductor builds this act from adjacent strings at src/spec_procs.c:1655-1657.
+709	specConductor	pkg/game/spec_procs4.go	81	2455	"$n asks, 'Why wouldn't you just give me your ticket?'"	c-reachable	C conductor has the matching output format at src/spec_procs.c:1660 (text score 86; C formatting supplies the variable text).
+710	specConductor	pkg/game/spec_procs4.go	116	3281	"$n asks, 'Pardon me $N, do you have your ticket?'"	c-reachable	C conductor uses the matching output literal at src/spec_procs.c:1700.
+711	specConductor	pkg/game/spec_procs4.go	120	3426	"$n asks, 'I said, do you have your ticket?'"	c-reachable	C conductor uses the matching output literal at src/spec_procs.c:1709.
+712	specConductor	pkg/game/spec_procs4.go	125	3614	"$n says, 'Ok $N, I'll let ya off this time, but don't do it again'."	c-reachable	C conductor has the matching output format at src/spec_procs.c:1717 (text score 94; C formatting supplies the variable text).
+713	specConductor	pkg/game/spec_procs4.go	126	3736	"$n walks out the door and vanishes."	c-reachable	C conductor uses the matching output literal at src/spec_procs.c:1720.
+714	specConductor	pkg/game/spec_procs4.go	129	3875	"$n says, 'Well then...'."	c-reachable	C conductor uses the matching output literal at src/spec_procs.c:1727.
+715	specConductor	pkg/game/spec_procs4.go	130	3951	"$n screams, 'GET THE HELL OFF MY TRAIN!!!'"	c-reachable	C conductor uses the matching output literal at src/spec_procs.c:1728.
+716	specBrassDragon	pkg/game/spec_procs4.go	145	4470	"The brass dragon humiliates $n, and blocks $s way."	c-reachable	C brass_dragon uses the matching output literal at src/spec_procs.c:1751.
+717	specBrassDragon	pkg/game/spec_procs4.go	146	4553	"The brass dragon humiliates you, and blocks your way.\n\r"	c-reachable	C brass_dragon uses the matching output literal at src/spec_procs.c:1750.
+718	specOutOfJailGuard	pkg/game/spec_procs4.go	169	5438	"The guard grabs $n by the collar and blocks $s way."	c-reachable	C outofjailguard uses the matching output literal at src/spec_procs.c:1771.
+719	specOutOfJailGuard	pkg/game/spec_procs4.go	170	5522	"The guard stops you from entering with one quick jerk of your collar."	c-reachable	C out_of_jail_guard emits this text at src/spec_procs.c:1773-1776.
+720	specJailGuard	pkg/game/spec_procs4.go	194	6415	"The guard grabs $n with one hand and throws $m back in the room."	c-reachable	C jailguard uses the matching output literal at src/spec_procs.c:1789.
+721	specJailGuard	pkg/game/spec_procs4.go	195	6512	"The guard stops you from leaving with one flabby hand."	c-reachable	C jail_guard blocks departure with this line at src/spec_procs.c:1791-1793.
+722	specPetShops	pkg/game/spec_procs4.go	257	8174	"Available pets are:\r\n"	c-reachable	C pet_shops uses the matching output literal at src/spec_procs.c:1853.
+723	specPetShops	pkg/game/spec_procs4.go	260	8294	"%8d - %s\r\n"	c-reachable	C pet_shops uses the matching output literal at src/spec_procs.c:1855.
+724	specPetShops	pkg/game/spec_procs4.go	285	8807	"There is no such pet!\r\n"	c-reachable	C pet_shops uses the matching output literal at src/spec_procs.c:1865.
+725	specPetShops	pkg/game/spec_procs4.go	290	8927	"You can't have any more followers!\r\n"	c-reachable	C pet_shops uses the matching output literal at src/spec_procs.c:1870.
+726	specPetShops	pkg/game/spec_procs4.go	296	9060	"You don't have enough gold!\r\n"	c-reachable	C pet_shops uses the matching output literal at src/spec_procs.c:1874.
+727	specPetShops	pkg/game/spec_procs4.go	326	9976	"May you enjoy your pet.\r\n"	c-reachable	C pet_shops uses the matching output literal at src/spec_procs.c:1901.
+728	specPetShops	pkg/game/spec_procs4.go	327	10045	"$n buys $N as a pet."	c-reachable	C pet_shops uses the matching output literal at src/spec_procs.c:1902.
+729	specEnterCircle	pkg/game/spec_procs4.go	344	10478	"Enter what?\r\n"	c-reachable	C enter_circle has the matching output format at src/spec_procs.c:1934 (text score 92; C formatting supplies the variable text).
+730	specEnterCircle	pkg/game/spec_procs4.go	349	10584	"You can't fit on the portal, it's too crowded.\n\r"	c-reachable	C enter_circle uses the matching output literal at src/spec_procs.c:1940.
+731	specEnterCircle	pkg/game/spec_procs4.go	353	10675	"You stand in the circle.\n\r"	c-reachable	C enter_circle uses the matching output literal at src/spec_procs.c:1946.
+732	specEnterCircle	pkg/game/spec_procs4.go	354	10741	"$n enters the circle which suddenly starts glowing brightly, obscuring your view of $m!"	c-reachable	C enter_circle has the matching output format at src/spec_procs.c:1947 (text score 82; C formatting supplies the variable text).
+733	specEnterCircle	pkg/game/spec_procs4.go	366	11059	"Looking into the circle at the platform in the middle of the room, you see\n\r"	c-reachable	C enter_circle has the matching output format at src/spec_procs.c:1964 (text score 82; C formatting supplies the variable text).
+734	specEnterCircle	pkg/game/spec_procs4.go	375	11360	" and "	c-reachable	C enter_circle uses the matching output literal at src/spec_procs.c:1971.
+735	specEnterCircle	pkg/game/spec_procs4.go	380	11439	"no one"	c-reachable	C enter_circle uses the matching output literal at src/spec_procs.c:1974.
+736	specElevator	pkg/game/spec_procs4.go	398	11910	"The portal begins to rise, lifted by the air elemental summoned by your rune!\n\r\n\r"	c-reachable	C elevator has the matching output format at src/spec_procs.c:2002 (text score 90; C formatting supplies the variable text).
+737	specElevator	pkg/game/spec_procs4.go	399	12033	"The portal begins to rise, lifted by the air elemental summoned by $n!\r\n\r\n"	c-reachable	C elevator has the matching output format at src/spec_procs.c:2002 (text score 95; C formatting supplies the variable text).
+738	specPrayForItems	pkg/game/spec_procs4.go	488	14680	"Nice try."	go-only-in-game	This is the Zach-approved security divergence DP-1373: Go closes C’s name-based immortality branch with “Nice try.”; C grants the named levels in src/spec_procs.c:2081-2126.
+739	specPrayForItems	pkg/game/spec_procs4.go	507	15232	"$n kneels and at the altar and chants a prayer to Odin."	c-reachable	C pray_for_items uses the matching output literal at src/spec_procs.c:2146.
+740	specPrayForItems	pkg/game/spec_procs4.go	508	15322	"You notice a faint light in Odin's eye."	c-reachable	C pray_for_items uses the matching output literal at src/spec_procs.c:2148.
+741	specPrayForItems	pkg/game/spec_procs4.go	524	16063	"$p slowly fades into existence."	c-reachable	C pray_for_items uses the matching output literal at src/spec_procs.c:2153.
+742	specPrayForItems	pkg/game/spec_procs4.go	525	16146	"$p slowly fades into existence."	c-reachable	C pray_for_items uses the matching output literal at src/spec_procs.c:2153.
+743	specOroQuartersRoom	pkg/game/spec_procs4.go	626	19773	"A strong force jolts $n in $s attempt to leave south."	c-reachable	C oro_quarters_room uses the matching output literal at src/spec_procs.c:2309.
+744	specOroQuartersRoom	pkg/game/spec_procs4.go	627	19859	"A strong force blocks your way and gives you a nasty jolt."	c-reachable	C oro_quarters_room has the matching output format at src/spec_procs.c:2311 (text score 95; C formatting supplies the variable text).
+745	specBank	pkg/game/spec_procs4.go	661	21101	"Your current balance is %d coins."	c-reachable	C bank has the matching output format at src/spec_procs.c:2352 (text score 97; C formatting supplies the variable text).
+746	specBank	pkg/game/spec_procs4.go	663	21186	"You currently have no money deposited."	c-reachable	C bank has the matching output format at src/spec_procs.c:2355 (text score 97; C formatting supplies the variable text).
+747	specBank	pkg/game/spec_procs4.go	671	21340	"How much do you want to deposit?"	c-reachable	C bank has the matching output format at src/spec_procs.c:2363 (text score 96; C formatting supplies the variable text).
+748	specBank	pkg/game/spec_procs4.go	679	21697	"You don't have that many coins!"	c-reachable	C bank has the matching output format at src/spec_procs.c:2368 (text score 96; C formatting supplies the variable text).
+749	specBank	pkg/game/spec_procs4.go	682	21780	"You deposit %d coins."	c-reachable	C bank has the matching output format at src/spec_procs.c:2373 (text score 95; C formatting supplies the variable text).
+750	specBank	pkg/game/spec_procs4.go	683	21848	"$n makes a bank transaction."	c-reachable	C bank uses the matching output literal at src/spec_procs.c:2375.
+751	specBank	pkg/game/spec_procs4.go	690	22001	"How much do you want to withdraw?"	c-reachable	C bank has the matching output format at src/spec_procs.c:2382 (text score 97; C formatting supplies the variable text).
+752	specBank	pkg/game/spec_procs4.go	696	22261	"You don't have that many coins deposited!"	c-reachable	C bank has the matching output format at src/spec_procs.c:2387 (text score 97; C formatting supplies the variable text).
+753	specBank	pkg/game/spec_procs4.go	699	22354	"You withdraw %d coins."	c-reachable	C bank has the matching output format at src/spec_procs.c:2392 (text score 95; C formatting supplies the variable text).
+754	specBank	pkg/game/spec_procs4.go	700	22423	"$n makes a bank transaction."	c-reachable	C bank uses the matching output literal at src/spec_procs.c:2375.
+755	specRecharger	pkg/game/spec_procs_missing.go	51	1693	"$n sighs loudly."	c-reachable	C recharger uses the matching output literal at src/new_cmds2.c:426.
+756	specRecharger	pkg/game/spec_procs_missing.go	52	1759	"$n says 'I recharge wands and staves, of course!'"	c-reachable	C recharger uses the matching output literal at src/new_cmds2.c:427.
+757	specRecharger	pkg/game/spec_procs_missing.go	53	1858	"$n says 'My price is 100 coins per spell level per charge..'"	c-reachable	C recharger uses the matching output literal at src/new_cmds2.c:429.
+758	specRecharger	pkg/game/spec_procs_missing.go	54	1968	"$n says 'So a wand casting heal at level 25 would cost 2500 coins per charge.'"	c-reachable	C recharger has the matching output format at src/new_cmds2.c:431 (text score 86; C formatting supplies the variable text).
+759	specRecharger	pkg/game/spec_procs_missing.go	55	2096	"$n says 'If it had 10 max charges at first, it would have 9 max after charging."	c-reachable	C recharger has the matching output format at src/new_cmds2.c:433 (text score 89; C formatting supplies the variable text).
+760	specRecharger	pkg/game/spec_procs_missing.go	56	2225	"$n says 'That means that an item could have 1 charge maximum, with 2 charges remaining (after a recharge)'"	c-reachable	C recharger builds this line from adjacent strings at src/new_cmds2.c:435-436.
+761	specRecharger	pkg/game/spec_procs_missing.go	57	2381	"$n says 'To recharge an item type: recharge <staff or wand>.'"	c-reachable	C recharger uses the matching output literal at src/new_cmds2.c:437.
+762	specRecharger	pkg/game/spec_procs_missing.go	58	2491	"$n stares expectantly at $N."	c-reachable	C recharger uses the matching output literal at src/new_cmds2.c:439.
+763	specRecharger	pkg/game/spec_procs_missing.go	59	2572	"$n stares expectantly at you."	c-reachable	C recharger uses the matching output literal at src/new_cmds2.c:440.
+764	specRecharger	pkg/game/spec_procs_missing.go	87	3192	"$n tells you, 'You don't have that!'"	c-reachable	C recharger uses the matching output literal at src/new_cmds2.c:448.
+765	specRecharger	pkg/game/spec_procs_missing.go	88	3277	"$n whaps $N upside the head."	c-reachable	C recharger uses the matching output literal at src/new_cmds2.c:449.
+766	specRecharger	pkg/game/spec_procs_missing.go	89	3358	"$n whaps you upside the head."	c-reachable	C recharger uses the matching output literal at src/new_cmds2.c:450.
+767	specRecharger	pkg/game/spec_procs_missing.go	95	3541	"$n tells you, 'Ummm... does that look like a wand or staff to you?'"	c-reachable	C recharger uses the matching output literal at src/new_cmds2.c:455.
+768	specRecharger	pkg/game/spec_procs_missing.go	96	3658	"$n shakes his head in disgust."	c-reachable	C recharger uses the matching output literal at src/new_cmds2.c:457.
+769	specRecharger	pkg/game/spec_procs_missing.go	105	3933	"$n tells you, 'You don't have enough gold!'"	c-reachable	C recharger uses the matching output literal at src/new_cmds2.c:462.
+770	specRecharger	pkg/game/spec_procs_missing.go	112	4157	"$n tells you, 'The item does not need recharging, stop wasting my time!'"	c-reachable	C recharger has the matching output format at src/new_cmds2.c:481 (text score 93; C formatting supplies the variable text).
+771	specRecharger	pkg/game/spec_procs_missing.go	127	4711	"$n waves his hands around and chants strange things."	c-reachable	C recharger uses the matching output literal at src/new_cmds2.c:474.
+772	specRecharger	pkg/game/spec_procs_missing.go	128	4807	"The item now has %d charges remaining.\r\n"	c-reachable	C recharger uses the matching output literal at src/new_cmds2.c:476.
+773	anotherHourLocked	pkg/game/weather.go	405	13688	"The suns rise in the east and north.\r\n"	c-reachable	C another_hour uses the matching output literal at src/weather.c:58.
+774	anotherHourLocked	pkg/game/weather.go	412	13892	"The day has begun.\r\n"	c-reachable	C another_hour uses the matching output literal at src/weather.c:64.
+775	anotherHourLocked	pkg/game/weather.go	417	14014	"The suns slowly disappear in the west and south.\r\n"	c-reachable	C another_hour has the matching output format at src/weather.c:68 (text score 91; C formatting supplies the variable text).
+776	anotherHourLocked	pkg/game/weather.go	428	14408	"The night has begun.\r\n"	c-reachable	C another_hour uses the matching output literal at src/weather.c:80.
+777	*World.LookAtRoomSimple	pkg/game/world.go	1112	38091	"%s\r\n"	c-reachable	C do_toggle uses the matching output literal at src/act.informative.c:2578.
+778	*World.LookAtRoomSimple	pkg/game/world.go	1119	38294	"%s is here.\r\n"	go-only-in-game	Go emits this simplified room line at pkg/game/world.go:1119; C list_one_char appends position-specific text such as “is standing here” (src/act.informative.c:496-503, 563-567).
+779	*World.LookAtRoomSimple	pkg/game/world.go	1124	38512	"%s is here.\r\n"	go-only-in-game	Go emits this simplified room line at pkg/game/world.go:1124; C list_one_char appends position-specific text such as “is standing here” (src/act.informative.c:496-503, 563-567).
+780	castSpellC	pkg/game/world_bridge.go	1191	35059	"You're not smart enough to cast!\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:841.
+781	castSpellC	pkg/game/world_bridge.go	1200	35568	"You can't cast anything yet!\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:847.
+782	castSpellC	pkg/game/world_bridge.go	1211	35833	"You dream about great magical powers.\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:856.
+783	castSpellC	pkg/game/world_bridge.go	1213	35916	"You cannot concentrate while resting.\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:859.
+784	castSpellC	pkg/game/world_bridge.go	1215	35999	"You can't do this sitting!\r\n"	c-reachable	C mag_objectmagic uses the matching output literal at src/spell_parser.c:702.
+785	castSpellC	pkg/game/world_bridge.go	1217	36072	"Impossible!  You can't concentrate enough!\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:865.
+786	castSpellC	pkg/game/world_bridge.go	1219	36145	"You can't do much of anything like this!\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:868.
+787	castSpellC	pkg/game/world_bridge.go	1225	36393	"You are afraid you might hurt your master!\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:875.
+788	castSpellC	pkg/game/world_bridge.go	1231	36672	"You can only cast this spell upon yourself!\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:881.
+789	castSpellC	pkg/game/world_bridge.go	1233	36748	"You can only will this power upon yourself!\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:883.
+790	castSpellC	pkg/game/world_bridge.go	1239	36920	"You cannot cast this spell upon yourself!\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:889.
+791	castSpellC	pkg/game/world_bridge.go	1241	36994	"You cannot will this power upon yourself!\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:891.
+792	castSpellC	pkg/game/world_bridge.go	1247	37190	"You can't cast this spell if you're not in a group!\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:897.
+793	castSpellC	pkg/game/world_bridge.go	1249	37274	"You cannot use this power if you are not in a group!\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:899.
+794	castSpellC	pkg/game/world_bridge.go	1254	37423	"Okay.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:92.
+795	*World.MindsightNotifyWatchers	pkg/game/world_movement.go	201	6028	"You feel like you're being watched.\r\n"	c-reachable	C source uses the matching output literal at src/spells.c:946.
+796	sendCommandsForBody	pkg/session/act_informative.go	220	6146	"No commands available.\r\n"	go-only-in-game	Go emits this empty-body fallback at pkg/session/act_informative.go:220; C do_commands prints a command-list header and entries, with no corresponding fallback (src/act.informative.c:2633-2688).
+797	cmdAlias	pkg/session/act_social.go	44	1120	"Currently defined aliases:\r\n"	c-reachable	C do_alias uses the matching output literal at src/interpreter.c:992.
+798	cmdAlias	pkg/session/act_social.go	46	1189	" None.\r\n"	c-reachable	C do_alias uses the matching output literal at src/interpreter.c:994.
+799	cmdAlias	pkg/session/act_social.go	50	1273	"%-15s %s\r\n"	c-reachable	C do_alias uses the matching output literal at src/interpreter.c:997.
+800	cmdAlias	pkg/session/act_social.go	64	1751	"Alias deleted."	c-reachable	C do_alias has the matching output format at src/interpreter.c:1013 (text score 93; C formatting supplies the variable text).
+801	cmdAlias	pkg/session/act_social.go	68	1802	"No such alias.\r\n"	c-reachable	C do_alias uses the matching output literal at src/interpreter.c:1011.
+802	cmdAlias	pkg/session/act_social.go	77	2103	"Maximum alias length is 120 characters. Yours has been truncated.\r\n"	c-reachable	C do_alias has the matching output format at src/interpreter.c:1025 (text score 85; C formatting supplies the variable text).
+803	cmdAlias	pkg/session/act_social.go	94	2688	"You can't alias 'alias'.\r\n"	c-reachable	C do_alias uses the matching output literal at src/interpreter.c:1016.
+804	cmdAlias	pkg/session/act_social.go	107	3216	"You have too many aliases. Delete one first.\r\n"	go-only-in-game	The Go count cap is explicitly an approved 2026-10-22 divergence: pkg/session/act_social.go:101-107 says C has no alias limit.
+805	cmdAlias	pkg/session/act_social.go	114	3479	"Alias added."	c-reachable	C do_alias has the matching output format at src/interpreter.c:1036 (text score 92; C formatting supplies the variable text).
+806	cmdAutoLoot	pkg/session/autoloot.go	25	692	"You will now automatically loot corpses.\r\n"	c-reachable	C do_auto uses the matching output literal at src/act.other.c:1368.
+807	cmdAutoLoot	pkg/session/autoloot.go	27	759	"You will no longer loot corpses.\r\n"	c-reachable	C do_auto uses the matching output literal at src/act.other.c:1363.
+808	checkCastPosition	pkg/session/cast_cmds.go	346	12185	"You dream about great magical powers.\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:856.
+809	checkCastPosition	pkg/session/cast_cmds.go	348	12269	"You cannot concentrate while resting.\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:859.
+810	checkCastPosition	pkg/session/cast_cmds.go	350	12353	"You can't do this sitting!\r\n"	c-reachable	C mag_objectmagic uses the matching output literal at src/spell_parser.c:702.
+811	checkCastPosition	pkg/session/cast_cmds.go	352	12427	"Impossible!  You can't concentrate enough!\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:865.
+812	checkCastPosition	pkg/session/cast_cmds.go	354	12496	"You can't do much of anything like this!\r\n"	c-reachable	C cast_spell uses the matching output literal at src/spell_parser.c:868.
+813	*Session.completeCharCreation	pkg/session/char_creation.go	740	26204	"$n has entered the game."	c-reachable	C do_quit has the matching output format at src/act.other.c:134 (text score 84; C formatting supplies the variable text).
+814	cmdOrder	pkg/session/cmd_combat_special.go	14	248	"Order who to do what?\r\n"	c-reachable	C do_order uses the matching output literal at src/act.offensive.c:306.
+815	cmdOrder	pkg/session/cmd_combat_special.go	37	912	"That person isn't here.\r\n"	c-reachable	C do_order uses the matching output literal at src/act.offensive.c:309.
+816	cmdOrder	pkg/session/cmd_combat_special.go	41	1015	"You obviously suffer from skitzofrenia.\r\n"	c-reachable	C do_order uses the matching output literal at src/act.offensive.c:311.
+817	cmdOrder	pkg/session/cmd_combat_special.go	47	1185	"Your superior would not aprove of you giving orders.\r\n"	c-reachable	C do_order has the matching output format at src/act.offensive.c:317 (text score 90; C formatting supplies the variable text).
+818	cmdOrder	pkg/session/cmd_combat_special.go	57	1452	"$N orders you to '%s'"	c-reachable	C do_order uses the matching output literal at src/act.offensive.c:323.
+819	cmdOrder	pkg/session/cmd_combat_special.go	59	1561	"$n gives $N an order."	c-reachable	C do_order uses the matching output literal at src/act.offensive.c:325.
+820	cmdOrder	pkg/session/cmd_combat_special.go	63	1735	"$n has an indifferent look."	c-reachable	C do_order uses the matching output literal at src/act.offensive.c:328.
+821	cmdOrder	pkg/session/cmd_combat_special.go	67	1811	"Okay.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:92.
+822	cmdOrder	pkg/session/cmd_combat_special.go	76	2135	"$n issues the order '%s'."	c-reachable	C do_order uses the matching output literal at src/act.offensive.c:337.
+823	cmdOrder	pkg/session/cmd_combat_special.go	86	2478	"Okay.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:92.
+824	cmdOrder	pkg/session/cmd_combat_special.go	88	2510	"Nobody here is a loyal subject of yours!\r\n"	c-reachable	C do_order uses the matching output literal at src/act.offensive.c:354.
+825	cmdAbilsForBody	pkg/session/cmd_info.go	64	1417	"Your current ability scores: \r\n"	c-reachable	C do_abils uses the matching output literal at src/act.informative.c:1082.
+826	cmdAbilsForBody	pkg/session/cmd_info.go	65	1474	"Strength:      (%s)\r\n"	c-reachable	C do_abils uses the matching output literal at src/act.informative.c:1083.
+827	cmdAbilsForBody	pkg/session/cmd_info.go	66	1567	"Dexterity:     (%s)\r\n"	c-reachable	C do_abils uses the matching output literal at src/act.informative.c:1085.
+828	cmdAbilsForBody	pkg/session/cmd_info.go	67	1660	"Intelligence:  (%s)\r\n"	c-reachable	C do_abils uses the matching output literal at src/act.informative.c:1087.
+829	cmdAbilsForBody	pkg/session/cmd_info.go	68	1753	"Wisdom:        (%s)\r\n"	c-reachable	C do_abils uses the matching output literal at src/act.informative.c:1089.
+830	cmdAbilsForBody	pkg/session/cmd_info.go	69	1846	"Constitution:  (%s)\r\n"	c-reachable	C do_abils uses the matching output literal at src/act.informative.c:1091.
+831	cmdAbilsForBody	pkg/session/cmd_info.go	70	1940	"Charisma:      (%s)\r\n"	c-reachable	C do_abils uses the matching output literal at src/act.informative.c:1093.
+832	cmdWhois	pkg/session/cmd_info.go	1542	46719	"For whom do you wish to search?\r\n"	c-reachable	C do_whois uses the matching output literal at src/new_cmds.c:1410.
+833	cmdWhois	pkg/session/cmd_info.go	1558	47384	"[%2d %s] %s %s\r\n"	c-reachable	C do_whois uses the matching output literal at src/new_cmds.c:1418.
+834	cmdWhois	pkg/session/cmd_info.go	1568	47683	"There is no such player.\r\n"	c-reachable	C do_whois uses the matching output literal at src/new_cmds.c:1415.
+835	cmdWhois	pkg/session/cmd_info.go	1572	47761	"There is no such player.\r\n"	c-reachable	C do_whois uses the matching output literal at src/new_cmds.c:1415.
+836	cmdWhois	pkg/session/cmd_info.go	1586	48192	"the Adventurer"	go-only-in-game	Go supplies this fallback when an offline record has no title and an invalid class (pkg/session/cmd_info.go:1582-1588); C do_whois formats the stored title directly and has no fallback (src/new_cmds.c:1418).
+837	cmdWhois	pkg/session/cmd_info.go	1589	48239	"[%2d %s] %s %s\r\n"	c-reachable	C do_whois uses the matching output literal at src/new_cmds.c:1418.
+838	cmdWhois	pkg/session/cmd_info.go	1593	48326	"There is no such player.\r\n"	c-reachable	C do_whois uses the matching output literal at src/new_cmds.c:1415.
+839	cmdShutdowStub	pkg/session/cmd_inventory.go	36	1075	"If you want to shut something down, say so!\r\n"	c-reachable	C do_shutdown uses the matching output literal at src/act.wizard.c:1080.
+840	execQuit	pkg/session/cmd_inventory.go	60	2241	"$n has left the game."	c-reachable	C do_quit uses the matching output literal at src/act.other.c:134.
+841	cmdKill	pkg/session/combat_cmds.go	26	707	"Kill who?\r\n"	c-reachable	C do_kill uses the matching output literal at src/act.offensive.c:146.
+842	cmdKill	pkg/session/combat_cmds.go	38	1187	"They aren't here.\r\n"	c-reachable	C do_kill uses the matching output literal at src/act.offensive.c:150.
+843	cmdKill	pkg/session/combat_cmds.go	44	1292	"They aren't here.\r\n"	c-reachable	C do_kill uses the matching output literal at src/act.offensive.c:150.
+844	cmdKill	pkg/session/combat_cmds.go	48	1367	"Your mother would be so sad.. :(\r\n"	c-reachable	C do_kill uses the matching output literal at src/act.offensive.c:152.
+845	cmdKill	pkg/session/combat_cmds.go	52	1486	"No can do, buddy.. \r\n"	c-reachable	C do_kill uses the matching output literal at src/act.offensive.c:154.
+846	cmdKill	pkg/session/combat_cmds.go	57	1582	"You chop $M to pieces!  Ah!  The blood!"	c-reachable	C do_kill uses the matching output literal at src/act.offensive.c:156.
+847	cmdKill	pkg/session/combat_cmds.go	59	1694	"$N chops you to pieces!"	c-reachable	C do_kill uses the matching output literal at src/act.offensive.c:158.
+848	cmdKill	pkg/session/combat_cmds.go	61	1802	"$n brutally slays $N!"	c-reachable	C do_kill uses the matching output literal at src/act.offensive.c:159.
+849	cmdHit	pkg/session/combat_cmds.go	73	2350	"Hit who?\r\n"	c-reachable	C do_hit uses the matching output literal at src/act.offensive.c:109.
+850	cmdHit	pkg/session/combat_cmds.go	86	2762	"They don't seem to be here.\r\n"	c-reachable	C do_hit uses the matching output literal at src/act.offensive.c:111.
+851	cmdHit	pkg/session/combat_cmds.go	91	2876	"They don't seem to be here.\r\n"	c-reachable	C do_hit uses the matching output literal at src/act.offensive.c:111.
+852	cmdHit	pkg/session/combat_cmds.go	99	3127	"You hit yourself...OUCH!."	c-reachable	C do_hit has the matching output format at src/act.offensive.c:114 (text score 96; C formatting supplies the variable text).
+853	cmdHit	pkg/session/combat_cmds.go	101	3239	"$n hits $mself, and says OUCH!"	c-reachable	C do_hit uses the matching output literal at src/act.offensive.c:115.
+854	cmdHit	pkg/session/combat_cmds.go	107	3458	"$N is just such a good friend, you simply can't hit $M."	c-reachable	C do_hit uses the matching output literal at src/act.offensive.c:118.
+855	cmdHit	pkg/session/combat_cmds.go	115	3802	"You do the best you can!\r\n"	c-reachable	C do_hit uses the matching output literal at src/act.offensive.c:129.
+856	cmdHit	pkg/session/combat_cmds.go	144	5050	"They don't seem to be here.\r\n"	c-reachable	C do_hit uses the matching output literal at src/act.offensive.c:111.
+857	cmdParry	pkg/session/combat_cmds.go	173	6263	"You're not good enough at swordplay to parry!\r\n"	c-reachable	C do_parry uses the matching output literal at src/new_cmds.c:2346.
+858	cmdParry	pkg/session/combat_cmds.go	178	6382	"But you aren't fighting anyone!\r\n"	c-reachable	C do_parry uses the matching output literal at src/new_cmds.c:2353.
+859	cmdParry	pkg/session/combat_cmds.go	184	6547	"But you aren't fighting anyone!\r\n"	c-reachable	C do_parry uses the matching output literal at src/new_cmds.c:2353.
+860	cmdParry	pkg/session/combat_cmds.go	189	6718	"But noone's attacking you!\r\n"	c-reachable	C do_parry uses the matching output literal at src/new_cmds.c:2358.
+861	cmdParry	pkg/session/combat_cmds.go	194	6810	"Parry with what? You're unarmed!\r\n"	c-reachable	C do_parry uses the matching output literal at src/new_cmds.c:2364.
+862	cmdParry	pkg/session/combat_cmds.go	198	6976	"Parry with what? You're unarmed!\r\n"	c-reachable	C do_parry uses the matching output literal at src/new_cmds.c:2364.
+863	cmdParry	pkg/session/combat_cmds.go	205	7199	"With a dazzling show of swordplay, you attempt to parry...but are outmaneuvered!\r\n"	c-reachable	C do_parry emits this failed-parry line at src/new_cmds.c:2373-2375.
+864	cmdParry	pkg/session/combat_cmds.go	211	7427	"With a dazzling show of swordplay, you move into defensive position...\r\n"	c-reachable	C do_parry has the matching output format at src/new_cmds.c:2381 (text score 80; C formatting supplies the variable text).
+865	cmdParry	pkg/session/combat_cmds.go	213	7568	"$n displays a dazzling show of swordplay, fending off $N's every blow!"	c-reachable	C do_parry uses the matching output literal at src/new_cmds.c:2383.
+866	cmdParry	pkg/session/combat_cmds.go	215	7710	"$n displays a dazzling show of swordplay, fending off your every blow!"	c-reachable	C do_parry uses the matching output literal at src/new_cmds.c:2385.
+867	cmdEmote	pkg/session/comm_cmds.go	70	2542	"Yes.. but what?"	c-reachable	C do_gen_comm emits this empty-emote prompt at src/act.wizard.c:135.
+868	cmdEmote	pkg/session/comm_cmds.go	77	2864	"You try to express yourself but cannot!"	c-reachable	C do_gen_comm emits this emote refusal at src/act.wizard.c:141.
+869	cmdEmote	pkg/session/comm_cmds.go	86	3323	"$n "	c-reachable	C do_emote builds the room act from "$n %s" at src/act.wizard.c:144.
+870	cmdEmote	pkg/session/comm_cmds.go	89	3490	"Okay.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:92.
+871	cmdPageText	pkg/session/comm_cmds.go	172	6736	"Whom do you wish to page?"	c-reachable	C do_page emits this missing-target prompt at src/act.comm.c:1117.
+872	cmdPageText	pkg/session/comm_cmds.go	178	6908	"\x07\x07*%s* %s"	c-reachable	C do_page formats the bell-prefixed page at src/act.comm.c:1119.
+873	cmdPageText	pkg/session/comm_cmds.go	186	7270	"You will never be godly enough to do that!"	c-reachable	C do_page emits this level refusal at src/act.comm.c:1126.
+874	cmdPageText	pkg/session/comm_cmds.go	215	8387	"There is no such person in the game!"	c-reachable	C do_page emits this target-not-found response at src/act.comm.c:1137.
+875	cmdPageText	pkg/session/comm_cmds.go	222	8593	"Okay."	c-reachable	C do_set uses the matching output literal at src/act.wizard.c:2718.
+876	cmdThinkBody	pkg/session/comm_switched.go	150	4366	"$n thinks about life, the universe, and everything."	c-reachable	C do_think uses the matching output literal at src/act.comm.c:1363.
+877	cmdThinkBody	pkg/session/comm_switched.go	151	4456	"You think about life, the universe, and everything.\n\r"	c-reachable	C do_think uses the matching output literal at src/act.comm.c:1365.
+878	cmdThinkBody	pkg/session/comm_switched.go	155	4573	"You try to think aloud, but cannot!\r\n"	c-reachable	C do_think uses the matching output literal at src/act.comm.c:1372.
+879	cmdThinkBody	pkg/session/comm_switched.go	159	4689	"$n thinks . o O ( "	c-reachable	C do_gen_comm formats the mobile thinking act at src/act.comm.c:1375-1376.
+880	cmdThinkBody	pkg/session/comm_switched.go	161	4831	"You think . o O ( %s )\n\r"	c-reachable	C do_think uses the matching output literal at src/act.comm.c:1380.
+881	executeCommandRaw	pkg/session/commands.go	1134	61880	"Huh?!?\r\n"	c-reachable	C command_interpreter uses the matching output literal at src/interpreter.c:916.
+882	mobInfoBarBody	pkg/session/infobar_body.go	50	1600	"Your infobar is off.\r\n"	c-reachable	C do_infobar uses the matching output literal at src/act.display.c:121.
+883	mobInfoBarBody	pkg/session/infobar_body.go	52	1670	"Your infobar is on.\r\n"	c-reachable	C do_infobar uses the matching output literal at src/act.display.c:124.
+884	mobInfoBarBody	pkg/session/infobar_body.go	54	1727	"You had an unknown infobar setting.\r\n"	c-reachable	C do_infobar uses the matching output literal at src/act.display.c:127.
+885	mobInfoBarBody	pkg/session/infobar_body.go	55	1789	"It is being set to OFF.\r\n"	c-reachable	C do_infobar uses the matching output literal at src/act.display.c:128.
+886	mobInfoBarBody	pkg/session/infobar_body.go	68	2148	"Your infobar is now set to off.\r\n"	c-reachable	C do_infobar uses the matching output literal at src/act.display.c:136.
+887	mobInfoBarBody	pkg/session/infobar_body.go	70	2217	"Your infobar is already off.\r\n"	c-reachable	C do_infobar uses the matching output literal at src/act.display.c:138.
+888	mobInfoBarBody	pkg/session/infobar_body.go	90	2852	"Your infobar is now set to on.\r\n"	c-reachable	C do_infobar uses the matching output literal at src/act.display.c:147.
+889	mobInfoBarBody	pkg/session/infobar_body.go	92	2920	"Your infobar is already on.\r\n"	c-reachable	C do_infobar uses the matching output literal at src/act.display.c:149.
+890	mobInfoBarBody	pkg/session/infobar_body.go	95	2987	"Usage:  infobar < on | off >\r\n"	c-reachable	C do_infobar uses the matching output literal at src/act.display.c:153.
+891	cmdMapForBody	pkg/session/map_cmds.go	189	5476	"Type HELP MAP to see a map of town.\r\n"	c-reachable	C do_map uses the matching output literal at src/mapcode.c:154.
+892	cmdMapForBody	pkg/session/map_cmds.go	243	6937	"You look down upon the world and see...\r\n"	c-reachable	C do_map uses the matching output literal at src/mapcode.c:184.
+893	cmdMapForBody	pkg/session/map_cmds.go	285	8452	"\r\nKEY: inside = &g0&n, city = &m#&n, field = &Y:&n, forest = &G+&n, hills = &w%&n,\r\n"	c-reachable	C do_map formats the matching terrain legend at src/mapcode.c:203-207; the %s values are the colorized terrain symbols.
+894	cmdMapForBody	pkg/session/map_cmds.go	286	8547	"     mountain = &y^&n, swim water = &B~&n, noswim water = &b~&n, underwater = &b_&n,\r\n"	c-reachable	C do_map formats this terrain legend at src/mapcode.c:203-207.
+895	cmdMapForBody	pkg/session/map_cmds.go	287	8642	"     flying = &C@&n, desert = &r$&n, fire = &RF&n, earth = &YE&n, wind = &CW&n,\r\n"	c-reachable	C do_map formats the matching terrain legend at src/mapcode.c:203-207; the %s values are the colorized terrain symbols.
+896	cmdMapForBody	pkg/session/map_cmds.go	288	8732	"     water = &cw&n, swamp = &D`&n\r\n"	c-reachable	C do_map formats the matching terrain legend at src/mapcode.c:203-207; the %s values are the colorized terrain symbols.
+897	cmdMapForBody	pkg/session/map_cmds.go	289	8776	"     &RX&n = You are here. &D*&n = overlapping room(s)\r\n"	c-reachable	C do_map uses the matching output literal at src/mapcode.c:207.
+898	*Session.finishDupeCheck	pkg/session/reconnect.go	167	6527	"You take over your own body, already in use!\r\n"	c-reachable	C perform_dupe_check sends this exact line to the reconnecting descriptor at src/interpreter.c:1644-1645.
+899	*Session.finishDupeCheck	pkg/session/reconnect.go	169	6620	"$n suddenly keels over in pain, surrounded by a white aura...\r\n"	c-reachable	C perform_dupe_check emits this room act at src/interpreter.c:1645-1646.
+900	*Session.finishDupeCheck	pkg/session/reconnect.go	170	6693	"$n's body has been taken over by a new spirit!"	c-reachable	C perform_dupe_check completes the room act at src/interpreter.c:1645-1646.
+901	*Session.finishDupeCheck	pkg/session/reconnect.go	173	6931	"Reconnecting.\r\n"	c-reachable	C reconnect path sends this exact prompt at src/interpreter.c:1636.
+902	*Session.finishDupeCheck	pkg/session/reconnect.go	175	6998	"You have mail waiting.\r\n"	c-reachable	C reconnect path sends this exact notice at src/interpreter.c:1638.
+903	*Session.finishDupeCheck	pkg/session/reconnect.go	177	7070	"$n has reconnected."	c-reachable	C reconnect path emits this room act at src/interpreter.c:1639.
+904	*Session.routeDescriptorLine	pkg/session/session_login.go	419	15975	"Post not aborted, use REMOVE <post #>.\r\n"	c-reachable	C playing_string_cleanup uses the matching output literal at src/modify.c:236.
+905	*Session.routeDescriptorLine	pkg/session/session_login.go	432	16563	"Line number must be higher than 0.\r\n"	c-reachable	C parse_action uses the matching output literal at src/improved-edit.c:387.
+906	*Session.routeDescriptorLine	pkg/session/session_login.go	436	16755	"Line changed.\r\n"	c-reachable	C parse_action uses the matching output literal at src/improved-edit.c:467.
+907	cmdEcho	pkg/session/wiz_communication.go	42	1004	"Yes.. but what?"	c-reachable	C do_echo has the matching output format at src/act.wizard.c:135 (text score 93; C formatting supplies the variable text).
+908	cmdEcho	pkg/session/wiz_communication.go	47	1101	"Maximum echo length is 500 characters."	go-only-in-game	Go emits this length guard at pkg/session/wiz_communication.go:46-49; C do_echo has no corresponding max-length response (src/act.wizard.c:147-151).
+909	cmdEcho	pkg/session/wiz_communication.go	60	1853	"Okay.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:92.
+910	cmdForceText	pkg/session/wiz_communication.go	141	4778	"Whom do you wish to force do what?\r\n"	c-reachable	C do_force uses the matching output literal at src/act.wizard.c:1867.
+911	cmdForceText	pkg/session/wiz_communication.go	148	5068	"Okay.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:92.
+912	cmdForceText	pkg/session/wiz_communication.go	183	6231	"No, no, no!\r\n"	c-reachable	C do_force uses the matching output literal at src/act.wizard.c:1872.
+913	cmdForceText	pkg/session/wiz_communication.go	187	6275	"Okay.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:92.
+914	cmdForceText	pkg/session/wiz_communication.go	191	6500	"$n has forced you to '%s'."	c-reachable	C do_force uses the matching output literal at src/act.wizard.c:1864.
+915	forceAll	pkg/session/wiz_communication.go	321	11016	"Okay.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:92.
+916	wiznetList	pkg/session/wiz_communication.go	506	17317	"Gods online:\r\n"	c-reachable	C do_wiznet uses the matching output literal at src/act.wizard.c:1954.
+917	wiznetList	pkg/session/wiz_communication.go	509	17375	"  %s"	c-reachable	C do_wiznet has the matching output format at src/act.wizard.c:1957 (text score 80; C formatting supplies the variable text).
+918	wiznetList	pkg/session/wiz_communication.go	511	17472	" (Writing)\r\n"	c-reachable	C do_wiznet has the matching output format at src/act.wizard.c:1959 (text score 92; C formatting supplies the variable text).
+919	wiznetList	pkg/session/wiz_communication.go	513	17563	" (Writing mail)\r\n"	c-reachable	C do_wiznet has the matching output format at src/act.wizard.c:1961 (text score 94; C formatting supplies the variable text).
+920	wiznetList	pkg/session/wiz_communication.go	524	17801	"Gods offline:\r\n"	c-reachable	C do_wiznet has the matching output format at src/act.wizard.c:1973 (text score 93; C formatting supplies the variable text).
+921	wiznetList	pkg/session/wiz_communication.go	527	17860	"  %s\r\n"	c-reachable	C do_wiznet has the matching output format at src/act.wizard.c:1976 (text score 85; C formatting supplies the variable text).
+922	cmdCheckload	pkg/session/wiz_info.go	464	15433	"Usage: checkload { obj | mob } <number>\r\n"	c-reachable	C do_checkload uses the matching output literal at src/act.wizard.c:3825.
+923	cmdCheckload	pkg/session/wiz_info.go	476	15751	"That mob does not exist.\r\n"	c-reachable	C do_checkload uses the matching output literal at src/act.wizard.c:3838.
+924	cmdCheckload	pkg/session/wiz_info.go	490	16330	"That object does not exist.\r\n"	c-reachable	C do_checkload uses the matching output literal at src/act.wizard.c:3850.
+925	cmdCheckload	pkg/session/wiz_info.go	501	16779	"Usage: checkload { obj | mob } <number>\r\n"	c-reachable	C do_checkload uses the matching output literal at src/act.wizard.c:3825.
+926	cmdLoad	pkg/session/wiz_object.go	30	733	"Usage: load { obj | mob } <number or name>\r\n"	c-reachable	C do_load has the matching output format at src/act.wizard.c:1289 (text score 97; C formatting supplies the variable text).
+927	cmdLoad	pkg/session/wiz_object.go	35	860	"Mob name not found.\r\n"	c-reachable	C do_load has the matching output format at src/act.wizard.c:1274 (text score 95; C formatting supplies the variable text).
+928	cmdLoad	pkg/session/wiz_object.go	37	940	"Object name not found.\r\n"	c-reachable	C do_load has the matching output format at src/act.wizard.c:1285 (text score 95; C formatting supplies the variable text).
+929	cmdLoad	pkg/session/wiz_object.go	39	983	"Usage: load { obj | mob } <number or name>\r\n"	c-reachable	C do_load has the matching output format at src/act.wizard.c:1289 (text score 97; C formatting supplies the variable text).
+930	cmdLoad	pkg/session/wiz_object.go	51	1225	"Mob name not found.\r\n"	c-reachable	C do_load has the matching output format at src/act.wizard.c:1274 (text score 95; C formatting supplies the variable text).
+931	cmdLoad	pkg/session/wiz_object.go	56	1374	"Object name not found.\r\n"	c-reachable	C do_load has the matching output format at src/act.wizard.c:1285 (text score 95; C formatting supplies the variable text).
+932	cmdLoad	pkg/session/wiz_object.go	61	1470	"Usage: load { obj | mob } <number or name>\r\n"	c-reachable	C do_load has the matching output format at src/act.wizard.c:1289 (text score 97; C formatting supplies the variable text).
+933	cmdLoad	pkg/session/wiz_object.go	70	1813	"A NEGATIVE number??\r\n"	c-reachable	C do_vstat uses the matching output literal at src/act.wizard.c:1395.
+934	cmdLoad	pkg/session/wiz_object.go	79	2014	"There is no monster with that number.\r\n"	c-reachable	C do_vstat uses the matching output literal at src/act.wizard.c:1400.
+935	cmdLoad	pkg/session/wiz_object.go	93	2747	"There is no object with that number.\r\n"	c-reachable	C do_vstat uses the matching output literal at src/act.wizard.c:1409.
+936	cmdLoad	pkg/session/wiz_object.go	98	2961	"You're not godly enough to load that!\r\n"	c-reachable	C do_load has the matching output format at src/act.wizard.c:1307 (text score 97; C formatting supplies the variable text).
+937	cmdLoad	pkg/session/wiz_object.go	103	3180	"That is beyond your godly powers...\r\n"	c-reachable	C do_load has the matching output format at src/act.wizard.c:1363 (text score 97; C formatting supplies the variable text).
+938	cmdLoad	pkg/session/wiz_object.go	109	3497	"You can't carry that right now.\r\n"	go-only-in-game	Go emits this when the inventory add fails at pkg/session/wiz_object.go:109; C do_load calls obj_to_char without a matching refusal (src/act.wizard.c:1368-1376).
+939	cmdLoad	pkg/session/wiz_object.go	120	4061	"That'll have to be either 'obj' or 'mob'.\r\n"	c-reachable	C do_vstat uses the matching output literal at src/act.wizard.c:1416.
+940	cmdLoad::func@86	pkg/session/wiz_object.go	87	2488	"$n has created $N!"	c-reachable	C do_load uses the matching output literal at src/act.wizard.c:1320.
+941	cmdLoad::func@86	pkg/session/wiz_object.go	88	2588	"You create $N."	c-reachable	C do_load uses the matching output literal at src/act.wizard.c:1321.
+942	cmdLoad::func@115	pkg/session/wiz_object.go	116	3902	"$n has created $p!"	c-reachable	C do_load uses the matching output literal at src/act.wizard.c:1375.
+943	cmdLoad::func@115	pkg/session/wiz_object.go	117	4002	"You create $p."	c-reachable	C do_load uses the matching output literal at src/act.wizard.c:1376.
+944	sendLoadNarration	pkg/session/wiz_object.go	190	5824	"$n makes a strange magickal gesture."	c-reachable	C do_load uses the matching output literal at src/act.wizard.c:1318.
+945	cmdPurge	pkg/session/wiz_object.go	211	6940	"Fuuuuuuuuu!\r\n"	c-reachable	C do_purge uses the matching output literal at src/act.wizard.c:1434.
+946	cmdPurge	pkg/session/wiz_object.go	217	7174	"$n disintegrates $N."	c-reachable	C do_purge uses the matching output literal at src/act.wizard.c:1437.
+947	cmdPurge	pkg/session/wiz_object.go	223	7588	"$n has lost $s link."	c-reachable	C close_socket uses the matching output literal at src/comm.c:2131.
+948	cmdPurge	pkg/session/wiz_object.go	230	7995	"$n disintegrates $N."	c-reachable	C do_purge uses the matching output literal at src/act.wizard.c:1437.
+949	cmdPurge	pkg/session/wiz_object.go	233	8097	"Okay.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:92.
+950	cmdPurge	pkg/session/wiz_object.go	238	8278	"$n destroys $p."	c-reachable	C do_purge uses the matching output literal at src/act.wizard.c:1450.
+951	cmdPurge	pkg/session/wiz_object.go	240	8373	"Okay.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:92.
+952	cmdPurge	pkg/session/wiz_object.go	243	8413	"Nothing here by that name.\r\n"	c-reachable	C do_purge uses the matching output literal at src/act.wizard.c:1454.
+953	cmdPurge	pkg/session/wiz_object.go	247	8560	"$n gestures... You are surrounded by scorching flames!"	c-reachable	C do_purge uses the matching output literal at src/act.wizard.c:1459.
+954	cmdRestore	pkg/session/wiz_player.go	24	730	"Whom do you wish to restore?\r\n"	c-reachable	C do_restore uses the matching output literal at src/act.wizard.c:1591.
+955	cmdRestore	pkg/session/wiz_player.go	35	1202	"No-one by that name here.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:93.
+956	cmdRestore	pkg/session/wiz_player.go	81	2659	"Okay.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:92.
+957	cmdRestore	pkg/session/wiz_player.go	87	2963	"The hand of $N touches you, healing your wounds and leaving you refreshed!"	c-reachable	C do_restore has the matching output format at src/act.wizard.c:1616 (text score 92; C formatting supplies the variable text).
+958	cmdSwitch	pkg/session/wiz_player.go	102	3524	"You're already switched.\r\n"	c-reachable	C do_switch uses the matching output literal at src/act.wizard.c:1182.
+959	cmdSwitch	pkg/session/wiz_player.go	107	3603	"Switch with who?\r\n"	c-reachable	C do_switch uses the matching output literal at src/act.wizard.c:1184.
+960	cmdSwitch	pkg/session/wiz_player.go	112	3735	"Switch with who?\r\n"	c-reachable	C do_switch uses the matching output literal at src/act.wizard.c:1184.
+961	cmdSwitch	pkg/session/wiz_player.go	117	3856	"No such character.\r\n"	c-reachable	C do_switch uses the matching output literal at src/act.wizard.c:1186.
+962	cmdSwitch	pkg/session/wiz_player.go	121	3942	"Hee hee... we are jolly funny today, eh?\r\n"	c-reachable	C do_switch uses the matching output literal at src/act.wizard.c:1188.
+963	cmdSwitch	pkg/session/wiz_player.go	125	4082	"You can't do that, the body is already in use!\r\n"	c-reachable	C do_switch uses the matching output literal at src/act.wizard.c:1190.
+964	cmdSwitch	pkg/session/wiz_player.go	129	4222	"You aren't holy enough to use a mortal's body.\r\n"	c-reachable	C do_switch uses the matching output literal at src/act.wizard.c:1192.
+965	cmdSwitch	pkg/session/wiz_player.go	148	4739	"Okay.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:92.
+966	*Manager.returnSwitch	pkg/session/wiz_player.go	191	6151	"You return to your original body.\r\n"	c-reachable	C do_return uses the matching output literal at src/act.wizard.c:1208.
+967	applySetField	pkg/session/wiz_set.go	687	21253	"Assuming the player is not logged in, this will not take effect if they are.\r\n"	c-reachable	C do_set has the matching output format at src/act.wizard.c:2985 (text score 80; C formatting supplies the variable text).
+968	*Session.sendStatObject	pkg/session/wiz_stats.go	817	31707	"No such object around.\r\n"	c-reachable	C do_stat uses the matching output literal at src/act.wizard.c:1053.
+969	cmdWizlock	pkg/session/wiz_system.go	197	5150	"currently"	c-reachable	C do_wizlock uses the matching output literal at src/act.wizard.c:1784.
+970	cmdWizlock	pkg/session/wiz_system.go	201	5262	"Invalid wizlock value.\r\n"	c-reachable	C do_wizlock uses the matching output literal at src/act.wizard.c:1778.
+971	cmdWizlock	pkg/session/wiz_system.go	206	5383	"now"	c-reachable	C do_wizlock uses the matching output literal at src/act.wizard.c:1782.
+972	cmdWizlock	pkg/session/wiz_system.go	212	5472	"The game is %s completely open.\r\n"	c-reachable	C do_wizlock uses the matching output literal at src/act.wizard.c:1788.
+973	cmdWizlock	pkg/session/wiz_system.go	214	5548	"The game is %s closed to new players.\r\n"	c-reachable	C do_wizlock uses the matching output literal at src/act.wizard.c:1791.
+974	cmdWizlock	pkg/session/wiz_system.go	216	5631	"Only level %d and above may enter the game %s.\r\n"	c-reachable	C do_wizlock uses the matching output literal at src/act.wizard.c:1794.
+975	cmdFreeze	pkg/session/wiz_system.go	590	20387	"Yes, but for whom?!?\r\n"	c-reachable	C do_wizutil uses the matching output literal at src/act.wizard.c:2091.
+976	cmdMute	pkg/session/wiz_system.go	646	22564	"Huh?!?"	c-reachable	C do_wiznet uses the matching output literal at src/act.wizard.c:1924.
+977	cmdMute	pkg/session/wiz_system.go	650	22620	"Yes, but for whom?!?\r\n"	c-reachable	C do_wizutil uses the matching output literal at src/act.wizard.c:2091.
+978	cmdNewbie	pkg/session/wiz_system.go	671	23324	"Whom do you wish to newbie?\r\n"	c-reachable	C do_newbie uses the matching output literal at src/act.wizard.c:3526.
+979	cmdNewbie	pkg/session/wiz_system.go	677	23465	"No-one by that name here.\r\n"	c-reachable	C source uses the matching output literal at src/config.c:93.
+980	cmdNewbie	pkg/session/wiz_system.go	715	24756	"Newbied.\r\n"	c-reachable	C do_newbie uses the matching output literal at src/act.wizard.c:3536.
+981	cmdNewbie	pkg/session/wiz_system.go	717	24828	"$N makes a magickal gesture, creating a bunch of equipment, and hands it to you!"	c-reachable	C do_newbie has the matching output format at src/act.wizard.c:3537 (text score 88; C formatting supplies the variable text).
+982	cmdZreset	pkg/session/wiz_zone.go	28	646	"You must specify a zone.\r\n"	c-reachable	C do_zreset uses the matching output literal at src/act.wizard.c:2043.
+983	cmdZreset	pkg/session/wiz_zone.go	45	1018	"Reset world.\r\n"	c-reachable	C do_zreset uses the matching output literal at src/act.wizard.c:2049.
+984	cmdZreset	pkg/session/wiz_zone.go	61	1536	"Invalid zone number.\r\n"	c-reachable	C do_zreset uses the matching output literal at src/act.wizard.c:2069.
+985	cmdZreset	pkg/session/wiz_zone.go	67	1649	"Reset zone %d (#%d): %s.\r\n"	c-reachable	C do_zreset uses the matching output literal at src/act.wizard.c:2063.
+986	mobWizutilBody::func@15	pkg/session/wizutil_body.go	21	704	"Huh?!?\r\n"	c-reachable	C do_wizutil uses the matching output literal at src/act.wizard.c:2084.
+987	mobWizutilBody::func@15	pkg/session/wizutil_body.go	30	945	"Yes, but for whom?!?\r\n"	c-reachable	C do_wizutil uses the matching output literal at src/act.wizard.c:2091.
+988	mobWizutilBody::func@15	pkg/session/wizutil_body.go	36	1166	"You can't do that to a mob!\r\n"	c-reachable	C do_wizutil uses the matching output literal at src/act.wizard.c:2095.
+989	mobWizutilBody::func@15	pkg/session/wizutil_body.go	39	1265	"There is no such player.\r\n"	c-reachable	C do_stat uses the matching output literal at src/act.wizard.c:1042.
+990	mobWizutilBody::func@15	pkg/session/wizutil_body.go	44	1468	"Hmmm...you'd better not.\r\n"	c-reachable	C do_wizutil uses the matching output literal at src/act.wizard.c:2098.
+991	mobWizutilBody::func@15	pkg/session/wizutil_body.go	53	1783	"OFF"	c-reachable	C do_toggle uses the matching output literal at src/act.informative.c:2507.
+992	mobWizutilBody::func@15	pkg/session/wizutil_body.go	55	1818	"ON"	c-reachable	C source uses the matching output literal at src/utils.h:159.
+993	mobWizutilBody::func@15	pkg/session/wizutil_body.go	59	1998	"(GC) Squelch %s for %s by %s.\r\n"	c-reachable	C do_wizutil has the matching output format at src/act.wizard.c:2133 (text score 96; C formatting supplies the variable text).
+994	mobWizutilBody::func@15	pkg/session/wizutil_body.go	62	2160	"Your victim is not flagged.\r\n"	c-reachable	C do_wizutil uses the matching output literal at src/act.wizard.c:2114.
+995	mobWizutilBody::func@15	pkg/session/wizutil_body.go	66	2303	"Pardoned.\r\n"	c-reachable	C do_wizutil uses the matching output literal at src/act.wizard.c:2118.
+996	mobWizutilBody::func@15	pkg/session/wizutil_body.go	67	2342	"You have been pardoned by the Gods!\r\n"	c-reachable	C do_wizutil uses the matching output literal at src/act.wizard.c:2119.
+997	*Session.startZedit	pkg/session/zedit.go	192	5442	"$n starts using OLC."	c-reachable	C do_olc uses the matching output literal at src/olc.c:275.
