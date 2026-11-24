@@ -71,7 +71,7 @@ goto 8105
 teleport Tellmobile 8163
 goto 8162
 set player Tellbody level 38
-set player Tellmobile level 38
+send:mobile set player Tellmobile level 38
 switch clone
 send:mobile switch air elemental
 
