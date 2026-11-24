@@ -152,6 +152,10 @@ set mob clone hit 50000
 set mob trainee level 39
 set mob Satan level 39
 set mob instructor level 1
+teleport clone 8105
+teleport trainee 8105
+teleport Satan 8105
+teleport instructor 8105
 force Satan sleep
 force instructor sleep
 switch clone
