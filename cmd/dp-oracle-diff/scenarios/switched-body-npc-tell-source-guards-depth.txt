@@ -9,7 +9,6 @@
 [fixture]
 empty-players
 spawn-mob 69 1 8162 80
-spawn-mob 83 1 8162 80
 set-room-flag 8162 5 on
 
 [setup:oracle]
@@ -101,10 +100,13 @@ goto 8105
 teleport Tellrecipient 8162
 teleport Tellmobile 8162
 goto 8162
+# Load the second mobile here so its target remains in the room for the peer.
+load mob 83
 # Keep Tellbody at C's initial LVL_IMPL while setting the peer; once demoted,
 # do_set correctly refuses to change a same-or-higher-level player.
 set player Tellmobile level 38
 set player Tellbody level 38
+send:mobile look
 switch clone
 send:mobile switch air elemental
 

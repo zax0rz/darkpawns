@@ -6,7 +6,6 @@
 [fixture]
 empty-players
 spawn-mob 69 1 8162 80
-spawn-mob 83 1 8163 80
 set-room-flag 8162 5 off
 set-room-flag 8163 5 on
 
@@ -69,6 +68,9 @@ Y
 [warmup]
 goto 8105
 teleport Tellmobile 8163
+goto 8163
+# Load the second mobile here so its target remains in the soundproof room.
+load mob 83
 goto 8162
 # Keep Tellbody at C's initial LVL_IMPL while setting the peer; once demoted,
 # do_set correctly refuses to change a same-or-higher-level player.
