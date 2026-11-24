@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_point	point	point.entry-gate	D1	command	unit-green	TestPointRegistrationUsesCEntryGate	interpreter.c:609	The registered C row is POS_RESTING with no command minimum level; the focused test pins the command gate before do_point (R1/R2/R5e).
+do_point	point	point.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:609	The registered C row is POS_RESTING with no command minimum level; the golden gate test pins both command_gates.tsv and the cmdRegistry registration for point before do_point (R1/R2/R5e).
 do_point	point	point.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:609	The shared POS_RESTING command rejection is already proven by the position-gate vehicle (R5b/R5c).
 do_point	point	point.no-argument	D2	command	oracle-green-multiseed	point-depth@1,2,3,5,8	new_cmds.c:2510-2564	Empty input falls through character/object/direction lookup to the exact around-the-room actor and room lines (R1/R3/R5e).
 do_point	point	point.direction	D2	command	oracle-green-multiseed	point-depth@1,2,3,5,8	new_cmds.c:2487-2503	The six-direction abbreviation helper emits the canonical full direction in both actor and room messages (R1/R2/R3/R5e).

@@ -24,11 +24,31 @@ func newTransferItem(vnum int, shortDesc, keywords string, wearMask int) *Object
 }
 
 func TestCanTakeObjUsesTakeBit(t *testing.T) {
-	w, ch, _ := newDonateTestWorld(t)
-	obj := newTransferItem(3990, "a short sword", "sword", (1<<0)|(1<<13))
-	obj.SetWeight(0)
-	if !w.canTakeObj(ch, obj) {
-		t.Fatal("TAKE|WIELD object should be takeable; TAKE is a bit test")
+	w, ch, lastMsg := newDonateTestWorld(t)
+
+	for _, tt := range []struct {
+		name     string
+		wearMask int
+		want     bool
+	}{
+		{name: "TAKE and WIELD", wearMask: (1 << 0) | (1 << 13), want: true},
+		{name: "TAKE only", wearMask: 1 << 0, want: true},
+		{name: "WIELD only without TAKE", wearMask: 1 << 13, want: false},
+		{name: "no wear flags", wearMask: 0, want: false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			obj := newTransferItem(3990, "a short sword", "sword", tt.wearMask)
+			obj.SetWeight(0)
+			got := w.canTakeObj(ch, obj)
+			if got != tt.want {
+				t.Fatalf("canTakeObj(wearMask=0x%x) = %v, want %v", tt.wearMask, got, tt.want)
+			}
+			if !tt.want {
+				if msg := lastMsg(); !strings.Contains(msg, "you can't take that!") {
+					t.Fatalf("non-TAKE refusal = %q, want \"you can't take that!\"", msg)
+				}
+			}
+		})
 	}
 }
 
