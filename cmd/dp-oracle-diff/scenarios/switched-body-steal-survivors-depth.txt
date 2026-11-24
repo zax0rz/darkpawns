@@ -1,0 +1,173 @@
+# C-first switched-body witness for survivor messages in do_steal.
+# The first command reaches the non-Outlaw PC-victim guard. A second descriptor
+# switches into an awake trainee so caught-item and gold ToVict bytes are
+# observable; an independent room observer sees ToNotVict. A sleeping Satan
+# Klaus reaches equipment failure, and the level-1 instructor permits success.
+# depth-case: switched.steal.outlaw-gate-victim-output
+# depth-case: switched.steal.inventory-caught-actor
+# depth-case: switched.steal.inventory-caught-victim
+# depth-case: switched.steal.inventory-caught-room
+# depth-case: switched.steal.equipment-failed-actor
+# depth-case: switched.steal.equipment-failed-room
+# depth-case: switched.steal.equipment-success-actor
+# depth-case: switched.steal.equipment-success-room
+# depth-case: switched.steal.missing-item
+# depth-case: switched.steal.gold-caught-room
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 80
+give-object 16303 12132 1 80
+spawn-mob 70 1 8105 70
+equip-object 70 8022 999 16 70
+spawn-mob 16304 1 8105 163
+equip-object 16304 8022 999 16 163
+
+[setup:oracle]
+Stealbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stealbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Stealvictim
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Stealvictim
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Stealtrainee
+Y
+trainpass
+trainpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Stealtrainee
+y
+trainpass
+trainpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Stealwatch
+Y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Stealwatch
+y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Stealvictim 8105
+teleport Stealtrainee 8105
+teleport Stealwatch 8105
+set player Stealvictim level 39
+set player Stealtrainee level 38
+set mob clone level 39
+set mob clone dex 18
+set mob clone maxhit 50000
+set mob clone hit 50000
+set mob trainee level 39
+set mob Satan level 39
+set mob instructor level 1
+teleport clone 8105
+teleport trainee 8105
+teleport Satan 8105
+teleport instructor 8105
+force Satan sleep
+force instructor sleep
+switch clone
+send:victim switch trainee
+
+[probe]
+look
+steal coins Stealvictim
+steal long Satan
+~dpclock pulse 20
+steal long instructor
+~dpclock pulse 20
+steal missing trainee
+steal coins Satan
+~dpclock pulse 20
+steal pepper trainee
