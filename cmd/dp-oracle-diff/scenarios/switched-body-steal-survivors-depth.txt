@@ -143,7 +143,7 @@ goto 8105
 teleport Stealvictim 8105
 teleport Stealtrainee 8105
 teleport Stealwatch 8105
-set player Stealvictim level 40
+set player Stealvictim level 31
 set mob clone level 39
 set mob clone dex 18
 set mob trainee level 31
