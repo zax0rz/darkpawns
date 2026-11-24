@@ -71,7 +71,7 @@ set player Rescuewatch level 38
 set mob clone level 39
 skillset SwitchBatch 'rescue' 0
 restore clone
-set mob clone level 0
+set mob clone level 1
 switch clone
 
 [probe]

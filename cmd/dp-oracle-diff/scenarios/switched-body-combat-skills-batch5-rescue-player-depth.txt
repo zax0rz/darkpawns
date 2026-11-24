@@ -106,7 +106,7 @@ skillset SwitchBatch 'rescue' 0
 set mob clone level 39
 goto 8162
 restore clone
-set mob clone level 0
+set mob clone level 1
 send:peer switch trainee
 switch clone
 

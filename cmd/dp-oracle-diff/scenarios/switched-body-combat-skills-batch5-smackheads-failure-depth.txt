@@ -78,7 +78,7 @@ set mob recruit ac -1000
 set mob clone level 0
 skillset SwitchBatch 'smackheads' 0
 restore clone
-set mob clone level 0
+set mob clone level 1
 set mob clone maxmove 1000
 set mob clone move 1000
 switch clone
