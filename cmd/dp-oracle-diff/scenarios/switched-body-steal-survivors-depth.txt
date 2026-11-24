@@ -23,8 +23,8 @@ spawn-mob 69 1 8105 80
 spawn-mob 16303 1 8105 80
 give-object 16303 12132 1 80
 equip-object 16303 8022 999 16 80
-spawn-mob 16304 1 8105 80
-equip-object 16304 8022 999 16 80
+spawn-mob 16304 1 8105 163
+equip-object 16304 8022 999 16 163
 
 [setup:oracle]
 Stealbody
