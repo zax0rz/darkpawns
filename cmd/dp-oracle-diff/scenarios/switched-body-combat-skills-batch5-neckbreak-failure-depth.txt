@@ -1,0 +1,114 @@
+# C-first switched-body neckbreak failure. A very negative AC makes the registered do_neckbreak failure roll exceed the mobile skill regardless of the draw. The watcher forces the switched body through command_interpreter so the actor lane is exercised; the connected target and watcher expose all three act audiences (src/interpreter.c:564; src/act.offensive.c:1295-1376; src/act.wizard.c:1856-1880).
+# depth-case: neckbreak.switched-mobile-failure-audiences
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+SwitchBatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchBatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Neckpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Neckpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watcher]
+Neckwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watcher]
+Neckwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Neckpeer 8105
+teleport Neckwatch 8105
+set player Neckpeer level 38
+set mob trainee ac -1000
+set mob trainee maxhit 30000
+set mob trainee hit 30000
+set mob clone level 39
+skillset SwitchBatch 'neckbreak' 0
+restore clone
+set mob clone level 0
+set mob clone maxmove 1000
+set mob clone move 1000
+set player Neckwatch level 38
+send:peer switch trainee
+switch clone
+
+[probe]
+send:watcher force clone neckbreak trainee
