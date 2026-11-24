@@ -43,8 +43,8 @@ Y
 [setup:oracle:recipient]
 Tellrecipient
 Y
-recipientpass
-recipientpass
+recippass
+recippass
 N
 M
 H

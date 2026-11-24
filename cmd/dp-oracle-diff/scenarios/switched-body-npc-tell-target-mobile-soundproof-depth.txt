@@ -74,8 +74,9 @@ goto 8162
 # do_set correctly refuses to change a same-or-higher-level player.
 set player Tellmobile level 38
 set player Tellbody level 38
+send:mobile look
 switch clone
-send:mobile switch air elemental
+send:mobile switch air
 
 [probe]
 tell air elemental hello there
