@@ -3,6 +3,7 @@
 # distinct visible targets. No quiet-mobs fixture masks room surfaces.
 # depth-case: npc-tell.switched-empty-argument
 # depth-case: npc-tell.switched-self-target
+# depth-case: npc-tell.switched-npc-no-descriptor
 # depth-case: npc-tell.switched-mobile-target-source-soundproof
 # depth-case: npc-tell.switched-player-target-source-soundproof
 
@@ -100,18 +101,21 @@ goto 8105
 teleport Tellrecipient 8162
 teleport Tellmobile 8162
 goto 8162
-# Load the second mobile here so its target remains in the room for the peer.
-load mob 83
+# Load stable, distinct mobile targets: fire is switched by the peer; earth
+# stays descriptorless so do_tell takes its NOPERSON guard.
+load mob 84
+load mob 81
 # Keep Tellbody at C's initial LVL_IMPL while setting the peer; once demoted,
 # do_set correctly refuses to change a same-or-higher-level player.
 set player Tellmobile level 38
 set player Tellbody level 38
 send:mobile look
 switch clone
-send:mobile switch air elemental
+send:mobile switch fire
 
 [probe]
 tell
 tell clone hello myself
-tell air elemental hello mobile
+tell fire hello mobile
+tell earth hello no descriptor
 tell Tellrecipient hello player
