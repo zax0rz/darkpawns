@@ -1,0 +1,97 @@
+# C-first switched-body witnesses for empty-argument, absent-item, and empty
+# equipment/inventory branches in do_wield, do_wear, and do_remove.
+# The connected observer keeps room output visible alongside the switched body.
+# depth-case: switched.wield.empty-argument
+# depth-case: switched.wield.missing-item
+# depth-case: switched.wear.empty-argument
+# depth-case: switched.wear.all-dot-empty-keyword
+# depth-case: switched.wear.all-dot-missing-item
+# depth-case: switched.wear.all-dot-missing-item-suffix
+# depth-case: switched.wear.all-empty-inventory
+# depth-case: switched.wear.missing-item
+# depth-case: switched.remove.empty-argument
+# depth-case: switched.remove.all-empty-equipment
+# depth-case: switched.remove.all-dot-empty-keyword
+# depth-case: switched.remove.all-dot-missing-item
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 99 8162 80
+
+[setup:oracle]
+Wearbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wearbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Wearwatch
+Y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Wearwatch
+y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport clone 8105
+teleport Wearwatch 8105
+set player Wearwatch level 38
+
+[probe]
+switch clone
+inventory
+wield
+wield missing
+wear
+wear missing
+wear all.
+wear all.missing
+remove
+remove all
+remove all.
+remove all.missing
+wear all

@@ -1,0 +1,86 @@
+# C-first switched-body witness for item-location validation and cursed removal.
+# This scenario intentionally has no quiet-mobs fixture: one spawned mobile and
+# a connected room peer prove the command's ToRoom surface without ambient mobs
+# masking the switched-body command path. The cursed amulet is vnum 2111
+# (ITEM_NODROP), as established in give-nodrop-depth.txt.
+# depth-case: switched.wear.all-with-position
+# depth-case: switched.wear.invalid-position
+# depth-case: switched.remove.cursed-equipment
+# depth-case: switched.wear-remove.unsilenced-room-audience
+
+[fixture]
+empty-players
+spawn-mob 69 99 8105 80
+give-object 69 8007 99 80
+give-object 69 2111 99 80
+
+[setup:oracle]
+Wearbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wearbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Wearwatch
+Y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Wearwatch
+y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Wearwatch 8105
+set player Wearwatch level 38
+
+[probe]
+switch clone
+inventory
+wear all ring
+wear ring nowhere
+wear ring
+remove ring
+wear amulet
+remove amulet
