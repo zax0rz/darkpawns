@@ -75,7 +75,7 @@ set mob trainee ac -1000
 set mob recruit maxhit 30000
 set mob recruit hit 30000
 set mob recruit ac -1000
-set mob clone level 0
+set mob clone level 39
 skillset SwitchBatch 'smackheads' 0
 restore clone
 set mob clone level 1
