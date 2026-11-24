@@ -1,0 +1,111 @@
+# C-first switched-mobile rsay branch matrix. Race is the mobile prototype's
+# GET_RACE field; the primary body is switched through command_interpreter
+# and the same-race human peer exercises the raw-language audience template.
+# C's player race values 4/6 collide with mobile Race: 4 (centaur) and Race: 6
+# (troll), so those mobiles produce the literal Minotauran/Ssauran labels.
+# C sites: src/act.comm.c:647-752; src/comm.c:619-629;
+# src/interpreter.c:883-949; src/act.wizard.c:1175-1200;
+# src/db.c:1189-1193; src/structs.h:130-161,192-198.
+# depth-case: switched-communication.rsay-mobile-stupid-gate
+# depth-case: switched-communication.rsay-mobile-empty-argument
+# depth-case: switched-communication.rsay-mobile-race-labels
+# depth-case: switched-communication.rsay-mobile-same-race-player
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12100 1 8162 121
+spawn-mob 8010 1 8162 80
+spawn-mob 8003 1 8162 80
+spawn-mob 7979 1 8162 79
+spawn-mob 9140 1 8162 91
+spawn-mob 11020 1 8162 110
+spawn-mob 14100 1 8162 141
+
+[setup:oracle]
+Racespeaker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Racespeaker
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Racepeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Racepeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Racepeer 8162
+set mob Darek wis 0
+set mob centaur int 10
+set mob centaur wis 10
+set mob troll int 10
+set mob troll wis 10
+
+[probe]
+switch Darek
+rsay too stupid
+return
+switch merchant
+rsay
+rsay human language.
+return
+switch lawana
+rsay elven language.
+return
+switch kender
+rsay kender language.
+return
+switch centaur
+rsay centaur language.
+return
+switch rakshasa
+rsay rakshasa language.
+return
+switch troll
+rsay troll language.

@@ -1,0 +1,77 @@
+# C-first switched-mobile rsay recipient path. A second descriptor is
+# switched into a mobile so do_race_say's NPC recipient arm emits through its
+# switched descriptor. C sites: src/act.comm.c:681-728; src/comm.c:619-629;
+# src/interpreter.c:883-949; src/act.wizard.c:1175-1200.
+# depth-case: switched-communication.rsay-mobile-switched-recipient
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12100 1 8162 121
+spawn-mob 69 1 8162 80
+
+[setup:oracle]
+Racesecond
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Racesecond
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Peersecond
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Peersecond
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Peersecond 8162
+set player Peersecond level 39
+send:peer switch clone
+
+[probe]
+switch merchant
+rsay mobile audience.
