@@ -1,0 +1,113 @@
+# C-first switched-body do_rescue success with the rescued mobile carrying a live peer descriptor. That peer receives the ToChar line and a separate room observer receives ToNotVict (src/interpreter.c:650; src/act.offensive.c:501-581).
+# depth-case: rescue.switched-mobile-success-victim-audience
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 69 1 8105 80
+spawn-mob 70 1 8105 80
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+SwitchBatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchBatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Rescuepeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Rescuepeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watcher]
+Rescuewatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watcher]
+Rescuewatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Rescuepeer 8105
+teleport Rescuewatch 8105
+set player Rescuepeer level 38
+set player Rescuewatch level 38
+set mob trainee maxhit 30000
+set mob trainee hit 30000
+force trainee hit satan
+skillset SwitchBatch 'rescue' 0
+set mob clone level 39
+goto 8162
+restore clone
+send:peer switch trainee
+switch clone
+
+[probe]
+rescue trainee

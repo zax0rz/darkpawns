@@ -1,0 +1,144 @@
+# C-first switched-body do_subdue refusal and failed roll. A real player target reaches the not-Outlaw refusal, then a peer switches into the authored awake MOB_AWARE seagull; MOB_AWARE sets prob to zero after its draw, forcing the miss bytes for target, actor, and room (src/interpreter.c:748; src/act.offensive.c:1146-1168; src/structs.h:251).
+# depth-case: subdue.switched-player-outlaw-refusal
+# depth-case: subdue.switched-mobile-failure-audiences
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 69 1 8105 80
+spawn-mob 19104 1 8105 80
+
+[setup:oracle]
+SwitchBatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchBatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:refusal]
+Subduerefusal
+Y
+refusepass
+refusepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:refusal]
+Subduerefusal
+y
+refusepass
+refusepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Subduepeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Subduepeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watcher]
+Subduewatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watcher]
+Subduewatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Subduerefusal 8105
+teleport Subduepeer 8105
+teleport Subduewatch 8105
+set player Subduepeer level 38
+set player Subduewatch level 38
+set mob clone level 39
+skillset SwitchBatch 'subdue' 0
+restore clone
+set mob clone level 0
+set mob clone maxmove 1000
+set mob clone move 1000
+set mob seagull level 30
+send:peer switch seagull
+set mob seagull level 39
+switch clone
+
+[probe]
+subdue Subduerefusal
+subdue seagull

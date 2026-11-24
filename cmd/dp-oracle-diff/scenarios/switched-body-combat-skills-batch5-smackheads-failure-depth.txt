@@ -1,0 +1,87 @@
+# C-first switched-body do_smackheads failure. The two AC -100 targets put seed 1 in the positive signed-byte failure band; a connected room observer sees C's concatenated ToRoom line (src/interpreter.c:711; src/new_cmds.c:966-1097).
+# depth-case: smackheads.switched-mobile-failure-room-audience
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 80
+spawn-mob 16302 1 8105 80
+
+[setup:oracle]
+SwitchBatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchBatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watcher]
+Smackwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watcher]
+Smackwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Smackwatch 8105
+set player Smackwatch level 38
+set mob trainee maxhit 30000
+set mob trainee hit 30000
+set mob trainee ac -100
+set mob recruit maxhit 30000
+set mob recruit hit 30000
+set mob recruit ac -100
+set mob clone level 39
+skillset SwitchBatch 'smackheads' 0
+restore clone
+set mob clone level 39
+set mob clone maxmove 1000
+set mob clone move 1000
+switch clone
+
+[probe]
+smackheads trainee recruit

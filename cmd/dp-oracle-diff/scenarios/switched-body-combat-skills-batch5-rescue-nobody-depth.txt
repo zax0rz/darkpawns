@@ -1,0 +1,47 @@
+# C-first switched-body do_rescue scan miss. The live target is present, but no character is fighting it, so C returns the exact actor line from do_rescue (src/interpreter.c:650; src/act.offensive.c:501-581).
+# depth-case: rescue.switched-mobile-nobody-fighting
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+SwitchBatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchBatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set mob clone level 39
+skillset SwitchBatch 'rescue' 0
+restore clone
+switch clone
+
+[probe]
+rescue trainee

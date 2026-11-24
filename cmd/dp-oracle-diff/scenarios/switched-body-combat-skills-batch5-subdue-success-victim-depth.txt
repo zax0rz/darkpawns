@@ -1,0 +1,108 @@
+# C-first switched-body do_subdue success with a switched target descriptor. The immortal-level mobile actor forces the success arm, and the target peer receives the direct knockout line (src/interpreter.c:748; src/act.offensive.c:1084-1182).
+# depth-case: subdue.switched-mobile-success-victim
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+SwitchBatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchBatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Subduepeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Subduepeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watcher]
+Subduewatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watcher]
+Subduewatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Subduepeer 8105
+teleport Subduewatch 8105
+set player Subduepeer level 38
+set player Subduewatch level 38
+set mob clone level 39
+skillset SwitchBatch 'subdue' 0
+restore clone
+send:peer switch trainee
+switch clone
+
+[probe]
+subdue trainee
