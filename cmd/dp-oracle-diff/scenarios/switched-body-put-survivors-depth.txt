@@ -1,0 +1,78 @@
+# C-first switched-body witness for all live do_put direct-output branches.
+# The owner remains in 8105 while descriptor->character is clone in 8162;
+# `put` is registered to do_put in src/interpreter.c:594 and the covered output
+# branches are in src/act.item.c:89-145. These commands deliberately exercise
+# the mobile inventory path, not an ordinary player's separate Go handler.
+# depth-case: switched-object-handling.put-mobile-no-arg
+# depth-case: switched-object-handling.put-mobile-multi-container
+# depth-case: switched-object-handling.put-mobile-no-container-it
+# depth-case: switched-object-handling.put-mobile-no-container-them
+# depth-case: switched-object-handling.put-mobile-no-container-format-prefix
+# depth-case: switched-object-handling.put-mobile-no-container-format-suffix
+# depth-case: switched-object-handling.put-mobile-container-not-found-prefix
+# depth-case: switched-object-handling.put-mobile-container-not-found-suffix
+# depth-case: switched-object-handling.put-mobile-not-container
+# depth-case: switched-object-handling.put-mobile-closed-container
+# depth-case: switched-object-handling.put-mobile-not-carrying
+# depth-case: switched-object-handling.put-mobile-self-fold
+# depth-case: switched-object-handling.put-mobile-all-empty
+# depth-case: switched-object-handling.put-mobile-alldot-empty-prefix
+# depth-case: switched-object-handling.put-mobile-alldot-empty-suffix
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8162 80
+give-object 69 12132 1 80
+give-object 69 8032 1 80
+give-object 69 8037 1 80
+give-object 69 8038 1 80
+
+[setup:oracle]
+Putmobile
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Putmobile
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+switch clone
+put
+put bread bag.all
+put bread
+put all.bread
+put pepper xyzzy
+put pepper short
+put pepper pack
+open pack
+put pack pack
+put xyzzy bag
+put all.ghost bag
+drop pepper
+drop short
+drop pack
+put all bag
