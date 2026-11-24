@@ -1,0 +1,115 @@
+# C-first switched-body do_spike miss. The watcher forces the switched mobile through command_interpreter. A level-0 actor faces a werewolf; the peer descriptor on the NPC exposes ToVict and the room observer exposes ToNotVict (src/interpreter.c:730; src/new_cmds.c:1098-1198; src/structs.h:337; src/act.wizard.c:1856-1880).
+# depth-case: spike.switched-mobile-failure-audiences
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 16303 1 8105 80
+spawn-mob 69 1 8105 80
+equip-object 69 7905 999 16 80
+set-mob-aff 16303 134217728
+
+[setup:oracle]
+SwitchBatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SwitchBatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Spikepeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Spikepeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watcher]
+Spikewatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watcher]
+Spikewatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Spikepeer 8105
+teleport Spikewatch 8105
+set player Spikepeer level 38
+set player Spikewatch level 38
+set mob clone level 39
+restore clone
+set mob clone level 0
+set mob clone maxmove 1000
+set mob clone move 1000
+set mob trainee level 30
+set mob trainee maxhit 30000
+set mob trainee hit 30000
+send:peer switch trainee
+switch clone
+
+[probe]
+send:watcher force clone spike trainee
