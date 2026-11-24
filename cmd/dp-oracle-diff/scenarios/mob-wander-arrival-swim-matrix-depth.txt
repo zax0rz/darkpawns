@@ -1,0 +1,54 @@
+# depth-case: mob.wander-swim-arrival-cardinal
+# depth-case: mob.wander-swim-arrival-below
+# depth-case: mob.wander-swim-arrival-above
+# C's mobile_activity pulse calls perform_move for a descriptorless wandering
+# mobile; a non-flying mobile entering an underwater room produces the swim
+# arrival forms. All six exits share a destination. Many water-walking movers
+# make the fixed seed exercise both vertical directions and a cardinal entry
+# while the high-hit-point observer remains in the destination room.
+# C path: src/mobact.c:119-143 -> src/act.movement.c:214-280;
+# underwater observers take periodic damage at src/comm.c:698-724.
+
+[fixture]
+quiet-mobs
+spawn-mob 4900 100 8162 80
+set-mob-aff 4900 64
+replace-room-exits 8162 all 8161 0
+replace-room-exits 8161 none
+set-room-sector 8161 8
+
+[setup:oracle]
+Swimmatrix
+Y
+swimpass1
+swimpass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Swimmatrix
+y
+swimpass1
+swimpass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Swimmatrix maxhit 50000
+set player Swimmatrix hit 50000
+goto 8161
+
+[probe]
+~dpclock pulse 40

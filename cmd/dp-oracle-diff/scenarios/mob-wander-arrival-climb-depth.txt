@@ -1,0 +1,46 @@
+# depth-case: mob.wander-climb-arrival-above
+# C's mobile_activity pulse calls perform_move for a descriptorless wandering
+# mobile. A non-flying mobile entering a normal room from above emits the climb
+# arrival act; all six exits share the target and the fixed seed supplies the
+# upward move while the connected observer watches the destination.
+# C path: src/mobact.c:119-143 -> src/act.movement.c:214-280.
+
+[fixture]
+quiet-mobs
+spawn-mob 4900 100 8162 80
+replace-room-exits 8162 all 8161 0
+replace-room-exits 8161 none
+
+[setup:oracle]
+Climbmatrix
+Y
+climbpass1
+climbpass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Climbmatrix
+y
+climbpass1
+climbpass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8161
+
+[probe]
+~dpclock pulse 40
