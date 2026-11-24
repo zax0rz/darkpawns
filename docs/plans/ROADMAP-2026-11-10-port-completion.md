@@ -9,74 +9,79 @@ Earlier pieces this builds on:
 `docs/research/port-completion-survey-2026-11-05.md` (the inventory) and
 `docs/briefs/PLAN-2026-11-07-done-measurement-tooling.md` (the tools).
 
-## Where we are (2026-11-22)
+## Where we are (2026-11-23)
 
-Measured at `origin/main` `a29f11723`. Sections 1 to 8 are the plan as
+Measured at `origin/main` `39100fef4`. Sections 1 to 8 are the plan as
 written on 11-10 and settled on 11-11; this section is progress against it.
-It replaces the 11-21 status.
+It replaces the 11-22 status.
 
-**Phases 0 to 2 are done. Phase 3 is under way:** the test audit is running,
-the mutation sweep is under way, and random play waits on the play lab.
+**Phases 0 to 2 are done. Phase 3 is in its final stretch:** all three
+stopping-rule test audits (`pkg/command`, `pkg/session`, `pkg/game`) are
+complete on main, the Round 4 whole-pool mutation sweep is complete, L1
+through L5 have zero unruled open items, and random play waits on the play
+lab.
 
 | List | Frozen 11-11 | Open now | What's left |
 |---|---|---|---|
-| L1. Uncovered C sites | 739 | **0** | confirmed by the 11-22 strict recount |
+| L1. Uncovered C sites | 739 | **0** | confirmed by the 11-22 strict recount (PF-166) |
 | L2. Known divergences | 58 | **0** | none open; DP-1610 is an approved divergence |
-| L3. Blocked proof units | 62 | shop rows excluded under R1a | Zach rules on the rest once the L1 recount settles |
-| L4. Harness blind spots | 11 | 0 open | none |
-| L5. Duplicate and invented code | 5 | 0 | none |
-| L6. Unverified research claims | 14 | 14 | not part of the stopping rule |
+| L3. Blocked proof units | 62 | **0 unruled** | 1 blocked cell left (`spell.identify.matrix-staff-olc`), already covered by the 11-18 DP-1496 `time(0)` ruling; shop UB rows excluded under R1a |
+| L4. Harness blind spots | 11 | **0** | none |
+| L5. Duplicate and invented code | 5 | **0** | none; CI guards `function-index` |
+| L6. Unverified research claims | 14 | 14 (plus PF-155) | not part of the stopping rule |
 
 **L1 is at zero, confirmed.** Neon's strict recount on the 11-22 nightly dump
 (`docs/research/l1-strict-recount-2026-11-22.md`, PF-166, #3021) classified
 all 574 uncovered C segments: 307 excluded by a ruling, 226 unreachable with
 a C cite, 33 witnessed in the multi-seed dumps, 8 unit-proven, and **0 open**.
-No new uncovered segment appeared, and the four rows that moved since 11-20
-are the ones settled on 11-21. Claude reran the coverage tool on the same
-dump and got identical totals and an identical `coverage.tsv` hash.
 
-**L2 is at zero.** All three items open this morning are closed:
-- **DP-1610**, clanless `clan quit` (C writes out of bounds): Zach ruled to
-  keep Go's behavior as an approved divergence.
-- **DP-1622**, typed `$` reaching `act()` in the remaining commands: fixed
-  by mirroring C's input `$`-doubling (#2983).
-- **DP-1623**, the Go warmup race under load: a harness wait bug, not a game
-  bug. Setup now waits for C's prompt (#2985, PF-162).
+**L2 and L3 have zero unruled items.** L2 closed on 11-22 (DP-1610 ruled as an
+approved divergence; DP-1622 fixed in #2983; DP-1623 fixed in #2985, PF-162).
+Across all 8,282 depth cases (`gen_fidelity_depth.py`) and nested surface
+inventories, 7,968 are proven or delegated, 297 excluded, 16 approved
+divergent, and **1** remains `blocked`: `cast.tsv:400`
+(`spell.identify.matrix-staff-olc`, mirrored in `surface-inventory.tsv:57`
+and `surface/spell-matrix.tsv:61`), which is already covered by Zach's
+2026-11-18 DP-1496 ruling (`time(0)` age output stays unit-proven until the
+post-v1.0.0 clock seam). The other 11 rows from `l3-blocked-2026-11-19.tsv`
+were settled in #2866 (`58a8f9ef8`) and PF-159 (`l1-settlement-2026-11-21.tsv`).
 
-**The census itself.** Under heavy load, Go's SQLite saves could stall long
-enough to make scenarios fail for reasons that weren't fidelity. The Go
-server in the census now writes with `synchronous = NORMAL` (#2996, PF-163),
-set on every database connection (#2997). Production keeps SQLite's default.
-The census still runs **nightly at 02:30 on main**
-(`~/bin/dp-nightly-census.sh`, results to Discord). The first nightly with
-these changes, at `f8c4ad638`, was fully CLEAN with no rechecks: 7,062 PASS,
-5 ledger-backed EXPECTED, 0 FAIL and 0 INFRA, against 35 INFRA and 3 FAIL
-in the previous combined census. It ran in 1.7 hours, beside four sweep
-censuses.
+**The census itself.** The nightly combined census runs at **02:30 on main**
+(`~/bin/dp-nightly-census.sh`, results to Discord), with SQLite
+`synchronous = NORMAL` in the census runner (#2996, #2997, PF-163; production
+keeps SQLite's default). Both recent nightlies are green with zero draw
+divergences: `2026-11-22/nightly-20261122` at `f8c4ad638` was `CLEAN` with
+zero rechecks (7,067 pairs), and `2026-11-23/nightly-20261123` at `7b95bc847`
+was `CLEAN_AFTER_RECHECK` across 7,068 pairs (2,249 deduplicated; 4 scenarios
+rechecked, 0 FAIL).
 
 **The four numbers.**
 
 | # | Number | Now | Measured on |
 |---|---|---|---|
-| 1 | Bytes | **0 FAIL** | nightly combined census `2026-11-22/nightly-20261122` at `f8c4ad638`: CLEAN, 7,067 runs, no rechecks |
-| 2 | Behavior | **0 draw divergence** | the same run, with `--draw-parity`; `draw-results.tsv` present |
-| 3 | Reach | **88.3%** of segments (4,328 of 4,902); 89.0% with the other seeds; 66.4% of sites (3,622 of 5,454) | `make census-coverage` on `2026-11-22/nightly-20261122`. Up from 73.5% and 54.3% on 11-10 |
+| 1 | Bytes | **0 FAIL** | nightly combined census `2026-11-23/nightly-20261123` at `7b95bc847`: `CLEAN_AFTER_RECHECK`, 7,068 pairs (and `CLEAN` with no rechecks on `2026-11-22/nightly-20261122`) |
+| 2 | Behavior | **0 draw divergence** | `2026-11-23/nightly-20261123`: 0 divergent across 2,457 full pairs (seed 1) and 6,860 claims pairs (22 seeds); `draw-results.tsv` present |
+| 3 | Reach | **88.3%** of segments (4,328 of 4,902); 89.0% with the other seeds; 66.4% of sites (3,622 of 5,454) | `make census-coverage` on `2026-11-22/nightly-20261122` (PF-166). Up from 73.5% and 54.3% on 11-10 |
 | 4 | Sensitivity | **64.3%** (corrected lower bound 51.7%) | mutation loop Round 3, 63 of 98 killed (PF-149). The bar is a corrected lower bound of 80% (90 of 100 at z = 2.50, 4 looks; 3 used) |
 
-**Sensitivity is still the long pole.** The whole-pool sweep mutates every
-literal in the Round 4 pool in 13 batches, each a full census on a mutated
-commit. It isn't a measurement, so it uses no look. Batches 03, 05, 08 and 09
-are running, each about a third done. The other nine died or were cancelled,
-and will rerun one at a time. Running four at once starves memory: alone, a
-full combined census takes about 2.3 hours.
+**Sensitivity is still the long pole, and the sweep is now in hand.** Luna
+completed the fixed-snapshot Round 4 population sweep across all 13 batches
+(`docs/research/mutation-loop/sweep/RESULT.md`, PF-169, #3038). It isn't a
+measurement, so it uses no look. Out of 998 literal tokens across 189
+functions (with 1 preclassified `c-unreachable` excluded from the
+denominator): **688 were killed**, **308 survived** (295 `c-reachable`, 12
+`go-only-in-game`, 1 `ask-zach` parser token on row 472), and **1 is
+`unknown`** (row 148, an R1a case where C passes a null clan plan to `%s` in
+`src/clan.c:774` and glibc prints `(null)`). Those 295 `c-reachable`
+survivors are the concrete repair queue before drawing Round 4 (look 4 of 4).
 
-**Test audit.**
+**Test audit: stopping-rule packages complete.**
 
 | Package | Audited | Note |
 |---|---|---|
 | `pkg/command` | 173 of 173 | done |
 | `pkg/session` | 1,537 of 1,537 | done (PF-165) |
-| `pkg/game` | 1,138 of 1,991 on main | Luna; T1139 to T1488 in review |
+| `pkg/game` | 1,991 of 1,991 | done (#3035, PF-168): R 1,788 / F 155 / C 37 / D 11 |
 
 Section 9 records all of the test work: the four layers of checking, every
 audited package, what the audit found, and where the audit itself went
@@ -87,15 +92,19 @@ being designed to double as decision-model training data.
 
 **What's left, in order:**
 
-1. **L3:** Zach's rulings on the remaining blocked units, now that L1 is
-   confirmed at zero.
-2. **Sensitivity:** finish the whole-pool sweep and its repairs, then
-   Round 4. It may still fall short. If it does, the report gives the
-   measured rate.
-3. **The test audit:** the rest of `pkg/game` (Luna), then a blind
-   cross-audit sample to calibrate the auditors (section 9).
-4. **Phase 3:** 24 hours of random play, then the release census with
-   `--combined --release --draw-parity` on the tagged commit.
+1. **Mutation-loop rulings (`DECISIONS.md`):** Zach's R1a ruling on sweep
+   row 148 (planless clan `do_clan_info` output), row 472's parser-token
+   class, and the remaining `go-only-in-game` / shadowed-guard classifications
+   in `docs/research/mutation-loop/DECISIONS.md`.
+2. **Sensitivity repairs, then Round 4:** repair the 295 `c-reachable`
+   sweep survivors, then run Round 4 (the 4th and final look). If it still
+   falls short of 80%, the completion report publishes the measured rate.
+3. **Optional audit calibration:** settle the three `pkg/spells` ledgers
+   into one, and run the blind cross-audit sample on `pkg/session` (PF-165,
+   section 9). Neither blocks the section 6 stopping rule.
+4. **Phase 3 finish:** draw-site reach report (or explicit deferral note),
+   24 hours of clean random play, and the release census with
+   `--combined --release --draw-parity` on the tagged `v1.0.0` commit.
 
 ## 1. What "done" means
 
@@ -349,12 +358,12 @@ stories (section 7).
 
 Each layer answers a different question. None stands in for another.
 
-| Layer | Question | Where it lives | State on 11-22 |
+| Layer | Question | Where it lives | State on 11-23 |
 |---|---|---|---|
-| **Oracle census** | Given the same input, do Go and C send the same bytes and draw the same random numbers? | `scripts/census.sh`; `docs/fidelity/oracle-differential-testing.md` | nightly at 02:30; the 11-22 run was CLEAN with 0 draw divergences |
-| **Depth proofs** | Does every C output site have a scenario or unit test that fails when the site breaks (R5h)? | `docs/fidelity/DEPTH_TESTING.md`; `docs/fidelity/depth/` | L1 confirmed 0 on 11-22 (PF-166); L3 awaits rulings |
-| **Mutation sampling** | If the port's output changes, does the census notice? | `docs/research/mutation-loop/`; earlier one-letter samples PF-102, PF-117, PF-118 | Rounds 1 to 3: 67.0%, 64.9%, 64.3%, against a bar of 80% (corrected lower bound); whole-pool sweep under way |
-| **Test audit** | Does each Go test check what its name claims, on the code players run? | `docs/research/test-audit/` | below |
+| **Oracle census** | Given the same input, do Go and C send the same bytes and draw the same random numbers? | `scripts/census.sh`; `docs/fidelity/oracle-differential-testing.md` | nightly at 02:30; 11-22 was `CLEAN` and 11-23 was `CLEAN_AFTER_RECHECK`, both with 0 draw divergences |
+| **Depth proofs** | Does every C output site have a scenario or unit test that fails when the site breaks (R5h)? | `docs/fidelity/DEPTH_TESTING.md`; `docs/fidelity/depth/` | L1 confirmed 0 on 11-22 (PF-166); L3 has 0 unruled blocked rows (1 `blocked` cell left, covered by DP-1496) |
+| **Mutation sampling** | If the port's output changes, does the census notice? | `docs/research/mutation-loop/`; earlier one-letter samples PF-102, PF-117, PF-118 | Rounds 1 to 3: 67.0%, 64.9%, 64.3%, against a bar of 80% (corrected lower bound); Round 4 population sweep complete (688 killed, 308 survived, 1 R1a unknown; PF-169) |
+| **Test audit** | Does each Go test check what its name claims, on the code players run? | `docs/research/test-audit/` | all three stopping-rule packages complete (below) |
 
 A green census says the scenarios agree. Mutation sampling says how often a
 real break would show. The test audit says whether the Go tests themselves
@@ -376,7 +385,7 @@ The auditor writes predictions before reading any test.
 | `pkg/spells` | 191 | MiMo, DeepSeek and Sol, blind | | | | | three ledgers, not yet settled into one; PF-107, PF-108 |
 | `pkg/command` | 173 | Kimi | 161 | 9 | 0 | 3 | `command/notes.md` |
 | `pkg/session` | 1,537 | Kimi (T001 to T1045), then Neon | 1,529 | 4 | 4 | 0 | `session/notes.md`, PF-165 |
-| `pkg/game` | 1,991 | GLM (pre-oracle), Luna (post-oracle) | 1,085 | 41 | 10 | 2 | 1,138 audited on main; `game/notes.md` |
+| `pkg/game` | 1,991 | GLM (pre-oracle), Luna (post-oracle) | 1,788 | 155 | 37 | 11 | `game/notes.md`, PF-168 (2,063 ledger rows; 72 functions audited twice) |
 
 The other 49 directories with Go tests aren't audited. The completion
 report lists them as not audited (section 6).
@@ -389,7 +398,7 @@ divergences in the code under them:
   each confirmed from source (PF-108);
 - in `pkg/game`: the conjured-actor special (#2990), and, in review, the
   clan info terminator, clan treasury arithmetic and `ungroup` (#3018);
-  #3018 also led to the class audit DP-1625.
+  #3018 also led to the class audit DP-1625 (#3024).
 
 **Where the audit itself went wrong.** Each of these was caught in review,
 and each changed how the next batch was run:
@@ -406,10 +415,10 @@ and each changed how the next batch was run:
   review of #3014 and #3017.
 - A CSV writer re-quoted old ledger rows, undoing an earlier cleanup (#3017).
 - `pkg/session`'s post-oracle tests came out 99.9% R from two auditors, while
-  `pkg/game`'s came out 95% R from a stricter one. So the pre-oracle versus
+  `pkg/game`'s came out 88.4% R from a stricter one. So the pre-oracle versus
   post-oracle comparison mixes auditor and date: `pkg/command` 13.5% to 5.1%
-  weak, `pkg/session` 4.1% to 0.1%, `pkg/game` 2.8% to 5.0%. PF-165 is
-  partially verified until a blind cross-audit sample settles it.
+  weak, `pkg/session` 4.1% to 0.1%, `pkg/game` 3.3% to 11.6% (PF-168). PF-165
+  is partially verified until a blind cross-audit sample settles it.
 
 **Rules the audit now follows,** from those incidents:
 - The reviewer reproduces mutation proofs, and doesn't take them from the
@@ -421,7 +430,7 @@ and each changed how the next batch was run:
   branch, not main (#2994).
 - A long all-R run from one auditor gets a blind sample from another.
 
-**What's left:** `pkg/game` T1489 to T1991 (Luna); settling the spells
-ledgers into one; and the blind cross-audit sample (PF-165). The combat and
-spells audits already used the design that sample needs: several blind
-auditors, then a settlement by mutation.
+**What's left (optional calibration):** settling the three `pkg/spells`
+ledgers into one; and the blind cross-audit sample on `pkg/session` (PF-165).
+The combat and spells audits already used the design that sample needs:
+several blind auditors, then a settlement by mutation.
