@@ -1,4 +1,4 @@
-# C-first switched-body do_subdue success with a switched target descriptor. The immortal-level mobile actor forces the success arm, and the target peer receives the direct knockout line (src/interpreter.c:748; src/act.offensive.c:1084-1182).
+# C-first switched-body do_subdue success with a switched target descriptor. The watcher forces the switched mobile through command_interpreter; the target peer receives the direct knockout line (src/interpreter.c:748; src/act.offensive.c:1084-1182; src/act.wizard.c:1856-1880).
 # depth-case: subdue.switched-mobile-success-victim
 
 [fixture]
@@ -101,8 +101,9 @@ set player Subduewatch level 38
 set mob clone level 39
 skillset SwitchBatch 'subdue' 0
 restore clone
+set mob clone level 0
 send:peer switch trainee
 switch clone
 
 [probe]
-subdue trainee
+send:watcher force clone subdue trainee

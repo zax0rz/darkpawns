@@ -1,4 +1,4 @@
-# C-first switched-body do_sleeper success with a switched target descriptor. The low-level mobile target receives the direct ToVict sleep line; the actor and independent room observer remain live (src/interpreter.c:706; src/act.offensive.c:1184-1280).
+# C-first switched-body do_sleeper success with a switched target descriptor. The watcher forces the switched mobile through command_interpreter; the low-level mobile target receives the direct ToVict sleep line while the actor and independent room observer remain live (src/interpreter.c:706; src/act.offensive.c:1184-1280; src/act.wizard.c:1856-1880).
 # depth-case: sleeper.switched-mobile-success-victim
 
 [fixture]
@@ -101,9 +101,10 @@ set player Sleeperwatch level 38
 set mob clone level 39
 skillset SwitchBatch 'sleeper' 0
 restore clone
+set mob clone level 0
 set mob trainee level 1
 send:peer switch trainee
 switch clone
 
 [probe]
-sleeper trainee
+send:watcher force clone sleeper trainee

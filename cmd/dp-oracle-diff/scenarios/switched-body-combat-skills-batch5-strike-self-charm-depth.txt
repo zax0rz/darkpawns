@@ -1,4 +1,4 @@
-# C-first switched-body do_strike self and charmed-master arms. A spawned recruit is the charmed clone’s master, and a connected watcher sees the self-act (src/interpreter.c:744; src/new_cmds.c:1433-1502).
+# C-first switched-body do_strike self and charmed-master arms. The watcher forces the switched mobile through command_interpreter. A spawned recruit is the charmed clone’s master, and a connected watcher sees the self-act (src/interpreter.c:744; src/new_cmds.c:1433-1502; src/act.wizard.c:1856-1880).
 # depth-case: strike.switched-self-and-charmed-master
 
 [fixture]
@@ -68,7 +68,7 @@ Y
 [warmup]
 goto 8105
 teleport Strikewatch 8105
-set player Strikewatch level 20
+set player Strikewatch level 38
 set mob clone level 39
 skillset SwitchBatch 'strike' 0
 restore clone
@@ -77,5 +77,5 @@ force clone follow recruit
 switch clone
 
 [probe]
-strike clone
-strike recruit
+send:watcher force clone strike clone
+send:watcher force clone strike recruit

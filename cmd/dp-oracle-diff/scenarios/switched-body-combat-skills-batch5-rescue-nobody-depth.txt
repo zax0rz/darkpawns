@@ -1,4 +1,4 @@
-# C-first switched-body do_rescue scan miss. The live target is present, but no character is fighting it, so C returns the exact actor line from do_rescue (src/interpreter.c:650; src/act.offensive.c:501-581).
+# C-first switched-body do_rescue scan miss. The live target is present, but no character is fighting it. A watcher forces the switched mobile through command_interpreter so Go's actor lane emits the line (src/interpreter.c:650; src/act.offensive.c:501-581; src/act.wizard.c:1856-1880).
 # depth-case: rescue.switched-mobile-nobody-fighting
 
 [fixture]
@@ -36,12 +36,43 @@ Y
 <ENTER>
 1
 
+[setup:oracle:watcher]
+Rescuewatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watcher]
+Rescuewatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 goto 8105
+teleport Rescuewatch 8105
+set player Rescuewatch level 38
 set mob clone level 39
 skillset SwitchBatch 'rescue' 0
 restore clone
+set mob clone level 0
 switch clone
 
 [probe]
-rescue trainee
+send:watcher force clone rescue trainee

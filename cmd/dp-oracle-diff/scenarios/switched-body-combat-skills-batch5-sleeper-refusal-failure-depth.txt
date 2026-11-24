@@ -1,4 +1,4 @@
-# C-first switched-body do_sleeper refusal and failed roll. The actor first targets a connected player to reach the not-Outlaw refusal, then a peer switches into the authored awake MOB_AWARE seagull; C’s MOB_AWARE victim sets prob to zero after its draw, reaching the failed hold and all three audiences (src/interpreter.c:706; src/act.offensive.c:1259-1278; src/structs.h:251).
+# C-first switched-body do_sleeper refusal and failed roll. The watcher forces the switched mobile through command_interpreter. The actor targets a connected player to reach the not-Outlaw refusal, then an authored awake MOB_AWARE seagull; C’s MOB_AWARE victim sets prob to zero after its draw, reaching the failed hold and all three audiences (src/interpreter.c:706; src/act.offensive.c:1259-1278; src/structs.h:251; src/act.wizard.c:1856-1880).
 # depth-case: sleeper.switched-player-outlaw-refusal
 # depth-case: sleeper.switched-mobile-failure-audiences
 
@@ -140,5 +140,5 @@ set mob seagull level 39
 switch clone
 
 [probe]
-sleeper Sleeperrefusal
-sleeper seagull
+send:watcher force clone sleeper Sleeperrefusal
+send:watcher force clone sleeper seagull

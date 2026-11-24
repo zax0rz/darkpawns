@@ -1,4 +1,4 @@
-# C-first switched-body do_spike miss. A level-0 actor faces the maximum mortal-level werewolf; the peer descriptor on the NPC exposes ToVict and the room observer exposes ToNotVict (src/interpreter.c:730; src/new_cmds.c:1098-1198; src/structs.h:337).
+# C-first switched-body do_spike miss. The watcher forces the switched mobile through command_interpreter. A level-0 actor faces a werewolf; the peer descriptor on the NPC exposes ToVict and the room observer exposes ToNotVict (src/interpreter.c:730; src/new_cmds.c:1098-1198; src/structs.h:337; src/act.wizard.c:1856-1880).
 # depth-case: spike.switched-mobile-failure-audiences
 
 [fixture]
@@ -112,4 +112,4 @@ send:peer switch trainee
 switch clone
 
 [probe]
-spike trainee
+send:watcher force clone spike trainee

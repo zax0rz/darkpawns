@@ -1,4 +1,4 @@
-# C-first switched-body do_rescue success with the rescued mobile carrying a live peer descriptor. That peer receives the ToChar line and a separate room observer receives ToNotVict (src/interpreter.c:650; src/act.offensive.c:501-581).
+# C-first switched-body do_rescue success with the rescued mobile carrying a live peer descriptor. A watcher forces the switched mobile through command_interpreter so Go's actor lane reaches the same ToChar and ToNotVict audiences (src/interpreter.c:650; src/act.offensive.c:501-581; src/act.wizard.c:1856-1880).
 # depth-case: rescue.switched-mobile-success-victim-audience
 
 [fixture]
@@ -106,8 +106,9 @@ skillset SwitchBatch 'rescue' 0
 set mob clone level 39
 goto 8162
 restore clone
+set mob clone level 0
 send:peer switch trainee
 switch clone
 
 [probe]
-rescue trainee
+send:watcher force clone rescue trainee

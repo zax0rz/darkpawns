@@ -1,4 +1,4 @@
-# C-first switched-body do_subdue refusal and failed roll. A real player target reaches the not-Outlaw refusal, then a peer switches into the authored awake MOB_AWARE seagull; MOB_AWARE sets prob to zero after its draw, forcing the miss bytes for target, actor, and room (src/interpreter.c:748; src/act.offensive.c:1146-1168; src/structs.h:251).
+# C-first switched-body do_subdue refusal and failed roll. The watcher forces the switched mobile through command_interpreter. A real player target reaches the not-Outlaw refusal, then an authored awake MOB_AWARE seagull; MOB_AWARE sets prob to zero after its draw, forcing the miss bytes for target, actor, and room (src/interpreter.c:748; src/act.offensive.c:1146-1168; src/structs.h:251; src/act.wizard.c:1856-1880).
 # depth-case: subdue.switched-player-outlaw-refusal
 # depth-case: subdue.switched-mobile-failure-audiences
 
@@ -140,5 +140,5 @@ set mob seagull level 39
 switch clone
 
 [probe]
-subdue Subduerefusal
-subdue seagull
+send:watcher force clone subdue Subduerefusal
+send:watcher force clone subdue seagull
