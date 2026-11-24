@@ -8,8 +8,8 @@
 [fixture]
 empty-players
 quiet-mobs
-set-room-sector 8162 7
-set-room-sector 8161 0
+set-room-sector 8162 0
+set-room-sector 8161 7
 replace-room-exits 8162 north 8161 0
 replace-room-exits 8161 none
 spawn-mob 16303 1 8162 163

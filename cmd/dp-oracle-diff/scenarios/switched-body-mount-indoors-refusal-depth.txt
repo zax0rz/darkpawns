@@ -16,8 +16,8 @@ spawn-mob 8021 1 8162 80
 [setup:oracle]
 Indoorowner
 Y
-indoorpass1
-indoorpass1
+indoor1
+indoor1
 N
 M
 H
@@ -30,8 +30,8 @@ Y
 [setup:port]
 Indoorowner
 y
-indoorpass1
-indoorpass1
+indoor1
+indoor1
 N
 M
 H

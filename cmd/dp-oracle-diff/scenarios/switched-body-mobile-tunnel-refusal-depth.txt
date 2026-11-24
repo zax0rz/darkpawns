@@ -16,8 +16,8 @@ spawn-mob 16303 1 8162 163
 [setup:oracle]
 Tunnelowner
 Y
-tunnelpass1
-tunnelpass1
+tunnel1
+tunnel1
 N
 M
 H
@@ -30,8 +30,8 @@ Y
 [setup:port]
 Tunnelowner
 y
-tunnelpass1
-tunnelpass1
+tunnel1
+tunnel1
 N
 M
 H

@@ -1,24 +1,120 @@
 # depth-case: mob.wander-swim-arrival-cardinal
 # depth-case: mob.wander-swim-arrival-below
 # depth-case: mob.wander-swim-arrival-above
-# C's mobile_activity pulse calls perform_move for a descriptorless wandering
-# mobile; a non-flying mobile entering an underwater room produces the swim
-# arrival forms. All six exits share a destination. Many water-walking movers
-# make the fixed seed exercise both vertical directions and a cardinal entry
-# while the high-hit-point observer remains in the destination room.
-# C path: src/mobact.c:119-143 -> src/act.movement.c:214-280;
-# underwater observers take periodic damage at src/comm.c:698-724.
+# A 100-mobile matrix samples every door direction in C's real mobile_activity
+# pulse; the connected observer is in the underwater destination for that pulse.
+# C path: src/mobact.c:119-143 -> src/act.movement.c:214-280.
+
 
 [fixture]
 quiet-mobs
-spawn-mob 4900 100 8162 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
 set-mob-aff 4900 64
-replace-room-exits 8162 all 8161 0
-replace-room-exits 8161 none
-set-room-sector 8161 8
+replace-room-exits 8105 all 8106 0
+replace-room-exits 8106 none
+set-room-sector 8106 8
 
 [setup:oracle]
-Swimmatrix
+Swimgod
 Y
 swimpass1
 swimpass1
@@ -32,7 +128,7 @@ Y
 1
 
 [setup:port]
-Swimmatrix
+Swimgod
 y
 swimpass1
 swimpass1
@@ -45,10 +141,51 @@ Y
 <ENTER>
 1
 
+[setup:oracle:observer]
+Swimpeer
+Y
+swimpeer1
+swimpeer1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+north
+
+[setup:port:observer]
+Swimpeer
+y
+swimpeer1
+swimpeer1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+north
+
 [warmup]
-set player Swimmatrix maxhit 50000
-set player Swimmatrix hit 50000
-goto 8161
+north
+east
+south
+east
 
 [probe]
+look
 ~dpclock pulse 40
+look
