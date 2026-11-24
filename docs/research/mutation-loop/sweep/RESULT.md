@@ -78,8 +78,23 @@ Batch 05 row 148 is `unknown` and excluded from kills and the denominator. C pas
 
 ## Decisions for Zach
 
-Row 148's expected planless-clan output and row 472's parser-token class remain open in `DECISIONS.md`.
+Row 148's expected planless-clan output remains open in `DECISIONS.md`. Row 472 was open at sweep completion and was classified as bucket E in the 2026-11-24 survivor-triage follow-up below.
 
 ## For Claude
 
 Please review every `killed` row against its cited C transcript line and Go diff line, then check the aggregate counts and any setup-refusal or infrastructure reruns.
+
+## Survivor-triage follow-up (2026-11-24)
+
+All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`:
+
+| Bucket | Count | Follow-up |
+|---|---:|---|
+| A. no witness | 291 | Repair in scenario-backed batches. |
+| B. masked | 0 | No normalization or masking cases found. |
+| C. Go-only branch | 12 | Ten unapproved proposals; retain two already-approved divergences (DP-1373 and the alias cap). |
+| D. C-unreachable | 0 | No survivor moved to this bucket. |
+| E. not player-facing | 2 | Rows 472 and 498 are collector false positives; exclude from repair work and future draws. |
+| F. ruling or harness capability | 3 | Rows 2, 4 and 908 cannot receive an isolated clean paired proof under the current approved behavior or fixture/input boundaries. |
+
+These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. Batch 05 row 148 remains a separate R1a unknown, outside the 308 survivors.

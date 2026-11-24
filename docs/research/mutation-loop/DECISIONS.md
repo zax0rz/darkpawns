@@ -31,3 +31,11 @@ been made for these rows.
 |---:|---|---|---|
 | 148 | `ask-zach` | Batch 05 has C `(null)` versus mutated Go `(Qull)` when a null clan plan reaches `%s` in `do_clan_info` (`src/clan.c:774`). C behavior is undefined; `(null)` is glibc behavior, not a game rule. | Keep unknown and exclude from kills and denominator. Zach must rule on what a planless clan should print; this is an R1a item, not an attribution question. |
 | 472 | `ask-zach` | The `all.` token is a Go remove-all parser prefix nested in an output expression (`pkg/game/npc_command_items.go:251`); C has no corresponding player-facing literal. | Decide whether this collector false positive remains `ask-zach` in the denominator or gets a correction. The frozen class stays unchanged during the sweep. |
+
+### Survivor-triage capability gaps (2026-11-24)
+
+- **Sweep row 2, bucket F:** C leaks one global board slot for each empty headline before `num_of_msgs` increments (`src/boards.c:228-241`), so enough empty `write` attempts can reach the C `find_slot()` refusal. Go releases that slot under approved DP-1388 (`pkg/boards/boards.go:635-642`), so the equivalent Go state cannot be produced and a clean paired census cannot prove this sampled message. Preserve the approved behavior and defer this row.
+- **Sweep row 4, bucket F:** The C line is printed only after `CREATE` fails for the heading allocation (`src/boards.c:248-255`). This OS allocation fault is not injectable through the current scenario fixtures. Defer without changing the harness or source.
+- **Sweep row 908, bucket F:** Go refuses echo input longer than 500 bytes (`pkg/session/wiz_communication.go:40-49`), while C's input line limit is 256 bytes (`src/structs.h:644`) and `do_echo` has no corresponding 500-byte response (`src/act.wizard.c:130-153`). The paired input needed for this branch exceeds the C line boundary. Defer without changing the harness or source.
+
+The row 472 question above is resolved by the 2026-11-24 correction: bucket E, not a Zach ruling. Row 148 remains the separate R1a unknown and is not one of the 308 survivors.
