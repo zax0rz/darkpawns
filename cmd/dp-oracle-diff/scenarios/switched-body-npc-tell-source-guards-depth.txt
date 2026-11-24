@@ -1,0 +1,113 @@
+# C-first switched-mobile calls into do_tell. The clone's descriptor exercises
+# NPC tell output while a second controlled mobile and a player provide two
+# distinct visible targets. No quiet-mobs fixture masks room surfaces.
+# depth-case: npc-tell.switched-empty-argument
+# depth-case: npc-tell.switched-self-target
+# depth-case: npc-tell.switched-mobile-target-source-soundproof
+# depth-case: npc-tell.switched-player-target-source-soundproof
+
+[fixture]
+empty-players
+spawn-mob 69 1 8162 80
+spawn-mob 83 1 8162 80
+set-room-flag 8162 5 on
+
+[setup:oracle]
+Tellbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tellbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:recipient]
+Tellrecipient
+Y
+recipientpass
+recipientpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:recipient]
+Tellrecipient
+y
+recipientpass
+recipientpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mobile]
+Tellmobile
+Y
+mobilepass
+mobilepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mobile]
+Tellmobile
+y
+mobilepass
+mobilepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Tellrecipient 8162
+teleport Tellmobile 8162
+goto 8162
+set player Tellbody level 38
+set player Tellmobile level 38
+switch clone
+send:mobile switch air elemental
+
+[probe]
+tell
+tell clone hello myself
+tell air elemental hello mobile
+tell Tellrecipient hello player

@@ -1,0 +1,79 @@
+# A switched mobile tells a different switched mobile in another room. The
+# sender room is ordinary; only the target room has ROOM_SOUNDPROOF, so do_tell
+# reaches its target-side "$E can't hear you." arm.
+# depth-case: npc-tell.switched-mobile-target-soundproof
+
+[fixture]
+empty-players
+spawn-mob 69 1 8162 80
+spawn-mob 83 1 8163 80
+set-room-flag 8162 5 off
+set-room-flag 8163 5 on
+
+[setup:oracle]
+Tellbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tellbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mobile]
+Tellmobile
+Y
+mobilepass
+mobilepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mobile]
+Tellmobile
+y
+mobilepass
+mobilepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Tellmobile 8163
+goto 8162
+set player Tellbody level 38
+set player Tellmobile level 38
+switch clone
+send:mobile switch air elemental
+
+[probe]
+tell air elemental hello there
