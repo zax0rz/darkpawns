@@ -1,4 +1,4 @@
-# C-first switched-body neckbreak failure. A very negative AC makes the registered do_neckbreak failure roll exceed the mobile skill regardless of the draw; connected target and room observer expose all three act audiences (src/interpreter.c:564; src/act.offensive.c:1295-1376).
+# C-first switched-body neckbreak failure. A very negative AC makes the registered do_neckbreak failure roll exceed the mobile skill regardless of the draw. The watcher forces the switched body through command_interpreter so the actor lane is exercised; the connected target and watcher expose all three act audiences (src/interpreter.c:564; src/act.offensive.c:1295-1376; src/act.wizard.c:1856-1880).
 # depth-case: neckbreak.switched-mobile-failure-audiences
 
 [fixture]
@@ -106,8 +106,9 @@ restore clone
 set mob clone level 0
 set mob clone maxmove 1000
 set mob clone move 1000
+set player Neckwatch level 38
 send:peer switch trainee
 switch clone
 
 [probe]
-neckbreak trainee
+send:watcher force clone neckbreak trainee
