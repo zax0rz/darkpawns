@@ -134,24 +134,6 @@ func ObjFromStore(data *houseSaveItem, getProto func(vnum int) (*parser.Obj, boo
 	return obj
 }
 
-// ObjToStore converts an ObjectInstance to a houseSaveItem.
-// Ported from C Obj_to_store() — serializes object for house save.
-// Container nesting is not recorded here: it is the collector's job, because
-// the file-position reference can only be computed with the whole item list
-// in hand. Returns the save item, or nil if the object is invalid.
-func ObjToStore(obj *ObjectInstance) *houseSaveItem {
-	if obj == nil || obj.Prototype == nil {
-		return nil
-	}
-	item := &houseSaveItem{
-		VNum: obj.Prototype.VNum,
-	}
-	if state := obj.GetSaveState(); state != nil {
-		item.State = state
-	}
-	return item
-}
-
 // ---------------------------------------------------------------------------
 // Room flag helpers (wrappers around parser.Room flag string slices)
 // ---------------------------------------------------------------------------

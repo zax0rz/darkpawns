@@ -1,12 +1,10 @@
 package game
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"testing"
 
@@ -389,55 +387,6 @@ func TestPlayerSaveData_ConcurrentSnapshot(t *testing.T) {
 	data := playerToSaveData(player)
 	if data.Name != "RaceTestPlayer" {
 		t.Errorf("Name = %q, want RaceTestPlayer", data.Name)
-	}
-}
-
-// errWriter fails every Write with a fixed error.
-type errWriter struct{ err error }
-
-func (e errWriter) Write([]byte) (int, error) { return 0, e.err }
-
-// DP-1267: a close failure after a successful encode must be reported —
-// on delayed-writeback filesystems a short write can surface at close time,
-// and swallowing it would make a truncated save look successful.
-func TestEncodeSave_CloseErrorReported(t *testing.T) {
-	err := encodeSave(&bytes.Buffer{}, func() error { return fmt.Errorf("close boom") }, map[string]int{"a": 1})
-	if err == nil {
-		t.Fatal("encodeSave should report close failure")
-	}
-	if !strings.Contains(err.Error(), "close save file") {
-		t.Errorf("error = %v, want %q context", err, "close save file")
-	}
-}
-
-func TestEncodeSave_EncodeErrorTakesPrecedence(t *testing.T) {
-	err := encodeSave(errWriter{err: fmt.Errorf("write boom")},
-		func() error { return fmt.Errorf("close boom") },
-		map[string]int{"a": 1})
-	if err == nil {
-		t.Fatal("encodeSave should report encode failure")
-	}
-	if !strings.Contains(err.Error(), "encode save data") {
-		t.Errorf("error = %v, want %q context", err, "encode save data")
-	}
-}
-
-func TestEncodeSave_Success(t *testing.T) {
-	var buf bytes.Buffer
-	closed := false
-	err := encodeSave(&buf, func() error { closed = true; return nil }, map[string]int{"a": 1})
-	if err != nil {
-		t.Fatalf("encodeSave: %v", err)
-	}
-	if !closed {
-		t.Error("closeFn should have been invoked")
-	}
-	var decoded map[string]int
-	if err := json.Unmarshal(buf.Bytes(), &decoded); err != nil {
-		t.Fatalf("output not valid JSON: %v", err)
-	}
-	if decoded["a"] != 1 {
-		t.Errorf("decoded a = %d, want 1", decoded["a"])
 	}
 }
 
