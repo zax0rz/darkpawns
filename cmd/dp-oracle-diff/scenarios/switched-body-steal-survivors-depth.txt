@@ -150,6 +150,7 @@ set mob clone dex 18
 set mob clone maxhit 50000
 set mob clone hit 50000
 set mob trainee level 39
+set mob Satan level 39
 set mob instructor level 1
 force Satan sleep
 force instructor sleep
