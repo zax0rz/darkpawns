@@ -70,8 +70,10 @@ Y
 goto 8105
 teleport Tellmobile 8163
 goto 8162
+# Keep Tellbody at C's initial LVL_IMPL while setting the peer; once demoted,
+# do_set correctly refuses to change a same-or-higher-level player.
+set player Tellmobile level 38
 set player Tellbody level 38
-send:mobile set player Tellmobile level 38
 switch clone
 send:mobile switch air elemental
 
