@@ -158,6 +158,7 @@ switch clone
 send:victim switch trainee
 
 [probe]
+look
 steal coins Stealvictim
 ~dpclock pulse 20
 steal pepper trainee
