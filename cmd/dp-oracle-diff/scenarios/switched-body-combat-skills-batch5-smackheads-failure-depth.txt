@@ -1,4 +1,4 @@
-# C-first switched-body do_smackheads failure. The watcher forces the switched mobile through command_interpreter. Two AC -600 targets put the unsigned-byte percentile above skill 100 without wrapping, so the connected room observer sees C's concatenated ToRoom line (src/interpreter.c:711; src/new_cmds.c:966-1097; src/act.wizard.c:1856-1880).
+# C-first switched-body do_smackheads failure. The watcher forces the switched mobile through command_interpreter. AC -100 plus seed 1's draw 78 yields percentile 108 in C's positive signed-byte failure band, so the connected room observer sees the concatenated ToRoom line (src/interpreter.c:711; src/new_cmds.c:966-1097; src/act.wizard.c:1856-1880).
 # depth-case: smackheads.switched-mobile-failure-room-audience
 
 [fixture]
@@ -71,10 +71,10 @@ teleport Smackwatch 8105
 set player Smackwatch level 38
 set mob trainee maxhit 30000
 set mob trainee hit 30000
-set mob trainee ac -600
+set mob trainee ac -100
 set mob recruit maxhit 30000
 set mob recruit hit 30000
-set mob recruit ac -600
+set mob recruit ac -100
 set mob clone level 39
 skillset SwitchBatch 'smackheads' 0
 restore clone
