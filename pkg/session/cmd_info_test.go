@@ -68,13 +68,16 @@ func TestAlignmentText(t *testing.T) {
 }
 
 // TestAcTextEveryBand pins every AC band against src/act.informative.c:1232-1257
-// (DP-1551). The -45 band has no final period; the very-well armored arm at
-// :1244 is dead (ac > -20 implies ac > -40) and is not probed by value.
+// (DP-1551). Only an exact 100 is "naked" (gear and APPLY_AC affects can push a
+// character above 100, and C still calls that "lightly clothed"); the -45 band
+// has no final period; the very-well armored arm at :1244 is dead (ac > -20
+// implies ac > -40) and is not probed by value.
 func TestAcTextEveryBand(t *testing.T) {
 	for _, tt := range []struct {
 		ac   int
 		want string
 	}{
+		{ac: 110, want: "You are lightly clothed."},
 		{ac: 101, want: "You are lightly clothed."},
 		{ac: 100, want: "You are naked, have you no shame?"},
 		{ac: 99, want: "You are lightly clothed."},
@@ -106,28 +109,6 @@ func TestAcTextEveryBand(t *testing.T) {
 		}
 		if tt.ac == -45 && acText(tt.ac) != "You are extremely well armored" {
 			t.Errorf("AC -45 must have no final period, got %q", acText(tt.ac))
-		}
-	}
-}
-
-// TestAcTextNakedIsExact100 pins C's boundary: only an exact 100 is "naked"
-// (src/act.informative.c:1232-1234). Gear and APPLY_AC affects push a
-// character above 100, and C still calls that "lightly clothed", so a >=100
-// test invents a band C does not have (R1/R4).
-func TestAcTextNakedIsExact100(t *testing.T) {
-	for _, tt := range []struct {
-		ac   int
-		want string
-	}{
-		{ac: 99, want: "You are lightly clothed."},
-		{ac: 100, want: "You are naked, have you no shame?"},
-		{ac: 101, want: "You are lightly clothed."},
-		{ac: 110, want: "You are lightly clothed."},
-		{ac: 71, want: "You are lightly clothed."},
-		{ac: 70, want: "You are pretty well clothed."},
-	} {
-		if got := acText(tt.ac); got != tt.want {
-			t.Errorf("acText(%d) = %q, want %q", tt.ac, got, tt.want)
 		}
 	}
 }

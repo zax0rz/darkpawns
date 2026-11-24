@@ -207,3 +207,57 @@ func TestCommandGatesAreAllCRows(t *testing.T) {
 		}
 	}
 }
+
+// TestAllCSocialsDispatchThroughExecuteCommand proves every social accepted by
+// isCSocial dispatches through the production ExecuteCommand path rather than
+// falling through to "Huh?!?" (R2, R5c).
+func TestAllCSocialsDispatchThroughExecuteCommand(t *testing.T) {
+	var socials []string
+	seen := make(map[string]struct{})
+	for name := range commandGates {
+		if isCSocial(name) {
+			seen[name] = struct{}{}
+			socials = append(socials, name)
+		}
+	}
+	for name := range game.Socials {
+		if isCSocial(name) {
+			if _, ok := seen[name]; !ok {
+				seen[name] = struct{}{}
+				socials = append(socials, name)
+			}
+		}
+	}
+	sort.Strings(socials)
+	if len(socials) == 0 {
+		t.Fatal("no C socials found")
+	}
+
+	m := makeTestManager(t)
+	s := makeCommandTestSession(t, m, "SocialTester", LVL_IMPL, 1001)
+	if err := m.Register("SocialTester", s); err != nil {
+		t.Fatalf("register SocialTester: %v", err)
+	}
+	if err := m.world.AddPlayer(s.player); err != nil {
+		t.Fatalf("AddPlayer: %v", err)
+	}
+
+	for _, name := range socials {
+		t.Run(name, func(t *testing.T) {
+			s.player.SetPosition(combat.PosStanding)
+			if err := ExecuteCommand(s, name, nil); err != nil {
+				t.Fatalf("ExecuteCommand(%q): %v", name, err)
+			}
+			got := readMsgTextOrEmpty(t, s)
+			if got == "Huh?!?\r\n" {
+				t.Fatalf("ExecuteCommand(%q) fell through to %q", name, got)
+			}
+			if got == "" {
+				t.Fatalf("ExecuteCommand(%q) emitted no output", name)
+			}
+			// Drain any extra messages before the next social.
+			for readMsgTextOrEmpty(t, s) != "" {
+			}
+		})
+	}
+}

@@ -121,7 +121,24 @@ func TestRestartDoesNotRestoreLegacyWorldSnapshot(t *testing.T) {
 		`"gossip":[{"name":"Ghost","message":"before the reboot","invis":0}]}`
 	writeLegacyWorldStateFile(t, encodeSnapshot(t, legacy))
 
+	logBuf := captureSlog(t)
 	w := bootRestartFixture(t)
+
+	t.Run("boot reports the ignored legacy snapshot", func(t *testing.T) {
+		output := logBuf.String()
+		for _, want := range []string{
+			"ignoring legacy world snapshot",
+			"save_version=2",
+			"mobs=1",
+			"room_items=3",
+			"door_states=1",
+			"gossip_entries=1",
+		} {
+			if !strings.Contains(output, want) {
+				t.Fatalf("boot log missing %q:\n%s", want, output)
+			}
+		}
+	})
 
 	t.Run("dropped prototype object is gone", func(t *testing.T) {
 		if items := w.GetItemsInRoom(5001); len(items) != 0 {
