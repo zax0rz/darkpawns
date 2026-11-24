@@ -147,7 +147,7 @@ set player Stealvictim level 39
 set player Stealtrainee level 38
 set mob clone level 39
 set mob clone dex 18
-set mob trainee level 40
+set mob trainee level 39
 set mob instructor level 1
 force trainee sleep
 force instructor sleep
