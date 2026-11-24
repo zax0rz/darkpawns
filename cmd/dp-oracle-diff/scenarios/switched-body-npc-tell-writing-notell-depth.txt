@@ -1,0 +1,80 @@
+# A switched mobile tells a connected player during a board post, then after
+# the editor closes and the player turns notell on. C's board editor sets
+# PLR_WRITING when the headline is accepted (src/boards.c:264-266). No
+# quiet-mobs mask is used; both C do_tell refusals remain visible to the actor.
+# depth-case: npc-tell.switched-writing-target
+# depth-case: npc-tell.switched-notell-target
+
+[fixture]
+empty-players
+spawn-mob 69 1 8004 80
+spawn-obj 8099 1 8004 48
+
+[setup:oracle]
+Tellbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tellbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Tellpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Tellpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Tellpeer 8004
+set player Tellbody level 38
+switch clone
+
+[probe]
+send:peer write A switched tell guard
+tell Tellpeer you are writing
+send:peer @
+send:peer notell
+tell Tellpeer can you hear me

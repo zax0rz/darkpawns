@@ -1,0 +1,115 @@
+# C-first switched-body witness for the awake-NPC coins ToVict line.
+# The caught coin attempt is the final probe because C immediately retaliates
+# against an awake NPC victim; the victim's switched descriptor and an
+# independent observer expose both audiences.
+# depth-case: switched.steal.gold-caught-victim
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Stealgoldbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stealgoldbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Stealgoldvictim
+Y
+trainpass
+trainpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Stealgoldvictim
+y
+trainpass
+trainpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Stealgoldwatch
+Y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Stealgoldwatch
+y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Stealgoldvictim 8105
+teleport Stealgoldwatch 8105
+set player Stealgoldvictim level 38
+set mob clone level 39
+set mob clone dex 18
+set mob clone maxhit 5000
+set mob clone hit 5000
+set mob trainee level 39
+set mob trainee maxhit 5000
+set mob trainee hit 5000
+teleport clone 8105
+teleport trainee 8105
+switch clone
+send:victim switch trainee
+
+[probe]
+steal coins trainee

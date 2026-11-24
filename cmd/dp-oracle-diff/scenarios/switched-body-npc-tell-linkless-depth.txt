@@ -1,0 +1,76 @@
+# After peer-drop, a switched mobile's do_tell resolves the saved player with
+# desc=NULL and emits C's linkless response.
+# depth-case: npc-tell.switched-linkless-target
+
+[fixture]
+empty-players
+spawn-mob 69 1 8162 80
+
+[setup:oracle]
+Tellbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tellbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Tellpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Tellpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Tellpeer 8162
+goto 8162
+set player Tellbody level 38
+switch clone
+
+[peer-drop]
+peer
+
+[probe]
+tell Tellpeer are you there

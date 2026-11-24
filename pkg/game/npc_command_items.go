@@ -291,7 +291,10 @@ func (w *World) npcWearDirect(me *MobInstance, argument string) CharacterCommand
 		} else if positionArg != "" {
 			me.SendMessage("'" + positionArg + "'?  What part of your body is THAT?\r\n")
 			return CharacterCommandHandled
-		} else if positionArg == "" {
+		} else if positionArg == "" && dotmode != findAll {
+			// C's FIND_ALL arm emits only the aggregate refusal after the loop;
+			// per-item refusals belong to FIND_ALLDOT and FIND_INDIV
+			// (src/act.item.c:1606-1618, 1633-1639, 1650-1656).
 			Act(w, false, me, nil, item, nil, "You can't wear $p.", "", ToChar)
 		}
 	}
