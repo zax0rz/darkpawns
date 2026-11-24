@@ -62,7 +62,7 @@ goto 8105
 [probe]
 switch clone
 put
-put bread bag.all
+put bread all.bag
 put bread
 put all.bread
 put pepper xyzzy
