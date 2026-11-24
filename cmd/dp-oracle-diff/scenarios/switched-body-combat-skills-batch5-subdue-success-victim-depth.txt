@@ -102,7 +102,7 @@ set mob clone level 39
 skillset SwitchBatch 'subdue' 0
 restore clone
 set mob clone level 1
-set mob trainee level 0
+set mob trainee level 1
 send:peer switch trainee
 switch clone
 
