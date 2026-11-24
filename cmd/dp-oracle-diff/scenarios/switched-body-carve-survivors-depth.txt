@@ -1,0 +1,122 @@
+# C-first switched-mobile witnesses for survivor rows 642-646 in characterCarve.
+# The player kills a real fish (C corpse keywords include fish/carve_meat), then
+# switches into a level-9 clone whose 18 bread items fill CAN_CARRY_N. A second
+# player supplies the living target; bread and the headless corpse cover the
+# object refusals. The five probe commands reach distinct C do_carve branches.
+# C path: src/interpreter.c:374,923-948 -> src/new_cmds.c:115-213;
+# switched body: src/act.wizard.c:1175-1200.
+# depth-case: carve.mobile-living-target
+# depth-case: carve.mobile-target-missing
+# depth-case: carve.mobile-non-corpse
+# depth-case: carve.mobile-non-carvable-corpse
+# depth-case: carve.mobile-full-arms
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-mob 69 1 8162 80
+spawn-mob 4350 1 8162 80
+spawn-obj 17 1 8162 80
+spawn-obj 8010 1 8162 80
+spawn-obj 8037 1 8162 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+give-object 69 8010 1000 80
+
+[setup:oracle]
+Carvesurv
+Y
+carvepass1
+carvepass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Carvesurv
+y
+carvepass1
+carvepass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Carvepeer
+Y
+carvepeer1
+carvepeer1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Carvepeer
+y
+carvepeer1
+carvepeer1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Carvepeer 8162
+get sword
+wield sword
+kill fish
+hit fish
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+switch clone
+
+[probe]
+carve Carvepeer
+carve moonstone
+carve bread
+carve headless
+carve carve_meat
