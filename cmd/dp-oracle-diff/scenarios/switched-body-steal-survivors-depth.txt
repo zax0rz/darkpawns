@@ -85,8 +85,8 @@ Y
 [setup:oracle:victim]
 Stealtrainee
 Y
-traineepass
-traineepass
+trainpass
+trainpass
 N
 F
 H
@@ -99,8 +99,8 @@ Y
 [setup:port:victim]
 Stealtrainee
 y
-traineepass
-traineepass
+trainpass
+trainpass
 N
 F
 H
