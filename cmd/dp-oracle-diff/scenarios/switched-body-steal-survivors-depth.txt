@@ -20,8 +20,8 @@
 empty-players
 quiet-mobs
 spawn-mob 69 1 8105 80
-spawn-mob 16303 1 8105 31
-spawn-mob 16304 1 8105 1
+spawn-mob 16303 1 8105 80
+spawn-mob 16304 1 8105 80
 give-object 16303 12132 1 80
 equip-object 16303 8022 999 16 80
 equip-object 16304 8022 999 16 80
@@ -146,6 +146,8 @@ teleport Stealwatch 8105
 set player Stealvictim level 40
 set mob clone level 39
 set mob clone dex 18
+set mob trainee level 31
+set mob instructor level 1
 force trainee sleep
 force instructor sleep
 switch clone
