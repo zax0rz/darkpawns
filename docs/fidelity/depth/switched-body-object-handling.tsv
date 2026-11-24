@@ -38,3 +38,5 @@ do_wear	wear	switched.wear.all-dot-missing-item	D1	command	oracle-green	switched
 do_wear	wear	switched.wear.all-dot-missing-item-suffix	D1	command	oracle-green	switched-body-wear-remove-empty-depth@1	src/act.item.c:1627-1631	Row 481: sampled s. suffix on the plural all-dot missing-item message.
 do_wear	wear	switched.wear.missing-item	D1	command	oracle-green	switched-body-wear-remove-empty-depth@1	src/act.item.c:1645-1649	Row 482: singular missing item.
 do_wear	wear	switched.wear.all-nonwearable-inventory	D1	command	oracle-green	switched-body-wear-remove-bag-depth@1	src/act.item.c:1606-1618	Row 484: only a non-wearable bag is carried.
+do_wear	wear	switched.wear.all-empty-inventory	D1	command	oracle-green	switched-body-wear-remove-empty-depth@1	src/act.item.c:1606-1618	Empty inventory through wear all reaches C's aggregate no-wearable output.
+do_wear	wear/remove	switched.wear-remove.unsilenced-room-audience	D2	command	oracle-green	switched-body-wear-remove-equipped-depth@1	src/act.item.c:1650-1656; src/act.item.c:1724-1728	Connected observer sees wear/remove room messages; no quiet-mobs mask.
