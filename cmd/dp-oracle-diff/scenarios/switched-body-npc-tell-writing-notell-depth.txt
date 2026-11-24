@@ -69,14 +69,16 @@ Y
 goto 8004
 teleport Tellpeer 8004
 set player Tellbody level 38
+load obj 19510
+give tome Tellpeer
+load obj 1208
+give quill Tellpeer
+send:peer hold quill
+send:peer write tome
 switch clone
 
 [probe]
-send:peer write
 tell Tellpeer you are writing
-send:peer write depth headline
-send:peer board body
-send:peer /e1 revised body
 send:peer @
 send:peer notell
 tell Tellpeer can you hear me
