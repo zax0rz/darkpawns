@@ -1,0 +1,78 @@
+# C-first switched-body witness for inventory containing only a non-wearable
+# bag: do_wear's item refusal and the all-items no-wearable summary.
+# depth-case: switched.wear.non-wearable-item
+# depth-case: switched.wear.all-nonwearable-inventory
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 99 8162 80
+give-object 69 8032 99 80
+
+[setup:oracle]
+Wearbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wearbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Wearwatch
+Y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Wearwatch
+y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport clone 8105
+teleport Wearwatch 8105
+set player Wearwatch level 38
+
+[probe]
+switch clone
+inventory
+wear bag
+wear all
