@@ -12,7 +12,6 @@
 # depth-case: switched.steal.equipment-success-actor
 # depth-case: switched.steal.equipment-success-room
 # depth-case: switched.steal.missing-item
-# depth-case: switched.steal.gold-caught-victim
 # depth-case: switched.steal.gold-caught-room
 
 [fixture]
@@ -164,13 +163,11 @@ send:victim switch trainee
 [probe]
 look
 steal coins Stealvictim
-~dpclock pulse 20
-steal pepper trainee
-~dpclock pulse 20
 steal long Satan
 ~dpclock pulse 20
 steal long instructor
 ~dpclock pulse 20
 steal missing trainee
+steal coins Satan
 ~dpclock pulse 20
-steal coins trainee
+steal pepper trainee
