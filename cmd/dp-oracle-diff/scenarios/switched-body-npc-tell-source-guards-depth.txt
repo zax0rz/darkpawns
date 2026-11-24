@@ -57,8 +57,8 @@ Y
 [setup:port:recipient]
 Tellrecipient
 y
-recipientpass
-recipientpass
+recippass
+recippass
 N
 M
 H
