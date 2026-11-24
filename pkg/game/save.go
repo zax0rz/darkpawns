@@ -4,7 +4,6 @@ package game
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log/slog"
 	"time"
 
@@ -120,26 +119,6 @@ type saveAffect struct {
 	// Deprecated: Type is kept for backward compatibility with old save files.
 	// New saves write SpellID + Location. Old saves are read via Type fallback.
 	Type int `json:"type,omitempty"` //nolint:govet // deprecated compat field
-}
-
-// encodeSave writes data as indented JSON to w, then invokes closeFn.
-// A close failure is reported when encoding succeeded: on filesystems with
-// delayed writeback a short write can surface at close time, and reporting
-// it keeps a truncated save from looking successful. C's save_char returns
-// void and never signals failure, so this is Go-internal hardening only —
-// no player-facing behavior changes.
-func encodeSave(w io.Writer, closeFn func() error, data any) (err error) {
-	defer func() {
-		if cerr := closeFn(); cerr != nil && err == nil {
-			err = fmt.Errorf("close save file: %w", cerr)
-		}
-	}()
-	enc := json.NewEncoder(w)
-	enc.SetIndent("", "  ")
-	if err = enc.Encode(data); err != nil {
-		return fmt.Errorf("encode save data: %w", err)
-	}
-	return nil
 }
 
 // playerToSaveData converts a Player to the serializable savePlayerData.

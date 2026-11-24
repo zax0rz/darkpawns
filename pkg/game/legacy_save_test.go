@@ -31,8 +31,14 @@ func SavePlayer(player *Player) error {
 		return fmt.Errorf("create save file: %w", err)
 	}
 
-	if err := encodeSave(f, f.Close, data); err != nil {
-		return err
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(data); err != nil {
+		_ = f.Close()
+		return fmt.Errorf("encode save data: %w", err)
+	}
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("close save file: %w", err)
 	}
 
 	slog.Debug("Player saved", "name", player.Name, "path", path)

@@ -2,6 +2,7 @@ package game
 
 import (
 	"bytes"
+	"encoding/json"
 	"math"
 	"os"
 	"path/filepath"
@@ -57,7 +58,9 @@ func TestGo126JSONBytes(t *testing.T) {
 			}
 			assertGo126JSON(t, name+"-character", character)
 			var indented bytes.Buffer
-			if err := encodeSave(&indented, func() error { return nil }, playerToSaveData(p)); err != nil {
+			enc := json.NewEncoder(&indented)
+			enc.SetIndent("", "  ")
+			if err := enc.Encode(playerToSaveData(p)); err != nil {
 				t.Fatal(err)
 			}
 			assertGo126JSON(t, name+"-indented", indented.Bytes())

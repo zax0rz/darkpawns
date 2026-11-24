@@ -50,58 +50,19 @@ func countObjectsInWorld(w *World) int {
 }
 
 func TestHouseSaveLoadFloorsContainerContents(t *testing.T) {
-	t.Chdir(t.TempDir()) // house/4100.house is written relative to cwd
+	// Stage a contents-first house save file where sword (3001) carries
+	// container_index=1 pointing at bag (3002). C House_load (src/house.c:87-101)
+	// ignores container_index and floors every surviving record in file order.
+	writeHouseFile(t, houseSaveData{
+		RoomVNum: 4100,
+		Items: []houseSaveItem{
+			{VNum: 3001, ContainerIndex: new(1)},
+			{VNum: 3002},
+		},
+	})
 	w := newHouseNestingWorld(t)
 
-	bag, err := w.SpawnObject(3002, 4100)
-	if err != nil {
-		t.Fatalf("spawn bag: %v", err)
-	}
-	sword, err := w.SpawnObject(3001, 4100)
-	if err != nil {
-		t.Fatalf("spawn sword: %v", err)
-	}
-	// SpawnObject registers the object; the room placement is a move.
-	if err := w.MoveObjectToRoom(bag, 4100); err != nil {
-		t.Fatalf("place bag in room: %v", err)
-	}
-	if err := w.MoveObjectToContainer(sword, bag); err != nil {
-		t.Fatalf("nest sword in bag: %v", err)
-	}
-
-	w.houseCrashsave(4100)
-
-	// The file records one item per object, contents first — C's House_save
-	// order (house.c:112-120).
-	var saved houseSaveData
-	raw, err := os.ReadFile(filepath.Clean(HouseGetFilename(4100)))
-	if err != nil {
-		t.Fatalf("read save file: %v", err)
-	}
-	if err := json.Unmarshal(raw, &saved); err != nil {
-		t.Fatalf("parse save file: %v", err)
-	}
-	if len(saved.Items) != 2 {
-		t.Fatalf("saved items = %d, want 2 (sword + bag): %s", len(saved.Items), raw)
-	}
-	if saved.Items[0].VNum != 3001 || saved.Items[1].VNum != 3002 {
-		t.Errorf("save order = [%d, %d], want contents-first [3001, 3002]",
-			saved.Items[0].VNum, saved.Items[1].VNum)
-	}
-	if saved.Items[0].ContainerIndex == nil || *saved.Items[0].ContainerIndex != 1 {
-		t.Errorf("sword container_index = %v, want pointer to 1 (the bag)", saved.Items[0].ContainerIndex)
-	}
-	if saved.Items[1].ContainerIndex != nil {
-		t.Errorf("bag container_index = %v, want nil (room-level)", saved.Items[1].ContainerIndex)
-	}
-
-	// Remove the live objects, then load the file back — a fresh boot.
 	live := countObjectsInWorld(w)
-	w.ExtractObject(sword, 4100)
-	w.ExtractObject(bag, 4100)
-	if got := countObjectsInWorld(w); got != live-2 {
-		t.Fatalf("extraction left objects behind: %d of %d", got, live)
-	}
 	if !w.houseLoad(4100) {
 		t.Fatal("houseLoad failed")
 	}
@@ -121,45 +82,8 @@ func TestHouseSaveLoadFloorsContainerContents(t *testing.T) {
 	if len(items) != 2 || items[0] != bag2 || items[1] != sword2 || sword2.ID >= bag2.ID {
 		t.Fatalf("floor order or file-order registration wrong: %v", items)
 	}
-	if got := countObjectsInWorld(w); got != live {
-		t.Errorf("registry count after load = %d, want %d", got, live)
-	}
-}
-
-func TestHouseSaveLoadFloorsDepthTwo(t *testing.T) {
-	t.Chdir(t.TempDir())
-	w := newHouseNestingWorld(t)
-
-	chest, _ := w.SpawnObject(3003, 4100)
-	bag, _ := w.SpawnObject(3002, 4100)
-	sword, _ := w.SpawnObject(3001, 4100)
-	if err := w.MoveObjectToRoom(chest, 4100); err != nil {
-		t.Fatalf("place chest in room: %v", err)
-	}
-	if err := w.MoveObjectToContainer(bag, chest); err != nil {
-		t.Fatalf("nest bag: %v", err)
-	}
-	if err := w.MoveObjectToContainer(sword, bag); err != nil {
-		t.Fatalf("nest sword: %v", err)
-	}
-
-	w.houseCrashsave(4100)
-	for _, obj := range []*ObjectInstance{sword, bag, chest} {
-		w.ExtractObject(obj, 4100)
-	}
-	if !w.houseLoad(4100) {
-		t.Fatal("houseLoad failed")
-	}
-
-	items := w.GetItemsInRoom(4100)
-	if len(items) != 3 {
-		t.Fatalf("floor has %d items, want empty chest, empty bag, sword", len(items))
-	}
-	for i, vnum := range []int{3003, 3002, 3001} {
-		obj := items[i]
-		if obj.VNum != vnum || len(obj.Contains) != 0 || obj.Location.Kind != ObjInRoom || obj.Location.RoomVNum != 4100 {
-			t.Fatalf("floor item %d = %+v, want vnum %d with no contents in room", i, obj, vnum)
-		}
+	if got := countObjectsInWorld(w); got != live+2 {
+		t.Errorf("registry count after load = %d, want %d", got, live+2)
 	}
 }
 

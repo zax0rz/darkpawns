@@ -626,7 +626,6 @@ src/handler.c:obj_to_room	pkg/game/world_object.go	(World).AddItemToRoomFront	pr
 src/handler.c:unequip_char	pkg/game/effective_attributes.go	(Player).applySpellUnequipWipe	primary
 src/handler.c:update_char_objects	pkg/game/char_mgmt.go	(World).updateCharObjects	primary
 src/handler.c:update_object	pkg/game/char_mgmt.go	UpdateObject	primary
-src/house.c:House_crashsave	pkg/game/house_save.go	(World).houseCrashsave	primary
 src/house.c:House_delete_file	pkg/game/house_save.go	houseDeleteFile	primary
 src/house.c:House_get_filename	pkg/game/houses.go	HouseGetFilename	primary
 src/house.c:House_load	pkg/game/house_save.go	(World).houseLoad	primary
@@ -826,7 +825,6 @@ src/objsave.c:Crash_rentsave	pkg/game/quit.go	(World).DiscardLoadedPlayerObjects
 src/objsave.c:Crash_save	pkg/db/object_save.go	objectSaveRecords	primary
 src/objsave.c:Crash_save_all	pkg/session/manager.go	(Manager).CrashSaveAll	primary
 src/objsave.c:Obj_from_store	pkg/game/houses.go	ObjFromStore	primary
-src/objsave.c:Obj_to_store	pkg/game/houses.go	ObjToStore	primary
 src/objsave.c:auto_equip	pkg/game/item_equipment.go	NameEquippedObject	primary
 src/oc.c:oc_show_list	pkg/game/item_views.go	formatOCShowListLine	primary
 src/oc.c:oc_show_list	pkg/game/look.go	objectVisibleFlags	split
