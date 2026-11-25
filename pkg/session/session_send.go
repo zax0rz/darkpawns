@@ -512,7 +512,7 @@ func (s *Session) promptText() string {
 	// because it never routes through string_write. The board, note, and mail
 	// editors therefore suppress invisibility and vitals fields as well as the
 	// normal AFK/inactive prefixes.
-	if editing, _ := s.editorPromptState(); editing || flags&(1<<uint(game.PlrWriting)) != 0 {
+	if editing, _ := s.editorPromptState(); editing || flags&(1<<uint(game.PlrWriting)) != 0 || game.IsWritingNote(s.player) {
 		return "] "
 	}
 	var prefix strings.Builder

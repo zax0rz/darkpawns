@@ -1717,9 +1717,10 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 		s.switchedPlayer = nil
 	}
 
-	// 3c. Cancel any in-progress mail writing
+	// 3c. Cancel any in-progress mail or paper note writing
 	if s.player != nil {
 		game.CancelMailWriting(s.player.ID)
+		game.CancelNoteWrite(s.player)
 	}
 
 	// 3d. Discard any in-progress medit (CON_MEDIT) session, mirroring C's

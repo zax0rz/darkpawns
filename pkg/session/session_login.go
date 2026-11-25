@@ -442,7 +442,13 @@ func (s *Session) routeDescriptorLine(command string, args []string, rawLine str
 		}
 		return true
 	}
-	// PLR_WRITING intercept: composing mail (PLR_MAILING) or a note (do_write).
+	// Paper note editor intercept: C's do_write on paper sets d->str without
+	// setting PLR_WRITING (src/act.comm.c:1098-1101).
+	if game.IsWritingNote(s.player) {
+		game.HandleNoteInput(s.player, editorLine)
+		return true
+	}
+	// PLR_WRITING intercept: composing mail (PLR_MAILING).
 	if s.player.GetFlags()&(1<<game.PlrWriting) != 0 {
 		line := editorLine
 		if s.player.GetFlags()&(1<<game.PlrMailing) != 0 {

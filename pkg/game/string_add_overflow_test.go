@@ -27,7 +27,6 @@ func TestNoteStringAddOverflowSkipsLineAndKeepsWriting(t *testing.T) {
 		delete(noteWriteEntries, player.ID)
 		noteWriteMu.Unlock()
 	})
-	player.SetPlrFlag(PlrWriting, true)
 
 	line := strings.Repeat("n", 240)
 	for range 4 {
@@ -46,7 +45,7 @@ func TestNoteStringAddOverflowSkipsLineAndKeepsWriting(t *testing.T) {
 	if state.buffer != accepted {
 		t.Fatalf("overflow changed accepted text: buffer=%d want buffer=%d", len(state.buffer), len(accepted))
 	}
-	if player.GetFlags()&(1<<PlrWriting) == 0 || noteWriteEntries[player.ID] != state {
+	if !IsWritingNote(player) || noteWriteEntries[player.ID] != state {
 		t.Fatal("note editor closed after overflow")
 	}
 
@@ -84,7 +83,6 @@ func TestNoteFirstLineOverflowTruncatesAndKeepsWriting(t *testing.T) {
 		delete(noteWriteEntries, player.ID)
 		noteWriteMu.Unlock()
 	})
-	player.SetPlrFlag(PlrWriting, true)
 
 	previousMessages := len(sent)
 	line := strings.Repeat("x", maxNoteLength-4) + "TAIL"
@@ -97,7 +95,7 @@ func TestNoteFirstLineOverflowTruncatesAndKeepsWriting(t *testing.T) {
 		t.Fatalf("first-line truncation buffer = %q, want retained prefix %q", state.buffer, want)
 	}
 	requireNewStringAddNotice(t, sent, previousMessages, "String too long - Truncated.\r\n")
-	if player.GetFlags()&(1<<PlrWriting) == 0 {
+	if !IsWritingNote(player) {
 		t.Fatal("note editor closed after first-line truncation")
 	}
 }
