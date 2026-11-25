@@ -7,11 +7,17 @@
 # - palm: 1 number(1,101) draw + "Palm what?" (src/new_cmds.c:2112,2120)
 # - compare / sharpen / carve / point: mob inventory/room context
 # depth-case: palm.no-arg
+# depth-case: sneak.switched-body-attempt-message
+# depth-case: hide.switched-body-attempt-message
+# depth-case: kabuki.switched-body-attempt-message
+# depth-case: mindlink.switched-body-missing-target
+# depth-case: mindlink.switched-body-untrained-target
 
 [fixture]
 empty-players
 quiet-mobs
 spawn-mob 69 1 8105 80
+spawn-mob 8021 1 8105 80
 
 [setup:oracle]
 Switchedutil
@@ -47,6 +53,8 @@ switch clone
 
 [probe]
 mindlink clone
+mindlink nobody
+mindlink horse
 mindlink
 turn
 sneak
