@@ -1,0 +1,50 @@
+# depth-case: movement.switched-mobile-water-no-boat
+# A descriptor is switched into a mobile in a no-swim source room. Its north
+# command reaches C do_move -> perform_move -> do_simple_move, where the mobile
+# has no boat and the switched player receives the original refusal.
+# C path: src/act.movement.c:95-132,311-366; src/act.wizard.c:1175-1200;
+# src/interpreter.c:883-949.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-sector 8162 0
+set-room-sector 8161 7
+replace-room-exits 8162 north 8161 0
+replace-room-exits 8161 none
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Waterowner
+Y
+waterpass1
+waterpass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Waterowner
+y
+waterpass1
+waterpass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+switch trainee
+
+[probe]
+north

@@ -1,0 +1,78 @@
+# depth-case: movement.switched-mobile-tunnel-full
+# A switched mobile tries to enter a tunnel room already occupied by a player.
+# C's do_simple_move counts the occupant and delivers the exact refusal through
+# the mobile's descriptor.
+# C path: src/act.movement.c:177-182,311-366; src/act.wizard.c:1175-1200;
+# src/interpreter.c:883-949.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8161 8 on
+replace-room-exits 8162 north 8161 0
+replace-room-exits 8161 none
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Tunnelowner
+Y
+tunnel1
+tunnel1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tunnelowner
+y
+tunnel1
+tunnel1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Tunnelpeer
+Y
+peerpass1
+peerpass1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Tunnelpeer
+y
+peerpass1
+peerpass1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Tunnelpeer 8161
+switch trainee
+
+[probe]
+north
