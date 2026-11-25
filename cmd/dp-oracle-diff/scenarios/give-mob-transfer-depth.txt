@@ -1,0 +1,86 @@
+# C-first mob-victim give witnesses the shared weight gate and TO_VICT output.
+# A switched God owns Dolkvin's descriptor; a mortal peer carries two confessor
+# swords. The first fits the mob's STR-3 carry limit and reaches TO_VICT. The
+# second exceeds it after the first is carried and reaches the C weight gate.
+# C: src/act.item.c:674-706; do_switch: src/act.wizard.c:1175-1201.
+# depth-case: give.mob-weight
+# depth-case: give.mob-switched-victim
+# probe-setup-refusal-reason: "send:giveactor give midlands dolkvin": witnesses the second give reaching perform_give's mobile weight gate (src/act.item.c:692-695)
+
+[fixture]
+empty-players
+quiet-mobs
+add-obj-index 58.obj
+spawn-mob 4301 1 8004 80
+replace-room-exits 8004 none
+
+[setup:oracle]
+Givegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Givegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:giveactor]
+Giveactor
+Y
+givepass
+givepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:giveactor]
+Giveactor
+y
+givepass
+givepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Giveactor 8004
+set player Giveactor str 18
+set mob Dolkvin str 3
+load obj 5805
+load obj 5805
+give confessor Giveactor
+give confessor Giveactor
+switch dolkvin
+
+[probe]
+send:giveactor give confessor dolkvin
+send:giveactor give midlands dolkvin
