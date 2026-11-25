@@ -1,0 +1,94 @@
+# C-first witness for uncovered divergences in do_point, do_compare, and
+# do_sharpen across player and switched-mobile paths (src/new_cmds.c:1952-2095,
+# 2470-2563, 2743-2792):
+# - invisible player point (room/victim/self $n visibility and $mself)
+# - invisible player sharpen (TO_ROOM $n visibility)
+# - switched-mobile point direction
+# - switched-mobile sharpen/compare with leading fill word ("the") under half_chop
+# depth-case: point.invisible-pointer-visibility
+# depth-case: point.switched-mobile-direction
+# depth-case: sharpen.invisible-sharpener-visibility
+# depth-case: sharpen.switched-mobile-half-chop
+# depth-case: compare.switched-mobile-half-chop
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 999 8105 80
+
+[setup:oracle]
+Pointgod
+Y
+pointpass1
+pointpass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pointgod
+y
+pointpass1
+pointpass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:obs]
+Pointobs
+Y
+pointobs1
+pointobs1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:obs]
+Pointobs
+y
+pointobs1
+pointobs1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Pointobs 8105
+load obj 8037
+load obj 8037
+load obj 18310
+give short clone
+give katana clone
+invis 35
+
+[probe]
+point
+point Pointobs
+point self
+sharpen short
+invis 0
+switch clone
+point north
+sharpen the short
+compare the short katana
