@@ -1,0 +1,47 @@
+# Switched C-first witness for do_gen_comm's room soundproof gate. The mobile
+# remains in room 8162, which is soundproof in both disposable worlds; shout
+# emits the body line to the owner's descriptor before the level and argument
+# checks. C dispatches shout to do_gen_comm (src/interpreter.c:690).
+# depth-case: switched-communication.soundproof-body-gate
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8003 1 8162 80
+set-room-flag 8162 5 on
+
+[setup:oracle]
+Switchproof
+Y
+proofpass
+proofpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchproof
+y
+proofpass
+proofpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Switchproof level 38
+goto 8162
+switch Darek
+
+[probe]
+shout words against the wall
