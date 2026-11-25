@@ -1,0 +1,75 @@
+# A mortal player tells a switched mobile whose room is soundproof. The teller
+# remains in the ordinary start room, so C reaches do_tell's target-room
+# soundproof arm and returns the line to the teller.
+# depth-case: tell.switched-player-target-soundproof
+
+[fixture]
+empty-players
+spawn-mob 69 1 8163 80
+set-room-flag 8105 5 off
+set-room-flag 8163 5 on
+
+[setup:oracle]
+Tellbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tellbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:teller]
+Targetproof
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:teller]
+Targetproof
+y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Targetproof room 8105
+set player Tellbody level 38
+goto 8163
+switch clone
+
+[probe]
+send:teller tell clone can you hear me
