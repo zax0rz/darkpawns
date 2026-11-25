@@ -67,6 +67,7 @@ Y
 [warmup]
 teleport Fingerofflinepeer 8004
 send:peer quit
+~dpclock pulse 1
 
 [probe]
 finger Fingerofflinepeer
