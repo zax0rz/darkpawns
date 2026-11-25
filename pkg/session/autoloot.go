@@ -13,21 +13,3 @@ func IsAutoLootEnabled(player *game.Player) bool {
 	}
 	return player.GetFlags()&(1<<game.PrfAutoLoot) != 0
 }
-
-// cmdAutoLoot toggles automatic looting after kills.
-func cmdAutoLoot(s *Session, args []string) error {
-	if s.player == nil {
-		return nil
-	}
-	enabled := IsAutoLootEnabled(s.player)
-	s.player.SetPlrFlag(game.PrfAutoLoot, !enabled)
-	if !enabled {
-		s.Send("You will now automatically loot corpses.\r\n")
-	} else {
-		s.Send("You will no longer loot corpses.\r\n")
-	}
-	return nil
-}
-
-func init() {
-}

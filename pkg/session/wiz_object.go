@@ -104,9 +104,9 @@ func cmdLoad(s *Session, args []string) error {
 			return nil
 		}
 		if err := s.manager.world.PlaceWizardLoadedObjectInInventory(obj, s.player); err != nil {
+			// Defensive guard only; C has no refusal message at this transfer step.
 			slog.Error("wizard load object transfer failed", "who", s.player.Name, "obj_vnum", vnum, "error", err)
 			s.manager.world.ExtractObject(obj, roomVNum)
-			s.Send("You can't carry that right now.\r\n")
 			return nil
 		}
 		// src/act.wizard.c:1369-1371: object payload has no final period.

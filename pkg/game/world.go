@@ -1096,37 +1096,6 @@ func (w *World) CreateMobileI(ch any, vnum, roomVNum, level int, hunting bool) (
 	return mob, nil
 }
 
-// LookAtRoomSimple sends a basic room description to a player via interface{}.
-// Used by mindsight which temporarily transfers the caster to another room.
-func (w *World) LookAtRoomSimple(roomVNum int, sender any) {
-	sm, ok := sender.(interface{ SendMessage(string) })
-	if !ok {
-		return
-	}
-
-	room := w.GetRoomInWorld(roomVNum)
-	if room == nil {
-		return
-	}
-
-	sm.SendMessage(fmt.Sprintf("%s\r\n", room.Name))
-	if room.Description != "" {
-		sm.SendMessage(room.Description + "\r\n")
-	}
-
-	// List characters in room
-	for _, m := range w.GetMobsInRoom(roomVNum) {
-		sm.SendMessage(fmt.Sprintf("%s is here.\r\n", m.GetShortDesc()))
-	}
-	for _, p := range w.GetPlayersInRoom(roomVNum) {
-		if pn, ok := sender.(interface{ GetName() string }); ok {
-			if pn.GetName() != p.GetName() {
-				sm.SendMessage(fmt.Sprintf("%s is here.\r\n", p.GetName()))
-			}
-		}
-	}
-}
-
 // ExtractMob marks a mob for extraction. C keeps it in the character and room
 // lists until extract_pending_chars at the next heartbeat (handler.c:1194-1209;
 // comm.c:805), so removal and combat retirement belong to that final pass.

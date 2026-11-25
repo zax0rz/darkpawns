@@ -496,8 +496,8 @@ func (w *World) performGiveToMob(ch *Player, vict *MobInstance, obj *ObjectInsta
 		return
 	}
 	if err := w.MoveObjectToMobInventoryFront(obj, vict); err != nil {
+		// Defensive guard only; C has no refusal message at this transfer step.
 		slog.Error("give to mob failed", "player", ch.Name, "mob_vnum", vict.GetVNum(), "obj_vnum", obj.VNum, "error", err)
-		Act(nil, false, ch, vict, nil, nil, "$E can't carry that much weight.", "", ToChar)
 		return
 	}
 

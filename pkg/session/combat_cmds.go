@@ -41,7 +41,7 @@ func cmdKill(s *Session, args []string) error {
 
 	victim := combatTargetActor(tgt)
 	if victim == nil {
-		s.Send("They aren't here.\r\n")
+		// Unreachable after ResolveCharInRoom succeeded; return silently without invented output.
 		return nil
 	}
 	if victim == s.player {
@@ -88,7 +88,7 @@ func cmdHit(s *Session, args []string) error {
 	}
 	victim := combatTargetActor(tgt)
 	if victim == nil {
-		s.Send("They don't seem to be here.\r\n")
+		// Unreachable after ResolveCharInRoom succeeded; return silently without invented output.
 		return nil
 	}
 
@@ -141,7 +141,7 @@ func cmdHit(s *Session, args []string) error {
 		victimCombatant = tgt.Mob
 	}
 	if victimCombatant == nil {
-		s.Send("They don't seem to be here.\r\n")
+		// Unreachable after ResolveCharInRoom succeeded; return silently without invented output.
 		return nil
 	}
 	// C's extract_char only flags a dead body (src/handler.c:1194-1209); it stays
@@ -181,7 +181,7 @@ func cmdParry(s *Session, _ []string) error {
 
 	target, ok := s.manager.world.ResolveFightingTarget(s.player)
 	if !ok || target.Combatant == nil {
-		s.Send("But you aren't fighting anyone!\r\n")
+		// Unreachable after GetFightingBody() != nil; return silently without duplicate output.
 		return nil
 	}
 	victim := combatTargetActor(target)
@@ -191,7 +191,7 @@ func cmdParry(s *Session, _ []string) error {
 	}
 
 	if s.player.Equipment == nil {
-		s.Send("Parry with what? You're unarmed!\r\n")
+		// Unreachable for initialized players; return silently without duplicate output.
 		return nil
 	}
 	if weapon, wielded := s.player.Equipment.GetItemInSlot(game.SlotWield); !wielded || weapon == nil {

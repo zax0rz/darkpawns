@@ -85,12 +85,7 @@ func CharacterSteal(ctx CharacterCommandContext, _ []string) CharacterCommandRes
 					if !victim.IsNPC() {
 						MudLog(fmt.Sprintf("(PS) %s stole %s from %s.", mob.GetName(), item.GetShortDesc(), victim.GetName()), MudlogComplete, LVL_IMMORT, true)
 					}
-					if ctx.DirectCall && ctx.Subcmd != 0 {
-						ActWithPrivateSink(ctx.World, true, mob, nil, item, nil,
-							"Somehow $p makes it's way into your pack.", "", ToChar, mob, ctx.PrivateOutput)
-					} else {
-						mobileSend(ctx, mob, "Got it!\r\n")
-					}
+					mobileSend(ctx, mob, "Got it!\r\n")
 				}
 			} else if mobCarriedItemCount(mob)+1 >= mobMaxCarryCount(mob) {
 				mobileSend(ctx, mob, "You cannot carry that much.\r\n")
