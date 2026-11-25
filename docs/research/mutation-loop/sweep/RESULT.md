@@ -98,3 +98,7 @@ All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`:
 | F. ruling or harness capability | 3 | Rows 2, 4 and 908 cannot receive an isolated clean paired proof under the current approved behavior or fixture/input boundaries. |
 
 These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; row 622 is superseded by the Go-only correction in `CLASSIFICATION-CORRECTIONS.md`. Batch 05 row 148 remains a separate R1a unknown, outside the 308 survivors.
+
+## Repair batch update (2026-11-25)
+
+Rows 402, 403, and 406 are killed by scenario-backed proofs: the NODROP gate for an NPC victim, the shared carry-weight gate for a mobile victim, and the `TO_VICT` give line delivered to a switched mobile descriptor. Row 404 moves from A to C because it is a Go-only transfer-error fallback with no C counterpart. Relative to current `origin/main` before this batch, the effective counts are A261/B0/C16/D23/E2/F3. The open combat-entry and prayer-reward PRs (#3060 and #3061) also update these shared research files; preserve their appended rows and recompute the cumulative counts when combining the diffs.
