@@ -86,10 +86,10 @@ Y
 1
 
 [warmup]
-set player Commpeer level 34
 goto 8162
 teleport Commpeer 8161
 clan create Commpeer Wolves
+set player Commpeer level 34
 switch Darek
 north
 
@@ -117,10 +117,10 @@ qsay not on quest
 ctell not in a clan
 ctell 1 message from the switched body
 send:peer set mob Darek level 1
-shout below the level gate
+holler below the level gate
 send:peer set mob Darek level 34
 send:peer set mob Darek int 0
-shout below the intelligence gate
+holler below the intelligence gate
 send:peer set mob Darek int 1
 send:peer set mob Darek wis 1
 send:peer set mob Darek move 0

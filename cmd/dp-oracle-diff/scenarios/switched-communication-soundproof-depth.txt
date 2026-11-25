@@ -1,7 +1,7 @@
 # Switched C-first witness for do_gen_comm's room soundproof gate. The mobile
 # remains in room 8162, which is soundproof in both disposable worlds; shout
 # emits the body line to the owner's descriptor before the level and argument
-# checks. C dispatches shout to do_gen_comm (src/interpreter.c:690).
+# checks. C dispatches holler to do_gen_comm (src/interpreter.c:498).
 # depth-case: switched-communication.soundproof-body-gate
 
 [fixture]
@@ -44,4 +44,4 @@ goto 8162
 switch Darek
 
 [probe]
-shout words against the wall
+holler words against the wall
