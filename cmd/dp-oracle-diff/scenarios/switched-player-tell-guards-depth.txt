@@ -1,0 +1,139 @@
+# A connected player tells a switched mobile from three player states. The
+# body has a descriptor, while each teller remains an ordinary connected
+# player: notell, PLR_NOSHOUT, and source-room soundproof are tested separately.
+# depth-case: tell.switched-player-target-notell
+# depth-case: tell.switched-player-target-noshout
+# depth-case: tell.switched-player-source-soundproof
+
+[fixture]
+empty-players
+spawn-mob 69 2 8162 80
+set-room-flag 8105 5 off
+set-room-flag 8162 5 off
+set-room-flag 8163 5 on
+
+[setup:oracle]
+Tellbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tellbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:notell]
+Talknotell
+Y
+notellpass
+notellpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+notell
+
+[setup:port:notell]
+Talknotell
+y
+notellpass
+notellpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+notell
+
+[setup:oracle:muted]
+Talkmuted
+Y
+mutedpass
+mutedpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:muted]
+Talkmuted
+y
+mutedpass
+mutedpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:soundproof]
+Talkproof
+Y
+proofpass
+proofpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:soundproof]
+Talkproof
+y
+proofpass
+proofpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+mute Talkmuted
+set player Talkproof room 8163
+set player Tellbody level 38
+goto 8162
+switch clone
+
+[probe]
+send:notell tell clone can you hear me
+send:soundproof tell clone can you hear me
+send:muted tell clone can you hear me
