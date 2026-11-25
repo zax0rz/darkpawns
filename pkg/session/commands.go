@@ -1502,32 +1502,6 @@ func cmdUse(s *Session, args []string) error {
 	if s.player == nil {
 		return fmt.Errorf("not logged in")
 	}
-	if len(args) == 0 {
-		s.Send("What do you want to use?\r\n")
-		return nil
-	}
-
-	itemArg := args[0]
-
-	// C do_use SCMD_USE (act.other.c:920): "tattoo" is a keyword special-case;
-	// otherwise the target must be EQUIPPED (WEAR_HOLD then any worn slot),
-	// matched by keyword — never inventory, and only wand/staff are usable.
-	// When nothing equipped matches, continue through C do_use so object-special
-	// fallthrough preserves the original command surface and bytes.
-	if strings.EqualFold(itemArg, "tattoo") {
-		s.manager.world.DoUse(s.player, strings.Join(args, " "))
-		return nil
-	}
-	if item := s.manager.world.FindEquippedVis(s.player, itemArg); item != nil {
-		itemType := item.GetTypeFlag()
-		if itemType == game.ITEM_WAND || itemType == game.ITEM_STAFF {
-			s.manager.world.DoUse(s.player, strings.Join(args, " "))
-			return nil
-		}
-		s.Send("You can't seem to figure out how to use it.\r\nTry holding it.(?)\r\n")
-		return nil
-	}
-
 	s.manager.world.DoUse(s.player, strings.Join(args, " "))
 	return nil
 }

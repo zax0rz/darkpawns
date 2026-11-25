@@ -26,7 +26,7 @@ func (w *World) doClanRename(ch *Player, arg string) {
 
 	c := w.Clans.GetClanByIndex(clanIdx)
 	if c == nil {
-		ch.SendMessage("There is no clan with that number.\r\n")
+		// Defensive nil guard for concurrent clan removal; return silently.
 		return
 	}
 	if len(arg2) > 32 {
