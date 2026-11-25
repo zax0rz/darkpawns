@@ -586,76 +586,86 @@ func DoTag(ch *Player, targetName string, world *World) SkillResult {
 }
 
 // DoPoint implements do_point() from new_cmds.c: point at a visible character,
-// visible room object, direction, or the room itself. targetName has already
-// passed through C's one_argument at the session boundary.
+// visible room object, direction, or the room itself.
 func DoPoint(ch *Player, targetName string, world *World) SkillResult {
-	if targetName == "" {
-		return pointResult("You point around the room.", fmt.Sprintf("%s points around the room.", ch.Name))
-	}
+	return doPointActor(world, ch, targetName, nil)
+}
 
-	if target, found := world.ResolveCharInRoom(ch, targetName); found {
-		if target.Combatant == ch {
-			return pointResult("You point at yourself.", fmt.Sprintf("%s points at %s.", ch.Name, himHer(ch.GetSex())))
+// doPointActor is the shared implementation of point for both players and
+// switched mobiles. It emits TO_ROOM/TO_NOTVICT, TO_CHAR, and TO_VICT in C's
+// order with C's hide_invisible flags.
+func doPointActor(world *World, combatant combat.Combatant, rawArg string, privateOut func(string)) SkillResult {
+	actor := asActor(combatant)
+	if actor == nil || world == nil {
+		return SkillResult{}
+	}
+	targetName, _ := OneArgument(rawArg)
+
+	var weapon *ObjectInstance
+	switch a := combatant.(type) {
+	case *Player:
+		if a.Equipment != nil {
+			weapon, _ = a.Equipment.GetItemInSlot(SlotWield)
 		}
-		return pointCharacterResult(ch, target.Combatant)
+	case *MobInstance:
+		weapon = a.Equipped(mobWearWield)
 	}
 
-	if object, found := world.ResolveObjectInRoom(ch, targetName); found {
-		return pointObjectResult(ch, object)
-	}
-
-	if direction := pointDirection(targetName); direction != "" {
-		return pointResult("You point "+direction+".", fmt.Sprintf("%s points %s.", ch.Name, direction))
-	}
-
-	return pointResult("You point around the room.", fmt.Sprintf("%s points around the room.", ch.Name))
-}
-
-func pointResult(toCh, toRoom string) SkillResult {
-	return SkillResult{Success: true, MessageToCh: toCh, MessageToRoom: toRoom}
-}
-
-func pointCharacterResult(ch *Player, target combat.Combatant) SkillResult {
-	targetName := target.GetName()
-	weapon := pointWeapon(ch)
-	if weapon == nil {
-		return SkillResult{
-			Success:       true,
-			MessageToCh:   fmt.Sprintf("You point at %s.", targetName),
-			MessageToVict: fmt.Sprintf("%s points at you.", ch.Name),
-			MessageToRoom: fmt.Sprintf("%s points at %s.", ch.Name, targetName),
-		}
-	}
-	weaponName := weapon.GetShortDesc()
-	return SkillResult{
-		Success:       true,
-		MessageToCh:   fmt.Sprintf("You point %s at %s.", weaponName, targetName),
-		MessageToVict: fmt.Sprintf("%s points %s at you.", ch.Name, weaponName),
-		MessageToRoom: fmt.Sprintf("%s points %s at %s.", ch.Name, weaponName, targetName),
-	}
-}
-
-func pointObjectResult(ch *Player, target *ObjectInstance) SkillResult {
-	targetName := target.GetShortDesc()
-	if weapon := pointWeapon(ch); weapon != nil {
-		weaponName := weapon.GetShortDesc()
-		return pointResult(
-			fmt.Sprintf("You point %s at %s.", weaponName, targetName),
-			fmt.Sprintf("%s points %s at %s.", ch.Name, weaponName, targetName),
-		)
-	}
-	return pointResult(
-		fmt.Sprintf("You point at %s.", targetName),
-		fmt.Sprintf("%s points at %s.", ch.Name, targetName),
+	var (
+		vict   Actor
+		obj    *ObjectInstance
+		toRoom string
+		toChar string
+		toVict string
 	)
-}
-
-func pointWeapon(ch *Player) *ObjectInstance {
-	if ch == nil || ch.Equipment == nil {
-		return nil
+	if target, found := world.ResolveCharInRoom(combatant, targetName); found {
+		if target.Combatant == combatant {
+			toRoom = "$n points at $mself."
+			toChar = "You point at yourself."
+		} else {
+			vict = asActor(target.Combatant)
+			if weapon != nil {
+				obj = weapon
+				toRoom = "$n points $p at $N."
+				toChar = "You point $p at $N."
+				toVict = "$n points $p at you."
+			} else {
+				toRoom = "$n points at $N."
+				toChar = "You point at $N."
+				toVict = "$n points at you."
+			}
+		}
+	} else if tobj, found := world.ResolveObjectInRoom(combatant, targetName); found {
+		if weapon != nil {
+			Act(world, false, actor, nil, weapon, tobj, "$n points $p at $P.", "", ToRoom)
+			ActWithPrivateSink(world, true, actor, nil, weapon, tobj, "You point $p at $P.", "", ToChar, actor, privateOut)
+		} else {
+			Act(world, false, actor, nil, nil, tobj, "$n points at $P.", "", ToRoom)
+			ActWithPrivateSink(world, true, actor, nil, nil, tobj, "You point at $P.", "", ToChar, actor, privateOut)
+		}
+		return SkillResult{Success: true}
+	} else if dir := pointDirection(targetName); dir != "" {
+		Act(world, false, actor, nil, nil, nil, fmt.Sprintf("$n points %s.", dir), "", ToRoom)
+		return SkillResult{
+			Success:                 true,
+			MessageToCh:             fmt.Sprintf("You point %s.\r\n", dir),
+			NoMessageToChTerminator: true,
+		}
+	} else {
+		toRoom = "$n points around the room."
+		toChar = "You point around the room."
 	}
-	weapon, _ := ch.Equipment.GetItemInSlot(SlotWield)
-	return weapon
+
+	if toRoom != "" {
+		Act(world, false, actor, vict, obj, nil, toRoom, "", ToNotVict)
+	}
+	if toChar != "" {
+		ActWithPrivateSink(world, true, actor, vict, obj, nil, toChar, "", ToChar, actor, privateOut)
+	}
+	if toVict != "" && vict != nil {
+		Act(world, true, actor, vict, obj, nil, toVict, "", ToVict)
+	}
+	return SkillResult{Success: true}
 }
 
 func pointDirection(argument string) string {
