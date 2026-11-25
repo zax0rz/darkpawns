@@ -98,3 +98,7 @@ All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`:
 | F. ruling or harness capability | 3 | Rows 2, 4 and 908 cannot receive an isolated clean paired proof under the current approved behavior or fixture/input boundaries. |
 
 These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; row 622 is superseded by the Go-only correction in `CLASSIFICATION-CORRECTIONS.md`. Batch 05 row 148 remains a separate R1a unknown, outside the 308 survivors.
+
+## Survivor-triage correction update (2026-11-25)
+
+Rows 665, 677–680, and 687–693 are reclassified from bucket A to bucket D after checking the C call paths and the existing depth manifest. Row 665 is an unreachable stable mount reload failure with the shipped 8021 prototype; the other 11 rows are in special procedures that C does not assign. The first-pass triage rows and the 308-row survivor set are unchanged. Effective counts are now A253/B0/C15/D35/E2/F3. The R1a unknown, row 148, remains separate and outside the survivor count.
