@@ -236,7 +236,7 @@ func (w *World) DoTell(ch *Player, argument string) {
 	}
 	target := resolved.Player
 	if target == nil {
-		communicationSend(ch, "No-one by that name here.")
+		// Unreachable after GetCharVis with nil Mob; return silently without invented output.
 		return
 	}
 	state := w.communicationEligibility(ch, target)

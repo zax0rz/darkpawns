@@ -1579,12 +1579,8 @@ func cmdWhois(s *Session, args []string) error {
 		// C do_whois (new_cmds.c:1418): "[%2d %s] %s %s" — level, class
 		// abbrev, name, AND title.
 		title := rec.Title
-		if title == "" {
-			if rec.Class >= 0 && rec.Class < len(game.Titles) {
-				title = game.Titles[rec.Class]
-			} else {
-				title = "the Adventurer"
-			}
+		if title == "" && rec.Class >= 0 && rec.Class < len(game.Titles) {
+			title = game.Titles[rec.Class]
 		}
 		s.Send(fmt.Sprintf("[%2d %s] %s %s\r\n", rec.Level, classAbbr, rec.Name, title))
 		return nil
