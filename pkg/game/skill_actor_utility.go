@@ -1,13 +1,10 @@
 package game
 
 import (
-	"fmt"
 	"strings"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
-	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // CharacterUtilitySkill routes the mobile body of the utility/stealth skills
@@ -152,228 +149,55 @@ func characterPalm(ctx CharacterCommandContext, mob *MobInstance, rawArg string)
 }
 
 func characterPoint(ctx CharacterCommandContext, mob *MobInstance, rawArg string) CharacterCommandResult {
-	targetName, _ := OneArgument(rawArg)
-	if targetName == "" {
-		sendBodyMessage(ctx.World, mob, "You point around the room.\r\n")
-		Act(ctx.World, false, mob, nil, nil, nil, "$n points around the room.", "", ToRoom)
-		return CharacterCommandHandled
-	}
-	if target, found := ctx.World.ResolveCharInRoom(mob, targetName); found {
-		if target.Combatant == mob {
-			sendBodyMessage(ctx.World, mob, "You point at yourself.\r\n")
-			Act(ctx.World, false, mob, nil, nil, nil, "$n points at $mself.", "", ToRoom)
-			return CharacterCommandHandled
-		}
-		weapon := mob.Equipped(mobWearWield)
-		victActor := asActor(target.Combatant)
-		if weapon == nil {
-			ActWithPrivateSink(ctx.World, false, mob, victActor, nil, nil, "You point at $N.", "", ToChar, mob, ctx.PrivateOutput)
-			Act(ctx.World, false, mob, victActor, nil, nil, "$n points at you.", "", ToVict)
-			Act(ctx.World, false, mob, victActor, nil, nil, "$n points at $N.", "", ToNotVict)
+	res := doPointActor(ctx.World, mob, rawArg, ctx.PrivateOutput)
+	if res.MessageToCh != "" {
+		if ctx.PrivateOutput != nil {
+			ctx.PrivateOutput(res.MessageToCh)
 		} else {
-			ActWithPrivateSink(ctx.World, false, mob, victActor, weapon, nil, "You point $p at $N.", "", ToChar, mob, ctx.PrivateOutput)
-			Act(ctx.World, false, mob, victActor, weapon, nil, "$n points $p at you.", "", ToVict)
-			Act(ctx.World, false, mob, victActor, weapon, nil, "$n points $p at $N.", "", ToNotVict)
+			sendBodyMessage(ctx.World, mob, res.MessageToCh)
 		}
-		return CharacterCommandHandled
 	}
-	if obj, found := ctx.World.ResolveObjectInRoom(mob, targetName); found {
-		weapon := mob.Equipped(mobWearWield)
-		if weapon == nil {
-			sendBodyMessage(ctx.World, mob, fmt.Sprintf("You point at %s.\r\n", obj.GetShortDesc()))
-			Act(ctx.World, false, mob, nil, obj, nil, "$n points at $p.", "", ToRoom)
-		} else {
-			sendBodyMessage(ctx.World, mob, fmt.Sprintf("You point %s at %s.\r\n", weapon.GetShortDesc(), obj.GetShortDesc()))
-			Act(ctx.World, false, mob, nil, weapon, obj, "$n points $p at $P.", "", ToRoom)
-		}
-		return CharacterCommandHandled
-	}
-	if dir := pointDirection(targetName); dir != "" {
-		sendBodyMessage(ctx.World, mob, fmt.Sprintf("You point %s.\r\n", dir))
-		Act(ctx.World, false, mob, nil, nil, nil, fmt.Sprintf("$n points %s.", dir), "", ToRoom)
-		return CharacterCommandHandled
-	}
-	sendBodyMessage(ctx.World, mob, "You point around the room.\r\n")
-	Act(ctx.World, false, mob, nil, nil, nil, "$n points around the room.", "", ToRoom)
 	return CharacterCommandHandled
 }
 
 func characterCompare(ctx CharacterCommandContext, mob *MobInstance, rawArg string) CharacterCommandResult {
-	if mob.IsAffected(affBlind) {
-		sendBodyMessage(ctx.World, mob, "You can't see a damned thing!\r\n")
-		return CharacterCommandHandled
+	arg1, arg2 := halfChop(rawArg)
+	res := doCompareActor(mob, arg1, arg2)
+	if res.MessageToCh != "" {
+		if ctx.PrivateOutput != nil {
+			ctx.PrivateOutput(res.MessageToCh)
+		} else {
+			sendBodyMessage(ctx.World, mob, res.MessageToCh)
+		}
 	}
-	arg1, rest := OneArgument(rawArg)
-	arg2, _ := OneArgument(rest)
-	var obj1, obj2 *ObjectInstance
-	if arg1 != "" {
-		obj1, _ = resolveVisibleObject(mob, arg1, mob.InventorySnapshot(), true)
-	}
-	if arg2 != "" {
-		obj2, _ = resolveVisibleObject(mob, arg2, mob.InventorySnapshot(), true)
-	}
-	if mob.GetFightingBody() != nil {
-		sendBodyMessage(ctx.World, mob, "You're pretty busy right now!\n\r")
-		return CharacterCommandHandled
-	}
-	if obj1 == nil || obj2 == nil {
-		sendBodyMessage(ctx.World, mob, "Looks like you don't have those objects..\n\r")
-		return CharacterCommandHandled
-	}
-	if obj1 == obj2 {
-		sendBodyMessage(ctx.World, mob, "They're the same thing!\n\r")
-		return CharacterCommandHandled
-	}
-	if obj1.GetTypeFlag() != obj2.GetTypeFlag() {
-		sendBodyMessage(ctx.World, mob, "You can't compare those things!\r\n")
-		return CharacterCommandHandled
-	}
-	if obj1.GetTypeFlag() != ITEM_WEAPON && obj1.GetTypeFlag() != ITEM_ARMOR {
-		sendBodyMessage(ctx.World, mob, "Compare is only for weapons and armor.\r\n")
-		return CharacterCommandHandled
-	}
-	// Mobiles have skill 0 -> prob = 20 + level (src/new_cmds.c:1964).
-	// C's armor-slot gate (new_cmds.c:2050-2055): different wear slots refuse
-	// before any RNG draw.
-	if obj1.GetTypeFlag() == ITEM_ARMOR && armorWearSlot(obj1) != armorWearSlot(obj2) {
-		sendBodyMessage(ctx.World, mob, "You can only compare the same types of armor!\r\n")
-		return CharacterCommandHandled
-	}
-
-	prob := 20 + mob.GetLevel()
-	// C percent = number(1,101). A failed draw adds number(-3,3) noise to diff;
-	// a made draw improves SKILL_COMPARE, but C's improve_skill returns on NPCs
-	// before its own RNG (act.other.c:1704-1707), so the mob lane draws nothing
-	// here.
-	// #nosec G404 — game RNG, not cryptographic
-	percent := dprng.Number(1, 101)
-	diff := 0
-	if obj1.GetTypeFlag() == ITEM_WEAPON {
-		diff = int((((float64(obj1.GetValue(2)) + 1) / 2.0) * float64(obj1.GetValue(1))) -
-			(((float64(obj2.GetValue(2)) + 1) / 2.0) * float64(obj2.GetValue(1))))
-	} else {
-		diff = int(((float64(obj1.GetValue(0)) + 1) / 2.0) - ((float64(obj2.GetValue(0)) + 1) / 2.0))
-	}
-	if percent > prob {
-		// #nosec G404 — game RNG, not cryptographic
-		diff += dprng.Number(-3, 3)
-	}
-
-	var msg string
-	switch {
-	case diff < -5:
-		msg = fmt.Sprintf("%s looks much worse than %s.\r\n", obj1.GetShortDesc(), obj2.GetShortDesc())
-	case diff < -3:
-		msg = fmt.Sprintf("%s looks a little worse than %s.\r\n", obj1.GetShortDesc(), obj2.GetShortDesc())
-	case diff < 0:
-		msg = fmt.Sprintf("%s looks slightly worse than %s.\r\n", obj1.GetShortDesc(), obj2.GetShortDesc())
-	case diff == 0:
-		msg = "They look just about the same.\r\n"
-	case diff < 3:
-		msg = fmt.Sprintf("%s looks slightly better than %s.\r\n", obj1.GetShortDesc(), obj2.GetShortDesc())
-	case diff < 5:
-		msg = fmt.Sprintf("%s looks a little better than %s.\r\n", obj1.GetShortDesc(), obj2.GetShortDesc())
-	default:
-		msg = fmt.Sprintf("%s looks much better than %s.\r\n", obj1.GetShortDesc(), obj2.GetShortDesc())
-	}
-	sendBodyMessage(ctx.World, mob, cap(msg))
 	return CharacterCommandHandled
 }
 
 func characterSharpen(ctx CharacterCommandContext, mob *MobInstance, rawArg string) CharacterCommandResult {
-	arg1, _ := OneArgument(rawArg)
-	if arg1 == "" {
-		sendBodyMessage(ctx.World, mob, "Sharpen what?\r\n")
-		return CharacterCommandHandled
-	}
-	obj, found := resolveVisibleObject(mob, arg1, mob.InventorySnapshot(), true)
-	if !found {
-		sendBodyMessage(ctx.World, mob, "Sharpen what?\r\n")
-		return CharacterCommandHandled
-	}
-	if obj.GetTypeFlag() != ITEM_WEAPON || obj.GetValue(3) != 3 {
-		sendBodyMessage(ctx.World, mob, "This weapon can not be sharpened.\n\r")
-		return CharacterCommandHandled
-	}
-	if obj.HasExtraFlag(0, itemExtraMagic) {
-		sendBodyMessage(ctx.World, mob, "This weapon can not be sharpened any further.\r\n")
-		return CharacterCommandHandled
-	}
-	for _, aff := range obj.GetAffects() {
-		if aff.Location != 0 {
-			sendBodyMessage(ctx.World, mob, "This weapon can not be sharpened any further.\r\n")
-			return CharacterCommandHandled
+	arg1, _ := halfChop(rawArg)
+	res := doSharpenActor(ctx.World, mob, arg1)
+	if res.MessageToCh != "" {
+		if ctx.PrivateOutput != nil {
+			ctx.PrivateOutput(res.MessageToCh)
+		} else {
+			sendBodyMessage(ctx.World, mob, res.MessageToCh)
 		}
 	}
-	if mob.GetFightingBody() != nil {
-		sendBodyMessage(ctx.World, mob, "You're too busy to be sharpening anything!\r\n")
-		return CharacterCommandHandled
-	}
-	// C draws number(1,101) against GET_SKILL (0 for mobiles), so a mobile
-	// always lands in the failure arm: APPLY_DAMROLL -1, the TO_ROOM act, and
-	// stc's char line (new_cmds.c:2789-2795). improve_skill returns on NPCs
-	// before its own RNG (act.other.c:1704-1707), so no second draw.
-	// #nosec G404 — game RNG, not cryptographic
-	_ = dprng.Number(1, 101)
-	obj.SetAffectsOverride([]parser.ObjAffect{{Location: ApplyDamroll, Modifier: -1}})
-	Act(ctx.World, false, mob, nil, obj, nil, "$n damages $p trying to sharpen it!", "", ToRoom)
-	sendBodyMessage(ctx.World, mob, "You damage it trying to sharpen it!\r\n")
 	return CharacterCommandHandled
 }
 
 func characterCarve(ctx CharacterCommandContext, mob *MobInstance, rawArg string) CharacterCommandResult {
-	if mob.GetPosition() == combat.PosFighting || mob.GetFightingBody() != nil {
-		sendBodyMessage(ctx.World, mob, "How can you think of food at a time like this?!?\r\n")
-		return CharacterCommandHandled
-	}
-	targetName, _ := OneArgument(rawArg)
-	if targetName == "" {
-		sendBodyMessage(ctx.World, mob, "You want to carve what?!?\r\n")
-		return CharacterCommandHandled
-	}
-	if target, found := ctx.World.ResolveCharInRoom(mob, targetName); found {
-		if target.Combatant == mob {
-			sendBodyMessage(ctx.World, mob, "This game doesn't support self-mutilation!\r\n")
-		} else {
-			sendBodyMessage(ctx.World, mob, "You kill it first and THEN you can eat it!\r\n")
+	res := doCarveActor(ctx.World, mob, rawArg, ctx.PrivateOutput)
+	if res.MessageToCh != "" {
+		msg := res.MessageToCh
+		if !res.NoMessageToChTerminator {
+			msg += "\r\n"
 		}
-		return CharacterCommandHandled
+		if ctx.PrivateOutput != nil {
+			ctx.PrivateOutput(msg)
+		} else {
+			sendBodyMessage(ctx.World, mob, msg)
+		}
 	}
-	corpse, found := ctx.World.ResolveObjectInRoom(mob, targetName)
-	if !found {
-		sendBodyMessage(ctx.World, mob, fmt.Sprintf("You can't seem to find a %s to carve!\r\n", targetName))
-		return CharacterCommandHandled
-	}
-	if !strings.Contains(corpse.GetKeywords(), "corpse") {
-		sendBodyMessage(ctx.World, mob, "Your initials are about all you can carve in that!\r\n")
-		return CharacterCommandHandled
-	}
-	if !strings.Contains(corpse.GetKeywords(), "carve_") {
-		sendBodyMessage(ctx.World, mob, "There's no way you could ever eat THAT!!!\r\n")
-		return CharacterCommandHandled
-	}
-	if mobCarriedItemCount(mob) >= mobMaxCarryCount(mob) {
-		sendBodyMessage(ctx.World, mob, "Your arms are already full!\r\n")
-		return CharacterCommandHandled
-	}
-	foodVNum := 8015
-	switch {
-	case strings.Contains(corpse.GetKeywords(), "carve_beef"):
-		foodVNum = 8000
-	case strings.Contains(corpse.GetKeywords(), "carve_chicken"):
-		foodVNum = 8002
-	case strings.Contains(corpse.GetKeywords(), "carve_pork"):
-		foodVNum = 8001
-	}
-	proto, ok := ctx.World.GetObjPrototype(foodVNum)
-	if !ok {
-		return CharacterCommandHandled
-	}
-	meat := NewObjectInstance(proto, -1)
-	if err := ctx.World.MoveObject(meat, LocInventoryMob(mob.ID)); err != nil {
-		return CharacterCommandHandled
-	}
-	sendBodyMessage(ctx.World, mob, fmt.Sprintf("You carve %s from %s.\r\n", meat.GetShortDesc(), corpse.GetShortDesc()))
-	Act(ctx.World, true, mob, nil, meat, corpse, "$n carves $p from $P.", "", ToRoom)
 	return CharacterCommandHandled
 }
