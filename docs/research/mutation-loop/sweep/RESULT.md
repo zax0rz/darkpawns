@@ -98,3 +98,7 @@ All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`:
 | F. ruling or harness capability | 3 | Rows 2, 4 and 908 cannot receive an isolated clean paired proof under the current approved behavior or fixture/input boundaries. |
 
 These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; row 622 is superseded by the Go-only correction in `CLASSIFICATION-CORRECTIONS.md`. Batch 05 row 148 remains a separate R1a unknown, outside the 308 survivors.
+
+## Survivor-triage correction update (2026-11-25)
+
+Rows 843, 851, 856, and 859 move from bucket A to bucket C because their sampled Go fallback arms follow a successful target or combatant lookup and have no reachable C call path. Row 861 also moves from A to C: the sampled Go nil-equipment fallback cannot run for a live player, and C's corresponding no-wield response comes from the later slot check. The first-pass triage rows and the 308-row survivor set are unchanged. On current `origin/main` before the open corrections in PRs #3057 and #3058, effective counts are A260/B0/C20/D23/E2/F3. Preserve those PRs' corrections when combining the updates.

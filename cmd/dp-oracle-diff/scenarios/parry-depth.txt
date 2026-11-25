@@ -2,12 +2,11 @@
 # src/new_cmds.c:2340-2389). The first player is temporarily lowered after
 # granting itself the skill, so the authored sword and a durable horse provide
 # a live mutual fight without an immortal damage shortcut. The observer proves
-# the TO_ROOM audience while the actor receives the direct and target-side
-# bytes.
+# the TO_ROOM audience; the actor receives only its direct success line. A
+# connected-PC victim separately proves TO_VICT in parry-player-victim-depth.
 
 # depth-case: parry.no-wield
 # depth-case: parry.success-actor
-# depth-case: parry.success-victim
 # depth-case: parry.success-observer
 # depth-case: parry.argument-ignored
 # depth-case: parry.wait-state
