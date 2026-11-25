@@ -1,0 +1,187 @@
+# depth-case: mob.wander-climb-arrival-above
+# A 100-mobile matrix lets the fixed seed exercise vertical moves through the
+# actual descriptorless mobile_activity -> perform_move path.
+# C path: src/mobact.c:119-143 -> src/act.movement.c:214-280.
+
+
+[fixture]
+quiet-mobs
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+replace-room-exits 8105 all 8106 0
+replace-room-exits 8106 none
+
+[setup:oracle]
+Climbmatrix
+Y
+climbpass1
+climbpass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Climbmatrix
+y
+climbpass1
+climbpass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Climbpeer
+Y
+climbpeer1
+climbpeer1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+north
+
+[setup:port:observer]
+Climbpeer
+y
+climbpeer1
+climbpeer1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+north
+
+[warmup]
+north
+east
+south
+east
+
+[probe]
+look
+~dpclock pulse 40
+look
