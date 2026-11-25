@@ -1,7 +1,7 @@
 # C-first witness for DP-1570 (utility/stealth skills on a switched mobile).
 # A level-40 God switches into a level-3 mobile (horse) and exercises each
-# wrapSkill command registered with utilitySkillActorHandler. The clone is a
-# separate visible mob for mindlink's valid-target branch:
+# wrapSkill command registered with utilitySkillActorHandler. A stableboy in
+# the same room supplies mindlink's valid-target branch:
 # - mindlink: mob skill 0 -> "Yeah, right." (src/new_cmds2.c:267)
 # - turn: mob skill 0 -> "Huh?!?" (src/new_cmds2.c:965)
 # - sneak / stealth / hide / kabuki: 1 number(1,101) draw each (src/act.other.c:233,291,1770)
@@ -17,8 +17,8 @@
 [fixture]
 empty-players
 quiet-mobs
-spawn-mob 69 1 8105 80
 spawn-mob 8021 1 8105 80
+spawn-mob 8022 1 8105 80
 
 [setup:oracle]
 Switchedutil
@@ -53,7 +53,7 @@ goto 8105
 switch horse
 
 [probe]
-mindlink clone
+mindlink stableboy
 mindlink nobody
 mindlink
 turn
