@@ -8,8 +8,11 @@
 # depth-case: wear.indiv-success
 # depth-case: wear.all-success
 # depth-case: wear.all-none
+# depth-case: wear.unwearable-alldot
+# depth-case: wear.unwearable-individual
 [fixture]
 quiet-mobs
+spawn-obj 8005 1 8162 80
 [setup:oracle]
 Wearer
 Y
@@ -62,7 +65,12 @@ K
 Y
 <ENTER>
 1
+[warmup]
+get cup
+
 [probe]
+wear all.cup
+wear cup
 wear
 wear all tunic
 wear all.xyzzy

@@ -1,11 +1,13 @@
 # DP-1371: TYPE_SUFFERING death and immortal message variants.
-# Two mortal victims take Drowning self-damage to the mortally wounded state,
-# then point_update reaches limits.c:513 and kills them with TYPE_SUFFERING.
+# One victim reaches POS_MORTALLYW; the second reaches POS_INCAP from the
+# same C-first underwater Drowning path. Both direct victim lines are retained.
+# Then point_update reaches limits.c:513 and kills them with TYPE_SUFFERING.
 # A separate level-31 God equips vnum 4406 at DEX 5; its -5 DEX affect calls
 # check_for_bad_stats -> damage(ch,ch,40,TYPE_SUFFERING), reaching God text.
 # C paths: src/comm.c:713-720; src/limits.c:511-513;
 # src/handler.c:640-675,749; src/fight.c:1023-1095,1314-1545.
 # depth-case: damage.tick-suffering-message-outcomes
+# depth-case: damage.wounded-band-player-direct
 
 [fixture]
 empty-players
@@ -163,7 +165,7 @@ set player SufferVictim maxhit 100
 set player SufferVictim hit 16
 set player SufferTwo level 10
 set player SufferTwo maxhit 100
-set player SufferTwo hit 16
+set player SufferTwo hit 20
 set player SufferingGod level 31
 set SufferingGod dex 5
 
