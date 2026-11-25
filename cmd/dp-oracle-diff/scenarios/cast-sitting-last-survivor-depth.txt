@@ -1,0 +1,50 @@
+# depth-case: cast.sitting-spell-position
+# A known level-31 Cleric sits and casts Sanctuary. C's command table allows
+# cast at POS_SITTING, then cast_spell rejects the spell's POS_STANDING
+# minimum at the sampled sitting branch (src/interpreter.c:373,923-947;
+# src/spell_parser.c:851-871). This is distinct from quaff's same-text
+# mag_objectmagic gate at src/spell_parser.c:699-704.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Castseat
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Castseat
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Castseat class cleric
+skillset Castseat 'sanctuary' 100
+set Castseat maxmana 5000
+set Castseat mana 5000
+set Castseat level 31
+
+[probe]
+sit
+cast 'sanctuary'

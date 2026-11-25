@@ -13,9 +13,13 @@
 # depth-case: switched-communication.think-body
 # depth-case: switched-communication.grats-body
 # depth-case: switched-communication.holler-body
+# depth-case: switched-communication.low-level-body-gate
+# depth-case: switched-communication.stupid-body-gate
+# depth-case: switched-communication.holler-exhausted-body-gate
 # depth-case: switched-communication.newbie-body
 # depth-case: switched-communication.qsay-dummy-preference-refusal
 # depth-case: switched-communication.ctell-immortal-clan-fanout
+# depth-case: switched-communication.think-int-zero-gate
 
 [fixture]
 empty-players
@@ -86,6 +90,7 @@ Y
 goto 8162
 teleport Commpeer 8161
 clan create Commpeer Wolves
+set player Commpeer level 38
 switch Darek
 north
 
@@ -112,3 +117,14 @@ newbie hello  newcomer
 qsay not on quest
 ctell not in a clan
 ctell 1 message from the switched body
+send:peer set mob Darek level 1
+holler below the level gate
+send:peer set mob Darek level 34
+send:peer set mob Darek int 0
+holler below the intelligence gate
+send:peer set mob Darek int 1
+send:peer set mob Darek wis 1
+send:peer set mob Darek move 0
+holler below the movement gate
+send:peer set mob Darek int 0
+think cannot think aloud

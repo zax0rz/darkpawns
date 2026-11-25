@@ -6,6 +6,7 @@
 
 # depth-case: load.no-arguments
 # depth-case: load.missing-argument
+# depth-case: load.object-missing-value
 # depth-case: load.invalid-kind
 # depth-case: load.kind-abbreviations
 # depth-case: load.invalid-mob-vnum
@@ -120,6 +121,7 @@ teleport Iris 8162
 [probe]
 load
 load mob
+load object
 load bad 1
 load m 999999
 load mob 999999

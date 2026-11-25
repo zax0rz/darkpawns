@@ -1,0 +1,162 @@
+# Recent-death AFF_DREAM takes the bad-dream travel branch at dream.c:59-62,
+# then dream_travel(ch, 1) reaches both actor and room output at :208-216.
+# A dead player reenters, receives Dream Travel, sleeps, and is ticked until
+# a bad-dream destination is selected. Peers cover origin and both destinations.
+# The destination sectors are made dry only to keep mortal witnesses connected
+# during the remaining clock pulses; dream text is independent of sector.
+# C sites: src/dream.c:55-62,208-216; src/limits.c:489-491.
+# depth-case: dream.bad-travel-recent-death
+[fixture]
+quiet-mobs
+seed-player
+set-room-sector 12410 0
+set-room-sector 12848 0
+spawn-mob 14516 1 8101 145
+
+[setup:oracle]
+Deathrecover
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Deathrecover
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+Dreamwitness
+Y
+actorpass
+actorpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+Dreamwitness
+y
+actorpass
+actorpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sea]
+Badsea
+Y
+seapass
+seapass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:sea]
+Badsea
+y
+seapass
+seapass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:corpse]
+Badcorpse
+Y
+corpsepass
+corpsepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:corpse]
+Badcorpse
+y
+corpsepass
+corpsepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+~dpclock pulse 40
+north
+east
+south
+west
+send:testor set player Deathrecover hit 1
+kill zoomaster
+~dpclock pulse 100
+1
+send:testor set player Deathrecover level 31
+send:testor set player Badsea level 31
+send:testor set player Badcorpse level 31
+send:testor skillset Deathrecover 'dream travel' 100
+send:testor teleport Dreamwitness 8004
+send:testor teleport Badsea 12410
+send:testor teleport Badcorpse 12848
+cast 'dream travel'
+sleep
+
+[probe]
+~dpclock pulse 630
+~dpclock pulse 630

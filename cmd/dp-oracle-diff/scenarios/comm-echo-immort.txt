@@ -1,4 +1,6 @@
 # depth-case: echo.immort
+# depth-case: emote.norepeat
+# depth-case: echo.norepeat
 # do_echo's immortal arm (act.wizard.c:130-154, registered LVL_IMMORT at
 # interpreter.c): the raw argument is echoed to the room and back with NO
 # "$n " prefix (only SCMD_EMOTE prepends it), and the empty argument answers
@@ -71,3 +73,6 @@ goto 8162
 [probe]
 echo
 echo TheImmortalWordsFallFlat
+norepeat
+emote waves happily with no repeat
+echo AnotherImmortalMessageFallsFlat
