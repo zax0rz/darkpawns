@@ -1,0 +1,240 @@
+# C-first direct-client vehicle for damage()'s wounded-band victim messages
+# (src/fight.c:1566-1578). Each victim is a connected player, so the direct
+# send_to_char cannot be hidden in an NPC descriptor. Separate attackers avoid
+# the post-strike wait state between the mortal and incapacitated arms.
+#
+# depth-case: damage.wounded-band-player-direct
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Woundgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Woundgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Woundatt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+Woundatt
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:attacker2]
+Woundnext
+Y
+attpass2
+attpass2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker2]
+Woundnext
+y
+attpass2
+attpass2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:mortal]
+Woundmortal
+Y
+mortalpass
+mortalpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Woundmortal
+y
+mortalpass
+mortalpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:incap]
+Woundincap
+Y
+incappass
+incappass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:incap]
+Woundincap
+y
+incappass
+incappass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:observer]
+Woundsee
+Y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:observer]
+Woundsee
+y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Woundatt 8105
+teleport Woundnext 8105
+teleport Woundmortal 8105
+teleport Woundincap 8105
+teleport Woundsee 8105
+set player Woundatt level 20
+set player Woundnext level 20
+skillset Woundatt 'tiger punch' 100
+skillset Woundnext 'tiger punch' 100
+set player Woundmortal level 20
+set player Woundmortal maxhit 500
+set player Woundmortal hit 42
+set player Woundincap level 20
+set player Woundincap maxhit 500
+set player Woundincap hit 46
+
+[probe:attacker]
+tiger Woundmortal
+send:attacker2 tiger Woundincap

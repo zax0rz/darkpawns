@@ -123,3 +123,70 @@ These are follow-up classifications on current `origin/main`; the frozen sweep t
 Claude merged repair PRs #3054–#3068 together and recomputed the bucket table above from `SURVIVOR-TRIAGE.tsv`, every bucket move in `CLASSIFICATION-CORRECTIONS.md`, and the row ids in `REPAIR-LEDGER.tsv`. The per-PR count sentences above were each computed against a different base and are superseded by the table. Effective buckets: A225 (161 killed, 64 open), B0, C29, D45, E3, F6, total 308.
 
 Open bucket A rows: 16, 17, 20, 34, 40, 60, 62, 72, 79, 87, 88, 89, 111, 126, 144, 150, 154, 164, 179, 220, 221, 222, 224, 237, 297, 298, 299, 345, 357, 370, 383, 386, 485, 487, 488, 496, 505, 506, 530, 545, 608, 609, 612, 614, 617, 780, 787, 808, 809, 810, 812, 834, 837, 838, 870, 878, 902, 909, 918, 919, 928, 960, 986, 994.
+
+
+## Last-survivor repair batch 2 (2026-11-25; stacked on PR #3071)
+
+Rows 20, 40, 62, 87, 88, and 89 are killed by isolated one-line mutants. Each mutant census failed on the changed Go byte; every clean baseline passed. All six mutants and their clean baselines used `--draw-parity`, with zero draw divergence, INFRA, TIMEOUT, hollow output, or probe setup refusals. Row 20 uses a spoken call-lightning witness that reaches the sampled spell damage helper; rows 87-89 use the switched-horse chosen-guard actor lane.
+
+| Row | Mutant commit | Scenario | Clean run | Mutant run | Result |
+|---:|---|---|---|---|---|
+| 20 | `d2bd0244ab54` | `spell-wimpy-default-arm-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-20-clean-r2` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-20-mutant-r2` | Killed; the victim receives C's wimpy line through the spell damage tail. |
+| 40 | `999de499d712` | `tiger-mounted-refusal-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch2-clean-r3` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-40-mutant` | Killed; C prints “Dismount first!” and the mutant changes the Go line. |
+| 62 | `76f4636765c7` | `disarm-gates-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch2-witness-clean` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-62-mutant` | Killed; the named-but-missing target reaches C's “Disarm who?” line. |
+| 87 | `c634cad71` | `spec-proc-chosen-guard-switched-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-chosen-switched-clean` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-87-mutant-r2` | Killed; actor's block line changes. |
+| 88 | `02f1637cc` | `spec-proc-chosen-guard-switched-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-chosen-switched-clean` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-88-mutant-r2` | Killed; actor's block line changes. |
+| 89 | `091a699a4` | `spec-proc-chosen-guard-switched-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-chosen-switched-clean` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-89-mutant` | Killed; actor's challenge line changes. |
+
+Rows 34, 60, 72, 111, and 154 move from A to C (Go-only concurrent-state guards); rows 79, 126, 150, 164, and 179 move from A to D (no player-reachable C call path for the sampled branch); row 144 moves from A to F as an R1a unknown caused by C's overlapping `sprintf`. Rows 87-89 also receive a source-attribution correction in `CLASSIFICATION-CORRECTIONS.md`; the frozen triage rows remain unchanged.
+
+Several preliminary attempts are retained but excluded from the kills: row 20's first melee mutant stayed CLEAN because the transcript reached the `CombatEngine` duplicate in `pkg/combat/engine.go`, not the sampled helper; the first spell fixture set wimpy on the caster and did not reach the victim's wimpy line; row 88's first mutant changed a duplicate in `specCastleGuardActor`, not the sampled `specChosenGuardActor` site; and the player-only chosen-guard scenario does not cover the NPC actor lane. The corrected scenario and mutants above reach each sampled site.
+
+Combined with PR #3071, branch-local effective counts are A208 (177 killed, 31 open), B0, C34, D54, E3, F9. The remaining bucket-A rows are: 16, 17, 237, 297, 298, 299, 345, 357, 370, 383, 386, 485, 488, 496, 505, 506, 530, 545, 608, 609, 612, 614, 617, 780, 787, 810, 902, 918, 919, 986, 994. These branch-local counts do not change the Claude-maintained bucket table above; Claude recomputes that table after the stacked PRs merge.
+
+## Last-survivor repair batch 3 (2026-11-25; stacked on PR #3072)
+
+Rows 16, 17, 297-299, 345, 357, 383, 386, 485, 505, and 506 are killed by isolated one-line mutants. The clean baseline is `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch3-clean-post-main-r1`, run on merged commit `d4203e38d`; it covers all ten scenarios below. Every mutant and the clean baseline used `--draw-parity`; mutant runs failed on the changed Go byte, while the clean baseline passed with zero draw divergence, INFRA, TIMEOUT, hollow output, or probe setup refusals.
+
+| Row | Mutant commit | Scenario | Mutant run | Result |
+|---:|---|---|---|---|
+| 16 | `7d3578f2cd6d` | `wounded-band-player-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-16-mutant-r2` | Killed; C mortally-wounded line, Go Qou... |
+| 17 | `f0d43f65a311` | `wounded-band-player-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-17-mutant` | Killed; C incapacitation line, Go Qou... |
+| 297 | `1bc1be2e888b` | `dream-bad-travel-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-297-mutant` | Killed; C You have a dream..., Go Qou... |
+| 298 | `e363a0f9aa2c` | `dream-bad-travel-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-298-mutant` | Killed; C fades from existence, Go Qhe... |
+| 299 | `9faf44bef66a` | `dream-bad-travel-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-299-mutant` | Killed; C fades into existence, Go Qhe... |
+| 345 | `0e17050738aa` | `drink-full-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-345-mutant` | Killed; C You are full., Go Qou... |
+| 357 | `9561241e4104` | `pour-out-refind` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-357-mutant` | Killed; C The a tin cup is empty., Go Qhe... |
+| 383 | `0d5abf00d24a` | `wear-basic` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-383-mutant` | Killed; C You can't wear a tin cup., Go Qou... |
+| 386 | `f9cd7488f37f` | `wear-basic` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-386-mutant` | Killed; second duplicate sampled site reaches its C counterpart |
+| 485 | `9bbd2612e394` | `switched-mobile-door-pour-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-485-mutant` | Killed; C actor line preserved, mutated Go $Q leaves it blank |
+| 505 | `8b16a2bdb824` | `staff-tap-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-505-mutant-r2` | Killed; C It seems powerless., Go Qt seems powerless. |
+| 506 | `09f35da22487` | `staff-tap-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-506-mutant-r2` | Killed; C Nothing seems to happen., Go Qothing... |
+
+Rows 488 and 496 move from A to C: the sampled `World.doUse` arms are bypassed by the live session command guards, which emit the same bytes; both isolated mutants stayed CLEAN because no player command reaches those sites. Row 370 moves from A to D because the sampled second wield check is a defensive duplicate after the earlier check. Row 530 moves from A to F as an R1a unknown: C uses overlapping `sprintf` for the no-argument auto listing, so the pinned bytes do not establish the intended string. These corrections and source citations are recorded in `CLASSIFICATION-CORRECTIONS.md`.
+
+Excluded attempts remain in the archive. Row 16's first mutant run reached the drowning duplicate rather than `emitWoundBand`; the corrected direct wounded-band scenario reaches the sampled victim line. Row 505's first mutant run reached `useStaff`, not `useStaffTap`; `staff-tap-depth` drains the staff charge before the second tap and reaches the sampled refusal. The earlier staff-tap clean run is retained; the batch clean suite rechecks it alongside all other witnesses.
+
+Relative to batch 2, this resolves 16 rows: 12 kills, rows 488 and 496 to C, row 370 to D, and row 530 to F. Branch-local effective counts are A204 (189 killed, 15 open), B0, C36, D55, E3, F10. The remaining bucket-A rows are: 237, 545, 608, 609, 612, 614, 617, 780, 787, 810, 902, 918, 919, 986, 994. These branch-local counts do not change the Claude-maintained bucket table above.
+
+## Last-survivor repair batch 4 (2026-11-25; stacked on PR #3073)
+
+Rows 237, 608, 609, 612, 614, 617, 780, 787, 810, 986, and 994 are killed by isolated one-line mutants. The clean baseline `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-clean-merged` ran on merged commit `6baf7376d`: 11/11 CLEAN with zero draw divergence, INFRA, TIMEOUT, hollow output, or probe setup refusals. Each counted mutant run used `--draw-parity` and failed on its changed Go byte with zero draw divergence, INFRA, TIMEOUT, hollow output, or probe setup refusals.
+
+| Row | Mutant commit | Scenario | Mutant run | Result |
+|---:|---|---|---|---|
+| 237 | `ecaa71d9f516` | `ctell-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-row-237-mutant` | Killed; changed Go byte fails against the original C line. |
+| 608 | `389750e609f5` | `switched-body-staff-zero-charge-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-row-608-mutant-r2` | Killed; changed Go byte fails against the original C line. |
+| 609 | `14178b8a728c` | `switched-body-behead-slash-last-survivor-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-row-609-mutant` | Killed; changed Go byte fails against the original C line. |
+| 612 | `63033b8c7734` | `switched-body-behead-barehands-last-survivor-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-row-612-mutant` | Killed; changed Go byte fails against the original C line. |
+| 614 | `af4a3d6d97e9` | `switched-body-shoot-pc-miss-last-survivor-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-row-614-mutant` | Killed; changed Go byte fails against the original C line. |
+| 617 | `82bc4f5d5a7a` | `switched-body-shoot-pc-hit-last-survivor-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-row-617-mutant` | Killed; changed Go byte fails against the original C line. |
+| 780 | `25f33bd605f9` | `switched-body-cast-smartness-master-last-survivors-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-row-780-mutant` | Killed; changed Go byte fails against the original C line. |
+| 787 | `4695365ae646` | `switched-body-cast-master-gate-last-survivor-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-row-787-mutant` | Killed; changed Go byte fails against the original C line. |
+| 810 | `5c29ffa6c837` | `cast-sitting-last-survivor-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-row-810-mutant-r2` | Killed; the cast-specific sitting path reaches the sampled `checkCastPosition` line. |
+| 986 | `508c6e08cd40` | `switched-body-wizutil-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-row-986-mutant-r2` | Killed; level-9 clone reaches the sampled body-level gate. |
+| 994 | `a7f7e29976e0` | `switched-body-wizutil-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-row-994-mutant-r2` | Killed; changed Go byte fails against the original C line. |
+
+Rows 545, 902, and 919 move from A to C, D, and D respectively. Row 918 moves from A to F as an R1a unknown and stays outside kills and the effective denominator. Row 810's earlier quaff-only mutation attempt is retained but excluded because it reached a separate C branch with identical text; the dedicated cast scenario above reaches the sampled path. Row 986's first attempt is also excluded: the clone prototype's default level hit the command gate before the sampled body-level branch, so the corrected fixture sets the clone to level 9. These call-path corrections and citations are recorded in `CLASSIFICATION-CORRECTIONS.md`; row 918 is also recorded in `../DECISIONS.md`.
+
+Relative to batch 3, this resolves the last 15 rows: 11 kills, row 545 to C, rows 902 and 919 to D, and row 918 to F. Branch-local effective buckets are A200 (200 killed, 0 open), B0, C37, D57, E3, F11. The remaining A rows are empty. The aggregate bucket table above remains unchanged for Claude to recompute after the stacked PRs merge.

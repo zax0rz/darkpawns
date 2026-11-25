@@ -5,8 +5,10 @@
 # equipd is set by matching buf against the actor's equipment
 # (src/spell_parser.c:569-572); naming the WIELDED weapon (slot 16) makes
 # equipd == WEAR_HOLD (17), so the held staff takes the switch's ITEM_STAFF
-# case instead of the held-staff else branch. The primary is an idle God; a
-# peer witnesses the room act.
+# case instead of the held-staff else branch. The first tap consumes 8054's
+# only charge; after a frozen twenty-pulse pad, the second tap reaches the
+# zero-charge actor and room messages. The primary is an idle God; a peer
+# witnesses the room act.
 
 [fixture]
 empty-players
@@ -82,4 +84,6 @@ hold staff
 wield sword
 
 [probe]
+use staff sword
+~dpclock pulse 20
 use staff sword

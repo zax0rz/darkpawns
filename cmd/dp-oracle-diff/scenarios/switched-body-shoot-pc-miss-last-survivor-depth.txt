@@ -1,0 +1,120 @@
+# C-first switched mobile shoot against a player target; low shooter Dexterity
+# and high target Dexterity force the PC miss arm and its room act.
+# depth-case: shoot.switched-mobile-player-miss-room-output
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-obj 4841 1 8162 48
+spawn-obj 4802 1 8162 48
+spawn-mob 69 1 8162 80
+replace-room-exits 8162 north 8163 0
+replace-room-exits 8163 none
+set-room-flag 8162 4 off
+set-room-flag 8163 4 off
+
+[setup:oracle]
+Shootmissbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootmissbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Shootmissvictim
+Y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Shootmissvictim
+y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+Shootmisswatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+Shootmisswatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Shootmissvictim 8163
+teleport Shootmisswatch 8163
+set player Shootmissvictim level 20
+set player Shootmissvictim maxhit 30000
+set player Shootmissvictim hit 30000
+set player Shootmissvictim dex 25
+skillset Shootmissbody 'shoot' 0
+set mob clone level 39
+set mob clone dex 18
+restore clone
+set mob clone dex 1
+switch clone
+get arrow
+get hoopak
+wield hoopak
+
+[probe]
+shoot arrow north Shootmissvictim

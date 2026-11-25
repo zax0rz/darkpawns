@@ -1,0 +1,83 @@
+# C-first mobile actor lane for the slash-weapon corpse act in do_behead.
+# The PC controller kills the trainee before switching; the switched mobile
+# retrieves and wields the room's slash weapon, then beheads that corpse.
+# A same-room peer receives the ToRoom bytes from src/new_cmds.c:274-279.
+# depth-case: behead.switched-mobile-slash-room-output
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+replace-room-exits 8105 none
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 163
+force-load 12120
+spawn-obj 12120 1 8105 48
+
+[setup:oracle]
+Bodybehead
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bodybehead
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watch]
+Beheadwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Beheadwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Beheadwatch 8105
+kill trainee
+~dpclock pulse 20
+switch clone
+
+[probe]
+get cutlass
+wield cutlass
+behead trainee

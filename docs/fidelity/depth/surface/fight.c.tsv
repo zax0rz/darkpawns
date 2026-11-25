@@ -72,9 +72,9 @@ src/fight.c:1550	damage	proven	damage.tick-mounted	The mounted-victim damage tai
 src/fight.c:1553	damage	proven	damage.tick-mounted	The mounted-victim damage tail pins both knock-off acts and both landing messages. (R1/R3/R5e/R5h).
 src/fight.c:1555	damage	proven	damage.tick-mounted	The mounted-victim damage tail pins both knock-off acts and both landing messages. (R1/R3/R5e/R5h).
 src/fight.c:1564	damage	proven	damage.tick-wounded	The wounded damage tail pins the position-specific room and victim messages. (R1/R3/R5e/R5h).
-src/fight.c:1566	damage	proven	damage.tick-wounded	The wounded damage tail pins the position-specific room and victim messages. (R1/R3/R5e/R5h).
+src/fight.c:1566	damage	proven	damage.wounded-band-player-direct	The connected player victim receives damage()'s direct mortal-wound send_to_char line. (R1/R3/R5e/R5h).
 src/fight.c:1570	damage	proven	update_pos.incap-victim-typo	The exact incapacitated room/victim bytes, including C’s typo, are pinned. (R1/R3/R5e/R5h).
-src/fight.c:1572	damage	proven	update_pos.incap-victim-typo	The exact incapacitated room/victim bytes, including C’s typo, are pinned. (R1/R3/R5e/R5h).
+src/fight.c:1572	damage	proven	damage.wounded-band-player-direct	The connected player victim receives damage()'s direct incapacitated send_to_char line, including C’s typo. (R1/R3/R5e/R5h).
 src/fight.c:1576	damage	proven	damage.tick-wounded	The wounded damage tail pins the position-specific room and victim messages. (R1/R3/R5e/R5h).
 src/fight.c:1578	damage	proven	damage.wounded-band-broadcast	The live wounded-band path pins room capitalization and victim exclusion. (R1/R3/R5e/R5h).
 src/fight.c:1582	damage	proven	damage.wounded-band-broadcast	The live wounded-band path pins room capitalization and victim exclusion. (R1/R3/R5e/R5h).

@@ -1,4 +1,6 @@
 # depth-case: wizutil.switched-body-squelch-pardon
+# depth-case: wizutil.switched-body-below-immortal-gate
+# depth-case: wizutil.switched-body-pardon-unflagged
 # C do_wizutil (src/act.wizard.c:2077-2219) gates a body below LVL_IMMORT that
 # is not PLR_CHOSEN with "Huh?!?", resolves the target with get_char_vis
 # (src/handler.c:1303-1324), rejects mobiles, refuses a higher immortal, and
@@ -103,6 +105,7 @@ teleport Peon 8162
 teleport Highgod 8162
 advance Highgod 40
 set player Peon outlaw on
+set mob clone level 9
 switch dealer
 
 [probe]
@@ -112,6 +115,7 @@ mute satan
 mute Highgod
 mute Peon
 mute Peon
+pardon Peon
 pardon Peon
 return
 goto 8162
