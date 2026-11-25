@@ -13,19 +13,36 @@ import (
 )
 
 func DoCarve(ch *Player, targetName string, world *World) SkillResult {
-	// C: new_cmds.c:115 — one_argument() runs before every branch in do_carve.
-	targetName, _ = OneArgument(targetName)
+	return doCarveActor(world, ch, targetName, nil)
+}
 
-	// C checks room characters before it checks room objects.  There is no
+// doCarveActor implements C do_carve (src/new_cmds.c:115-213) for both players
+// and switched mobiles so the two paths share one C-faithful implementation.
+func doCarveActor(world *World, combatant combat.Combatant, targetName string, privateOut func(string)) SkillResult {
+	actor := asActor(combatant)
+	if actor == nil {
+		return SkillResult{}
+	}
+	// C: new_cmds.c:120-133 — one_argument() runs before every branch, then
+	// POS_FIGHTING, then empty arg, then room char/obj lookup.
+	targetName, _ = OneArgument(targetName)
+	if actor.GetPosition() == combat.PosFighting {
+		return SkillResult{MessageToCh: "How can you think of food at a time like this?!?"}
+	}
+	if targetName == "" {
+		return SkillResult{MessageToCh: "You want to carve what?!?"}
+	}
+
+	// C checks room characters before it checks room objects. There is no
 	// skill gate: do_carve is registered as a plain command at interpreter.c:374.
-	if target, found := world.ResolveCharInRoom(ch, targetName); found {
-		if target.Combatant == ch {
+	if target, found := world.ResolveCharInRoom(combatant, targetName); found {
+		if target.Combatant == combatant {
 			return SkillResult{MessageToCh: "This game doesn't support self-mutilation!"}
 		}
 		return SkillResult{MessageToCh: "You kill it first and THEN you can eat it!"}
 	}
 
-	corpse, found := world.ResolveObjectInRoom(ch, targetName)
+	corpse, found := world.ResolveObjectInRoom(combatant, targetName)
 	if !found {
 		return SkillResult{
 			MessageToCh: fmt.Sprintf("You can't seem to find a %s to carve!", targetName),
@@ -40,7 +57,24 @@ func DoCarve(ch *Player, targetName string, world *World) SkillResult {
 	if !strings.Contains(corpse.GetKeywords(), "carve_") {
 		return SkillResult{MessageToCh: "There's no way you could ever eat THAT!!!"}
 	}
-	if ch.Inventory.GetItemCount() >= ch.MaxCarryItems() {
+
+	var (
+		fullArms bool
+		wielded  *ObjectInstance
+	)
+	switch a := actor.(type) {
+	case *Player:
+		fullArms = a.Inventory.GetItemCount() >= a.MaxCarryItems()
+		if a.Equipment != nil {
+			wielded, _ = a.Equipment.GetItemInSlot(SlotWield)
+		}
+	case *MobInstance:
+		fullArms = mobCarriedItemCount(a) >= mobMaxCarryCount(a)
+		wielded = a.Equipped(mobWearWield)
+	default:
+		return SkillResult{}
+	}
+	if fullArms {
 		return SkillResult{MessageToCh: "Your arms are already full!"}
 	}
 
@@ -65,44 +99,54 @@ func DoCarve(ch *Player, targetName string, world *World) SkillResult {
 	}
 
 	// C creates the food before checking the wielded weapon and extracts it on
-	// either weapon failure.  Keep that lifecycle even though the failed object
-	// is not player-visible.
-	wielded, hasWeapon := (*ObjectInstance)(nil), false
-	if ch.Equipment != nil {
-		wielded, hasWeapon = ch.Equipment.GetItemInSlot(SlotWield)
-	}
-	if !hasWeapon || wielded == nil {
+	// either weapon failure (src/new_cmds.c:179-198). Both refusals end in \n\r.
+	if wielded == nil {
 		world.ExtractObject(food, -1)
-		return SkillResult{MessageToCh: "You don't have anything to carve with!"}
+		return SkillResult{
+			MessageToCh:             "You don't have anything to carve with!\n\r",
+			NoMessageToChTerminator: true,
+		}
 	}
 	if wielded.GetValue(3) != 3 && wielded.GetValue(3) != 11 {
 		world.ExtractObject(food, -1)
-		return SkillResult{MessageToCh: "You can't carve with that!"}
+		return SkillResult{
+			MessageToCh:             "You can't carve with that!\n\r",
+			NoMessageToChTerminator: true,
+		}
 	}
-	if err := world.MoveObjectToPlayerInventory(food, ch); err != nil {
-		slog.Error("carve food inventory placement failed", "obj_vnum", foodVNum, "error", err)
+
+	var moveErr error
+	switch a := actor.(type) {
+	case *Player:
+		moveErr = world.MoveObjectToPlayerInventory(food, a)
+	case *MobInstance:
+		moveErr = world.MoveObjectToMobInventoryFront(food, a)
+	}
+	if moveErr != nil {
+		slog.Error("carve food inventory placement failed", "obj_vnum", foodVNum, "error", moveErr)
 		world.ExtractObject(food, -1)
 		return SkillResult{}
 	}
 
-	// C obj_to_room() prepends each extracted child.  Iterating the original
+	// C emits TO_ROOM then TO_CHAR with hide_invisible=TRUE before dumping
+	// corpse contents and extracting the corpse (src/new_cmds.c:200-210).
+	Act(world, true, actor, nil, corpse, nil, "$n carves up some meat from the $p.", "", ToRoom)
+	ActWithPrivateSink(world, true, actor, nil, corpse, nil, "You carve up some meat from the $p.", "", ToChar, actor, privateOut)
+
+	// C obj_to_room() prepends each extracted child. Iterating the original
 	// slice and using MoveObjectToRoomFront preserves that linked-list order.
 	contents := append([]*ObjectInstance(nil), corpse.Contains...)
 	for _, item := range contents {
 		if item == nil {
 			continue
 		}
-		if err := world.MoveObjectToRoomFront(item, ch.GetRoomVNum()); err != nil {
+		if err := world.MoveObjectToRoomFront(item, actor.GetRoom()); err != nil {
 			slog.Error("carve corpse contents placement failed", "obj_vnum", item.GetVNum(), "error", err)
 		}
 	}
 	world.ExtractObject(corpse, -1)
 
-	return SkillResult{
-		Success:       true,
-		MessageToCh:   fmt.Sprintf("You carve up some meat from the %s.", corpse.GetShortDesc()),
-		MessageToRoom: fmt.Sprintf("%s carves up some meat from the %s.", ch.Name, corpse.GetShortDesc()),
-	}
+	return SkillResult{Success: true}
 }
 
 // DoCutthroat implements do_cutthroat() — attempt throat slit from behind.
