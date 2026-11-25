@@ -1,8 +1,9 @@
-# C-first witness for the NPC mount's own exhaustion line when a wizard
-# switches into a mount carrying a player. The north command reaches
-# do_simple_move's IS_NPC mount branch; the rider command then reaches the
-# player-rider branch while the controlled mount still has its descriptor
-# (src/act.wizard.c:1175-1200; src/act.movement.c:138-170;
+# C-first witness for the NPC mount's own exhaustion lines when a wizard
+# switches into a mount carrying a player. The rider leaves the room after
+# mounting, so the switched mount's north command reaches do_simple_move's
+# IS_NPC exhaustion branch instead of the same-room charm guard. The rider
+# remains attached and receives the paired message through its descriptor
+# (src/act.wizard.c:1175-1200; src/act.movement.c:119-170;
 # src/act.other.c:1545-1593; src/utils.c:378-425,617-632).
 # depth-case: movement.mount-switched-self-exhaustion
 # depth-case: movement.mount-switched-rider-exhaustion
@@ -78,8 +79,8 @@ goto 8162
 teleport MountRider 8162
 set mob horse move 0
 send:rider mount horse
+teleport MountRider 8163
 switch horse
 
 [probe]
 north
-send:rider north

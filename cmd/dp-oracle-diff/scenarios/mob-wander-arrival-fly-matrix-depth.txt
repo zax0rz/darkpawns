@@ -1,0 +1,203 @@
+# depth-case: mob.wander-fly-arrival-cardinal
+# depth-case: mob.wander-fly-arrival-below
+# depth-case: mob.wander-fly-arrival-above
+# The fixed seed's mobile door draws are sampled by 100 descriptorless flyers.
+# Every direction leads to the observer's room, proving cardinal and vertical
+# arrival acts from C's real mobile_activity -> perform_move path.
+# C path: src/mobact.c:119-143 -> src/act.movement.c:214-280.
+
+
+[fixture]
+quiet-mobs
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+spawn-mob 4900 100 8105 80
+set-mob-aff 4900 67108864
+replace-room-exits 8105 all 8106 0
+replace-room-exits 8106 none
+
+[setup:oracle]
+Flymatrix
+Y
+flypass1
+flypass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Flymatrix
+y
+flypass1
+flypass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Flyobserver
+Y
+flypeer1
+flypeer1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+north
+
+[setup:port:observer]
+Flyobserver
+y
+flypeer1
+flypeer1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+north
+
+[warmup]
+north
+east
+south
+east
+
+[probe]
+look
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+look
