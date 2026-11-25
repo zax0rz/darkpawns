@@ -109,6 +109,7 @@ Y
 goto 8004
 teleport Followpeer 8004
 teleport Followobserver 8004
+set player Followpeer level 34
 
 [probe]
 follow
