@@ -98,3 +98,16 @@ All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`:
 | F. ruling or harness capability | 3 | Rows 2, 4 and 908 cannot receive an isolated clean paired proof under the current approved behavior or fixture/input boundaries. |
 
 These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; row 622 is superseded by the Go-only correction in `CLASSIFICATION-CORRECTIONS.md`. Batch 05 row 148 remains a separate R1a unknown, outside the 308 survivors.
+
+## Survivor repair batch: `perform_move` mobile refusals (2026-11-25)
+
+Rows 308–311 are killed by four isolated one-byte mutations through switched-mobile `performMoveMob` scenarios. Each mutant census failed on the changed Go byte while retaining the original C line. The four-scenario clean census passed; all five runs used `--draw-parity`, with zero draw divergence, INFRA, TIMEOUT, hollow steps, or probe setup-refusal steps. The closed-door scenarios close the fixture door in warmup before switching, so the probe reaches the closed refusal itself. Preliminary clean attempts are retained but excluded: `luna-survivors-performmove-clean` and `-clean-r3` passed while the door was still open and the probe moved rooms; `-clean-r2` failed fixture validation because door state `3` is unsupported.
+
+| Row | Scenario | Clean run | Mutant run | Result |
+|---:|---|---|---|---|
+| 308 | `perform-move-mob-no-exit-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-performmove-clean-r4` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-performmove-row-308-mutant` | Killed; C `Alas...`, Go `Qlas...` |
+| 309 | `perform-move-mob-hidden-secret-depth` | same | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-performmove-row-309-mutant` | Killed; C `Alas...`, Go `Qlas...` |
+| 310 | `perform-move-mob-closed-keyword-depth` | same | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-performmove-row-310-mutant` | Killed; C `The gate seems...`, Go `Qhe gate seems...` |
+| 311 | `perform-move-mob-closed-unnamed-depth` | same | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-performmove-row-311-mutant` | Killed; C `It seems...`, Go `Qt seems...` |
+
+Relative to `origin/main` before this batch, the survivor buckets move from A261/B0/C15/D23/E2/F3 to A257/B0/C15/D23/E2/F3. This batch is based on `fe2838ce4`; open repair PRs #3054–#3063 also update shared evidence and need to be unioned before aggregate counts are finalized.
