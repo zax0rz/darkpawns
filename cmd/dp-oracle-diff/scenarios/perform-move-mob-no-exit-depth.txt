@@ -1,0 +1,44 @@
+# A switched mobile issues a direction from a room with no exits, reaching
+# perform_move's direct actor refusal (src/act.movement.c:311-320).
+# depth-case: movement.mob-no-exit
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 70 1 8162 80
+replace-room-exits 8162 none
+
+[setup:oracle]
+MoveMobGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+MoveMobGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+switch Satan
+
+[probe]
+north

@@ -1,0 +1,47 @@
+# A switched mobile attempts a closed exit with no keyword, reaching
+# perform_move's distinct unnamed-door refusal (src/act.movement.c:333-334).
+# The God closes the fixture door by direction before switching; C's find_door
+# accepts an explicit direction when the exit has no keyword (src/act.movement.c:370-389).
+# depth-case: movement.mob-closed-unnamed
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 70 1 8162 80
+replace-room-exits 8162 north 8161 1
+
+[setup:oracle]
+MoveMobGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+MoveMobGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+close door north
+switch Satan
+
+[probe]
+north
