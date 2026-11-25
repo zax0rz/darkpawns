@@ -12,8 +12,8 @@
 # so the murder's WAIT_STATE (PULSE_VIOLENCE + 2 = 2.2 s) is drained by the
 # ten pump steps' quiescence windows before the flee is sent; the single
 # pump after the flee lets C's next violence pass run the fleer's
-# stop_fighting before the move. The bare-fisted mortal drops to its wimpy
-# level (5) during the ten rounds and auto-flees from live combat — the rat
+# stop_fighting before the move. The mortal's wimpy level is set to 5 before
+# combat; it drops below that threshold during the ten rounds and auto-flees — the rat
 # cannot kill it first (1d4 damage against a wimpy threshold of 5).
 
 [fixture]
@@ -82,6 +82,7 @@ Y
 
 [warmup]
 teleport Fleewalk 18201
+wimpy 5
 
 [probe:mortal]
 murder rat
