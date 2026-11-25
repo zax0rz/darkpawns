@@ -1,0 +1,363 @@
+# C-first self-damage fanout: a hidden PC and two mounted riders take live
+# underwater pulse damage. The immortal controller witnesses the reveal and
+# dismount lines; repeated DEX-18 landing rolls sample both result arms.
+
+# depth-case: room-activity.selfdamage-hidden-reveal
+# depth-case: room-activity.selfdamage-dismount-audience
+# depth-case: room-activity.selfdamage-dismount-feet
+# depth-case: room-activity.selfdamage-dismount-thud
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8111 3 off
+set-room-sector 8111 8
+spawn-mob 8021 2 8111 80
+spawn-mob 8021 2 8111 80
+
+[setup:oracle]
+DrownView
+Y
+viewpass
+viewpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DrownView
+y
+viewpass
+viewpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:hidden]
+DrownHidden
+Y
+hiddenpass
+hiddenpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:hidden]
+DrownHidden
+y
+hiddenpass
+hiddenpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:feet]
+DrownFeet
+Y
+feetpass
+feetpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:feet]
+DrownFeet
+y
+feetpass
+feetpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:thud]
+DrownThud
+Y
+thudpass
+thudpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:thud]
+DrownThud
+y
+thudpass
+thudpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8111
+teleport DrownHidden 8162
+teleport DrownFeet 8111
+teleport DrownThud 8111
+set player DrownView maxhit 10000
+set player DrownView hit 10000
+set player DrownHidden level 1
+set player DrownHidden dex 18
+set player DrownHidden maxhit 10000
+set player DrownHidden hit 10000
+skillset DrownHidden 'hide' 100
+send:hidden hide
+teleport DrownHidden 8111
+set player DrownFeet level 1
+set player DrownFeet dex 18
+set player DrownFeet con 18
+set player DrownFeet maxhit 10000
+set player DrownFeet hit 10000
+set player DrownThud level 1
+set player DrownThud dex 18
+set player DrownThud con 18
+set player DrownThud maxhit 10000
+set player DrownThud hit 10000
+set mob 1.horse maxhit 5000
+set mob 1.horse hit 5000
+set mob 2.horse maxhit 5000
+set mob 2.horse hit 5000
+[probe]
+~dpclock pulse 40
+teleport DrownHidden 8162
+send:feet ride 1.horse
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
+~dpclock pulse 40
+send:feet stand
+send:feet ride 1.horse
+send:thud stand
+send:thud ride 2.horse
