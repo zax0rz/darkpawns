@@ -1,0 +1,53 @@
+# C-first switched-body disarm against a target without a wielded weapon.
+# The switched actor owns a descriptor; the absence of a weapon reaches the
+# ToChar act before combat-state validation (src/new_cmds2.c:217-221).
+# depth-case: disarm.switched-body.no-weapon-target
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Disarmowner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Disarmowner
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set mob clone level 39
+set mob trainee maxhit 5000
+set mob trainee hit 5000
+set mob trainee ac 50
+skillset Disarmowner 'disarm' 0
+restore clone
+goto 8162
+switch clone
+
+[probe]
+disarm trainee

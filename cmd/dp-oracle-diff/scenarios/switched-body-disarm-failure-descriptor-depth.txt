@@ -1,0 +1,120 @@
+# C-first switched-body disarm failure with a level-60 NPC victim descriptor
+# and independent room witness. Bahamut's level widens the ordinary disarm roll
+# beyond the restored mobile skill. src/new_cmds2.c:229-247; src/act.wizard.c:1584-1618.
+# depth-case: disarm.switched-body.failure-actor-act
+# depth-case: disarm.switched-body.failure-victim-act
+# depth-case: disarm.switched-body.failure-room-act
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 69 1 8105 80
+spawn-mob 4313 1 8105 80
+equip-object 4313 8022 999 16 80
+
+[setup:oracle]
+Disarmowner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Disarmowner
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Disarmpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Disarmpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watcher]
+Disarmwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watcher]
+Disarmwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Disarmpeer 8105
+teleport Disarmwatch 8105
+set player Disarmpeer level 38
+set player Disarmwatch level 38
+set mob clone level 39
+set mob clone maxhit 500000
+set mob clone hit 500000
+set mob clone ac 50
+set mob bahamut maxhit 500000
+set mob bahamut hit 500000
+set mob bahamut ac 50
+skillset Disarmowner 'disarm' 0
+send:peer switch bahamut
+send:peer hit clone
+restore clone
+switch clone
+
+[probe]
+disarm bahamut

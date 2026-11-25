@@ -1,0 +1,117 @@
+# C-first switched-body disarm success with victim and room descriptors. The
+# restored clone uses the shared dummy_mob skill record; the peer switches into
+# the trainee so the ToVict line is visible, while the watcher sees ToNotVict.
+# src/new_cmds2.c:217-240; src/act.wizard.c:1584-1618.
+# depth-case: disarm.switched-body.success-victim-act
+# depth-case: disarm.switched-body.success-room-act
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 80
+equip-object 16303 8022 999 16 80
+
+[setup:oracle]
+Disarmowner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Disarmowner
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Disarmpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Disarmpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watcher]
+Disarmwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watcher]
+Disarmwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Disarmpeer 8105
+teleport Disarmwatch 8105
+set player Disarmpeer level 38
+set player Disarmwatch level 38
+set mob clone level 39
+set mob trainee maxhit 5000
+set mob trainee hit 5000
+set mob trainee ac 50
+skillset Disarmowner 'disarm' 0
+force trainee hit clone
+send:peer switch trainee
+restore clone
+switch clone
+
+[probe]
+disarm trainee
