@@ -19,6 +19,7 @@
 # depth-case: switched-communication.newbie-body
 # depth-case: switched-communication.qsay-dummy-preference-refusal
 # depth-case: switched-communication.ctell-immortal-clan-fanout
+# depth-case: switched-communication.think-int-zero-gate
 
 [fixture]
 empty-players
@@ -125,3 +126,5 @@ send:peer set mob Darek int 1
 send:peer set mob Darek wis 1
 send:peer set mob Darek move 0
 holler below the movement gate
+send:peer set mob Darek int 0
+think cannot think aloud

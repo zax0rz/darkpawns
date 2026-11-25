@@ -3,6 +3,7 @@
 # saved but no longer connected, so this isolates the offline load path.
 
 # depth-case: finger.offline-player
+# depth-case: finger.offline-title-format
 
 [fixture]
 empty-players

@@ -8,6 +8,7 @@
 # depth-case: switch.player-in-use
 # depth-case: switch.mob-success
 # depth-case: switch.one-argument
+# depth-case: switch.fill-words-missing-target
 # depth-case: switch.switched-npc-gate
 
 [fixture]
@@ -81,3 +82,4 @@ switch Switchwizard
 switch Switchpeer
 switch satan trailing words are ignored
 switch
+switch the
