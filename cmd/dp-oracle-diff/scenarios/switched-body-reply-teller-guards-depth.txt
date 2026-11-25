@@ -1,0 +1,98 @@
+# One switched mobile's shared dummy_mob last_tell record selects the same
+# player through do_reply's writing, notell, source-room soundproof, and
+# target-room soundproof guards. C call path: src/act.comm.c:934-973.
+# depth-case: switched-communication.reply-teller-writing
+# depth-case: switched-communication.reply-teller-notell
+# depth-case: switched-communication.reply-source-soundproof
+# depth-case: switched-communication.reply-target-soundproof
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 5 on
+set-room-flag 8163 5 on
+spawn-mob 69 1 8004 80
+spawn-mob 69 1 8162 80
+spawn-obj 8099 1 8004 48
+
+[setup:oracle]
+Replyguard
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Replyguard
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Replypeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Replypeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Replyguard level 38
+goto 8004
+set player Replypeer room 8004
+set player Replypeer level 38
+switch clone
+
+[probe]
+send:peer tell clone opening
+send:peer write A reply guard
+reply while writing
+send:peer @
+send:peer notell
+reply while notell
+send:peer notell
+return
+goto 8162
+switch clone
+reply from soundproof room
+return
+goto 8004
+switch clone
+send:peer tell clone target room
+send:peer goto 8163
+reply to soundproof target

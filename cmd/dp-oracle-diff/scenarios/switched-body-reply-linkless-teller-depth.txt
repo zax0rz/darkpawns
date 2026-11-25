@@ -1,0 +1,78 @@
+# A player tells the switched mobile, then loses the descriptor while staying
+# in character_list. The final reply reaches do_reply's player-linkless arm.
+# C call path: src/act.comm.c:934-973.
+# depth-case: switched-communication.reply-teller-linkless
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8004 80
+
+[setup:oracle]
+Replylink
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Replylink
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Linkpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Linkpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Replylink level 38
+goto 8004
+set player Linkpeer room 8004
+switch clone
+send:peer tell clone last words
+
+[peer-drop]
+peer
+
+[probe]
+reply hello

@@ -1,0 +1,77 @@
+# A player tells the switched mobile and quits before its final reply. Once the
+# player is removed from character_list, do_reply emits the no-longer-playing
+# response. C call path: src/act.comm.c:934-973.
+# depth-case: switched-communication.reply-teller-logged-out
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 69 1 8004 80
+
+[setup:oracle]
+Replylogout
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Replylogout
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Gonepeer
+Y
+gonepass
+gonepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Gonepeer
+y
+gonepass
+gonepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Replylogout level 38
+goto 8004
+set player Gonepeer room 8004
+switch clone
+send:peer tell clone last words
+send:peer quit
+send:peer reallyquit
+
+[probe]
+reply hello
