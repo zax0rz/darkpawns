@@ -90,10 +90,10 @@ All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`. The table below gives t
 
 | Bucket | Count | Follow-up |
 |---|---:|---|
-| A. no witness | 261 | Repair in scenario-backed batches. |
+| A. no witness | 257 | Repair in scenario-backed batches. |
 | B. masked | 0 | No normalization or masking cases found. |
-| C. Go-only branch | 15 | Thirteen unapproved proposals; retain two already-approved divergences (DP-1373 and the alias cap). |
-| D. C-unreachable | 27 | Excluded from repair work and the effective denominator. |
+| C. Go-only branch | 18 | Sixteen unapproved proposals; retain two already-approved divergences (DP-1373 and the alias cap). |
+| D. C-unreachable | 28 | Excluded from repair work and the effective denominator. |
 | E. not player-facing | 2 | Rows 472 and 498 are collector false positives; exclude from repair work and future draws. |
 | F. ruling or harness capability | 3 | Rows 2, 4 and 908 cannot receive an isolated clean paired proof under the current approved behavior or fixture/input boundaries. |
 
