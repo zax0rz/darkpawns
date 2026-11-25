@@ -1,0 +1,85 @@
+# C-first do_parry receives a connected player victim (src/new_cmds.c:2379-2385).
+# Both players are outlawed in a non-peaceful room so the ordinary hit establishes
+# mutual combat; a durable victim keeps the target descriptor live for TO_VICT.
+# depth-case: parry.success-victim
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Parryplayer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Parryplayer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Parryvictim
+Y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Parryvictim
+y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Parryvictim 8105
+set player Parryplayer level 39
+set player Parryvictim level 11
+set player Parryplayer maxhit 10000
+set player Parryplayer hit 10000
+set player Parryvictim maxhit 10000
+set player Parryvictim hit 10000
+set player Parryplayer outlaw on
+set player Parryvictim outlaw on
+skillset Parryplayer 'parry' 100
+load obj 8037
+wield sword
+hit Parryvictim
+~dpclock pulse 60
+
+[probe]
+parry ignored argument

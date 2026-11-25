@@ -4,6 +4,8 @@
 # of do_simple_move and refuses its indoor destination.
 # C path: src/act.movement.c:139-165,184-189,311-366;
 # src/act.wizard.c:1175-1200; src/interpreter.c:883-949.
+# depth-case: sneak.switched-body-mounted-gate
+# depth-case: hide.switched-body-mounted-gate
 
 [fixture]
 empty-players
@@ -78,4 +80,6 @@ set mob horse move 1000
 switch horse
 
 [probe]
+sneak
+hide
 north

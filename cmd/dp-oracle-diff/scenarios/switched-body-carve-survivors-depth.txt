@@ -10,6 +10,7 @@
 # depth-case: carve.mobile-non-corpse
 # depth-case: carve.mobile-non-carvable-corpse
 # depth-case: carve.mobile-full-arms
+# depth-case: carve.switched-body-self-target
 
 [fixture]
 empty-players
@@ -115,6 +116,7 @@ hit fish
 switch clone
 
 [probe]
+carve clone
 carve Carvepeer
 carve moonstone
 carve bread

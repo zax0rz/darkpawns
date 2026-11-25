@@ -1,0 +1,45 @@
+# A switched mobile attempts the disposable fixture's closed named gate exit,
+# reaching perform_move's formatted door refusal (src/act.movement.c:326-332).
+# depth-case: movement.mob-closed-keyword
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 70 1 8162 80
+replace-room-exits 8162 north 8161 1 gate
+
+[setup:oracle]
+MoveMobGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+MoveMobGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+close gate
+switch Satan
+
+[probe]
+north

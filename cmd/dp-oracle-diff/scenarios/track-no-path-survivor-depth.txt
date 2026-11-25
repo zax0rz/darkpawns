@@ -1,0 +1,47 @@
+# C-first unreachable-room-pair proof for do_track's BFS_NO_PATH branch.
+# The primary tracker starts in 8105 and the spawned beggar in 8106; replacing
+# both rooms' exits with none makes the target visible but disconnected.
+
+# depth-case: track.no-path
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 none
+replace-room-exits 8106 none
+spawn-mob 8071 1 8106 80
+
+[setup:oracle]
+Trackpath
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Trackpath
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Trackpath 'track' 100
+
+[probe]
+track beggar

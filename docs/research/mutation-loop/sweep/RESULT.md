@@ -86,15 +86,40 @@ Please review every `killed` row against its cited C transcript line and Go diff
 
 ## Survivor-triage follow-up (2026-11-24)
 
-All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`:
+All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`. The table below gives the effective follow-up buckets after the corrections in `CLASSIFICATION-CORRECTIONS.md`; the original first-pass assignments remain preserved in the TSV:
 
 | Bucket | Count | Follow-up |
 |---|---:|---|
-| A. no witness | 290 | Repair in scenario-backed batches. |
+| A. no witness | 225 | 161 killed by scenario-backed proofs in `REPAIR-LEDGER.tsv`; 64 still open. |
 | B. masked | 0 | No normalization or masking cases found. |
-| C. Go-only branch | 13 | Eleven unapproved proposals; retain two already-approved divergences (DP-1373 and the alias cap). |
-| D. C-unreachable | 0 | No survivor moved to this bucket. |
-| E. not player-facing | 2 | Rows 472 and 498 are collector false positives; exclude from repair work and future draws. |
-| F. ruling or harness capability | 3 | Rows 2, 4 and 908 cannot receive an isolated clean paired proof under the current approved behavior or fixture/input boundaries. |
+| C. Go-only branch | 29 | Proposed for removal in a separate code PR, except the two already-approved divergences (DP-1373 and the alias cap). |
+| D. C-unreachable | 45 | Excluded from repair work and the effective denominator. |
+| E. not player-facing | 3 | Collector false positives; exclude from repair work and future draws. |
+| F. ruling or harness capability | 6 | Rows 2, 4 and 908 have behavior or fixture limits; rows 527–529 are R1a unknowns because C's no-argument `auto` listing uses overlapping `sprintf`. |
 
 These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; row 622 is superseded by the Go-only correction in `CLASSIFICATION-CORRECTIONS.md`. Batch 05 row 148 remains a separate R1a unknown, outside the 308 survivors.
+
+## Survivor-triage correction update (2026-11-25)
+
+Rows 665, 677–680, and 687–693 are reclassified from bucket A to bucket D after checking the C call paths and the existing depth manifest. Row 665 is an unreachable stable mount reload failure with the shipped 8021 prototype; the other 11 rows are in special procedures that C does not assign. The first-pass triage rows and the 308-row survivor set are unchanged. Effective counts are now A253/B0/C15/D35/E2/F3. The R1a unknown, row 148, remains separate and outside the survivor count.
+Rows 843, 851, 856, and 859 move from bucket A to bucket C because their sampled Go fallback arms follow a successful target or combatant lookup and have no reachable C call path. Row 861 also moves from A to C: the sampled Go nil-equipment fallback cannot run for a live player, and C's corresponding no-wield response comes from the later slot check. The first-pass triage rows and the 308-row survivor set are unchanged. On current `origin/main` before the open corrections in PRs #3057 and #3058, effective counts are A260/B0/C20/D23/E2/F3. Preserve those PRs' corrections when combining the updates.
+Rows 739–742 move from bucket A to bucket D: the live `pray_for_items` special is assigned at room 8008, but the reward loop requires an `item_for_<player>` extra description in the adjacent key room. The current world has no such key and no player command can create one. The first-pass triage rows and 308-row survivor set are unchanged. On current `origin/main` before open corrections in PRs #3058 and #3060, effective counts are A261/B0/C15/D27/E2/F3. Preserve both PRs' corrections when combining the updates.
+## Repair batch update (2026-11-25)
+Rows 402, 403, and 406 are killed by scenario-backed proofs: the NODROP gate for an NPC victim, the shared carry-weight gate for a mobile victim, and the `TO_VICT` give line delivered to a switched mobile descriptor. Row 404 moves from A to C because it is a Go-only transfer-error fallback with no C counterpart. Relative to current `origin/main` before this batch, the effective counts are A261/B0/C16/D23/E2/F3. The open combat-entry and prayer-reward PRs (#3060 and #3061) also update these shared research files; preserve their appended rows and recompute the cumulative counts when combining the diffs.
+Rows 889 and 890 are killed by `switched-body-infobar-depth`, which reaches the `mobInfoBarBody` already-on and invalid-argument outputs through a switched descriptor. Rows 884-885 move from A to C: the invalid-mode fallback has no live C path and Go's shared infobar mode is only set to OFF or ON in production. Relative to current `origin/main` before this batch, the effective counts are A261/B0/C17/D23/E2/F3. This update shares correction/result files with open repair PRs #3054–#3062; preserve their rows and recompute cumulative counts when combining the diffs.
+## Survivor repair batch: `perform_move` mobile refusals (2026-11-25)
+Rows 308–311 are killed by four isolated one-byte mutations through switched-mobile `performMoveMob` scenarios. Each mutant census failed on the changed Go byte while retaining the original C line. The four-scenario clean census passed; all five runs used `--draw-parity`, with zero draw divergence, INFRA, TIMEOUT, hollow steps, or probe setup-refusal steps. The closed-door scenarios close the fixture door in warmup before switching, so the probe reaches the closed refusal itself. Preliminary clean attempts are retained but excluded: `luna-survivors-performmove-clean` and `-clean-r3` passed while the door was still open and the probe moved rooms; `-clean-r2` failed fixture validation because door state `3` is unsupported.
+| Row | Scenario | Clean run | Mutant run | Result |
+|---:|---|---|---|---|
+| 308 | `perform-move-mob-no-exit-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-performmove-clean-r4` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-performmove-row-308-mutant` | Killed; C `Alas...`, Go `Qlas...` |
+| 309 | `perform-move-mob-hidden-secret-depth` | same | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-performmove-row-309-mutant` | Killed; C `Alas...`, Go `Qlas...` |
+| 310 | `perform-move-mob-closed-keyword-depth` | same | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-performmove-row-310-mutant` | Killed; C `The gate seems...`, Go `Qhe gate seems...` |
+| 311 | `perform-move-mob-closed-unnamed-depth` | same | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-performmove-row-311-mutant` | Killed; C `It seems...`, Go `Qt seems...` |
+Relative to `origin/main` before this batch, the survivor buckets move from A261/B0/C15/D23/E2/F3 to A257/B0/C15/D23/E2/F3. This batch is based on `fe2838ce4`; open repair PRs #3054–#3063 also update shared evidence and need to be unioned before aggregate counts are finalized.
+These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; corrections in `CLASSIFICATION-CORRECTIONS.md` supersede them for follow-up work. Rows 527–529 remain unknown within the 308 survivors; batch 05 row 148 is a separate R1a unknown outside that set.
+
+## Consolidated counts after the 2026-11-25 batch merge
+
+Claude merged repair PRs #3054–#3068 together and recomputed the bucket table above from `SURVIVOR-TRIAGE.tsv`, every bucket move in `CLASSIFICATION-CORRECTIONS.md`, and the row ids in `REPAIR-LEDGER.tsv`. The per-PR count sentences above were each computed against a different base and are superseded by the table. Effective buckets: A225 (161 killed, 64 open), B0, C29, D45, E3, F6, total 308.
+
+Open bucket A rows: 16, 17, 20, 34, 40, 60, 62, 72, 79, 87, 88, 89, 111, 126, 144, 150, 154, 164, 179, 220, 221, 222, 224, 237, 297, 298, 299, 345, 357, 370, 383, 386, 485, 487, 488, 496, 505, 506, 530, 545, 608, 609, 612, 614, 617, 780, 787, 808, 809, 810, 812, 834, 837, 838, 870, 878, 902, 909, 918, 919, 928, 960, 986, 994.

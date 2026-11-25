@@ -1,5 +1,7 @@
-# C-first witness for stop_follower AFF_CHARM jerk act (src/utils.c:412#1, 412#2).
+# C-first witnesses for do_follow's charmed-master refusal (src/act.movement.c:908-910)
+# and stop_follower AFF_CHARM jerk act (src/utils.c:412#1, 412#2).
 # depth-case: follow.charm-stop-jerk-act
+# depth-case: follow.charmed-already-following
 
 [fixture]
 empty-players
@@ -107,6 +109,7 @@ send:master cast 'charm person' Charmpet
 ~dpclock pulse 40
 send:master cast 'charm person' Charmpet
 ~dpclock pulse 40
+send:follower follow Charmadmin
 force Charmmaster quit
 ~dpclock pulse 2
 send:follower look
