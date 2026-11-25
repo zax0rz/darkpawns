@@ -346,7 +346,7 @@ func (w *World) doScout(ch *Player, me *MobInstance, cmd string, arg string) boo
 
 	toRoom := w.GetRoomInWorld(exitObj.ToRoom)
 	if toRoom == nil {
-		ch.SendMessage("There is nothing of interest there.\r\n")
+		// Defensive nil guard for missing destination room; return silently.
 		return true
 	}
 

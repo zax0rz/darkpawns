@@ -297,7 +297,7 @@ func (w *World) doClanMembers(ch *Player) {
 
 	_, c := w.Clans.FindClanByID(ch.ClanID)
 	if c == nil {
-		ch.SendMessage("You aren't in a clan!\r\n")
+		// Defensive nil guard for concurrent clan removal; return silently.
 		return
 	}
 

@@ -117,11 +117,8 @@ func CmdBash(s SessionInterface, args []string) error {
 		if !found {
 			return s.SendMessage("Bash who?\r\n")
 		}
-	} else if ch.GetFightingBody() != nil {
-		target, found = heldFightingTarget(ch)
-		if !found {
-			return s.SendMessage("Bash who?\r\n")
-		}
+	} else if fighting := ch.GetFightingBody(); fighting != nil {
+		target = fighting
 	} else {
 		return s.SendMessage("Bash who?\r\n")
 	}
@@ -951,14 +948,8 @@ func CmdDisarm(s SessionInterface, args []string) error {
 	var target combat.Combatant
 	world := s.GetWorld()
 
-	if ch.GetFightingBody() != nil {
-		resolved, found := world.ResolveFightingTarget(ch)
-		if !found {
-			// A live C FIGHTING pointer cannot be absent from the room. Keep the
-			// command's only C target failure text if the Go state is stale.
-			return s.SendMessage("Disarm who?\r\n")
-		}
-		target = resolved.Combatant
+	if fighting := ch.GetFightingBody(); fighting != nil {
+		target = fighting
 	} else {
 		targetName, _ := game.OneArgument(strings.Join(args, " "))
 		if targetName == "" {
@@ -1887,11 +1878,8 @@ func CmdCharge(s SessionInterface, args []string) error {
 		if !found {
 			return s.SendMessage("Great! Fine! Charge who?!?!\r\n")
 		}
-	} else if ch.GetFightingBody() != nil {
-		target, found = heldFightingTarget(ch)
-		if !found {
-			return s.SendMessage("Great! Fine! Charge who?!?!\r\n")
-		}
+	} else if fighting := ch.GetFightingBody(); fighting != nil {
+		target = fighting
 	} else {
 		return s.SendMessage("Great! Fine! Charge who?!?!\r\n")
 	}

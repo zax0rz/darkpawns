@@ -28,3 +28,11 @@ row	action	go_site	c_cite	go_callers_checked	test_changed
 884	removed	pkg/session/infobar_body.go:54 (mobInfoBarBody)	src/act.display.c:117-130; src/db.c:104,1281 (dummy_mob infobar zero-initialized OFF and only set to OFF/ON)	pkg/session/commands.go:740	none
 885	removed	pkg/session/infobar_body.go:55 (mobInfoBarBody)	src/act.display.c:117-130; src/db.c:104,1281 (dummy_mob infobar zero-initialized OFF and only set to OFF/ON)	pkg/session/commands.go:740	none
 938	silenced	pkg/session/wiz_object.go:109 (cmdLoad)	src/act.wizard.c:1368-1376 (obj_to_char has no carry-failure refusal)	pkg/session/commands.go:446	none
+34	removed	pkg/command/skill_commands.go:123 (CmdBash)	src/act.offensive.c:440-448 (reads FIGHTING(ch) once; dropped Go second-read fallback)	pkg/session/commands.go:364	none
+60	removed	pkg/command/skill_commands.go:959 (CmdDisarm)	src/new_cmds2.c:204-211 (reads FIGHTING(ch) once; dropped Go ResolveFightingTarget second-read fallback)	pkg/session/commands.go:570	none
+72	removed	pkg/command/skill_commands.go:1893 (CmdCharge)	src/new_cmds.c:895-903 (reads FIGHTING(ch) once; dropped Go second-read fallback)	pkg/session/commands.go:368	none
+111	silenced	pkg/game/clan_admin.go:29 (*World.doClanRename)	src/clan.c:134-150 (range check and array access in one serial command; kept nil guard, dropped invented message)	pkg/game/clan_command.go:65	none
+154	silenced	pkg/game/clan_membership.go:300 (*World.doClanMembers)	src/clan.c:578-588 (checks GET_CLAN/GET_CLAN_RANK once then uses find_clan_by_id without nil-clan message; kept nil guard, dropped invented message)	pkg/game/clan_command.go:109	none
+488	removed	pkg/session/commands.go:1506 (cmdUse -> *World.DoUse)	src/act.other.c:901-905 (removed duplicate empty-arg check in cmdUse so World.doUse is the single copy)	pkg/session/commands.go:351; pkg/game/other_economy.go:612	none
+496	removed	pkg/session/commands.go:1527 (cmdUse -> *World.DoUse)	src/act.other.c:963-968 (removed duplicate non-wand/staff refusal in cmdUse so World.doUse is the single copy)	pkg/session/commands.go:351; pkg/game/other_economy.go:612	none
+545	silenced	pkg/game/other_utility.go:349 (*World.doScout)	src/act.other.c:1854-1860 (only missing exit prints refusal; kept toRoom nil guard, dropped invented message)	pkg/game/act_other_bridge.go:62	none
