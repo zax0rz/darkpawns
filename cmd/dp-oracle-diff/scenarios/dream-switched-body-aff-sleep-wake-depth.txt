@@ -1,0 +1,112 @@
+# depth-case: dream.switched-body-aff-sleep-wake-refusal
+# The switched level-32 brass dragon is sleeping at spawn and reaches the
+# default dream arm from
+# limits.c:489-491 / dream.c:175-184. Its AFF_SLEEP bit makes the nested
+# do_wake call take the refusal and room-act branches in act.movement.c:869-879.
+# The explicit target spawn remains active under quiet-mobs, so the switched
+# descriptor sees the actor line and an awake witness sees the TO_ROOM line
+# while unrelated zone resets stay out of the measurement.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 5005 1 8162 80
+set-mob-aff 5005 16384
+
+[setup:oracle]
+Dreamsleeper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dreamsleeper
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+Dreamwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+Dreamwitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Dreamwitness 8162
+set Dreamsleeper level 32
+switch wyrm
+
+[probe]
+# Sixteen four-hour windows preserve the seeded 64-hour draw window and keep
+# the awake witness active before the C idle-to-void threshold.
+~dpclock pulse 2520
+send:witness look
+~dpclock pulse 2520
+send:witness look
+~dpclock pulse 2520
+send:witness look
+~dpclock pulse 2520
+send:witness look
+~dpclock pulse 2520
+send:witness look
+~dpclock pulse 2520
+send:witness look
+~dpclock pulse 2520
+send:witness look
+~dpclock pulse 2520
+send:witness look
+~dpclock pulse 2520
+send:witness look
+~dpclock pulse 2520
+send:witness look
+~dpclock pulse 2520
+send:witness look
+~dpclock pulse 2520
+send:witness look
+~dpclock pulse 2520
+send:witness look
+~dpclock pulse 2520
+send:witness look
+~dpclock pulse 2520
+send:witness look
+~dpclock pulse 2520
+send:witness look
