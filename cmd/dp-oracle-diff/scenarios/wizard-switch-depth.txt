@@ -80,6 +80,7 @@ teleport Switchpeer 8162
 switch Nobody
 switch Switchwizard
 switch Switchpeer
+switch the
 switch satan trailing words are ignored
 switch
 switch the
