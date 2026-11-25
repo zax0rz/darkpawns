@@ -143,3 +143,28 @@ Rows 34, 60, 72, 111, and 154 move from A to C (Go-only concurrent-state guards)
 Several preliminary attempts are retained but excluded from the kills: row 20's first melee mutant stayed CLEAN because the transcript reached the `CombatEngine` duplicate in `pkg/combat/engine.go`, not the sampled helper; the first spell fixture set wimpy on the caster and did not reach the victim's wimpy line; row 88's first mutant changed a duplicate in `specCastleGuardActor`, not the sampled `specChosenGuardActor` site; and the player-only chosen-guard scenario does not cover the NPC actor lane. The corrected scenario and mutants above reach each sampled site.
 
 Combined with PR #3071, branch-local effective counts are A208 (177 killed, 31 open), B0, C34, D54, E3, F9. The remaining bucket-A rows are: 16, 17, 237, 297, 298, 299, 345, 357, 370, 383, 386, 485, 488, 496, 505, 506, 530, 545, 608, 609, 612, 614, 617, 780, 787, 810, 902, 918, 919, 986, 994. These branch-local counts do not change the Claude-maintained bucket table above; Claude recomputes that table after the stacked PRs merge.
+
+## Last-survivor repair batch 3 (2026-11-25; stacked on PR #3072)
+
+Rows 16, 17, 297-299, 345, 357, 383, 386, 485, 505, and 506 are killed by isolated one-line mutants. The clean baseline is `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch3-clean-post-main-r1`, run on merged commit `d4203e38d`; it covers all ten scenarios below. Every mutant and the clean baseline used `--draw-parity`; mutant runs failed on the changed Go byte, while the clean baseline passed with zero draw divergence, INFRA, TIMEOUT, hollow output, or probe setup refusals.
+
+| Row | Mutant commit | Scenario | Mutant run | Result |
+|---:|---|---|---|---|
+| 16 | `7d3578f2cd6d` | `wounded-band-player-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-16-mutant-r2` | Killed; C mortally-wounded line, Go Qou... |
+| 17 | `f0d43f65a311` | `wounded-band-player-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-17-mutant` | Killed; C incapacitation line, Go Qou... |
+| 297 | `1bc1be2e888b` | `dream-bad-travel-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-297-mutant` | Killed; C You have a dream..., Go Qou... |
+| 298 | `e363a0f9aa2c` | `dream-bad-travel-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-298-mutant` | Killed; C fades from existence, Go Qhe... |
+| 299 | `9faf44bef66a` | `dream-bad-travel-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-299-mutant` | Killed; C fades into existence, Go Qhe... |
+| 345 | `0e17050738aa` | `drink-full-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-345-mutant` | Killed; C You are full., Go Qou... |
+| 357 | `9561241e4104` | `pour-out-refind` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-357-mutant` | Killed; C The a tin cup is empty., Go Qhe... |
+| 383 | `0d5abf00d24a` | `wear-basic` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-383-mutant` | Killed; C You can't wear a tin cup., Go Qou... |
+| 386 | `f9cd7488f37f` | `wear-basic` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-386-mutant` | Killed; second duplicate sampled site reaches its C counterpart |
+| 485 | `9bbd2612e394` | `switched-mobile-door-pour-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-485-mutant` | Killed; C actor line preserved, mutated Go $Q leaves it blank |
+| 505 | `8b16a2bdb824` | `staff-tap-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-505-mutant-r2` | Killed; C It seems powerless., Go Qt seems powerless. |
+| 506 | `09f35da22487` | `staff-tap-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-506-mutant-r2` | Killed; C Nothing seems to happen., Go Qothing... |
+
+Rows 488 and 496 move from A to C: the sampled `World.doUse` arms are bypassed by the live session command guards, which emit the same bytes; both isolated mutants stayed CLEAN because no player command reaches those sites. Row 370 moves from A to D because the sampled second wield check is a defensive duplicate after the earlier check. Row 530 moves from A to F as an R1a unknown: C uses overlapping `sprintf` for the no-argument auto listing, so the pinned bytes do not establish the intended string. These corrections and source citations are recorded in `CLASSIFICATION-CORRECTIONS.md`.
+
+Excluded attempts remain in the archive. Row 16's first mutant run reached the drowning duplicate rather than `emitWoundBand`; the corrected direct wounded-band scenario reaches the sampled victim line. Row 505's first mutant run reached `useStaff`, not `useStaffTap`; `staff-tap-depth` drains the staff charge before the second tap and reaches the sampled refusal. The earlier staff-tap clean run is retained; the batch clean suite rechecks it alongside all other witnesses.
+
+Relative to batch 2, this resolves 16 rows: 12 kills, rows 488 and 496 to C, row 370 to D, and row 530 to F. Branch-local effective counts are A204 (189 killed, 15 open), B0, C36, D55, E3, F10. The remaining bucket-A rows are: 237, 545, 608, 609, 612, 614, 617, 780, 787, 810, 902, 918, 919, 986, 994. These branch-local counts do not change the Claude-maintained bucket table above.
