@@ -90,11 +90,11 @@ All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`. The table below gives t
 
 | Bucket | Count | Follow-up |
 |---|---:|---|
-| A. no witness | 257 | Repair in scenario-backed batches. |
+| A. no witness | 254 | Repair in scenario-backed batches. |
 | B. masked | 0 | No normalization or masking cases found. |
 | C. Go-only branch | 18 | Sixteen unapproved proposals; retain two already-approved divergences (DP-1373 and the alias cap). |
 | D. C-unreachable | 28 | Excluded from repair work and the effective denominator. |
 | E. not player-facing | 2 | Rows 472 and 498 are collector false positives; exclude from repair work and future draws. |
-| F. ruling or harness capability | 3 | Rows 2, 4 and 908 cannot receive an isolated clean paired proof under the current approved behavior or fixture/input boundaries. |
+| F. ruling or harness capability | 6 | Rows 2, 4 and 908 have behavior or fixture limits; rows 527–529 are R1a unknowns because C's no-argument `auto` listing uses overlapping `sprintf`. |
 
-These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; corrections in `CLASSIFICATION-CORRECTIONS.md` supersede them for follow-up work. Batch 05 row 148 remains a separate R1a unknown, outside the 308 survivors.
+These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; corrections in `CLASSIFICATION-CORRECTIONS.md` supersede them for follow-up work. Rows 527–529 remain unknown within the 308 survivors; batch 05 row 148 is a separate R1a unknown outside that set.

@@ -31,6 +31,7 @@ been made for these rows.
 |---:|---|---|---|
 | 148 | `ask-zach` | Batch 05 has C `(null)` versus mutated Go `(Qull)` when a null clan plan reaches `%s` in `do_clan_info` (`src/clan.c:774`). C behavior is undefined; `(null)` is glibc behavior, not a game rule. | Keep unknown and exclude from kills and denominator. Zach must rule on what a planless clan should print; this is an R1a item, not an attribution question. |
 | 472 | `ask-zach` | The `all.` token is a Go remove-all parser prefix nested in an output expression (`pkg/game/npc_command_items.go:251`); C has no corresponding player-facing literal. | Decide whether this collector false positive remains `ask-zach` in the denominator or gets a correction. The frozen class stays unchanged during the sweep. |
+| 527–529 | `F` | Go's `doAuto` samples are the `Loot`, `Gold`, and `Split` fragments (`pkg/game/other_status.go:59,62,65`). C's no-argument `do_auto` listing builds those bytes with overlapping `sprintf` input/output (`src/act.other.c:1305-1335`), undefined behavior; the pinned oracle emits no listing. | Keep all three rows unknown (R1a), outside kills and the repair denominator, until Zach rules on the intended listing bytes. Continue the repair loop; do not patch the Go output to match this oracle build. |
 
 ### Survivor-triage capability gaps (2026-11-24)
 
