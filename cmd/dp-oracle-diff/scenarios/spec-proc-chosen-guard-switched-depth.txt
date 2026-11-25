@@ -1,0 +1,76 @@
+# C-first switched-body witness for the chosen_guard NPC actor lane
+# (src/interpreter.c:1407-1481; src/spec_procs2.c:2113-2132). A level-1
+# switched horse moves south past old guard 8096. The mortal observer receives
+# the non-victim and room acts; the descriptor owner receives the victim act.
+# depth-case: mob.chosen-guard-switched-actor-audience
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8144 none
+spawn-mob 8096 1 8144 80
+spawn-mob 8021 1 8144 1
+
+[setup:oracle]
+ChosenSwitch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ChosenSwitch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ChosenView
+Y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ChosenView
+y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8144
+teleport ChosenView 8144
+switch horse
+
+[probe]
+south
