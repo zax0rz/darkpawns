@@ -1,0 +1,97 @@
+# depth-case: write.paper-no-plr-writing
+# depth-case: wiznet.gods-online-writing
+# C do_write on paper sets d->str without setting PLR_WRITING
+# (src/act.comm.c:1098-1101), so a paper writer still receives room act()s
+# (src/comm.c:2482), channels (src/act.comm.c:1283,1346), and tells
+# (src/act.comm.c:923), and is not tagged (writing)/(Writing) in who
+# (src/act.informative.c:1887) or wiznet @ (src/act.wizard.c:1958-1959).
+# By contrast, Board_write_message sets PLR_WRITING (src/boards.c:266), so
+# wiznet @ prints " (Writing)\r\n" for a board writer (kills sweep row 918).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8099 99 8004 80
+force-load 8099
+
+[setup:oracle]
+Writegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Writegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Writepeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Writepeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+advance Writepeer 31
+goto 8000
+teleport Writepeer 8000
+load obj 1207
+load obj 1208
+give parchment Writepeer
+give quill Writepeer
+
+[probe]
+send:peer write parchment quill
+nod
+gossip paper check
+tell Writepeer can you hear this
+who
+wiznet @
+send:peer paper line one
+send:peer @
+send:peer read parchment
+goto 8004
+teleport Writepeer 8004
+send:peer write boardtest
+wiznet @
+send:peer board line one
+send:peer @
