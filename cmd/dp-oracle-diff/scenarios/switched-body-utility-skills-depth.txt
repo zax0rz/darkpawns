@@ -53,7 +53,7 @@ goto 8105
 switch horse
 
 [probe]
-mindlink stableboy
+mindlink stablehand
 mindlink nobody
 mindlink
 turn
