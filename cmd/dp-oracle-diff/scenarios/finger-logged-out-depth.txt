@@ -65,6 +65,7 @@ Y
 1
 
 [warmup]
+teleport Fingerofflinepeer 8004
 send:peer quit
 
 [probe]
