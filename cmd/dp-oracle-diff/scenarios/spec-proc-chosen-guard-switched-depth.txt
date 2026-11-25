@@ -2,7 +2,7 @@
 # (src/interpreter.c:1407-1481; src/spec_procs2.c:2113-2132). A level-1
 # switched horse moves south past old guard 8096. The mortal observer receives
 # the non-victim and room acts; the descriptor owner receives the victim act.
-# depth-case: mob.chosen-guard-switched-actor-audience
+# depth-case: mob.chosen-guard-npc-actor-lane
 
 [fixture]
 empty-players

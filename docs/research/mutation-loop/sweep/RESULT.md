@@ -123,3 +123,23 @@ These are follow-up classifications on current `origin/main`; the frozen sweep t
 Claude merged repair PRs #3054–#3068 together and recomputed the bucket table above from `SURVIVOR-TRIAGE.tsv`, every bucket move in `CLASSIFICATION-CORRECTIONS.md`, and the row ids in `REPAIR-LEDGER.tsv`. The per-PR count sentences above were each computed against a different base and are superseded by the table. Effective buckets: A225 (161 killed, 64 open), B0, C29, D45, E3, F6, total 308.
 
 Open bucket A rows: 16, 17, 20, 34, 40, 60, 62, 72, 79, 87, 88, 89, 111, 126, 144, 150, 154, 164, 179, 220, 221, 222, 224, 237, 297, 298, 299, 345, 357, 370, 383, 386, 485, 487, 488, 496, 505, 506, 530, 545, 608, 609, 612, 614, 617, 780, 787, 808, 809, 810, 812, 834, 837, 838, 870, 878, 902, 909, 918, 919, 928, 960, 986, 994.
+
+
+## Last-survivor repair batch 2 (2026-11-25; stacked on PR #3071)
+
+Rows 20, 40, 62, 87, 88, and 89 are killed by isolated one-line mutants. Each mutant census failed on the changed Go byte; every clean baseline passed. All six mutants and their clean baselines used `--draw-parity`, with zero draw divergence, INFRA, TIMEOUT, hollow output, or probe setup refusals. Row 20 uses a spoken call-lightning witness that reaches the sampled spell damage helper; rows 87-89 use the switched-horse chosen-guard actor lane.
+
+| Row | Mutant commit | Scenario | Clean run | Mutant run | Result |
+|---:|---|---|---|---|---|
+| 20 | `d2bd0244ab54` | `spell-wimpy-default-arm-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-20-clean-r2` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-20-mutant-r2` | Killed; the victim receives C's wimpy line through the spell damage tail. |
+| 40 | `999de499d712` | `tiger-mounted-refusal-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch2-clean-r3` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-40-mutant` | Killed; C prints “Dismount first!” and the mutant changes the Go line. |
+| 62 | `76f4636765c7` | `disarm-gates-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch2-witness-clean` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-62-mutant` | Killed; the named-but-missing target reaches C's “Disarm who?” line. |
+| 87 | `c634cad71` | `spec-proc-chosen-guard-switched-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-chosen-switched-clean` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-87-mutant-r2` | Killed; actor's block line changes. |
+| 88 | `02f1637cc` | `spec-proc-chosen-guard-switched-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-chosen-switched-clean` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-88-mutant-r2` | Killed; actor's block line changes. |
+| 89 | `091a699a4` | `spec-proc-chosen-guard-switched-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-chosen-switched-clean` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-row-89-mutant` | Killed; actor's challenge line changes. |
+
+Rows 34, 60, 72, 111, and 154 move from A to C (Go-only concurrent-state guards); rows 79, 126, 150, 164, and 179 move from A to D (no player-reachable C call path for the sampled branch); row 144 moves from A to F as an R1a unknown caused by C's overlapping `sprintf`. Rows 87-89 also receive a source-attribution correction in `CLASSIFICATION-CORRECTIONS.md`; the frozen triage rows remain unchanged.
+
+Several preliminary attempts are retained but excluded from the kills: row 20's first melee mutant stayed CLEAN because the transcript reached the `CombatEngine` duplicate in `pkg/combat/engine.go`, not the sampled helper; the first spell fixture set wimpy on the caster and did not reach the victim's wimpy line; row 88's first mutant changed a duplicate in `specCastleGuardActor`, not the sampled `specChosenGuardActor` site; and the player-only chosen-guard scenario does not cover the NPC actor lane. The corrected scenario and mutants above reach each sampled site.
+
+Combined with PR #3071, branch-local effective counts are A208 (177 killed, 31 open), B0, C34, D54, E3, F9. The remaining bucket-A rows are: 16, 17, 237, 297, 298, 299, 345, 357, 370, 383, 386, 485, 488, 496, 505, 506, 530, 545, 608, 609, 612, 614, 617, 780, 787, 810, 902, 918, 919, 986, 994. These branch-local counts do not change the Claude-maintained bucket table above; Claude recomputes that table after the stacked PRs merge.
