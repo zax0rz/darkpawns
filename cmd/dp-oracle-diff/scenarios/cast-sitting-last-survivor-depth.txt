@@ -41,7 +41,7 @@ Y
 goto 8105
 set Castseat class cleric
 set Castseat level 31
-skillset Castseat sanctuary 100
+skillset Castseat 'sanctuary' 100
 set Castseat maxmana 5000
 set Castseat mana 5000
 
