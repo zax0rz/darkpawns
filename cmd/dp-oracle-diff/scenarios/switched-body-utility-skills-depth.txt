@@ -1,6 +1,7 @@
 # C-first witness for DP-1570 (utility/stealth skills on a switched mobile).
-# A level-40 God switches into a level-9 mobile (clone) and exercises each
-# wrapSkill command registered with utilitySkillActorHandler:
+# A level-40 God switches into a level-3 mobile (horse) and exercises each
+# wrapSkill command registered with utilitySkillActorHandler. The clone is a
+# separate visible mob for mindlink's valid-target branch:
 # - mindlink: mob skill 0 -> "Yeah, right." (src/new_cmds2.c:267)
 # - turn: mob skill 0 -> "Huh?!?" (src/new_cmds2.c:965)
 # - sneak / stealth / hide / kabuki: 1 number(1,101) draw each (src/act.other.c:233,291,1770)
@@ -49,12 +50,11 @@ Y
 
 [warmup]
 goto 8105
-switch clone
+switch horse
 
 [probe]
 mindlink clone
 mindlink nobody
-mindlink horse
 mindlink
 turn
 sneak
