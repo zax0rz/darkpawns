@@ -74,8 +74,8 @@ load obj 8054
 give staff clone
 switch clone
 hold staff
-use staff
+use staff staff
 ~dpclock pulse 20
 
 [probe]
-use staff
+use staff staff
