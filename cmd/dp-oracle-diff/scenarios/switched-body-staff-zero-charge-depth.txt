@@ -1,5 +1,5 @@
-# C-first switched mobile staff refusal. One warmup use spends staff 8054's
-# sole charge; the probed second use reaches the zero-charge TO_ROOM bytes.
+# C-first switched mobile staff tap refusal. Wieldable staff 7018 starts with
+# three charges; the three warmup taps spend them before the probed fourth tap.
 # depth-case: use.mobile-staff-empty-charge-room-output
 # depth-case: use.mobile-staff-zero-charge-last-survivor
 
@@ -68,14 +68,23 @@ Y
 
 [warmup]
 goto 8105
-teleport Staffwatch 8105
+advance Staffwatch 34
+set player Bodyuser maxhit 30000
+set player Bodyuser hit 30000
 set mob clone level 1
-load obj 8054
+set mob clone str 25
+load obj 7018
 give staff clone
+goto 8162
 switch clone
-hold staff
+wield staff
 use staff staff
 ~dpclock pulse 20
+use staff staff
+~dpclock pulse 20
+use staff staff
+~dpclock pulse 20
+send:staffwatch goto 8105
 
 [probe]
 use staff staff
