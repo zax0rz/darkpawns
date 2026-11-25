@@ -105,6 +105,7 @@ teleport Peon 8162
 teleport Highgod 8162
 advance Highgod 40
 set player Peon outlaw on
+set mob clone level 9
 switch dealer
 
 [probe]
