@@ -1,4 +1,5 @@
 # depth-case: yank.success-audience
+# depth-case: yank.follower-already-up
 # C do_yank success (src/act.other.c:1656-1658): the actor sees "You yank $M to
 # $S feet." (TO_CHAR), the victim only "$n yanks you to your feet." (TO_VICT),
 # and every other occupant "$n yanks $N to $S feet." (TO_NOTVICT — excludes the
@@ -98,7 +99,8 @@ goto 8162
 teleport Yankvictim 8162
 teleport Yankwatch 8162
 send:follower follow Yankgod
-send:follower sit
 
 [probe]
+yank Yankvictim
+send:follower sit
 yank Yankvictim
