@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -322,58 +321,17 @@ func characterSharpen(ctx CharacterCommandContext, mob *MobInstance, rawArg stri
 }
 
 func characterCarve(ctx CharacterCommandContext, mob *MobInstance, rawArg string) CharacterCommandResult {
-	if mob.GetPosition() == combat.PosFighting || mob.GetFightingBody() != nil {
-		sendBodyMessage(ctx.World, mob, "How can you think of food at a time like this?!?\r\n")
-		return CharacterCommandHandled
-	}
-	targetName, _ := OneArgument(rawArg)
-	if targetName == "" {
-		sendBodyMessage(ctx.World, mob, "You want to carve what?!?\r\n")
-		return CharacterCommandHandled
-	}
-	if target, found := ctx.World.ResolveCharInRoom(mob, targetName); found {
-		if target.Combatant == mob {
-			sendBodyMessage(ctx.World, mob, "This game doesn't support self-mutilation!\r\n")
-		} else {
-			sendBodyMessage(ctx.World, mob, "You kill it first and THEN you can eat it!\r\n")
+	res := doCarveActor(ctx.World, mob, rawArg, ctx.PrivateOutput)
+	if res.MessageToCh != "" {
+		msg := res.MessageToCh
+		if !res.NoMessageToChTerminator {
+			msg += "\r\n"
 		}
-		return CharacterCommandHandled
+		if ctx.PrivateOutput != nil {
+			ctx.PrivateOutput(msg)
+		} else {
+			sendBodyMessage(ctx.World, mob, msg)
+		}
 	}
-	corpse, found := ctx.World.ResolveObjectInRoom(mob, targetName)
-	if !found {
-		sendBodyMessage(ctx.World, mob, fmt.Sprintf("You can't seem to find a %s to carve!\r\n", targetName))
-		return CharacterCommandHandled
-	}
-	if !strings.Contains(corpse.GetKeywords(), "corpse") {
-		sendBodyMessage(ctx.World, mob, "Your initials are about all you can carve in that!\r\n")
-		return CharacterCommandHandled
-	}
-	if !strings.Contains(corpse.GetKeywords(), "carve_") {
-		sendBodyMessage(ctx.World, mob, "There's no way you could ever eat THAT!!!\r\n")
-		return CharacterCommandHandled
-	}
-	if mobCarriedItemCount(mob) >= mobMaxCarryCount(mob) {
-		sendBodyMessage(ctx.World, mob, "Your arms are already full!\r\n")
-		return CharacterCommandHandled
-	}
-	foodVNum := 8015
-	switch {
-	case strings.Contains(corpse.GetKeywords(), "carve_beef"):
-		foodVNum = 8000
-	case strings.Contains(corpse.GetKeywords(), "carve_chicken"):
-		foodVNum = 8002
-	case strings.Contains(corpse.GetKeywords(), "carve_pork"):
-		foodVNum = 8001
-	}
-	proto, ok := ctx.World.GetObjPrototype(foodVNum)
-	if !ok {
-		return CharacterCommandHandled
-	}
-	meat := NewObjectInstance(proto, -1)
-	if err := ctx.World.MoveObject(meat, LocInventoryMob(mob.ID)); err != nil {
-		return CharacterCommandHandled
-	}
-	sendBodyMessage(ctx.World, mob, fmt.Sprintf("You carve %s from %s.\r\n", meat.GetShortDesc(), corpse.GetShortDesc()))
-	Act(ctx.World, true, mob, nil, meat, corpse, "$n carves $p from $P.", "", ToRoom)
 	return CharacterCommandHandled
 }
