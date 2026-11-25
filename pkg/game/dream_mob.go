@@ -51,10 +51,6 @@ func (w *World) mobWake(m *MobInstance) {
 		Act(w, true, m, nil, nil, nil, "$n tosses and turns uncomfortably.", "", ToRoom)
 		return
 	}
-	if m.GetPosition() > PosSleeping {
-		m.SendMessage("You are already awake...\r\n")
-		return
-	}
 	m.SendMessage("You awaken, and sit up.\r\n")
 	Act(w, true, m, nil, nil, nil, "$n awakens.", "", ToRoom)
 	m.SetPosition(PosSitting)

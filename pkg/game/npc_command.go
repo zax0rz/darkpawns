@@ -121,22 +121,6 @@ func anyOneArg(line string) (string, string) {
 	return line[:end], line[end:]
 }
 
-// npcStand is do_stand (act.movement.c:696-731) for a mobile: only the
-// room's lines are visible. A mounted mobile's dismount is not ported.
-func (w *World) npcStand(me *MobInstance) {
-	switch me.GetPosition() {
-	case combat.PosStanding, combat.PosSleeping, combat.PosFighting:
-		return // TO_CHAR only (a standing mobile's dismount is not ported)
-	case combat.PosSitting:
-		Act(w, true, me, nil, nil, nil, "$n clambers to $s feet.", "", ToRoom)
-	case combat.PosResting:
-		Act(w, true, me, nil, nil, nil, "$n stops resting, and clambers on $s feet.", "", ToRoom)
-	default:
-		Act(w, true, me, nil, nil, nil, "$n stops floating around, and puts $s feet on the ground.", "", ToRoom)
-	}
-	me.SetPosition(combat.PosStanding)
-}
-
 // npcSay is do_say (act.comm.c:759-821) for a mobile: the room hears
 // "$n says, '...'" (or exclaims/asks/states by the line's last character).
 func (w *World) npcSay(me *MobInstance, argument string) {
@@ -224,7 +208,7 @@ func (w *World) npcTell(me *MobInstance, argument string) {
 	}
 	target := resolved.Player
 	if target == nil {
-		Act(w, false, me, nil, nil, nil, "No-one by that name here.", "", ToChar)
+		// Unreachable after GetCharVis with nil Mob; return silently without invented output.
 		return
 	}
 	if w.communicationRoomSoundproof(me.GetRoom()) {
