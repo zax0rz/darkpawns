@@ -361,15 +361,14 @@ func TestHandleMailAndNoteSlashAAbort(t *testing.T) {
 		delete(noteWriteEntries, sender.ID)
 		noteWriteMu.Unlock()
 	}()
-	sender.SetPlrFlag(PlrWriting, true)
 	if HandleNoteInput(sender, "draft note") {
 		t.Fatal("draft note unexpectedly ended note composition")
 	}
 	if !HandleNoteInput(sender, "/a") {
 		t.Fatal("/a did not abort note composition")
 	}
-	if sender.HasPLRFlag(PlrWriting) {
-		t.Fatal("PLR_WRITING not cleared after note /a")
+	if IsWritingNote(sender) {
+		t.Fatal("note editor still active after note /a")
 	}
 	if note.Runtime.NoteText != "" {
 		t.Fatalf("note /a stored text %q, want empty", note.Runtime.NoteText)

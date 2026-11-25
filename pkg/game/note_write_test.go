@@ -21,7 +21,6 @@ func setupNoteWriter(t *testing.T, id int, paper *ObjectInstance) (*Player, *[]s
 		delete(noteWriteEntries, player.ID)
 		noteWriteMu.Unlock()
 	})
-	player.SetPlrFlag(PlrWriting, true)
 	return player, &sent
 }
 
@@ -51,8 +50,11 @@ func TestNoteCommitIsSilentAndReadable(t *testing.T) {
 	if got := paper.ActionDescription(); got != want {
 		t.Fatalf("ActionDescription() = %q, want %q", got, want)
 	}
+	if IsWritingNote(player) {
+		t.Fatal("note editor still active after @")
+	}
 	if player.GetFlags()&(1<<PlrWriting) != 0 {
-		t.Fatal("PLR_WRITING still set after @")
+		t.Fatal("PLR_WRITING set during/after paper write")
 	}
 }
 
@@ -120,7 +122,7 @@ func TestNoteGateReadsWrittenTextAndPrototypeText(t *testing.T) {
 	if got, want := lastMsg(), "There's something written on it already.\r\n"; got != want {
 		t.Fatalf("prototype text write gate = %q, want %q", got, want)
 	}
-	if player.GetFlags()&(1<<PlrWriting) != 0 {
+	if IsWritingNote(player) || player.GetFlags()&(1<<PlrWriting) != 0 {
 		t.Fatal("prototype text entered the note editor")
 	}
 
@@ -134,6 +136,12 @@ func TestNoteGateReadsWrittenTextAndPrototypeText(t *testing.T) {
 	if got, want := lastMsg(), "Write your note.  End with '@' on a new line.\r\n"; got != want {
 		t.Fatalf("initial note write = %q, want %q", got, want)
 	}
+	if !IsWritingNote(player) {
+		t.Fatal("paper write did not enter the note editor")
+	}
+	if player.GetFlags()&(1<<PlrWriting) != 0 {
+		t.Fatal("paper write must not set PLR_WRITING")
+	}
 	if HandleNoteInput(player, "draft") {
 		t.Fatal("note editor exited on a text line")
 	}
@@ -145,7 +153,7 @@ func TestNoteGateReadsWrittenTextAndPrototypeText(t *testing.T) {
 	if got, want := lastMsg(), "There's something written on it already.\r\n"; got != want {
 		t.Fatalf("written text write gate = %q, want %q", got, want)
 	}
-	if player.GetFlags()&(1<<PlrWriting) != 0 {
+	if IsWritingNote(player) || player.GetFlags()&(1<<PlrWriting) != 0 {
 		t.Fatal("existing text entered a second note editor")
 	}
 }

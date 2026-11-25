@@ -176,7 +176,6 @@ func beginNoteWrite(descriptorOwner *Player, paper *ObjectInstance) {
 	if descriptorOwner == nil || paper == nil {
 		return
 	}
-	descriptorOwner.SetPlrFlag(PlrWriting, true)
 	noteWriteMu.Lock()
 	noteWriteEntries[descriptorOwner.ID] = &noteWriteEntry{obj: paper}
 	noteWriteMu.Unlock()

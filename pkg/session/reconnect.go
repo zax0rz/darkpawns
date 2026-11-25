@@ -149,6 +149,7 @@ func (s *Session) finishDupeCheck(p *game.Player, name string, olcZone int, unsw
 	p.SetIdleTimer(0)
 	p.SetPlrFlag(game.PlrMailing, false)
 	p.SetPlrFlag(game.PlrWriting, false)
+	game.CancelNoteWrite(p)
 
 	// CON_PASSWORD's echo_on() comes before everything else: IAC WONT ECHO and
 	// then CR LF (comm.c:954-967). The empty non-secret entry frame is the

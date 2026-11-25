@@ -33,10 +33,31 @@ type noteWriteEntry struct {
 	overflowed  bool
 }
 
+// IsWritingNote reports whether ch currently has an active paper note editor.
+func IsWritingNote(ch *Player) bool {
+	if ch == nil {
+		return false
+	}
+	noteWriteMu.Lock()
+	_, ok := noteWriteEntries[ch.ID]
+	noteWriteMu.Unlock()
+	return ok
+}
+
+// CancelNoteWrite discards any active paper note editor for ch.
+func CancelNoteWrite(ch *Player) {
+	if ch == nil {
+		return
+	}
+	noteWriteMu.Lock()
+	delete(noteWriteEntries, ch.ID)
+	noteWriteMu.Unlock()
+}
+
 // HandleNoteInput processes one line of input from a player in note-write mode.
 // Returns true when writing is complete (line == "@"), false while buffering.
-// Clears PLR_WRITING on completion or error.
-// Called from session_login.go PLR_WRITING intercept when PLR_MAILING is unset.
+// Paper writing tracks its editor state in noteWriteEntries without setting
+// PlrWriting, matching C's do_write (src/act.comm.c:1098-1101).
 //
 // '@' commits with no message: for a note, C's string_add takes the
 // STRINGADD_SAVE path through playing_string_cleanup, which only handles mail
@@ -51,16 +72,12 @@ func HandleNoteInput(ch *Player, line string) bool {
 		noteWriteMu.Lock()
 		delete(noteWriteEntries, ch.ID)
 		noteWriteMu.Unlock()
-
-		ch.SetPlrFlag(PlrWriting, false)
 		return true
 	case "@", "/s":
 		noteWriteMu.Lock()
 		state, ok := noteWriteEntries[ch.ID]
 		delete(noteWriteEntries, ch.ID)
 		noteWriteMu.Unlock()
-
-		ch.SetPlrFlag(PlrWriting, false)
 
 		if ok && state.buffer != "" {
 			text := state.buffer
@@ -80,7 +97,6 @@ func HandleNoteInput(ch *Player, line string) bool {
 	state, ok := noteWriteEntries[ch.ID]
 	if !ok {
 		noteWriteMu.Unlock()
-		ch.SetPlrFlag(PlrWriting, false)
 		return true
 	}
 	if len(line)+state.editorBytes+3 > maxNoteLength {
