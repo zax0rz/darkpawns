@@ -90,11 +90,11 @@ All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`. The table below gives t
 
 | Bucket | Count | Follow-up |
 |---|---:|---|
-| A. no witness | 252 | Repair in scenario-backed batches. |
+| A. no witness | 225 | 161 killed by scenario-backed proofs in `REPAIR-LEDGER.tsv`; 64 still open. |
 | B. masked | 0 | No normalization or masking cases found. |
-| C. Go-only branch | 20 | Eighteen unapproved rows proposed for removal; retain two already-approved divergences (DP-1373 and the alias cap). |
-| D. C-unreachable | 28 | Excluded from repair work and the effective denominator. |
-| E. not player-facing | 2 | Rows 472 and 498 are collector false positives; exclude from repair work and future draws. |
+| C. Go-only branch | 29 | Proposed for removal in a separate code PR, except the two already-approved divergences (DP-1373 and the alias cap). |
+| D. C-unreachable | 45 | Excluded from repair work and the effective denominator. |
+| E. not player-facing | 3 | Collector false positives; exclude from repair work and future draws. |
 | F. ruling or harness capability | 6 | Rows 2, 4 and 908 have behavior or fixture limits; rows 527–529 are R1a unknowns because C's no-argument `auto` listing uses overlapping `sprintf`. |
 
 These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; row 622 is superseded by the Go-only correction in `CLASSIFICATION-CORRECTIONS.md`. Batch 05 row 148 remains a separate R1a unknown, outside the 308 survivors.
@@ -117,3 +117,9 @@ Rows 308–311 are killed by four isolated one-byte mutations through switched-m
 | 311 | `perform-move-mob-closed-unnamed-depth` | same | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-performmove-row-311-mutant` | Killed; C `It seems...`, Go `Qt seems...` |
 Relative to `origin/main` before this batch, the survivor buckets move from A261/B0/C15/D23/E2/F3 to A257/B0/C15/D23/E2/F3. This batch is based on `fe2838ce4`; open repair PRs #3054–#3063 also update shared evidence and need to be unioned before aggregate counts are finalized.
 These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; corrections in `CLASSIFICATION-CORRECTIONS.md` supersede them for follow-up work. Rows 527–529 remain unknown within the 308 survivors; batch 05 row 148 is a separate R1a unknown outside that set.
+
+## Consolidated counts after the 2026-11-25 batch merge
+
+Claude merged repair PRs #3054–#3068 together and recomputed the bucket table above from `SURVIVOR-TRIAGE.tsv`, every bucket move in `CLASSIFICATION-CORRECTIONS.md`, and the row ids in `REPAIR-LEDGER.tsv`. The per-PR count sentences above were each computed against a different base and are superseded by the table. Effective buckets: A225 (161 killed, 64 open), B0, C29, D45, E3, F6, total 308.
+
+Open bucket A rows: 16, 17, 20, 34, 40, 60, 62, 72, 79, 87, 88, 89, 111, 126, 144, 150, 154, 164, 179, 220, 221, 222, 224, 237, 297, 298, 299, 345, 357, 370, 383, 386, 485, 487, 488, 496, 505, 506, 530, 545, 608, 609, 612, 614, 617, 780, 787, 808, 809, 810, 812, 834, 837, 838, 870, 878, 902, 909, 918, 919, 928, 960, 986, 994.
