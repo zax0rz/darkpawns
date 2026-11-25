@@ -9,26 +9,28 @@ Earlier pieces this builds on:
 `docs/research/port-completion-survey-2026-11-05.md` (the inventory) and
 `docs/briefs/PLAN-2026-11-07-done-measurement-tooling.md` (the tools).
 
-## Where we are (2026-11-23)
+## Where we are (2026-11-25)
 
-Measured at `origin/main` `39100fef4`. Sections 1 to 8 are the plan as
+Measured at `origin/main` `f3d46e951`. Sections 1 to 8 are the plan as
 written on 11-10 and settled on 11-11; this section is progress against it.
-It replaces the 11-22 status.
+It replaces the 11-23 status.
 
-**Phases 0 to 2 are done. Phase 3 is in its final stretch:** all three
-stopping-rule test audits (`pkg/command`, `pkg/session`, `pkg/game`) are
-complete on main, the Round 4 whole-pool mutation sweep is complete, L1
-through L5 have zero unruled open items, and random play waits on the play
-lab.
+**Phases 0 to 2 are done. Phase 3 is down to its measurements:** the three
+stopping-rule test audits are complete, L1 through L5 have zero unruled open
+items, and every survivor of the Round 4 population sweep is now killed,
+reclassified with a C cite, or waiting on a Zach ruling. Round 4 itself
+(look 4 of 4) is with Luna, pre-registered in
+`docs/briefs/BRIEF-2026-11-25-luna-round-4.md`. Random play waits on the
+play lab.
 
 | List | Frozen 11-11 | Open now | What's left |
 |---|---|---|---|
 | L1. Uncovered C sites | 739 | **0** | confirmed by the 11-22 strict recount (PF-166) |
-| L2. Known divergences | 58 | **0** | none open; DP-1610 is an approved divergence |
+| L2. Known divergences | 58 | **0** | none open; DP-1610 is an approved divergence. Two new Go divergences found by the sweep were fixed on 11-25 (PF-179, PF-185) |
 | L3. Blocked proof units | 62 | **0 unruled** | 1 blocked cell left (`spell.identify.matrix-staff-olc`), already covered by the 11-18 DP-1496 `time(0)` ruling; shop UB rows excluded under R1a |
 | L4. Harness blind spots | 11 | **0** | none |
-| L5. Duplicate and invented code | 5 | **0** | none; CI guards `function-index` |
-| L6. Unverified research claims | 14 | 14 (plus PF-155) | not part of the stopping rule |
+| L5. Duplicate and invented code | 5 | **0** | none; CI guards `function-index`. The sweep found four more player/switched-mobile duplicate pairs, now merged into one implementation each (PF-179, PF-180) |
+| L6. Unverified research claims | 14 | 15 (14 plus PF-155) | not part of the stopping rule |
 
 **L1 is at zero, confirmed.** Neon's strict recount on the 11-22 nightly dump
 (`docs/research/l1-strict-recount-2026-11-22.md`, PF-166, #3021) classified
@@ -49,31 +51,49 @@ were settled in #2866 (`58a8f9ef8`) and PF-159 (`l1-settlement-2026-11-21.tsv`).
 **The census itself.** The nightly combined census runs at **02:30 on main**
 (`~/bin/dp-nightly-census.sh`, results to Discord), with SQLite
 `synchronous = NORMAL` in the census runner (#2996, #2997, PF-163; production
-keeps SQLite's default). Both recent nightlies are green with zero draw
-divergences: `2026-11-22/nightly-20261122` at `f8c4ad638` was `CLEAN` with
-zero rechecks (7,067 pairs), and `2026-11-23/nightly-20261123` at `7b95bc847`
-was `CLEAN_AFTER_RECHECK` across 7,068 pairs (2,249 deduplicated; 4 scenarios
-rechecked, 0 FAIL).
+keeps SQLite's default). The last two nightlies are both `CLEAN` with no
+rechecks and zero draw divergence: `2026-11-24/nightly-20261124` at
+`ef2b14138` (7,068 pairs) and `2026-11-25/nightly-20261125` at `fe2838ce4`
+(7,104 pairs, 2,285 deduplicated).
 
 **The four numbers.**
 
 | # | Number | Now | Measured on |
 |---|---|---|---|
-| 1 | Bytes | **0 FAIL** | nightly combined census `2026-11-23/nightly-20261123` at `7b95bc847`: `CLEAN_AFTER_RECHECK`, 7,068 pairs (and `CLEAN` with no rechecks on `2026-11-22/nightly-20261122`) |
-| 2 | Behavior | **0 draw divergence** | `2026-11-23/nightly-20261123`: 0 divergent across 2,457 full pairs (seed 1) and 6,860 claims pairs (22 seeds); `draw-results.tsv` present |
-| 3 | Reach | **88.3%** of segments (4,328 of 4,902); 89.0% with the other seeds; 66.4% of sites (3,622 of 5,454) | `make census-coverage` on `2026-11-22/nightly-20261122` (PF-166). Up from 73.5% and 54.3% on 11-10 |
-| 4 | Sensitivity | **64.3%** (corrected lower bound 51.7%) | mutation loop Round 3, 63 of 98 killed (PF-149). The bar is a corrected lower bound of 80% (90 of 100 at z = 2.50, 4 looks; 3 used) |
+| 1 | Bytes | **0 FAIL** | nightly combined census `2026-11-25/nightly-20261125` at `fe2838ce4`: `CLEAN`, 7,104 pairs, no rechecks |
+| 2 | Behavior | **0 draw divergence** | `2026-11-25/nightly-20261125`: 0 divergent across 2,493 full pairs (seed 1) and 6,896 claims pairs (22 seeds); `draw-results.tsv` present |
+| 3 | Reach | **88.3%** of segments (4,328 of 4,902); 89.0% with the other seeds; 66.4% of sites (3,622 of 5,454) | `make census-coverage` on `2026-11-22/nightly-20261122` (PF-166). Up from 73.5% and 54.3% on 11-10. Not remeasured since; the sweep repairs added scenarios, so the next recount should be higher |
+| 4 | Sensitivity | **64.3%** (corrected lower bound 51.7%) | mutation loop Round 3, 63 of 98 killed (PF-149). The bar is a corrected lower bound of 80% (90 of 100 at z = 2.50, 4 looks; 3 used). Round 4 is the last look |
 
-**Sensitivity is still the long pole, and the sweep is now in hand.** Luna
-completed the fixed-snapshot Round 4 population sweep across all 13 batches
-(`docs/research/mutation-loop/sweep/RESULT.md`, PF-169, #3038). It isn't a
-measurement, so it uses no look. Out of 998 literal tokens across 189
-functions (with 1 preclassified `c-unreachable` excluded from the
-denominator): **688 were killed**, **308 survived** (295 `c-reachable`, 12
-`go-only-in-game`, 1 `ask-zach` parser token on row 472), and **1 is
-`unknown`** (row 148, an R1a case where C passes a null clan plan to `%s` in
-`src/clan.c:774` and glibc prints `(null)`). Those 295 `c-reachable`
-survivors are the concrete repair queue before drawing Round 4 (look 4 of 4).
+**The sweep is finished.** Luna's whole-pool sweep (PF-169) left 308
+survivors. Every one now has an outcome, recomputed from the triage, every
+correction and the repair ledger
+(`docs/research/mutation-loop/sweep/RESULT.md`):
+
+| Bucket | Rows | Outcome |
+|---|---:|---|
+| A. no witness | 201 | **all 201 killed** by scenario-backed proofs (`REPAIR-LEDGER.tsv`, PF-171 to PF-185); the last, row 918, came with the paper-writing fix |
+| B. masked | 0 | none found |
+| C. Go-only branch | 37 | 33 removed or silenced (#3070, #3079); two approved divergences kept (DP-1373, the alias cap); rows 647-648 turned out to be a stand-in on a C path and were ported instead (#3074). See `GO-ONLY-REMOVALS.tsv` |
+| D. C-unreachable | 57 | excluded, each with a C cite |
+| E. not player-facing | 3 | collector false positives |
+| F. ruling or harness | 10 | five R1a rows (144, 527-529, 530) wait on Zach; two need a no-database harness state (834, 838); rows 2, 4 and 908 have behavior or fixture limits |
+
+The sweep isn't a measurement and uses no look. Its kill rate says nothing
+about Round 4's result, which is measured fresh on whatever `origin/main`
+holds at the draw.
+
+**What the sweep found besides missing tests.** Mutation survivors led to
+real Go fixes, not just scenarios:
+
+- the switched-mobile `carve` was a hand-written stand-in with the wrong
+  food items, no weapon check and invented messages (#3074, PF-179);
+- `point`, `compare` and `sharpen` had separate player and switched-mobile
+  copies; all four commands now share one implementation each, and the
+  player paths now go through `act()` (#3074, #3075, PF-179, PF-180);
+- Go set `PLR_WRITING` for a player writing on paper, which C never does
+  (`src/act.comm.c:1098-1101`), so paper writers missed room actions,
+  channels and tells (#3078, PF-185).
 
 **Test audit: stopping-rule packages complete.**
 
@@ -83,28 +103,31 @@ survivors are the concrete repair queue before drawing Round 4 (look 4 of 4).
 | `pkg/session` | 1,537 of 1,537 | done (PF-165) |
 | `pkg/game` | 1,991 of 1,991 | done (#3035, PF-168): R 1,788 / F 155 / C 37 / D 11 |
 
-Section 9 records all of the test work: the four layers of checking, every
-audited package, what the audit found, and where the audit itself went
-wrong.
+The blind cross-audit of 120 tests (Carbon, PF-170) found the session/game gap
+in weak-test rates was mostly auditor strictness, and its findings were fixed
+in #3045 and #3046. Section 9 records all of the test work.
 
-**Random play** waits on DeepSeek's play lab (about 11-25). Its logging is
-being designed to double as decision-model training data.
+**Random play** waits on DeepSeek's play lab. Its logging is being designed to
+double as decision-model training data.
 
 **What's left, in order:**
 
-1. **Mutation-loop rulings (`DECISIONS.md`):** Zach's R1a ruling on sweep
-   row 148 (planless clan `do_clan_info` output), row 472's parser-token
-   class, and the remaining `go-only-in-game` / shadowed-guard classifications
-   in `docs/research/mutation-loop/DECISIONS.md`.
-2. **Sensitivity repairs, then Round 4:** repair the 295 `c-reachable`
-   sweep survivors, then run Round 4 (the 4th and final look). If it still
-   falls short of 80%, the completion report publishes the measured rate.
-3. **Optional audit calibration:** settle the three `pkg/spells` ledgers
-   into one, and run the blind cross-audit sample on `pkg/session` (PF-165,
-   section 9). Neither blocks the section 6 stopping rule.
-4. **Phase 3 finish:** draw-site reach report (or explicit deferral note),
-   24 hours of clean random play, and the release census with
-   `--combined --release --draw-parity` on the tagged `v1.0.0` commit.
+1. **Round 4** (Luna, in progress): draw with seed `20261123`, classify
+   before any census, measure, then repair its misses. The terms are fixed in
+   the brief. If the corrected lower bound is below 80%, the completion
+   report publishes the measured rate.
+2. **Zach's rulings** in `docs/research/mutation-loop/DECISIONS.md`: the R1a
+   rows (148 outside the survivor set; 144, 527-529 and 530 inside it), and
+   whether to delete the 111 level- and position-only registration tests
+   (`docs/research/test-audit/cross-audit-2026-11-24/registration-class.tsv`).
+   The row 918 transcript is evidence for the R1a rows: the pinned C build
+   appended correctly through the same overlapping `sprintf` pattern.
+3. **Optional audit calibration:** settle the three `pkg/spells` ledgers into
+   one. It doesn't block the section 6 stopping rule.
+4. **Phase 3 finish:** a fresh reach recount, the draw-site reach report (or
+   an explicit deferral note), 24 hours of clean random play, and the release
+   census with `--combined --release --draw-parity` on the tagged `v1.0.0`
+   commit.
 
 ## 1. What "done" means
 
@@ -431,6 +454,7 @@ and each changed how the next batch was run:
 - A long all-R run from one auditor gets a blind sample from another.
 
 **What's left (optional calibration):** settling the three `pkg/spells`
-ledgers into one; and the blind cross-audit sample on `pkg/session` (PF-165).
+ledgers into one. The blind cross-audit sample on `pkg/session` and
+`pkg/game` ran on 11-24 (PF-170, resolving PF-165).
 The combat and spells audits already used the design that sample needs:
 several blind auditors, then a settlement by mutation.
