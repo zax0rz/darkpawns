@@ -37,37 +37,10 @@ Y
 <ENTER>
 1
 
-[setup:oracle:rider]
-Tigermount
-Y
-riderpass
-riderpass
-N
-M
-H
-W
-K
-Y
-<ENTER>
-1
-
-[setup:port:rider]
-Tigermount
-y
-riderpass
-riderpass
-N
-M
-H
-W
-K
-Y
-<ENTER>
-1
-
 [warmup]
-skillset Tigermount 'tiger punch' 100
+goto 8162
+skillset Tigermountgod 'tiger punch' 100
 
-[probe:rider]
+[probe]
 ride horse
 tiger horse
