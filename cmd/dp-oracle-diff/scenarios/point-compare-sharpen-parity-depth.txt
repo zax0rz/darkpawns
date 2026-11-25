@@ -75,6 +75,7 @@ Y
 [warmup]
 goto 8105
 teleport Pointobs 8105
+teleport clone 8105
 load obj 8037
 load obj 8037
 load obj 18310

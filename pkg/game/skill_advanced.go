@@ -303,55 +303,79 @@ func DoStrike(ch *Player, target combat.Combatant, percent int) SkillResult {
 // vehicle, including weapon and same-slot armor RNG draws. The C vehicle also
 // covers the non-comparable same-type and armor-slot mismatch gates.
 func DoCompare(ch *Player, objName1, objName2 string) SkillResult {
-	// prob = APPRAISE if learned, else 20 + level. C sets prob only.
-	prob := ch.GetSkill(SkillAppraise)
-	if prob == 0 {
-		prob = 20 + ch.GetLevel()
+	return doCompareActor(ch, objName1, objName2)
+}
+
+// doCompareActor is the shared implementation of compare for both players and
+// switched mobiles.
+func doCompareActor(combatant combat.Combatant, objName1, objName2 string) SkillResult {
+	var (
+		prob     int
+		blind    bool
+		carrying []*ObjectInstance
+		fighting combat.Combatant
+		player   *Player
+	)
+	switch a := combatant.(type) {
+	case *Player:
+		player = a
+		prob = a.GetSkill(SkillAppraise)
+		if prob == 0 {
+			prob = 20 + a.GetLevel()
+		}
+		blind = a.IsAffected(affBlind)
+		if a.Inventory != nil {
+			carrying = a.Inventory.FindItems("")
+		}
+		fighting = a.GetFightingBody()
+	case *MobInstance:
+		prob = 20 + a.GetLevel()
+		blind = a.IsAffected(affBlind)
+		carrying = a.InventorySnapshot()
+		fighting = a.GetFightingBody()
+	default:
+		return SkillResult{}
 	}
 
-	if ch.IsAffected(affBlind) {
-		return SkillResult{MessageToCh: "You can't see a damned thing!\r\n"}
+	if blind {
+		return SkillResult{MessageToCh: "You can't see a damned thing!\r\n", NoMessageToChTerminator: true}
 	}
 
-	// C get_obj_in_list_vis("", carrying) returns NULL (empty name matches
-	// nothing); Go's helper would match the first item via Contains(x,""), so
-	// gate the lookup on a non-empty name.
 	var obj1, obj2 *ObjectInstance
 	var found1, found2 bool
 	if objName1 != "" {
-		obj1, found1 = findItemByName(ch, objName1)
+		obj1, found1 = resolveVisibleObject(combatant, objName1, carrying, true)
 	}
 	if objName2 != "" {
-		obj2, found2 = findItemByName(ch, objName2)
+		obj2, found2 = resolveVisibleObject(combatant, objName2, carrying, true)
 	}
-	fighting := ch.GetFightingBody()
 	if !found1 || !found2 || fighting != nil {
 		if fighting != nil {
-			return SkillResult{MessageToCh: "You're pretty busy right now!\n\r"}
+			return SkillResult{MessageToCh: "You're pretty busy right now!\n\r", NoMessageToChTerminator: true}
 		}
-		return SkillResult{MessageToCh: "Looks like you don't have those objects..\n\r"}
+		return SkillResult{MessageToCh: "Looks like you don't have those objects..\n\r", NoMessageToChTerminator: true}
 	}
 
 	if obj1 == obj2 {
-		return SkillResult{MessageToCh: "They're the same thing!\n\r"}
+		return SkillResult{MessageToCh: "They're the same thing!\n\r", NoMessageToChTerminator: true}
 	}
 
 	t1 := obj1.GetTypeFlag()
 	if t1 != obj2.GetTypeFlag() {
-		return SkillResult{MessageToCh: "You can't compare those things!\r\n"}
+		return SkillResult{MessageToCh: "You can't compare those things!\r\n", NoMessageToChTerminator: true}
 	}
 	if t1 != ITEM_WEAPON && t1 != ITEM_ARMOR {
-		return SkillResult{MessageToCh: "Compare is only for weapons and armor.\r\n"}
+		return SkillResult{MessageToCh: "Compare is only for weapons and armor.\r\n", NoMessageToChTerminator: true}
 	}
 
-	// --- Comparison path: C's RNG-gated comparison and skill-improvement path. ---
 	if t1 == ITEM_ARMOR {
 		if armorWearSlot(obj1) != armorWearSlot(obj2) {
-			return SkillResult{MessageToCh: "You can only compare the same types of armor!\r\n"}
+			return SkillResult{MessageToCh: "You can only compare the same types of armor!\r\n", NoMessageToChTerminator: true}
 		}
 	}
 
-	percent := dprng.Number(1, 101) // C: "101% is a complete failure"
+	// #nosec G404 — game RNG, not cryptographic
+	percent := dprng.Number(1, 101)
 	diff := 0
 	if t1 == ITEM_WEAPON {
 		diff = int((((float64(obj1.GetValue(2)) + 1) / 2.0) * float64(obj1.GetValue(1))) -
@@ -361,9 +385,11 @@ func DoCompare(ch *Player, objName1, objName2 string) SkillResult {
 		diff = int(((float64(obj1.GetValue(0)) + 1) / 2.0) - ((float64(obj2.GetValue(0)) + 1) / 2.0))
 	}
 	if percent > prob {
+		// #nosec G404 — game RNG, not cryptographic
 		diff += dprng.Number(-3, 3)
-	} else {
-		improveSkill(ch, SkillCompare)
+	} else if player != nil {
+		// Mobiles skip improveSkill (C returns on NPCs before drawing).
+		improveSkill(player, SkillCompare)
 	}
 
 	var msg string
@@ -383,7 +409,7 @@ func DoCompare(ch *Player, objName1, objName2 string) SkillResult {
 	default:
 		msg = fmt.Sprintf("%s looks much better than %s.\r\n", obj1.GetShortDesc(), obj2.GetShortDesc())
 	}
-	return SkillResult{MessageToCh: cap(msg)}
+	return SkillResult{MessageToCh: cap(msg), NoMessageToChTerminator: true}
 }
 
 // armorWearSlot mirrors C do_compare's CAN_WEAR→WEAR mapping for the "same type
@@ -447,70 +473,99 @@ func armorWearSlot(obj *ObjectInstance) int {
 }
 
 // DoSharpen implements do_sharpen() — sharpen a weapon.
-func DoSharpen(ch *Player, objName string) SkillResult {
-	// C half_chop() supplies only the first word to get_obj_in_list_vis(), and
-	// that lookup is restricted to carrying.  In particular, equipped objects
-	// are not eligible here (new_cmds.c:2744).
-	if ch.Inventory == nil || objName == "" {
-		return SkillResult{MessageToCh: "Sharpen what?"}
+func DoSharpen(ch *Player, objName string, world *World) SkillResult {
+	return doSharpenActor(world, ch, objName)
+}
+
+// doSharpenActor is the shared C-faithful implementation of sharpen for both
+// players and switched mobiles (src/new_cmds.c:2743-2792).
+func doSharpenActor(world *World, combatant combat.Combatant, objName string) SkillResult {
+	var (
+		carrying []*ObjectInstance
+		fighting combat.Combatant
+		skillPct int
+		level    int
+		isPlayer bool
+	)
+	switch a := combatant.(type) {
+	case *Player:
+		isPlayer = true
+		if a.Inventory != nil {
+			carrying = a.Inventory.FindItems("")
+		}
+		fighting = a.GetFightingBody()
+		skillPct = a.GetSkill(SkillSharpen)
+		level = a.GetLevel()
+	case *MobInstance:
+		carrying = a.InventorySnapshot()
+		fighting = a.GetFightingBody()
+		level = a.GetLevel()
+	default:
+		return SkillResult{}
 	}
-	obj, found := resolveVisibleObject(ch, objName, ch.Inventory.FindItems(""), true)
+
+	if objName == "" {
+		return SkillResult{MessageToCh: "Sharpen what?\r\n", NoMessageToChTerminator: true}
+	}
+	obj, found := resolveVisibleObject(combatant, objName, carrying, true)
 	if !found {
-		return SkillResult{MessageToCh: "Sharpen what?"}
+		return SkillResult{MessageToCh: "Sharpen what?\r\n", NoMessageToChTerminator: true}
 	}
 
-	// C accepts only ITEM_WEAPON objects whose attack type is TYPE_SLASH.  The
-	// values check is intentionally separate from the general weapon helper:
-	// fire weapons and missiles are not accepted by this command.
 	if obj.GetTypeFlag() != ITEM_WEAPON || obj.GetValue(3) != 3 {
-		return SkillResult{MessageToCh: "This weapon can not be sharpened."}
+		return SkillResult{MessageToCh: "This weapon can not be sharpened.\n\r", NoMessageToChTerminator: true}
 	}
 
-	// C scans all MAX_OBJ_AFFECT slots and also refuses ITEM_MAGIC weapons.
 	if obj.HasExtraFlag(0, itemExtraMagic) {
-		return SkillResult{MessageToCh: "This weapon can not be sharpened any further."}
+		return SkillResult{MessageToCh: "This weapon can not be sharpened any further.\n\r", NoMessageToChTerminator: true}
 	}
 	for _, affect := range obj.GetAffects() {
 		if affect.Location != 0 {
-			return SkillResult{MessageToCh: "This weapon can not be sharpened any further."}
+			return SkillResult{MessageToCh: "This weapon can not be sharpened any further.\n\r", NoMessageToChTerminator: true}
 		}
 	}
 
-	// do_sharpen checks FIGHTING(ch) after resolving and validating the object,
-	// rather than using the command table position gate as a substitute.
-	if ch.GetFightingBody() != nil {
-		return SkillResult{MessageToCh: "You're too busy to be sharpening anything!"}
+	if fighting != nil {
+		return SkillResult{MessageToCh: "You're too busy to be sharpening anything!\n\r", NoMessageToChTerminator: true}
 	}
 
-	// C draws number(1,101) and succeeds only when the draw is strictly below
-	// GET_SKILL(ch, SKILL_SHARPEN).  A zero skill is not an early return: a
-	// valid carried slash weapon reaches the failure mutation below.
 	// #nosec G404 — game RNG, not cryptographic
 	roll := dprng.Number(1, 101)
-	if roll < ch.GetSkill(SkillSharpen) {
+	actor := asActor(combatant)
+	if roll < skillPct {
 		modifier := 1
-		if ch.GetLevel() == 30 {
+		if level == 30 {
 			modifier++
 		}
-		if ch.GetLevel() > 25 {
+		if level > 25 {
 			modifier++
 		}
+		// Every existing affect slot was verified APPLY_NONE above, so setting
+		// slot 0 in place leaves this single damroll affect.
 		obj.SetAffectsOverride([]parser.ObjAffect{{Location: ApplyDamroll, Modifier: modifier}})
+		if world != nil && actor != nil {
+			Act(world, false, actor, nil, obj, nil, "$n sharpens $p to perfection.", "", ToRoom)
+		}
 		return SkillResult{
-			Success:       true,
-			MessageToCh:   "You sharpen it to perfection!",
-			MessageToRoom: fmt.Sprintf("%s sharpens %s to perfection.", ch.GetName(), obj.GetShortDesc()),
+			Success:                 true,
+			MessageToCh:             "You sharpen it to perfection!\r\n",
+			NoMessageToChTerminator: true,
 		}
 	}
 
 	obj.SetAffectsOverride([]parser.ObjAffect{{Location: ApplyDamroll, Modifier: -1}})
-	return SkillResult{
-		MessageToCh:               "You damage it trying to sharpen it!",
-		MessageToRoom:             fmt.Sprintf("%s damages %s trying to sharpen it!", ch.GetName(), obj.GetShortDesc()),
-		DeferredImprove:           []string{SkillSharpen},
-		MessageToChAfterRoom:      true,
-		DeferredImproveAfterActor: true,
+	if world != nil && actor != nil {
+		Act(world, false, actor, nil, obj, nil, "$n damages $p trying to sharpen it!", "", ToRoom)
 	}
+	res := SkillResult{
+		MessageToCh:             "You damage it trying to sharpen it!\r\n",
+		NoMessageToChTerminator: true,
+	}
+	if isPlayer {
+		res.DeferredImprove = []string{SkillSharpen}
+		res.DeferredImproveAfterActor = true
+	}
+	return res
 }
 
 // ---------------------------------------------------------------------------

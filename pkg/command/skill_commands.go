@@ -892,7 +892,7 @@ func CmdSharpen(s SessionInterface, args []string) error {
 	if len(args) > 0 {
 		objName = args[0]
 	}
-	result := game.DoSharpen(ch, objName)
+	result := game.DoSharpen(ch, objName, s.GetWorld())
 	return sendSkillResult(s, ch, nil, result)
 }
 
@@ -1711,14 +1711,7 @@ func CmdPoint(s SessionInterface, args []string) error {
 	targetName, _ := game.OneArgument(argument)
 	world := s.GetWorld()
 	result := game.DoPoint(ch, targetName, world)
-
-	var target combat.Combatant
-	if targetName != "" {
-		if resolved, found := world.ResolveCharInRoom(ch, targetName); found {
-			target = resolved.Combatant
-		}
-	}
-	return sendSkillResult(s, ch, target, result)
+	return sendSkillResult(s, ch, nil, result)
 }
 
 // CmdGroinrip handles the groinrip command.
