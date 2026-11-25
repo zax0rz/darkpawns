@@ -98,3 +98,7 @@ All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`:
 | F. ruling or harness capability | 3 | Rows 2, 4 and 908 cannot receive an isolated clean paired proof under the current approved behavior or fixture/input boundaries. |
 
 These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; row 622 is superseded by the Go-only correction in `CLASSIFICATION-CORRECTIONS.md`. Batch 05 row 148 remains a separate R1a unknown, outside the 308 survivors.
+
+## Survivor-triage correction update (2026-11-25)
+
+Rows 739–742 move from bucket A to bucket D: the live `pray_for_items` special is assigned at room 8008, but the reward loop requires an `item_for_<player>` extra description in the adjacent key room. The current world has no such key and no player command can create one. The first-pass triage rows and 308-row survivor set are unchanged. On current `origin/main` before open corrections in PRs #3058 and #3060, effective counts are A261/B0/C15/D27/E2/F3. Preserve both PRs' corrections when combining the updates.
