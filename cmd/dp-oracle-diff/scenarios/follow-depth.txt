@@ -1,8 +1,9 @@
 # C-first follow/do_follow vehicle (src/interpreter.c:450;
 # src/act.movement.c:883-951; src/handler.c:1276-1300; src/utils.c:365-498).
 # The primary actor exercises the direct follow state machine while two room
-# peers expose stop/start audience bytes. The spawned generic mob covers the
-# NPC leader branch.
+# peers expose stop/start audience bytes. A plain NPC covers the descriptorless
+# leader branch; the peer then switches into that mobile so follow can address
+# the mobile descriptor with C add_follower's TO_VICT notice.
 
 # depth-case: follow.no-argument
 # depth-case: follow.target-not-found
@@ -13,6 +14,7 @@
 # depth-case: follow.target-success
 # depth-case: follow.switch-leader
 # depth-case: follow.mob-leader
+# depth-case: follow.switched-mob-leader
 
 [fixture]
 empty-players
@@ -119,3 +121,5 @@ follow the Followpeer trailing words are ignored
 follow Followobserver
 follow generic
 follow self
+send:peer switch generic
+follow generic
