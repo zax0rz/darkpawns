@@ -50,11 +50,6 @@ func mobInfoBarBody(ctx game.CharacterCommandContext, _ string, args []string) g
 			mob.SendMessage("Your infobar is off.\r\n")
 		case game.InfobarOn:
 			mob.SendMessage("Your infobar is on.\r\n")
-		default:
-			mob.SendMessage("You had an unknown infobar setting.\r\n")
-			mob.SendMessage("It is being set to OFF.\r\n")
-			state.Mode = game.InfobarOff
-			ctx.World.SetNPCInfoBar(state)
 		}
 		return game.CharacterCommandHandled
 	}

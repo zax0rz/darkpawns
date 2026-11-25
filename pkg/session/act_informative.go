@@ -213,14 +213,6 @@ func cmdSocialsForBody(s *Session, body combat.Combatant, args []string) error {
 
 func sendCommandsForBody(s *Session, level int, name string, self bool, commands func(int) []string, socials, wizhelp bool) error {
 	names := commands(level)
-	if len(names) == 0 {
-		if socials {
-			s.Send("\r\n")
-		} else {
-			s.Send("No commands available.\r\n")
-		}
-		return nil
-	}
 	label := "commands"
 	if socials {
 		label = "socials"

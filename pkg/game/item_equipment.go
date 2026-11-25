@@ -188,8 +188,8 @@ func (w *World) performWear(ch *Player, obj *ObjectInstance, where int) {
 	}
 
 	if err := w.EquipItem(ch, obj, where); err != nil {
+		// Defensive guard only; C has no refusal message at this transfer step.
 		slog.Warn("equip failed during wear", "player", ch.Name, "slot", where, "error", err)
-		ch.SendMessage("You can't wear that right now.\r\n")
 		return
 	}
 }
@@ -522,8 +522,8 @@ func (w *World) performRemove(ch *Player, pos int) {
 	}
 
 	if err := w.UnequipItem(ch, pos); err != nil {
+		// Defensive guard only; C has no refusal message at this transfer step.
 		slog.Warn("unequip failed during remove", "player", ch.Name, "slot", pos, "error", err)
-		ch.SendMessage("You can't remove that right now.\r\n")
 		return
 	}
 
