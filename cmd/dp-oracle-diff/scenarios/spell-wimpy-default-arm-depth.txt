@@ -108,7 +108,7 @@ set player WimpSpellVictim maxhit 600
 set player WimpSpellVictim hit 160
 set player WimpSpellActor maxhit 600
 set player WimpSpellObserver maxhit 600
-wimpy 150
+send:victim wimpy 150
 set player WimpSpellActor level 31
 
 [probe]
