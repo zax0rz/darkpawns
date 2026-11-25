@@ -1,4 +1,6 @@
 # depth-case: infobar.switched-body-on-off
+# depth-case: infobar.switched-body-already-on
+# depth-case: infobar.switched-body-argument-first-token
 # depth-case: infobar.shared-dummy-record
 # C do_infobar reads GET_INFOBAR/GET_SCREENSIZE from the shared dummy_mob
 # player_specials record (src/utils.h:588-589; src/db.c:104,1281) and
@@ -49,6 +51,8 @@ switch clone
 [probe]
 infobar
 infobar on
+infobar on
+infobar invalid trailing words
 infobar
 infobar off
 infobar off

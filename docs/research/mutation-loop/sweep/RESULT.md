@@ -98,3 +98,7 @@ All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`:
 | F. ruling or harness capability | 3 | Rows 2, 4 and 908 cannot receive an isolated clean paired proof under the current approved behavior or fixture/input boundaries. |
 
 These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; row 622 is superseded by the Go-only correction in `CLASSIFICATION-CORRECTIONS.md`. Batch 05 row 148 remains a separate R1a unknown, outside the 308 survivors.
+
+## Repair batch update (2026-11-25)
+
+Rows 889 and 890 are killed by `switched-body-infobar-depth`, which reaches the `mobInfoBarBody` already-on and invalid-argument outputs through a switched descriptor. Rows 884-885 move from A to C: the invalid-mode fallback has no live C path and Go's shared infobar mode is only set to OFF or ON in production. Relative to current `origin/main` before this batch, the effective counts are A261/B0/C17/D23/E2/F3. This update shares correction/result files with open repair PRs #3054–#3062; preserve their rows and recompute cumulative counts when combining the diffs.
