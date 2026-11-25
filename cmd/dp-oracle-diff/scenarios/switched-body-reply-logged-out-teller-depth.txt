@@ -1,6 +1,6 @@
-# A player tells the switched mobile and quits before its final reply. Once the
-# player is removed from character_list, do_reply emits the no-longer-playing
-# response. C call path: src/act.comm.c:934-973.
+# A player tells the switched mobile and quits. C defers character-list
+# removal until the next pulse (src/handler.c:1194-1226; src/comm.c:805), so
+# the final warmup pulse drains it before do_reply. C call path: src/act.comm.c:934-973.
 # depth-case: switched-communication.reply-teller-logged-out
 
 [fixture]
@@ -72,6 +72,7 @@ switch clone
 send:peer tell clone last words
 send:peer quit
 send:peer reallyquit
+~dpclock pulse 1
 
 [probe]
 reply hello

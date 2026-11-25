@@ -12,7 +12,7 @@ quiet-mobs
 set-room-flag 8162 5 on
 set-room-flag 8163 5 on
 spawn-mob 69 1 8004 80
-spawn-mob 69 1 8162 80
+spawn-mob 70 1 8162 80
 spawn-obj 8099 1 8004 48
 
 [setup:oracle]
@@ -87,7 +87,7 @@ reply while notell
 send:peer notell
 return
 goto 8162
-switch clone
+switch satan
 reply from soundproof room
 return
 goto 8004
