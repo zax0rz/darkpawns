@@ -1,0 +1,166 @@
+# C-first follow-up vehicle for the Kender peek/do_steal subcmd=1 path.
+# A low-dexterity Kender exposes do_steal's caught-item actor and room lines;
+# a second skilled Kender reaches the transferred-item success line.
+# depth-case: peek.kender-mob-steal-failure
+# depth-case: peek.kender-mob-steal-success
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19101 1 1204 191
+
+[setup:oracle]
+Kenderfail
+Y
+oraclepass
+oraclepass
+N
+M
+K
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Kenderfail
+y
+oraclepass
+oraclepass
+N
+M
+K
+T
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Kenderwatch
+Y
+oraclepass
+oraclepass
+N
+M
+K
+T
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:success]
+Kendersuccess
+Y
+oraclepass
+oraclepass
+N
+M
+K
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port:success]
+Kendersuccess
+y
+oraclepass
+oraclepass
+N
+M
+K
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Kenderwatch
+y
+oraclepass
+oraclepass
+N
+M
+K
+T
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 1204
+teleport Kendersuccess 1204
+teleport Kenderwatch 1204
+set player Kenderfail dex 3
+skillset Kenderfail 'steal' 100
+set player Kenderfail maxhit 100000
+set player Kenderfail hit 100000
+skillset Kendersuccess 'steal' 100
+set player Kendersuccess maxhit 100000
+set player Kendersuccess hit 100000
+set player Kendersuccess level 30
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+load obj 8037
+give sword Skullgrin
+set player Kenderfail level 30
+
+[probe]
+peek Skullgrin
+~dpclock pulse 25
+peek Skullgrin
+~dpclock pulse 25
+peek Skullgrin
+~dpclock pulse 25
+peek Skullgrin
+~dpclock pulse 25
+peek Skullgrin
+~dpclock pulse 25
+peek Skullgrin
+~dpclock pulse 25
+send:success peek Skullgrin
+send:success ~dpclock pulse 25
+send:success peek Skullgrin
+send:success ~dpclock pulse 25
+send:success peek Skullgrin
+send:success ~dpclock pulse 25
+send:success peek Skullgrin
+send:success ~dpclock pulse 25
+send:success peek Skullgrin
+send:success ~dpclock pulse 25
+send:success peek Skullgrin
+send:success ~dpclock pulse 25
