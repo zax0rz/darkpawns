@@ -42,3 +42,5 @@ been made for these rows.
 - **Sweep row 908, bucket F:** Go refuses echo input longer than 500 bytes (`pkg/session/wiz_communication.go:40-49`), while C's input line limit is 256 bytes (`src/structs.h:644`) and `do_echo` has no corresponding 500-byte response (`src/act.wizard.c:130-153`). The paired input needed for this branch exceeds the C line boundary. Defer without changing the harness or source.
 
 The row 472 question above is resolved by the 2026-11-24 correction: bucket E, not a Zach ruling. Row 148 remains the separate R1a unknown and is not one of the 308 survivors.
+
+The row 918 question above is withdrawn by the 2026-11-25 correction in `sweep/CLASSIFICATION-CORRECTIONS.md`: C `do_write` on paper never sets `PLR_WRITING` (`src/act.comm.c:1098-1101`) and Go does (`pkg/game/act_write.go:179`), so this is a Go divergence to fix, not an R1a ruling.

@@ -90,12 +90,12 @@ All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`. The table below gives t
 
 | Bucket | Count | Follow-up |
 |---|---:|---|
-| A. no witness | 225 | 161 killed by scenario-backed proofs in `REPAIR-LEDGER.tsv`; 64 still open. |
+| A. no witness | 201 | 200 killed by scenario-backed proofs in `REPAIR-LEDGER.tsv`; 1 open (row 918, a real Go divergence; see below). |
 | B. masked | 0 | No normalization or masking cases found. |
-| C. Go-only branch | 29 | Proposed for removal in a separate code PR, except the two already-approved divergences (DP-1373 and the alias cap). |
-| D. C-unreachable | 45 | Excluded from repair work and the effective denominator. |
+| C. Go-only branch | 37 | The first 29 were handled in #3070 (27 removed or silenced, plus the two approved divergences DP-1373 and the alias cap). Rows 34, 60, 72, 111, 154, 488, 496 and 545 were added by the last-survivor batches and still need a removal code PR. |
+| D. C-unreachable | 57 | Excluded from repair work and the effective denominator. |
 | E. not player-facing | 3 | Collector false positives; exclude from repair work and future draws. |
-| F. ruling or harness capability | 6 | Rows 2, 4 and 908 have behavior or fixture limits; rows 527–529 are R1a unknowns because C's no-argument `auto` listing uses overlapping `sprintf`. |
+| F. ruling or harness capability | 10 | Rows 2, 4 and 908 have behavior or fixture limits; rows 834 and 838 need a no-database harness state; rows 144, 527–529 and 530 are R1a unknowns because C builds the line with overlapping `sprintf`. |
 
 These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; row 622 is superseded by the Go-only correction in `CLASSIFICATION-CORRECTIONS.md`. Batch 05 row 148 remains a separate R1a unknown, outside the 308 survivors.
 
@@ -190,3 +190,9 @@ Rows 237, 608, 609, 612, 614, 617, 780, 787, 810, 986, and 994 are killed by iso
 Rows 545, 902, and 919 move from A to C, D, and D respectively. Row 918 moves from A to F as an R1a unknown and stays outside kills and the effective denominator. Row 810's earlier quaff-only mutation attempt is retained but excluded because it reached a separate C branch with identical text; the dedicated cast scenario above reaches the sampled path. Row 986's first attempt is also excluded: the clone prototype's default level hit the command gate before the sampled body-level branch, so the corrected fixture sets the clone to level 9. These call-path corrections and citations are recorded in `CLASSIFICATION-CORRECTIONS.md`; row 918 is also recorded in `../DECISIONS.md`.
 
 Relative to batch 3, this resolves the last 15 rows: 11 kills, row 545 to C, rows 902 and 919 to D, and row 918 to F. Branch-local effective buckets are A200 (200 killed, 0 open), B0, C37, D57, E3, F11. The remaining A rows are empty. The aggregate bucket table above remains unchanged for Claude to recompute after the stacked PRs merge.
+
+## Claude's recount after the last-survivor batches (2026-11-25)
+
+Claude merged Luna's last-survivor PRs #3071, #3072, #3073 and #3076 together and recomputed the bucket table above from `SURVIVOR-TRIAGE.tsv`, every move in `CLASSIFICATION-CORRECTIONS.md`, and the row ids in `REPAIR-LEDGER.tsv`. All 39 new repair rows were checked: each mutant run is a one-line commit that FAILs on its scenario with zero draw divergence, and each clean run is CLEAN with zero draw divergence and no refused setup steps. Effective buckets: A201 (200 killed, 1 open), B0, C37, D57, E3, F10, total 308.
+
+Row 918 is not an R1a unknown. The same overlapping `sprintf` in `do_wiznet` (`src/act.wizard.c:1957`) appended `Wizwritingpeer` correctly in the pinned C transcript, so the build does append; the `(Writing)` suffix was missing because the peer was never flagged. C's `do_write` on paper points `ch->desc->str` at the note and never sets `PLR_WRITING` (`src/act.comm.c:1098-1101`), while Go's `beginNoteWrite` does (`pkg/game/act_write.go:179`). Every C `PLR_WRITING` reader (wiznet, who, tell, the channels) therefore sees a different state for a player writing on paper. Row 918 returns to bucket A, open, pending a Go fix; a board-write probe (`src/boards.c:266` sets the flag) can witness the sampled line itself.
