@@ -67,7 +67,7 @@ Y
 [warmup]
 set player Replylink level 38
 goto 8004
-set player Linkpeer room 8004
+teleport Linkpeer 8004
 switch clone
 send:peer tell clone last words
 

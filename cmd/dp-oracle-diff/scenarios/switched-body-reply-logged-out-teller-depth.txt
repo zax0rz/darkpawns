@@ -67,7 +67,7 @@ Y
 [warmup]
 set player Replylogout level 38
 goto 8004
-set player Gonepeer room 8004
+teleport Gonepeer 8004
 switch clone
 send:peer tell clone last words
 send:peer quit

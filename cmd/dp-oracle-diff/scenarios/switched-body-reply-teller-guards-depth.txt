@@ -74,8 +74,7 @@ Y
 [warmup]
 set player Replyguard level 38
 goto 8004
-set player Replypeer room 8004
-set player Replypeer level 38
+teleport Replypeer 8004
 switch clone
 
 [probe]
@@ -94,5 +93,7 @@ return
 goto 8004
 switch clone
 send:peer tell clone target room
-send:peer goto 8163
+return
+teleport Replypeer 8163
+switch clone
 reply to soundproof target
