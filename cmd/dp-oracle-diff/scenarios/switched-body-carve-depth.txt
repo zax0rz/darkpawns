@@ -1,0 +1,97 @@
+# C-first switched-mobile witness for do_carve weapon gates, success output,
+# food vnums (carve_meat and carve_bird), corpse extraction, and corpse
+# content dumping (src/new_cmds.c:115-213; src/act.wizard.c:1175-1200).
+# depth-case: carve.mobile-no-wield
+# depth-case: carve.mobile-wrong-weapon
+# depth-case: carve.mobile-success-meat
+# depth-case: carve.mobile-success-bird
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-mob 69 999 8162 80
+spawn-mob 4350 999 8162 80
+spawn-mob 14510 999 8162 80
+give-object 4350 8010 999 80
+spawn-obj 8023 1 8162 80
+spawn-obj 8037 1 8162 80
+
+[setup:oracle]
+Carvemob
+Y
+carvepass1
+carvepass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Carvemob
+y
+carvepass1
+carvepass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:obs]
+Carveobs
+Y
+carveobs1
+carveobs1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:obs]
+Carveobs
+y
+carveobs1
+carveobs1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Carveobs 8162
+kill fish
+kill swan
+~dpclock pulse 40
+~dpclock pulse 40
+switch clone
+
+[probe]
+carve fish
+get club
+wield club
+carve fish
+remove club
+get sword
+wield sword
+carve fish
+look
+carve swan
+inventory
+look

@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -77,7 +78,7 @@ func TestDoCarveCEntryBranches(t *testing.T) {
 		{
 			name: "no wield",
 			call: func(w *World, _ *Player) { carveDepthCorpse(t, w, "fish carve_meat corpse") },
-			want: "You don't have anything to carve with!",
+			want: "You don't have anything to carve with!\n\r",
 		},
 		{
 			name: "wrong wield",
@@ -91,7 +92,7 @@ func TestDoCarveCEntryBranches(t *testing.T) {
 					t.Fatalf("SetSlot: %v", err)
 				}
 			},
-			want: "You can't carve with that!",
+			want: "You can't carve with that!\n\r",
 		},
 		{
 			name: "full arms",
@@ -134,6 +135,22 @@ func TestDoCarveCEntryBranches(t *testing.T) {
 
 func TestDoCarveSuccessUsesCFoodAndRoomContract(t *testing.T) {
 	w, ch := newCarveDepthWorld(t)
+	var chOut, obsOut, blindObsOut strings.Builder
+	obs := NewPlayer(2, "Watcher", 1001)
+	if err := w.AddPlayer(obs); err != nil {
+		t.Fatalf("AddPlayer watcher: %v", err)
+	}
+	w.MessageSink = func(name string, msg []byte) {
+		switch name {
+		case ch.Name:
+			chOut.Write(msg)
+		case obs.Name:
+			obsOut.Write(msg)
+		case "HiddenWatcher":
+			blindObsOut.Write(msg)
+		}
+	}
+
 	corpse := carveDepthCorpse(t, w, "fish carve_meat corpse")
 	child, err := w.SpawnObject(9003, -1)
 	if err != nil {
@@ -154,11 +171,11 @@ func TestDoCarveSuccessUsesCFoodAndRoomContract(t *testing.T) {
 	if !result.Success {
 		t.Fatal("DoCarve reported failure")
 	}
-	if result.MessageToCh != "You carve up some meat from the the corpse of fish." {
-		t.Fatalf("MessageToCh = %q", result.MessageToCh)
+	if got := chOut.String(); got != "You carve up some meat from the the corpse of fish.\r\n" {
+		t.Fatalf("char output = %q", got)
 	}
-	if result.MessageToRoom != "Carvegod carves up some meat from the the corpse of fish." {
-		t.Fatalf("MessageToRoom = %q", result.MessageToRoom)
+	if got := obsOut.String(); got != "Carvegod carves up some meat from the the corpse of fish.\r\n" {
+		t.Fatalf("room output = %q", got)
 	}
 	if _, ok := ch.Inventory.FindItem("meat"); !ok {
 		t.Fatal("carved food was not added to inventory")
@@ -168,6 +185,21 @@ func TestDoCarveSuccessUsesCFoodAndRoomContract(t *testing.T) {
 	}
 	if _, ok := w.ResolveObjectInRoom(ch, "scrap"); !ok {
 		t.Fatal("corpse contents were not dumped into the room")
+	}
+
+	// Verify hide_invisible=true on TO_ROOM (src/new_cmds.c:200): an invisible
+	// carver's room act is suppressed for observers who cannot see them.
+	hiddenObs := NewPlayer(3, "HiddenWatcher", 1001)
+	if err := w.AddPlayer(hiddenObs); err != nil {
+		t.Fatalf("AddPlayer hidden watcher: %v", err)
+	}
+	ch.AddAffect(engine.NewAffectDirect(0, engine.ApplyNone, 1, 0, engine.AFFInvisible, "test"))
+	carveDepthCorpse(t, w, "fish carve_meat corpse")
+	if result := DoCarve(ch, "corpse", w); !result.Success {
+		t.Fatal("DoCarve while invisible reported failure")
+	}
+	if got := blindObsOut.String(); got != "" {
+		t.Fatalf("invisible carver leaked TO_ROOM act: %q", got)
 	}
 }
 

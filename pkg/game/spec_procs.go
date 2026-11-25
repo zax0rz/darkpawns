@@ -1271,7 +1271,7 @@ func specMickey(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		if me.GetPosition() > combat.PosSleeping && me.GetPosition() < combat.PosFighting {
 			// C: do_stand(ch, "", 0, 0) (src/spec_procs.c:1280), which emits the
 			// ordinary stand acts for the mobile's position.
-			w.npcStand(me)
+			w.doPositionCommand(me, positionCommandSpecs[0], nil)
 		} else {
 			// C case 5 (:1301-1303) has no break and falls into default
 			// (:1304-1305, a break); one number(1,10) draw either way (R3).
@@ -1364,7 +1364,7 @@ func specMallory(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	}
 	if me.IsFighting() {
 		if me.GetPosition() > combat.PosSleeping && me.GetPosition() < combat.PosFighting {
-			w.npcStand(me)
+			w.doPositionCommand(me, positionCommandSpecs[0], nil)
 		} else {
 			switch randRange(1, 10) {
 			case 1:

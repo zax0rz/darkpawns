@@ -1222,17 +1222,17 @@ command	CmdSmackheads	pkg/command/skill_commands.go	1615
 command	CmdBite	pkg/command/skill_commands.go	1639			
 command	CmdTag	pkg/command/skill_commands.go	1676			
 command	CmdPoint	pkg/command/skill_commands.go	1704			
-command	CmdGroinrip	pkg/command/skill_commands.go	1725			
-command	CmdPalm	pkg/command/skill_commands.go	1779			
-command	CmdFleshAlter	pkg/command/skill_commands.go	1797			
-command	CmdSpike	pkg/command/skill_commands.go	1811			
-command	CmdStake	pkg/command/skill_commands.go	1816			
-command	cmdSpikeOrStake	pkg/command/skill_commands.go	1820			
-command	CmdCircle	pkg/command/skill_commands.go	1841			
-command	CmdCharge	pkg/command/skill_commands.go	1878			
-command	heldFightingTarget	pkg/command/skill_commands.go	1916			
-command	sendSkillVictimMessage	pkg/command/skill_commands.go	1923			
-command	sendSkillRoomMessage	pkg/command/skill_commands.go	1936			
+command	CmdGroinrip	pkg/command/skill_commands.go	1718			
+command	CmdPalm	pkg/command/skill_commands.go	1772			
+command	CmdFleshAlter	pkg/command/skill_commands.go	1790			
+command	CmdSpike	pkg/command/skill_commands.go	1804			
+command	CmdStake	pkg/command/skill_commands.go	1809			
+command	cmdSpikeOrStake	pkg/command/skill_commands.go	1813			
+command	CmdCircle	pkg/command/skill_commands.go	1834			
+command	CmdCharge	pkg/command/skill_commands.go	1871			
+command	heldFightingTarget	pkg/command/skill_commands.go	1909			
+command	sendSkillVictimMessage	pkg/command/skill_commands.go	1916			
+command	sendSkillRoomMessage	pkg/command/skill_commands.go	1929			
 command	(rescueCommandSession).GetPlayer	pkg/command/skill_commands_test.go	21			
 command	(rescueCommandSession).SendMessage	pkg/command/skill_commands_test.go	23			
 command	(rescueCommandSession).Send	pkg/command/skill_commands_test.go	28			
@@ -2191,13 +2191,13 @@ game	TestGenBoardFullBoardWriteRefusalOutput	pkg/game/boards_test.go	98
 game	TestGenBoardEmptyHeadlinesDoNotExhaustSlots	pkg/game/boards_test.go	122	src/boards.c:Board_write_message	src/boards.c:228	
 game	TestMaxCarryWeightUsesLiveExceptionalStrength	pkg/game/carry_weight_test.go	5			
 game	TestAdvanceLevelRefreshesCarryCapacity	pkg/game/carry_weight_test.go	17			
-game	newCarveDepthWorld	pkg/game/carve_depth_test.go	10			
-game	carveDepthCorpse	pkg/game/carve_depth_test.go	40			
-game	TestDoCarveCEntryBranches	pkg/game/carve_depth_test.go	51			
-game	TestDoCarveSuccessUsesCFoodAndRoomContract	pkg/game/carve_depth_test.go	135			
-game	TestDoCarveFoodMappings	pkg/game/carve_depth_test.go	174			
-game	TestMakeCorpseUsesMobKeywordList	pkg/game/carve_depth_test.go	206			
-game	TestHandleMobDeathPreservesMobKeywordListOnCorpse	pkg/game/carve_depth_test.go	217			
+game	newCarveDepthWorld	pkg/game/carve_depth_test.go	11			
+game	carveDepthCorpse	pkg/game/carve_depth_test.go	41			
+game	TestDoCarveCEntryBranches	pkg/game/carve_depth_test.go	52			
+game	TestDoCarveSuccessUsesCFoodAndRoomContract	pkg/game/carve_depth_test.go	136			
+game	TestDoCarveFoodMappings	pkg/game/carve_depth_test.go	206			
+game	TestMakeCorpseUsesMobKeywordList	pkg/game/carve_depth_test.go	238			
+game	TestHandleMobDeathPreservesMobKeywordListOnCorpse	pkg/game/carve_depth_test.go	249			
 game	TestCFNameTable	pkg/game/cfname_test.go	15	src/handler.c:fname	C's fname( | src/handler.c:68-79	
 game	(Player).HasLight	pkg/game/char_mgmt.go	26	src/handler.c:has_light	c has_light(	
 game	(World).updateCharObjects	pkg/game/char_mgmt.go	48	src/handler.c:update_char_objects	C's update_char_objects (	
@@ -3261,14 +3261,14 @@ game	mobileActToChar	pkg/game/item_transfer_actor.go	362
 game	registerTransferObject	pkg/game/item_transfer_test.go	10			
 game	newTransferItem	pkg/game/item_transfer_test.go	16			
 game	TestCanTakeObjUsesTakeBit	pkg/game/item_transfer_test.go	26			
-game	TestDoGetChecksFullArmsBeforeEmptyArgument	pkg/game/item_transfer_test.go	35			
-game	TestDoGetAllFromContainerUsesSecondaryObject	pkg/game/item_transfer_test.go	52			
-game	TestDoDropAllDotAndCoins	pkg/game/item_transfer_test.go	78			
-game	TestDoGiveMovesObjectToMobBeforeHook	pkg/game/item_transfer_test.go	113			
-game	TestPerformDropNoDrop	pkg/game/item_transfer_test.go	150			
-game	TestPerformGiveNoDrop	pkg/game/item_transfer_test.go	185			
-game	TestGiveFindVictNoperson	pkg/game/item_transfer_test.go	226			
-game	TestDoGiveAllSkipsUnseenItems	pkg/game/item_transfer_test.go	251			
+game	TestDoGetChecksFullArmsBeforeEmptyArgument	pkg/game/item_transfer_test.go	55			
+game	TestDoGetAllFromContainerUsesSecondaryObject	pkg/game/item_transfer_test.go	72			
+game	TestDoDropAllDotAndCoins	pkg/game/item_transfer_test.go	98			
+game	TestDoGiveMovesObjectToMobBeforeHook	pkg/game/item_transfer_test.go	133			
+game	TestPerformDropNoDrop	pkg/game/item_transfer_test.go	170			
+game	TestPerformGiveNoDrop	pkg/game/item_transfer_test.go	205			
+game	TestGiveFindVictNoperson	pkg/game/item_transfer_test.go	246			
+game	TestDoGiveAllSkipsUnseenItems	pkg/game/item_transfer_test.go	271			
 game	cWearSlot	pkg/game/item_views.go	16			
 game	COrderedWorn	pkg/game/item_views.go	24	src/interpreter.c:special	C's special( | src/interpreter.c:1427-1440	
 game	COrderedCarrying	pkg/game/item_views.go	43	src/interpreter.c:special	C's special( | src/interpreter.c:1444-1452	
@@ -4176,17 +4176,16 @@ game	(World).npcEcho	pkg/game/npc_command.go	87
 game	(World).npcGlobalEcho	pkg/game/npc_command.go	98			
 game	isASCIIAlpha	pkg/game/npc_command.go	109			
 game	anyOneArg	pkg/game/npc_command.go	115			
-game	(World).npcStand	pkg/game/npc_command.go	126			
-game	(World).npcSay	pkg/game/npc_command.go	142			
-game	(World).npcEmote	pkg/game/npc_command.go	173			
-game	(World).npcTell	pkg/game/npc_command.go	191			
-game	splitMobileTellArgument	pkg/game/npc_command.go	255			
-game	(World).npcVisiblePlayer	pkg/game/npc_command.go	266			
-game	(World).npcGive	pkg/game/npc_command.go	288			
-game	articleAN	pkg/game/npc_command.go	321			
-game	(World).npcCarriedVis	pkg/game/npc_command.go	333			
-game	(World).npcPerformGive	pkg/game/npc_command.go	359			
-game	(World).npcSocial	pkg/game/npc_command.go	407			
+game	(World).npcSay	pkg/game/npc_command.go	126			
+game	(World).npcEmote	pkg/game/npc_command.go	157			
+game	(World).npcTell	pkg/game/npc_command.go	175			
+game	splitMobileTellArgument	pkg/game/npc_command.go	239			
+game	(World).npcVisiblePlayer	pkg/game/npc_command.go	250			
+game	(World).npcGive	pkg/game/npc_command.go	272			
+game	articleAN	pkg/game/npc_command.go	305			
+game	(World).npcCarriedVis	pkg/game/npc_command.go	317			
+game	(World).npcPerformGive	pkg/game/npc_command.go	343			
+game	(World).npcSocial	pkg/game/npc_command.go	391			
 game	CharacterPut	pkg/game/npc_command_items.go	8			
 game	CharacterWear	pkg/game/npc_command_items.go	19			
 game	CharacterWield	pkg/game/npc_command_items.go	28			
@@ -5030,16 +5029,16 @@ game	encodeSnapshot	pkg/game/save_world_test.go	78
 game	writeLegacyWorldStateFile	pkg/game/save_world_test.go	89			
 game	captureSlog	pkg/game/save_world_test.go	101			
 game	TestRestartDoesNotRestoreLegacyWorldSnapshot	pkg/game/save_world_test.go	113			
-game	TestReviewCannotShowPreRestartGossip	pkg/game/save_world_test.go	196			
-game	TestCorpsesMoneyAndAshDoNotSurviveRestart	pkg/game/save_world_test.go	219			
-game	TestLegacySnapshotWithManySyntheticObjectsLogsOnce	pkg/game/save_world_test.go	278			
-game	itoaDecimal	pkg/game/save_world_test.go	311			
-game	TestInspectLegacyWorldStateCountsTransientSections	pkg/game/save_world_test.go	327			
-game	TestInspectLegacyWorldStateToleratesBadInput	pkg/game/save_world_test.go	358			
-game	TestIgnoreLegacyWorldStateIsNotFatalAndKeepsTheFile	pkg/game/save_world_test.go	392			
-game	TestPlayerPersistenceIsSeparateFromWorldSnapshot	pkg/game/save_world_test.go	416	src/comm.c:init_game; src/db.c:save_char	src/comm.c:293 | src/db.c:2366	
-game	TestBootAndShutdownWriteNoWorldSnapshot	pkg/game/save_world_test.go	443			
-game	TestZoneResetInitializationIsDeterministic	pkg/game/save_world_test.go	461			
+game	TestReviewCannotShowPreRestartGossip	pkg/game/save_world_test.go	213			
+game	TestCorpsesMoneyAndAshDoNotSurviveRestart	pkg/game/save_world_test.go	236			
+game	TestLegacySnapshotWithManySyntheticObjectsLogsOnce	pkg/game/save_world_test.go	295			
+game	itoaDecimal	pkg/game/save_world_test.go	328			
+game	TestInspectLegacyWorldStateCountsTransientSections	pkg/game/save_world_test.go	344			
+game	TestInspectLegacyWorldStateToleratesBadInput	pkg/game/save_world_test.go	375			
+game	TestIgnoreLegacyWorldStateIsNotFatalAndKeepsTheFile	pkg/game/save_world_test.go	409			
+game	TestPlayerPersistenceIsSeparateFromWorldSnapshot	pkg/game/save_world_test.go	433	src/comm.c:init_game; src/db.c:save_char	src/comm.c:293 | src/db.c:2366	
+game	TestBootAndShutdownWriteNoWorldSnapshot	pkg/game/save_world_test.go	460			
+game	TestZoneResetInitializationIsDeterministic	pkg/game/save_world_test.go	478			
 game	(World).SaySpellDeliver	pkg/game/say_spell_act.go	15	src/spell_parser.c:say_spell	src/spell_parser.c:325-343	
 game	actorClass	pkg/game/say_spell_act.go	55			
 game	(World).SpellActNotVict	pkg/game/say_spell_act.go	67			
@@ -5097,13 +5096,16 @@ game	TestDoFollowShadowFailureUsesOrdinaryFollowAudience	pkg/game/shadow_depth_t
 game	TestDoFollowShadowConsumesSkillRollDraw	pkg/game/shadow_depth_test.go	80			
 game	TestStopFollowerShadowClearsAffectAndSuppressesAudience	pkg/game/shadow_depth_test.go	99			
 game	TestDoFollowShadowSwitchReplacesPriorAffect	pkg/game/shadow_depth_test.go	128			
-game	sharpenTestObject	pkg/game/sharpen_depth_test.go	11			
-game	TestDoSharpenUsesCObjectGatesAndCarriedOnly	pkg/game/sharpen_depth_test.go	22			
-game	TestDoSharpenRejectsNonSlashAndAlreadyAffected	pkg/game/sharpen_depth_test.go	55			
-game	TestDoSharpenMutatesAndScalesSuccessfulWeapon	pkg/game/sharpen_depth_test.go	73			
-game	TestDoSharpenFailureMutatesEvenWithZeroSkill	pkg/game/sharpen_depth_test.go	119			
-game	TestDoSharpenFightingGateFollowsObjectGates	pkg/game/sharpen_depth_test.go	150			
-game	TestDoSharpenConsumesOneCPercentDraw	pkg/game/sharpen_depth_test.go	166			
+game	sharpenTestWorld	pkg/game/sharpen_depth_test.go	13			
+game	sharpenTestObject	pkg/game/sharpen_depth_test.go	39			
+game	TestDoSharpenUsesCObjectGatesAndCarriedOnly	pkg/game/sharpen_depth_test.go	50			
+game	TestDoSharpenRejectsNonSlashAndAlreadyAffected	pkg/game/sharpen_depth_test.go	83			
+game	TestDoSharpenMutatesAndScalesSuccessfulWeapon	pkg/game/sharpen_depth_test.go	101			
+game	TestDoSharpenFailureMutatesEvenWithZeroSkill	pkg/game/sharpen_depth_test.go	147			
+game	TestDoSharpenFightingGateFollowsObjectGates	pkg/game/sharpen_depth_test.go	178			
+game	TestDoSharpenConsumesOneCPercentDraw	pkg/game/sharpen_depth_test.go	194			
+game	TestDoSharpenInvisibleUsesActRoomVisibility	pkg/game/sharpen_depth_test.go	211			
+game	TestCompareAndPointExactTerminatorsAndOrder	pkg/game/sharpen_depth_test.go	223			
 game	(World).ApplyRangedProjectileDamage	pkg/game/shoot.go	14	src/act.offensive.c:do_shoot; src/fight.c:update_pos	src/act.offensive.c:938-946 | src/fight.c:186-203	
 game	(World).TransferRangedVictim	pkg/game/shoot.go	63	src/act.offensive.c:do_shoot; src/handler.c:char_from_room; src/handler.c:char_to_room	src/act.offensive.c:948-950 | src/handler.c:504-543	
 game	TestRangedDeathHasNoKillerBookkeeping	pkg/game/shoot_death_test.go	11			
@@ -5249,29 +5251,32 @@ game	CharacterBehead	pkg/game/skill_actor_selected.go	255
 game	characterShoot	pkg/game/skill_actor_shoot.go	16	src/act.offensive.c:do_shoot	src/act.offensive.c:746-987	
 game	sendCombatantMessage	pkg/game/skill_actor_shoot.go	185			
 game	CharacterSteal	pkg/game/skill_actor_steal.go	16	src/act.other.c:do_steal	src/act.other.c:309-538	
-game	mobileStealCarriedItem	pkg/game/skill_actor_steal.go	168			
-game	mobileStealEquippedItem	pkg/game/skill_actor_steal.go	186			
-game	mobileCanCarryStolen	pkg/game/skill_actor_steal.go	207			
-game	CharacterUtilitySkill	pkg/game/skill_actor_utility.go	16			
-game	characterSneak	pkg/game/skill_actor_utility.go	53			
-game	characterHide	pkg/game/skill_actor_utility.go	81			
-game	characterMindlink	pkg/game/skill_actor_utility.go	107			
-game	characterTurn	pkg/game/skill_actor_utility.go	127			
-game	characterPalm	pkg/game/skill_actor_utility.go	133			
-game	characterPoint	pkg/game/skill_actor_utility.go	154			
-game	characterCompare	pkg/game/skill_actor_utility.go	201			
-game	characterSharpen	pkg/game/skill_actor_utility.go	283			
-game	characterCarve	pkg/game/skill_actor_utility.go	324			
+game	mobileStealCarriedItem	pkg/game/skill_actor_steal.go	163			
+game	mobileStealEquippedItem	pkg/game/skill_actor_steal.go	181			
+game	mobileCanCarryStolen	pkg/game/skill_actor_steal.go	202			
+game	CharacterUtilitySkill	pkg/game/skill_actor_utility.go	13			
+game	characterSneak	pkg/game/skill_actor_utility.go	50			
+game	characterHide	pkg/game/skill_actor_utility.go	78			
+game	characterMindlink	pkg/game/skill_actor_utility.go	104			
+game	characterTurn	pkg/game/skill_actor_utility.go	124			
+game	characterPalm	pkg/game/skill_actor_utility.go	130			
+game	characterPoint	pkg/game/skill_actor_utility.go	151			
+game	characterCompare	pkg/game/skill_actor_utility.go	163			
+game	characterSharpen	pkg/game/skill_actor_utility.go	176			
+game	characterCarve	pkg/game/skill_actor_utility.go	189			
 game	CharacterScrounge	pkg/game/skill_actor_waits.go	18	src/new_cmds2.c:do_scrounge	src/new_cmds2.c:64-75	
 game	CharacterDetect	pkg/game/skill_actor_waits.go	85	src/new_cmds2.c:do_detect	src/new_cmds2.c:498-521	
 game	DoCarve	pkg/game/skill_advanced.go	15			
-game	DoCutthroat	pkg/game/skill_advanced.go	112	src/new_cmds.c:do_cutthroat	src/new_cmds.c:552-655	
-game	applyCutthroatAffect	pkg/game/skill_advanced.go	197			
-game	DoStrike	pkg/game/skill_advanced.go	224	src/new_cmds.c:check_kk_success; src/new_cmds.c:do_strike	src/new_cmds.c:1433-1502	
-game	DoCompare	pkg/game/skill_advanced.go	261	src/new_cmds.c:do_compare	port of do_compare ( | src/new_cmds.c:1952	
-game	armorWearSlot	pkg/game/skill_advanced.go	350			
-game	DoSharpen	pkg/game/skill_advanced.go	406			
-game	DoScan	pkg/game/skill_advanced.go	479			
+game	doCarveActor	pkg/game/skill_advanced.go	21	src/new_cmds.c:do_carve	C do_carve ( | src/new_cmds.c:115-213	
+game	DoCutthroat	pkg/game/skill_advanced.go	156	src/new_cmds.c:do_cutthroat	src/new_cmds.c:552-655	
+game	applyCutthroatAffect	pkg/game/skill_advanced.go	241			
+game	DoStrike	pkg/game/skill_advanced.go	268	src/new_cmds.c:check_kk_success; src/new_cmds.c:do_strike	src/new_cmds.c:1433-1502	
+game	DoCompare	pkg/game/skill_advanced.go	305	src/new_cmds.c:do_compare	port of do_compare ( | src/new_cmds.c:1952	
+game	doCompareActor	pkg/game/skill_advanced.go	311			
+game	armorWearSlot	pkg/game/skill_advanced.go	420			
+game	DoSharpen	pkg/game/skill_advanced.go	476			
+game	doSharpenActor	pkg/game/skill_advanced.go	482	src/new_cmds.c:do_sharpen	src/new_cmds.c:2743-2792	
+game	DoScan	pkg/game/skill_advanced.go	578			
 game	TestSkillDamageAttackTypeMatchesC	pkg/game/skill_attack_type_test.go	20	src/fight.c:damage; src/fight.c:make_corpse	src/fight.c:1314-1545 | src/fight.c:283-370	
 game	TestSkillResultDamageAttackTypePrefersCSkillMessageKey	pkg/game/skill_attack_type_test.go	76			
 game	TestSkillKillCorpseUsesCSkillAttackType	pkg/game/skill_attack_type_test.go	105	src/fight.c:make_corpse	src/fight.c:283-370	
@@ -5428,18 +5433,15 @@ game	DoSmackheads	pkg/game/skill_special.go	329
 game	DoBite	pkg/game/skill_special.go	404	src/new_cmds.c:do_bite	src/new_cmds.c:1199-1300	
 game	feedFromBite	pkg/game/skill_special.go	510			
 game	DoTag	pkg/game/skill_special.go	520			
-game	DoPoint	pkg/game/skill_special.go	591			
-game	pointResult	pkg/game/skill_special.go	614			
-game	pointCharacterResult	pkg/game/skill_special.go	618			
-game	pointObjectResult	pkg/game/skill_special.go	638			
-game	pointWeapon	pkg/game/skill_special.go	653			
-game	pointDirection	pkg/game/skill_special.go	661			
-game	DoGroinrip	pkg/game/skill_special.go	671			
-game	DoReview	pkg/game/skill_special.go	752	src/new_cmds.c:do_review	C: do_review(	
-game	DoPalm	pkg/game/skill_special.go	765	src/act.item.c:perform_get_from_room; src/new_cmds.c:do_palm	src/act.item.c:269-283 | src/new_cmds.c:2108-2123 | src/new_cmds.c:2122	
-game	FleshAlterWeapon	pkg/game/skill_special.go	785	src/new_cmds.c:flesh_alter_weapon	mirrors flesh_alter_weapon( | src/new_cmds.c:1836-1870 | src/new_cmds.c:1836-1881	
-game	fleshAlteredType	pkg/game/skill_special.go	814	src/new_cmds.c:flesh_altered_type	mirrors flesh_altered_type( | src/new_cmds.c:1783-1826	src/fight.c:82 (range does not intersect a parsed C function body)
-game	DoFleshAlter	pkg/game/skill_special.go	834			
+game	DoPoint	pkg/game/skill_special.go	590			
+game	doPointActor	pkg/game/skill_special.go	597			
+game	pointDirection	pkg/game/skill_special.go	671			
+game	DoGroinrip	pkg/game/skill_special.go	681			
+game	DoReview	pkg/game/skill_special.go	762	src/new_cmds.c:do_review	C: do_review(	
+game	DoPalm	pkg/game/skill_special.go	775	src/act.item.c:perform_get_from_room; src/new_cmds.c:do_palm	src/act.item.c:269-283 | src/new_cmds.c:2108-2123 | src/new_cmds.c:2122	
+game	FleshAlterWeapon	pkg/game/skill_special.go	795	src/new_cmds.c:flesh_alter_weapon	mirrors flesh_alter_weapon( | src/new_cmds.c:1836-1870 | src/new_cmds.c:1836-1881	
+game	fleshAlteredType	pkg/game/skill_special.go	824	src/new_cmds.c:flesh_altered_type	mirrors flesh_altered_type( | src/new_cmds.c:1783-1826	src/fight.c:82 (range does not intersect a parsed C function body)
+game	DoFleshAlter	pkg/game/skill_special.go	844			
 game	DoSneak	pkg/game/skill_stealth.go	21	src/act.other.c:do_sneak	src/act.other.c:214-244	
 game	doSneak	pkg/game/skill_stealth.go	28			
 game	DoStealth	pkg/game/skill_stealth.go	67			
@@ -5494,7 +5496,6 @@ game	GetPronouns	pkg/game/skills.go	352
 game	ActMessage	pkg/game/skills.go	369			
 game	findItemByName	pkg/game/skills.go	539			
 game	max	pkg/game/skills.go	559			
-game	himHer	pkg/game/skills.go	574			
 game	DoScrounge	pkg/game/skills2.go	21			
 game	scroungeForSector	pkg/game/skills2.go	48			
 game	DoFirstAid	pkg/game/skills2.go	136			
@@ -6557,35 +6558,34 @@ game	(World).spawnMobQuiet	pkg/game/world.go	1052
 game	(World).SpawnMobQuiet	pkg/game/world.go	1059			
 game	(World).SpawnMobWithLevelI	pkg/game/world.go	1068			
 game	(World).CreateMobileI	pkg/game/world.go	1084	src/new_cmds2.c:create_mobile	C's create_mobile ( | src/new_cmds2.c:588-620 | src/new_cmds2.c:609-613 | src/new_cmds2.c:615-618	
-game	(World).LookAtRoomSimple	pkg/game/world.go	1101			
-game	(World).ExtractMob	pkg/game/world.go	1133			
-game	(World).mobileObjectOwnerLocked	pkg/game/world.go	1150			
-game	(World).registerExistingObject	pkg/game/world.go	1166			
-game	(World).NewObjectFromProto	pkg/game/world.go	1185			
-game	(World).SpawnObject	pkg/game/world.go	1193			
-game	(World).newObjectInstance	pkg/game/world.go	1208			
-game	(World).newObjectInstanceLocked	pkg/game/world.go	1214			
-game	(World).GetMobsInRoomScriptable	pkg/game/world.go	1223			
-game	(World).GetMobByVNumAndRoomScriptable	pkg/game/world.go	1233			
-game	(World).GetMobByID	pkg/game/world.go	1243			
-game	(World).GetMobByName	pkg/game/world.go	1251			
-game	(World).GetMobsInRoom	pkg/game/world.go	1264			
-game	(World).COrderedRoomMobs	pkg/game/world.go	1293	src/interpreter.c:special	C's special( | src/interpreter.c:1452-1466	
-game	(World).GetAllObjects	pkg/game/world.go	1306			
-game	(World).GetAllMobs	pkg/game/world.go	1318			
-game	(World).EquipChar	pkg/game/world.go	1343			
-game	(World).EquipMobByVNum	pkg/game/world.go	1381			
-game	(World).equipMobileInventoryVNum	pkg/game/world.go	1390			
-game	(World).SetFollower	pkg/game/world.go	1408			
-game	(World).MountPlayer	pkg/game/world.go	1448			
-game	(World).DismountPlayer	pkg/game/world.go	1459			
-game	(World).ClearAffects	pkg/game/world.go	1470			
-game	(World).CanCarryObject	pkg/game/world.go	1501			
-game	(World).canGetObject	pkg/game/world.go	1525			
-game	(World).IsCorpseObj	pkg/game/world.go	1548			
-game	(World).SetHunting	pkg/game/world.go	1559			
-game	(World).IsHunting	pkg/game/world.go	1586			
-game	(World).SetGossipObserver	pkg/game/world.go	1602			
+game	(World).ExtractMob	pkg/game/world.go	1102			
+game	(World).mobileObjectOwnerLocked	pkg/game/world.go	1119			
+game	(World).registerExistingObject	pkg/game/world.go	1135			
+game	(World).NewObjectFromProto	pkg/game/world.go	1154			
+game	(World).SpawnObject	pkg/game/world.go	1162			
+game	(World).newObjectInstance	pkg/game/world.go	1177			
+game	(World).newObjectInstanceLocked	pkg/game/world.go	1183			
+game	(World).GetMobsInRoomScriptable	pkg/game/world.go	1192			
+game	(World).GetMobByVNumAndRoomScriptable	pkg/game/world.go	1202			
+game	(World).GetMobByID	pkg/game/world.go	1212			
+game	(World).GetMobByName	pkg/game/world.go	1220			
+game	(World).GetMobsInRoom	pkg/game/world.go	1233			
+game	(World).COrderedRoomMobs	pkg/game/world.go	1262	src/interpreter.c:special	C's special( | src/interpreter.c:1452-1466	
+game	(World).GetAllObjects	pkg/game/world.go	1275			
+game	(World).GetAllMobs	pkg/game/world.go	1287			
+game	(World).EquipChar	pkg/game/world.go	1312			
+game	(World).EquipMobByVNum	pkg/game/world.go	1350			
+game	(World).equipMobileInventoryVNum	pkg/game/world.go	1359			
+game	(World).SetFollower	pkg/game/world.go	1377			
+game	(World).MountPlayer	pkg/game/world.go	1417			
+game	(World).DismountPlayer	pkg/game/world.go	1428			
+game	(World).ClearAffects	pkg/game/world.go	1439			
+game	(World).CanCarryObject	pkg/game/world.go	1470			
+game	(World).canGetObject	pkg/game/world.go	1494			
+game	(World).IsCorpseObj	pkg/game/world.go	1517			
+game	(World).SetHunting	pkg/game/world.go	1528			
+game	(World).IsHunting	pkg/game/world.go	1555			
+game	(World).SetGossipObserver	pkg/game/world.go	1571			
 game	(WorldScriptableAdapter).resolveChar	pkg/game/world_bridge.go	24			
 game	(WorldScriptableAdapter).resolveObj	pkg/game/world_bridge.go	41			
 game	objRefs	pkg/game/world_bridge.go	47			
@@ -7942,11 +7942,11 @@ session	cmdSocials	pkg/session/act_informative.go	142
 session	cmdSocialsBody	pkg/session/act_informative.go	184			
 session	cmdSocialsForBody	pkg/session/act_informative.go	196			
 session	sendCommandsForBody	pkg/session/act_informative.go	214			
-session	cmdWizhelpBody	pkg/session/act_informative.go	253			
-session	cmdToggle	pkg/session/act_informative.go	292	src/act.informative.c:do_toggle	c do_toggle(	
-session	onOff	pkg/session/act_informative.go	341			
-session	yesNo	pkg/session/act_informative.go	349			
-session	colorLevelStr	pkg/session/act_informative.go	358			
+session	cmdWizhelpBody	pkg/session/act_informative.go	245			
+session	cmdToggle	pkg/session/act_informative.go	284	src/act.informative.c:do_toggle	c do_toggle(	
+session	onOff	pkg/session/act_informative.go	333			
+session	yesNo	pkg/session/act_informative.go	341			
+session	colorLevelStr	pkg/session/act_informative.go	350			
 session	cmdInsult	pkg/session/act_social.go	17	src/act.social.c:do_insult	c do_insult(	
 session	cmdDream	pkg/session/act_social.go	27	src/act.social.c:do_dream	c do_dream(	
 session	cmdAlias	pkg/session/act_social.go	36			
@@ -8042,13 +8042,8 @@ session	readAuditFile	pkg/session/audit_pii_test.go	20
 session	TestAuditNeverRecordsRejectedNameInput	pkg/session/audit_pii_test.go	44			
 session	TestAuditRecordsGatePassedName	pkg/session/audit_pii_test.go	99			
 session	IsAutoLootEnabled	pkg/session/autoloot.go	10			
-session	cmdAutoLoot	pkg/session/autoloot.go	18			
-session	init	pkg/session/autoloot.go	32			
-session	TestCmdAutoLoot_TogglesPrfAutoLoot	pkg/session/autoloot_test.go	12			
-session	TestIsAutoLootEnabled_NilPlayer	pkg/session/autoloot_test.go	36			
-session	TestCmdAutoLoot_NilPlayer	pkg/session/autoloot_test.go	43			
-session	TestCmdAutoLoot_ConcurrentToggleRead	pkg/session/autoloot_test.go	55			
-session	TestIsAutoLootEnabled_UsesExistingFlag	pkg/session/autoloot_test.go	76			
+session	TestIsAutoLootEnabled_NilPlayer	pkg/session/autoloot_test.go	10			
+session	TestIsAutoLootEnabled_UsesExistingFlag	pkg/session/autoloot_test.go	18			
 session	newAutosaveHarness	pkg/session/autosave_test.go	26			
 session	(autosaveHarness).addSession	pkg/session/autosave_test.go	45			
 session	TestAutosaveFiresAtMinuteTenNotNine	pkg/session/autosave_test.go	56			
@@ -8383,32 +8378,31 @@ session	TestCmdHelpQuestionMarkAlias	pkg/session/cmd_info_help_test.go	219
 session	TestCmdHelpRawArgumentSpacingMatchesC	pkg/session/cmd_info_help_test.go	234			
 session	readSessionText	pkg/session/cmd_info_test.go	18			
 session	TestAlignmentText	pkg/session/cmd_info_test.go	48			
-session	TestAcTextEveryBand	pkg/session/cmd_info_test.go	73	src/act.informative.c:do_score	src/act.informative.c:1232-1257	
-session	TestAcTextNakedIsExact100	pkg/session/cmd_info_test.go	117	src/act.informative.c:do_score	src/act.informative.c:1232-1234	
-session	TestPositionTextEveryPosition	pkg/session/cmd_info_test.go	137	src/act.informative.c:do_score	src/act.informative.c:1324-1355	
-session	TestArticleFor	pkg/session/cmd_info_test.go	166			
-session	TestCmdLevels	pkg/session/cmd_info_test.go	187			
-session	TestCmdAbils	pkg/session/cmd_info_test.go	210			
-session	TestCmdAbilsClampsCEffectiveStatCeilings	pkg/session/cmd_info_test.go	248			
-session	TestCmdCoins	pkg/session/cmd_info_test.go	280			
-session	TestCmdScore	pkg/session/cmd_info_test.go	297			
-session	TestScoreManaLabelMatchesCClassBranch	pkg/session/cmd_info_test.go	321			
-session	TestCmdScoreFixedFixtureGolden	pkg/session/cmd_info_test.go	333			
-session	TestCmdScorePreservesNegativeExperienceToNextLevel	pkg/session/cmd_info_test.go	389			
-session	TestCmdScoreUsesPlayerRaceAndClassNamesAndCLineEnding	pkg/session/cmd_info_test.go	405			
-session	TestCmdScoreStateVariants	pkg/session/cmd_info_test.go	423			
-session	TestCmdScoreFightingTargetUsesCPersAndThinAirFallback	pkg/session/cmd_info_test.go	456			
-session	TestCmdScoreSpellAffectsUseCNewestFirstTwoColumnLayout	pkg/session/cmd_info_test.go	488			
-session	TestCmdScoreActiveAffectFilterUsesCBitPositions	pkg/session/cmd_info_test.go	533			
-session	TestFleshAlterWeaponMatchesCLevelBands	pkg/session/cmd_info_test.go	551			
-session	TestCmdSaySelfEcho	pkg/session/cmd_info_test.go	573			
-session	TestCmdHelp	pkg/session/cmd_info_test.go	607			
-session	TestCmdWhere	pkg/session/cmd_info_test.go	625			
-session	TestCmdWho	pkg/session/cmd_info_test.go	643			
-session	TestCmdUsersCFormat	pkg/session/cmd_info_test.go	661			
-session	TestCmdUsersPreLoginAndStateLabels	pkg/session/cmd_info_test.go	686			
-session	TestCmdUsersSwitchedIdleUsesBodyLevel	pkg/session/cmd_info_test.go	763			
-session	TestCmdWhoisOffline	pkg/session/cmd_info_test.go	796			
+session	TestAcTextEveryBand	pkg/session/cmd_info_test.go	75	src/act.informative.c:do_score	src/act.informative.c:1232-1257	
+session	TestPositionTextEveryPosition	pkg/session/cmd_info_test.go	118	src/act.informative.c:do_score	src/act.informative.c:1324-1355	
+session	TestArticleFor	pkg/session/cmd_info_test.go	147			
+session	TestCmdLevels	pkg/session/cmd_info_test.go	168			
+session	TestCmdAbils	pkg/session/cmd_info_test.go	191			
+session	TestCmdAbilsClampsCEffectiveStatCeilings	pkg/session/cmd_info_test.go	229			
+session	TestCmdCoins	pkg/session/cmd_info_test.go	261			
+session	TestCmdScore	pkg/session/cmd_info_test.go	278			
+session	TestScoreManaLabelMatchesCClassBranch	pkg/session/cmd_info_test.go	302			
+session	TestCmdScoreFixedFixtureGolden	pkg/session/cmd_info_test.go	314			
+session	TestCmdScorePreservesNegativeExperienceToNextLevel	pkg/session/cmd_info_test.go	370			
+session	TestCmdScoreUsesPlayerRaceAndClassNamesAndCLineEnding	pkg/session/cmd_info_test.go	386			
+session	TestCmdScoreStateVariants	pkg/session/cmd_info_test.go	404			
+session	TestCmdScoreFightingTargetUsesCPersAndThinAirFallback	pkg/session/cmd_info_test.go	437			
+session	TestCmdScoreSpellAffectsUseCNewestFirstTwoColumnLayout	pkg/session/cmd_info_test.go	469			
+session	TestCmdScoreActiveAffectFilterUsesCBitPositions	pkg/session/cmd_info_test.go	514			
+session	TestFleshAlterWeaponMatchesCLevelBands	pkg/session/cmd_info_test.go	532			
+session	TestCmdSaySelfEcho	pkg/session/cmd_info_test.go	554			
+session	TestCmdHelp	pkg/session/cmd_info_test.go	588			
+session	TestCmdWhere	pkg/session/cmd_info_test.go	606			
+session	TestCmdWho	pkg/session/cmd_info_test.go	624			
+session	TestCmdUsersCFormat	pkg/session/cmd_info_test.go	642			
+session	TestCmdUsersPreLoginAndStateLabels	pkg/session/cmd_info_test.go	667			
+session	TestCmdUsersSwitchedIdleUsesBodyLevel	pkg/session/cmd_info_test.go	744			
+session	TestCmdWhoisOffline	pkg/session/cmd_info_test.go	777			
 session	cmdQuit	pkg/session/cmd_inventory.go	11			
 session	cmdReallyQuit	pkg/session/cmd_inventory.go	15			
 session	cmdQuiStub	pkg/session/cmd_inventory.go	23	src/act.other.c:do_quit	src/act.other.c:114-116	
@@ -8637,6 +8631,7 @@ session	TestPositionFailMessageMatchesC	pkg/session/command_gates_test.go	90
 session	TestCommandGateCascadeHidesLevelBeforePositionAndFrozen	pkg/session/command_gates_test.go	111			
 session	TestCommandGateCascadeFrozenAndSwitchedBeforePosition	pkg/session/command_gates_test.go	131			
 session	TestCommandGatesAreAllCRows	pkg/session/command_gates_test.go	203			
+session	TestAllCSocialsDispatchThroughExecuteCommand	pkg/session/command_gates_test.go	214			
 session	mustParseCommandOrder	pkg/session/command_order.go	32			
 session	resolveCommandPrefix	pkg/session/command_order.go	89			
 session	TestResolveCommandPrefixThreeLaws	pkg/session/command_order_test.go	16			
@@ -9195,7 +9190,7 @@ session	TestInactiveRegistrationUsesCEntryGate	pkg/session/inactive_test.go	9
 session	TestInfoRegistrationUsesCEntryGate	pkg/session/info_test.go	9			
 session	newBodyInfobarState	pkg/session/infobar_body.go	12			
 session	mobInfoBarBody	pkg/session/infobar_body.go	33	src/act.display.c:do_infobar	src/act.display.c:112-155	
-session	(Session).bodyInfoBarUpdateOutput	pkg/session/infobar_body.go	104	src/act.display.c:InfoBarUpdate; src/comm.c:make_prompt	src/act.display.c:226-285 | src/comm.c:1158-1193	
+session	(Session).bodyInfoBarUpdateOutput	pkg/session/infobar_body.go	99	src/act.display.c:InfoBarUpdate; src/comm.c:make_prompt	src/act.display.c:226-285 | src/comm.c:1158-1193	
 session	readRawInfobarEvent	pkg/session/infobar_depth_test.go	13			
 session	TestInfobarRegistrationUsesCEntryGate	pkg/session/infobar_depth_test.go	33			
 session	TestInfobarUnknownStateResetsToOff	pkg/session/infobar_depth_test.go	51			
@@ -9858,7 +9853,6 @@ session	newFlagShopHarnessWithStore	pkg/session/plr_crash_session_test.go	36
 session	TestShopBuySetsCrashFlag	pkg/session/plr_crash_session_test.go	73			
 session	TestShopSellSetsCrashFlag	pkg/session/plr_crash_session_test.go	99			
 session	TestWirePlayerSaverRejectsForeignPlayer	pkg/session/plr_crash_session_test.go	148			
-session	TestPointRegistrationUsesCEntryGate	pkg/session/point_depth_test.go	9			
 session	TestPokeRegistrationUsesCEntryGate	pkg/session/poke_depth_test.go	10			
 session	TestPolicyRegistrationUsesCEntryGate	pkg/session/policy_depth_test.go	9			
 session	TestPonderRegistrationUsesCEntryGate	pkg/session/ponder_depth_test.go	10			
