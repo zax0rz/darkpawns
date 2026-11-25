@@ -98,3 +98,18 @@ All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`:
 | F. ruling or harness capability | 3 | Rows 2, 4 and 908 cannot receive an isolated clean paired proof under the current approved behavior or fixture/input boundaries. |
 
 These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; row 622 is superseded by the Go-only correction in `CLASSIFICATION-CORRECTIONS.md`. Batch 05 row 148 remains a separate R1a unknown, outside the 308 survivors.
+
+## Survivor repair batch: track (2026-11-25)
+
+Four bucket-A survivors have isolated kill proofs: rows 322 and 323 at the two do_track entry gates, row 327 at the player evasion refusal, and row 330 at BFS_NO_PATH. Row 328 is reclassified A→D in `CLASSIFICATION-CORRECTIONS.md`; its C error arm requires an invalid room index and is unreachable through the registered player path. The original triage table remains the first-pass record. Effective survivor buckets after this correction are A264/B0/C15/D24/E2/F3.
+
+The corrected clean run is `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-track-clean-r2`: CLEAN, 3/3 scenarios, zero infra, timeouts, hollow steps, probe setup refusals, or draw divergence. Its C transcript reaches both gate lines, the repeated evasion refusal and fall-through, and the HMHR-specific no-path line `You can't sense a trail to him from here.` The first attempt, `luna-survivors-track-clean-r1`, is retained but not used as proof for row 330: its beggar resolved in the tracker's room and reached BFS_ALREADY_THERE; the corrected scenario uses a player target in a separate room.
+
+Each mutant run below is expected NOT_CLEAN and has one isolated Go byte difference against its original C line. All four have zero draw divergence, infra, timeouts, hollow steps, and probe setup refusals.
+
+| Row | C transcript / Go mutant diff | Scenario | Mutant run | Clean run |
+|---:|---|---|---|---|
+| 322 | `src/graph.c:194` `You have no idea how.` / `pkg/game/graph.go:137` `Qou have no idea how.` | `track-survivor-gates-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-track-row322-mutant-r1` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-track-clean-r2` |
+| 323 | `src/graph.c:199` `You have no idea how.` / `pkg/game/graph.go:142` `Qou have no idea how.` | `track-survivor-gates-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-track-row323-mutant-r1` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-track-clean-r2` |
+| 327 | `src/graph.c:218` `You sense no trail.` / `pkg/game/graph.go:176` `Qou sense no trail.` | `track-evasion-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-track-row327-mutant-r1` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-track-clean-r2` |
+| 330 | `src/graph.c:232-235` `You can't sense a trail to him from here.` / `pkg/game/graph.go:190` `Qou can't sense a trail to him from here.` | `track-no-path-depth` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-track-row330-mutant-r1` | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-track-clean-r2` |

@@ -1,0 +1,75 @@
+# C-first proof for the two surviving do_track entry gates: a non-tracking
+# class is refused before skill lookup, while a warrior with zero track skill
+# reaches the separate no-skill branch.
+
+# depth-case: track.class-gate
+# depth-case: track.no-skill-gate
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Trackgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Trackgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Trackpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Trackpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Trackgod class mage
+set player Trackpeer class warrior
+skillset Trackpeer 'track' 0
+
+[probe]
+track nobody
+send:target track nobody

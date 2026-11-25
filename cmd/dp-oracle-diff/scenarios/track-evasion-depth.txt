@@ -1,0 +1,94 @@
+# C-first live player-victim evasion gate. A 100-point evasion skill gives a
+# high chance to reach the trail-refusal arm within this repeated probe; the
+# fixed seed and draw-parity census retain the exact draw sequence.
+
+# depth-case: track.evasion-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Trackgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Trackgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Evasionpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Evasionpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Evasionpeer 8106
+goto 8105
+set player Trackgod class warrior
+skillset Trackgod 'track' 100
+skillset Evasionpeer 'evasion' 100
+
+[probe]
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer
+track Evasionpeer

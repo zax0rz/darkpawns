@@ -1,0 +1,75 @@
+# C-first proof of BFS_NO_PATH in do_track. The tracker and visible player
+# occupy distinct valid rooms, but the fixture removes every exit from the
+# tracker room. A player target avoids name collisions with world mobs.
+
+# depth-case: track.no-path
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 none
+
+[setup:oracle]
+Trackgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Trackgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Trackpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Trackpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Trackpeer 8106
+goto 8105
+set player Trackgod class warrior
+skillset Trackgod 'track' 100
+
+[probe]
+track Trackpeer

@@ -1,11 +1,11 @@
 c_site	function	classification	case_ids	notes
-src/graph.c:194	do_track	proven	track.class-gate	Real registered track dispatch reaches the class gate; TestTrackClassGate asserts the exact refusal. (R1/R2/R5e/R5h).
-src/graph.c:199	do_track	proven	track.no-skill-gate	Real registered track dispatch reaches the learned-skill gate; TestTrackSkillGate asserts the exact refusal. (R1/R2/R5e/R5h).
+src/graph.c:194	do_track	proven	track.class-gate	Registered C dispatch and the C-first mage probe reach the class refusal; TestTrackClassGate also asserts the exact bytes. (R1/R2/R5e/R5h).
+src/graph.c:199	do_track	proven	track.no-skill-gate	The C-first warrior probe with zero track skill reaches the separate learned-skill refusal; TestTrackSkillGate also asserts the exact bytes. (R1/R2/R5e/R5h).
 src/graph.c:204	do_track	proven	track.no-argument	track-depth@1,2,3,5,8 reaches the empty-argument output through registered dispatch. (R1/R2/R3/R5e/R5h).
 src/graph.c:208	do_track	proven	track.target-not-found	track-depth@1,2,3,5,8 reaches the target lookup miss through registered dispatch. (R1/R2/R3/R5e/R5h).
 src/graph.c:212	do_track	proven	track.notrack-sentinel-victim	track-depth@1,2,3,5,8 reaches the NOTRACK victim branch through registered dispatch. (R1/R2/R3/R5e/R5h).
-src/graph.c:218	do_track	proven	track.evasion-roll	TestTrackEvasionRoll pins the guarded roll path. (R1/R2/R3/R5e/R5h).
-src/graph.c:227	do_track	proven	track.bfs-error	TestTrackBFSSentinels pins the BFS failure arm. (R1/R2/R5e/R5h).
+src/graph.c:218	do_track	proven	track.evasion-roll;track.evasion-refusal	TestTrackEvasionRoll pins the draw; the C-first repeated probe reaches the exact evasion refusal and fall-through with matching draws. (R1/R2/R3/R5e/R5h).
+src/graph.c:227	do_track	unreachable	-	BFS_ERROR needs a room index outside 0..top_of_world; the registered player path installs valid rooms and dispatches only after login fallback. See track.bfs-error and survivor row 328 correction. (R1/R2/R5e/R5g).
 src/graph.c:230	do_track	proven	track.already-there	track-depth@1,2,3,5,8 reaches the already-there branch through registered dispatch. (R1/R2/R3/R5e/R5h).
-src/graph.c:235	do_track	proven	track.no-path	TestTrackBFSSentinels pins the no-path sentinel. (R1/R2/R3/R5e/R5h).
+src/graph.c:235	do_track	proven	track.no-path	The C-first no-exits fixture reaches BFS_NO_PATH and emits the exact HMHR output; TestTrackBFSSentinels also pins the sentinel. (R1/R2/R3/R5e/R5h).
 src/graph.c:255	do_track	proven	track.trail-direction	track-depth@1,2,3,5,8 reaches the real trail direction output. (R1/R2/R3/R5e/R5h).
