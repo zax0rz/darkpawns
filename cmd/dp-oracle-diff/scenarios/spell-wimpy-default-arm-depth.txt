@@ -1,0 +1,115 @@
+# depth-case: fight.damage-spell-wimpy-arm
+# A C-first spoken call-lightning cast lowers a connected victim beneath its
+# legal wimpy threshold. The victim receives the damage() default-arm text.
+# This follows do_cast -> mag_damage -> damage, exercising the spell damage
+# seam that calls ApplySurvivingVictimDefaultArm.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+WimpSpellActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+WimpSpellActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+WimpSpellVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+WimpSpellVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+WimpSpellObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+WimpSpellObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport WimpSpellVictim 8105
+teleport WimpSpellObserver 8105
+set player WimpSpellActor class mage
+skillset WimpSpellActor 'call lightning' 100
+set player WimpSpellActor maxmana 5000
+set player WimpSpellActor mana 5000
+set player WimpSpellActor align 1000
+set player WimpSpellVictim class mage
+set player WimpSpellVictim level 20
+set player WimpSpellVictim maxhit 600
+set player WimpSpellVictim hit 160
+set player WimpSpellActor maxhit 600
+set player WimpSpellObserver maxhit 600
+wimpy 150
+set player WimpSpellActor level 31
+
+[probe]
+cast 'call lightning' WimpSpellVictim
