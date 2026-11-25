@@ -1,0 +1,48 @@
+# The standing potion position gate is in C mag_objectmagic's ITEM_POTION
+# arm (src/spell_parser.c:699-704); this scenario reaches it through the
+# registered quaff command while the player is sitting.
+# depth-case: parser.quaff.potion-sitting-last-survivor
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 on
+force-load 4811
+spawn-obj 4811 1 8105 80
+
+[setup:oracle]
+Sitpotion
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sitpotion
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+get potion
+
+[probe]
+sit
+quaff potion

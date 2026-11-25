@@ -12,6 +12,7 @@
 # depth-case: ctell.immortal-rank-filter
 # depth-case: ctell.immortal-broadcast
 # depth-case: ctell.norepeat
+# depth-case: ctell.hidden-sender-recipient
 
 [fixture]
 empty-players
@@ -102,6 +103,7 @@ Y
 1
 
 [warmup]
+set Clangod level 34
 clan create Clanmate Wolves
 clan set applev 1 Wolves
 clan create Clanother Tigers
@@ -118,3 +120,5 @@ ctell 1 #2 leader only
 ctell 1 #1 everyone
 norepeat
 ctell 1 silent clan
+invis 34
+ctell 1 hidden sender

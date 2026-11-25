@@ -1,6 +1,7 @@
 # C-first switched mobile staff refusal. One warmup use spends staff 8054's
 # sole charge; the probed second use reaches the zero-charge TO_ROOM bytes.
 # depth-case: use.mobile-staff-empty-charge-room-output
+# depth-case: use.mobile-staff-zero-charge-last-survivor
 
 [fixture]
 empty-players

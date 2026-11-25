@@ -1,0 +1,87 @@
+# A charmed mobile oncmd calls the vocal C cast path through Lua and targets
+# its master, reaching cast_spell's charmed-master gate.
+# depth-case: cast.lua-mobile-charmed-master-gate
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 14405 1 8105 144
+mob-script 14405 oracle/luna_cast_gates.lua 512
+
+[lua-script mob/oracle/luna_cast_gates.lua]
+function oncmd()
+  if (argument == "say master") then
+    follow(ch, 1)
+    spell(ch, nil, SPELL_SANCTUARY, 1)
+    return TRUE
+  end
+  return FALSE
+end
+
+[setup:oracle]
+Castbody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Castbody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Castpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Castpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Castpeer 8105
+advance Castpeer 34
+set mob gil-glash int 10
+set mob gil-glash wis 10
+switch gil-glash
+
+[probe:peer]
+say master

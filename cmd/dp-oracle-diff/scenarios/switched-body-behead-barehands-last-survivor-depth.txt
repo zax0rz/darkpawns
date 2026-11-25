@@ -1,0 +1,49 @@
+# C-first mobile actor lane for do_behead's private bare-hands refusal.
+# The PC controller creates the trainee corpse before switching into the
+# unarmed clone; the descriptor receives the actor bytes at src/new_cmds.c:288.
+# depth-case: behead.switched-mobile-barehands-actor-output
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+replace-room-exits 8105 none
+spawn-mob 69 1 8105 80
+spawn-mob 16303 1 8105 163
+
+[setup:oracle]
+Bodybeheadbare
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bodybeheadbare
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+kill trainee
+~dpclock pulse 20
+switch clone
+
+[probe]
+behead trainee
