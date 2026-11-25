@@ -57,7 +57,7 @@ func CancelNoteWrite(ch *Player) {
 // HandleNoteInput processes one line of input from a player in note-write mode.
 // Returns true when writing is complete (line == "@"), false while buffering.
 // Paper writing tracks its editor state in noteWriteEntries without setting
-// PlrWriting, matching C's do_write (src/act.comm.c:1098-1101).
+// PlrWriting.
 //
 // '@' commits with no message: for a note, C's string_add takes the
 // STRINGADD_SAVE path through playing_string_cleanup, which only handles mail
