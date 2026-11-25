@@ -7,6 +7,8 @@
 
 # depth-case: track.no-argument
 # depth-case: track.target-not-found
+# depth-case: track.class-gate-mutation-loop
+# depth-case: track.no-skill-mutation-loop
 # depth-case: track.already-there
 # depth-case: track.notrack-sentinel-victim
 # depth-case: track.trail-direction
@@ -51,6 +53,12 @@ goto 8105
 skillset Trackgod 'track' 100
 
 [probe]
+set Trackgod class mage
+track
+set Trackgod class warrior
+skillset Trackgod 'track' 0
+track nobody
+skillset Trackgod 'track' 100
 track
 track nobody
 track citizen
