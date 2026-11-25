@@ -89,7 +89,7 @@ Y
 goto 8162
 teleport Commpeer 8161
 clan create Commpeer Wolves
-set player Commpeer level 34
+set player Commpeer level 38
 switch Darek
 north
 
