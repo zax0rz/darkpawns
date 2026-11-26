@@ -52,7 +52,7 @@ func SecurityHeaders(next http.Handler) http.Handler {
 			"script-src " + scriptSrc + "; " +
 			"style-src 'self' 'unsafe-inline'; " +
 			"img-src 'self' data:; " +
-			"connect-src 'self' ws: wss:; " +
+			"connect-src 'self'; " +
 			"font-src 'self'; " +
 			"object-src 'none'; " +
 			"media-src 'self'; " +

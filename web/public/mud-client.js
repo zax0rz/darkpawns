@@ -64,10 +64,8 @@ export function createMudClient(options) {
 
   const term = options.terminal;
   const doc = options.doc || document;
-  const params = new URLSearchParams(location.search);
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl =
-    options.wsUrl || params.get('host') || `${proto}//${location.host}/ws`;
+  const wsUrl = options.wsUrl || `${proto}//${location.host}/ws`;
 
   // Every one of these is optional. The splash has the connection chrome and
   // the status bar but none of the sidebar panels; the admin Terminal has
