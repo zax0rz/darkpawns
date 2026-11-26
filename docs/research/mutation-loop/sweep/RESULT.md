@@ -90,7 +90,7 @@ All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`. The table below gives t
 
 | Bucket | Count | Follow-up |
 |---|---:|---|
-| A. no witness | 201 | 200 killed by scenario-backed proofs in `REPAIR-LEDGER.tsv`; 1 open (row 918, a real Go divergence; see below). |
+| A. no witness | 201 | All 201 killed by scenario-backed proofs in `REPAIR-LEDGER.tsv`. Row 918, the last, was killed with the paper-writing fix in #3078 (PF-185). |
 | B. masked | 0 | No normalization or masking cases found. |
 | C. Go-only branch | 37 | The first 29 were handled in #3070 (27 removed or silenced, plus the two approved divergences DP-1373 and the alias cap). Rows 34, 60, 72, 111, 154, 488, 496 and 545 were added by the last-survivor batches and still need a removal code PR. |
 | D. C-unreachable | 57 | Excluded from repair work and the effective denominator. |
