@@ -1374,8 +1374,6 @@ func (w *World) mobGenDoor(m *MobInstance, argument string, scmd int) {
 	roomFormat := fmt.Sprintf("$n %ss the ", cmdDoor[scmd])
 	if ext.Keywords != "" {
 		Act(w, false, m, nil, nil, nil, roomFormat+"$F.", ext.Keywords, ToRoom)
-	} else {
-		Act(w, false, m, nil, nil, nil, roomFormat+"door.", "", ToRoom)
 	}
 	if (scmd == scmdOpen || scmd == scmdClose) && hasBack {
 		backName := "door"

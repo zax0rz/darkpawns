@@ -82,3 +82,9 @@ Effective buckets after this batch's 11 reclassifications are A208 (177 killed, 
 
 - **Row 918:** Return from bucket F to bucket A, open. The overlapping `sprintf` in `do_wiznet` (`src/act.wizard.c:1957-1963`) appended the peer's name correctly in the pinned C transcript, so R1a does not explain the missing suffix. C `do_write` on paper sets `ch->desc->str` and `max_str` and never sets `PLR_WRITING` (`src/act.comm.c:1098-1101`); Go `beginNoteWrite` sets it (`pkg/game/act_write.go:179`). This is a Go divergence (R4), not undefined behavior.
 - **Row 220:** The repair ledger names `switched-communication-depth`, but the row's mutant run failed on `switched-communication-soundproof-depth`. Corrected in `REPAIR-LEDGER.tsv`; the proof itself holds.
+
+## Zach's 2026-11-25 rulings (PR 1: Go-only removals and denominator rulings)
+
+- **Row 2:** Reclassify from bucket F to approved divergence under DP-1388 (ruling 8), excluded from the denominator. Go releases the board slot on an empty headline (`pkg/boards/boards.go:635-642`) instead of leaking it as C does (`src/boards.c:228-241`).
+- **Rows 834 and 838:** Reclassify from bucket F to `go-only-surface` (ruling 7), excluded from the denominator. Go's `DP_ALLOW_NO_DB` operation and storage-error fallbacks in `cmdWhois` (`pkg/session/cmd_info.go:1563-1569,1591-1594`) stay as Go-only operational surface.
+- **Row 908 (and Round 2 row 8, Round 3 row 88):** Held open pending Zach's decision under ruling 3's stop condition: structured WebSocket `MsgCommand` (`pkg/session/session_pump.go:130,296-324`) applies `cInputJSON` (character filter only) and bypasses `TerminalLine` / `cTruncateInputLine`, so a WebSocket JSON client can deliver lines over 255 bytes (up to the 16 KiB read limit) to `cmdEcho`, `AppendBoardLine`, and `HandleNoteInput`.
