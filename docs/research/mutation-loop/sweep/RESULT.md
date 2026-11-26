@@ -90,12 +90,12 @@ All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`. The table below gives t
 
 | Bucket | Count | Follow-up |
 |---|---:|---|
-| A. no witness | 201 | All 201 killed by scenario-backed proofs in `REPAIR-LEDGER.tsv`. Row 918, the last, was killed with the paper-writing fix in #3078 (PF-185). |
+| A. no witness | 206 | All 206 killed: 205 by scenario-backed proofs in `REPAIR-LEDGER.tsv`, and row 4 by a unit proof under the 2026-11-11 exception (#3081). Rows 527-530 were killed in #3082. |
 | B. masked | 0 | No normalization or masking cases found. |
-| C. Go-only branch | 37 | The first 29 were handled in #3070 (27 removed or silenced, plus the two approved divergences DP-1373 and the alias cap). Rows 34, 60, 72, 111, 154, 488, 496 and 545 were added by the last-survivor batches and still need a removal code PR. |
-| D. C-unreachable | 57 | Excluded from repair work and the effective denominator. |
-| E. not player-facing | 3 | Collector false positives; exclude from repair work and future draws. |
-| F. ruling or harness capability | 10 | Rows 2, 4 and 908 have behavior or fixture limits; rows 834 and 838 need a no-database harness state; rows 144, 527–529 and 530 are R1a unknowns because C builds the line with overlapping `sprintf`. |
+| C. Go-only branch | 39 | All handled. 38 rows are in `GO-ONLY-REMOVALS.tsv`: 20 removed, 14 silenced, 2 approved divergences (DP-1373 and the alias cap) and 2 ported (647-648, #3074). Row 2 is an approved divergence under DP-1388 (ruling 8), recorded in `CLASSIFICATION-CORRECTIONS.md`. Row 908 was removed in #3084 once structured WebSocket commands got C's line cut. |
+| D. C-unreachable | 58 | Excluded from repair work and the effective denominator. Row 144 joined in #3082: C never sets a clan spell. |
+| E. not player-facing | 5 | Three collector false positives, plus rows 834 and 838 (`go-only-surface`, ruling 7). Excluded from repair work and future draws. |
+| F. ruling or harness capability | 0 | All settled by Zach's 2026-11-25 rulings. |
 
 These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; row 622 is superseded by the Go-only correction in `CLASSIFICATION-CORRECTIONS.md`. Batch 05 row 148 remains a separate R1a unknown, outside the 308 survivors.
 
@@ -196,3 +196,20 @@ Relative to batch 3, this resolves the last 15 rows: 11 kills, row 545 to C, row
 Claude merged Luna's last-survivor PRs #3071, #3072, #3073 and #3076 together and recomputed the bucket table above from `SURVIVOR-TRIAGE.tsv`, every move in `CLASSIFICATION-CORRECTIONS.md`, and the row ids in `REPAIR-LEDGER.tsv`. All 39 new repair rows were checked: each mutant run is a one-line commit that FAILs on its scenario with zero draw divergence, and each clean run is CLEAN with zero draw divergence and no refused setup steps. Effective buckets: A201 (200 killed, 1 open), B0, C37, D57, E3, F10, total 308.
 
 Row 918 is not an R1a unknown. The same overlapping `sprintf` in `do_wiznet` (`src/act.wizard.c:1957`) appended `Wizwritingpeer` correctly in the pinned C transcript, so the build does append; the `(Writing)` suffix was missing because the peer was never flagged. C's `do_write` on paper points `ch->desc->str` at the note and never sets `PLR_WRITING` (`src/act.comm.c:1098-1101`), while Go's `beginNoteWrite` does (`pkg/game/act_write.go:179`). Every C `PLR_WRITING` reader (wiznet, who, tell, the channels) therefore sees a different state for a player writing on paper. Row 918 returns to bucket A, open, pending a Go fix; a board-write probe (`src/boards.c:266` sets the flag) can witness the sampled line itself.
+
+## Claude's recount after the ruling work (2026-11-25)
+
+Claude recomputed the bucket table after #3080, #3081, #3082 and #3084 (the
+ruling work from Zach's 2026-11-25 rulings in `DECISIONS.md`) and Round 4
+(#3083) merged. Starting from A201, B0, C37, D57, E3, F10:
+
+- Rows 527, 528, 529 and 530: F to A, killed (ruling 1, #3082).
+- Row 4: F to A, unit-proven (ruling 6, #3081).
+- Rows 2 and 908: F to C. Row 2 is an approved divergence (ruling 8); row 908
+  was removed (ruling 3, #3084).
+- Row 144: F to D (#3082).
+- Rows 834 and 838: F to E as `go-only-surface` (ruling 7).
+
+Result: **A206 (all killed), B0, C39 (all handled), D58, E5, F0**, 308 rows.
+No survivor is left open. Row 148, outside the 308, is killed by
+`clan-info-planless-depth` (#3082) under ruling 2.
