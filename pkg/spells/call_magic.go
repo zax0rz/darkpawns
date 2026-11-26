@@ -233,33 +233,6 @@ func CastPositionRefusalMessage(position int) string {
 	}
 }
 
-// checkPosition verifies the caster is in a valid position to cast.
-func checkPosition(ch interface{}, si *SpellInfo) bool {
-	type poser interface{ GetPosition() int }
-	p, ok := ch.(poser)
-	if !ok {
-		return false
-	}
-
-	pos := p.GetPosition()
-	type sender interface{ SendMessage(string) }
-
-	switch {
-	case pos == int(PosDead):
-		if s, ok := ch.(sender); ok {
-			s.SendMessage("You can't cast spells while dead!\r\n")
-		}
-		return false
-	case pos < int(si.MinPosition):
-		if s, ok := ch.(sender); ok {
-			s.SendMessage("You can't concentrate enough!\r\n")
-		}
-		return false
-	}
-
-	return true
-}
-
 // roomIsPeaceful checks if the room has the PEACEFUL flag set.
 func roomIsPeaceful(ch interface{}, world interface{}) bool {
 	type rg interface{ GetRoomVNum() int }
