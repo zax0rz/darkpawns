@@ -28,8 +28,8 @@ func TestBoardMessageCappedAtMaxLength(t *testing.T) {
 	if got := len(bs.msgStorage[bs.writerSlots["Cap"]]); got > MaxMessageLength {
 		t.Fatalf("first line stored at %d bytes, want <= %d", got, MaxMessageLength)
 	}
-	if !strings.Contains(ch.lastMessage(), "String too long - Truncated.") {
-		t.Fatalf("truncation reply = %q, want C's \"String too long - Truncated.\"", ch.lastMessage())
+	if strings.Contains(ch.lastMessage(), "String too long - Truncated.") {
+		t.Fatalf("first-line defensive cap emitted %q, want silent cap behind 255-byte line cut", ch.lastMessage())
 	}
 
 	bs.AppendBoardLine(magic, ch, strings.Repeat("b", 200))

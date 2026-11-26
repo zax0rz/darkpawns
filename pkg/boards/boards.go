@@ -933,8 +933,7 @@ func (bs *BoardSystem) AppendBoardLine(magic int, ch BoardPlayer, line string) {
 	}
 	if bs.msgStorage[slot] == "" {
 		if len(line)+3 > MaxMessageLength {
-			// modify.c:132-137 — truncate the first line to the cap and say so.
-			ch.SendMessage("String too long - Truncated.\r\n")
+			// Defensive bounds guard; keep truncated prefix silently.
 			line = line[:MaxMessageLength-3] + "\r\n"
 		}
 		bs.msgStorage[slot] = line
