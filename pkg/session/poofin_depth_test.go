@@ -2,27 +2,7 @@ package session
 
 import (
 	"testing"
-
-	"github.com/zax0rz/darkpawns/pkg/combat"
 )
-
-func TestPoofinRegistrationUsesCEntryGate(t *testing.T) {
-	gate, ok := commandGates["poofin"]
-	if !ok {
-		t.Fatal("poofin command has no C gate")
-	}
-	if gate.MinLevel != LVL_IMMORT || gate.MinPosition != combat.PosDead {
-		t.Fatalf("poofin gate = level %d position %d, want level %d position %d", gate.MinLevel, gate.MinPosition, LVL_IMMORT, combat.PosDead)
-	}
-
-	entry, ok := cmdRegistry.Lookup("poofin")
-	if !ok {
-		t.Fatal("poofin command is not registered")
-	}
-	if entry.MinLevel != gate.MinLevel || entry.MinPosition != gate.MinPosition {
-		t.Fatalf("poofin registry gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, gate.MinLevel, gate.MinPosition)
-	}
-}
 
 func TestCmdPoofinClearsAndPreservesCRawArgument(t *testing.T) {
 	m := makeTestManager(t)

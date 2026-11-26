@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_last	last	last.entry-gate	D1	command	unit-green	TestLastRegistrationUsesCEntryGate	interpreter.c:535	The Go registry preserves C's LVL_GOD-1/POS_DEAD entry gate (R2/R5e).
+do_last	last	last.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:535	The Go registry preserves C's LVL_GOD-1/POS_DEAD entry gate (R2/R5e).
 do_last	last	last.no-arguments	D1	command	oracle-green	last-depth	act.wizard.c:1834-1841	Empty input reaches C's exact For whom do you wish to search? response (R1/R5e).
 do_last	last	last.not-found	D1	command	oracle-green	last-depth	act.wizard.c:1842-1845	A missing pfile reaches C's exact There is no such player. response; the no-database Go harness now preserves that early return (R1/R4/R5e).
 do_last	last	last.argument-first-token	D1	command	oracle-green	last-depth	interpreter.c:1267-1286; act.wizard.c:1840-1842	The fill-word-prefixed missing target proves one_argument selects the first meaningful token and ignores the rest (R1/R5e).

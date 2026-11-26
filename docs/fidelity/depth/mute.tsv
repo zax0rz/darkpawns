@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_wizutil	mute	mute.entry-gate	D1	command	unit-green	TestMuteRegistrationUsesCEntryGate	interpreter.c:559; act.wizard.c:2077-2140	The C mute row is available from level 1 at POS_DEAD; the focused registration test pins the authoritative gate (R1/R2/R5e).
+do_wizutil	mute	mute.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:559; act.wizard.c:2077-2140	The C mute row is available from level 1 at POS_DEAD; the focused registration test pins the authoritative gate (R1/R2/R5e).
 do_wizutil	mute	mute.no-argument	D2	command	oracle-green-multiseed	mute-depth@1,2,3,5,8	act.wizard.c:2087-2089	The authorized actor reaches the exact do_wizutil no-target prompt after the command row and inner auth guard (R1/R3/R5e).
 do_wizutil	mute	mute.target-not-found	D2	command	oracle-green-multiseed	mute-depth@1,2,3,5,8	act.wizard.c:2090-2091	A visible authorized actor with an unresolved target receives the exact player-miss bytes (R1/R3/R5e).
 do_wizutil	mute	mute.visible-npc-target	D2	command	oracle-green-multiseed	mute-depth@1,2,3,5,8	act.wizard.c:2092-2093; handler.c:1276-1300	A visible mob resolves before the sub-command switch and reaches the shared NPC rejection (R1/R3/R5e).

@@ -3,19 +3,8 @@ package session
 import (
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestMuteRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := cmdRegistry.Lookup("mute")
-	if !ok {
-		t.Fatal("mute command is not registered")
-	}
-	if entry.MinLevel != 1 || entry.MinPosition != combat.PosDead {
-		t.Fatalf("mute gate = (%d, %d), want (1, %d)", entry.MinLevel, entry.MinPosition, combat.PosDead)
-	}
-}
 
 func TestCmdMuteMatchesDoWizutilTargetBranches(t *testing.T) {
 	m := makeTestManager(t)

@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_action	fondle	fondle.entry-gate	D1	command	unit-green	TestFondleRegistrationUsesCEntryGate	interpreter.c:451	The registered C row is POS_RESTING with no minimum level; the standard social entry gate is shared with the already-proven social class.
+do_action	fondle	fondle.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:451	The registered C row is POS_RESTING with no minimum level; the standard social entry gate is shared with the already-proven social class.
 do_action	fondle	fondle.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:451	The shared POS_RESTING command rejection is proven by the fade position-gate vehicle.
 do_action	fondle	fondle.noshout	D1	command	delegated	dance-noshout	act.social.c:113-118	The shared PLR_NOSHOUT refusal runs before target lookup.
 do_action	fondle	fondle.no-argument	D2	audience	oracle-green-multiseed	fondle-depth@1,2,3,5,8	act.social.c:102-113; lib/misc/socials:250-258	The no-argument record emits the exact actor prompt and its room audience.

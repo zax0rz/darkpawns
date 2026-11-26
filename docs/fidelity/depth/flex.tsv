@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_action	flex	flex.entry-gate	D1	command	unit-green	TestFlexRegistrationUsesCEntryGate	interpreter.c:447; act.social.c:102-112	The registered C row is POS_RESTING with no minimum level.
+do_action	flex	flex.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:447; act.social.c:102-112	The registered C row is POS_RESTING with no minimum level.
 do_action	flex	flex.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:447; interpreter.c:910-947	The shared POS_RESTING command rejection is proven by the fade position-gate vehicle.
 do_action	flex	flex.no-argument	D3	audience	oracle-green-multiseed	flex-depth@1,2,3,5,8	act.social.c:102-113; lib/misc/socials:1198-1206	The no-argument record emits the actor line and the room audience.
 do_action	flex	flex.target-success	D3	audience	oracle-green-multiseed	flex-depth@1,2,3,5,8	act.social.c:114-151; lib/misc/socials:1198-1206	A visible standing target receives the actor, non-victim room, and victim messages.

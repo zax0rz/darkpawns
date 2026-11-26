@@ -6,28 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
-
-func TestZlistRegistrationUsesCEntryGate(t *testing.T) {
-	gate, ok := commandGates["zlist"]
-	if !ok {
-		t.Fatal("zlist command has no C gate")
-	}
-	if gate.MinLevel != LVL_IMMORT || gate.MinPosition != combat.PosDead {
-		t.Fatalf("zlist gate = level %d position %d, want level %d position %d", gate.MinLevel, gate.MinPosition, LVL_IMMORT, combat.PosDead)
-	}
-
-	entry, ok := cmdRegistry.Lookup("zlist")
-	if !ok {
-		t.Fatal("zlist command is not registered")
-	}
-	if entry.MinLevel != gate.MinLevel || entry.MinPosition != gate.MinPosition {
-		t.Fatalf("zlist registry gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, gate.MinLevel, gate.MinPosition)
-	}
-}
 
 func TestCmdZlistMatchesCFixedReadBound(t *testing.T) {
 	w, err := game.NewWorld(&parser.World{

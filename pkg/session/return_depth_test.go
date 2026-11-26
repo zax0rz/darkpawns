@@ -3,19 +3,8 @@ package session
 import (
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestReturnRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := cmdRegistry.Lookup("return")
-	if !ok {
-		t.Fatal("return command is not registered")
-	}
-	if entry.MinLevel != 0 || entry.MinPosition != combat.PosDead {
-		t.Fatalf("return gate = (level %d, position %d), want (0, %d)", entry.MinLevel, entry.MinPosition, combat.PosDead)
-	}
-}
 
 func TestCmdReturnMatchesCSwitchedBodyMessage(t *testing.T) {
 	m := makeTestManager(t)

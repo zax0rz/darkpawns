@@ -8,16 +8,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
-func TestGotoRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := commandGates["goto"]
-	if !ok {
-		t.Fatal("goto command has no C gate")
-	}
-	if entry.MinLevel != LVL_IMMORT || entry.MinPosition != combat.PosSleeping {
-		t.Fatalf("goto gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, LVL_IMMORT, combat.PosSleeping)
-	}
-}
-
 func TestFindGotoRoomSkipsCFillWords(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "GotoWizard", 1001, true)

@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_race_say	rsay	rsay.entry-gate	D1	command	unit-green	TestRaceSayRegistrationUsesCEntryGate	interpreter.c:667; act.comm.c:635-646	The registered C row permits every level at POS_RESTING; the focused test pins the command-surface gate (R1/R2/R5e).
+do_race_say	rsay	rsay.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:667; act.comm.c:635-646	The registered C row permits every level at POS_RESTING; the focused test pins the command-surface gate (R1/R2/R5e).
 do_race_say	rsay	rsay.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:667	The shared POS_RESTING dispatcher rejection is already proven by the social position-gate vehicle (R5b/R5c).
 do_race_say	rsay	rsay.stupid-gate	D1	command	unit-green	TestRaceSayUsesCControlBytesAndGateOrder	act.comm.c:647-653	The wisdom/intelligence refusal runs before empty-argument handling and preserves C CRLF bytes (R1/R5e).
 do_race_say	rsay	rsay.noshout	D1	command	oracle-green	rsay-noshout	act.comm.c:654-658	PLR_NOSHOUT blocks race-say before argument parsing with C's exact actor-only refusal (R1/R2/R5e).

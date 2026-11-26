@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_pour	fill	fill.entry-gate	D1	command	unit-green	TestFillRegistrationUsesCEntryGate	interpreter.c:443; act.item.c:1186-1190	The registered C row is POS_STANDING with no minimum level.
+do_pour	fill	fill.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:443; act.item.c:1186-1190	The registered C row is POS_STANDING with no minimum level.
 do_pour	fill	fill.position-gate	D1	command	unit-green	TestFillRestingActorHitsCPositionGate	interpreter.c:443; interpreter.c:910-947	A resting actor is rejected before do_pour with C's exact POS_STANDING gate bytes.
 do_pour	fill	fill.no-arguments	D1	command	oracle-green-multiseed	fill-depth@1,2,3,5,8	act.item.c:1186-1190	Empty fill args yield the exact two-part usage response.
 do_pour	fill	fill.target-missing	D2	command	oracle-green-multiseed	fill-depth@1,2,3,5,8	act.item.c:1191-1194	A missing inventory target yields C's "You can't find it!" response.

@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_action	fade	fade.entry-gate	D1	command	unit-green	TestFadeRegistrationUsesCEntryGate	interpreter.c:439; act.social.c:102-112	The registered C row is POS_RESTING with no minimum level.
+do_action	fade	fade.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:439; act.social.c:102-112	The registered C row is POS_RESTING with no minimum level.
 do_action	fade	fade.position-gate	D1	command	unit-green	TestFadeSleepingActorHitsCPositionGate	interpreter.c:439; interpreter.c:910-947	A sleeping actor is rejected before do_action with C's exact position-gate bytes, including CRLF.
 do_action	fade	fade.no-argument	D2	audience	oracle-green-multiseed	fade-depth@1,2,3,5,8	act.social.c:102-113; lib/misc/socials:211-219	The no-argument record emits the actor line and the room fade audience.
 do_action	fade	fade.target-success	D3	audience	oracle-green-multiseed	fade-depth@1,2,3,5,8	act.social.c:114-151; lib/misc/socials:211-219	A visible target receives the actor, non-victim room, and victim record messages.

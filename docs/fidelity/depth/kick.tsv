@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_kick	kick	kick.entry-gate	D1	command	unit-green	TestKickRegistrationUsesCEntryGate	interpreter.c:528; act.offensive.c:587-590	The registered C row requires level 1 and POS_FIGHTING; the focused session test pins both the authoritative gate and Go registration (R2/R5e).
+do_kick	kick	kick.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:528; act.offensive.c:587-590	The registered C row requires level 1 and POS_FIGHTING; the focused session test pins both the authoritative gate and Go registration (R2/R5e).
 do_kick	kick	kick.position-gate	D1	command	unit-green	TestPositionFailMessageMatchesC	interpreter.c:528	The shared command dispatcher rejects callers below POS_FIGHTING with C's position bytes (R1/R2/R5b/R5c).
 do_kick	kick	kick.no-skill	D1	command	unit-green	TestDoKick_SkillKnownGateUnchanged	act.offensive.c:592-596	GET_SKILL==0 returns the exact martial-arts refusal before argument parsing or target lookup (R1/R5e).
 do_kick	kick	kick.no-argument	D1	command	unit-green	TestCmdKickTargetGates	act.offensive.c:600-608	An awake caller with no argument and no FIGHTING target receives Kick who?; the table test also pins the target-missing branch (R1/R5e).

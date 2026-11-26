@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_send	send	send.entry-gate	D1	command	unit-green	TestSendRegistrationUsesCEntryGate	interpreter.c:681	The registered C row is POS_SLEEPING with the LVL_GOD authorization gate, and the focused registration test pins both values (R2/R5e).
+do_send	send	send.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:681	The registered C row is POS_SLEEPING with the LVL_GOD authorization gate, and the focused registration test pins both values (R2/R5e).
 do_send	send	send.position-gate	D1	shared	delegated	group.position-gate	interpreter.c:681	The shared POS_SLEEPING dispatcher rejection is owned by the group gate vehicle (R5b/R5c).
 do_send	send	send.no-argument	D1	command	oracle-green-multiseed	send-depth@1,2,3,5,8	act.wizard.c:160-163	An empty argument reaches the exact Send what to who? response with its C line ending (R1/R2/R5e).
 do_send	send	send.missing-target	D1	command	oracle-green-multiseed	send-depth@1,2,3,5,8	act.wizard.c:164-167; config.c:93	An unresolved visible-character lookup emits C's exact NOPERSON text and no recipient bytes (R1/R5e).

@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_qcomm	qecho	qecho.entry-gate	D1	command	unit-green	TestQechoRegistrationUsesCEntryGate	interpreter.c:627; act.comm.c:1301-1305	The registered C row requires POS_DEAD and LVL_IMMORT; the focused test pins this command-surface gate (R2/R5e).
+do_qcomm	qecho	qecho.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:627; act.comm.c:1301-1305	The registered C row requires POS_DEAD and LVL_IMMORT; the focused test pins this command-surface gate (R2/R5e).
 do_qcomm	qecho	qecho.position-gate	D1	command	delegated	purge.position-gate	interpreter.c:627	The shared POS_DEAD dispatcher rejection is already proven by the purge gate boundary (R5b/R5c).
 do_qcomm	qecho	qecho.quest-gate	D1	command	oracle-green-multiseed	qecho-depth@1,2,3,5,8	act.comm.c:1306-1310	A caller without PRF_QUEST is rejected before argument parsing with C's exact quest-participation message (R1/R2/R5e).
 do_qcomm	qecho	qecho.noshout-gate	D1	command	oracle-green-multiseed	qecho-depth@1,2,3,5,8	act.comm.c:1311-1314	PLR_NOSHOUT blocks the quest channel with C's shared You cannot quest-say! response (R1/R2/R5e).

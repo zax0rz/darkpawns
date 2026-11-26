@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_load	load	load.entry-gate	D1	command	unit-green	TestLoadRegistrationUsesCEntryGate	interpreter.c:544; act.wizard.c:1248-1258	The registered C row is POS_DEAD with LVL_IMMORT, and the focused test pins that command-surface gate (R2/R5e).
+do_load	load	load.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:544; act.wizard.c:1248-1258	The registered C row is POS_DEAD with LVL_IMMORT, and the focused test pins that command-surface gate (R2/R5e).
 do_load	load	load.no-arguments	D1	command	oracle-green-multiseed	load-depth@1,2,3,5,8	act.wizard.c:1259-1263	An empty command reaches C's exact usage bytes (R1/R3/R5e).
 do_load	load	load.missing-argument	D1	command	oracle-green-multiseed	load-depth@1,2,3,5,8	act.wizard.c:1264-1280	A recognized mob kind without a value emits C's name-not-found prelude followed by usage; this preserves the actual one_argument/two_arguments path (R1/R2/R5e).
 do_load	load	load.object-missing-value	D1	command	oracle-green	load-depth@1	act.wizard.c:1276-1290	A recognized object kind without a value emits C's object-name-not-found prelude followed by usage (R1/R2/R5e/R5h).

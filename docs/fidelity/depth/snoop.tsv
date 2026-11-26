@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-cmdSnoop	snoop	snoop.entry-gate	D1	command	unit-green	TestSnoopRegistrationUsesCEntryGate	interpreter.c:723;act.wizard.c:1135-1140	The registered row requires LVL_GOD at POS_DEAD; the authoritative Go gate preserves the C command surface (R1/R2/R5e).
+cmdSnoop	snoop	snoop.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:723;act.wizard.c:1135-1140	The registered row requires LVL_GOD at POS_DEAD; the authoritative Go gate preserves the C command surface (R1/R2/R5e).
 cmdSnoop	snoop	snoop.no-argument	D1	audience	oracle-green-multiseed	snoop-depth@1,2,3,5,8	act.wizard.c:1120-1142	stop_snooping emits the exact active/inactive messages and clears the bidirectional descriptor link (R1/R4/R5e).
 cmdSnoop	snoop	snoop.missing-target	D1	command	oracle-green-multiseed	snoop-depth@1,2,3,5,8	act.wizard.c:1143-1144	C emits No such person around with its CRLF, rather than an invented online-only response (R1/R5e).
 cmdSnoop	snoop	snoop.no-descriptor-target	D2	command	oracle-green-multiseed	snoop-depth@1,2,3,5,8	act.wizard.c:1145-1146	Visible NPC lookup reaches the descriptor-less target branch and emits C's no-link bytes (R1/R3/R5e).

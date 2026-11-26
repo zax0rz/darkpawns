@@ -2,27 +2,7 @@ package session
 
 import (
 	"testing"
-
-	"github.com/zax0rz/darkpawns/pkg/combat"
 )
-
-func TestSkillsetRegistrationUsesCEntryGates(t *testing.T) {
-	gate, ok := commandGates["skillset"]
-	if !ok {
-		t.Fatal("skillset command has no C gate")
-	}
-	if gate.MinLevel != LVL_GRGOD || gate.MinPosition != combat.PosSleeping {
-		t.Fatalf("skillset gate = level %d position %d, want level %d position %d", gate.MinLevel, gate.MinPosition, LVL_GRGOD, combat.PosSleeping)
-	}
-
-	entry, ok := cmdRegistry.Lookup("skillset")
-	if !ok {
-		t.Fatal("skillset command is not registered")
-	}
-	if entry.MinLevel != gate.MinLevel || entry.MinPosition != gate.MinPosition {
-		t.Fatalf("skillset registry gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, gate.MinLevel, gate.MinPosition)
-	}
-}
 
 func TestCmdSkillsetUsesCVisibleTargetResolver(t *testing.T) {
 	wiz, target := makeSkillsetTestSession(t)

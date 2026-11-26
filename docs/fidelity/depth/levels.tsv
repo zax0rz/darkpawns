@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_levels	levels	levels.entry-gate	D1	command	unit-green	TestLevelsRegistrationUsesCEntryGate	interpreter.c:538	The registered C row is POS_DEAD with no command minimum, so position does not reject the command (R2/R5e).
+do_levels	levels	levels.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:538	The registered C row is POS_DEAD with no command minimum, so position does not reject the command (R2/R5e).
 do_levels	levels	levels.output	D2	command	oracle-green	levels-depth@1	act.informative.c:2311-2328; class.c:1089-1166	A non-NPC player receives all 30 exact class XP rows through the pager boundary (R1/R3/R5e).
 do_levels	levels	levels.arguments-ignored	D1	command	oracle-green	levels-arguments-depth@1	act.informative.c:2311-2328	C do_levels never parses its argument; a fresh vehicle proves the table is unchanged with trailing input (R1/R2/R5e).
 do_levels	levels	levels.npc-branch	D2	command	oracle-green	levels-npc-depth@1	act.informative.c:2311-2318; act.wizard.c:1175-1208	Switching into a mob reaches IS_NPC(ch) and emits only C's hound-dog line, without entering the pager (R1/R2/R5e).

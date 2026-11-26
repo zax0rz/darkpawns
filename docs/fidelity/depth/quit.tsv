@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_quit	quit	quit.entry-gate	D1	command	unit-green	TestQuitRegistrationUsesCEntryGate	interpreter.c:630; act.other.c:72-116	The registered C row is POS_DEAD with no level minimum; the focused test pins this command-surface gate (R2/R5e).
+do_quit	quit	quit.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:630; act.other.c:72-116	The registered C row is POS_DEAD with no level minimum; the focused test pins this command-surface gate (R2/R5e).
 do_quit	quit	quit.position-gate	D1	command	delegated	purge.position-gate	interpreter.c:630	The shared POS_DEAD dispatcher rejection is already proven by the purge gate boundary (R5b/R5c).
 do_quit	quit	quit.unsafe-refusal	D1	command	oracle-green-multiseed	quit-unsafe-depth@1,2,3,5,8	act.other.c:114-132	A low-level mortal in an unsafe room receives C's exact REALLYQUIT block plus the level-five RECALL hint and remains connected (R1/R2/R5e).
 do_quit	quit	quit.argument-ignored	D1	command	oracle-green-multiseed	quit-unsafe-depth@1,2,3,5,8	act.other.c:72-181; interpreter.c:1265-1283	The do_quit handler does not parse its argument; trailing words do not alter the unsafe-room refusal (R1/R2/R5e).

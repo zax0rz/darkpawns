@@ -2,19 +2,7 @@ package session
 
 import (
 	"testing"
-
-	"github.com/zax0rz/darkpawns/pkg/combat"
 )
-
-func TestSnoopRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := cmdRegistry.Lookup("snoop")
-	if !ok {
-		t.Fatal("snoop command is not registered")
-	}
-	if entry.MinLevel != LVL_GOD || entry.MinPosition != combat.PosDead {
-		t.Fatalf("snoop gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, LVL_GOD, combat.PosDead)
-	}
-}
 
 func TestCmdSnoopStateGatesUseCBranches(t *testing.T) {
 	tests := []struct {

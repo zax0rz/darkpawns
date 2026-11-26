@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_split	split	split.entry-gate	D1	command	unit-green	TestSplitRegistrationUsesCEntryGate	interpreter.c:726; act.other.c:823-829	The registered C row requires level 1 at POS_SITTING, and the Go registry preserves that command-surface gate (R1/R2/R5e).
+do_split	split	split.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:726; act.other.c:823-829	The registered C row requires level 1 at POS_SITTING, and the Go registry preserves that command-surface gate (R1/R2/R5e).
 do_split	split	split.empty-argument	D1	command	oracle-green-multiseed	split-depth@1,2,3,5,8	act.other.c:823-834	C one_argument leaves an empty amount at zero and emits the exact non-positive refusal (R1/R2/R3/R5e).
 do_split	split	split.nonnumeric-argument	D1	command	oracle-green-multiseed	split-depth@1,2,3,5,8	act.other.c:827-834; utils.c:378-385	C is_number requires an all-digit first token and emits the canonical amount prompt for malformed input (R1/R2/R5e).
 do_split	split	split.zero-amount	D1	command	oracle-green-multiseed	split-depth@1,2,3,5,8	act.other.c:830-834	A parsed zero amount reaches C's exact non-positive refusal before group or gold state is inspected (R1/R3/R5e).

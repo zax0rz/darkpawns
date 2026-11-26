@@ -9,23 +9,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
-func TestRestoreRegistrationUsesCEntryGate(t *testing.T) {
-	gate, ok := commandGates["restore"]
-	if !ok {
-		t.Fatal("restore command has no C gate")
-	}
-	if gate.MinLevel != LVL_GOD-1 || gate.MinPosition != combat.PosDead {
-		t.Fatalf("restore gate = level %d position %d, want level %d position %d", gate.MinLevel, gate.MinPosition, LVL_GOD-1, combat.PosDead)
-	}
-	entry, ok := cmdRegistry.Lookup("restore")
-	if !ok {
-		t.Fatal("restore command is not registered")
-	}
-	if entry.MinLevel != gate.MinLevel || entry.MinPosition != gate.MinPosition {
-		t.Fatalf("restore registry gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, gate.MinLevel, gate.MinPosition)
-	}
-}
-
 func TestCmdRestoreMatchesCEntryAndTargetMessages(t *testing.T) {
 	m := makeTestManager(t)
 	actor := makeCommandTestSession(t, m, "Restoregod", LVL_IMPL, 1001)

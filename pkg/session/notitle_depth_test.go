@@ -3,19 +3,8 @@ package session
 import (
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestNotitleRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := commandGates["notitle"]
-	if !ok {
-		t.Fatal("notitle command has no C gate")
-	}
-	if entry.MinLevel != LVL_GOD || entry.MinPosition != combat.PosDead {
-		t.Fatalf("notitle gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, LVL_GOD, combat.PosDead)
-	}
-}
 
 func TestCmdNotitleMatchesCBranchesAndToggle(t *testing.T) {
 	m := makeTestManager(t)

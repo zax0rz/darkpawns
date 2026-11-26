@@ -4,19 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestQsayRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := commandGates["qsay"]
-	if !ok {
-		t.Fatal("qsay command has no C gate")
-	}
-	if entry.MinLevel != 0 || entry.MinPosition != combat.PosSleeping {
-		t.Fatalf("qsay gate = level %d position %d, want level 0 position %d", entry.MinLevel, entry.MinPosition, combat.PosSleeping)
-	}
-}
 
 func TestQsayBroadcastSkipsWritingQuestPlayer(t *testing.T) {
 	m := makeTestManager(t)

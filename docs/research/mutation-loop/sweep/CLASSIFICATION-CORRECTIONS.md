@@ -83,6 +83,10 @@ Effective buckets after this batch's 11 reclassifications are A208 (177 killed, 
 - **Row 918:** Return from bucket F to bucket A, open. The overlapping `sprintf` in `do_wiznet` (`src/act.wizard.c:1957-1963`) appended the peer's name correctly in the pinned C transcript, so R1a does not explain the missing suffix. C `do_write` on paper sets `ch->desc->str` and `max_str` and never sets `PLR_WRITING` (`src/act.comm.c:1098-1101`); Go `beginNoteWrite` sets it (`pkg/game/act_write.go:179`). This is a Go divergence (R4), not undefined behavior.
 - **Row 220:** The repair ledger names `switched-communication-depth`, but the row's mutant run failed on `switched-communication-soundproof-depth`. Corrected in `REPAIR-LEDGER.tsv`; the proof itself holds.
 
+## Zach's 2026-11-25 rulings (PR 2: unit-proven rows)
+
+- **Row 4:** Reclassify from bucket F to `unit-proven` under the 2026-11-11 exception (ruling 6). `TestBoardWriteHeadingAllocFailureUnitProof` (`pkg/boards/boards_heading_alloc_unit_proof_test.go`) drives `BoardSystem.allocateHeading` returning `nil`, asserts `"The board is malfunctioning - sorry.\r\n"` (`src/boards.c:248-255`), and fails when `pkg/boards/boards.go:654` is mutated (`T` -> `Q`). Also recorded Round 1 row 61 (`TestEntryDuplicateMenuClose`), Round 2 row 11 (`TestDoGenWriteOpenFileFailureUnitProof`), and Round 3 row 27 (`TestSendUptimeSingularDayUnitProof`) as unit-proven in `REPAIR-LEDGER.tsv`.
+
 ## Zach's 2026-11-25 rulings (PR 3: reopened witnesses)
 
 - **Rows 527, 528, 529, 530:** Return from bucket F to bucket A (ruling 1 — overlapping `sprintf(buf, "%s...", buf)` appends are ordinary `c-reachable` lines matching the pinned reference build). All four are killed by isolated one-line mutants (`neon-row-527-mutant`, `neon-row-528-mutant`, `neon-row-529-mutant`, `neon-row-530-mutant-r2`) against `auto-listing-depth`, with clean baseline `neon-rulings-pr3-clean-r2` (all `--draw-parity`, zero draw divergence).

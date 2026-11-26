@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_wizutil	notitle	notitle.entry-gate	D1	command	unit-green	TestNotitleRegistrationUsesCEntryGate	interpreter.c:580; act.wizard.c:2077-2088	The C row requires LVL_GOD at POS_DEAD; the focused test pins the authoritative registered gate (R1/R2/R5e).
+do_wizutil	notitle	notitle.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:580; act.wizard.c:2077-2088	The C row requires LVL_GOD at POS_DEAD; the focused test pins the authoritative registered gate (R1/R2/R5e).
 do_wizutil	notitle	notitle.no-argument	D1	command	oracle-green-multiseed	notitle-depth@1,2,3,5,8	act.wizard.c:2089-2091	A bare command emits exactly Yes, but for whom?!? before target lookup (R1/R3/R5e).
 do_wizutil	notitle	notitle.target-not-found	D1	command	oracle-green-multiseed	notitle-depth@1,2,3,5,8	act.wizard.c:2091-2093	An unresolved visible-world target emits exactly There is no such player. (R1/R3/R5e).
 do_wizutil	notitle	notitle.visible-npc-target	D2	command	oracle-green-multiseed	notitle-depth@1,2,3,5,8	act.wizard.c:2093-2095	A visible NPC is rejected before the SCMD_NOTITLE switch with C's exact mob refusal; the shared target gate is reached by this command vehicle (R1/R3/R5e).

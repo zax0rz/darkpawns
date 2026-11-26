@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_restore	restore	restore.entry-gate	D1	command	unit-green	TestRestoreRegistrationUsesCEntryGate	interpreter.c:650; act.wizard.c:1584	The registered row is POS_DEAD at LVL_GOD-1; the focused test pins the authoritative command gate (R2/R5e).
+do_restore	restore	restore.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:650; act.wizard.c:1584	The registered row is POS_DEAD at LVL_GOD-1; the focused test pins the authoritative command gate (R2/R5e).
 do_restore	restore	restore.no-argument	D1	command	oracle-green-multiseed	restore-depth@1,2,3,5,8	act.wizard.c:1584-1592	A permitted caster with no target receives exactly Whom do you wish to restore?
 do_restore	restore	restore.target-not-found	D1	command	oracle-green-multiseed	restore-depth@1,2,3,5,8	act.wizard.c:1588-1593	An unresolved visible-world target receives C's exact No-one by that name here. response.
 do_restore	restore	restore.visible-npc-target	D2	command	oracle-green-multiseed	restore-depth@1,2,3,5,8	act.wizard.c:1592-1600; handler.c:1276-1332	A registered visible mob is restored and the caster receives only C's Okay. acknowledgement; NPCs have no descriptor for the target act.
