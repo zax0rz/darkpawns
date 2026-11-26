@@ -49,7 +49,7 @@ The corrected bar is met. No later repair changes this frozen Round 4 number. Th
   subcommand path. The complete 316-scenario cast/Lua-cast/movement matrix is
   `CLEAN` with zero draw divergence. The removed Go-only output is recorded as
   `R4-6` in `sweep/GO-ONLY-REMOVALS.tsv`.
-- **Rows 27, 35 and 80 — classification corrections in PR #TBD.** The Go
+- **Rows 27, 35 and 80 — classification corrections in PR #3086.** The Go
   carve line is gated on every production command route; object vnum 20 exists
   in the shipped world; and both C and Go reject or consume the clan arguments
   before the empty-value prompt. The frozen sample classes, denominator and
