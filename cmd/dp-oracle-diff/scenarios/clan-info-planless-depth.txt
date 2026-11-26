@@ -1,0 +1,71 @@
+# depth-case: clan.info-planless-null
+# C do_clan_info (src/clan.c:774) formats clan[i].plan with %s; before any
+# plan is written, plan is NULL and glibc prints "(null)". Zach's 2026-11-25
+# ruling 2 keeps "(null)" as an ordinary C-reachable line (Round 4 sweep batch
+# 05 row 148).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Planlessgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Planlessgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:leader]
+Planlesslead
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:leader]
+Planlesslead
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+clan create Planlesslead Wolves
+
+[probe]
+clan info Wolves
