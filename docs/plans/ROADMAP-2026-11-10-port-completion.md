@@ -62,7 +62,7 @@ rechecks and zero draw divergence: `2026-11-24/nightly-20261124` at
 |---|---|---|---|
 | 1 | Bytes | **0 FAIL** | nightly combined census `2026-11-25/nightly-20261125` at `fe2838ce4`: `CLEAN`, 7,104 pairs, no rechecks |
 | 2 | Behavior | **0 draw divergence** | `2026-11-25/nightly-20261125`: 0 divergent across 2,493 full pairs (seed 1) and 6,896 claims pairs (22 seeds); `draw-results.tsv` present |
-| 3 | Reach | **88.3%** of segments (4,328 of 4,902); 89.0% with the other seeds; 66.4% of sites (3,622 of 5,454) | `make census-coverage` on `2026-11-22/nightly-20261122` (PF-166). Up from 73.5% and 54.3% on 11-10. Not remeasured since; the sweep repairs added scenarios, so the next recount should be higher |
+| 3 | Reach | **88.4%** of segments (4,332 of 4,902); 66.5% of sites (3,626 of 5,454); 89.0% with the other seeds on 11-22, not rechecked | `make census-coverage` on `2026-11-26/nightly-20261126` at `0b54a2143` (PF-188). Since 11-22 (88.3%): 4 segments newly witnessed, 0 lost; the 570 still uncovered were all classified in the 11-22 strict recount (PF-166), so L1 stays 0. Up from 73.5% and 54.3% on 11-10 |
 | 4 | Sensitivity | **64.3%** (corrected lower bound 51.7%) | mutation loop Round 3, 63 of 98 killed (PF-149). The bar is a corrected lower bound of 80% (90 of 100 at z = 2.50, 4 looks; 3 used). Round 4 is the last look |
 
 **The sweep is finished.** Luna's whole-pool sweep (PF-169) left 308
@@ -124,7 +124,7 @@ double as decision-model training data.
    appended correctly through the same overlapping `sprintf` pattern.
 3. **Optional audit calibration:** settle the three `pkg/spells` ledgers into
    one. It doesn't block the section 6 stopping rule.
-4. **Phase 3 finish:** a fresh reach recount, the draw-site reach report (or
+4. **Phase 3 finish:** a fresh reach recount (done 2026-11-26, PF-188), the draw-site reach report (or
    an explicit deferral note), 24 hours of clean random play, and the release
    census with `--combined --release --draw-parity` on the tagged `v1.0.0`
    commit.
