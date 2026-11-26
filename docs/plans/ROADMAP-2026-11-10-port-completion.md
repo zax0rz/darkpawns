@@ -61,7 +61,7 @@ rechecks and zero draw divergence: `2026-11-24/nightly-20261124` at
 | # | Number | Now | Measured on |
 |---|---|---|---|
 | 1 | Bytes | **0 FAIL** | nightly combined census `2026-11-25/nightly-20261125` at `fe2838ce4`: `CLEAN`, 7,104 pairs, no rechecks |
-| 2 | Behavior | **0 draw divergence** | `2026-11-25/nightly-20261125`: 0 divergent across 2,493 full pairs (seed 1) and 6,896 claims pairs (22 seeds); `draw-results.tsv` present |
+| 2 | Behavior | **0 draw divergence** | `2026-11-25/nightly-20261125`: 0 divergent across 2,493 full pairs (seed 1) and 6,896 claims pairs (22 seeds); `draw-results.tsv` present. **Draw reach: 79.8%** of C's 361 random-draw call sites (288; seed 1 alone 285, 78.9%), measured on the unchanged reference binary (PF-189, #3090); the 73 unreached sites are listed in `docs/research/draw-reach-2026-11-26.md`, not yet classified |
 | 3 | Reach | **88.4%** of segments (4,332 of 4,902); 66.5% of sites (3,626 of 5,454); 89.0% with the other seeds on 11-22, not rechecked | `make census-coverage` on `2026-11-26/nightly-20261126` at `0b54a2143` (PF-188). Since 11-22 (88.3%): 4 segments newly witnessed, 0 lost; the 570 still uncovered were all classified in the 11-22 strict recount (PF-166), so L1 stays 0. Up from 73.5% and 54.3% on 11-10 |
 | 4 | Sensitivity | **94.6%** (88 of 93; corrected lower bound 85.5%, above the 80% bar) | mutation loop Round 4, the last of 4 looks (PF-186, #3083). Uncorrected two-sided 95% Wilson interval 88.0-97.7%. All five misses settled (#3085, #3086). Round 3 was 64.3% (PF-149) |
 
@@ -124,8 +124,8 @@ double as decision-model training data.
    appended correctly through the same overlapping `sprintf` pattern.
 3. **Optional audit calibration:** settle the three `pkg/spells` ledgers into
    one. It doesn't block the section 6 stopping rule.
-4. **Phase 3 finish:** a fresh reach recount (done 2026-11-26, PF-188), the draw-site reach report (or
-   an explicit deferral note), 24 hours of clean random play, and the release
+4. **Phase 3 finish:** a fresh reach recount (done 2026-11-26, PF-188), the draw-site reach report (done
+   2026-11-26, PF-189; classifying its 73 unreached sites is Zach's call), 24 hours of clean random play, and the release
    census with `--combined --release --draw-parity` on the tagged `v1.0.0`
    commit.
 
