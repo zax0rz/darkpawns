@@ -22,23 +22,60 @@
   with a stunned peer, so the pinned C path can print the sampled bytes. The
   Go sample is in the session command gate; its isolated check is recorded in
   `probes.tsv`.
-- **Row 27 — post-census call-path correction; frozen class remains
-  `c-reachable`.** `src/interpreter.c:374` sets carve's minimum position to
-  `POS_STANDING`; `command_interpreter` returns for a fighting character at
-  `src/interpreter.c:939-948`, before C `do_carve` can reach the literal at
-  `src/new_cmds.c:124-127`. The depth manifest records this proof in
-  `docs/fidelity/depth/carve.tsv` (`carve.fighting-no-arg`). The post-result
-  correction is recorded here, but does not revise the pre-census class or
-  denominator. The row remains a non-kill in the frozen measurement.
-- **Row 80 — post-census call-path correction; frozen class remains
-  `c-reachable`.** C `do_clan_set` dispatches `clan set applev` to
-  `do_clan_application` at `src/clan.c:1531-1535`; an empty remainder returns
-  through `send_clan_format` at `src/clan.c:1273-1281`, before the sampled
-  `Set to which level?` branch at `src/clan.c:1308-1310`. This post-result
-  correction does not revise the pre-census class or denominator; the row
-  remains a non-kill in the frozen measurement. It also corrects the original
-  evidence's function name: `do_clan_application`, not `do_clan_sp`.
+- **Row 27 — post-census call-path correction: C-unreachable at the sampled
+  site; the frozen class remains `c-reachable`.** `src/interpreter.c:374` sets
+  carve's minimum position to `POS_STANDING`; `command_interpreter` returns
+  for a fighting character at `src/interpreter.c:939-948`, before C `do_carve` can reach the literal at
+  `src/new_cmds.c:124-127`. `src/new_cmds.c` has no other `do_carve` caller.
+  In Go, the production `CmdCarve` registration is
+  `pkg/session/commands.go:560`, and `executeCommandRaw` applies the checked-in
+  C position gate before the handler (`pkg/session/commands.go:1138-1140;
+  pkg/session/command_gates.tsv:58`). Switched-body commands and Lua
+  `command()` calls on a mobile use `NPCCommand` and
+  `dispatchCharacterCommand`'s position gate (`pkg/game/world_bridge.go:356-365`;
+  `pkg/game/npc_command.go:20-26`; `pkg/session/manager.go:1137-1140`;
+  `pkg/session/character_dispatch.go:149-167`). Their `carve` actor handler
+  calls `doCarveActor`, not the sampled `CmdCarve` line. Lua `command()` calls
+  on a player use `CommandExecFunc` and `ExecuteCommand`, which reaches the same
+  regular command gate (`pkg/game/world_bridge.go:356-365`;
+  `pkg/session/manager.go:1123-1135`; `pkg/session/commands.go:1138-1140`).
+  A repository-wide caller search found no production direct caller of
+  `CmdCarve` outside its registration. So no Go route reaches the sampled line
+  without the gate.
+  The depth manifest records the C gate proof in `docs/fidelity/depth/carve.tsv`
+  (`carve.fighting-no-arg`). This correction does not revise the pre-census
+  class or denominator; the row remains a non-kill in the frozen measurement.
+- **Row 35 — post-census C-path correction: C-unreachable in the shipped
+  world.** C `do_pour` emits the sampled error only if
+  `read_object(20, VIRTUAL)` fails (`src/act.item.c:1249-1253`). The shipped
+  world defines object vnum 20 as a puddle (`lib/world/obj/0.obj:126-132`).
+  Go's `characterMobPourOut` creates vnum 20 at
+  `pkg/game/npc_command_utility.go:196-200`; the sampled error is its nil
+  creation branch, which is not reached when the shipped prototype is loaded.
+  This post-census correction does not revise the frozen sample or denominator;
+  the row remains a non-kill in the recorded measurement.
+- **Row 80 — post-census call-path correction: C-unreachable at the sampled
+  site; the frozen class remains `c-reachable`.** C `do_clan_set` dispatches
+  `clan set applev` to `do_clan_application` at `src/clan.c:1533-1535`. The handler first returns
+  through `send_clan_format` for an empty argument (`src/clan.c:1273-1283`).
+  For immortals it then resolves the second word as an exact clan name;
+  `find_clan` compares the supplied name with `str_cmp`
+  (`src/clan.c:799-806`), so an empty name returns "Unknown clan." before the
+  sampled `Set to which level?` branch (`src/clan.c:1308-1310`). A valid
+  immortal call retains the first word as the level argument, so it does not
+  reach that empty-value branch. Go follows the same barriers:
+  the production clan command calls `doClanSet` at
+  `pkg/game/clan_command.go:117`, which dispatches `applev` to
+  `doClanAppLevel` at `pkg/game/clan_economy.go:126-128`. That function returns
+  on empty input at `pkg/game/clan_economy.go:58-61`;
+  `resolveClanForImmortal` rejects an empty immortal clan name at
+  `pkg/game/clans.go:459-464`; after a successful lookup, Go retains the first
+  word as the level argument (`pkg/game/clan_economy.go:63-78`). The checked
+  path therefore cannot reach the sampled prompt. This correction does not
+  revise the pre-census class or denominator; the row remains a non-kill in
+  the frozen measurement. It also corrects the original evidence's function
+  name: `do_clan_application`, not `do_clan_sp`.
 
-Rows 0, 27 and 80 have post-census evidence corrections. They do not revise
+Rows 0, 27, 35 and 80 have post-census evidence corrections. They do not revise
 any pre-census class or denominator. The `sample.tsv` checksum in `SHA256SUMS`
 remains the frozen draw checksum.
