@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_force	force	force.entry-gate	D1	command	unit-green	TestForceRegistrationUsesCEntryGate	interpreter.c:438; act.wizard.c:1856-1868	The command is available at LVL_GOD and POS_SLEEPING, matching the registered C gate and handler entry.
+do_force	force	force.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:438; act.wizard.c:1856-1868	The command is available at LVL_GOD and POS_SLEEPING, matching the registered C gate and handler entry.
 do_force	force	force.no-arguments	D1	command	oracle-green-multiseed	force-gates@1,2,3,5,8	act.wizard.c:1862-1867	An empty argument reaches the exact Whom do you wish to force do what? response.
 do_force	force	force.no-command	D1	command	oracle-green-multiseed	force-gates@1,2,3,5,8	act.wizard.c:1862-1867	A target without a command takes the same half_chop usage branch.
 do_force	force	force.missing-target	D1	command	oracle-green-multiseed	force-gates@1,2,3,5,8	act.wizard.c:1868-1870; config.c:93	An unresolved target emits C's NOPERSON bytes.

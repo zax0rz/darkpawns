@@ -8,10 +8,7 @@ This is a fixed-snapshot work list, not a mutation-loop round. It has no sample 
 - Mutations: first ASCII letter to `Q`, or `Z` when the first letter is `Q`; the same transformed text does not occur twice within any batch.
 - A kill requires the mutant line in the Go diff and the original line in that scenario’s normalized C transcript. Each literal is scored from its full batch run; there are no singleton runs.
 
-## Counts by class (original census classification)
-
-The table below is the initial census accounting. Zach's 2026-11-25 rulings
-reconcile row 148 from unknown to a kill; see the current reconciliation below.
+## Counts by class
 
 | Class | Killed | Survived | Unknown | Excluded | Total |
 |---|---:|---:|---:|---:|---:|
@@ -21,7 +18,7 @@ reconcile row 148 from unknown to a kill; see the current reconciliation below.
 | go-only-in-game | 0 | 12 | 0 | 0 | 12 |
 | **Total** | 688 | 308 | 1 | 1 | 998 |
 
-## Counts by package (original census classification)
+## Counts by package
 
 | Package | Killed | Survived | Unknown | Excluded | Total |
 |---|---:|---:|---:|---:|---:|
@@ -73,15 +70,15 @@ All mutant commits are throwaway direct children of the sweep SHA and are retain
 ## Unknown-infra rows
 
 0 sampled rows remained unknown (infra) after same-commit targeted rechecks; they are excluded from kills and the denominator.
-The original classification recorded one separate R1a unknown, batch 05 row 148. Zach's 2026-11-25 ruling resolves it; no R1a unknown remains from that row.
+Separate R1a unknown: 1 row(s).
 
-## Original R1a item (resolved)
+## R1a item
 
-Batch 05 row 148 was first recorded as `unknown`. Zach's 2026-11-25 ruling says the pinned reference output `(null)` for a NULL `%s` in `do_clan_info` (`src/clan.c:774`) is the ordinary C output for this case. The already archived `clan-applicant-depth` FAIL has C `(null)` and Go `(Qull)`, so row 148 is now a `c-reachable` kill. The transcript, diff, and ruling are recorded in `probes.tsv` and `CLASSIFICATION-CORRECTIONS.md`.
+Batch 05 row 148 is `unknown` and excluded from kills and the denominator. C passes a null clan plan to `%s` in `do_clan_info` (`src/clan.c:774`); the pinned oracle prints `(null)` through glibc behavior, which is not game law. The row awaits Zach's ruling on what a planless clan should print. Its archived C and mutated Go lines remain in `probes.tsv`.
 
 ## Decisions for Zach
 
-Row 148 is resolved by Zach's 2026-11-25 ruling. Row 472 was open at sweep completion and was classified as bucket E in the 2026-11-24 survivor-triage follow-up below.
+Row 148's expected planless-clan output remains open in `DECISIONS.md`. Row 472 was open at sweep completion and was classified as bucket E in the 2026-11-24 survivor-triage follow-up below.
 
 ## For Claude
 
@@ -100,11 +97,11 @@ All 308 survivors are assigned in `SURVIVOR-TRIAGE.tsv`. The table below gives t
 | E. not player-facing | 3 | Collector false positives; exclude from repair work and future draws. |
 | F. ruling or harness capability | 10 | Rows 2, 4 and 908 have behavior or fixture limits; rows 834 and 838 need a no-database harness state; rows 144, 527–529 and 530 are R1a unknowns because C builds the line with overlapping `sprintf`. |
 
-These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; row 622 is superseded by the Go-only correction in `CLASSIFICATION-CORRECTIONS.md`. At this checkpoint batch 05 row 148 was still recorded as a separate R1a unknown; Zach's later ruling corrects it to a kill, outside the 308 survivors.
+These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; row 622 is superseded by the Go-only correction in `CLASSIFICATION-CORRECTIONS.md`. Batch 05 row 148 remains a separate R1a unknown, outside the 308 survivors.
 
 ## Survivor-triage correction update (2026-11-25)
 
-Rows 665, 677–680, and 687–693 are reclassified from bucket A to bucket D after checking the C call paths and the existing depth manifest. Row 665 is an unreachable stable mount reload failure with the shipped 8021 prototype; the other 11 rows are in special procedures that C does not assign. The first-pass triage rows and the 308-row survivor set are unchanged. Effective counts are now A253/B0/C15/D35/E2/F3. At this checkpoint, row 148 was still recorded separately; Zach's later ruling corrects it to a kill outside the survivor count.
+Rows 665, 677–680, and 687–693 are reclassified from bucket A to bucket D after checking the C call paths and the existing depth manifest. Row 665 is an unreachable stable mount reload failure with the shipped 8021 prototype; the other 11 rows are in special procedures that C does not assign. The first-pass triage rows and the 308-row survivor set are unchanged. Effective counts are now A253/B0/C15/D35/E2/F3. The R1a unknown, row 148, remains separate and outside the survivor count.
 Rows 843, 851, 856, and 859 move from bucket A to bucket C because their sampled Go fallback arms follow a successful target or combatant lookup and have no reachable C call path. Row 861 also moves from A to C: the sampled Go nil-equipment fallback cannot run for a live player, and C's corresponding no-wield response comes from the later slot check. The first-pass triage rows and the 308-row survivor set are unchanged. On current `origin/main` before the open corrections in PRs #3057 and #3058, effective counts are A260/B0/C20/D23/E2/F3. Preserve those PRs' corrections when combining the updates.
 Rows 739–742 move from bucket A to bucket D: the live `pray_for_items` special is assigned at room 8008, but the reward loop requires an `item_for_<player>` extra description in the adjacent key room. The current world has no such key and no player command can create one. The first-pass triage rows and 308-row survivor set are unchanged. On current `origin/main` before open corrections in PRs #3058 and #3060, effective counts are A261/B0/C15/D27/E2/F3. Preserve both PRs' corrections when combining the updates.
 ## Repair batch update (2026-11-25)
@@ -119,7 +116,7 @@ Rows 308–311 are killed by four isolated one-byte mutations through switched-m
 | 310 | `perform-move-mob-closed-keyword-depth` | same | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-performmove-row-310-mutant` | Killed; C `The gate seems...`, Go `Qhe gate seems...` |
 | 311 | `perform-move-mob-closed-unnamed-depth` | same | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-survivors-performmove-row-311-mutant` | Killed; C `It seems...`, Go `Qt seems...` |
 Relative to `origin/main` before this batch, the survivor buckets move from A261/B0/C15/D23/E2/F3 to A257/B0/C15/D23/E2/F3. This batch is based on `fe2838ce4`; open repair PRs #3054–#3063 also update shared evidence and need to be unioned before aggregate counts are finalized.
-These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; corrections in `CLASSIFICATION-CORRECTIONS.md` supersede them for follow-up work. At this checkpoint, rows 527–529 were still in the R1a bucket; Zach's later ruling makes them reachable C lines and returns them to bucket A for witnesses. Batch 05 row 148 is now a `c-reachable` kill outside the survivor set.
+These are follow-up classifications on current `origin/main`; the frozen sweep totals above remain unchanged. The original bucket assignments are preserved in `SURVIVOR-TRIAGE.tsv`; corrections in `CLASSIFICATION-CORRECTIONS.md` supersede them for follow-up work. Rows 527–529 remain unknown within the 308 survivors; batch 05 row 148 is a separate R1a unknown outside that set.
 
 ## Consolidated counts after the 2026-11-25 batch merge
 
@@ -199,23 +196,3 @@ Relative to batch 3, this resolves the last 15 rows: 11 kills, row 545 to C, row
 Claude merged Luna's last-survivor PRs #3071, #3072, #3073 and #3076 together and recomputed the bucket table above from `SURVIVOR-TRIAGE.tsv`, every move in `CLASSIFICATION-CORRECTIONS.md`, and the row ids in `REPAIR-LEDGER.tsv`. All 39 new repair rows were checked: each mutant run is a one-line commit that FAILs on its scenario with zero draw divergence, and each clean run is CLEAN with zero draw divergence and no refused setup steps. Effective buckets: A201 (200 killed, 1 open), B0, C37, D57, E3, F10, total 308.
 
 Row 918 is not an R1a unknown. The same overlapping `sprintf` in `do_wiznet` (`src/act.wizard.c:1957`) appended `Wizwritingpeer` correctly in the pinned C transcript, so the build does append; the `(Writing)` suffix was missing because the peer was never flagged. C's `do_write` on paper points `ch->desc->str` at the note and never sets `PLR_WRITING` (`src/act.comm.c:1098-1101`), while Go's `beginNoteWrite` does (`pkg/game/act_write.go:179`). Every C `PLR_WRITING` reader (wiznet, who, tell, the channels) therefore sees a different state for a player writing on paper. Row 918 returns to bucket A, open, pending a Go fix; a board-write probe (`src/boards.c:266` sets the flag) can witness the sampled line itself.
-
-## Zach's ruling reconciliation (2026-11-25)
-
-The pinned-build ruling supersedes the later R1a triage corrections for
-overlapping `sprintf(buf, "%s...", buf)` lines. Sweep rows 144 and 527–530
-return from bucket F to bucket A: C can print the append, but their full-run
-records contain no paired original-line and mutated-Go witness, so each stays
-open for a C-first witness and repair. This moves the final bucket counts from
-A201 (200 killed, 1 open), F10 to **A206 (200 killed, 6 open), F5**; the total
-survivor set stays 308. Batch 05 row 148 is separately reclassified from
-unknown to a `c-reachable` kill because its retained C line `(null)` and Go
-diff `(Qull)` satisfy the kill rule under Zach's NULL `%s` ruling. The archived
-census runs and the fixed sweep input were not changed. The corrected current
-class tally is 689 kills, 308 survivors, 0 unknown, and 1 excluded; row 148
-adds one kill to the original 688/308/1/1 accounting. The corrected package
-game tally is 459 kills, 261 survivors, 0 unknown, and 1 excluded.
-
-The current survivor-bucket reconciliation is A206 (200 killed, 6 open), B0,
-C37, D57, E3, F5. The five rows returned from F to A (144 and 527–530) are
-already inside the 308-row survivor set; row 148 is a kill outside that set.

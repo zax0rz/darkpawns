@@ -3,20 +3,8 @@ package session
 import (
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
-
 	"github.com/zax0rz/darkpawns/pkg/common"
 )
-
-func TestSetRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := cmdRegistry.Lookup("set")
-	if !ok {
-		t.Fatal("set is not registered")
-	}
-	if entry.MinLevel != LVL_GOD || entry.MinPosition != combat.PosDead {
-		t.Fatalf("set gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, LVL_GOD, combat.PosDead)
-	}
-}
 
 func TestSetFieldTableMatchesCOrderAndGates(t *testing.T) {
 	want := []struct {

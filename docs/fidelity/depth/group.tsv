@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_group	group	group.entry-gate	D1	command	unit-green	TestGroupRegistrationUsesCEntryGate	interpreter.c:471	The C registration admits level 1 characters at POS_SLEEPING.
-do_group	group	group.position-gate	D1	command	unit-green	TestGroupRegistrationUsesCEntryGate	interpreter.c:471	The shared command gate preserves the C POS_SLEEPING entry position.
+do_group	group	group.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:471	The C registration admits level 1 characters at POS_SLEEPING.
+do_group	group	group.position-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:471	The shared command gate preserves the C POS_SLEEPING entry position.
 do_group	group	group.no-argument	D1	command	oracle-green-multiseed	group-depth@1,2,3,5,8	act.other.c:685-698	No argument dispatches to print_group and preserves the exact not-in-group text.
 do_group	group	group.no-argument-gate	D1	command	oracle-green-multiseed	group-gates-depth@1,2,3,5,8	act.other.c:685-698	A fresh character with no group receives print_group's exact refusal.
 do_group	group	group.fill-word-no-argument	D2	command	oracle-green-multiseed	group-gates-depth@1,2,3,5,8	interpreter.c:1265-1283; act.other.c:687-698	Leading fill words are skipped, so a fill-only argument reaches the no-argument branch.

@@ -9,29 +9,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/fileedit"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestTeditRegistrationUsesCEntryGate(t *testing.T) {
-	gate, ok := commandGates["tedit"]
-	if !ok {
-		t.Fatal("tedit command has no C gate")
-	}
-	if gate.MinLevel != game.LVL_GRGOD || gate.MinPosition != combat.PosDead {
-		t.Fatalf("tedit gate = (%d,%d), want (%d,%d)",
-			gate.MinLevel, gate.MinPosition, game.LVL_GRGOD, combat.PosDead)
-	}
-	entry, ok := cmdRegistry.Lookup("tedit")
-	if !ok {
-		t.Fatal("tedit command is not registered")
-	}
-	if entry.MinLevel != gate.MinLevel || entry.MinPosition != gate.MinPosition {
-		t.Fatalf("tedit registry gate = (%d,%d), want (%d,%d)",
-			entry.MinLevel, entry.MinPosition, gate.MinLevel, gate.MinPosition)
-	}
-}
 
 func TestTeditAuthorizationAndCaseNormalization(t *testing.T) {
 	m := makeTestManager(t)

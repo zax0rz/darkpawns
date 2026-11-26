@@ -3,26 +3,8 @@ package session
 import (
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestPromptRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := commandGates["prompt"]
-	if !ok {
-		t.Fatal("prompt command has no C gate")
-	}
-	if entry.MinLevel != 0 || entry.MinPosition != combat.PosDead {
-		t.Fatalf("prompt gate = level %d position %d, want level 0 position %d", entry.MinLevel, entry.MinPosition, combat.PosDead)
-	}
-	registered, ok := cmdRegistry.Lookup("prompt")
-	if !ok {
-		t.Fatal("prompt command is not registered")
-	}
-	if registered.MinLevel != entry.MinLevel || registered.MinPosition != entry.MinPosition {
-		t.Fatalf("prompt registry gate = level %d position %d, want level %d position %d", registered.MinLevel, registered.MinPosition, entry.MinLevel, entry.MinPosition)
-	}
-}
 
 func TestCmdPromptMatchesCDoDisplay(t *testing.T) {
 	m := makeTestManager(t)

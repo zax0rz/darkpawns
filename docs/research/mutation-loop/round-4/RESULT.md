@@ -8,7 +8,7 @@
 - Of the 100 sampled functions, 99 occur in the frozen Round 4 sweep pool and 1 is new (row 78). This does not split the headline.
 - Headline: **88 / 93 catchable mutants = 94.6%**. The uncorrected two-sided 95% Wilson interval is **88.0%–97.7%**. The four-look corrected one-sided Wilson lower bound (z = 2.50) is **85.5%**, above the 80% stop bar.
 - All-sample count, including rows excluded from the denominator: **88 / 100**.
-- Frozen classes: 93 `c-reachable` (88 killed, 5 survived); 7 `c-unreachable` (excluded). There are no `go-only-in-game`, `go-only-surface`, `harness-blind`, or `ask-zach` rows.
+- Frozen classes (committed in `da87c183e` before the census): 92 `c-reachable` (87 killed, 5 survived); 1 `ask-zach`, row 64, killed; 7 `c-unreachable` (excluded). There are no `go-only-in-game`, `go-only-surface` or `harness-blind` rows. Zach's 2026-11-25 ruling 1, recorded after the census (see `CLASSIFICATION-CORRECTIONS.md`), makes row 64 `c-reachable`; both classes count in the denominator, so the headline is the same either way.
 - Survivor rows: **0, 6, 27, 35, 80**. Each had a one-mutant targeted census with draw parity. Rows 0, 6, 27, 35, and 80 were CLEAN; row 23's isolated run reproduced its kill.
 
 The sample classes and denominator remain those committed before the census. A post-census C call-path audit found that rows 27 and 80 do not reach their sampled C lines through the registered command path. Those corrections are recorded in `CLASSIFICATION-CORRECTIONS.md`; the pre-registered classes and denominator remain frozen, so both rows stay in the measurement as non-kills. Rows 0 and 6 likewise have clean isolated runs where the sampled Go branch is not reached by the exercised command, while row 35's error branch is not reached because object prototype 20 exists in the fixture. These are retained as survivors, not silently removed from the denominator.
@@ -40,7 +40,7 @@ The corrected bar is met. No later repair changes this frozen Round 4 number. Th
 
 ## Decisions for Zach
 
-No ruling is requested. The NULL `%s` and overlapping-`sprintf` cases follow Zach's 2026-11-25 decisions recorded before the census. The post-census rows 27 and 80 call-path corrections preserve the frozen class and denominator.
+No ruling is requested. The NULL `%s` and overlapping-`sprintf` rulings landed on `main` at 19:18 on 2026-11-25 (`a48baa25c`), after the all-mutants census finished (18:43). The frozen classes predate them; row 64 stayed `ask-zach` in the frozen sample, inside the denominator, and its correction is a separate row. The post-census rows 27 and 80 call-path corrections preserve the frozen class and denominator.
 
 ## For Claude
 

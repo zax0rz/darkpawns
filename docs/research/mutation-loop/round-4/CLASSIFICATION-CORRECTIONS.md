@@ -1,7 +1,8 @@
 # Round 4 classification corrections
 
-- **Row 64 — frozen `ask-zach`; corrected to `c-reachable` before any mutant
-  census verdict.** Zach's 2026-11-25 ruling in
+- **Row 64 — frozen `ask-zach`; corrected to `c-reachable` after the census.**
+  The all-mutants census finished at 18:43 on 2026-11-25; the ruling reached
+  `main` at 19:18 (`a48baa25c`). The frozen `sample.tsv` keeps `ask-zach`. Zach's 2026-11-25 ruling in
   `docs/research/mutation-loop/DECISIONS.md` says overlapping C
   `sprintf(buf, "%s...", buf)` appends are classified by the pinned reference
   build's output. C `do_auto` appends this exact `Exits ` fragment at

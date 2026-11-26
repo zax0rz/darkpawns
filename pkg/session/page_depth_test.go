@@ -7,24 +7,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
-func TestPageRegistrationUsesCEntryGate(t *testing.T) {
-	gate, ok := commandGates["page"]
-	if !ok {
-		t.Fatal("page command has no C gate")
-	}
-	if gate.MinLevel != game.LVL_IMMORT || gate.MinPosition != combat.PosDead {
-		t.Fatalf("page gate = level %d position %d, want level %d position %d", gate.MinLevel, gate.MinPosition, game.LVL_IMMORT, combat.PosDead)
-	}
-
-	entry, ok := cmdRegistry.Lookup("page")
-	if !ok {
-		t.Fatal("page command is not registered")
-	}
-	if entry.MinLevel != gate.MinLevel || entry.MinPosition != gate.MinPosition {
-		t.Fatalf("page registry gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, gate.MinLevel, gate.MinPosition)
-	}
-}
-
 func TestPageAllRequiresStrictlyAboveGod(t *testing.T) {
 	m := makeTestManager(t)
 	actor := makeCommandTestSession(t, m, "Pageactor", game.LVL_GOD, 1001)

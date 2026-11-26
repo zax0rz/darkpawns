@@ -3,28 +3,8 @@ package session
 import (
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestShutdownRegistrationUsesCEntryGates(t *testing.T) {
-	for _, name := range []string{"shutdow", "shutdown"} {
-		gate, ok := commandGates[name]
-		if !ok {
-			t.Fatalf("%s has no C gate", name)
-		}
-		if gate.MinLevel != game.LVL_IMPL-1 || gate.MinPosition != combat.PosDead {
-			t.Fatalf("%s gate = level %d position %d, want level %d position %d", name, gate.MinLevel, gate.MinPosition, game.LVL_IMPL-1, combat.PosDead)
-		}
-		entry, ok := cmdRegistry.Lookup(name)
-		if !ok {
-			t.Fatalf("%s is not registered", name)
-		}
-		if entry.MinLevel != gate.MinLevel || entry.MinPosition != gate.MinPosition {
-			t.Fatalf("%s registry gate = level %d position %d, want level %d position %d", name, entry.MinLevel, entry.MinPosition, gate.MinLevel, gate.MinPosition)
-		}
-	}
-}
 
 func TestShutdownAbbreviationKeepsCGuardBytes(t *testing.T) {
 	m := makeTestManager(t)

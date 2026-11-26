@@ -2,19 +2,7 @@ package session
 
 import (
 	"testing"
-
-	"github.com/zax0rz/darkpawns/pkg/combat"
 )
-
-func TestForceRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := cmdRegistry.Lookup("force")
-	if !ok {
-		t.Fatal("force command is not registered")
-	}
-	if entry.MinLevel != LVL_GOD || entry.MinPosition != combat.PosSleeping {
-		t.Fatalf("force gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, LVL_GOD, combat.PosSleeping)
-	}
-}
 
 func TestCmdForceUsesCRejections(t *testing.T) {
 	m := makeTestManager(t)

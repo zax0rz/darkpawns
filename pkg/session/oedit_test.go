@@ -93,20 +93,6 @@ func makeOeditTestSession(t *testing.T, m *Manager, name string, level int) *Ses
 	return s
 }
 
-func TestOeditRegistrationUsesCEntryGate(t *testing.T) {
-	gate, ok := commandGates["oedit"]
-	if !ok {
-		t.Fatal("oedit command has no C gate")
-	}
-	// C interpreter.c:592: { "oedit", POS_DEAD, do_olc, LVL_BUILDER, SCMD_OLC_OEDIT }
-	if gate.MinLevel != 31 || gate.MinPosition != 0 {
-		t.Fatalf("oedit gate = (%d,%d), want (31,0)", gate.MinLevel, gate.MinPosition)
-	}
-	if _, ok := cmdRegistry.Lookup("oedit"); !ok {
-		t.Fatal("oedit command is not registered")
-	}
-}
-
 func TestOeditEntryGates(t *testing.T) {
 	w := makeOeditTestWorld(t)
 	m := newTestManager(t, w, nil)

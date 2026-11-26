@@ -83,30 +83,18 @@ Effective buckets after this batch's 11 reclassifications are A208 (177 killed, 
 - **Row 918:** Return from bucket F to bucket A, open. The overlapping `sprintf` in `do_wiznet` (`src/act.wizard.c:1957-1963`) appended the peer's name correctly in the pinned C transcript, so R1a does not explain the missing suffix. C `do_write` on paper sets `ch->desc->str` and `max_str` and never sets `PLR_WRITING` (`src/act.comm.c:1098-1101`); Go `beginNoteWrite` sets it (`pkg/game/act_write.go:179`). This is a Go divergence (R4), not undefined behavior.
 - **Row 220:** The repair ledger names `switched-communication-depth`, but the row's mutant run failed on `switched-communication-soundproof-depth`. Corrected in `REPAIR-LEDGER.tsv`; the proof itself holds.
 
-## Zach's R1a output rulings (2026-11-25)
+## Zach's 2026-11-25 rulings (PR 1: Go-only removals and denominator rulings)
 
-- **Sweep rows 144 and 527–530 — supersede the earlier bucket-F corrections;
-  return these rows to bucket A.** Zach ruled that C lines built with
-  overlapping `sprintf(buf, "%s...", buf)` are `c-reachable` according to
-  the pinned reference build's append output. The sampled clan spells list
-  uses this pattern at `src/clan.c:763-768`; the four `do_auto` fragments use
-  it at `src/act.other.c:1311,1316,1321,1326,1331,1333`. The CLEAN combined
-  run `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/nightly-20261125`
-  witnesses `Exits ` in `player-state-toggles.txt`. The sweep batch runs remain
-  unchanged and list these rows as survivors without an attributed C-line and
-  mutated-Go-line pair; they are reachable C lines that still need a targeted
-  witness and repair. This supersedes the previous R1a reclassifications for
-  rows 144, 527–529, and 530. Effective bucket counts after this correction
-  are A206 (200 killed, 6 open), B0, C37, D57, E3, F5; the 308-row survivor
-  set is unchanged.
-- **Batch 05 row 148 — supersede the previous R1a unknown; classify it as a
-  `c-reachable` kill.** C `do_clan_info` passes the clan plan to `%s` at
-  `src/clan.c:774`. Zach ruled that the reference `(null)` output is the
-  ordinary output for a NULL `%s` in this case. The archived
-  `/home/zach/Archives/darkpawns/oracle-runs/2026-11-21/luna-sweep-batch-05`
-  run has a `clan-applicant-depth` FAIL with C `(null)` and mutated Go
-  `(Qull)`, so row 148 meets the kill rule. The archived measurement and
-  frozen `BATCH-PLAN.tsv` are unchanged; the current `probes.tsv`,
-  `INTERIM-CLASSIFICATIONS.tsv`, and `RESULT.md` record the correction. The
-  corrected full-run tally is 689 killed, 308 survived, 0 unknown, and 1
-  excluded.
+- **Row 2:** Reclassify from bucket F to approved divergence under DP-1388 (ruling 8), excluded from the denominator. Go releases the board slot on an empty headline (`pkg/boards/boards.go:635-642`) instead of leaking it as C does (`src/boards.c:228-241`).
+- **Rows 834 and 838:** Reclassify from bucket F to `go-only-surface` (ruling 7), excluded from the denominator. Go's `DP_ALLOW_NO_DB` operation and storage-error fallbacks in `cmdWhois` (`pkg/session/cmd_info.go:1563-1569,1591-1594`) stay as Go-only operational surface.
+- **Row 908 (and Round 2 row 8, Round 3 row 88):** Held open pending Zach's decision under ruling 3's stop condition: structured WebSocket `MsgCommand` (`pkg/session/session_pump.go:130,296-324`) applies `cInputJSON` (character filter only) and bypasses `TerminalLine` / `cTruncateInputLine`, so a WebSocket JSON client can deliver lines over 255 bytes (up to the 16 KiB read limit) to `cmdEcho`, `AppendBoardLine`, and `HandleNoteInput`.
+
+## Zach's 2026-11-25 rulings (PR 2: unit-proven rows)
+
+- **Row 4:** Reclassify from bucket F to `unit-proven` under the 2026-11-11 exception (ruling 6). `TestBoardWriteHeadingAllocFailureUnitProof` (`pkg/boards/boards_heading_alloc_unit_proof_test.go`) drives `BoardSystem.allocateHeading` returning `nil`, asserts `"The board is malfunctioning - sorry.\r\n"` (`src/boards.c:248-255`), and fails when `pkg/boards/boards.go:654` is mutated (`T` -> `Q`). Also recorded Round 1 row 61 (`TestEntryDuplicateMenuClose`), Round 2 row 11 (`TestDoGenWriteOpenFileFailureUnitProof`), and Round 3 row 27 (`TestSendUptimeSingularDayUnitProof`) as unit-proven in `REPAIR-LEDGER.tsv`.
+
+## Zach's 2026-11-25 rulings (PR 3: reopened witnesses)
+
+- **Rows 527, 528, 529, 530:** Return from bucket F to bucket A (ruling 1 — overlapping `sprintf(buf, "%s...", buf)` appends are ordinary `c-reachable` lines matching the pinned reference build). All four are killed by isolated one-line mutants (`neon-row-527-mutant`, `neon-row-528-mutant`, `neon-row-529-mutant`, `neon-row-530-mutant-r2`) against `auto-listing-depth`, with clean baseline `neon-rulings-pr3-clean-r2` (all `--draw-parity`, zero draw divergence).
+- **Row 148:** Reclassified as ordinary `c-reachable` under ruling 2 (keep glibc's `(null)` for a planless clan at `src/clan.c:774`; Round 4 sweep batch 05 row, outside the 308 survivors) and killed by `neon-row-148-mutant` against `clan-info-planless-depth` (`--draw-parity`, zero draw divergence).
+- **Row 144:** Ruling 1 removed the R1a objection to `src/clan.c:765-766`'s overlapping `sprintf`, returning it from F, but a full `src/` audit (R5g) shows `clan[i].spells[j]` is zero-initialized on creation (`src/clan.c:223`), `lib/etc/clans` contains 0 clans (`0000 0000`), and no C command or handler anywhere in `src/` writes a non-zero value to `clan[].spells[]` (identical to `at_war` in row 150). Reclassify from F to bucket D (C-unreachable).

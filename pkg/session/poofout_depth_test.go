@@ -2,27 +2,7 @@ package session
 
 import (
 	"testing"
-
-	"github.com/zax0rz/darkpawns/pkg/combat"
 )
-
-func TestPoofoutRegistrationUsesCEntryGate(t *testing.T) {
-	gate, ok := commandGates["poofout"]
-	if !ok {
-		t.Fatal("poofout command has no C gate")
-	}
-	if gate.MinLevel != LVL_IMMORT || gate.MinPosition != combat.PosDead {
-		t.Fatalf("poofout gate = level %d position %d, want level %d position %d", gate.MinLevel, gate.MinPosition, LVL_IMMORT, combat.PosDead)
-	}
-
-	entry, ok := cmdRegistry.Lookup("poofout")
-	if !ok {
-		t.Fatal("poofout command is not registered")
-	}
-	if entry.MinLevel != gate.MinLevel || entry.MinPosition != gate.MinPosition {
-		t.Fatalf("poofout registry gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, gate.MinLevel, gate.MinPosition)
-	}
-}
 
 func TestCmdPoofoutClearsAndPreservesCRawArgument(t *testing.T) {
 	m := makeTestManager(t)

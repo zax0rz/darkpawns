@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_skillset	skillset	skillset.entry-gate	D1	command	unit-green	TestSkillsetRegistrationUsesCEntryGates	interpreter.c:704	The registered C row requires POS_SLEEPING and LVL_GRGOD; the focused registry test pins both gates under R1/R2/R5e.
+do_skillset	skillset	skillset.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:704	The registered C row requires POS_SLEEPING and LVL_GRGOD; the focused registry test pins both gates under R1/R2/R5e.
 do_skillset	skillset	skillset.no-argument	D1	command	oracle-green-multiseed	skillset-depth@1,2,3,5,8	modify.c:262-279	No target prints C's syntax and raw-index four-column spells list, including mixed line endings, under R1/R3/R5e.
 do_skillset	skillset	skillset.target-not-found	D1	command	oracle-green-multiseed	skillset-depth@1,2,3,5,8	modify.c:282-285; handler.c:1263-1324	Visible-world miss returns C NOPERSON before parsing the remaining arguments under R1/R3/R5e.
 do_skillset	skillset	skillset.skill-name-expected	D1	command	oracle-green-multiseed	skillset-depth@1,2,3,5,8	modify.c:287-291	A visible target with no remaining argument reaches the exact mixed-order C error under R1/R5e.

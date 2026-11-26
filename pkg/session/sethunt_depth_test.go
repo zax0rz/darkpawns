@@ -4,26 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestSethuntRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := commandGates["sethunt"]
-	if !ok {
-		t.Fatal("sethunt command has no C gate")
-	}
-	if entry.MinLevel != LVL_GRGOD || entry.MinPosition != combat.PosDead {
-		t.Fatalf("sethunt gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, LVL_GRGOD, combat.PosDead)
-	}
-	registered, ok := cmdRegistry.Lookup("sethunt")
-	if !ok {
-		t.Fatal("sethunt command is not registered")
-	}
-	if registered.MinLevel != entry.MinLevel || registered.MinPosition != entry.MinPosition {
-		t.Fatalf("sethunt registry gate = level %d position %d, want level %d position %d", registered.MinLevel, registered.MinPosition, entry.MinLevel, entry.MinPosition)
-	}
-}
 
 func TestCmdSethuntSetsHunterState(t *testing.T) {
 	m := makeTestManagerWithMobs(t)

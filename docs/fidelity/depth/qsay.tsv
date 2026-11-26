@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_qcomm	qsay	qsay.entry-gate	D1	command	unit-green	TestQsayRegistrationUsesCEntryGate	interpreter.c:631; act.comm.c:1301-1305	The registered C row is POS_SLEEPING with no level minimum; the focused test pins this command-surface gate (R2/R5e).
+do_qcomm	qsay	qsay.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:631; act.comm.c:1301-1305	The registered C row is POS_SLEEPING with no level minimum; the focused test pins this command-surface gate (R2/R5e).
 do_qcomm	qsay	qsay.position-gate	D1	command	delegated	group.position-gate	interpreter.c:631	The shared POS_SLEEPING dispatcher rejection is already proven by the group gate boundary (R5b/R5c).
 do_qcomm	qsay	qsay.quest-gate	D1	command	oracle-green-multiseed	qsay-depth@1,2,3,5,8	act.comm.c:1306-1310	A caller without PRF_QUEST is rejected before argument parsing with C's exact quest-participation message (R1/R2/R5e).
 do_qcomm	qsay	qsay.noshout-gate	D1	command	oracle-green	qsay-depth@1	src/act.comm.c:1311-1314	The live qsay-depth probe uses the wizard mute action to set PLR_NOSHOUT and reaches C's exact refusal; deaf-to-shouts is a separate PRF flag (R1/R2/R5e/R5h).

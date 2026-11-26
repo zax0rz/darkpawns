@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_order	order	order.entry-gate	D1	command	unit-green	TestOrderRegistrationUsesCEntryGate	interpreter.c:586; act.offensive.c:294-307	The C row requires level 1 at POS_RESTING; the focused test pins the live registry gate (R1/R2/R5e).
+do_order	order	order.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:586; act.offensive.c:294-307	The C row requires level 1 at POS_RESTING; the focused test pins the live registry gate (R1/R2/R5e).
 do_order	order	order.no-argument	D1	command	oracle-green-multiseed	order-depth@1,2,3,5,8	act.offensive.c:303-306	A missing target or command reaches half_chop's exact Order who to do what? response (R1/R3/R5e).
 do_order	order	order.target-not-found	D1	command	oracle-green-multiseed	order-depth@1,2,3,5,8	act.offensive.c:307-309	An unresolved visible-room target emits exactly That person isn't here. before actor or follower state is inspected (R1/R3/R5e).
 do_order	order	order.self-target	D2	command	oracle-green-multiseed	order-depth@1,2,3,5,8	act.offensive.c:310-311	Self resolution is rejected with C's misspelled schizophrenia response (R1/R3/R5e).

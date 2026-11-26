@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_hide	hide	hide.entry-gate	D1	command	unit-green	TestHideFamilyRegistrationUsesCEntryGates	interpreter.c:493; act.other.c:247-306	The ordinary row is POS_RESTING with command minimum level 1; the focused registration test pins the authoritative gate.
-do_hide	kabuki	kabuki.entry-gate	D1	command	unit-green	TestHideFamilyRegistrationUsesCEntryGates	interpreter.c:526; act.other.c:247-306	SCMD_KABUKI reaches the same do_hide handler with the same POS_RESTING/level-1 gate.
+do_hide	hide	hide.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:493; act.other.c:247-306	The ordinary row is POS_RESTING with command minimum level 1; the focused registration test pins the authoritative gate.
+do_hide	kabuki	kabuki.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:526; act.other.c:247-306	SCMD_KABUKI reaches the same do_hide handler with the same POS_RESTING/level-1 gate.
 do_hide	hide	hide.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:493; interpreter.c:910-947	The shared POS_RESTING dispatcher rejection is owned by the existing fade position-gate vehicle.
 do_hide	kabuki	kabuki.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:526; interpreter.c:910-947	The kabuki row uses the same shared POS_RESTING dispatcher rejection.
 do_hide	hide	hide.mounted-gate	D1	command	oracle-green	hide-mounted-depth	act.other.c:247-255	A ridden actor receives Dismount first! before the daytime sector switch, attempt message, or roll.

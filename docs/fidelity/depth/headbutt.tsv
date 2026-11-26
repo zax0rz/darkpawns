@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_headbutt	headbutt	headbutt.entry-gate	D1	command	unit-green	TestHeadbuttRegistrationUsesCEntryGate	interpreter.c:487; new_cmds.c:368-378	The C row is level 1 and POS_FIGHTING; the focused test pins the checked-in registry against that authoritative gate.
+do_headbutt	headbutt	headbutt.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:487; new_cmds.c:368-378	The C row is level 1 and POS_FIGHTING; the focused test pins the checked-in registry against that authoritative gate.
 do_headbutt	headbutt	headbutt.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:487	The common POS_FIGHTING dispatcher rejection is owned by the existing fade position-gate vehicle.
 do_headbutt	headbutt	headbutt.prefix-resolution	D1	command	oracle-green-multiseed	headbutt-depth@1,2,3,5,8	interpreter.c:487; interpreter.c:909-912	The typed `head` prefix resolves to headbutt in C table order and reaches its no-target outcome.
 do_headbutt	headbutt	headbutt.no-skill	D1	command	oracle-green	combat-skill-noskill	interpreter.c:487; new_cmds.c:382-386	C checks GET_SKILL before target lookup and emits the exact qualification refusal.

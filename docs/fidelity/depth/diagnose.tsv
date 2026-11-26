@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_diagnose	diagnose	diagnose.entry-gate	D1	command	unit-green	TestDiagnoseRegistrationUsesCEntryGate	interpreter.c:412	The registered diagnose/diag/glance entry shares C's POS_RESTING gate; the focused registry test pins all three names (R1/R2/R5e).
+do_diagnose	diagnose	diagnose.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:412	The registered diagnose/diag/glance entry shares C's POS_RESTING gate; the focused registry test pins all three names (R1/R2/R5e).
 do_diagnose	diagnose	diagnose.no-argument	D1	command	oracle-green-multiseed	diagnose-depth@1,2,3,5,8	act.informative.c:2437-2455	With no explicit target and no FIGHTING pointer, C emits only Diagnose who? (R1/R3/R5e).
 do_diagnose	diagnose	diagnose.mob-target	D2	command	oracle-green-multiseed	diagnose-depth@1,2,3,5,8	act.informative.c:2439-2447; act.informative.c:354-385	A visible horse resolves through get_char_room_vis and receives the capitalized full-health diagnostic line (R1/R3/R5e).
 do_diagnose	diagnose	diagnose.trailing-arguments	D1	command	oracle-green-multiseed	diagnose-depth@1,2,3,5,8	interpreter.c:1265-1283; act.informative.c:2437-2447	one_argument consumes only the first token, so trailing words do not alter the diagnostic target (R1/R2/R3/R5e).

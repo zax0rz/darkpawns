@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_wizutil	freeze	freeze.entry-gate	D1	command	unit-green	TestFreezeRegistrationUsesCEntryGate	interpreter.c:452; act.wizard.c:2077-2085	The standalone freeze row preserves C's LVL_FREEZE (=LVL_GRGOD) and POS_DEAD registration gate.
+do_wizutil	freeze	freeze.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:452; act.wizard.c:2077-2085	The standalone freeze row preserves C's LVL_FREEZE (=LVL_GRGOD) and POS_DEAD registration gate.
 do_wizutil	freeze	freeze.no-argument	D1	command	oracle-green-multiseed	freeze-depth@1,2,3,5,8	act.wizard.c:2088-2090	A gated implementor with no target receives the exact C prompt.
 do_wizutil	freeze	freeze.missing-target	D1	command	oracle-green-multiseed	freeze-depth@1,2,3,5,8	act.wizard.c:2092-2095	An unresolved visible target receives C's NOPERSON response.
 do_wizutil	freeze	freeze.self-alias	D2	command	oracle-green-multiseed	freeze-depth@1,2,3,5,8	handler.c:1284-1285; act.wizard.c:2105-2108	C's self alias resolves the actor before the freeze self-protection branch.

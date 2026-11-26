@@ -3,19 +3,8 @@ package session
 import (
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestGechoRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := commandGates["gecho"]
-	if !ok {
-		t.Fatal("gecho command has no C gate")
-	}
-	if entry.MinLevel != LVL_GOD || entry.MinPosition != combat.PosDead {
-		t.Fatalf("gecho gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, LVL_GOD, combat.PosDead)
-	}
-}
 
 func TestCommandArgumentTextPreservesCSpacing(t *testing.T) {
 	if got, want := CommandArgumentText("  gecho Alpha  beta  "), "Alpha  beta  "; got != want {

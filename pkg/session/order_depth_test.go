@@ -4,27 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestOrderRegistrationUsesCEntryGate(t *testing.T) {
-	gate, ok := commandGates["order"]
-	if !ok {
-		t.Fatal("order command has no C gate")
-	}
-	if gate.MinLevel != 1 || gate.MinPosition != combat.PosResting {
-		t.Fatalf("order gate = level %d position %d, want level 1 position %d", gate.MinLevel, gate.MinPosition, combat.PosResting)
-	}
-
-	entry, ok := cmdRegistry.Lookup("order")
-	if !ok {
-		t.Fatal("order command is not registered")
-	}
-	if entry.MinLevel != gate.MinLevel || entry.MinPosition != gate.MinPosition {
-		t.Fatalf("order registry gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, gate.MinLevel, gate.MinPosition)
-	}
-}
 
 func TestOrderCharmedPlayerExecutesExactCommandPath(t *testing.T) {
 	m := makeTestManager(t)

@@ -3,19 +3,8 @@ package session
 import (
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestRaceSayRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := cmdRegistry.Lookup("rsay")
-	if !ok {
-		t.Fatal("rsay command is not registered")
-	}
-	if entry.MinLevel != 0 || entry.MinPosition != combat.PosResting {
-		t.Fatalf("rsay gate = (%d, %d), want (0, %d)", entry.MinLevel, entry.MinPosition, combat.PosResting)
-	}
-}
 
 func TestCmdRaceSayRunsCPrechecksForEmptyArguments(t *testing.T) {
 	m := makeTestManager(t)

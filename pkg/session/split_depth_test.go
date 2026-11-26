@@ -6,23 +6,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
-func TestSplitRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := commandGates["split"]
-	if !ok {
-		t.Fatal("split command has no C gate")
-	}
-	if entry.MinLevel != 1 || entry.MinPosition != combat.PosSitting {
-		t.Fatalf("split gate = level %d position %d, want level 1 position %d", entry.MinLevel, entry.MinPosition, combat.PosSitting)
-	}
-	registered, ok := cmdRegistry.Lookup("split")
-	if !ok {
-		t.Fatal("split command is not registered")
-	}
-	if registered.MinLevel != entry.MinLevel || registered.MinPosition != entry.MinPosition {
-		t.Fatalf("split registry gate = level %d position %d, want level %d position %d", registered.MinLevel, registered.MinPosition, entry.MinLevel, entry.MinPosition)
-	}
-}
-
 // TestSplitNoGroupUsesCMessage proves do_split's direct no-group refusal
 // (src/act.other.c:863-866) without relying on the shared group/ungroup
 // command vehicle. The command is still invoked through its registered C
