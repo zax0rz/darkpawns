@@ -115,6 +115,11 @@ under Linux `ptrace`:
   --draw-parity --name neon-draw-attribution` with
   `CENSUS_ALLOW_NONREFERENCE=1` inside the standard 36-worker admission budget
   (6,074s vs 5,772s for the untraced `nightly-20261126` run).
+- Future attribution runs verify the traced target's SHA-256 against
+  `cmd/dp-oracle-diff/reference-oracle.sha256` before exec or attach (refusing
+  mismatches unless `DP_DRAW_TRACER_ALLOW_NONREFERENCE=1`) and record the target
+  path, SHA-256, and reference status in `c-draw-target.txt` beside
+  `c-draw-sites.log`.
 
 ## Parity check and exclusions
 
