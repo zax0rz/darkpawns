@@ -16,10 +16,13 @@ package main
 
 import (
 	"bufio"
+	"crypto/sha256"
 	"debug/elf"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -33,6 +36,11 @@ import (
 const (
 	defaultOracleBin = "/home/zach/darkpawns-c-oracle/bin/circle"
 	prSetPtracer     = 0x59616d61
+	// Must match cmd/dp-oracle-diff/reference-oracle.sha256; pinned by
+	// TestReferenceOracleSHA256MatchesFile so promoting a new reference binary
+	// without updating the tracer fails CI.
+	referenceOracleSHA256 = "bd6c548c6fbc41d35eede384e4ce2c5a858ff2ce0f568a379d7fb366a9051b07"
+	targetSidecarName     = "c-draw-target.txt"
 )
 
 type symRange struct {
@@ -75,16 +83,64 @@ func targetBinary() (string, error) {
 	return filepath.Abs(target)
 }
 
+func verifyTarget(path, expectedSHA string, allowNonReference bool) (actualSHA string, isReference bool, err error) {
+	// #nosec G304 G703 -- path is the resolved local oracle binary
+	f, err := os.Open(path)
+	if err != nil {
+		return "", false, fmt.Errorf("open target %s: %w", path, err)
+	}
+	defer func() { _ = f.Close() }()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", false, fmt.Errorf("hash target %s: %w", path, err)
+	}
+	actualSHA = hex.EncodeToString(h.Sum(nil))
+	want := strings.ToLower(strings.TrimSpace(expectedSHA))
+	isReference = actualSHA == want
+	if !isReference && !allowNonReference {
+		return actualSHA, false, fmt.Errorf("target %s sha256 %s does not match reference %s (set DP_DRAW_TRACER_ALLOW_NONREFERENCE=1 to override)", path, actualSHA, want)
+	}
+	return actualSHA, isReference, nil
+}
+
+func writeTargetSidecar(logPath, target, actualSHA string, isReference bool) error {
+	dir := filepath.Dir(logPath)
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		return fmt.Errorf("create target sidecar dir: %w", err)
+	}
+	refWord := "no"
+	if isReference {
+		refWord = "yes"
+	}
+	line := fmt.Sprintf("target=%s sha256=%s reference=%s\n", target, actualSHA, refWord)
+	sidecar := filepath.Join(dir, targetSidecarName)
+	// #nosec G304 G703 -- sidecar sits beside the trusted harness evidence log
+	if err := os.WriteFile(sidecar, []byte(line), 0o600); err != nil {
+		return fmt.Errorf("write target sidecar %s: %w", sidecar, err)
+	}
+	return nil
+}
+
 func runParent() error {
 	target, err := targetBinary()
 	if err != nil {
 		return fmt.Errorf("resolve target: %w", err)
 	}
+	allowNonRef := os.Getenv("DP_DRAW_TRACER_ALLOW_NONREFERENCE") == "1"
+	actualSHA, isRef, err := verifyTarget(target, referenceOracleSHA256, allowNonRef)
+	if err != nil {
+		return err
+	}
 	argv := append([]string{target}, os.Args[1:]...)
 
-	if resolveLogPath() == "" {
-		// #nosec G204 -- trusted local oracle tracer forwarding to reference binary
+	logPath := resolveLogPath()
+	if logPath == "" {
+		// #nosec G204 -- trusted local oracle tracer forwarding to verified target binary
 		return syscall.Exec(target, argv, os.Environ())
+	}
+	if err := writeTargetSidecar(logPath, target, actualSHA, isRef); err != nil {
+		return err
 	}
 
 	readyR, readyW, err := os.Pipe()
