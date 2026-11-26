@@ -82,3 +82,31 @@ Effective buckets after this batch's 11 reclassifications are A208 (177 killed, 
 
 - **Row 918:** Return from bucket F to bucket A, open. The overlapping `sprintf` in `do_wiznet` (`src/act.wizard.c:1957-1963`) appended the peer's name correctly in the pinned C transcript, so R1a does not explain the missing suffix. C `do_write` on paper sets `ch->desc->str` and `max_str` and never sets `PLR_WRITING` (`src/act.comm.c:1098-1101`); Go `beginNoteWrite` sets it (`pkg/game/act_write.go:179`). This is a Go divergence (R4), not undefined behavior.
 - **Row 220:** The repair ledger names `switched-communication-depth`, but the row's mutant run failed on `switched-communication-soundproof-depth`. Corrected in `REPAIR-LEDGER.tsv`; the proof itself holds.
+
+## Zach's R1a output rulings (2026-11-25)
+
+- **Sweep rows 144 and 527–530 — supersede the earlier bucket-F corrections;
+  return these rows to bucket A.** Zach ruled that C lines built with
+  overlapping `sprintf(buf, "%s...", buf)` are `c-reachable` according to
+  the pinned reference build's append output. The sampled clan spells list
+  uses this pattern at `src/clan.c:763-768`; the four `do_auto` fragments use
+  it at `src/act.other.c:1311,1316,1321,1326,1331,1333`. The CLEAN combined
+  run `/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/nightly-20261125`
+  witnesses `Exits ` in `player-state-toggles.txt`. The sweep batch runs remain
+  unchanged and list these rows as survivors without an attributed C-line and
+  mutated-Go-line pair; they are reachable C lines that still need a targeted
+  witness and repair. This supersedes the previous R1a reclassifications for
+  rows 144, 527–529, and 530. Effective bucket counts after this correction
+  are A206 (200 killed, 6 open), B0, C37, D57, E3, F5; the 308-row survivor
+  set is unchanged.
+- **Batch 05 row 148 — supersede the previous R1a unknown; classify it as a
+  `c-reachable` kill.** C `do_clan_info` passes the clan plan to `%s` at
+  `src/clan.c:774`. Zach ruled that the reference `(null)` output is the
+  ordinary output for a NULL `%s` in this case. The archived
+  `/home/zach/Archives/darkpawns/oracle-runs/2026-11-21/luna-sweep-batch-05`
+  run has a `clan-applicant-depth` FAIL with C `(null)` and mutated Go
+  `(Qull)`, so row 148 meets the kill rule. The archived measurement and
+  frozen `BATCH-PLAN.tsv` are unchanged; the current `probes.tsv`,
+  `INTERIM-CLASSIFICATIONS.tsv`, and `RESULT.md` record the correction. The
+  corrected full-run tally is 689 killed, 308 survived, 0 unknown, and 1
+  excluded.
