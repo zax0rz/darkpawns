@@ -44,3 +44,19 @@ been made for these rows.
 The row 472 question above is resolved by the 2026-11-24 correction: bucket E, not a Zach ruling. Row 148 remains the separate R1a unknown and is not one of the 308 survivors.
 
 The row 918 question above is withdrawn by the 2026-11-25 correction in `sweep/CLASSIFICATION-CORRECTIONS.md`: C `do_write` on paper never sets `PLR_WRITING` (`src/act.comm.c:1098-1101`) and Go does (`pkg/game/act_write.go:179`), so this is a Go divergence to fix, not an R1a ruling.
+
+## Zach's rulings, 2026-11-25
+
+Ruled by Zach in Claude's session on 2026-11-25. Each settles the rows named; Round 4 classifies by these rulings.
+
+1. **Overlapping `sprintf` appends (R1a class ruling).** C lines built as `sprintf(buf, "%s...", buf)` print what the pinned reference build prints: the append. The authors meant append, and the build does it (the 2026-11-25 nightly's `player-state-toggles` shows bare `auto` printing `You have the following autos set:` then `Exits `; wiznet appends names the same way). Sweep rows 144 and 527-530 are ordinary `c-reachable` lines, to be witnessed. Any Round 4 row in this class is `c-reachable`, not `ask-zach`.
+2. **Row 148, planless clan.** Keep `(null)`, the reference build's glibc output for a NULL `%s` in `do_clan_info` (`src/clan.c:774`). Row 148 is an ordinary `c-reachable` line.
+3. **Input line length.** Port C's framing: each input line is cut at `MAX_INPUT_LENGTH - 1` (255) characters and the player gets `Line too long.  Truncated to:` plus the kept text (`src/comm.c:1963-1990`; `src/structs.h:644`). Go's silent 1,024-byte cap goes. Afterwards sweep row 908, Round 2 row 8 and Round 3 row 88 are Go-only branches to remove.
+4. **The 111 level- and position-only registration tests** (`docs/research/test-audit/cross-audit-2026-11-24/registration-class.tsv`) are deleted; `TestCommandGateGoldenCoversCGoRegistrationsAndSocials` covers them.
+5. **Dispatcher-shadowed inner guards** (Round 1 rows 55, 60, 88, 97: goto, transfer, zlist, hcontrol) are `go-only-in-game`. Remove the inner refusals; the dispatcher's C-equivalent refusal stays.
+6. **OS-fault and clock rows** (sweep row 4, Round 2 row 11, Round 3 row 27) and the harness-gap row Round 1 row 61 take the 2026-11-11 unit-proof exception: a unit test with a C cite and a revert proof each, listed in the completion report's unit-proven column. Row 61 is already pinned (`docs/fidelity/depth/entry.tsv:91`).
+7. **No-database rows** (sweep rows 834, 838) are `go-only-surface` (Go's `DP_ALLOW_NO_DB` operation and storage errors), excluded from the denominator. The code stays.
+8. **Sweep row 2** is an approved divergence under DP-1388 (Go doesn't leak a board slot per empty headline), excluded from the denominator.
+9. **Round 3 row 4**, `mobGenDoor`'s unkeyed-exit branch, which no caller reaches, is `go-only-in-game`. Remove it.
+
+Already resolved before this ruling: Round 1 row 28 (`CmdListSkills` is gone) and Round 1 row 34 (`doCompareActor`, #3075, no longer prints `looks better than`).
