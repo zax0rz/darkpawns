@@ -4,20 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestRerollRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := commandGates["reroll"]
-	if !ok {
-		t.Fatal("reroll command has no C gate")
-	}
-	if entry.MinLevel != LVL_GRGOD || entry.MinPosition != combat.PosDead {
-		t.Fatalf("reroll gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, LVL_GRGOD, combat.PosDead)
-	}
-}
 
 func TestCmdRerollNoArgumentUsesCResponse(t *testing.T) {
 	m := makeTestManager(t)

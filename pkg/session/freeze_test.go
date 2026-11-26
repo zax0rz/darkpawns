@@ -3,20 +3,8 @@ package session
 import (
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestFreezeRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := cmdRegistry.Lookup("freeze")
-	if !ok {
-		t.Fatal("freeze command is not registered")
-	}
-	if entry.MinLevel != LVL_GRGOD || entry.MinPosition != combat.PosDead {
-		t.Fatalf("freeze gate = (%d, %d), want (%d, %d)",
-			entry.MinLevel, entry.MinPosition, LVL_GRGOD, combat.PosDead)
-	}
-}
 
 func TestCmdFreezeResolvesCCharacterTargets(t *testing.T) {
 	t.Run("self alias", func(t *testing.T) {

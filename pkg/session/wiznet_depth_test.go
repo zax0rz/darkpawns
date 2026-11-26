@@ -5,19 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestWiznetRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := cmdRegistry.Lookup("wiznet")
-	if !ok {
-		t.Fatal("wiznet command is not registered")
-	}
-	if entry.MinLevel != 0 || entry.MinPosition != combat.PosDead {
-		t.Fatalf("wiznet gate = level %d position %d, want level 0 position dead", entry.MinLevel, entry.MinPosition)
-	}
-}
 
 func TestCmdWiznetEntryAllowsChosenMortal(t *testing.T) {
 	m := makeTestManager(t)

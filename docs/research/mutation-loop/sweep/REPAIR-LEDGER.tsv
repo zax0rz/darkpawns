@@ -200,3 +200,7 @@ row	scenario	mutant_run_directory	clean_run_directory	pr
 986	switched-body-wizutil-depth	/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-row-986-mutant-r2	/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-clean-merged	https://github.com/zax0rz/darkpawns/pull/3076
 994	switched-body-wizutil-depth	/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-row-994-mutant-r2	/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/luna-last-survivors-batch4-clean-merged	https://github.com/zax0rz/darkpawns/pull/3076
 918	paper-writing-flag-depth	/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/neon-row-918-mutant	/home/zach/Archives/darkpawns/oracle-runs/2026-11-25/neon-paper-writing-clean	fix/paper-writing-flag
+4	unit-proven	TestBoardWriteHeadingAllocFailureUnitProof (revert-proven RED on boards.go:654 T->Q)	pkg/boards/boards_heading_alloc_unit_proof_test.go	test/ruling-unit-proofs-and-reg-cleanup
+R1-61	unit-proven	TestEntryDuplicateMenuClose (revert-proven RED on reconnect.go:64 M->Q)	pkg/session/entry_duplicate_test.go	test/ruling-unit-proofs-and-reg-cleanup
+R2-11	unit-proven	TestDoGenWriteOpenFileFailureUnitProof (revert-proven RED on other_settings.go:173 C->Q)	pkg/game/gen_write_open_fail_unit_proof_test.go	test/ruling-unit-proofs-and-reg-cleanup
+R3-27	unit-proven	TestSendUptimeSingularDayUnitProof (revert-proven RED on wiz_system.go:289 d->Q)	pkg/session/uptime_singular_day_unit_proof_test.go	test/ruling-unit-proofs-and-reg-cleanup

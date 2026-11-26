@@ -4,28 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
-
-func TestRlistRegistrationUsesCEntryGate(t *testing.T) {
-	gate, ok := commandGates["rlist"]
-	if !ok {
-		t.Fatal("rlist command has no C gate")
-	}
-	if gate.MinLevel != LVL_IMMORT || gate.MinPosition != combat.PosDead {
-		t.Fatalf("rlist gate = level %d position %d, want level %d position %d", gate.MinLevel, gate.MinPosition, LVL_IMMORT, combat.PosDead)
-	}
-
-	entry, ok := cmdRegistry.Lookup("rlist")
-	if !ok {
-		t.Fatal("rlist command is not registered")
-	}
-	if entry.MinLevel != gate.MinLevel || entry.MinPosition != gate.MinPosition {
-		t.Fatalf("rlist registry gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, gate.MinLevel, gate.MinPosition)
-	}
-}
 
 func TestCmdRlistUsesNumericZoneAndCOutput(t *testing.T) {
 	m := makeTestManager(t)

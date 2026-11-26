@@ -3,28 +3,8 @@ package session
 import (
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
-
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestPlayersRegistrationUsesCEntryGate(t *testing.T) {
-	gate, ok := commandGates["players"]
-	if !ok {
-		t.Fatal("players command has no C gate")
-	}
-	if gate.MinLevel != LVL_GRGOD || gate.MinPosition != combat.PosDead {
-		t.Fatalf("players gate = level %d position %d, want level %d position %d", gate.MinLevel, gate.MinPosition, LVL_GRGOD, combat.PosDead)
-	}
-
-	entry, ok := cmdRegistry.Lookup("players")
-	if !ok {
-		t.Fatal("players command is not registered")
-	}
-	if entry.MinLevel != gate.MinLevel || entry.MinPosition != gate.MinPosition {
-		t.Fatalf("players registry gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, gate.MinLevel, gate.MinPosition)
-	}
-}
 
 func TestCmdPlayersUsesCPlayerTableShapeWithoutDatabase(t *testing.T) {
 	m := makeTestManager(t)

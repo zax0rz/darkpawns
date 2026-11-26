@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_set	set	set.entry-gate	D1	command	unit-green	TestSetRegistrationUsesCEntryGate	interpreter.c:682	The registered command row is POS_DEAD at LVL_GOD; command dispatch owns the shared entry gate (R2/R5e).
+do_set	set	set.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:682	The registered command row is POS_DEAD at LVL_GOD; command dispatch owns the shared entry gate (R2/R5e).
 do_set	set	set.field-table	D1	command	unit-green	TestSetFieldTableMatchesCOrderAndGates	act.wizard.c:2537-2596	The Go table preserves all 59 C rows, first-prefix order, levels, PC/NPC gates, and field types (R2/R5b/R5e).
 do_set	set	set.no-argument	D1	command	oracle-green-multiseed	set-depth@1,2,3,5,8	src/act.wizard.c:2624-2627	Missing victim, field, or value framing reaches C's exact usage bytes (R1/R2/R5e).
 do_set	set	set.missing-target	D1	command	oracle-green-multiseed	set-depth@1,2,3,5,8	src/act.wizard.c:2639-2645; src/handler.c:1276-1332	The ordinary target path emits There is no such creature. and the optional player path is covered separately (R1/R5e).

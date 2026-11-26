@@ -3,19 +3,7 @@ package session
 import (
 	"strings"
 	"testing"
-
-	"github.com/zax0rz/darkpawns/pkg/combat"
 )
-
-func TestQuiRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := commandGates["qui"]
-	if !ok {
-		t.Fatal("qui command has no C gate")
-	}
-	if entry.MinLevel != 0 || entry.MinPosition != combat.PosDead {
-		t.Fatalf("qui gate = level %d position %d, want level 0 position %d", entry.MinLevel, entry.MinPosition, combat.PosDead)
-	}
-}
 
 func TestQuiMortalShortcutUsesCRefusal(t *testing.T) {
 	m := makeTestManager(t)

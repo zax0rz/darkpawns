@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_infobar	infobar	infobar.entry-gate	D1	command	unit-green	TestInfobarRegistrationUsesCEntryGate	interpreter.c:517; act.display.c:112-155	The C row permits every level at POS_DEAD; the focused test pins both the authoritative gate and the registered Go entry (R2/R5e).
+do_infobar	infobar	infobar.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:517; act.display.c:112-155	The C row permits every level at POS_DEAD; the focused test pins both the authoritative gate and the registered Go entry (R2/R5e).
 do_infobar	infobar	infobar.off-status	D2	command	oracle-green-multiseed	infobar-depth@1,2,3,5,8	act.display.c:112-155	No argument on the default OFF state emits the exact status line across the deterministic seed matrix (R1/R3/R5e).
 do_infobar	infobar	infobar.on-frame	D3	audience	oracle-green-multiseed	infobar-depth@1,2,3,5,8	act.display.c:158-216; vt100.h:33-47	The default zero screen size becomes 25, then InfoBarOn emits the immortal actor's exact VT100 frame, field positions, colors, value order, and raw boundary bytes (R1/R3/R5e).
 do_infobar	infobar	infobar.already-on	D2	command	oracle-green-multiseed	infobar-depth@1,2,3,5,8	act.display.c:140-146	A second on request takes the already-on branch and emits only its exact status line (R1/R3/R5e).

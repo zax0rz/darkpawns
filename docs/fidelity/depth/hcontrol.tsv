@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_hcontrol	hcontrol	hcontrol.entry-gate	D1	command	unit-green	TestHcontrolRegistrationUsesCEntryGate	interpreter.c:491; house.c:579-598	The C row is LVL_GRGOD and POS_DEAD; the focused test pins both the authoritative gate and registered Go entry.
+do_hcontrol	hcontrol	hcontrol.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:491; house.c:579-598	The C row is LVL_GRGOD and POS_DEAD; the focused test pins both the authoritative gate and registered Go entry.
 do_hcontrol	hcontrol	hcontrol.usage	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	interpreter.c:491; house.c:579-598; house.c:323-330	A bare command emits the exact five-line C usage string.
 do_hcontrol	hcontrol	hcontrol.unknown-subcommand	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:591-598	An unknown subcommand falls through the C usage path.
 do_hcontrol	show	hcontrol.show-empty	D2	command	oracle-green-multiseed	hcontrol-depth@1,2,3,5,8	house.c:334-337	The empty control table emits No houses have been defined.

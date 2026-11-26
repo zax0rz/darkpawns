@@ -69,20 +69,6 @@ func makeMeditTestSession(t *testing.T, m *Manager, name string, level int) *Ses
 	return s
 }
 
-func TestMeditRegistrationUsesCEntryGate(t *testing.T) {
-	gate, ok := commandGates["medit"]
-	if !ok {
-		t.Fatal("medit command has no C gate")
-	}
-	// C interpreter.c:553: { "medit", POS_DEAD, do_olc, LVL_BUILDER, SCMD_OLC_MEDIT }
-	if gate.MinLevel != 31 || gate.MinPosition != 0 {
-		t.Fatalf("medit gate = (%d,%d), want (31,0)", gate.MinLevel, gate.MinPosition)
-	}
-	if _, ok := cmdRegistry.Lookup("medit"); !ok {
-		t.Fatal("medit command is not registered")
-	}
-}
-
 func TestMeditEntryGates(t *testing.T) {
 	w := makeMeditTestWorld(t)
 	m := newTestManager(t, w, nil)

@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_action	farewell	farewell.entry-gate	D1	command	unit-green	TestFarewellRegistrationUsesCEntryGate	interpreter.c:441; act.social.c:102-112	The registered C row is POS_RESTING with no minimum level.
+do_action	farewell	farewell.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:441; act.social.c:102-112	The registered C row is POS_RESTING with no minimum level.
 do_action	farewell	farewell.position-gate	D1	command	delegated	fade.position-gate	interpreter.c:441; interpreter.c:910-947	The shared POS_RESTING command rejection is proven by the fade position-gate vehicle.
 do_action	farewell	farewell.no-argument	D2	audience	oracle-green-multiseed	farewell-depth@1,2,3,5,8	act.social.c:102-113; lib/misc/socials:1476-1484	The no-argument record emits the actor and room farewell messages.
 do_action	farewell	farewell.target-success	D3	audience	oracle-green-multiseed	farewell-depth@1,2,3,5,8	act.social.c:114-151; lib/misc/socials:1476-1484	A visible target receives the actor, non-victim room, and victim messages.

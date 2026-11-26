@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -54,23 +53,6 @@ func makeZeditTestSession(t *testing.T, m *Manager, name string, level int) *Ses
 	s := makeCommandTestSession(t, m, name, level, 3000)
 	s.olcZone = 30
 	return s
-}
-
-func TestZeditRegistrationUsesCEntryGate(t *testing.T) {
-	gate, ok := commandGates["zedit"]
-	if !ok {
-		t.Fatal("zedit command has no C gate")
-	}
-	if gate.MinLevel != game.LVL_IMMORT || gate.MinPosition != combat.PosDead {
-		t.Fatalf("zedit gate = (%d,%d), want (%d,%d)", gate.MinLevel, gate.MinPosition, game.LVL_IMMORT, combat.PosDead)
-	}
-	entry, ok := cmdRegistry.Lookup("zedit")
-	if !ok {
-		t.Fatal("zedit command is not registered")
-	}
-	if entry.MinLevel != gate.MinLevel || entry.MinPosition != gate.MinPosition {
-		t.Fatalf("zedit registry gate = (%d,%d), want (%d,%d)", entry.MinLevel, entry.MinPosition, gate.MinLevel, gate.MinPosition)
-	}
 }
 
 // TestZeditNewZoneRequiresNumber pins src/olc.c:138 through the ZEDIT entry

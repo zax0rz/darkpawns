@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_luaedit	luaedit	luaedit.entry-gate	D1	command	unit-green	TestLuaEditRegistrationUsesCEntryGate	interpreter.c:546	The command is registered at POS_DEAD/LVL_BUILDER (31); the separate LVL_HIGOD threshold remains in the handler (R2/R5e).
+do_luaedit	luaedit	luaedit.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:546	The command is registered at POS_DEAD/LVL_BUILDER (31); the separate LVL_HIGOD threshold remains in the handler (R2/R5e).
 do_luaedit	luaedit	luaedit.entry-list	D2	command	oracle-green	luaedit-list	luaedit.c:28-58; file-edit.c:83-114	Root listing follows alphasort, the Lua filter, %-26.26s truncation, and the three-column CRLF break (R1/R2/R5e).
 do_luaedit	luaedit	luaedit.subdirectory-list	D2	command	oracle-green	luaedit-list	luaedit.c:34-42; file-edit.c:83-114	The mob/obj/room directory branch is selected only when arg1 begins with that prefix; the is_scripts_root name is intentionally inverted (R1/R2/R5e).
 do_luaedit	luaedit	luaedit.invalid-directory	D1	command	oracle-green	luaedit-list	file-edit.c:83-90; luaedit.c:34-45	A missing or unsafe selected directory returns only Invalid lua edit option.\r\n (R1/R4/R5e).

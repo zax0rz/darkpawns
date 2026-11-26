@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_slug	slug	slug.entry-gate	D1	command	unit-green	TestSlugRegistrationUsesCEntryGate	interpreter.c:709	The registered row requires level 1 at POS_FIGHTING, and the Go command registry preserves the authoritative C gate (R1/R2/R5e).
+do_slug	slug	slug.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:709	The registered row requires level 1 at POS_FIGHTING, and the Go command registry preserves the authoritative C gate (R1/R2/R5e).
 do_slug	slug	slug.position-gate	D1	shared	delegated	kick.position-gate	interpreter.c:709	The common POS_FIGHTING dispatcher rejection is owned by the existing kick position-gate proof (R2/R5b/R5c).
 do_slug	slug	slug.no-skill	D1	command	unit-green	TestDoSlug_GateOrderAndMessages	new_cmds.c:826-831	GET_SKILL zero returns the exact wet-paper-bag refusal before target lookup or RNG (R1/R5e).
 do_slug	slug	slug.no-argument	D1	command	oracle-green-multiseed	slug-depth@1,2,3,5,8	new_cmds.c:826-840	An awake skilled actor without an argument or fighting target receives Slug who? (R1/R2/R3/R5e).
