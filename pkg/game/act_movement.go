@@ -209,7 +209,7 @@ type MoveResult struct {
 func (w *World) DoMove(ch *Player, direction string) MoveResult {
 	dir := searchBlock(strings.ToLower(strings.TrimSpace(direction)), dirs, false)
 	if dir < 0 {
-		movementSendToChar(ch, "Alas, you cannot go that way...")
+		// C never parses a direction string here.
 		return MoveResult{}
 	}
 	result := MoveResult{}

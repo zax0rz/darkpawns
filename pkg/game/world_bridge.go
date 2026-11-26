@@ -1205,20 +1205,7 @@ func castSpellC(w *World, me combat.Combatant, meRef scripting.CharRef, victRef,
 		return false
 	}
 	if me.GetPosition() < int(info.MinPosition) {
-		var message string
-		switch me.GetPosition() {
-		case combat.PosSleeping:
-			message = "You dream about great magical powers.\r\n"
-		case combat.PosResting:
-			message = "You cannot concentrate while resting.\r\n"
-		case combat.PosSitting:
-			message = "You can't do this sitting!\r\n"
-		case combat.PosFighting:
-			message = "Impossible!  You can't concentrate enough!\r\n"
-		default:
-			message = "You can't do much of anything like this!\r\n"
-		}
-		sendActLineWithWorld(w, me, message)
+		sendActLineWithWorld(w, me, spells.CastPositionRefusalMessage(me.GetPosition()))
 		return false
 	}
 	if body.IsAffected(affCharm) && tch != nil && masterRef != nil && victRef != nil && *masterRef == *victRef {
