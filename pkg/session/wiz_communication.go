@@ -43,10 +43,6 @@ func cmdEcho(s *Session, args []string) error {
 		return nil
 	}
 	msg := strings.Join(args, " ")
-	if len(msg) > 500 {
-		s.Send("Maximum echo length is 500 characters.")
-		return nil
-	}
 	// C do_echo (src/act.wizard.c:147-151): the room copy is
 	// act(buf, FALSE, ch, 0, 0, TO_ROOM) — sleepers get nothing — then
 	// NOREPEAT gets OK (config.c:92) and everyone else gets the act TO_CHAR

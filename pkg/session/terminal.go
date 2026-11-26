@@ -483,11 +483,10 @@ func (s *Session) terminalCommand(cmd string, args []string, rawLine string) err
 }
 
 func (s *Session) sendClientMessage(msgType string, data json.RawMessage) error {
-	msg, err := json.Marshal(ClientMessage{Type: msgType, Data: data})
-	if err != nil {
-		return err
-	}
-	return s.handleMessage(msg)
+	// TerminalLine has already applied cInputLine and cTruncateInputLine;
+	// dispatch directly with alreadyFramed=true so the line is never cut or
+	// noticed a second time.
+	return s.dispatchClientMessage(ClientMessage{Type: msgType, Data: data}, true)
 }
 
 // terminalError shows a routing error the way telnet always has.

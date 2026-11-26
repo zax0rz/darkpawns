@@ -3,6 +3,7 @@ package session
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 )
 
 // cInputLine applies the character pass of C's process_input to one input
@@ -114,6 +115,95 @@ func cInputJSON(data json.RawMessage) (json.RawMessage, error) {
 		return nil, err
 	}
 	return out, nil
+}
+
+// commandDataLine reconstructs the single command line that CommandData
+// represents so structured WebSocket commands receive the same 255-byte
+// line framing as terminal clients.
+func commandDataLine(cmd CommandData) string {
+	if cmd.RawLine != "" {
+		return cmd.RawLine
+	}
+	if cmd.RawArgs != "" {
+		if cmd.Command == "" {
+			return cmd.RawArgs
+		}
+		return cmd.Command + " " + cmd.RawArgs
+	}
+	if len(cmd.Args) > 0 {
+		joined := strings.Join(cmd.Args, " ")
+		if cmd.Command == "" {
+			return joined
+		}
+		return cmd.Command + " " + joined
+	}
+	return cmd.Command
+}
+
+// frameCommandData applies cTruncateInputLine to an external structured
+// MsgCommand payload, sends the truncation notice before dispatch when cut,
+// and rebuilds Command, Args, RawArgs, and RawLine so every field agrees.
+func (s *Session) frameCommandData(data json.RawMessage) (json.RawMessage, error) {
+	var cmd CommandData
+	if err := json.Unmarshal(data, &cmd); err != nil {
+		return nil, err
+	}
+	line := commandDataLine(cmd)
+	cut, notice := cTruncateInputLine(line)
+	if notice == "" {
+		return data, nil
+	}
+	s.Send(notice)
+	cmdWord, cmdArgs := SplitCommandInput(strings.TrimSpace(cut))
+	cmd.Command = cmdWord
+	cmd.Args = cmdArgs
+	cmd.RawArgs = CommandArgumentText(cut)
+	if cmd.RawLine != "" {
+		cmd.RawLine = cut
+	}
+	return json.Marshal(cmd)
+}
+
+// frameChoiceData applies cTruncateInputLine to an external structured
+// MsgCharInput or MsgPagerInput payload.
+func (s *Session) frameChoiceData(data json.RawMessage) (json.RawMessage, error) {
+	var input CharInputData
+	if err := json.Unmarshal(data, &input); err != nil {
+		return nil, err
+	}
+	cut, notice := cTruncateInputLine(input.Choice)
+	if notice == "" {
+		return data, nil
+	}
+	s.Send(notice)
+	input.Choice = cut
+	return json.Marshal(input)
+}
+
+// frameLoginData applies cTruncateInputLine to the typed line fields
+// (PlayerName and Password) of an external structured MsgLogin payload.
+func (s *Session) frameLoginData(data json.RawMessage) (json.RawMessage, error) {
+	var login LoginData
+	if err := json.Unmarshal(data, &login); err != nil {
+		return nil, err
+	}
+	changed := false
+	if cut, notice := cTruncateInputLine(login.PlayerName); notice != "" {
+		s.Send(notice)
+		login.PlayerName = cut
+		changed = true
+	}
+	if login.Password != "" {
+		if cut, notice := cTruncateInputLine(login.Password); notice != "" {
+			s.Send(notice)
+			login.Password = cut
+			changed = true
+		}
+	}
+	if !changed {
+		return data, nil
+	}
+	return json.Marshal(login)
 }
 
 func cInputValue(v any) any {

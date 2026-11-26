@@ -303,6 +303,10 @@ func (s *Session) handleMessage(data []byte) error {
 		msg.Data = filtered
 	}
 
+	return s.dispatchClientMessage(msg, false)
+}
+
+func (s *Session) dispatchClientMessage(msg ClientMessage, alreadyFramed bool) error {
 	switch msg.Type {
 	case MsgTerminal:
 		s.startBrowserTerminal()
@@ -310,7 +314,15 @@ func (s *Session) handleMessage(data []byte) error {
 	case MsgLine:
 		return s.handleTerminalLine(msg.Data)
 	case MsgLogin:
-		return s.handleLogin(msg.Data)
+		data := msg.Data
+		if !alreadyFramed {
+			var err error
+			data, err = s.frameLoginData(data)
+			if err != nil {
+				return err
+			}
+		}
+		return s.handleLogin(data)
 	case MsgCommand:
 		// The DP_CLOCK harness control reaches a WebSocket session as an
 		// ordinary command line (the browser client sends every line that
@@ -321,18 +333,34 @@ func (s *Session) handleMessage(data []byte) error {
 		if !s.authenticated || s.menuActive || s.charCreating || s.creationSaved {
 			return ErrNotAuthenticated
 		}
-		return s.handleCommand(msg.Data)
+		data := msg.Data
+		if !alreadyFramed {
+			var err error
+			data, err = s.frameCommandData(data)
+			if err != nil {
+				return err
+			}
+		}
+		return s.handleCommand(data)
 	case MsgSubscribe:
 		if !s.authenticated {
 			return ErrNotAuthenticated
 		}
 		return s.handleSubscribe(msg.Data)
 	case MsgCharInput:
+		data := msg.Data
+		if !alreadyFramed {
+			var err error
+			data, err = s.frameChoiceData(data)
+			if err != nil {
+				return err
+			}
+		}
 		if s.menuActive {
-			return s.handleMenuInput(msg.Data)
+			return s.handleMenuInput(data)
 		}
 		if s.charCreating {
-			return s.handleCharInput(msg.Data)
+			return s.handleCharInput(data)
 		}
 		return ErrNotInCharCreation
 	case MsgPagerInput:
@@ -343,7 +371,15 @@ func (s *Session) handleMessage(data []byte) error {
 		if !s.IsPaging() {
 			return ErrNotInCharCreation
 		}
-		return s.handlePagerInputMsg(msg.Data)
+		data := msg.Data
+		if !alreadyFramed {
+			var err error
+			data, err = s.frameChoiceData(data)
+			if err != nil {
+				return err
+			}
+		}
+		return s.handlePagerInputMsg(data)
 	default:
 		return ErrUnknownMessageType
 	}

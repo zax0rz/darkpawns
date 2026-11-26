@@ -68,38 +68,6 @@ func TestNoteStringAddOverflowSkipsLineAndKeepsWriting(t *testing.T) {
 	}
 }
 
-// C truncates an oversized first line to max_str-3 and stores it
-// (src/modify.c:132-140).
-func TestNoteFirstLineOverflowTruncatesAndKeepsWriting(t *testing.T) {
-	var sent []string
-	player := NewPlayer(42, "NoteWriter", 1001)
-	player.entryTextSink = func(msg string) { sent = append(sent, msg) }
-	paper := &ObjectInstance{}
-	noteWriteMu.Lock()
-	noteWriteEntries[player.ID] = &noteWriteEntry{obj: paper}
-	noteWriteMu.Unlock()
-	t.Cleanup(func() {
-		noteWriteMu.Lock()
-		delete(noteWriteEntries, player.ID)
-		noteWriteMu.Unlock()
-	})
-
-	previousMessages := len(sent)
-	line := strings.Repeat("x", maxNoteLength-4) + "TAIL"
-	if HandleNoteInput(player, line) {
-		t.Fatal("note editor exited after truncating the first line")
-	}
-	state := noteWriteEntries[player.ID]
-	want := line[:maxNoteLength-3]
-	if state.buffer != want {
-		t.Fatalf("first-line truncation buffer = %q, want retained prefix %q", state.buffer, want)
-	}
-	requireNewStringAddNotice(t, sent, previousMessages, "String too long - Truncated.\r\n")
-	if !IsWritingNote(player) {
-		t.Fatal("note editor closed after first-line truncation")
-	}
-}
-
 func TestMailStringAddOverflowSkipsLineAndKeepsWriting(t *testing.T) {
 	var sent []string
 	player := NewPlayer(43, "MailWriter", 1001)

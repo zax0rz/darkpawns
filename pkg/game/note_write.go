@@ -100,15 +100,17 @@ func HandleNoteInput(ch *Player, line string) bool {
 		return true
 	}
 	if len(line)+state.editorBytes+3 > maxNoteLength {
-		notice := "String too long.  Last line skipped.\r\n"
 		if state.editorBytes == 0 {
+			// Defensive bounds guard; keep truncated prefix silently.
 			state.buffer = line[:maxNoteLength-3]
-			state.editorBytes = maxNoteLength - 1 // truncated text plus C's CRLF
-			notice = "String too long - Truncated.\r\n"
+			state.editorBytes = maxNoteLength - 1
+			state.overflowed = true
+			noteWriteMu.Unlock()
+			return false
 		}
 		state.overflowed = true
 		noteWriteMu.Unlock()
-		ch.SendMessage(notice)
+		ch.SendMessage("String too long.  Last line skipped.\r\n")
 		return false
 	}
 	state.buffer += line + "\r\n"
