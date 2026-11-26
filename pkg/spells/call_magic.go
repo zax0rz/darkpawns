@@ -216,6 +216,23 @@ func roomHasNoMagic(ch interface{}, world interface{}) bool {
 	return room.HasFlag(RoomNoMagic)
 }
 
+// CastPositionRefusalMessage returns the exact C cast_spell refusal for a
+// caster who is below the spell's required position.
+func CastPositionRefusalMessage(position int) string {
+	switch Position(position) {
+	case PosSleeping:
+		return "You dream about great magical powers.\r\n"
+	case PosResting:
+		return "You cannot concentrate while resting.\r\n"
+	case PosSitting:
+		return "You can't do this sitting!\r\n"
+	case PosFighting:
+		return "Impossible!  You can't concentrate enough!\r\n"
+	default:
+		return "You can't do much of anything like this!\r\n"
+	}
+}
+
 // checkPosition verifies the caster is in a valid position to cast.
 func checkPosition(ch interface{}, si *SpellInfo) bool {
 	type poser interface{ GetPosition() int }

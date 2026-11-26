@@ -341,18 +341,7 @@ func checkCastPosition(s *Session, info *spells.SpellInfo) bool {
 	if info == nil || s.player.GetPosition() >= int(info.MinPosition) {
 		return true
 	}
-	switch s.player.GetPosition() {
-	case int(spells.PosSleeping):
-		s.Send("You dream about great magical powers.\r\n")
-	case int(spells.PosResting):
-		s.Send("You cannot concentrate while resting.\r\n")
-	case int(spells.PosSitting):
-		s.Send("You can't do this sitting!\r\n")
-	case int(spells.PosFighting):
-		s.Send("Impossible!  You can't concentrate enough!\r\n")
-	default:
-		s.Send("You can't do much of anything like this!\r\n")
-	}
+	s.Send(spells.CastPositionRefusalMessage(s.player.GetPosition()))
 	return false
 }
 
