@@ -12,7 +12,7 @@ Phase 3 step 1 of `docs/plans/ROADMAP-2026-11-10-port-completion.md`. Measured o
 | Reference census run | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-26/nightly-20261126` |
 | Reference `go-head.txt` | `0b54a21431618d806c070b83192a023dfed1be7e` |
 | Attributed census run | `/home/zach/Archives/darkpawns/oracle-runs/2026-11-26/neon-draw-attribution` |
-| Attributed `go-head.txt` | `aeba1ac7cc8f0b17f7090754a9aa146df0c17025` (dirty worktree adding tooling only; no game code changes) |
+| Attributed `go-head.txt` | `aeba1ac7cd4071266406ca4bcee94bf4cbdfabd6` (dirty worktree adding tooling only; no game code changes) |
 | Combined census verdict | `CLEAN` (`full=CLEAN`, `claims=CLEAN`, `pairs=7137`, `deduplicated=2318`, `draw_divergent=0`, `elapsed=6074.228s`) |
 | Generated inventory & reach | `docs/fidelity/draws/draw-inventory.tsv`, `docs/fidelity/draws/draw-coverage.tsv`, `docs/fidelity/draws/draw-coverage-summary.txt` |
 
