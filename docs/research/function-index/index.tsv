@@ -524,15 +524,16 @@ boards	(BoardSystem).DisplayMsg	pkg/boards/boards.go	733
 boards	(BoardSystem).RemoveMsg	pkg/boards/boards.go	809			
 boards	stripTerminalControls	pkg/boards/boards.go	902			
 boards	(BoardSystem).AppendBoardLine	pkg/boards/boards.go	922			
-boards	(BoardSystem).ReviseBoardLine	pkg/boards/boards.go	958	src/improved-edit.c:parse_action	C's parse_action(	
-boards	(BoardSystem).AbortBoardWrite	pkg/boards/boards.go	988			
-boards	(BoardSystem).FinalizeBoardWrite	pkg/boards/boards.go	1006			
+boards	(BoardSystem).ReviseBoardLine	pkg/boards/boards.go	957	src/improved-edit.c:parse_action	C's parse_action(	
+boards	(BoardSystem).AbortBoardWrite	pkg/boards/boards.go	987			
+boards	(BoardSystem).FinalizeBoardWrite	pkg/boards/boards.go	1005			
 boards	TestDisplayRemoveMsgParseLikeCAtoi	pkg/boards/boards_atoi_test.go	14	src/boards.c:Board_display_msg	src/boards.c:330-332	
 boards	writeStart	pkg/boards/boards_fidelity_test.go	8			
 boards	TestBoardMessageCappedAtMaxLength	pkg/boards/boards_fidelity_test.go	23			
 boards	TestBoardEditorBoundToWriterSlot	pkg/boards/boards_fidelity_test.go	51			
 boards	TestBoardCapEdgeExactlyTwoBytes	pkg/boards/boards_fidelity_test.go	79			
 boards	TestBoardTextStripsTerminalControls	pkg/boards/boards_fidelity_test.go	121			
+boards	TestBoardWriteHeadingAllocFailureUnitProof	pkg/boards/boards_heading_alloc_unit_proof_test.go	12	src/boards.c:Board_write_message	src/boards.c:248-255	
 boards	newMockBoardPlayer	pkg/boards/boards_test.go	23			
 boards	(mockBoardPlayer).GetLevel	pkg/boards/boards_test.go	31			
 boards	(mockBoardPlayer).GetName	pkg/boards/boards_test.go	32			
@@ -1178,61 +1179,61 @@ command	skillGate	pkg/command/skill_commands.go	44
 command	oneArgumentSkillTarget	pkg/command/skill_commands.go	52			
 command	CmdBackstab	pkg/command/skill_commands.go	59			
 command	CmdBash	pkg/command/skill_commands.go	93			
-command	CmdKick	pkg/command/skill_commands.go	138			
-command	CmdTrip	pkg/command/skill_commands.go	181			
-command	CmdHeadbutt	pkg/command/skill_commands.go	220			
-command	CmdRescue	pkg/command/skill_commands.go	257			
-command	CmdDisembowel	pkg/command/skill_commands.go	297			
-command	CmdDragonKick	pkg/command/skill_commands.go	330			
-command	CmdTigerPunch	pkg/command/skill_commands.go	350			
-command	martialArtsVictim	pkg/command/skill_commands.go	377			
-command	CmdShoot	pkg/command/skill_commands.go	391			
-command	shootTargetGate	pkg/command/skill_commands.go	495			
-command	CmdSubdue	pkg/command/skill_commands.go	518	src/act.movement.c:do_stand; src/act.offensive.c:do_subdue; src/fight.c:perform_violence	src/act.movement.c:707-710 | src/act.offensive.c:1091-1105 | src/fight.c:1992	
-command	CmdSleeper	pkg/command/skill_commands.go	546			
-command	CmdNeckbreak	pkg/command/skill_commands.go	567			
-command	CmdAmbush	pkg/command/skill_commands.go	594			
-command	CmdBerserk	pkg/command/skill_commands.go	633			
-command	CmdKujiKiri	pkg/command/skill_commands.go	644			
-command	CmdSneak	pkg/command/skill_commands.go	655			
-command	CmdStealth	pkg/command/skill_commands.go	666			
-command	CmdHide	pkg/command/skill_commands.go	676			
-command	CmdKabuki	pkg/command/skill_commands.go	687	src/act.other.c:do_hide	src/act.other.c:247-306	
-command	CmdSteal	pkg/command/skill_commands.go	697			
-command	CmdCarve	pkg/command/skill_commands.go	724			
-command	CmdCutthroat	pkg/command/skill_commands.go	743			
-command	CmdStrike	pkg/command/skill_commands.go	776	src/new_cmds.c:check_kk_success; src/new_cmds.c:do_strike	src/new_cmds.c:1433-1502	
-command	CmdCompare	pkg/command/skill_commands.go	851	src/new_cmds.c:do_compare	port of do_compare ( | src/new_cmds.c:1952	
-command	CmdScan	pkg/command/skill_commands.go	871			
-command	CmdSharpen	pkg/command/skill_commands.go	886			
-command	CmdScrounge	pkg/command/skill_commands.go	900			
-command	CmdFirstAid	pkg/command/skill_commands.go	911			
-command	CmdDisarm	pkg/command/skill_commands.go	937			
-command	CmdMindlink	pkg/command/skill_commands.go	979			
-command	CmdDetect	pkg/command/skill_commands.go	999			
-command	CmdSerpentKick	pkg/command/skill_commands.go	1010			
-command	CmdTurn	pkg/command/skill_commands.go	1051			
-command	skillMessageTerminator	pkg/command/skill_commands.go	1078	src/new_cmds.c:do_compare; src/new_cmds2.c:do_detect	src/new_cmds.c:1991 | src/new_cmds2.c:516	
-command	sendSkillResult	pkg/command/skill_commands.go	1085			
-command	CmdMold	pkg/command/skill_commands.go	1508			
-command	CmdBehead	pkg/command/skill_commands.go	1526			
-command	CmdBearhug	pkg/command/skill_commands.go	1547			
-command	CmdSlug	pkg/command/skill_commands.go	1584			
-command	CmdSmackheads	pkg/command/skill_commands.go	1615			
-command	CmdBite	pkg/command/skill_commands.go	1639			
-command	CmdTag	pkg/command/skill_commands.go	1676			
-command	CmdPoint	pkg/command/skill_commands.go	1704			
-command	CmdGroinrip	pkg/command/skill_commands.go	1718			
-command	CmdPalm	pkg/command/skill_commands.go	1772			
-command	CmdFleshAlter	pkg/command/skill_commands.go	1790			
-command	CmdSpike	pkg/command/skill_commands.go	1804			
-command	CmdStake	pkg/command/skill_commands.go	1809			
-command	cmdSpikeOrStake	pkg/command/skill_commands.go	1813			
-command	CmdCircle	pkg/command/skill_commands.go	1834			
-command	CmdCharge	pkg/command/skill_commands.go	1871			
-command	heldFightingTarget	pkg/command/skill_commands.go	1909			
-command	sendSkillVictimMessage	pkg/command/skill_commands.go	1916			
-command	sendSkillRoomMessage	pkg/command/skill_commands.go	1929			
+command	CmdKick	pkg/command/skill_commands.go	135			
+command	CmdTrip	pkg/command/skill_commands.go	178			
+command	CmdHeadbutt	pkg/command/skill_commands.go	217			
+command	CmdRescue	pkg/command/skill_commands.go	254			
+command	CmdDisembowel	pkg/command/skill_commands.go	294			
+command	CmdDragonKick	pkg/command/skill_commands.go	327			
+command	CmdTigerPunch	pkg/command/skill_commands.go	347			
+command	martialArtsVictim	pkg/command/skill_commands.go	374			
+command	CmdShoot	pkg/command/skill_commands.go	388			
+command	shootTargetGate	pkg/command/skill_commands.go	492			
+command	CmdSubdue	pkg/command/skill_commands.go	515	src/act.movement.c:do_stand; src/act.offensive.c:do_subdue; src/fight.c:perform_violence	src/act.movement.c:707-710 | src/act.offensive.c:1091-1105 | src/fight.c:1992	
+command	CmdSleeper	pkg/command/skill_commands.go	543			
+command	CmdNeckbreak	pkg/command/skill_commands.go	564			
+command	CmdAmbush	pkg/command/skill_commands.go	591			
+command	CmdBerserk	pkg/command/skill_commands.go	630			
+command	CmdKujiKiri	pkg/command/skill_commands.go	641			
+command	CmdSneak	pkg/command/skill_commands.go	652			
+command	CmdStealth	pkg/command/skill_commands.go	663			
+command	CmdHide	pkg/command/skill_commands.go	673			
+command	CmdKabuki	pkg/command/skill_commands.go	684	src/act.other.c:do_hide	src/act.other.c:247-306	
+command	CmdSteal	pkg/command/skill_commands.go	694			
+command	CmdCarve	pkg/command/skill_commands.go	721			
+command	CmdCutthroat	pkg/command/skill_commands.go	740			
+command	CmdStrike	pkg/command/skill_commands.go	773	src/new_cmds.c:check_kk_success; src/new_cmds.c:do_strike	src/new_cmds.c:1433-1502	
+command	CmdCompare	pkg/command/skill_commands.go	848	src/new_cmds.c:do_compare	port of do_compare ( | src/new_cmds.c:1952	
+command	CmdScan	pkg/command/skill_commands.go	868			
+command	CmdSharpen	pkg/command/skill_commands.go	883			
+command	CmdScrounge	pkg/command/skill_commands.go	897			
+command	CmdFirstAid	pkg/command/skill_commands.go	908			
+command	CmdDisarm	pkg/command/skill_commands.go	934			
+command	CmdMindlink	pkg/command/skill_commands.go	970			
+command	CmdDetect	pkg/command/skill_commands.go	990			
+command	CmdSerpentKick	pkg/command/skill_commands.go	1001			
+command	CmdTurn	pkg/command/skill_commands.go	1042			
+command	skillMessageTerminator	pkg/command/skill_commands.go	1069	src/new_cmds.c:do_compare; src/new_cmds2.c:do_detect	src/new_cmds.c:1991 | src/new_cmds2.c:516	
+command	sendSkillResult	pkg/command/skill_commands.go	1076			
+command	CmdMold	pkg/command/skill_commands.go	1499			
+command	CmdBehead	pkg/command/skill_commands.go	1517			
+command	CmdBearhug	pkg/command/skill_commands.go	1538			
+command	CmdSlug	pkg/command/skill_commands.go	1575			
+command	CmdSmackheads	pkg/command/skill_commands.go	1606			
+command	CmdBite	pkg/command/skill_commands.go	1630			
+command	CmdTag	pkg/command/skill_commands.go	1667			
+command	CmdPoint	pkg/command/skill_commands.go	1695			
+command	CmdGroinrip	pkg/command/skill_commands.go	1709			
+command	CmdPalm	pkg/command/skill_commands.go	1763			
+command	CmdFleshAlter	pkg/command/skill_commands.go	1781			
+command	CmdSpike	pkg/command/skill_commands.go	1795			
+command	CmdStake	pkg/command/skill_commands.go	1800			
+command	cmdSpikeOrStake	pkg/command/skill_commands.go	1804			
+command	CmdCircle	pkg/command/skill_commands.go	1825			
+command	CmdCharge	pkg/command/skill_commands.go	1862			
+command	heldFightingTarget	pkg/command/skill_commands.go	1897			
+command	sendSkillVictimMessage	pkg/command/skill_commands.go	1904			
+command	sendSkillRoomMessage	pkg/command/skill_commands.go	1917			
 command	(rescueCommandSession).GetPlayer	pkg/command/skill_commands_test.go	21			
 command	(rescueCommandSession).SendMessage	pkg/command/skill_commands_test.go	23			
 command	(rescueCommandSession).Send	pkg/command/skill_commands_test.go	28			
@@ -1837,8 +1838,8 @@ game	firstWord	pkg/game/act_movement.go	1201
 game	verbIs	pkg/game/act_movement.go	1213			
 game	hasMobKey	pkg/game/act_movement.go	1222	src/act.movement.c:has_key	src/act.movement.c:428-441	
 game	(World).mobGenDoor	pkg/game/act_movement.go	1243	src/act.movement.c:do_enter; src/act.movement.c:do_gen_door	src/act.movement.c:605-642	
-game	(World).mobDoorObjectTarget	pkg/game/act_movement.go	1398	src/act.movement.c:do_gen_door	src/act.movement.c:612	
-game	(World).findDoorMob	pkg/game/act_movement.go	1416	src/act.movement.c:find_door	src/act.movement.c:370-421	
+game	(World).mobDoorObjectTarget	pkg/game/act_movement.go	1396	src/act.movement.c:do_gen_door	src/act.movement.c:612	
+game	(World).findDoorMob	pkg/game/act_movement.go	1414	src/act.movement.c:find_door	src/act.movement.c:370-421	
 game	newDoorHandlerTestWorld	pkg/game/act_movement_door_test.go	11			
 game	giveDoorTestObject	pkg/game/act_movement_door_test.go	48			
 game	joinedDoorMessages	pkg/game/act_movement_door_test.go	60			
@@ -2869,6 +2870,7 @@ game	(World).RawKill	pkg/game/gates.go	136
 game	TestDoGenWriteNPCGate	pkg/game/gen_write_depth_test.go	14	src/act.other.c:do_gen_write	src/act.other.c:1103-1106	
 game	TestDoGenWritePlayerRecordAndResponse	pkg/game/gen_write_depth_test.go	44	src/act.other.c:do_gen_write	src/act.other.c:1107-1127	
 game	TestDoGenWriteEntryGates	pkg/game/gen_write_depth_test.go	83	src/act.other.c:do_gen_write	src/act.other.c:1086-1117	
+game	TestDoGenWriteOpenFileFailureUnitProof	pkg/game/gen_write_open_fail_unit_proof_test.go	13	src/act.other.c:do_gen_write	C do_gen_write ( | src/act.other.c:1122-1125	
 game	TestGenericFindEquipFirstLookInObj	pkg/game/generic_find_equip_first_test.go	15	src/act.informative.c:look_in_obj; src/handler.c:generic_find	C generic_find ( | src/act.informative.c:924 | src/handler.c:1513-1564	
 game	TestGenericFindEquipFirstLookAtTarget	pkg/game/generic_find_equip_first_test.go	48	src/act.informative.c:look_at_target	src/act.informative.c:1017	
 game	TestGenericFindEquipFirstMagObjectMagic	pkg/game/generic_find_equip_first_test.go	78	src/spell_parser.c:mag_objectmagic	src/spell_parser.c:566	
@@ -4151,12 +4153,14 @@ game	TestDoNewbieChannelDepthGatesAndFanout	pkg/game/newbie_channel_depth_test.g
 game	makeNightbreedObj	pkg/game/nightbreed_wipe_test.go	10			
 game	nightbreedRobes	pkg/game/nightbreed_wipe_test.go	14			
 game	TestApplySpellUnequipWipesPersistentNightbreedBit	pkg/game/nightbreed_wipe_test.go	35	src/act.other.c:do_transform; src/handler.c:aff_apply_modify; src/handler.c:equip_char; src/handler.c:unequip_char	src/act.other.c:1503 | src/handler.c:259-266 | src/handler.c:749-782	
-game	HandleNoteInput	pkg/game/note_write.go	48	src/modify.c:string_add	src/modify.c:127-156 | src/modify.c:216-217	
+game	IsWritingNote	pkg/game/note_write.go	37			
+game	CancelNoteWrite	pkg/game/note_write.go	48			
+game	HandleNoteInput	pkg/game/note_write.go	69	src/modify.c:string_add	src/modify.c:127-156 | src/modify.c:216-217	
 game	setupNoteWriter	pkg/game/note_write_test.go	11			
-game	TestNoteCommitIsSilentAndReadable	pkg/game/note_write_test.go	34	src/act.comm.c:do_write; src/modify.c:playing_string_cleanup; src/modify.c:string_add	src/act.comm.c:1089-1102 | src/modify.c:132-155 | src/modify.c:218-236	
-game	TestNoteInstancesDoNotShareText	pkg/game/note_write_test.go	63	src/db.c:read_object; src/modify.c:string_add	src/db.c:1947-1953 | src/modify.c:132-144	
-game	TestEmptyNoteStaysBlank	pkg/game/note_write_test.go	86			
-game	TestNoteGateReadsWrittenTextAndPrototypeText	pkg/game/note_write_test.go	105	src/act.comm.c:do_write	src/act.comm.c:1089-1095	
+game	TestNoteCommitIsSilentAndReadable	pkg/game/note_write_test.go	33	src/act.comm.c:do_write; src/modify.c:playing_string_cleanup; src/modify.c:string_add	src/act.comm.c:1089-1102 | src/modify.c:132-155 | src/modify.c:218-236	
+game	TestNoteInstancesDoNotShareText	pkg/game/note_write_test.go	65	src/db.c:read_object; src/modify.c:string_add	src/db.c:1947-1953 | src/modify.c:132-144	
+game	TestEmptyNoteStaysBlank	pkg/game/note_write_test.go	88			
+game	TestNoteGateReadsWrittenTextAndPrototypeText	pkg/game/note_write_test.go	107	src/act.comm.c:do_write	src/act.comm.c:1089-1095	
 game	TestDeathObservationCoversGuardedAndRawPaths	pkg/game/notification_death_test.go	11			
 game	(World).NPCCommand	pkg/game/npc_command.go	22			
 game	(World).NPCCommandDirect	pkg/game/npc_command.go	46			
@@ -6287,9 +6291,8 @@ game	TestDoStrike_HitContract	pkg/game/strike_skillmsg_test.go	46
 game	TestDoStrike_SleepingVictimRaisesProbTo100	pkg/game/strike_skillmsg_test.go	76			
 game	requireNewStringAddNotice	pkg/game/string_add_overflow_test.go	8			
 game	TestNoteStringAddOverflowSkipsLineAndKeepsWriting	pkg/game/string_add_overflow_test.go	17	src/modify.c:string_add	src/modify.c:145-155	
-game	TestNoteFirstLineOverflowTruncatesAndKeepsWriting	pkg/game/string_add_overflow_test.go	74	src/modify.c:string_add	src/modify.c:132-140	
-game	TestMailStringAddOverflowSkipsLineAndKeepsWriting	pkg/game/string_add_overflow_test.go	105			
-game	TestMailFirstLineOverflowTruncatesAndKeepsWriting	pkg/game/string_add_overflow_test.go	152			
+game	TestMailStringAddOverflowSkipsLineAndKeepsWriting	pkg/game/string_add_overflow_test.go	71			
+game	TestMailFirstLineOverflowTruncatesAndKeepsWriting	pkg/game/string_add_overflow_test.go	118			
 game	subdueTestWorld	pkg/game/subdue_depth_test.go	11			
 game	subdueTestPlayer	pkg/game/subdue_depth_test.go	26			
 game	assertZeroDrawsBeyond	pkg/game/subdue_depth_test.go	35			
@@ -6652,9 +6655,9 @@ game	(World).SpellObjectAct	pkg/game/world_bridge.go	1135
 game	(World).SpellActToChar	pkg/game/world_bridge.go	1151	src/comm.c:perform_act	src/comm.c:2397-2477	
 game	(World).IsSpellCharmShopkeeper	pkg/game/world_bridge.go	1164			
 game	castSpellC	pkg/game/world_bridge.go	1180			
-game	(WorldScriptableAdapter).Unaffect	pkg/game/world_bridge.go	1260			
-game	(WorldScriptableAdapter).Mount	pkg/game/world_bridge.go	1300			
-game	(WorldScriptableAdapter).CombatTargetName	pkg/game/world_bridge.go	1331			
+game	(WorldScriptableAdapter).Unaffect	pkg/game/world_bridge.go	1247			
+game	(WorldScriptableAdapter).Mount	pkg/game/world_bridge.go	1287			
+game	(WorldScriptableAdapter).CombatTargetName	pkg/game/world_bridge.go	1318			
 game	TestWorldBridgeMobileActionsDispatchTheCCommandAndArgument	pkg/game/world_bridge_direct_test.go	11			
 game	(World).StartCombat	pkg/game/world_combat.go	14			
 game	(World).ApplyMobDamageRedirects	pkg/game/world_combat.go	23			
@@ -8151,8 +8154,8 @@ session	cmdCast	pkg/session/cast_cmds.go	188
 session	cmdWill	pkg/session/cast_cmds.go	192			
 session	cmdCastCommand	pkg/session/cast_cmds.go	196			
 session	checkCastPosition	pkg/session/cast_cmds.go	340			
-session	castWeightPenalty	pkg/session/cast_cmds.go	359			
-session	init	pkg/session/cast_cmds.go	377			
+session	castWeightPenalty	pkg/session/cast_cmds.go	348			
+session	init	pkg/session/cast_cmds.go	366			
 session	seedForCastRoll	pkg/session/cast_cmds_test.go	16			
 session	prepareCaster	pkg/session/cast_cmds_test.go	27			
 session	captureCastDraws	pkg/session/cast_cmds_test.go	37			
@@ -8365,17 +8368,16 @@ session	cmdHelpTextForBody	pkg/session/cmd_info.go	1466
 session	cmdReview	pkg/session/cmd_info.go	1525	src/new_cmds.c:do_review	C: do_review(	
 session	cmdWhois	pkg/session/cmd_info.go	1537	src/new_cmds.c:do_whois	C: do_whois(	
 session	makeHelpTestManager	pkg/session/cmd_info_help_test.go	14			
-session	TestHelpRegistrationUsesCEntryGate	pkg/session/cmd_info_help_test.go	41			
-session	TestCmdHelpNoArgPagesScreen	pkg/session/cmd_info_help_test.go	62			
-session	TestCmdHelpHitDisplayByteExact	pkg/session/cmd_info_help_test.go	81			
-session	longestDashRun	pkg/session/cmd_info_help_test.go	111			
-session	TestCmdHelpPrefixFirstMatch	pkg/session/cmd_info_help_test.go	128			
-session	TestCmdHelpWizonlyHiddenFromMortal	pkg/session/cmd_info_help_test.go	146			
-session	TestCmdHelpWizonlyVisibleToImmortal	pkg/session/cmd_info_help_test.go	163			
-session	TestCmdHelpMissExactMessage	pkg/session/cmd_info_help_test.go	182			
-session	TestCmdHelpNoRegistryFallback	pkg/session/cmd_info_help_test.go	198			
-session	TestCmdHelpQuestionMarkAlias	pkg/session/cmd_info_help_test.go	219			
-session	TestCmdHelpRawArgumentSpacingMatchesC	pkg/session/cmd_info_help_test.go	234			
+session	TestCmdHelpNoArgPagesScreen	pkg/session/cmd_info_help_test.go	43			
+session	TestCmdHelpHitDisplayByteExact	pkg/session/cmd_info_help_test.go	62			
+session	longestDashRun	pkg/session/cmd_info_help_test.go	92			
+session	TestCmdHelpPrefixFirstMatch	pkg/session/cmd_info_help_test.go	109			
+session	TestCmdHelpWizonlyHiddenFromMortal	pkg/session/cmd_info_help_test.go	127			
+session	TestCmdHelpWizonlyVisibleToImmortal	pkg/session/cmd_info_help_test.go	144			
+session	TestCmdHelpMissExactMessage	pkg/session/cmd_info_help_test.go	163			
+session	TestCmdHelpNoRegistryFallback	pkg/session/cmd_info_help_test.go	179			
+session	TestCmdHelpQuestionMarkAlias	pkg/session/cmd_info_help_test.go	200			
+session	TestCmdHelpRawArgumentSpacingMatchesC	pkg/session/cmd_info_help_test.go	215			
 session	readSessionText	pkg/session/cmd_info_test.go	18			
 session	TestAlignmentText	pkg/session/cmd_info_test.go	48			
 session	TestAcTextEveryBand	pkg/session/cmd_info_test.go	75	src/act.informative.c:do_score	src/act.informative.c:1232-1257	
@@ -8672,7 +8674,7 @@ session	warnUnsupportedSpecialOnce	pkg/session/commands.go	1278
 session	runSpecials	pkg/session/commands.go	1298	src/interpreter.c:special	C's special( | src/interpreter.c:1407-1481	
 session	resolveDirection	pkg/session/commands.go	1492			
 session	cmdUse	pkg/session/commands.go	1501			
-session	isCSocial	pkg/session/commands.go	1538			
+session	isCSocial	pkg/session/commands.go	1512			
 session	TestRunSpecialsSwitchedActorIsMobBody	pkg/session/commands_switched_specials_test.go	16	src/interpreter.c:special	C's special( | src/interpreter.c:1407-1481	
 session	TestRunSpecialsSwitchedUnsupportedDoesNotTrap	pkg/session/commands_switched_specials_test.go	69			
 session	makeCommandTestSession	pkg/session/commands_test.go	13			
@@ -8724,7 +8726,6 @@ session	TestCreationAcceptedSQLiteRecord	pkg/session/creation_record_test.go	77
 session	TestCreationEntryAndAdvanceSQLiteRecords	pkg/session/creation_record_test.go	83			
 session	TestCreationLiveStateAndDrawsUnchanged	pkg/session/creation_record_test.go	106			
 session	TestCreationReconnectDurableValues	pkg/session/creation_record_test.go	134			
-session	TestCreditsRegistrationUsesCEntryGate	pkg/session/credits_depth_test.go	9			
 session	TestCmdDateIgnoresArguments	pkg/session/date_depth_test.go	8			
 session	TestParseDCNumberMirrorsCAtoi	pkg/session/dc_depth_test.go	5			
 session	TestInstakillFollowerNoticeBeforeMenuWire	pkg/session/death_followers_wire_test.go	13	src/act.offensive.c:do_kill; src/fight.c:raw_kill; src/handler.c:extract_char_final; src/utils.c:stop_follower	src/act.offensive.c:160 | src/fight.c:534-580 | src/handler.c:1116-1117 | src/utils.c:422-423	
@@ -8759,7 +8760,6 @@ session	TestCmdTagNPCAcknowledgment	pkg/session/descriptor_wizard_info_test.go	2
 session	TestUsersListsDescriptorsButOmitsLinklessCharacters	pkg/session/descriptor_wizard_info_test.go	277			
 session	TestWhereNoArgumentOnlyListsConPlayingDescriptors	pkg/session/descriptor_wizard_info_test.go	305			
 session	TestConPlayingDescriptorFanoutMatchesCStates	pkg/session/descriptor_world_broadcast_test.go	9			
-session	TestDiagnoseRegistrationUsesCEntryGate	pkg/session/diagnose_depth_test.go	9			
 session	infobarSeparator	pkg/session/display_cmds.go	50			
 session	infobarHitPointsStr	pkg/session/display_cmds.go	55			
 session	infobarHitPoints	pkg/session/display_cmds.go	60			
@@ -8960,11 +8960,7 @@ session	TestPurgeRoomDrainsPendingMobsImmediately	pkg/session/extchar_deferred_t
 session	TestPurgeRoomReturnsPendingPlayerToHeartbeatMenu	pkg/session/extchar_deferred_test.go	153			
 session	TestCombatMobSpecialSkipsPendingExtraction	pkg/session/extchar_deferred_test.go	191			
 session	TestPlayerExtcharDropsPossessionsAndReturnsToMenuAtHeartbeat	pkg/session/extchar_deferred_test.go	232			
-session	TestFadeRegistrationUsesCEntryGate	pkg/session/fade_test.go	9			
-session	TestFadeSleepingActorHitsCPositionGate	pkg/session/fade_test.go	19			
-session	TestFaintRegistrationUsesCEntryGate	pkg/session/faint_test.go	9			
-session	TestFarewellRegistrationUsesCEntryGate	pkg/session/farewell_test.go	9			
-session	TestFartRegistrationUsesCEntryGate	pkg/session/fart_test.go	9			
+session	TestFadeSleepingActorHitsCPositionGate	pkg/session/fade_test.go	9			
 session	killEditorFile	pkg/session/file_editor_access_posix.go	13	src/file-edit.c:kill_file	src/file-edit.c:19-25	
 session	killEditorFile	pkg/session/file_editor_access_windows.go	8	src/file-edit.c:kill_file	src/file-edit.c:19-25	
 session	TestPortableWindowsEditorDelete	pkg/session/file_editor_access_windows_test.go	9			
@@ -8986,48 +8982,36 @@ session	TestSQLiteLevelAdvanceSave	pkg/session/file_store_test.go	52
 session	TestSaveSQLiteLeavesLegacyJSONUntouched	pkg/session/file_store_test.go	66			
 session	TestCreationResumeAcceptedRecord	pkg/session/file_store_test.go	96			
 session	TestSQLiteFileAdmissionGates	pkg/session/file_store_test.go	113			
-session	TestFillRegistrationUsesCEntryGate	pkg/session/fill_test.go	9			
-session	TestFillRestingActorHitsCPositionGate	pkg/session/fill_test.go	19			
-session	TestFingerRegistrationUsesCEntryGate	pkg/session/finger_test.go	9			
+session	TestFillRestingActorHitsCPositionGate	pkg/session/fill_test.go	9			
 session	TestShouldCrownFirstPlayer_HarnessLatch	pkg/session/firstplayer_god_test.go	14			
 session	TestShouldCrownFirstPlayer_NotFreshIsMortal	pkg/session/firstplayer_god_test.go	34			
 session	TestCompleteCharCreation_FreshGodThenMortal	pkg/session/firstplayer_god_test.go	48			
 session	TestCompleteCharCreation_GodRoomWithDB	pkg/session/firstplayer_god_test.go	117			
-session	TestFlexRegistrationUsesCEntryGate	pkg/session/flex_test.go	9			
-session	TestFlipRegistrationUsesCEntryGate	pkg/session/flip_test.go	9			
-session	TestFlipRestingActorHitsCPositionGate	pkg/session/flip_test.go	19			
-session	TestFlirtRegistrationUsesCEntryGate	pkg/session/flirt_test.go	9			
-session	TestFollowRegistrationUsesCEntryGate	pkg/session/follow_test.go	9			
-session	TestFondleRegistrationUsesCEntryGate	pkg/session/fondle_test.go	9			
+session	TestFlipRestingActorHitsCPositionGate	pkg/session/flip_test.go	9			
 session	TestForceMobileRunsGroupAndEnrolsTheFollower	pkg/session/force_mobile_group_test.go	23	src/act.other.c:do_group; src/act.wizard.c:do_force	src/act.other.c:685-740 | src/act.wizard.c:1869-1880	
 session	TestForceNotificationVisibilityAndSleep	pkg/session/force_notification_depth_test.go	10			
 session	TestForceShutdownNotificationAct	pkg/session/force_notification_depth_test.go	37			
 session	TestForceTargetsUsesDescriptorOrderForAllAndRoomOrderForRoom	pkg/session/force_order_test.go	10			
 session	sessionNames	pkg/session/force_order_test.go	67			
-session	TestForceRegistrationUsesCEntryGate	pkg/session/force_test.go	9			
-session	TestCmdForceUsesCRejections	pkg/session/force_test.go	19			
-session	TestCmdForceGodCasterAndVictimNotification	pkg/session/force_test.go	48			
-session	TestCmdForceRoomAndAllFilterByLevelAndRoom	pkg/session/force_test.go	69			
-session	TestCmdForceBelowGreaterGodTreatsAllAsCharacterName	pkg/session/force_test.go	115			
-session	assertNoSessionMessage	pkg/session/force_test.go	128			
-session	TestFreezeRegistrationUsesCEntryGate	pkg/session/freeze_test.go	10			
-session	TestCmdFreezeResolvesCCharacterTargets	pkg/session/freeze_test.go	21			
+session	TestCmdForceUsesCRejections	pkg/session/force_test.go	7			
+session	TestCmdForceGodCasterAndVictimNotification	pkg/session/force_test.go	36			
+session	TestCmdForceRoomAndAllFilterByLevelAndRoom	pkg/session/force_test.go	57			
+session	TestCmdForceBelowGreaterGodTreatsAllAsCharacterName	pkg/session/force_test.go	103			
+session	assertNoSessionMessage	pkg/session/force_test.go	116			
+session	TestCmdFreezeResolvesCCharacterTargets	pkg/session/freeze_test.go	9			
 session	TestFrenchRegistrationUsesCEntryGate	pkg/session/french_test.go	10			
 session	TestFrownRegistrationUsesCEntryGate	pkg/session/frown_test.go	10			
 session	TestFumeRegistrationUsesCEntryGate	pkg/session/fume_test.go	10			
-session	TestFutureRegistrationUsesCEntryGate	pkg/session/future_test.go	9			
 session	TestFwapRegistrationUsesCEntryGate	pkg/session/fwap_test.go	10			
 session	TestGagRegistrationUsesCEntryGate	pkg/session/gag_test.go	10			
-session	TestGaspRegistrationUsesCEntryGate	pkg/session/gasp_test.go	9			
 session	newGateDepthFixture	pkg/session/gate_depth_test.go	12			
 session	addGateObserver	pkg/session/gate_depth_test.go	52			
 session	allowGateCast	pkg/session/gate_depth_test.go	60			
 session	TestGatePortalCommandsUseAssignedObjectSpecial	pkg/session/gate_depth_test.go	67			
 session	TestGateSpellManualDispatchOutputsAndTimer	pkg/session/gate_depth_test.go	107			
-session	TestGechoRegistrationUsesCEntryGate	pkg/session/gecho_test.go	10			
-session	TestCommandArgumentTextPreservesCSpacing	pkg/session/gecho_test.go	20			
-session	TestGechoNoRepeatUsesCOkayAndExcludesActor	pkg/session/gecho_test.go	29			
-session	TestGechoQueuedInputPreservesRawArgs	pkg/session/gecho_test.go	48			
+session	TestCommandArgumentTextPreservesCSpacing	pkg/session/gecho_test.go	9			
+session	TestGechoNoRepeatUsesCOkayAndExcludesActor	pkg/session/gecho_test.go	18			
+session	TestGechoQueuedInputPreservesRawArgs	pkg/session/gecho_test.go	37			
 session	loginTextForFile	pkg/session/gen_ps_cmds.go	29			
 session	readCTextFile	pkg/session/gen_ps_cmds.go	49			
 session	minInt	pkg/session/gen_ps_cmds.go	94			
@@ -9100,25 +9084,19 @@ session	TestGMCPClientMapOffer	pkg/session/gmcp_test.go	282
 session	TestConcurrentFirstCreationsCrownExactlyOne	pkg/session/god_latch_race_test.go	16			
 session	TestGooseRegistrationUsesCEntryGate	pkg/session/goose_test.go	10			
 session	TestGossipMOTDOverlayIsOptInAndDoesNotEditCText	pkg/session/gossip_notice_test.go	12			
-session	TestGrabRegistrationUsesCEntryGate	pkg/session/grab_test.go	9			
 session	TestGreetRegistrationUsesCEntryGate	pkg/session/greet_test.go	10			
 session	TestGrimaceRegistrationUsesCEntryGate	pkg/session/grimace_test.go	10			
 session	TestGrinRegistrationUsesCEntryGate	pkg/session/grin_test.go	10			
 session	TestGroanRegistrationUsesCEntryGate	pkg/session/groan_test.go	10			
-session	TestGroinripRegistrationUsesCEntryGate	pkg/session/groinrip_test.go	9			
 session	TestGropeRegistrationUsesCEntryGate	pkg/session/grope_test.go	10			
 session	TestGroupSleepingLeaderReadsTheSendToCharAnswers	pkg/session/group_command_gates_test.go	18	src/act.other.c:do_group; src/comm.c:send_to_char	src/act.other.c:714-720 | src/comm.c:2335-2339	src/interpreter.c:471 (range does not intersect a parsed C function body)
 session	TestGroupRefusesAShadowingFollowerByName	pkg/session/group_command_gates_test.go	55	src/act.other.c:do_group	src/act.other.c:721	
 session	TestCmdUngroupDisbandIncludesMobileAndPreservesCharmedFollow	pkg/session/group_disband_walk_test.go	15	src/act.other.c:do_ungroup; src/utils.c:stop_follower	src/act.other.c:757-765 | src/utils.c:419-426	
-session	TestGroupRegistrationUsesCEntryGate	pkg/session/group_test.go	9			
 session	TestGrovelRegistrationUsesCEntryGate	pkg/session/grovel_test.go	10			
 session	TestGrowlRegistrationUsesCEntryGate	pkg/session/growl_test.go	10			
 session	TestGrumbleRegistrationUsesCEntryGate	pkg/session/grumble_test.go	10			
 session	TestGsayRegistrationUsesCEntryGates	pkg/session/gsay_test.go	10			
 session	TestGsayRawMessageAndNoRepeatMatchC	pkg/session/gsay_test.go	36			
-session	TestHandbookRegistrationUsesCEntryGate	pkg/session/handbook_test.go	9			
-session	TestHcontrolRegistrationUsesCEntryGate	pkg/session/hcontrol_test.go	9			
-session	TestHeadbuttRegistrationUsesCEntryGate	pkg/session/headbutt_test.go	9			
 session	(Manager).BeginHeartbeatOutput	pkg/session/heartbeat_output.go	39			
 session	(Manager).beginPumpHeartbeatOutput	pkg/session/heartbeat_output.go	57			
 session	(Session).stageHeartbeat	pkg/session/heartbeat_output.go	75			
@@ -9154,7 +9132,6 @@ session	TestHeartbeatOutputWebSocketOrderlyBoundary	pkg/session/heartbeat_transp
 session	TestHehRegistrationUsesCEntryGate	pkg/session/heh_test.go	10			
 session	TestHelpMudlogActingBody	pkg/session/help_body_mudlog_test.go	11			
 session	TestHiccupRegistrationUsesCEntryGate	pkg/session/hiccup_test.go	10			
-session	TestHideFamilyRegistrationUsesCEntryGates	pkg/session/hide_test.go	9			
 session	TestHighfiveRegistrationUsesCEntryGate	pkg/session/highfive_test.go	10			
 session	TestCmdHitUsesCOneArgumentBoundary	pkg/session/hit_depth_test.go	5			
 session	TestCmdHitFillWordsWithoutTargetUseNoArgumentMessage	pkg/session/hit_depth_test.go	22			
@@ -9184,18 +9161,13 @@ session	writeObjectIDList	pkg/session/idlist.go	92	src/act.wizard.c:check_load; 
 session	plural	pkg/session/idlist.go	173			
 session	TestWriteObjectIDListMatchesCReportShape	pkg/session/idlist_test.go	11			
 session	TestIDListBitArrayUsesUndefinedForOutOfTableBits	pkg/session/idlist_test.go	81			
-session	TestImmlistRegistrationUsesCEntryGate	pkg/session/immlist_test.go	9			
-session	TestImotdRegistrationUsesCEntryGate	pkg/session/imotd_test.go	9			
-session	TestInactiveRegistrationUsesCEntryGate	pkg/session/inactive_test.go	9			
-session	TestInfoRegistrationUsesCEntryGate	pkg/session/info_test.go	9			
 session	newBodyInfobarState	pkg/session/infobar_body.go	12			
 session	mobInfoBarBody	pkg/session/infobar_body.go	33	src/act.display.c:do_infobar	src/act.display.c:112-155	
 session	(Session).bodyInfoBarUpdateOutput	pkg/session/infobar_body.go	99	src/act.display.c:InfoBarUpdate; src/comm.c:make_prompt	src/act.display.c:226-285 | src/comm.c:1158-1193	
-session	readRawInfobarEvent	pkg/session/infobar_depth_test.go	13			
-session	TestInfobarRegistrationUsesCEntryGate	pkg/session/infobar_depth_test.go	33			
-session	TestInfobarUnknownStateResetsToOff	pkg/session/infobar_depth_test.go	51			
-session	TestInfobarUpdateUsesCLayoutAndBitOrder	pkg/session/infobar_depth_test.go	70			
-session	TestInfobarColorLevels	pkg/session/infobar_depth_test.go	129			
+session	readRawInfobarEvent	pkg/session/infobar_depth_test.go	12			
+session	TestInfobarUnknownStateResetsToOff	pkg/session/infobar_depth_test.go	32			
+session	TestInfobarUpdateUsesCLayoutAndBitOrder	pkg/session/infobar_depth_test.go	51			
+session	TestInfobarColorLevels	pkg/session/infobar_depth_test.go	110			
 session	cmdTitle	pkg/session/informative_cmds.go	17	src/act.other.c:do_title	C do_title( | src/act.other.c:595-620	
 session	TestCmdTitleEmptyArgsClearsTitle	pkg/session/informative_cmds_test.go	10			
 session	TestCmdTitlePreservesFullArgument	pkg/session/informative_cmds_test.go	23			
@@ -9207,11 +9179,15 @@ session	TestCmdTitleSuccessUsesSetTitle	pkg/session/informative_cmds_test.go	90
 session	TestCmdTitleSetThenClear	pkg/session/informative_cmds_test.go	104			
 session	TestCmdTitleNotitleFlagWithEmptyArgs	pkg/session/informative_cmds_test.go	125			
 session	assertTitleText	pkg/session/informative_cmds_test.go	139			
-session	cInputLine	pkg/session/input_filter.go	15	src/comm.c:process_input	src/comm.c:1965-1982	
-session	cTruncateInputLine	pkg/session/input_filter.go	39	src/comm.c:process_input	src/comm.c:1969-1999	
-session	cInputLineSlow	pkg/session/input_filter.go	84			
-session	cInputJSON	pkg/session/input_filter.go	102			
-session	cInputValue	pkg/session/input_filter.go	119			
+session	cInputLine	pkg/session/input_filter.go	16	src/comm.c:process_input	src/comm.c:1965-1982	
+session	cTruncateInputLine	pkg/session/input_filter.go	40	src/comm.c:process_input	src/comm.c:1969-1999	
+session	cInputLineSlow	pkg/session/input_filter.go	85			
+session	cInputJSON	pkg/session/input_filter.go	103			
+session	commandDataLine	pkg/session/input_filter.go	123			
+session	(Session).frameCommandData	pkg/session/input_filter.go	146			
+session	(Session).frameChoiceData	pkg/session/input_filter.go	169			
+session	(Session).frameLoginData	pkg/session/input_filter.go	185			
+session	cInputValue	pkg/session/input_filter.go	209			
 session	TestCInputLine	pkg/session/input_filter_test.go	13	src/comm.c:process_input	src/comm.c:1965-1982	
 session	filterTestSpeaker	pkg/session/input_filter_test.go	33			
 session	TestTerminalLineAppliesCInputFilter	pkg/session/input_filter_test.go	48			
@@ -9236,7 +9212,6 @@ session	TestInputTiming_NoInventedString	pkg/session/input_timing_test.go	243
 session	TestInputTiming_UnitConversion	pkg/session/input_timing_test.go	266			
 session	TestInputTiming_PumpPulsesDrainsRemainingReadyQueue	pkg/session/input_timing_test.go	299			
 session	TestBeginHeartbeatOutputRejectsUnexpectedOverlap	pkg/session/input_timing_test.go	335			
-session	TestInsultRegistrationUsesCEntryGate	pkg/session/insult_depth_test.go	9			
 session	TestConcurrentCharCreation	pkg/session/integration_test.go	16			
 session	newI8Rig	pkg/session/interpreter_batch8_mudlog_test.go	48			
 session	i8Saw	pkg/session/interpreter_batch8_mudlog_test.go	65			
@@ -9260,39 +9235,29 @@ session	TestEntryRestrictionMudlogProducers	pkg/session/interpreter_batch9_mudlo
 session	TestBadPasswordMudlog	pkg/session/interpreter_batch9_mudlog_test.go	128			
 session	TestSelfDeleteMudlog	pkg/session/interpreter_batch9_mudlog_test.go	154			
 session	TestCommandPositionRefusalOutputBranches	pkg/session/interpreter_dispatch_depth_test.go	9			
-session	TestInvisRegistrationUsesCEntryGate	pkg/session/invis_depth_test.go	9			
-session	TestInvisPromptIncludesCLevel	pkg/session/invis_depth_test.go	27			
+session	TestInvisPromptIncludesCLevel	pkg/session/invis_depth_test.go	7			
 session	TestItemSleepEntryDepth	pkg/session/item_sleep_depth_test.go	18	src/magic.c:mag_affects; src/spell_parser.c:mag_objectmagic	src/magic.c:1199-1248 | src/spell_parser.c:699-718	
 session	TestJeerRegistrationUsesCEntryGate	pkg/session/jeer_test.go	10			
-session	TestJinRegistrationUsesCEntryGate	pkg/session/jin_depth_test.go	9			
 session	TestGo126JSONBytes	pkg/session/json_bytes_compat_test.go	15			
-session	TestKaiRegistrationUsesCEntryGate	pkg/session/kai_depth_test.go	9			
-session	TestKickRegistrationUsesCEntryGate	pkg/session/kick_depth_test.go	9			
 session	TestKissRegistrationUsesCEntryGate	pkg/session/kiss_depth_test.go	10			
-session	TestKyoRegistrationUsesCEntryGate	pkg/session/kyo_depth_test.go	9			
 session	TestLambadaRegistrationUsesCEntryGate	pkg/session/lambada_depth_test.go	10			
-session	TestLastRegistrationUsesCEntryGate	pkg/session/last_depth_test.go	13			
-session	TestLastUsesCOneArgumentAndMissingPlayerText	pkg/session/last_depth_test.go	31			
-session	TestLastNoDatabaseReportsMissing	pkg/session/last_depth_test.go	48	src/act.wizard.c:do_last	src/act.wizard.c:1841-1844	
-session	TestLastPrintsSavedHostInCFormat	pkg/session/last_depth_test.go	75	src/act.wizard.c:do_last	src/act.wizard.c:1847	
-session	TestLastRecordWithoutHostColumnReadsEmpty	pkg/session/last_depth_test.go	109			
-session	TestSaveStoresSessionHostAndEmptyWithoutDescriptor	pkg/session/last_depth_test.go	148	src/db.c:save_char	src/db.c:2373-2381	
+session	TestLastUsesCOneArgumentAndMissingPlayerText	pkg/session/last_depth_test.go	12			
+session	TestLastNoDatabaseReportsMissing	pkg/session/last_depth_test.go	29	src/act.wizard.c:do_last	src/act.wizard.c:1841-1844	
+session	TestLastPrintsSavedHostInCFormat	pkg/session/last_depth_test.go	56	src/act.wizard.c:do_last	src/act.wizard.c:1847	
+session	TestLastRecordWithoutHostColumnReadsEmpty	pkg/session/last_depth_test.go	90			
+session	TestSaveStoresSessionHostAndEmptyWithoutDescriptor	pkg/session/last_depth_test.go	129	src/db.c:save_char	src/db.c:2373-2381	
 session	TestLaughRegistrationUsesCEntryGate	pkg/session/laugh_depth_test.go	10			
-session	TestLeaveRegistrationUsesCEntryGate	pkg/session/leave_depth_test.go	9			
 session	TestLeerRegistrationUsesCEntryGate	pkg/session/leer_depth_test.go	10			
-session	TestLevelsRegistrationUsesCEntryGate	pkg/session/levels_depth_test.go	9			
-session	TestCmdLevelsSwitchedMobUsesCNpcEarlyReturn	pkg/session/levels_depth_test.go	19			
+session	TestCmdLevelsSwitchedMobUsesCNpcEarlyReturn	pkg/session/levels_depth_test.go	7			
 session	TestTextEventRenderingPreservesLFCR	pkg/session/lfcr_render_test.go	18	src/new_cmds.c:do_compare	src/new_cmds.c:1991	
 session	TestRawEventRenderingPreservesLFCR	pkg/session/lfcr_render_test.go	46			
 session	TestLickRegistrationUsesCEntryGate	pkg/session/lick_depth_test.go	10			
-session	TestLinesRegistrationUsesCEntryGate	pkg/session/lines_depth_test.go	9			
-session	TestParseLinesSizeMirrorsCAtoi	pkg/session/lines_depth_test.go	19			
+session	TestParseLinesSizeMirrorsCAtoi	pkg/session/lines_depth_test.go	7			
 session	TestListenRegistrationUsesCEntryGate	pkg/session/listen_depth_test.go	10			
-session	TestLoadRegistrationUsesCEntryGate	pkg/session/load_depth_test.go	14			
-session	TestLoadCArgumentHelpers	pkg/session/load_depth_test.go	24			
-session	TestCmdLoadObjectNameUsesCPlacementAndAudiences	pkg/session/load_depth_test.go	46			
-session	TestLoadCostAndObjectLimits	pkg/session/load_depth_test.go	89			
-session	TestCmdLoadNarrationRespectsViewerSight	pkg/session/load_depth_test.go	121	src/act.wizard.c:do_load; src/act.wizard.c:random_load_msg	src/act.wizard.c:1222-1244 | src/act.wizard.c:1373-1376	
+session	TestLoadCArgumentHelpers	pkg/session/load_depth_test.go	13			
+session	TestCmdLoadObjectNameUsesCPlacementAndAudiences	pkg/session/load_depth_test.go	35			
+session	TestLoadCostAndObjectLimits	pkg/session/load_depth_test.go	78			
+session	TestCmdLoadNarrationRespectsViewerSight	pkg/session/load_depth_test.go	110	src/act.wizard.c:do_load; src/act.wizard.c:random_load_msg	src/act.wizard.c:1222-1244 | src/act.wizard.c:1373-1376	
 session	TestMudlogLocalClanDeposit	pkg/session/local_mudlog_deposit_test.go	5			
 session	TestMudlogLocalHelp	pkg/session/local_mudlog_help_test.go	5			
 session	TestMudlogLocalOeditDefault	pkg/session/local_mudlog_oedit_test.go	5			
@@ -9316,13 +9281,12 @@ session	pathWithinResolvedRoot	pkg/session/luaedit.go	189
 session	list_directory	pkg/session/luaedit.go	197			
 session	view_file	pkg/session/luaedit.go	232			
 session	edit_file	pkg/session/luaedit.go	254			
-session	TestLuaEditRegistrationUsesCEntryGate	pkg/session/luaedit_test.go	14			
-session	TestLuaEditListMatchesCFilterAndThreeColumnLayout	pkg/session/luaedit_test.go	33			
-session	TestLuaEditArgumentDanceViewAndSubstringExtension	pkg/session/luaedit_test.go	73			
-session	TestLuaEditViewBelowHigodAndEditAtHigod	pkg/session/luaedit_test.go	109			
-session	TestLuaEditEmptySaveDeletesAndNewFileSaveCreates	pkg/session/luaedit_test.go	148			
-session	TestLuaEditRejectsTraversalAndCFileReadCap	pkg/session/luaedit_test.go	194			
-session	TestLuaEditListAcceptsDottedAbsoluteScriptsRoot	pkg/session/luaedit_test.go	217	src/file-edit.c:valid_directory; src/luaedit.c:do_luaedit	C's valid_directory ( | src/file-edit.c:78-81 | src/luaedit.c:37-42	
+session	TestLuaEditListMatchesCFilterAndThreeColumnLayout	pkg/session/luaedit_test.go	13			
+session	TestLuaEditArgumentDanceViewAndSubstringExtension	pkg/session/luaedit_test.go	53			
+session	TestLuaEditViewBelowHigodAndEditAtHigod	pkg/session/luaedit_test.go	89			
+session	TestLuaEditEmptySaveDeletesAndNewFileSaveCreates	pkg/session/luaedit_test.go	128			
+session	TestLuaEditRejectsTraversalAndCFileReadCap	pkg/session/luaedit_test.go	174			
+session	TestLuaEditListAcceptsDottedAbsoluteScriptsRoot	pkg/session/luaedit_test.go	197	src/file-edit.c:valid_directory; src/luaedit.c:do_luaedit	C's valid_directory ( | src/file-edit.c:78-81 | src/luaedit.c:37-42	
 session	init	pkg/session/manager.go	65			
 session	ApplyWebSocketLimits	pkg/session/manager.go	89			
 session	isLoopback	pkg/session/manager.go	198			
@@ -9376,34 +9340,34 @@ session	(Manager).Register	pkg/session/manager.go	1579
 session	(Manager).register	pkg/session/manager.go	1586			
 session	(Manager).enterWorld	pkg/session/manager.go	1645			
 session	(Manager).cleanupSession	pkg/session/manager.go	1665			
-session	(Manager).HandleTransportDisconnect	pkg/session/manager.go	1775	src/comm.c:close_socket	C close_socket(	
-session	(Manager).handleTransportDisconnect	pkg/session/manager.go	1782			
-session	(Manager).UnregisterSession	pkg/session/manager.go	1844			
-session	(Manager).unregisterSession	pkg/session/manager.go	1861			
-session	(Manager).Unregister	pkg/session/manager.go	1888			
-session	(Manager).unregister	pkg/session/manager.go	1895			
-session	(Manager).closeDuplicateSessions	pkg/session/manager.go	1922			
-session	(Manager).EachSession	pkg/session/manager.go	1970			
-session	(Manager).playerHasPlayingDescriptor	pkg/session/manager.go	1989			
-session	(Manager).playerHasDescriptor	pkg/session/manager.go	2012			
-session	(Manager).AutosaveTick	pkg/session/manager.go	2039			
-session	(Manager).CrashSaveAll	pkg/session/manager.go	2060	src/objsave.c:Crash_save_all	ports Crash_save_all (	
-session	(Manager).SaveCharSite	pkg/session/manager.go	2084	src/db.c:save_char	C save_char(	
-session	(Manager).WirePlayerSaver	pkg/session/manager.go	2093			
-session	(Manager).GetSession	pkg/session/manager.go	2183			
-session	(Manager).Kick	pkg/session/manager.go	2202			
-session	(Manager).allocateEphemeralPlayerID	pkg/session/manager.go	2229			
-session	(Manager).SessionCount	pkg/session/manager.go	2238			
-session	(Manager).World	pkg/session/manager.go	2246			
-session	(Manager).BroadcastToRoom	pkg/session/manager.go	2251			
-session	(Manager).GetOLCClaims	pkg/session/manager.go	2540			
-session	(Manager).GetOLCDirtyZones	pkg/session/manager.go	2546			
-session	(Manager).ShutdownGracefully	pkg/session/manager.go	2551			
-session	(Manager).ShutdownGracefullyWithoutNotice	pkg/session/manager.go	2557			
-session	(Manager).shutdownGracefully	pkg/session/manager.go	2561			
-session	(Manager).SetNotifications	pkg/session/manager.go	2637			
-session	(Manager).notifyLeftWorld	pkg/session/manager.go	2639			
-session	notificationVisible	pkg/session/manager.go	2646			
+session	(Manager).HandleTransportDisconnect	pkg/session/manager.go	1776	src/comm.c:close_socket	C close_socket(	
+session	(Manager).handleTransportDisconnect	pkg/session/manager.go	1783			
+session	(Manager).UnregisterSession	pkg/session/manager.go	1845			
+session	(Manager).unregisterSession	pkg/session/manager.go	1862			
+session	(Manager).Unregister	pkg/session/manager.go	1889			
+session	(Manager).unregister	pkg/session/manager.go	1896			
+session	(Manager).closeDuplicateSessions	pkg/session/manager.go	1923			
+session	(Manager).EachSession	pkg/session/manager.go	1971			
+session	(Manager).playerHasPlayingDescriptor	pkg/session/manager.go	1990			
+session	(Manager).playerHasDescriptor	pkg/session/manager.go	2013			
+session	(Manager).AutosaveTick	pkg/session/manager.go	2040			
+session	(Manager).CrashSaveAll	pkg/session/manager.go	2061	src/objsave.c:Crash_save_all	ports Crash_save_all (	
+session	(Manager).SaveCharSite	pkg/session/manager.go	2085	src/db.c:save_char	C save_char(	
+session	(Manager).WirePlayerSaver	pkg/session/manager.go	2094			
+session	(Manager).GetSession	pkg/session/manager.go	2184			
+session	(Manager).Kick	pkg/session/manager.go	2203			
+session	(Manager).allocateEphemeralPlayerID	pkg/session/manager.go	2230			
+session	(Manager).SessionCount	pkg/session/manager.go	2239			
+session	(Manager).World	pkg/session/manager.go	2247			
+session	(Manager).BroadcastToRoom	pkg/session/manager.go	2252			
+session	(Manager).GetOLCClaims	pkg/session/manager.go	2541			
+session	(Manager).GetOLCDirtyZones	pkg/session/manager.go	2547			
+session	(Manager).ShutdownGracefully	pkg/session/manager.go	2552			
+session	(Manager).ShutdownGracefullyWithoutNotice	pkg/session/manager.go	2558			
+session	(Manager).shutdownGracefully	pkg/session/manager.go	2562			
+session	(Manager).SetNotifications	pkg/session/manager.go	2638			
+session	(Manager).notifyLeftWorld	pkg/session/manager.go	2640			
+session	notificationVisible	pkg/session/manager.go	2647			
 session	TestManagerUsesDBLookupForOfflinePlayers	pkg/session/manager_house_lookup_test.go	20	src/db.c:get_id_by_name; src/db.c:get_name_by_id	src/db.c:2313-2336	
 session	TestManagerNilDBFallsBackToOnlineScan	pkg/session/manager_house_lookup_test.go	79			
 session	TestManagerKick	pkg/session/manager_kick_test.go	10			
@@ -9463,19 +9427,18 @@ session	TestOLCMemoryMudlogMedit	pkg/session/medit_memory_mudlog_test.go	5
 session	TestMeditOpenParentMudlog	pkg/session/medit_open_mudlog_test.go	9			
 session	makeMeditTestWorld	pkg/session/medit_test.go	13			
 session	makeMeditTestSession	pkg/session/medit_test.go	63			
-session	TestMeditRegistrationUsesCEntryGate	pkg/session/medit_test.go	72			
-session	TestMeditEntryGates	pkg/session/medit_test.go	86			
-session	TestMeditPermissionGate	pkg/session/medit_test.go	121			
-session	TestMeditDuplicateGate	pkg/session/medit_test.go	161			
-session	TestMeditNewMobDefaults	pkg/session/medit_test.go	187			
-session	TestMeditFieldEditing	pkg/session/medit_test.go	234			
-session	TestMeditSaveAndDiscard	pkg/session/medit_test.go	299			
-session	TestMeditCleanQuit	pkg/session/medit_test.go	353			
-session	TestMeditScriptMenuNewMobRejected	pkg/session/medit_test.go	373			
-session	TestMeditScriptShallowBehavior	pkg/session/medit_test.go	390			
-session	TestMeditDisconnectCleanup	pkg/session/medit_test.go	444			
-session	TestMeditSaveCommand	pkg/session/medit_test.go	472			
-session	TestMeditFlagToggle	pkg/session/medit_test.go	494			
+session	TestMeditEntryGates	pkg/session/medit_test.go	72			
+session	TestMeditPermissionGate	pkg/session/medit_test.go	107			
+session	TestMeditDuplicateGate	pkg/session/medit_test.go	147			
+session	TestMeditNewMobDefaults	pkg/session/medit_test.go	173			
+session	TestMeditFieldEditing	pkg/session/medit_test.go	220			
+session	TestMeditSaveAndDiscard	pkg/session/medit_test.go	285			
+session	TestMeditCleanQuit	pkg/session/medit_test.go	339			
+session	TestMeditScriptMenuNewMobRejected	pkg/session/medit_test.go	359			
+session	TestMeditScriptShallowBehavior	pkg/session/medit_test.go	376			
+session	TestMeditDisconnectCleanup	pkg/session/medit_test.go	430			
+session	TestMeditSaveCommand	pkg/session/medit_test.go	458			
+session	TestMeditFlagToggle	pkg/session/medit_test.go	480			
 session	(Session).loginMOTDFile	pkg/session/menu.go	50	src/interpreter.c:nanny	src/interpreter.c:1919-1921	
 session	(Session).startReturningMenu	pkg/session/menu.go	57			
 session	(Session).showMainMenu	pkg/session/menu.go	80			
@@ -9504,13 +9467,10 @@ session	TestMenuDeleteReturningPlayer	pkg/session/menu_test.go	255
 session	TestSendTextOutputOwesThePromptFrame	pkg/session/missing_blank_test.go	21			
 session	TestDarkRoomActCarriesItsOwnBreak	pkg/session/missing_blank_test.go	36			
 session	TestUnknownCommandRendersCTerminatedReplyWithFrame	pkg/session/missing_blank_test.go	70			
-session	TestMlistRegistrationUsesCEntryGate	pkg/session/mlist_depth_test.go	9			
-session	TestMlistAtoiMatchesCDecimalPrefix	pkg/session/mlist_depth_test.go	27			
+session	TestMlistAtoiMatchesCDecimalPrefix	pkg/session/mlist_depth_test.go	7			
 session	TestMoanRegistrationUsesCEntryGate	pkg/session/moan_test.go	10			
 session	TestMobileEquipmentOutputConcreteDescriptor	pkg/session/mobile_equipment_output_test.go	10			
-session	TestMoldRegistrationUsesCEntryGate	pkg/session/mold_depth_test.go	9			
 session	TestMoshRegistrationUsesCEntryGate	pkg/session/mosh_depth_test.go	10			
-session	TestMotdRegistrationUsesCEntryGate	pkg/session/motd_depth_test.go	9			
 session	TestMountAndRideRegistrationUseCEntryGates	pkg/session/mount_depth_test.go	9			
 session	cmdStand	pkg/session/movement_cmds.go	8			
 session	cmdSit	pkg/session/movement_cmds.go	13			
@@ -9538,11 +9498,10 @@ session	TestWildBanHosts	pkg/session/mud_host_test.go	99
 session	(Session).mudlogActor	pkg/session/mudlog_actor.go	11	src/db.c:clear_char	src/db.c:2976-2989	
 session	TestMuhahaRegistrationUsesCEntryGateAndRecord	pkg/session/muhaha_depth_test.go	10			
 session	TestMumbleRegistrationUsesCEntryGateAndRecord	pkg/session/mumble_depth_test.go	10			
-session	TestMuteRegistrationUsesCEntryGate	pkg/session/mute_depth_test.go	10			
-session	TestCmdMuteMatchesDoWizutilTargetBranches	pkg/session/mute_depth_test.go	20			
-session	TestCmdMuteRejectsVisibleMob	pkg/session/mute_depth_test.go	58			
-session	TestCmdMuteRejectsHigherImmortal	pkg/session/mute_depth_test.go	72			
-session	TestCmdMuteMortalFailsInnerDoWizutilAuth	pkg/session/mute_depth_test.go	91			
+session	TestCmdMuteMatchesDoWizutilTargetBranches	pkg/session/mute_depth_test.go	9			
+session	TestCmdMuteRejectsVisibleMob	pkg/session/mute_depth_test.go	47			
+session	TestCmdMuteRejectsHigherImmortal	pkg/session/mute_depth_test.go	61			
+session	TestCmdMuteMortalFailsInnerDoWizutilAuth	pkg/session/mute_depth_test.go	80			
 session	TestTripOutputGatesMatchCAtRealDispatch	pkg/session/new_cmds_surface_depth_test.go	13			
 session	TestPalmEarlyOutputGatesMatchCAtRealDispatch	pkg/session/new_cmds_surface_depth_test.go	126			
 session	TestCircleBusyGateMatchesCAtRealDispatch	pkg/session/new_cmds_surface_depth_test.go	166			
@@ -9554,8 +9513,6 @@ session	TestNewZoneMudlogSuccess	pkg/session/new_zone_mudlog_success_test.go	5
 session	testNewZoneMudlog	pkg/session/new_zone_mudlog_test.go	12			
 session	TestNewZoneMudlogWld	pkg/session/new_zone_mudlog_wld_test.go	5			
 session	TestNewZoneMudlogZon	pkg/session/new_zone_mudlog_zon_test.go	5			
-session	TestNewbieRegistrationUsesCEntryGate	pkg/session/newbie_depth_test.go	9			
-session	TestNewsRegistrationUsesCEntryGate	pkg/session/news_depth_test.go	9			
 session	TestNibbleRegistrationUsesCEntryGate	pkg/session/nibble_depth_test.go	10			
 session	TestNodRegistrationUsesCEntryGate	pkg/session/nod_depth_test.go	10			
 session	TestNoogieRegistrationUsesCEntryGateAndRecord	pkg/session/noogie_depth_test.go	10			
@@ -9563,8 +9520,7 @@ session	sessionNotificationService	pkg/session/notifications_test.go	13
 session	TestNotificationsFollowWorldEntryAndExit	pkg/session/notifications_test.go	30			
 session	TestNotificationMilestoneObserversAndInvisPrivacy	pkg/session/notifications_test.go	64			
 session	TestCharacterCreationNotificationAfterSaveOnly	pkg/session/notifications_test.go	98			
-session	TestNotitleRegistrationUsesCEntryGate	pkg/session/notitle_depth_test.go	10			
-session	TestCmdNotitleMatchesCBranchesAndToggle	pkg/session/notitle_depth_test.go	20			
+session	TestCmdNotitleMatchesCBranchesAndToggle	pkg/session/notitle_depth_test.go	9			
 session	TestNudgeRegistrationUsesCEntryGateAndRecord	pkg/session/nudge_depth_test.go	10			
 session	TestNuzzleRegistrationUsesCEntryGateAndRecord	pkg/session/nuzzle_depth_test.go	10			
 session	cmdLook	pkg/session/observation.go	14			
@@ -9653,30 +9609,29 @@ session	TestOLCMemoryMudlogOedit	pkg/session/oedit_memory_mudlog_test.go	5
 session	TestOeditOpenParentMudlog	pkg/session/oedit_open_mudlog_test.go	9			
 session	makeOeditTestWorld	pkg/session/oedit_test.go	19			
 session	makeOeditTestSession	pkg/session/oedit_test.go	89			
-session	TestOeditRegistrationUsesCEntryGate	pkg/session/oedit_test.go	96			
-session	TestOeditEntryGates	pkg/session/oedit_test.go	110			
-session	TestOeditMainFieldEntryPrompts	pkg/session/oedit_test.go	178			
-session	TestOeditValue1TypePrompts	pkg/session/oedit_test.go	207	src/oedit.c:oedit_disp_val1_menu	src/oedit.c:730	
-session	TestOeditApplyModifierEntryPrompt	pkg/session/oedit_test.go	238	src/oedit.c:oedit_parse	src/oedit.c:1417	
-session	TestOeditNoZoneSaveGate	pkg/session/oedit_test.go	254			
-session	openOedit	pkg/session/oedit_test.go	278			
-session	TestOeditWeaponVal3Fallthrough	pkg/session/oedit_test.go	290			
-session	TestOeditCostPromptHasNoMaximum	pkg/session/oedit_test.go	339			
-session	TestOeditTypeMenuListsZeroButRejectsIt	pkg/session/oedit_test.go	366			
-session	TestOeditExtrasVsWearErrorAsymmetry	pkg/session/oedit_test.go	411			
-session	TestOeditPercentLoadFloatSemantics	pkg/session/oedit_test.go	454			
-session	TestOeditValueCascadeSkipsByType	pkg/session/oedit_test.go	490			
-session	TestOeditExtraDescMenuIsNotRedits	pkg/session/oedit_test.go	550			
-session	TestOeditApplyPromptForms	pkg/session/oedit_test.go	623			
-session	TestOeditConfirmSavePromptAsymmetry	pkg/session/oedit_test.go	684			
-session	TestOeditNewObjectDefaults	pkg/session/oedit_test.go	715			
-session	TestOeditWorkingCopySaveAndAbort	pkg/session/oedit_test.go	756			
-session	TestOeditScriptShallowBehavior	pkg/session/oedit_test.go	791			
-session	TestOeditDisconnectCleanup	pkg/session/oedit_test.go	835	src/olc.c:cleanup_olc	C's cleanup_olc(	
-session	TestOeditNewObjectCommitAndDiskSave	pkg/session/oedit_test.go	863			
-session	TestOeditRefreshLiveInstancesPreservesRuntimePlacement	pkg/session/oedit_test.go	950			
-session	TestOeditMenuColorsMatchGetCharCols	pkg/session/oedit_test.go	992			
-session	TestOeditConcurrentEntryAdmitsExactlyOneEditor	pkg/session/oedit_test.go	1081			
+session	TestOeditEntryGates	pkg/session/oedit_test.go	96			
+session	TestOeditMainFieldEntryPrompts	pkg/session/oedit_test.go	164			
+session	TestOeditValue1TypePrompts	pkg/session/oedit_test.go	193	src/oedit.c:oedit_disp_val1_menu	src/oedit.c:730	
+session	TestOeditApplyModifierEntryPrompt	pkg/session/oedit_test.go	224	src/oedit.c:oedit_parse	src/oedit.c:1417	
+session	TestOeditNoZoneSaveGate	pkg/session/oedit_test.go	240			
+session	openOedit	pkg/session/oedit_test.go	264			
+session	TestOeditWeaponVal3Fallthrough	pkg/session/oedit_test.go	276			
+session	TestOeditCostPromptHasNoMaximum	pkg/session/oedit_test.go	325			
+session	TestOeditTypeMenuListsZeroButRejectsIt	pkg/session/oedit_test.go	352			
+session	TestOeditExtrasVsWearErrorAsymmetry	pkg/session/oedit_test.go	397			
+session	TestOeditPercentLoadFloatSemantics	pkg/session/oedit_test.go	440			
+session	TestOeditValueCascadeSkipsByType	pkg/session/oedit_test.go	476			
+session	TestOeditExtraDescMenuIsNotRedits	pkg/session/oedit_test.go	536			
+session	TestOeditApplyPromptForms	pkg/session/oedit_test.go	609			
+session	TestOeditConfirmSavePromptAsymmetry	pkg/session/oedit_test.go	670			
+session	TestOeditNewObjectDefaults	pkg/session/oedit_test.go	701			
+session	TestOeditWorkingCopySaveAndAbort	pkg/session/oedit_test.go	742			
+session	TestOeditScriptShallowBehavior	pkg/session/oedit_test.go	777			
+session	TestOeditDisconnectCleanup	pkg/session/oedit_test.go	821	src/olc.c:cleanup_olc	C's cleanup_olc(	
+session	TestOeditNewObjectCommitAndDiskSave	pkg/session/oedit_test.go	849			
+session	TestOeditRefreshLiveInstancesPreservesRuntimePlacement	pkg/session/oedit_test.go	936			
+session	TestOeditMenuColorsMatchGetCharCols	pkg/session/oedit_test.go	978			
+session	TestOeditConcurrentEntryAdmitsExactlyOneEditor	pkg/session/oedit_test.go	1067			
 session	cmdOlc	pkg/session/olc_control.go	15	src/olc.c:do_olc	src/olc.c:85-99	src/interpreter.c:590 (range does not intersect a parsed C function body)
 session	olcSaveLabel	pkg/session/olc_control.go	32			src/olc.c:311 (range does not intersect a parsed C function body)
 session	(Session).olcSaveInfo	pkg/session/olc_control.go	49			
@@ -9763,23 +9718,19 @@ session	(webEquivalenceOwner).Identity	pkg/session/olc_web_telnet_equivalence_te
 session	newOlcZonePersistenceWorld	pkg/session/olc_zone_persistence_test.go	14			
 session	drainOlcZoneMessages	pkg/session/olc_zone_persistence_test.go	34			
 session	TestOlcZoneSurvivesDisconnectAndReconnect	pkg/session/olc_zone_persistence_test.go	44			
-session	TestOlistRegistrationUsesCEntryGate	pkg/session/olist_depth_test.go	12			src/interpreter.c:591 (range does not intersect a parsed C function body)
-session	TestOrderRegistrationUsesCEntryGate	pkg/session/order_depth_test.go	11			
-session	TestOrderCharmedPlayerExecutesExactCommandPath	pkg/session/order_depth_test.go	29			
-session	TestOrderRejectsCharmedActorWithCMessage	pkg/session/order_depth_test.go	78			
-session	TestOrderSwitchedCharmedMobRefuses	pkg/session/order_depth_test.go	99			
+session	TestOrderCharmedPlayerExecutesExactCommandPath	pkg/session/order_depth_test.go	10			
+session	TestOrderRejectsCharmedActorWithCMessage	pkg/session/order_depth_test.go	59			
+session	TestOrderSwitchedCharmedMobRefuses	pkg/session/order_depth_test.go	80			
 session	TestOrderedMobileReportUsesReportersStats	pkg/session/ordered_report_test.go	24	src/act.other.c:do_report	src/act.other.c:799-821	src/interpreter.c:634 (range does not intersect a parsed C function body)
-session	TestOrgasmRegistrationUsesCEntryGate	pkg/session/orgasm_depth_test.go	11			
-session	TestOrgasmHandlerKeepsCImmortalGuard	pkg/session/orgasm_depth_test.go	29			
-session	TestOrgasmMaleVictimUpdatesCState	pkg/session/orgasm_depth_test.go	43			
-session	TestOrgasmSelfActKeepsLFCRAndActCRLF	pkg/session/orgasm_depth_test.go	77	src/new_cmds.c:do_otouch	src/new_cmds.c:688-691	
-session	TestOrgasmFemaleActorDoesNotTriggerMaleFollowup	pkg/session/orgasm_depth_test.go	97			
+session	TestOrgasmHandlerKeepsCImmortalGuard	pkg/session/orgasm_depth_test.go	10			
+session	TestOrgasmMaleVictimUpdatesCState	pkg/session/orgasm_depth_test.go	24			
+session	TestOrgasmSelfActKeepsLFCRAndActCRLF	pkg/session/orgasm_depth_test.go	58	src/new_cmds.c:do_otouch	src/new_cmds.c:688-691	
+session	TestOrgasmFemaleActorDoesNotTriggerMaleFollowup	pkg/session/orgasm_depth_test.go	78			
 session	TestCheckOriginLocalhostOriginRequiresLocalhostHost	pkg/session/origin_host_gate_test.go	13			
 session	TestPaceRegistrationUsesCEntryGateAndRecord	pkg/session/pace_depth_test.go	10			
-session	TestPageRegistrationUsesCEntryGate	pkg/session/page_depth_test.go	10			
-session	TestPageAllRequiresStrictlyAboveGod	pkg/session/page_depth_test.go	28			
-session	TestPageResolvesCaseInsensitiveAndSuppressesSleepingTarget	pkg/session/page_depth_test.go	40			
-session	TestPageSelfAliasesDeliverTwoCActMessages	pkg/session/page_depth_test.go	71			
+session	TestPageAllRequiresStrictlyAboveGod	pkg/session/page_depth_test.go	10			
+session	TestPageResolvesCaseInsensitiveAndSuppressesSleepingTarget	pkg/session/page_depth_test.go	22			
+session	TestPageSelfAliasesDeliverTwoCActMessages	pkg/session/page_depth_test.go	53			
 session	nextPage	pkg/session/pager.go	28	src/modify.c:next_page	port of next_page (	
 session	paginate	pkg/session/pager.go	74			
 session	PageString	pkg/session/pager.go	111	src/modify.c:page_string	C's page_string (	
@@ -9822,15 +9773,12 @@ session	lastDisplayedPage	pkg/session/pager_test.go	386
 session	TestLevelsEntersPagerForLongOutput	pkg/session/pager_test.go	398			
 session	TestPagerResetsIdleTimer	pkg/session/pager_test.go	417			
 session	TestPantRegistrationUsesCEntryGateAndRecord	pkg/session/pant_depth_test.go	10			
-session	TestPardonRegistrationUsesCEntryGate	pkg/session/pardon_depth_test.go	10			
-session	TestCmdPardonMatchesCInnerAuthorization	pkg/session/pardon_depth_test.go	28			
-session	TestCmdPardonUsesCOneArgumentAndHigherImmortalGuard	pkg/session/pardon_depth_test.go	58			
-session	TestParryRegistrationUsesCEntryGate	pkg/session/parry_depth_test.go	11			
-session	TestCmdParryEntryMessages	pkg/session/parry_depth_test.go	29			
-session	TestCmdParrySuccessUsesCActAudiencesAndWait	pkg/session/parry_depth_test.go	86			
+session	TestCmdPardonMatchesCInnerAuthorization	pkg/session/pardon_depth_test.go	9			
+session	TestCmdPardonUsesCOneArgumentAndHigherImmortalGuard	pkg/session/pardon_depth_test.go	39			
+session	TestCmdParryEntryMessages	pkg/session/parry_depth_test.go	10			
+session	TestCmdParrySuccessUsesCActAudiencesAndWait	pkg/session/parry_depth_test.go	67			
 session	parseSignedIntPrefix	pkg/session/parse_helpers.go	15			
 session	TestPatRegistrationUsesCEntryGateAndRecord	pkg/session/pat_depth_test.go	10			
-session	TestPeekRegistrationUsesCEntryGate	pkg/session/peek_depth_test.go	9			
 session	TestPeerRegistrationUsesCEntryGateAndRecord	pkg/session/peer_depth_test.go	10			
 session	(Session).playerRecordForSave	pkg/session/persistence.go	20			
 session	(Session).creationRecord	pkg/session/persistence.go	58			
@@ -9844,8 +9792,7 @@ session	TestRecoveryAutosave	pkg/session/persistence_recovery_test.go	160
 session	TestRecoveryVoidPull	pkg/session/persistence_recovery_test.go	175			
 session	TestPinchRegistrationUsesCEntryGate	pkg/session/pinch_depth_test.go	10			
 session	TestPissRegistrationUsesCEntryGate	pkg/session/piss_depth_test.go	10			
-session	TestPlayersRegistrationUsesCEntryGate	pkg/session/players_depth_test.go	11			
-session	TestCmdPlayersUsesCPlayerTableShapeWithoutDatabase	pkg/session/players_depth_test.go	29			
+session	TestCmdPlayersUsesCPlayerTableShapeWithoutDatabase	pkg/session/players_depth_test.go	9			
 session	TestPlotRegistrationUsesCEntryGate	pkg/session/plot_depth_test.go	10			
 session	(recordingStore).SavePlayer	pkg/session/plr_crash_session_test.go	21			
 session	newFlagShopHarness	pkg/session/plr_crash_session_test.go	32			
@@ -9854,12 +9801,9 @@ session	TestShopBuySetsCrashFlag	pkg/session/plr_crash_session_test.go	73
 session	TestShopSellSetsCrashFlag	pkg/session/plr_crash_session_test.go	99			
 session	TestWirePlayerSaverRejectsForeignPlayer	pkg/session/plr_crash_session_test.go	148			
 session	TestPokeRegistrationUsesCEntryGate	pkg/session/poke_depth_test.go	10			
-session	TestPolicyRegistrationUsesCEntryGate	pkg/session/policy_depth_test.go	9			
 session	TestPonderRegistrationUsesCEntryGate	pkg/session/ponder_depth_test.go	10			
-session	TestPoofinRegistrationUsesCEntryGate	pkg/session/poofin_depth_test.go	9			
-session	TestCmdPoofinClearsAndPreservesCRawArgument	pkg/session/poofin_depth_test.go	27			
-session	TestPoofoutRegistrationUsesCEntryGate	pkg/session/poofout_depth_test.go	9			
-session	TestCmdPoofoutClearsAndPreservesCRawArgument	pkg/session/poofout_depth_test.go	27			
+session	TestCmdPoofinClearsAndPreservesCRawArgument	pkg/session/poofin_depth_test.go	7			
+session	TestCmdPoofoutClearsAndPreservesCRawArgument	pkg/session/poofout_depth_test.go	7			
 session	TestPoseRegistrationUsesCEntryGate	pkg/session/pose_depth_test.go	10			
 session	TestPoutRegistrationUsesCEntryGate	pkg/session/pout_depth_test.go	10			
 session	readReportLine	pkg/session/pr1682_reports_test.go	16			
@@ -9869,8 +9813,7 @@ session	TestShowStatsCountsVisibleConnectedAndRegistered	pkg/session/pr1682_repo
 session	TestShowLookupResolvesNothingRowFirst	pkg/session/pr1682_reports_test.go	157	src/act.wizard.c:do_show	src/act.wizard.c:2285-2287	
 session	cmdPractice	pkg/session/practice.go	14	src/act.other.c:do_practice	c do_practice(	
 session	TestPracticeCommandPagesLongImmortalCatalog	pkg/session/practice_test.go	10			
-session	TestPromptRegistrationUsesCEntryGate	pkg/session/prompt_depth_test.go	10			
-session	TestCmdPromptMatchesCDoDisplay	pkg/session/prompt_depth_test.go	27			
+session	TestCmdPromptMatchesCDoDisplay	pkg/session/prompt_depth_test.go	9			
 session	newPromptFrameSession	pkg/session/prompt_frame_test.go	18			
 session	promptTextAfterFlush	pkg/session/prompt_frame_test.go	31			
 session	TestSendPromptNowCompactSuppressesFrameWithPendingOutput	pkg/session/prompt_frame_test.go	57	src/comm.c:process_output	src/comm.c:1631	
@@ -9884,16 +9827,11 @@ session	asCloseError	pkg/session/proxy_limit_test.go	67
 session	TestMultiplayLimitsFitTwoPlayers	pkg/session/proxy_limit_test.go	77			
 session	TestPukeRegistrationUsesCEntryGate	pkg/session/puke_depth_test.go	10			
 session	TestPunchRegistrationUsesCEntryGate	pkg/session/punch_depth_test.go	10			
-session	TestPurgeRegistrationUsesCEntryGate	pkg/session/purge_depth_test.go	9			
 session	TestPurrRegistrationUsesCEntryGate	pkg/session/purr_depth_test.go	10			
-session	TestQechoRegistrationUsesCEntryGate	pkg/session/qecho_depth_test.go	11			
-session	TestQechoBroadcastSkipsWritingQuestPlayer	pkg/session/qecho_depth_test.go	21			
-session	TestQsayRegistrationUsesCEntryGate	pkg/session/qsay_depth_test.go	11			
-session	TestQsayBroadcastSkipsWritingQuestPlayer	pkg/session/qsay_depth_test.go	21			
+session	TestQechoBroadcastSkipsWritingQuestPlayer	pkg/session/qecho_depth_test.go	10			
+session	TestQsayBroadcastSkipsWritingQuestPlayer	pkg/session/qsay_depth_test.go	10			
 session	TestQuaffSetsCrashFlag	pkg/session/quaff_flag_test.go	13			
-session	TestQuiRegistrationUsesCEntryGate	pkg/session/qui_depth_test.go	10			
-session	TestQuiMortalShortcutUsesCRefusal	pkg/session/qui_depth_test.go	20			
-session	TestQuitRegistrationUsesCEntryGate	pkg/session/quit_depth_test.go	9			
+session	TestQuiMortalShortcutUsesCRefusal	pkg/session/qui_depth_test.go	8			
 session	(captureSaveDB).SavePlayer	pkg/session/quit_test.go	31			
 session	makeQuitTestManager	pkg/session/quit_test.go	39			
 session	makeQuitSession	pkg/session/quit_test.go	62			
@@ -9933,15 +9871,14 @@ session	TestIdleDisconnectKeepsObjectsRentStyle	pkg/session/reaper_test.go	368		
 session	TestLinkdeadPlayerFollowsTickDrivenLifecycle	pkg/session/reaper_test.go	426			
 session	TestAbruptCloseLeavesCharacterLinkdead	pkg/session/reaper_test.go	482			
 session	TestWriterFirstDisconnectLeavesCharacterLinkdead	pkg/session/reaper_test.go	556			
-session	TestRecallRegistrationUsesCEntryGate	pkg/session/recall_depth_test.go	9			
 session	newReciteHarness	pkg/session/recite_flag_test.go	18			
 session	TestReciteCarriedSetsCrashFlag	pkg/session/recite_flag_test.go	42			
 session	TestReciteHeldLeavesFlagClear	pkg/session/recite_flag_test.go	63			
 session	(Session).performDupeCheck	pkg/session/reconnect.go	31	src/interpreter.c:perform_dupe_check	ports perform_dupe_check (	
 session	(Session).finishDupeCheck	pkg/session/reconnect.go	131			
-session	(Session).olcActor	pkg/session/reconnect.go	194			
-session	(Session).inOLCEditorState	pkg/session/reconnect.go	204			
-session	(Session).reconnectSwitched	pkg/session/reconnect.go	214			
+session	(Session).olcActor	pkg/session/reconnect.go	195			
+session	(Session).inOLCEditorState	pkg/session/reconnect.go	205			
+session	(Session).reconnectSwitched	pkg/session/reconnect.go	215			
 session	renderedOutput	pkg/session/reconnect_test.go	12			
 session	dupeCheckFixture	pkg/session/reconnect_test.go	32			
 session	assertTookOver	pkg/session/reconnect_test.go	45			
@@ -9998,25 +9935,22 @@ session	diskReditString	pkg/session/redit.go	1139
 session	TestReditInsertionMudlogBoundary	pkg/session/redit_insertion_mudlog_test.go	12			
 session	TestOLCMemoryMudlogRedit	pkg/session/redit_memory_mudlog_test.go	5			
 session	TestReditOpenParentMudlog	pkg/session/redit_open_mudlog_test.go	9			
-session	newReditTestManager	pkg/session/redit_test.go	18			
-session	TestReditRegistrationUsesCEntryGate	pkg/session/redit_test.go	43			
-session	TestReditMainMenuAndNoDirtyQuit	pkg/session/redit_test.go	60			
-session	TestReditWorkingCopySaveAndAbort	pkg/session/redit_test.go	95			
-session	TestReditExitAndStringAbortReturnToMenu	pkg/session/redit_test.go	137			
-session	TestReditStringAddOverflowKeepsOLCEditorOpen	pkg/session/redit_test.go	161			
-session	TestReditDisconnectDropsWorkingStringEditor	pkg/session/redit_test.go	198			
-session	TestReditNewRoomCommitAndDiskSave	pkg/session/redit_test.go	220			
-session	TestReditMenuColorsMatchGetCharCols	pkg/session/redit_test.go	274			
-session	TestReditConcurrentEntryAdmitsExactlyOneEditor	pkg/session/redit_test.go	366			
-session	TestReditSaveSurvivesRealRestart	pkg/session/redit_test.go	470			
-session	readMsgTextOrEmpty	pkg/session/redit_test.go	647			
-session	TestReditWorkingCopySurvivesOverlappingAdminWrite	pkg/session/redit_test.go	672			
+session	newReditTestManager	pkg/session/redit_test.go	17			
+session	TestReditMainMenuAndNoDirtyQuit	pkg/session/redit_test.go	42			
+session	TestReditWorkingCopySaveAndAbort	pkg/session/redit_test.go	77			
+session	TestReditExitAndStringAbortReturnToMenu	pkg/session/redit_test.go	119			
+session	TestReditStringAddOverflowKeepsOLCEditorOpen	pkg/session/redit_test.go	143			
+session	TestReditDisconnectDropsWorkingStringEditor	pkg/session/redit_test.go	180			
+session	TestReditNewRoomCommitAndDiskSave	pkg/session/redit_test.go	202			
+session	TestReditMenuColorsMatchGetCharCols	pkg/session/redit_test.go	256			
+session	TestReditConcurrentEntryAdmitsExactlyOneEditor	pkg/session/redit_test.go	348			
+session	TestReditSaveSurvivesRealRestart	pkg/session/redit_test.go	452			
+session	readMsgTextOrEmpty	pkg/session/redit_test.go	629			
+session	TestReditWorkingCopySurvivesOverlappingAdminWrite	pkg/session/redit_test.go	654			
 session	TestReelRegistrationUsesCEntryGateAndRecord	pkg/session/reel_depth_test.go	10			
-session	TestReloadRegistrationUsesCEntryGate	pkg/session/reload_depth_test.go	9			
 session	TestRenRegistrationUsesCEntryGateAndRecord	pkg/session/ren_depth_test.go	10			
 session	TestOfflineRenameDeletesOldRent	pkg/session/rename_cleanup_test.go	10			
 session	TestOfflineRenamePreventsAliasInheritance	pkg/session/rename_cleanup_test.go	31			
-session	TestReportRegistrationUsesCEntryGate	pkg/session/report_depth_test.go	9			
 session	groupColorFixture	pkg/session/report_group_color_test.go	14			
 session	TestGroupListColorLevelsMatchC	pkg/session/report_group_color_test.go	75	src/act.other.c:print_group	src/act.other.c:638-681	
 session	TestReportColorUsesCNRMNotCMP	pkg/session/report_group_color_test.go	117	src/act.other.c:do_report	src/act.other.c:806-818	
@@ -10024,33 +9958,26 @@ session	TestGroupListMobileLeaderShowsRealStats	pkg/session/report_group_color_t
 session	TestGroupListResolvesTheFollowedDuplicateNpc	pkg/session/report_group_color_test.go	242			
 session	TestReportMudlogRawBytesAndOrder	pkg/session/report_mudlog_test.go	11			
 session	TestReportMudlogTokenizedDollars	pkg/session/report_mudlog_test.go	82			
-session	TestRerollRegistrationUsesCEntryGate	pkg/session/reroll_depth_test.go	12			
-session	TestCmdRerollNoArgumentUsesCResponse	pkg/session/reroll_depth_test.go	22			
-session	TestCmdRerollMatchesCStatRollAndState	pkg/session/reroll_depth_test.go	35			
-session	TestCmdRerollRejectsHigherImmortal	pkg/session/reroll_depth_test.go	72			
-session	TestRestoreRegistrationUsesCEntryGate	pkg/session/restore_depth_test.go	12			
-session	TestCmdRestoreMatchesCEntryAndTargetMessages	pkg/session/restore_depth_test.go	29			
-session	TestCmdRestoreUsesCNotFoundText	pkg/session/restore_depth_test.go	62			
-session	TestCmdRestoreRestoresVisibleMob	pkg/session/restore_depth_test.go	75			
-session	TestCmdRestoreMatchesCHighImmortalStateBranch	pkg/session/restore_depth_test.go	104			
-session	assertRestoreNoMessage	pkg/session/restore_depth_test.go	152			
-session	TestE2AttrWizardUnaffectBoundary	pkg/session/restore_depth_test.go	161			
+session	TestCmdRerollNoArgumentUsesCResponse	pkg/session/reroll_depth_test.go	11			
+session	TestCmdRerollMatchesCStatRollAndState	pkg/session/reroll_depth_test.go	24			
+session	TestCmdRerollRejectsHigherImmortal	pkg/session/reroll_depth_test.go	61			
+session	TestCmdRestoreMatchesCEntryAndTargetMessages	pkg/session/restore_depth_test.go	12			
+session	TestCmdRestoreUsesCNotFoundText	pkg/session/restore_depth_test.go	45			
+session	TestCmdRestoreRestoresVisibleMob	pkg/session/restore_depth_test.go	58			
+session	TestCmdRestoreMatchesCHighImmortalStateBranch	pkg/session/restore_depth_test.go	87			
+session	assertRestoreNoMessage	pkg/session/restore_depth_test.go	135			
+session	TestE2AttrWizardUnaffectBoundary	pkg/session/restore_depth_test.go	144			
 session	makeRetreatDoorsManager	pkg/session/retreat_doors_test.go	20			
 session	TestCmdRetreatNeverCrossesClosedDoors	pkg/session/retreat_doors_test.go	54			
-session	TestRetsuRegistrationUsesCEntryGate	pkg/session/retsu_depth_test.go	9			
-session	TestReturnRegistrationUsesCEntryGate	pkg/session/return_depth_test.go	10			
-session	TestCmdReturnMatchesCSwitchedBodyMessage	pkg/session/return_depth_test.go	20			
-session	TestCmdReturnMatchesCSwitchedBodyState	pkg/session/return_depth_test.go	36			
-session	TestCmdReturnWithoutOriginalBodyIsSilent	pkg/session/return_depth_test.go	55			
+session	TestCmdReturnMatchesCSwitchedBodyMessage	pkg/session/return_depth_test.go	9			
+session	TestCmdReturnMatchesCSwitchedBodyState	pkg/session/return_depth_test.go	25			
+session	TestCmdReturnWithoutOriginalBodyIsSilent	pkg/session/return_depth_test.go	44			
 session	TestReviewSendsCBytesUntouched	pkg/session/review_bytes_test.go	15	src/new_cmds.c:do_review	src/new_cmds.c:1369-1391	
-session	TestRinRegistrationUsesCEntryGate	pkg/session/rin_depth_test.go	9			
-session	TestRlistRegistrationUsesCEntryGate	pkg/session/rlist_depth_test.go	12			
-session	TestCmdRlistUsesNumericZoneAndCOutput	pkg/session/rlist_depth_test.go	30			
-session	TestCmdRlistUsesCDecimalPrefixAndNoZoneMessage	pkg/session/rlist_depth_test.go	44			
-session	TestCmdRlistTruncatesAtCBufferLimit	pkg/session/rlist_depth_test.go	64			
+session	TestCmdRlistUsesNumericZoneAndCOutput	pkg/session/rlist_depth_test.go	11			
+session	TestCmdRlistUsesCDecimalPrefixAndNoZoneMessage	pkg/session/rlist_depth_test.go	25			
+session	TestCmdRlistTruncatesAtCBufferLimit	pkg/session/rlist_depth_test.go	45			
 session	TestRoarRegistrationUsesCEntryGate	pkg/session/roar_depth_test.go	10			
 session	TestRoflRegistrationUsesCEntryGate	pkg/session/rofl_depth_test.go	10			
-session	TestRollRegistrationUsesCEntryGate	pkg/session/roll_depth_test.go	9			
 session	makeRoomActTestManager	pkg/session/room_act_depth_test.go	18			
 session	TestEchoRoomActSkipsSleepingViewer	pkg/session/room_act_depth_test.go	41	src/act.wizard.c:do_echo	src/act.wizard.c:147	
 session	TestEchoActPassesTypedDollarsThrough	pkg/session/room_act_depth_test.go	67	src/comm.c:process_input	src/comm.c:1968-1977	
@@ -10065,19 +9992,14 @@ session	newOnCmdGatesWorld	pkg/session/room_obj_script_gates_test.go	43
 session	mustWorld	pkg/session/room_obj_script_gates_test.go	102			
 session	TestRunSpecialsRoomObjScriptNPCGates	pkg/session/room_obj_script_gates_test.go	117	src/interpreter.c:special	C's special(	
 session	scriptGateCalls	pkg/session/room_obj_script_gates_test.go	161			
-session	TestRaceSayRegistrationUsesCEntryGate	pkg/session/rsay_depth_test.go	10			
-session	TestCmdRaceSayRunsCPrechecksForEmptyArguments	pkg/session/rsay_depth_test.go	20			
+session	TestCmdRaceSayRunsCPrechecksForEmptyArguments	pkg/session/rsay_depth_test.go	9			
 session	TestRuffleRegistrationUsesCEntryGate	pkg/session/ruffle_depth_test.go	10			
 session	TestSaluteRegistrationUsesCEntryGate	pkg/session/salute_depth_test.go	10			
 session	sanitizeMessage	pkg/session/sanitize.go	10			
 session	TestSanitizeMessage	pkg/session/sanitize_test.go	5			
-session	TestSaveRegistrationUsesCEntryGate	pkg/session/save_depth_test.go	9			
 session	TestScoffRegistrationUsesCEntryGate	pkg/session/scoff_depth_test.go	10			
-session	TestScoutRegistrationUsesCEntryGate	pkg/session/scout_depth_test.go	9			
 session	TestScratchRegistrationUsesCEntryGate	pkg/session/scratch_depth_test.go	10			
 session	TestScreamRegistrationUsesCEntryGateAndRecord	pkg/session/scream_depth_test.go	10			
-session	TestScroungeRegistrationUsesCEntryGate	pkg/session/scrounge_depth_test.go	9			
-session	TestSearchRegistrationUsesCEntryGate	pkg/session/search_depth_test.go	9			
 session	cmdSedit	pkg/session/sedit.go	78	src/sedit.c:sedit_setup_new	src/sedit.c:103-130	
 session	(Session).startSedit	pkg/session/sedit.go	159			
 session	newSeditShop	pkg/session/sedit.go	190			
@@ -10121,26 +10043,23 @@ session	TestOLCMemoryMudlogSedit	pkg/session/sedit_memory_mudlog_test.go	5
 session	TestSeditOpenParentMudlog	pkg/session/sedit_open_mudlog_test.go	9			
 session	makeSeditTestWorld	pkg/session/sedit_test.go	13			
 session	makeSeditTestSession	pkg/session/sedit_test.go	49			
-session	TestSeditRegistrationUsesCEntryGate	pkg/session/sedit_test.go	56			
-session	TestSeditEntryGatesAndNewDefaults	pkg/session/sedit_test.go	70			
-session	TestSeditEmptyNumericInputAndMessages	pkg/session/sedit_test.go	122			
-session	TestSeditKeeperValidationKeepsPrompt	pkg/session/sedit_test.go	152			
-session	TestSeditMenusPreserveCLayout	pkg/session/sedit_test.go	176			
-session	TestSeditMenuColorsMatchGetCharCols	pkg/session/sedit_test.go	201			
-session	TestSeditSaveRoundTripAndWriter	pkg/session/sedit_test.go	232			
-session	TestSeditSavePathDuplicateRefusalBytes	pkg/session/sedit_test.go	287	src/olc.c:do_olc	src/olc.c:157-158	
+session	TestSeditEntryGatesAndNewDefaults	pkg/session/sedit_test.go	56			
+session	TestSeditEmptyNumericInputAndMessages	pkg/session/sedit_test.go	108			
+session	TestSeditKeeperValidationKeepsPrompt	pkg/session/sedit_test.go	138			
+session	TestSeditMenusPreserveCLayout	pkg/session/sedit_test.go	162			
+session	TestSeditMenuColorsMatchGetCharCols	pkg/session/sedit_test.go	187			
+session	TestSeditSaveRoundTripAndWriter	pkg/session/sedit_test.go	218			
+session	TestSeditSavePathDuplicateRefusalBytes	pkg/session/sedit_test.go	273	src/olc.c:do_olc	src/olc.c:157-158	
 session	TestSendMessage_AfterClose	pkg/session/send_closed_test.go	13			
 session	TestSendMessage_ConcurrentClose	pkg/session/send_closed_test.go	29			
-session	TestSendRegistrationUsesCEntryGate	pkg/session/send_depth_test.go	10			
-session	makeSendTestSessions	pkg/session/send_depth_test.go	20			
-session	TestSendTextMatchesCHalfChopAndAudiences	pkg/session/send_depth_test.go	45			
-session	TestSendTextMatchesCNotFoundSelfAndNoRepeat	pkg/session/send_depth_test.go	76			
+session	makeSendTestSessions	pkg/session/send_depth_test.go	9			
+session	TestSendTextMatchesCHalfChopAndAudiences	pkg/session/send_depth_test.go	34			
+session	TestSendTextMatchesCNotFoundSelfAndNoRepeat	pkg/session/send_depth_test.go	65			
 session	TestSendTextContractTerminatedAndBareValues	pkg/session/sendtext_contract_test.go	21			
 session	TestCmdWhereTerminatedListRendersOneFrame	pkg/session/sendtext_contract_test.go	73			
 session	captureWire	pkg/session/sendtochar_wire_test.go	16			
 session	doorWireFixture	pkg/session/sendtochar_wire_test.go	41			
 session	TestDoorOpenWireMatchesC	pkg/session/sendtochar_wire_test.go	64	src/act.movement.c:do_gen_door; src/comm.c:process_output	src/act.movement.c:606-609 | src/comm.c:1620-1644	
-session	TestSerpentRegistrationUsesCEntryGate	pkg/session/serpent_depth_test.go	9			
 session	TestCloseAfterSendDrainsBeforeClosingTransport	pkg/session/session_close_after_send_test.go	11			
 session	TestDupeCheckDrainsNonReadingClientWithoutManagerOrWorldLock	pkg/session/session_close_after_send_test.go	36			
 session	(Manager).RegisterCommand	pkg/session/session_command.go	11			
@@ -10171,7 +10090,7 @@ session	(Session).handleLogin	pkg/session/session_login.go	20
 session	isHeavyCommand	pkg/session/session_login.go	238			
 session	(Session).handleCommand	pkg/session/session_login.go	249			
 session	(Session).routeDescriptorLine	pkg/session/session_login.go	353			
-session	(Manager).untagItIfPlayingPresent	pkg/session/session_login.go	461	src/db.c:store_to_char	src/db.c:2510-2519	
+session	(Manager).untagItIfPlayingPresent	pkg/session/session_login.go	467	src/db.c:store_to_char	src/db.c:2510-2519	
 session	loginMsg	pkg/session/session_login_test.go	18			
 session	callHandleLogin	pkg/session/session_login_test.go	30			
 session	drainSend	pkg/session/session_login_test.go	54			
@@ -10241,9 +10160,10 @@ session	(Session).readPump	pkg/session/session_pump.go	78
 session	(Session).writePump	pkg/session/session_pump.go	181			
 session	(Session).finishWebSocketTransport	pkg/session/session_pump.go	256			
 session	(Session).handleMessage	pkg/session/session_pump.go	286			
-session	(Session).OnInboundActivity	pkg/session/session_pump.go	358			
-session	(Session).resetIdleOnCommand	pkg/session/session_pump.go	370			
-session	(Session).maybeReturnFromVoid	pkg/session/session_pump.go	382			
+session	(Session).dispatchClientMessage	pkg/session/session_pump.go	309			
+session	(Session).OnInboundActivity	pkg/session/session_pump.go	394			
+session	(Session).resetIdleOnCommand	pkg/session/session_pump.go	406			
+session	(Session).maybeReturnFromVoid	pkg/session/session_pump.go	418			
 session	(Session).sendWelcome	pkg/session/session_send.go	14			
 session	(Session).sendError	pkg/session/session_send.go	54			
 session	(Session).sendErrorWithState	pkg/session/session_send.go	70			
@@ -10307,21 +10227,15 @@ session	(mockGameStore).Exec	pkg/session/session_test.go	462
 session	TestCheckOriginBehindTheProxy	pkg/session/session_test.go	472			
 session	TestCheckOrigin_AllowedOriginWithoutAgentKeyAccepts	pkg/session/session_test.go	517			
 session	TestCheckOrigin_PrivateIPWithoutAgentKeyRejects	pkg/session/session_test.go	529			
-session	TestSetRegistrationUsesCEntryGate	pkg/session/set_depth_test.go	11			
-session	TestSetFieldTableMatchesCOrderAndGates	pkg/session/set_depth_test.go	21			
-session	TestSetRawValueUsesCFieldRemainder	pkg/session/set_depth_test.go	98			
-session	TestSetCAtoiMatchesAtoiPrefixBehavior	pkg/session/set_depth_test.go	111			
+session	TestSetFieldTableMatchesCOrderAndGates	pkg/session/set_depth_test.go	9			
+session	TestSetRawValueUsesCFieldRemainder	pkg/session/set_depth_test.go	86			
+session	TestSetCAtoiMatchesAtoiPrefixBehavior	pkg/session/set_depth_test.go	99			
 session	TestSetHitrollDamrollWrapToSByte	pkg/session/set_sbyte_test.go	16	src/act.wizard.c:do_set	src/act.wizard.c:2836-2840	
-session	TestSethuntRegistrationUsesCEntryGate	pkg/session/sethunt_depth_test.go	11			
-session	TestCmdSethuntSetsHunterState	pkg/session/sethunt_depth_test.go	28			
-session	TestShaRegistrationUsesCEntryGate	pkg/session/sha_depth_test.go	9			
-session	TestShadowRegistrationUsesCEntryGate	pkg/session/shadow_depth_test.go	9			
+session	TestCmdSethuntSetsHunterState	pkg/session/sethunt_depth_test.go	10			
 session	TestShakeRegistrationUsesCEntryGateAndRecord	pkg/session/shake_depth_test.go	10			
 session	TestShameRegistrationUsesCEntryGate	pkg/session/shame_test.go	10			
-session	TestSharpenRegistrationUsesCEntryGate	pkg/session/sharpen_depth_test.go	9			
 session	TestShishkabobRegistrationUsesCEntryGate	pkg/session/shishkabob_test.go	10			
 session	TestShiverRegistrationUsesCEntryGate	pkg/session/shiver_depth_test.go	10			
-session	TestShootRegistrationUsesCEntryGate	pkg/session/shoot_depth_test.go	9			
 session	TestBuyContainerThenPutSucceeds	pkg/session/shop_buy_put_test.go	13			
 session	TestCmdBuyCapacityRefusalPreservesGold	pkg/session/shop_buy_refund_test.go	13			
 session	TestBuyRejectedAtWeightLeavesNoRegisteredObject	pkg/session/shop_buy_refund_test.go	78			
@@ -10380,7 +10294,6 @@ session	TestShopListMagicAnnotationsAndLineEndingsThroughDispatch	pkg/session/sh
 session	TestShopListUsesPagerThroughDispatch	pkg/session/shop_transaction_depth_test.go	312			
 session	TestShopStatReportsInstalledSpecialThroughDispatch	pkg/session/shop_transaction_depth_test.go	343	src/act.wizard.c:do_stat_character	src/act.wizard.c:908-910	
 session	TestShowAggrCreationOrder	pkg/session/show_aggr_depth_test.go	10			
-session	TestShowRegistrationUsesCEntryGate	pkg/session/show_depth_test.go	9			
 session	TestShowHooksIndexedExitMatrix	pkg/session/show_hooks_depth_test.go	10			
 session	TestShowPlayerDurableReport	pkg/session/show_player_depth_test.go	12			
 session	TestPasswordChangeUpdatesCharacterSaveMetadata	pkg/session/show_player_depth_test.go	57			
@@ -10406,37 +10319,30 @@ session	drainShowReport	pkg/session/show_zones_depth_test.go	13
 session	TestShowZonesRuntimeAndSelection	pkg/session/show_zones_depth_test.go	32			
 session	TestShrugRegistrationUsesCEntryGateAndRecord	pkg/session/shrug_depth_test.go	10			
 session	TestShudderRegistrationUsesCEntryGateAndRecord	pkg/session/shudder_depth_test.go	10			
-session	TestShutdownRegistrationUsesCEntryGates	pkg/session/shutdown_depth_test.go	10			
-session	TestShutdownAbbreviationKeepsCGuardBytes	pkg/session/shutdown_depth_test.go	29			
-session	TestShutdownPlanUsesCGlobalMessages	pkg/session/shutdown_depth_test.go	41			
-session	TestShutdownCommandBroadcastsCTextAndRequestsLifecycle	pkg/session/shutdown_depth_test.go	72			
+session	TestShutdownAbbreviationKeepsCGuardBytes	pkg/session/shutdown_depth_test.go	9			
+session	TestShutdownPlanUsesCGlobalMessages	pkg/session/shutdown_depth_test.go	21			
+session	TestShutdownCommandBroadcastsCTextAndRequestsLifecycle	pkg/session/shutdown_depth_test.go	52			
 session	TestCommandShutdownDoesNotBroadcastSessionLeave	pkg/session/shutdown_leave_depth_test.go	11	src/comm.c:game_loop	src/comm.c:478-688	
 session	TestShutdownForceMudlog	pkg/session/shutdown_mudlog_test.go	11			
 session	TestSighRegistrationUsesCEntryGateAndRecord	pkg/session/sigh_depth_test.go	10			
 session	TestSingRegistrationUsesCEntryGateAndRecord	pkg/session/sing_depth_test.go	10			
 session	TestBucketASkillsRegistered	pkg/session/skill_wiring_test.go	10			
 session	TestBucketEToggleCommandsRegistered	pkg/session/skill_wiring_test.go	32			
-session	TestSkillsetRegistrationUsesCEntryGates	pkg/session/skillset_depth_test.go	9			
-session	TestCmdSkillsetUsesCVisibleTargetResolver	pkg/session/skillset_depth_test.go	27			
+session	TestCmdSkillsetUsesCVisibleTargetResolver	pkg/session/skillset_depth_test.go	7			
 session	TestSlapRegistrationUsesCEntryGate	pkg/session/slap_depth_test.go	10			
-session	TestSleeperRegistrationUsesCEntryGate	pkg/session/sleeper_depth_test.go	9			
-session	TestSlugRegistrationUsesCEntryGate	pkg/session/slug_depth_test.go	9			
-session	TestSmackheadsRegistrationUsesCEntryGate	pkg/session/smackheads_depth_test.go	9			
 session	TestSmellRegistrationUsesCEntryGate	pkg/session/smell_depth_test.go	10			
 session	TestSmileRegistrationUsesCEntryGateAndRecord	pkg/session/smile_depth_test.go	10			
 session	TestSmirkRegistrationUsesCEntryGate	pkg/session/smirk_depth_test.go	10			
 session	TestSnapRegistrationUsesCEntryGate	pkg/session/snap_depth_test.go	10			
 session	TestSnarlRegistrationUsesCEntryGate	pkg/session/snarl_depth_test.go	10			
-session	TestSneakRegistrationUsesCEntryGate	pkg/session/sneak_depth_test.go	9			
 session	TestSneerRegistrationUsesCEntryGate	pkg/session/sneer_depth_test.go	10			
 session	TestSneezeRegistrationUsesCEntryGate	pkg/session/sneeze_depth_test.go	10			
 session	TestSnickerRegistrationUsesCEntryGate	pkg/session/snicker_depth_test.go	10			
 session	TestSniffRegistrationUsesCEntryGateAndRecord	pkg/session/sniff_depth_test.go	10			
-session	TestSnoopRegistrationUsesCEntryGate	pkg/session/snoop_depth_test.go	9			
-session	TestCmdSnoopStateGatesUseCBranches	pkg/session/snoop_depth_test.go	19			
-session	TestCmdSnoopStopAndRelayMatchC	pkg/session/snoop_depth_test.go	72			
-session	TestCmdSnoopUsesSwitchedOriginalLevel	pkg/session/snoop_depth_test.go	113			
-session	TestSnoopInputRelayUsesCFraming	pkg/session/snoop_depth_test.go	130			
+session	TestCmdSnoopStateGatesUseCBranches	pkg/session/snoop_depth_test.go	7			
+session	TestCmdSnoopStopAndRelayMatchC	pkg/session/snoop_depth_test.go	60			
+session	TestCmdSnoopUsesSwitchedOriginalLevel	pkg/session/snoop_depth_test.go	101			
+session	TestSnoopInputRelayUsesCFraming	pkg/session/snoop_depth_test.go	118			
 session	TestSnoreRegistrationUsesCEntryGateAndRecord	pkg/session/snore_depth_test.go	10			
 session	TestSnowballRegistrationUsesCEntryGateAndRecord	pkg/session/snowball_depth_test.go	10			
 session	TestSnuggleRegistrationUsesCEntryGateAndRecord	pkg/session/snuggle_depth_test.go	10			
@@ -10470,12 +10376,10 @@ session	TestRunSpecialsWornOrderFollowsCWearIndex	pkg/session/special_order_test
 session	grantClassSpells	pkg/session/spell_level.go	21			
 session	TestSpellLevels_GoldenAgainstCSource	pkg/session/spell_levels_golden_test.go	295			
 session	TestSpewRegistrationUsesCEntryGateAndRecord	pkg/session/spew_depth_test.go	10			
-session	TestSpikeRegistrationUsesCEntryGate	pkg/session/spike_depth_test.go	10			
-session	TestSpikeRegistrationUsesNativeHandler	pkg/session/spike_depth_test.go	22			
-session	TestSpikeEntryGateIsNotSkillKnowledgeGated	pkg/session/spike_depth_test.go	34			
+session	TestSpikeRegistrationUsesNativeHandler	pkg/session/spike_depth_test.go	10			
+session	TestSpikeEntryGateIsNotSkillKnowledgeGated	pkg/session/spike_depth_test.go	22			
 session	TestSpitRegistrationUsesCEntryGateAndRecord	pkg/session/spit_depth_test.go	10			
-session	TestSplitRegistrationUsesCEntryGate	pkg/session/split_depth_test.go	9			
-session	TestSplitNoGroupUsesCMessage	pkg/session/split_depth_test.go	30	src/act.other.c:do_split	src/act.other.c:863-866	
+session	TestSplitNoGroupUsesCMessage	pkg/session/split_depth_test.go	13	src/act.other.c:do_split	src/act.other.c:863-866	
 session	TestSqueezeRegistrationUsesCEntryGateAndRecord	pkg/session/squeeze_depth_test.go	10			
 session	TestStareRegistrationUsesCEntryGateAndRecord	pkg/session/stare_depth_test.go	10			
 session	TestStartleRegistrationUsesCEntryGateAndRecord	pkg/session/startle_depth_test.go	10			
@@ -10634,23 +10538,22 @@ session	parseEditorInt	pkg/session/tedit.go	958
 session	oneSpaceHalfChopGo	pkg/session/tedit.go	980			
 session	atoiEditor	pkg/session/tedit.go	993			
 session	pluralEditorSpace	pkg/session/tedit.go	998			
-session	TestTeditRegistrationUsesCEntryGate	pkg/session/tedit_test.go	17			
-session	TestTeditAuthorizationAndCaseNormalization	pkg/session/tedit_test.go	36			
-session	TestReadCTextFileUsesBootCRLFRepresentation	pkg/session/tedit_test.go	68			
-session	TestReadCTextFileDropsShortFinalFragmentAtEOF	pkg/session/tedit_test.go	83			
-session	TestTeditAbortRestoresCacheAndLeavesDiskUntouched	pkg/session/tedit_test.go	98			
-session	TestTeditSaveUpdatesDiskCacheAndStaticCommand	pkg/session/tedit_test.go	134			
-session	TestTeditMOTDUpdateAppearsInReturningLoginMenu	pkg/session/tedit_test.go	193	src/interpreter.c:nanny	src/interpreter.c:1919-1921	
-session	TestTeditRawLineRoutesSlashInputBeforeCommands	pkg/session/tedit_test.go	221			
-session	TestTeditBlankLineAppendsToSharedBuffer	pkg/session/tedit_test.go	247			
-session	TestTeditOverlappingEditorsShareLiveBufferAndBackstr	pkg/session/tedit_test.go	271			
-session	TestTeditReplacementMatchesCUnsignedSizeAndStrtokEdges	pkg/session/tedit_test.go	317			
-session	TestTeditHelpScreenSynchronizesWithHelpAndReload	pkg/session/tedit_test.go	385			
-session	textEditTestCache	pkg/session/tedit_test.go	433			
-session	TestTeditDisconnectDropsDescriptorWithoutSaving	pkg/session/tedit_test.go	439			
-session	setTeditTestCache	pkg/session/tedit_test.go	468			
-session	TestWebTeditSaveRefreshesLiveText	pkg/session/tedit_test.go	492			
-session	TestWebTeditSaveDoesNotRaceLiveReaders	pkg/session/tedit_test.go	518			
+session	TestTeditAuthorizationAndCaseNormalization	pkg/session/tedit_test.go	16			
+session	TestReadCTextFileUsesBootCRLFRepresentation	pkg/session/tedit_test.go	48			
+session	TestReadCTextFileDropsShortFinalFragmentAtEOF	pkg/session/tedit_test.go	63			
+session	TestTeditAbortRestoresCacheAndLeavesDiskUntouched	pkg/session/tedit_test.go	78			
+session	TestTeditSaveUpdatesDiskCacheAndStaticCommand	pkg/session/tedit_test.go	114			
+session	TestTeditMOTDUpdateAppearsInReturningLoginMenu	pkg/session/tedit_test.go	173	src/interpreter.c:nanny	src/interpreter.c:1919-1921	
+session	TestTeditRawLineRoutesSlashInputBeforeCommands	pkg/session/tedit_test.go	201			
+session	TestTeditBlankLineAppendsToSharedBuffer	pkg/session/tedit_test.go	227			
+session	TestTeditOverlappingEditorsShareLiveBufferAndBackstr	pkg/session/tedit_test.go	251			
+session	TestTeditReplacementMatchesCUnsignedSizeAndStrtokEdges	pkg/session/tedit_test.go	297			
+session	TestTeditHelpScreenSynchronizesWithHelpAndReload	pkg/session/tedit_test.go	365			
+session	textEditTestCache	pkg/session/tedit_test.go	413			
+session	TestTeditDisconnectDropsDescriptorWithoutSaving	pkg/session/tedit_test.go	419			
+session	setTeditTestCache	pkg/session/tedit_test.go	448			
+session	TestWebTeditSaveRefreshesLiveText	pkg/session/tedit_test.go	472			
+session	TestWebTeditSaveDoesNotRaceLiveReaders	pkg/session/tedit_test.go	498			
 session	TestTeleportSwitchedVictimSkipsRecipientOutput	pkg/session/teleport_switched_test.go	15	src/act.informative.c:do_look; src/act.wizard.c:do_stat_room; src/act.wizard.c:do_teleport	src/act.informative.c:1103-1104 | src/act.wizard.c:366-388 | src/act.wizard.c:414-421	
 session	SetOperatorGreeting	pkg/session/terminal.go	46			
 session	TerminalGreeting	pkg/session/terminal.go	70			
@@ -10668,8 +10571,8 @@ session	(Session).terminalCharInput	pkg/session/terminal.go	456
 session	(Session).terminalPagerInput	pkg/session/terminal.go	464			
 session	(Session).terminalCommand	pkg/session/terminal.go	472			
 session	(Session).sendClientMessage	pkg/session/terminal.go	485			
-session	(Session).terminalError	pkg/session/terminal.go	494			
-session	(Session).sendTerminalText	pkg/session/terminal.go	502			
+session	(Session).terminalError	pkg/session/terminal.go	493			
+session	(Session).sendTerminalText	pkg/session/terminal.go	501			
 session	(Session).RenderTerminalFrame	pkg/session/terminal_colors.go	8			src/comm.c:1285-1286 (range does not intersect a parsed C function body)
 session	expandTerminalColors	pkg/session/terminal_colors.go	33			
 session	colorFrame	pkg/session/terminal_colors_test.go	10			
@@ -10714,6 +10617,7 @@ session	TestAutoUsesDoAutoAndAutoexitIsUnregistered	pkg/session/toggle_cmds_test
 session	TestCmdToggleIgnoresArguments	pkg/session/toggle_cmds_test.go	101	src/act.informative.c:do_toggle	c do_toggle(	
 session	TestTugRegistrationUsesCEntryGateAndRecord	pkg/session/tug_depth_test.go	10			
 session	TestTwiddleRegistrationUsesCEntryGateAndRecord	pkg/session/twiddle_depth_test.go	10			
+session	TestSendUptimeSingularDayUnitProof	pkg/session/uptime_singular_day_unit_proof_test.go	15	src/act.wizard.c:do_date	src/act.wizard.c:1825-1826	
 session	cmdRecite	pkg/session/use_cmds.go	15			
 session	init	pkg/session/use_cmds.go	151			
 session	TestCmdReciteHoldPriority	pkg/session/use_cmds_hold_test.go	18			
@@ -10783,25 +10687,25 @@ session	TestWinkRegistrationUsesCEntryGateAndRecord	pkg/session/wink_depth_test.
 session	cmdGecho	pkg/session/wiz_communication.go	14			
 session	cmdGechoText	pkg/session/wiz_communication.go	18			
 session	cmdEcho	pkg/session/wiz_communication.go	40			
-session	cmdSend	pkg/session/wiz_communication.go	70			
-session	cmdSendText	pkg/session/wiz_communication.go	78	src/interpreter.c:half_chop	C's half_chop ( | src/interpreter.c:1372-1379	
-session	splitSendArgs	pkg/session/wiz_communication.go	108			
-session	cmdForce	pkg/session/wiz_communication.go	132	src/act.wizard.c:do_force	src/act.wizard.c:1856-1906	
-session	cmdForceText	pkg/session/wiz_communication.go	138	src/act.wizard.c:do_force	src/act.wizard.c:1863-1880	
-session	forceMobNotice	pkg/session/wiz_communication.go	208	src/act.wizard.c:do_force	src/act.wizard.c:1875	
-session	forceMobCommand	pkg/session/wiz_communication.go	218	src/act.wizard.c:do_force	src/act.wizard.c:1880	
-session	findForceSession	pkg/session/wiz_communication.go	224			
-session	forceTargets	pkg/session/wiz_communication.go	248			
-session	forceRoom	pkg/session/wiz_communication.go	285			
-session	forceAll	pkg/session/wiz_communication.go	320	src/act.wizard.c:do_force; src/act.wizard.c:do_shutdown	src/act.wizard.c:1113 | src/act.wizard.c:1894-1906	
-session	forceSessionCommand	pkg/session/wiz_communication.go	331	src/interpreter.c:command_interpreter	mirrors command_interpreter(	
-session	cmdWiznet	pkg/session/wiz_communication.go	351			
-session	cmdWiznetText	pkg/session/wiz_communication.go	358	src/act.wizard.c:do_wiznet	ports do_wiznet( | src/act.wizard.c:1912-2034	
-session	wiznetEmotePrefix	pkg/session/wiz_communication.go	446			
-session	wiznetHalfChop	pkg/session/wiz_communication.go	453			
-session	wiznetSessions	pkg/session/wiz_communication.go	465			
-session	wiznetRecipientEligible	pkg/session/wiz_communication.go	469			
-session	wiznetList	pkg/session/wiz_communication.go	489			
+session	cmdSend	pkg/session/wiz_communication.go	66			
+session	cmdSendText	pkg/session/wiz_communication.go	74	src/interpreter.c:half_chop	C's half_chop ( | src/interpreter.c:1372-1379	
+session	splitSendArgs	pkg/session/wiz_communication.go	104			
+session	cmdForce	pkg/session/wiz_communication.go	128	src/act.wizard.c:do_force	src/act.wizard.c:1856-1906	
+session	cmdForceText	pkg/session/wiz_communication.go	134	src/act.wizard.c:do_force	src/act.wizard.c:1863-1880	
+session	forceMobNotice	pkg/session/wiz_communication.go	204	src/act.wizard.c:do_force	src/act.wizard.c:1875	
+session	forceMobCommand	pkg/session/wiz_communication.go	214	src/act.wizard.c:do_force	src/act.wizard.c:1880	
+session	findForceSession	pkg/session/wiz_communication.go	220			
+session	forceTargets	pkg/session/wiz_communication.go	244			
+session	forceRoom	pkg/session/wiz_communication.go	281			
+session	forceAll	pkg/session/wiz_communication.go	316	src/act.wizard.c:do_force; src/act.wizard.c:do_shutdown	src/act.wizard.c:1113 | src/act.wizard.c:1894-1906	
+session	forceSessionCommand	pkg/session/wiz_communication.go	327	src/interpreter.c:command_interpreter	mirrors command_interpreter(	
+session	cmdWiznet	pkg/session/wiz_communication.go	347			
+session	cmdWiznetText	pkg/session/wiz_communication.go	354	src/act.wizard.c:do_wiznet	ports do_wiznet( | src/act.wizard.c:1912-2034	
+session	wiznetEmotePrefix	pkg/session/wiz_communication.go	442			
+session	wiznetHalfChop	pkg/session/wiz_communication.go	449			
+session	wiznetSessions	pkg/session/wiz_communication.go	461			
+session	wiznetRecipientEligible	pkg/session/wiz_communication.go	465			
+session	wiznetList	pkg/session/wiz_communication.go	485			
 session	cmdShow	pkg/session/wiz_info.go	44			
 session	showErrantRooms	pkg/session/wiz_info.go	273			
 session	showFlaggedRooms	pkg/session/wiz_info.go	290			
@@ -10845,14 +10749,13 @@ session	cmdTeleport	pkg/session/wiz_movement.go	281
 session	cmdTransfer	pkg/session/wiz_movement.go	356	src/act.wizard.c:do_trans	mirrors do_trans ( | src/act.wizard.c:309-361	
 session	transferCharacter	pkg/session/wiz_movement.go	419	src/act.wizard.c:do_trans	src/act.wizard.c:329-339 | src/act.wizard.c:332-336	
 session	cmdHome	pkg/session/wiz_movement.go	455			
-session	TestGotoRegistrationUsesCEntryGate	pkg/session/wiz_movement_test.go	11			
-session	TestFindGotoRoomSkipsCFillWords	pkg/session/wiz_movement_test.go	21			
-session	TestGotoRoomAllowedHonorsCPrivateAndGodroomGates	pkg/session/wiz_movement_test.go	32			
-session	TestCmdAtPreservesNestedMovementLocation	pkg/session/wiz_movement_test.go	57			
-session	TestParseDigRoomNumberMatchesAtoiPrefix	pkg/session/wiz_movement_test.go	70			
-session	TestParseDigArgumentsMatchesCFillWordParsing	pkg/session/wiz_movement_test.go	93			
-session	TestDigDirectionsAcceptCSpellings	pkg/session/wiz_movement_test.go	100			
-session	TestTeleportMortallyWoundedRoomView	pkg/session/wiz_movement_test.go	122	src/act.wizard.c:do_teleport	src/act.wizard.c:389	
+session	TestFindGotoRoomSkipsCFillWords	pkg/session/wiz_movement_test.go	11			
+session	TestGotoRoomAllowedHonorsCPrivateAndGodroomGates	pkg/session/wiz_movement_test.go	22			
+session	TestCmdAtPreservesNestedMovementLocation	pkg/session/wiz_movement_test.go	47			
+session	TestParseDigRoomNumberMatchesAtoiPrefix	pkg/session/wiz_movement_test.go	60			
+session	TestParseDigArgumentsMatchesCFillWordParsing	pkg/session/wiz_movement_test.go	83			
+session	TestDigDirectionsAcceptCSpellings	pkg/session/wiz_movement_test.go	90			
+session	TestTeleportMortallyWoundedRoomView	pkg/session/wiz_movement_test.go	112	src/act.wizard.c:do_teleport	src/act.wizard.c:389	
 session	cmdLoad	pkg/session/wiz_object.go	26			
 session	loadIsAbbrev	pkg/session/wiz_object.go	125			
 session	loadStartsWithDigit	pkg/session/wiz_object.go	129			
@@ -11036,14 +10939,13 @@ session	TestWizardMudlogRefusals	pkg/session/wizard_mudlog_test.go	231
 session	TestWizardMudlogNewbieMobileName	pkg/session/wizard_mudlog_test.go	255			
 session	TestWizardMudlogNestedForceRemainder	pkg/session/wizard_mudlog_test.go	276			
 session	TestWizardSetOutputGates	pkg/session/wizard_set_output_gates_test.go	10			
-session	TestWiznetRegistrationUsesCEntryGate	pkg/session/wiznet_depth_test.go	12			
-session	TestCmdWiznetEntryAllowsChosenMortal	pkg/session/wiznet_depth_test.go	22			
-session	TestWiznetHalfChopMatchesCWordBoundary	pkg/session/wiznet_depth_test.go	43			
-session	wiznetListFixture	pkg/session/wiznet_depth_test.go	62			
-session	TestWiznetListSplitsNowizGodsOffline	pkg/session/wiznet_depth_test.go	91			
-session	TestWiznetListImplementorBypassIsOnlineOnly	pkg/session/wiznet_depth_test.go	105			
-session	TestWiznetBroadcastSkipsGodAtMenu	pkg/session/wiznet_depth_test.go	119			
-session	TestWiznetListApprovedFreshBuffer	pkg/session/wiznet_depth_test.go	136			
+session	TestCmdWiznetEntryAllowsChosenMortal	pkg/session/wiznet_depth_test.go	11			
+session	TestWiznetHalfChopMatchesCWordBoundary	pkg/session/wiznet_depth_test.go	32			
+session	wiznetListFixture	pkg/session/wiznet_depth_test.go	51			
+session	TestWiznetListSplitsNowizGodsOffline	pkg/session/wiznet_depth_test.go	80			
+session	TestWiznetListImplementorBypassIsOnlineOnly	pkg/session/wiznet_depth_test.go	94			
+session	TestWiznetBroadcastSkipsGodAtMenu	pkg/session/wiznet_depth_test.go	108			
+session	TestWiznetListApprovedFreshBuffer	pkg/session/wiznet_depth_test.go	125			
 session	mobWizutilBody	pkg/session/wizutil_body.go	14	src/act.wizard.c:do_wizutil	src/act.wizard.c:2077-2219	
 session	TestWizutilMudlogTypeDiscriminators	pkg/session/wizutil_mudlog_discriminators_test.go	31			
 session	TestWizutilMudlogLevelDiscriminators	pkg/session/wizutil_mudlog_discriminators_test.go	89			
@@ -11064,14 +10966,16 @@ session	TestCmdUnaffectMatchesCNoAffectBranch	pkg/session/wizutil_unaffect_depth
 session	readWizardUnaffectMessages	pkg/session/wizutil_unaffect_depth_test.go	103			
 session	assertWizardUnaffectNoMessage	pkg/session/wizutil_unaffect_depth_test.go	112			
 session	TestCmdUnaffectDispatchRemainsRegisteredAtGod	pkg/session/wizutil_unaffect_depth_test.go	121			
-session	TestWnewbieRegistrationUsesCEntryGate	pkg/session/wnewbie_depth_test.go	12			
-session	TestCmdNewbieCreatesCOrderAndAudiences	pkg/session/wnewbie_depth_test.go	22			
-session	TestCmdNewbieCreatesItemsForMobTarget	pkg/session/wnewbie_depth_test.go	68			
-session	TestCmdNewbieUsesCNoPersonAndEmptyArgumentBytes	pkg/session/wnewbie_depth_test.go	108			
+session	TestCmdNewbieCreatesCOrderAndAudiences	pkg/session/wnewbie_depth_test.go	11			
+session	TestCmdNewbieCreatesItemsForMobTarget	pkg/session/wnewbie_depth_test.go	57			
+session	TestCmdNewbieUsesCNoPersonAndEmptyArgumentBytes	pkg/session/wnewbie_depth_test.go	97			
 session	TestWorshipRegistrationUsesCEntryGateAndRecord	pkg/session/worship_depth_test.go	10			
 session	setAuthReadDeadline	pkg/session/ws_auth_idle_test.go	10			
 session	waitForPlayingSession	pkg/session/ws_auth_idle_test.go	17			
 session	TestWebSocket_AuthenticatedIdlePlayerSurvivesLivenessClock	pkg/session/ws_auth_idle_test.go	37			
+session	TestStructuredCommandOver255PlainTruncatesWithExactNotice	pkg/session/ws_command_line_cut_test.go	9			
+session	TestStructuredCommandOver255WithDollarTruncatesWithDoubledNotice	pkg/session/ws_command_line_cut_test.go	40			
+session	TestTerminalLineOver255EmitsExactlyOneNotice	pkg/session/ws_command_line_cut_test.go	72			
 session	setPreAuthIdleTimeout	pkg/session/ws_preauth_idle_test.go	13			
 session	dialTestWebSocket	pkg/session/ws_preauth_idle_test.go	19			
 session	TestWebSocket_PreAuthIdleTimeout_DropsParkedSocketDespitePongs	pkg/session/ws_preauth_idle_test.go	39			
@@ -11132,22 +11036,20 @@ session	TestOLCMemoryMudlogZedit	pkg/session/zedit_memory_mudlog_test.go	5
 session	zeditLogNewZoneOpenFailure	pkg/session/zedit_new_zone_mudlog.go	13			
 session	TestZeditOpenParentMudlog	pkg/session/zedit_open_mudlog_test.go	9			
 session	TestZeditOpenParentUsesWriterRoot	pkg/session/zedit_open_root_test.go	12			
-session	makeZeditTestWorld	pkg/session/zedit_test.go	14			
-session	makeZeditTestSession	pkg/session/zedit_test.go	52			
-session	TestZeditRegistrationUsesCEntryGate	pkg/session/zedit_test.go	59			
-session	TestZeditNewZoneRequiresNumber	pkg/session/zedit_test.go	78	src/olc.c:do_olc	src/olc.c:138	
-session	TestZeditMissingRoomRefusal	pkg/session/zedit_test.go	93	src/olc.c:do_olc	src/olc.c:243	
-session	TestZeditEntryAndNoDirtyQuit	pkg/session/zedit_test.go	106			
-session	TestZeditDuplicateGateAndCleanup	pkg/session/zedit_test.go	131			
-session	TestZeditMenuColorsAtCLevels	pkg/session/zedit_test.go	161			
-session	TestZeditStaleCarryAndCommandSave	pkg/session/zedit_test.go	220			
-session	TestZeditObjectLoadPrompts	pkg/session/zedit_test.go	286	src/zedit.c:zedit_disp_arg1	src/zedit.c:740	
-session	TestZeditBoundaryQuirks	pkg/session/zedit_test.go	313			
-session	TestZeditNewZoneTemplatesAndIndexInsertion	pkg/session/zedit_test.go	362			
-session	TestZeditNewZoneRefusals	pkg/session/zedit_test.go	414			
+session	makeZeditTestWorld	pkg/session/zedit_test.go	13			
+session	makeZeditTestSession	pkg/session/zedit_test.go	51			
+session	TestZeditNewZoneRequiresNumber	pkg/session/zedit_test.go	60	src/olc.c:do_olc	src/olc.c:138	
+session	TestZeditMissingRoomRefusal	pkg/session/zedit_test.go	75	src/olc.c:do_olc	src/olc.c:243	
+session	TestZeditEntryAndNoDirtyQuit	pkg/session/zedit_test.go	88			
+session	TestZeditDuplicateGateAndCleanup	pkg/session/zedit_test.go	113			
+session	TestZeditMenuColorsAtCLevels	pkg/session/zedit_test.go	143			
+session	TestZeditStaleCarryAndCommandSave	pkg/session/zedit_test.go	202			
+session	TestZeditObjectLoadPrompts	pkg/session/zedit_test.go	268	src/zedit.c:zedit_disp_arg1	src/zedit.c:740	
+session	TestZeditBoundaryQuirks	pkg/session/zedit_test.go	295			
+session	TestZeditNewZoneTemplatesAndIndexInsertion	pkg/session/zedit_test.go	344			
+session	TestZeditNewZoneRefusals	pkg/session/zedit_test.go	396			
 session	TestZeditUnknownCommandMudlogBoundary	pkg/session/zedit_unknown_mudlog_test.go	14			
-session	TestZlistRegistrationUsesCEntryGate	pkg/session/zlist_depth_test.go	14			
-session	TestCmdZlistMatchesCFixedReadBound	pkg/session/zlist_depth_test.go	32			
+session	TestCmdZlistMatchesCFixedReadBound	pkg/session/zlist_depth_test.go	13			
 session	(Manager).occupiedZoneRooms	pkg/session/zone_occupancy.go	9	src/db.c:is_empty	src/db.c:2290-2302	
 session	TestZoneOccupancyDescriptorBodies	pkg/session/zone_occupancy_test.go	12			
 session	TestZoneOccupancyDoesNotAcquireLifecycle	pkg/session/zone_occupancy_test.go	54			
@@ -11568,15 +11470,16 @@ spells	CastFromSpecialTarget	pkg/spells/call_magic.go	54
 spells	CastFromTattoo	pkg/spells/call_magic.go	60			
 spells	callMagic	pkg/spells/call_magic.go	64			
 spells	roomHasNoMagic	pkg/spells/call_magic.go	201			
-spells	checkPosition	pkg/spells/call_magic.go	220			
-spells	roomIsPeaceful	pkg/spells/call_magic.go	247			
-spells	magSavingThrow	pkg/spells/call_magic.go	267			
-spells	dice	pkg/spells/call_magic.go	272			
+spells	CastPositionRefusalMessage	pkg/spells/call_magic.go	221			
+spells	roomIsPeaceful	pkg/spells/call_magic.go	237			
+spells	magSavingThrow	pkg/spells/call_magic.go	257			
+spells	dice	pkg/spells/call_magic.go	262			
 spells	TestCallMagicItemCastIgnoresFightingPosition	pkg/spells/call_magic_gates_test.go	16	src/spell_parser.c:call_magic; src/spell_parser.c:cast_spell	C's call_magic( | src/spell_parser.c:431-434 | src/spell_parser.c:855-870	
 spells	TestCallMagicStillRefusesSittingCaster	pkg/spells/call_magic_gates_test.go	38	src/spell_parser.c:call_magic	src/spell_parser.c:431-434	
 spells	(noMagicTestWorld).GetRoomInWorld	pkg/spells/call_magic_gates_test.go	53			
 spells	TestCallMagicRefusesSpokenCastInNoMagicRoom	pkg/spells/call_magic_gates_test.go	63	src/spell_parser.c:call_magic	src/spell_parser.c:414-428	
 spells	TestCallMagicExemptsImmortalsFromNoMagic	pkg/spells/call_magic_gates_test.go	96	src/spell_parser.c:call_magic	src/spell_parser.c:415	
+spells	TestCastPositionRefusalMessageExactBytes	pkg/spells/cast_position_test.go	5			
 spells	TestLayHandsItemCastRollsCasterLevelDice	pkg/spells/caster_level_test.go	22	src/magic.c:mag_points	src/magic.c:1823	
 spells	TestMeteorSwarmItemCastDamagesWithCasterLevel	pkg/spells/caster_level_test.go	38	src/spells.c:spell_meteor_swarm	src/spells.c:1094	
 spells	TestCircleOfSummoningItemCastTimerUsesCasterLevel	pkg/spells/caster_level_test.go	65	src/spells.c:spell_coc	src/spells.c:1018	
@@ -11845,40 +11748,37 @@ spells	TestMagDamageFormula_GoldenAgainstCSource	pkg/spells/spell_damage_golden_
 spells	TestMagDamageFormula_NonDamageSpells	pkg/spells/spell_damage_golden_test.go	78	src/magic.c:mag_damage	C's mag_damage(	
 spells	TestMagPointsFormula_GoldenAgainstCSource	pkg/spells/spell_healing_golden_test.go	21			
 spells	TestMagPointsFormula_NonHealingSpells	pkg/spells/spell_healing_golden_test.go	70	src/magic.c:mag_points	C's mag_points(	
-spells	(poserMock).GetPosition	pkg/spells/spell_helpers_test.go	14			
-spells	(poserMock).SetPosition	pkg/spells/spell_helpers_test.go	15			
-spells	(positionedMsgMock).GetPosition	pkg/spells/spell_helpers_test.go	22			
-spells	(positionedMsgMock).SendMessage	pkg/spells/spell_helpers_test.go	23			
-spells	(hpMock).GetHP	pkg/spells/spell_helpers_test.go	35			
-spells	(hpMock).SetHP	pkg/spells/spell_helpers_test.go	36			
-spells	(alignMock).GetAlignment	pkg/spells/spell_helpers_test.go	42			
-spells	(npcMock).IsNPC	pkg/spells/spell_helpers_test.go	46			
-spells	(roomMock).GetRoomVNum	pkg/spells/spell_helpers_test.go	52			
-spells	(spellObjectMock).InRoom	pkg/spells/spell_helpers_test.go	59			
-spells	(spellObjectMock).CarriedBy	pkg/spells/spell_helpers_test.go	60			
-spells	(zoneWorldMock).SendToZone	pkg/spells/spell_helpers_test.go	70			
-spells	(msgMock).SendMessage	pkg/spells/spell_helpers_test.go	80			
-spells	TestIsNPC	pkg/spells/spell_helpers_test.go	86			
-spells	TestIsEvil	pkg/spells/spell_helpers_test.go	96			
-spells	TestIsGood	pkg/spells/spell_helpers_test.go	111			
-spells	TestGetHP	pkg/spells/spell_helpers_test.go	126			
-spells	TestSendToZone	pkg/spells/spell_helpers_test.go	135			
-spells	TestRandBool	pkg/spells/spell_helpers_test.go	152			
-spells	TestConsumeReagent	pkg/spells/spell_helpers_test.go	163			
-spells	TestSameRoom	pkg/spells/spell_helpers_test.go	185			
-spells	TestSameRoomWithObj	pkg/spells/spell_helpers_test.go	197			
-spells	TestCast_UnknownSpellReturnsFalse	pkg/spells/spell_helpers_test.go	220			
-spells	TestCallMagicInactiveInRangeSpellIsSuccessfulNoop	pkg/spells/spell_helpers_test.go	229			
-spells	(spawnWorldMock).SpawnObjectToPlayerInventoryI	pkg/spells/spell_helpers_test.go	261			
-spells	(spawnWorldMock).ForEachPlayerInRoomInterface	pkg/spells/spell_helpers_test.go	267			
-spells	(spawnWorldMock).ForEachMobInRoomInterface	pkg/spells/spell_helpers_test.go	273			
-spells	TestMagCreations_CreateFood	pkg/spells/spell_helpers_test.go	275			
-spells	TestMagCreationsCreateFoodRoomFallbackUsesActGate	pkg/spells/spell_helpers_test.go	296			
-spells	(createFoodActWorld).SpellCreatedObjectAct	pkg/spells/spell_helpers_test.go	323			
-spells	TestMagCreationsCreateFoodUsesLiveActAdapter	pkg/spells/spell_helpers_test.go	328			
-spells	TestMagCreations_NilCaster	pkg/spells/spell_helpers_test.go	339			
-spells	TestCast_RoutesToCallMagic	pkg/spells/spell_helpers_test.go	347			
-spells	TestCheckPosition	pkg/spells/spell_helpers_test.go	358			
+spells	(positionedMsgMock).GetPosition	pkg/spells/spell_helpers_test.go	13			
+spells	(positionedMsgMock).SendMessage	pkg/spells/spell_helpers_test.go	14			
+spells	(hpMock).GetHP	pkg/spells/spell_helpers_test.go	26			
+spells	(hpMock).SetHP	pkg/spells/spell_helpers_test.go	27			
+spells	(alignMock).GetAlignment	pkg/spells/spell_helpers_test.go	33			
+spells	(npcMock).IsNPC	pkg/spells/spell_helpers_test.go	37			
+spells	(roomMock).GetRoomVNum	pkg/spells/spell_helpers_test.go	43			
+spells	(spellObjectMock).InRoom	pkg/spells/spell_helpers_test.go	50			
+spells	(spellObjectMock).CarriedBy	pkg/spells/spell_helpers_test.go	51			
+spells	(zoneWorldMock).SendToZone	pkg/spells/spell_helpers_test.go	61			
+spells	(msgMock).SendMessage	pkg/spells/spell_helpers_test.go	71			
+spells	TestIsNPC	pkg/spells/spell_helpers_test.go	77			
+spells	TestIsEvil	pkg/spells/spell_helpers_test.go	87			
+spells	TestIsGood	pkg/spells/spell_helpers_test.go	102			
+spells	TestGetHP	pkg/spells/spell_helpers_test.go	117			
+spells	TestSendToZone	pkg/spells/spell_helpers_test.go	126			
+spells	TestRandBool	pkg/spells/spell_helpers_test.go	143			
+spells	TestConsumeReagent	pkg/spells/spell_helpers_test.go	154			
+spells	TestSameRoom	pkg/spells/spell_helpers_test.go	176			
+spells	TestSameRoomWithObj	pkg/spells/spell_helpers_test.go	188			
+spells	TestCast_UnknownSpellReturnsFalse	pkg/spells/spell_helpers_test.go	211			
+spells	TestCallMagicInactiveInRangeSpellIsSuccessfulNoop	pkg/spells/spell_helpers_test.go	220			
+spells	(spawnWorldMock).SpawnObjectToPlayerInventoryI	pkg/spells/spell_helpers_test.go	252			
+spells	(spawnWorldMock).ForEachPlayerInRoomInterface	pkg/spells/spell_helpers_test.go	258			
+spells	(spawnWorldMock).ForEachMobInRoomInterface	pkg/spells/spell_helpers_test.go	264			
+spells	TestMagCreations_CreateFood	pkg/spells/spell_helpers_test.go	266			
+spells	TestMagCreationsCreateFoodRoomFallbackUsesActGate	pkg/spells/spell_helpers_test.go	287			
+spells	(createFoodActWorld).SpellCreatedObjectAct	pkg/spells/spell_helpers_test.go	314			
+spells	TestMagCreationsCreateFoodUsesLiveActAdapter	pkg/spells/spell_helpers_test.go	319			
+spells	TestMagCreations_NilCaster	pkg/spells/spell_helpers_test.go	330			
+spells	TestCast_RoutesToCallMagic	pkg/spells/spell_helpers_test.go	338			
 spells	GetSpellInfo	pkg/spells/spell_info.go	98			
 spells	SetSpellInfo	pkg/spells/spell_info.go	103			
 spells	(SpellInfo).HasRoutine	pkg/spells/spell_info.go	110			

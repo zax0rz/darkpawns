@@ -3,16 +3,7 @@ package spells
 import (
 	"reflect"
 	"testing"
-
-	"github.com/zax0rz/darkpawns/pkg/combat"
 )
-
-type poserMock struct {
-	position int
-}
-
-func (m *poserMock) GetPosition() int { return m.position }
-func (m *poserMock) SetPosition(int)  {}
 
 type positionedMsgMock struct {
 	position int
@@ -353,36 +344,4 @@ func TestCast_RoutesToCallMagic(t *testing.T) {
 	if len(caster.messages) != 0 {
 		t.Errorf("Cast with unknown spell should not send messages, got %v", caster.messages)
 	}
-}
-
-func TestCheckPosition(t *testing.T) {
-	si := &SpellInfo{MinPosition: PosStanding}
-
-	t.Run("dead", func(t *testing.T) {
-		caster := &msgMock{}
-		if checkPosition(&poserMock{position: combat.PosDead}, si) {
-			t.Error("expected checkPosition to return false for dead caster")
-		}
-		if len(caster.messages) != 0 {
-			t.Error("expected no message because mock lacks SendMessage")
-		}
-	})
-
-	t.Run("position too low", func(t *testing.T) {
-		if checkPosition(&poserMock{position: combat.PosSleeping}, si) {
-			t.Error("expected checkPosition to return false when position too low")
-		}
-	})
-
-	t.Run("position ok", func(t *testing.T) {
-		if !checkPosition(&poserMock{position: combat.PosStanding}, si) {
-			t.Error("expected checkPosition to return true when position ok")
-		}
-	})
-
-	t.Run("non-poser", func(t *testing.T) {
-		if checkPosition("not a poser", si) {
-			t.Error("expected checkPosition to return false for non-poser")
-		}
-	})
 }
