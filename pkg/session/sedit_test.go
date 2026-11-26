@@ -53,20 +53,6 @@ func makeSeditTestSession(t *testing.T, m *Manager, name string, level int) *Ses
 	return s
 }
 
-func TestSeditRegistrationUsesCEntryGate(t *testing.T) {
-	gate, ok := commandGates["sedit"]
-	if !ok {
-		t.Fatal("sedit command has no C gate")
-	}
-	// src/interpreter.c:684: { "sedit", POS_DEAD, do_olc, LVL_BUILDER, SCMD_OLC_SEDIT }.
-	if gate.MinLevel != 31 || gate.MinPosition != 0 {
-		t.Fatalf("sedit gate = (%d,%d), want (31,0)", gate.MinLevel, gate.MinPosition)
-	}
-	if _, ok := cmdRegistry.Lookup("sedit"); !ok {
-		t.Fatal("sedit command is not registered")
-	}
-}
-
 func TestSeditEntryGatesAndNewDefaults(t *testing.T) {
 	w := makeSeditTestWorld(t)
 	m := newTestManager(t, w, nil)

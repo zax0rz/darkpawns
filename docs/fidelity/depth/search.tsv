@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_detect	search	search.entry-gate	D1	command	unit-green	TestSearchRegistrationUsesCEntryGate	interpreter.c:411; new_cmds2.c:500-507	The registered row is POS_STANDING with no level minimum; the focused registry test pins the C gate (R1/R2/R5e).
+do_detect	search	search.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:411; new_cmds2.c:500-507	The registered row is POS_STANDING with no level minimum; the focused registry test pins the C gate (R1/R2/R5e).
 do_detect	search	search.no-skill	D1	command	oracle-green-multiseed	search-gates-depth@1,2,3,5,8	new_cmds2.c:504-507	An ordinary no-skill player receives Yeah, right. before any room lookup or RNG draw (R1/R3/R5e).
 do_detect	search	search.no-secret-success	D2	command	oracle-green-multiseed	search-depth@1,2,3,5,8	new_cmds2.c:510-522	The successful roll emits only the room-check line when no exit keyword contains lowercase secret; Go no longer invents a failure suffix (R1/R3/R5e).
 do_detect	search	search.arguments-ignored	D2	command	oracle-green-multiseed	search-depth@1,2,3,5,8	interpreter.c:1265-1283; new_cmds2.c:500-541	The handler ignores its argument, so trailing words follow the same no-secret success path (R1/R2/R3/R5e).

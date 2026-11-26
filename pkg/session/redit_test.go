@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -38,23 +37,6 @@ func newReditTestManager(t *testing.T) *Manager {
 	}
 	t.Cleanup(func() { w.StopAITicker() })
 	return newTestManager(t, w, nil)
-}
-
-func TestReditRegistrationUsesCEntryGate(t *testing.T) {
-	gate, ok := commandGates["redit"]
-	if !ok {
-		t.Fatal("redit command has no C gate")
-	}
-	if gate.MinLevel != game.LVL_IMMORT || gate.MinPosition != combat.PosDead {
-		t.Fatalf("redit gate = (%d,%d), want (%d,%d)", gate.MinLevel, gate.MinPosition, game.LVL_IMMORT, combat.PosDead)
-	}
-	entry, ok := cmdRegistry.Lookup("redit")
-	if !ok {
-		t.Fatal("redit command is not registered")
-	}
-	if entry.MinLevel != gate.MinLevel || entry.MinPosition != gate.MinPosition {
-		t.Fatalf("redit registry gate = (%d,%d), want (%d,%d)", entry.MinLevel, entry.MinPosition, gate.MinLevel, gate.MinPosition)
-	}
 }
 
 func TestReditMainMenuAndNoDirtyQuit(t *testing.T) {

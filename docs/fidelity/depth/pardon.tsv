@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_wizutil	pardon	pardon.entry-gate	D1	command	unit-green	TestPardonRegistrationUsesCEntryGate	interpreter.c:601; act.wizard.c:2077-2085	The registered pardon row is POS_DEAD at level 1, then the handler applies its own LVL_IMMORT/PLR_CHOSEN gate (R1/R2/R5e).
+do_wizutil	pardon	pardon.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:601; act.wizard.c:2077-2085	The registered pardon row is POS_DEAD at level 1, then the handler applies its own LVL_IMMORT/PLR_CHOSEN gate (R1/R2/R5e).
 do_wizutil	pardon	pardon.low-level-authorization	D1	command	oracle-green-multiseed	pardon-gates-depth@1,2,3,5,8	act.wizard.c:2083-2085	An ordinary level-1 non-chosen caller receives the exact Huh?!? inner authorization response before argument parsing (R1/R2/R3/R5e).
 do_wizutil	pardon	pardon.chosen-low-level	D1	command	unit-green	TestCmdPardonMatchesCInnerAuthorization	act.wizard.c:2083-2085	A low-level caller carrying PLR_CHOSEN is admitted through the C inner guard and can reach the pardon switch (R1/R5e).
 do_wizutil	pardon	pardon.no-argument	D1	command	oracle-green-multiseed	pardon-depth@1,2,3,5,8	act.wizard.c:2088-2089	An authorized caller with no target receives Yes, but for whom?!? (R1/R3/R5e).

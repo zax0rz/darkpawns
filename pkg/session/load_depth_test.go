@@ -4,22 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
-
-func TestLoadRegistrationUsesCEntryGate(t *testing.T) {
-	entry, ok := commandGates["load"]
-	if !ok {
-		t.Fatal("load command has no C gate")
-	}
-	if entry.MinLevel != LVL_IMMORT || entry.MinPosition != combat.PosDead {
-		t.Fatalf("load gate = level %d position %d, want level %d position %d", entry.MinLevel, entry.MinPosition, LVL_IMMORT, combat.PosDead)
-	}
-}
 
 func TestLoadCArgumentHelpers(t *testing.T) {
 	tests := []struct {

@@ -1,0 +1,48 @@
+# depth-case: auto.listing-all-flags
+# depth-case: auto.listing-none
+# C do_auto bare listing (src/act.other.c:1305-1341) appends Exits, Loot, Gold,
+# and Split via sprintf(buf, "%s...", buf), or prints "None." when all four are
+# off. Zach's 2026-11-25 ruling 1 confirms the pinned reference build prints the
+# append, so sweep rows 527-530 are ordinary C-reachable lines.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Autolistgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Autolistgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+auto loot
+auto gold
+auto split
+auto
+auto loot
+auto gold
+auto split
+auto

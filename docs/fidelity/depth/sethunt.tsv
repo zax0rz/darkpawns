@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_sethunt	sethunt	sethunt.entry-gate	D1	command	unit-green	TestSethuntRegistrationUsesCEntryGate	interpreter.c:683; act.wizard.c:3444-3452	The registered row is POS_DEAD at LVL_GRGOD and the focused test pins the authoritative dispatch gate (R2/R5e).
+do_sethunt	sethunt	sethunt.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:683; act.wizard.c:3444-3452	The registered row is POS_DEAD at LVL_GRGOD and the focused test pins the authoritative dispatch gate (R2/R5e).
 do_sethunt	sethunt	sethunt.no-argument	D1	command	oracle-green-multiseed	sethunt-depth@1,2,3,5,8	act.wizard.c:3452-3455	An empty remainder reaches the C half_chop branch and emits Who do you wish to hunt? with its unusual LF/CR order (R1/R2/R5e).
 do_sethunt	sethunt	sethunt.victim-missing	D1	command	oracle-green-multiseed	sethunt-depth@1,2,3,5,8	act.wizard.c:3455-3457; handler.c:1276-1332	C resolves the victim before the hunter and emits No-one by that name around. for a missing visible target (R1/R5e).
 do_sethunt	sethunt	sethunt.hunter-missing	D1	command	oracle-green-multiseed	sethunt-depth@1,2,3,5,8	act.wizard.c:3457-3459; handler.c:1276-1332	A valid victim followed by an unresolved hunter reaches the distinct Who shall be the hunter? branch (R1/R5e).

@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_grab	grab	grab.entry-gate	D1	command	unit-green	TestGrabRegistrationUsesCEntryGate	interpreter.c:472; act.item.c:1685-1709	The registered C row is POS_RESTING with no command minimum level; the shared hold alias remains level 1.
+do_grab	grab	grab.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:472; act.item.c:1685-1709	The registered C row is POS_RESTING with no command minimum level; the shared hold alias remains level 1.
 do_grab	grab	grab.position-gate	D1	shared	delegated	fade.position-gate	interpreter.c:472	The shared POS_RESTING command rejection is owned by the existing fade position-gate vehicle.
 do_grab	grab	grab.no-argument	D1	command	oracle-green-multiseed	grab-depth@1,2,3,5,8	act.item.c:1685-1689	Empty one_argument input emits the exact Hold what? prompt.
 get_obj_in_list_vis	grab	grab.missing-visible-inventory-object	D2	command	oracle-green-multiseed	grab-depth@1,2,3,5,8	act.item.c:1690-1694; handler.c:1328-1352	A numbered miss in the carried list emits C's AN(arg) not-found wording.

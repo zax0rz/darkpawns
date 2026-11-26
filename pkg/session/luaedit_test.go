@@ -7,28 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
-
-func TestLuaEditRegistrationUsesCEntryGate(t *testing.T) {
-	gate, ok := commandGates["luaedit"]
-	if !ok {
-		t.Fatal("luaedit command has no C gate")
-	}
-	if gate.MinLevel != game.LVL_IMMORT || gate.MinPosition != combat.PosDead {
-		t.Fatalf("luaedit gate = (%d,%d), want (%d,%d)",
-			gate.MinLevel, gate.MinPosition, game.LVL_IMMORT, combat.PosDead)
-	}
-	entry, ok := cmdRegistry.Lookup("luaedit")
-	if !ok {
-		t.Fatal("luaedit command is not registered")
-	}
-	if entry.MinLevel != gate.MinLevel || entry.MinPosition != gate.MinPosition {
-		t.Fatalf("luaedit registry gate = (%d,%d), want (%d,%d)",
-			entry.MinLevel, entry.MinPosition, gate.MinLevel, gate.MinPosition)
-	}
-}
 
 func TestLuaEditListMatchesCFilterAndThreeColumnLayout(t *testing.T) {
 	m := makeTestManager(t)

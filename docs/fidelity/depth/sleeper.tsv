@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_sleeper	sleeper	sleeper.entry-gate	D1	command	unit-green	TestSleeperRegistrationUsesCEntryGate	interpreter.c:706	The registered C row is available at mortal level with POS_STANDING; the focused registry test pins the authoritative Go gate under R1/R2/R5e.
+do_sleeper	sleeper	sleeper.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:706	The registered C row is available at mortal level with POS_STANDING; the focused registry test pins the authoritative Go gate under R1/R2/R5e.
 do_sleeper	sleeper	sleeper.no-skill	D1	command	unit-green	TestDoSleeperDepthGateOrder	act.offensive.c:1193-1197	The direct GET_SKILL zero branch returns You have no idea how. before every later gate under R1/R5e.
 do_sleeper	sleeper	sleeper.no-argument	D1	command	oracle-green-multiseed	sleeper-depth@1,2,3,5,8	act.offensive.c:1189-1197	An empty one_argument reaches Sleeper who? after the skill gate across the required seed matrix under R1/R2/R3/R5e.
 do_sleeper	sleeper	sleeper.target-not-found	D1	command	oracle-green-multiseed	sleeper-depth@1,2,3,5,8	act.offensive.c:1223-1226; handler.c:1276-1300	A missing visible-room target returns Sleeper who? with no invented They aren't here. text under R1/R3/R5e.

@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_kuji_kiri	rin	rin.entry-gate	D1	command	unit-green	TestRinRegistrationUsesCEntryGate	interpreter.c:660; new_cmds.c:1552-1554	The registered C row requires level 0 at POS_STANDING; the focused test pins the authoritative dispatcher gate and Go registration (R2/R5e).
+do_kuji_kiri	rin	rin.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:660; new_cmds.c:1552-1554	The registered C row requires level 0 at POS_STANDING; the focused test pins the authoritative dispatcher gate and Go registration (R2/R5e).
 do_kuji_kiri	rin	rin.position-gate	D1	shared	delegated	flip.position-gate	interpreter.c:660	The shared POS_STANDING command-interpreter rejection is owned by the existing flip position-gate proof (R2/R5b/R5c).
 do_kuji_kiri	rin	rin.class-gate	D1	shared	delegated	jin.class-gate	new_cmds.c:1557-1560	The shared non-Ninja mortal early return is owned by the Jin kuji-kiri gate proof (R1/R5b/R5c).
 do_kuji_kiri	rin	rin.fighting-gate	D1	shared	delegated	jin.fighting-gate	new_cmds.c:1562-1565	The shared FIGHTING early return is owned by the Jin kuji-kiri gate proof (R1/R5b/R5c).

@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_insult	insult	insult.entry-gate	D1	command	unit-green	TestInsultRegistrationUsesCEntryGate	interpreter.c:518; act.social.c:153-201	The C row permits every level at POS_RESTING; the focused test pins both the authoritative gate and the registered Go entry (R2/R5e).
+do_insult	insult	insult.entry-gate	D1	command	unit-green	TestCommandGateGoldenCoversCGoRegistrationsAndSocials	interpreter.c:518; act.social.c:153-201	The C row permits every level at POS_RESTING; the focused test pins both the authoritative gate and the registered Go entry (R2/R5e).
 do_insult	insult	insult.no-argument	D2	command	oracle-green-multiseed	insult-depth@1,2,3,5,8	act.social.c:155-156	An empty first argument takes the exact everybody refusal branch across the deterministic seed matrix (R1/R3/R5e).
 do_insult	insult	insult.target-not-found	D1	command	oracle-green-multiseed	insult-depth@1,2,3,5,8	act.social.c:157-159	A supplied but unresolved first token emits only C's exact Can't hear you! actor line and consumes no insult draw (R1/R3/R5e).
 do_insult	insult	insult.self-target	D2	command	oracle-green-multiseed	insult-depth@1,2,3,5,8	act.social.c:159-198	A visible self target takes the early self branch and emits only the exact actor insulted line (R1/R3/R5e).
