@@ -38,9 +38,26 @@ Every isolated summary reports zero draw divergence and zero probe setup refusal
 
 The corrected bar is met. No later repair changes this frozen Round 4 number. The survivors remain the input for the mutation-loop repair work after review.
 
+## Repairs
+
+- **Row 0 — repaired in code PR #3085.** The session and Lua cast paths now
+  share `spells.CastPositionRefusalMessage`; exact CRLF bytes are pinned in a
+  unit test. The one-byte revert run is `NOT_CLEAN` and the clean run is
+  `CLEAN` on `lua-cast-spell-gates-depth`; both have zero draw divergence.
+- **Row 6 — repaired in code PR #3085.** `World.DoMove` keeps the
+  invalid-direction guard but returns silently, matching C's fixed direction
+  subcommand path. The complete 316-scenario cast/Lua-cast/movement matrix is
+  `CLEAN` with zero draw divergence. The removed Go-only output is recorded as
+  `R4-6` in `sweep/GO-ONLY-REMOVALS.tsv`.
+- **Rows 27, 35 and 80 — classification corrections in PR #TBD.** The Go
+  carve line is gated on every production command route; object vnum 20 exists
+  in the shipped world; and both C and Go reject or consume the clan arguments
+  before the empty-value prompt. The frozen sample classes, denominator and
+  headline are unchanged.
+
 ## Decisions for Zach
 
-No ruling is requested. The NULL `%s` and overlapping-`sprintf` rulings landed on `main` at 19:18 on 2026-11-25 (`a48baa25c`), after the all-mutants census finished (18:43). The frozen classes predate them; row 64 stayed `ask-zach` in the frozen sample, inside the denominator, and its correction is a separate row. The post-census rows 27 and 80 call-path corrections preserve the frozen class and denominator.
+No ruling is requested. The NULL `%s` and overlapping-`sprintf` rulings landed on `main` at 19:18 on 2026-11-25 (`a48baa25c`), after the all-mutants census finished (18:43). The frozen classes predate them; row 64 stayed `ask-zach` in the frozen sample, inside the denominator, and its correction is a separate row. The post-census call-path and shipped-world corrections for rows 27, 35 and 80 preserve the frozen sample and denominator.
 
 ## For Claude
 
