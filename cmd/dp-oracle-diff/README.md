@@ -256,6 +256,43 @@ transport.
 This mode is a probe, not a gate yet: the expected-divergence ledger and pins
 describe the telnet transport.
 
+## Lockstep interactive mode (`-lockstep`)
+
+`-lockstep` boots both engines from a scenario head (`-scenario <name>` or
+`-scenario-file <path>`, with fixtures, setups, optional relogin/warmup, and
+shared `-seed`), then reads one JSON request per line from stdin and writes one
+JSON result per line to stdout:
+
+- `{"type":"command","command":"look"}` — sends the command (or `<RELOGIN>`) to
+  both engines and compares the resulting blocks with the census comparator
+  (same normalizer, expected-divergence ledger/pins, and optional
+  `-draw-parity`).
+- `{"type":"pulse","pulses":10}` — sends `~dpclock pulse 10` on both engines
+  and compares the resulting heartbeat blocks.
+- `{"type":"end"}` — flushes `-lockstep-out`, shuts down both engines, and
+  exits cleanly.
+
+Each response carries `step`, `type`, `command`, `oracle_raw`,
+`oracle_normalized`, `go_normalized`, `diff`, `verdict`
+(`same` | `expected` | `diverged`), `fingerprint`, `draw_parity`
+(`disabled` | `match` | `mismatch`), `draw_stream`, `draw_detail`,
+`oracle_closed`, `go_closed`, `c_entries`, and `go_entries`.
+
+`-lockstep-out <file>` atomically writes a replayable scenario file (head plus
+every executed `[probe]` step) after each step, so a killed session still
+leaves a scenario that replays byte-for-byte through `scripts/census.sh`.
+
+**Telnet transport only.** Lockstep mode runs over the harness's raw telnet
+transport and negotiates no telnet options, so there is no GMCP: rows carry
+only the text a telnet player sees. `-go-transport ws` is rejected in lockstep
+mode.
+
+**Host admission.** Wrap long-lived lockstep processes with
+`scripts/lockstep_admit.py --name <session> -- dp-oracle-diff -lockstep ...`,
+which acquires a single `worker` permit from `scripts/census_budget.py` (the
+same host budget, memory floor, release-drain barrier, and crash-reaping
+registry as `scripts/census.sh`) and releases it on exit or crash.
+
 ## Disposable misc-file fixture
 
 `misc-file bugs 55 Sysfile paging evidence.` in `[fixture]` writes the same

@@ -165,6 +165,7 @@ func main() {
 func run() int {
 	var (
 		scenarioName      = flag.String("scenario", "look-start-room", "scenario name from scenarios/<name>.txt")
+		scenarioFile      = flag.String("scenario-file", "", "load scenario (or scenario head in -lockstep mode) from this file path instead of embedded scenarios/<name>.txt")
 		seed              = flag.String("seed", "1", "shared deterministic DP_SEED value")
 		showOracle        = flag.Bool("show-oracle", false, "print normalized C blocks even when both implementations match")
 		dumpOracle        = flag.String("dump-oracle", "", "write each run's normalized C blocks to <dir>/<scenario>.txt")
@@ -175,6 +176,10 @@ func run() int {
 		drawParity        = flag.Bool("draw-parity", false, "also compare the C oracle's and the Go port's RNG draw streams (needs a reference oracle built with the DP draw-log seam); a draw-only mismatch exits 5")
 		goTransport       = flag.String("go-transport", envOr("DP_ORACLE_GO_TRANSPORT", "telnet"), "how the Go port is driven: telnet, or ws (the /play browser client, run headless under node); default from DP_ORACLE_GO_TRANSPORT")
 		enforceProbeSetup = flag.Bool("enforce-probe-setup-refusals", enforceProbeSetupRefusals, "fail the run if any setup-shaped [probe] step receives a C refusal without # probe-setup-refusal-reason:")
+		lockstep          = flag.Bool("lockstep", false, "interactive lockstep mode: boot from a scenario head, read JSONL commands from stdin, and write one JSONL verdict per step")
+		lockstepOut       = flag.String("lockstep-out", "", "in -lockstep mode, atomically write the replayable scenario file after every step")
+		expectedDivPath   = flag.String("expected-divergences", "", "optional path to expected_divergences.tsv (defaults to repo cmd/dp-oracle-diff/expected_divergences.tsv)")
+		expectedPinsPath  = flag.String("expected-divergence-pins", "", "optional path to expected_divergence_pins.tsv (defaults to repo cmd/dp-oracle-diff/expected_divergence_pins.tsv)")
 	)
 	flag.Parse()
 	if _, err := strconv.ParseUint(*seed, 10, 64); err != nil {
@@ -195,7 +200,30 @@ func run() int {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff: -go-transport must be telnet or ws")
 		return 1
 	}
-	if err := execute(*scenarioName, *quiescence, *firstByteWait, *bootTimeout, oracleBin, *seed, *showOracle, *dumpOracle, *showGoLog, *goTransport, *drawParity, *enforceProbeSetup); err != nil {
+	if *lockstep {
+		if *goTransport != "telnet" {
+			fmt.Fprintln(os.Stderr, "dp-oracle-diff: -lockstep supports telnet transport only (no GMCP/ws)")
+			return 1
+		}
+		if err := executeLockstep(lockstepConfig{
+			scenarioName:     *scenarioName,
+			scenarioFile:     *scenarioFile,
+			lockstepOut:      *lockstepOut,
+			quiescence:       *quiescence,
+			firstByteWait:    *firstByteWait,
+			bootTimeout:      *bootTimeout,
+			oracleBin:        oracleBin,
+			seed:             *seed,
+			drawParity:       *drawParity,
+			expectedDivPath:  *expectedDivPath,
+			expectedPinsPath: *expectedPinsPath,
+		}, os.Stdin, os.Stdout); err != nil {
+			fmt.Fprintln(os.Stderr, "dp-oracle-diff:", err)
+			return 1
+		}
+		return 0
+	}
+	if err := execute(*scenarioName, *scenarioFile, *quiescence, *firstByteWait, *bootTimeout, oracleBin, *seed, *showOracle, *dumpOracle, *showGoLog, *goTransport, *drawParity, *enforceProbeSetup); err != nil {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff:", err)
 		if errors.Is(err, errDivergence) {
 			return 3
@@ -231,32 +259,118 @@ var errDrawDivergence = errors.New("rng draw streams diverge")
 // `# probe-setup-refusal-reason: "<step>": <why>`.
 const enforceProbeSetupRefusals = true
 
-func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Duration, oracleBin, seed string, showOracle bool, dumpOracle string, showGoLog bool, goTransport string, drawParity bool, enforceProbeSetup bool) error {
-	if firstByteWait < 0 {
-		return errors.New("first-byte-wait must be nonnegative")
+type harnessConfig struct {
+	quiescence    time.Duration
+	firstByteWait time.Duration
+	bootTimeout   time.Duration
+	oracleBin     string
+	seed          string
+	goTransport   string
+	drawParity    bool
+}
+
+type harnessSession struct {
+	scenario       oraclediff.Scenario
+	repoRoot       string
+	tmp            string
+	oracleData     string
+	goWorld        string
+	scriptTwinPath string
+	cDrawLog       string
+	goDrawLog      string
+	oracleAddr     string
+	goAddr         string
+	oracleEngine   *engine
+	goEngine       *engine
+	oracleActor    oraclediff.Conn
+	goActor        oraclediff.Conn
+	oracleAudience map[string]oraclediff.Conn
+	goAudience     map[string]oraclediff.Conn
+	oracleSetup    string
+	goSetup        string
+	oracleDraws    []oraclediff.DrawBoundary
+	goDraws        []oraclediff.DrawBoundary
+	faults         faultTrees
+	drawParity     bool
+	quiescence     time.Duration
+	cleanups       []func()
+}
+
+func (h *harnessSession) close() {
+	for i := len(h.cleanups) - 1; i >= 0; i-- {
+		h.cleanups[i]()
 	}
-	if quiescence <= 0 {
-		return errors.New("quiescence must be positive")
+	h.cleanups = nil
+}
+
+func (h *harnessSession) deferCleanup(fn func()) {
+	h.cleanups = append(h.cleanups, fn)
+}
+
+func loadScenario(scenarioName, scenarioFile string, allowEmptyProbe bool) (oraclediff.Scenario, string, error) {
+	var raw []byte
+	var name string
+	if scenarioFile != "" {
+		data, err := os.ReadFile(filepath.Clean(scenarioFile)) // #nosec G304 -- user-supplied scenario file path
+		if err != nil {
+			return oraclediff.Scenario{}, "", fmt.Errorf("open scenario file %q: %w", scenarioFile, err)
+		}
+		raw = data
+		base := filepath.Base(scenarioFile)
+		name = strings.TrimSuffix(base, filepath.Ext(base))
+	} else {
+		path := filepath.ToSlash(filepath.Join("scenarios", scenarioName+".txt"))
+		data, err := scenarioFiles.ReadFile(path)
+		if err != nil {
+			return oraclediff.Scenario{}, "", fmt.Errorf("open scenario %q: %w", scenarioName, err)
+		}
+		raw = data
+		name = scenarioName
 	}
-	scenarioFile := filepath.ToSlash(filepath.Join("scenarios", scenarioName+".txt"))
-	f, err := scenarioFiles.Open(scenarioFile)
+	var (
+		scenario oraclediff.Scenario
+		err      error
+	)
+	if allowEmptyProbe {
+		scenario, err = oraclediff.ParseScenarioHead(name, bytes.NewReader(raw))
+	} else {
+		scenario, err = oraclediff.ParseScenario(name, bytes.NewReader(raw))
+	}
 	if err != nil {
-		return fmt.Errorf("open scenario %q: %w", scenarioName, err)
+		return oraclediff.Scenario{}, "", err
 	}
-	defer func() { _ = f.Close() }()
-	scenario, err := oraclediff.ParseScenario(scenarioName, f)
-	if err != nil {
-		return err
+	return scenario, string(raw), nil
+}
+
+// bootHarness boots both engines, applies all scenario fixtures, opens telnet
+// (or ws) connections, runs setup, peer setup, drains, and warmup, and records
+// setup/warmup RNG draw boundaries. Both batch census execution and interactive
+// lockstep mode call this single function.
+func bootHarness(scenario oraclediff.Scenario, cfg harnessConfig) (_ *harnessSession, retErr error) {
+	if cfg.firstByteWait < 0 {
+		return nil, errors.New("first-byte-wait must be nonnegative")
+	}
+	if cfg.quiescence <= 0 {
+		return nil, errors.New("quiescence must be positive")
 	}
 	repoRoot, err := findRepoRoot()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	tmp, err := os.MkdirTemp("", "dp-oracle-diff-")
 	if err != nil {
-		return fmt.Errorf("create work directory: %w", err)
+		return nil, fmt.Errorf("create work directory: %w", err)
 	}
-	defer func() {
+	h := &harnessSession{
+		scenario:   scenario,
+		repoRoot:   repoRoot,
+		tmp:        tmp,
+		cDrawLog:   filepath.Join(tmp, "c-draws.log"),
+		goDrawLog:  filepath.Join(tmp, "go-draws.log"),
+		drawParity: cfg.drawParity,
+		quiescence: cfg.quiescence,
+	}
+	h.deferCleanup(func() {
 		// Some opt-in filesystem-failure scenarios make a disposable directory
 		// read-only. Restore directory write permission before removing scratch.
 		_ = filepath.WalkDir(tmp, func(path string, entry fs.DirEntry, err error) error {
@@ -269,16 +383,19 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 			return nil
 		})
 		_ = os.RemoveAll(tmp)
+	})
+	defer func() {
+		if retErr != nil {
+			h.close()
+		}
 	}()
 
 	// -draw-parity: each engine appends its RNG draws to its own file (the C
 	// seam reads DP_C_DRAW_LOG_FILE, the Go port DP_DRAW_LOG_FILE), so a
 	// <RESTART> keeps one continuous log per side.
-	cDrawLog := filepath.Join(tmp, "c-draws.log")
-	goDrawLog := filepath.Join(tmp, "go-draws.log")
 	var oracleDrawEnv []string
-	if drawParity {
-		oracleDrawEnv = []string{"DP_C_DRAW_LOG_FILE=" + cDrawLog}
+	if cfg.drawParity {
+		oracleDrawEnv = []string{"DP_C_DRAW_LOG_FILE=" + h.cDrawLog}
 	}
 
 	goBin := filepath.Join(tmp, "dp-server")
@@ -291,11 +408,11 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	if prebuilt := os.Getenv("ORACLE_REGRESSION_SERVER"); prebuilt != "" {
 		abs, absErr := filepath.Abs(prebuilt)
 		if absErr != nil {
-			return fmt.Errorf("resolve ORACLE_REGRESSION_SERVER: %w", absErr)
+			return nil, fmt.Errorf("resolve ORACLE_REGRESSION_SERVER: %w", absErr)
 		}
 		// #nosec G703 -- dev oracle-diff harness; the path derives from the trusted local regression driver's env, not request input (same class as findOracleRoot's DP_ORACLE_BIN walk).
 		if _, statErr := os.Stat(abs); statErr != nil {
-			return fmt.Errorf("ORACLE_REGRESSION_SERVER %q: %w", abs, statErr)
+			return nil, fmt.Errorf("ORACLE_REGRESSION_SERVER %q: %w", abs, statErr)
 		}
 		goBin = abs
 	} else {
@@ -308,17 +425,18 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		build := exec.Command("go", "build", "-o", goBin, "./cmd/server")
 		build.Dir = repoRoot
 		if output, buildErr := build.CombinedOutput(); buildErr != nil {
-			return fmt.Errorf("build Go server: %w\n%s", buildErr, output)
+			return nil, fmt.Errorf("build Go server: %w\n%s", buildErr, output)
 		}
 	}
 
-	oracleRoot, err := findOracleRoot(oracleBin)
+	oracleRoot, err := findOracleRoot(cfg.oracleBin)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	oracleData := filepath.Join(tmp, "oracle-lib")
+	h.oracleData = oracleData
 	if err := prepareOracleData(filepath.Join(oracleRoot, "lib"), oracleData, scenario.EmptyPlayers); err != nil {
-		return err
+		return nil, err
 	}
 	// Keep the Go world disposable for every scenario, not only fixture cases.
 	// The server anchors relative runtime state (player saves and the instance
@@ -326,122 +444,122 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	// one scenario's quit save poison later scenarios and makes a clean oracle
 	// comparison flaky.
 	goWorld := filepath.Join(tmp, "go-world")
+	h.goWorld = goWorld
 	if err := os.CopyFS(goWorld, os.DirFS(filepath.Join(repoRoot, "lib", "world"))); err != nil {
-		return fmt.Errorf("copy Go world to throwaway directory: %w", err)
+		return nil, fmt.Errorf("copy Go world to throwaway directory: %w", err)
 	}
 	for _, root := range []string{oracleData, filepath.Dir(goWorld)} {
 		if err := applyMiscFileFixtures(root, scenario.MiscFiles); err != nil {
-			return fmt.Errorf("apply disposable misc fixtures: %w", err)
+			return nil, fmt.Errorf("apply disposable misc fixtures: %w", err)
 		}
 	}
-	var scriptTwinPath string
 	if scenario.ScriptTwin != nil {
 		sourcePath := filepath.Join(oracleData, "scripts", filepath.FromSlash(scenario.ScriptTwin.Path))
 		source, err := os.ReadFile(sourcePath)
 		if err != nil {
-			return fmt.Errorf("read script twin source %s: %w", scenario.ScriptTwin.Path, err)
+			return nil, fmt.Errorf("read script twin source %s: %w", scenario.ScriptTwin.Path, err)
 		}
 		if !bytes.HasSuffix(source, []byte("\n")) {
-			return fmt.Errorf("script twin source %s must end with LF", scenario.ScriptTwin.Path)
+			return nil, fmt.Errorf("script twin source %s must end with LF", scenario.ScriptTwin.Path)
 		}
-		scriptTwinPath = filepath.Join(tmp, "script-twin")
+		h.scriptTwinPath = filepath.Join(tmp, "script-twin")
 		expected := append(append([]byte(nil), source...), []byte(scenario.ScriptTwin.Append+"\n")...)
-		if err := os.WriteFile(scriptTwinPath, expected, 0o600); err != nil { // #nosec G703 -- scriptTwinPath is a file directly under the os.MkdirTemp scratch root
-			return fmt.Errorf("write script twin: %w", err)
+		if err := os.WriteFile(h.scriptTwinPath, expected, 0o600); err != nil { // #nosec G703 -- scriptTwinPath is a file directly under the os.MkdirTemp scratch root
+			return nil, fmt.Errorf("write script twin: %w", err)
 		}
 	}
 	// Sibling lib/text rides along: the server derives help (and future static
 	// text) from the -world dir's parent, so the throwaway layout mirrors
 	// lib/{world,text}.
 	if err := os.CopyFS(filepath.Join(tmp, "text"), os.DirFS(filepath.Join(repoRoot, "lib", "text"))); err != nil {
-		return fmt.Errorf("copy lib/text to throwaway directory: %w", err)
+		return nil, fmt.Errorf("copy lib/text to throwaway directory: %w", err)
 	}
 	if len(scenario.Fixtures) > 0 || len(scenario.ObjectSpawns) > 0 || len(scenario.MobFixtures) > 0 || len(scenario.ZoneCommandFixtures) > 0 || len(scenario.MobObjectFixtures) > 0 || len(scenario.MobAffFixtures) > 0 || len(scenario.MobFlagFixtures) > 0 || len(scenario.ObjIndexFixtures) > 0 || len(scenario.WldIndexFixtures) > 0 || len(scenario.QuietZones) > 0 || scenario.QuietAllMobs || len(scenario.ScriptlessMobIDs) > 0 || len(scenario.RoomExitFixtures) > 0 || len(scenario.RoomFlagFixtures) > 0 || len(scenario.RoomSectors) > 0 || len(scenario.RoomScripts) > 0 || len(scenario.ForceLoadVNums) > 0 || len(scenario.HouseControls) > 0 {
 		if err := applyObjIndexFixtures(filepath.Join(oracleData, "world"), scenario.ObjIndexFixtures); err != nil {
-			return fmt.Errorf("apply C oracle obj index fixtures: %w", err)
+			return nil, fmt.Errorf("apply C oracle obj index fixtures: %w", err)
 		}
 		if err := applyObjIndexFixtures(goWorld, scenario.ObjIndexFixtures); err != nil {
-			return fmt.Errorf("apply Go port obj index fixtures: %w", err)
+			return nil, fmt.Errorf("apply Go port obj index fixtures: %w", err)
 		}
 		if err := applyWldIndexFixtures(filepath.Join(oracleData, "world"), scenario.WldIndexFixtures); err != nil {
-			return fmt.Errorf("apply C oracle wld index fixtures: %w", err)
+			return nil, fmt.Errorf("apply C oracle wld index fixtures: %w", err)
 		}
 		if err := applyWldIndexFixtures(goWorld, scenario.WldIndexFixtures); err != nil {
-			return fmt.Errorf("apply Go port wld index fixtures: %w", err)
+			return nil, fmt.Errorf("apply Go port wld index fixtures: %w", err)
 		}
 		if err := applyObjectFixtures(filepath.Join(oracleData, "world"), scenario.Fixtures); err != nil {
-			return fmt.Errorf("apply C oracle fixtures: %w", err)
+			return nil, fmt.Errorf("apply C oracle fixtures: %w", err)
 		}
 		if err := applyObjectFixtures(goWorld, scenario.Fixtures); err != nil {
-			return fmt.Errorf("apply Go port fixtures: %w", err)
+			return nil, fmt.Errorf("apply Go port fixtures: %w", err)
 		}
 		if err := applyObjectSpawnFixtures(filepath.Join(oracleData, "world"), scenario.ObjectSpawns); err != nil {
-			return fmt.Errorf("apply C oracle object spawn fixtures: %w", err)
+			return nil, fmt.Errorf("apply C oracle object spawn fixtures: %w", err)
 		}
 		if err := applyObjectSpawnFixtures(goWorld, scenario.ObjectSpawns); err != nil {
-			return fmt.Errorf("apply Go port object spawn fixtures: %w", err)
+			return nil, fmt.Errorf("apply Go port object spawn fixtures: %w", err)
 		}
 		if err := applyForceLoadFixtures(filepath.Join(oracleData, "world"), scenario.ForceLoadVNums); err != nil {
-			return fmt.Errorf("apply C oracle force-load fixtures: %w", err)
+			return nil, fmt.Errorf("apply C oracle force-load fixtures: %w", err)
 		}
 		if err := applyForceLoadFixtures(goWorld, scenario.ForceLoadVNums); err != nil {
-			return fmt.Errorf("apply Go port force-load fixtures: %w", err)
+			return nil, fmt.Errorf("apply Go port force-load fixtures: %w", err)
 		}
 		if err := applyQuietZoneFixtures(filepath.Join(oracleData, "world"), scenario.QuietZones); err != nil {
-			return fmt.Errorf("apply C oracle quiet-zone fixtures: %w", err)
+			return nil, fmt.Errorf("apply C oracle quiet-zone fixtures: %w", err)
 		}
 		if err := applyQuietZoneFixtures(goWorld, scenario.QuietZones); err != nil {
-			return fmt.Errorf("apply Go port quiet-zone fixtures: %w", err)
+			return nil, fmt.Errorf("apply Go port quiet-zone fixtures: %w", err)
 		}
 		if scenario.QuietAllMobs {
 			if err := applyQuietMobFixtures(filepath.Join(oracleData, "world")); err != nil {
-				return fmt.Errorf("apply C oracle quiet-mob fixture: %w", err)
+				return nil, fmt.Errorf("apply C oracle quiet-mob fixture: %w", err)
 			}
 			if err := applyQuietMobFixtures(goWorld); err != nil {
-				return fmt.Errorf("apply Go port quiet-mob fixture: %w", err)
+				return nil, fmt.Errorf("apply Go port quiet-mob fixture: %w", err)
 			}
 		}
 		if err := applyZoneCommandFixtures(filepath.Join(oracleData, "world"), scenario.ZoneCommandFixtures); err != nil {
-			return fmt.Errorf("apply C oracle zone-command fixtures: %w", err)
+			return nil, fmt.Errorf("apply C oracle zone-command fixtures: %w", err)
 		}
 		if err := applyZoneCommandFixtures(goWorld, scenario.ZoneCommandFixtures); err != nil {
-			return fmt.Errorf("apply Go port zone-command fixtures: %w", err)
+			return nil, fmt.Errorf("apply Go port zone-command fixtures: %w", err)
 		}
 		if err := applyMobFixtures(filepath.Join(oracleData, "world"), scenario.MobFixtures); err != nil {
-			return fmt.Errorf("apply C oracle mob fixtures: %w", err)
+			return nil, fmt.Errorf("apply C oracle mob fixtures: %w", err)
 		}
 		if err := applyMobFixtures(goWorld, scenario.MobFixtures); err != nil {
-			return fmt.Errorf("apply Go port mob fixtures: %w", err)
+			return nil, fmt.Errorf("apply Go port mob fixtures: %w", err)
 		}
 		if err := applyMobObjectFixtures(filepath.Join(oracleData, "world"), scenario.MobObjectFixtures); err != nil {
-			return fmt.Errorf("apply C oracle mob-object fixtures: %w", err)
+			return nil, fmt.Errorf("apply C oracle mob-object fixtures: %w", err)
 		}
 		if err := applyMobObjectFixtures(goWorld, scenario.MobObjectFixtures); err != nil {
-			return fmt.Errorf("apply Go port mob-object fixtures: %w", err)
+			return nil, fmt.Errorf("apply Go port mob-object fixtures: %w", err)
 		}
 		if err := applyMobFlagFixtures(filepath.Join(oracleData, "world"), scenario.MobFlagFixtures); err != nil {
-			return fmt.Errorf("apply C oracle mob flag fixtures: %w", err)
+			return nil, fmt.Errorf("apply C oracle mob flag fixtures: %w", err)
 		}
 		if err := applyMobFlagFixtures(goWorld, scenario.MobFlagFixtures); err != nil {
-			return fmt.Errorf("apply Go port mob flag fixtures: %w", err)
+			return nil, fmt.Errorf("apply Go port mob flag fixtures: %w", err)
 		}
 		if err := applyMobAffFixtures(filepath.Join(oracleData, "world"), scenario.MobAffFixtures); err != nil {
-			return fmt.Errorf("apply C oracle mob aff fixtures: %w", err)
+			return nil, fmt.Errorf("apply C oracle mob aff fixtures: %w", err)
 		}
 		if err := applyMobAffFixtures(goWorld, scenario.MobAffFixtures); err != nil {
-			return fmt.Errorf("apply Go port mob aff fixtures: %w", err)
+			return nil, fmt.Errorf("apply Go port mob aff fixtures: %w", err)
 		}
 		if err := applyScriptlessMobFixtures(filepath.Join(oracleData, "world"), scenario.ScriptlessMobIDs); err != nil {
-			return fmt.Errorf("apply C oracle mob script fixtures: %w", err)
+			return nil, fmt.Errorf("apply C oracle mob script fixtures: %w", err)
 		}
 		if err := applyScriptlessMobFixtures(goWorld, scenario.ScriptlessMobIDs); err != nil {
-			return fmt.Errorf("apply Go port mob script fixtures: %w", err)
+			return nil, fmt.Errorf("apply Go port mob script fixtures: %w", err)
 		}
 		if err := applyRoomFixtures(filepath.Join(oracleData, "world"), scenario.RoomExitFixtures, scenario.RoomFlagFixtures, scenario.RoomSectors, scenario.RoomScripts); err != nil {
-			return fmt.Errorf("apply C oracle room fixtures: %w", err)
+			return nil, fmt.Errorf("apply C oracle room fixtures: %w", err)
 		}
 		if err := applyRoomFixtures(goWorld, scenario.RoomExitFixtures, scenario.RoomFlagFixtures, scenario.RoomSectors, scenario.RoomScripts); err != nil {
-			return fmt.Errorf("apply Go port room fixtures: %w", err)
+			return nil, fmt.Errorf("apply Go port room fixtures: %w", err)
 		}
 	}
 	for _, target := range []struct{ scripts, world string }{
@@ -449,47 +567,47 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		{filepath.Join(goWorld, "scripts"), goWorld},
 	} {
 		if err := applyLuaScriptFixtures(target.scripts, scenario.LuaScripts); err != nil {
-			return err
+			return nil, err
 		}
 		if err := applyMobScriptFixtures(target.world, scenario.MobScripts); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	if err := applyOracleHouseControlFixtures(oracleData, scenario.HouseControls); err != nil {
-		return fmt.Errorf("apply C oracle house-control fixtures: %w", err)
+		return nil, fmt.Errorf("apply C oracle house-control fixtures: %w", err)
 	}
 
 	goWork := filepath.Join(tmp, "go-work")
 	if err := os.MkdirAll(filepath.Join(goWork, "data"), 0o750); err != nil {
-		return fmt.Errorf("create Go runtime directory: %w", err)
+		return nil, fmt.Errorf("create Go runtime directory: %w", err)
 	}
-	faults := faultTrees{oracleLib: oracleData, goRoot: filepath.Dir(goWorld), goWorld: goWorld}
-	if err := applyFaultFixtures(faults, scenario.FaultFixtures); err != nil {
-		return fmt.Errorf("apply fault fixtures: %w", err)
+	h.faults = faultTrees{oracleLib: oracleData, goRoot: filepath.Dir(goWorld), goWorld: goWorld}
+	if err := applyFaultFixtures(h.faults, scenario.FaultFixtures); err != nil {
+		return nil, fmt.Errorf("apply fault fixtures: %w", err)
 	}
 	if err := applyGoHouseControlFixtures(filepath.Dir(goWorld), scenario.HouseControls); err != nil {
-		return fmt.Errorf("apply Go port house-control fixtures: %w", err)
+		return nil, fmt.Errorf("apply Go port house-control fixtures: %w", err)
 	}
-	releasePorts, err := bootLease(bootTimeout)
+	releasePorts, err := bootLease(cfg.bootTimeout)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	oracleListener, whodListener, goTelnetListener, goWHODListener, goHTTPListener, err := allocatePorts()
 	releasePorts()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer func() {
+	h.deferCleanup(func() {
 		for _, ln := range []net.Listener{oracleListener, whodListener, goTelnetListener, goWHODListener, goHTTPListener} {
 			_ = ln.Close()
 		}
-	}()
+	})
 	oraclePort := oracleListener.Addr().(*net.TCPAddr).Port
 	goTelnetPort := goTelnetListener.Addr().(*net.TCPAddr).Port
 	goHTTPPort := goHTTPListener.Addr().(*net.TCPAddr).Port
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	h.deferCleanup(cancel)
 	// goEnv and goDB are filled in below, before the Go port first starts. The
 	// engine closures read them lazily, so a <RESTART> step reuses the same
 	// environment and the same durable store as the first boot.
@@ -509,7 +627,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		name: "C oracle",
 		start: func() (*process, error) {
 			return startProcess(ctx, "C oracle", oracleRoot,
-				oracleServerEnv(os.Environ(), seed, pinnedTime, oracleDrawEnv...), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
+				oracleServerEnv(os.Environ(), cfg.seed, pinnedTime, oracleDrawEnv...), cfg.oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
 		},
 	}
 	goEngine := &engine{
@@ -522,68 +640,56 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 				"-db", goDB)
 		},
 	}
+	h.oracleEngine = oracleEngine
+	h.goEngine = goEngine
 	// One cleanup for both engines, evaluated on the way out so it stops
 	// whichever process a <RESTART> step left running.
-	defer func() {
+	h.deferCleanup(func() {
 		goEngine.stop()
 		oracleEngine.stop()
-	}()
+	})
 
-	oracleEngine.start = ownedStart(bootTimeout, []net.Listener{oracleListener, whodListener}, []int{oraclePort, oraclePort + 1}, oracleEngine.start)
-	goEngine.start = ownedStart(bootTimeout, []net.Listener{goTelnetListener, goWHODListener, goHTTPListener}, []int{goTelnetPort, goTelnetPort + 1, goHTTPPort}, goEngine.start)
+	oracleEngine.start = ownedStart(cfg.bootTimeout, []net.Listener{oracleListener, whodListener}, []int{oraclePort, oraclePort + 1}, oracleEngine.start)
+	goEngine.start = ownedStart(cfg.bootTimeout, []net.Listener{goTelnetListener, goWHODListener, goHTTPListener}, []int{goTelnetPort, goTelnetPort + 1, goHTTPPort}, goEngine.start)
 	if _, err := oracleEngine.ensure(); err != nil {
-		return err
+		return nil, err
 	}
 
-	goEnv = goServerEnv(os.Environ(), seed, pinnedTime, drawParity, goDrawLog, scenario.EmptyPlayers)
+	goEnv = goServerEnv(os.Environ(), cfg.seed, pinnedTime, cfg.drawParity, h.goDrawLog, scenario.EmptyPlayers)
 	// Every scenario boots the Go port with a real SQLite store, the same one
 	// login and the record consumers use: C always has its player file, and a
 	// store-less boot silenced every saved-player surface (DP-1463, DP-1464).
 	goDB, err = prepareGoReloginDB(goWork, scenario.EmptyPlayers, scenario.SeedPlayer, filepath.Join(oracleRoot, "lib", "etc", "players"))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if _, err := goEngine.ensure(); err != nil {
-		return err
+		return nil, err
 	}
 
 	oracleAddr := fmt.Sprintf("127.0.0.1:%d", oraclePort)
 	goAddr := fmt.Sprintf("127.0.0.1:%d", goTelnetPort)
-	// awaitOracle blocks until the C listener accepts a connection, which C
-	// cannot do before boot_db() has finished (src/comm.c init_game boots the
-	// world first and opens the mother connection second). The probe connection
-	// is closed immediately; the descriptor number it took is reused by the
-	// login that follows.
+	h.oracleAddr = oracleAddr
+	h.goAddr = goAddr
 	awaitOracle := func() error {
-		c, dialErr := dialWhenReady(oracleEngine.proc, oracleAddr, bootTimeout)
+		c, dialErr := dialWhenReady(oracleEngine.proc, oracleAddr, cfg.bootTimeout)
 		if dialErr != nil {
 			return dialErr
 		}
 		return c.Close()
 	}
-	// awaitGo blocks on the port's readiness marker. Every start gets a fresh
-	// log buffer, so this waits for the new process's boot rather than matching
-	// the line the previous process printed. A boot that came up without
-	// persistence must not compare (requirePersistence).
 	awaitGo := func() error {
-		if err := waitForLog(goEngine.proc, bootmarker.Ready, bootTimeout); err != nil {
+		if err := waitForLog(goEngine.proc, bootmarker.Ready, cfg.bootTimeout); err != nil {
 			return err
 		}
 		return requirePersistence(goEngine.proc)
 	}
-	// restartOracle stops the C oracle and starts it again on the same
-	// disposable lib tree and the same port: the copied lib's player, rent,
-	// board, mail, house and clan files are what must survive, and the world
-	// files + reset tables are what must not.
 	restartOracle := func() error {
 		if _, bounceErr := oracleEngine.bounce(); bounceErr != nil {
 			return bounceErr
 		}
 		return awaitOracle()
 	}
-	// restartGo stops the Go port and starts it again on the same throwaway
-	// world copy, runtime directory and database, all of which live under the
-	// scenario's temporary directory rather than in the checkout.
 	restartGo := func() error {
 		if _, bounceErr := goEngine.bounce(); bounceErr != nil {
 			return bounceErr
@@ -591,38 +697,33 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		return awaitGo()
 	}
 
-	oracleNetConn, err := dialWhenReady(oracleEngine.proc, oracleAddr, bootTimeout)
+	oracleNetConn, err := dialWhenReady(oracleEngine.proc, oracleAddr, cfg.bootTimeout)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	newTCPConn := func(conn net.Conn) *oraclediff.TCPConn {
 		c := oraclediff.NewTCPConn(conn)
-		c.SetFirstByteWait(firstByteWait)
+		c.SetFirstByteWait(cfg.firstByteWait)
 		return c
 	}
 
 	oracleConn := newTCPConn(oracleNetConn)
-	defer func() { _ = oracleConn.Close() }()
-	// Readiness is probed on the listener the scenario will use: a telnet
-	// connection takes a descriptor number, which would shift `users` and
-	// `dc <n>` for a WebSocket actor.
+	h.deferCleanup(func() { _ = oracleConn.Close() })
 	readyAddr := goAddr
-	if goTransport == "ws" {
+	if cfg.goTransport == "ws" {
 		readyAddr = fmt.Sprintf("127.0.0.1:%d", goHTTPPort)
 	}
-	goNetConn, err := dialWhenReady(goEngine.proc, readyAddr, bootTimeout)
+	goNetConn, err := dialWhenReady(goEngine.proc, readyAddr, cfg.bootTimeout)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if err := awaitGo(); err != nil {
-		return err
+		return nil, err
 	}
-	// dialGo opens one more player connection to the Go port over the chosen
-	// transport. The telnet dial above still gates readiness either way.
 	goWSURL := fmt.Sprintf("ws://127.0.0.1:%d/ws", goHTTPPort)
 	dialGo := func() (oraclediff.Conn, error) {
-		if goTransport == "ws" {
-			if err := waitOwnedListener(goEngine.proc, goHTTPPort, bootTimeout); err != nil {
+		if cfg.goTransport == "ws" {
+			if err := waitOwnedListener(goEngine.proc, goHTTPPort, cfg.bootTimeout); err != nil {
 				return nil, err
 			}
 			c, err := oraclediff.NewWSConn("node",
@@ -630,98 +731,82 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 				filepath.Join(repoRoot, "web", "public", "mud-client.js"),
 				goWSURL)
 			if err == nil {
-				if ownErr := waitOwnedListener(goEngine.proc, goHTTPPort, bootTimeout); ownErr != nil {
+				if ownErr := waitOwnedListener(goEngine.proc, goHTTPPort, cfg.bootTimeout); ownErr != nil {
 					_ = c.Close()
 					return nil, ownErr
 				}
-				c.SetFirstByteWait(firstByteWait)
+				c.SetFirstByteWait(cfg.firstByteWait)
 			}
 			return c, err
 		}
-		c, dialErr := dialWhenReady(goEngine.proc, goAddr, bootTimeout)
+		c, dialErr := dialWhenReady(goEngine.proc, goAddr, cfg.bootTimeout)
 		if dialErr != nil {
 			return nil, dialErr
 		}
 		return newTCPConn(c), nil
 	}
 	var goConn oraclediff.Conn
-	if goTransport == "ws" {
+	if cfg.goTransport == "ws" {
 		_ = goNetConn.Close()
 		if goConn, err = dialGo(); err != nil {
-			return err
+			return nil, err
 		}
-		goAddr = goWSURL + " (browser client)"
+		h.goAddr = goWSURL + " (browser client)"
 	} else {
 		goConn = newTCPConn(goNetConn)
 	}
-	defer func() { _ = goConn.Close() }()
+	h.deferCleanup(func() { _ = goConn.Close() })
 
 	runSetup := func(conn oraclediff.Conn, setup []string) (string, error) {
 		if scenario.SkipSetupSettle {
-			return oraclediff.RunSetup(conn, setup, quiescence)
+			return oraclediff.RunSetup(conn, setup, cfg.quiescence)
 		}
-		return oraclediff.RunSetupAndSettle(conn, setup, settlePulses, quiescence)
+		return oraclediff.RunSetupAndSettle(conn, setup, settlePulses, cfg.quiescence)
 	}
-	// A relogin without a menu choice is a reconnect to a linkdead body; its
-	// lines are played as-is, with no entry settle.
 	runRelogin := func(conn oraclediff.Conn, setup []string) (string, error) {
 		if !oraclediff.HasEnterGameStep(setup) {
-			return oraclediff.RunSetup(conn, setup, quiescence)
+			return oraclediff.RunSetup(conn, setup, cfg.quiescence)
 		}
 		return runSetup(conn, setup)
 	}
 
-	// A scenario whose actor relogs gets a primary that can reconnect to the
-	// same server and log the character in again. A scenario that restarts
-	// additionally gets a primary that stops and starts its engine first: the
-	// engine behind this connection, not the peer's, so the peer pass keeps its
-	// live connection and the block alignment stays intact.
 	restartsActor := slices.Contains(scenario.Probe, oraclediff.RestartStep)
 	crashesActor := slices.Contains(scenario.Probe, oraclediff.CrashStep)
 	var oraclePrimary, goPrimary oraclediff.Conn = oracleConn, goConn
 	if len(scenario.ReloginOracle) > 0 {
 		oracleDial := func() (oraclediff.Conn, error) {
-			c, dialErr := dialWhenReady(oracleEngine.proc, oracleAddr, bootTimeout)
+			c, dialErr := dialWhenReady(oracleEngine.proc, oracleAddr, cfg.bootTimeout)
 			if dialErr != nil {
 				return nil, dialErr
 			}
 			return newTCPConn(c), nil
 		}
 		oracleLogin := func(c oraclediff.Conn) (string, error) { return runRelogin(c, scenario.ReloginOracle) }
-		oracleSettle := func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) }
+		oracleSettle := func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, cfg.quiescence) }
 		switch {
 		case restartsActor:
 			oraclePrimary = oraclediff.NewRestartConn(oracleConn, oracleDial, oracleLogin, oracleSettle, restartOracle)
 		case crashesActor:
-			// The crash callbacks kill and restart this engine only: the C
-			// oracle's own process, never the Go port's, and no settle or
-			// close runs before the kill. The restart gates on the fresh
-			// boot's readiness marker, like restartOracle does.
 			crashKillOracle, crashRestartOracle := crashRestart(oracleEngine, awaitOracle)
 			oraclePrimary = oraclediff.NewCrashConn(oracleConn, oracleDial, oracleLogin, crashKillOracle, crashRestartOracle)
 		default:
 			oraclePrimary = oraclediff.NewReloginConn(oracleConn, oracleDial, oracleLogin, oracleSettle)
 		}
-		defer func() { _ = oraclePrimary.Close() }()
+		h.deferCleanup(func() { _ = oraclePrimary.Close() })
 	}
 	if len(scenario.ReloginPort) > 0 {
 		goLogin := func(c oraclediff.Conn) (string, error) { return runRelogin(c, scenario.ReloginPort) }
-		goSettle := func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, quiescence) }
+		goSettle := func(c oraclediff.Conn) (string, error) { return oraclediff.PumpPulses(c, settlePulses, cfg.quiescence) }
 		switch {
 		case restartsActor:
 			goPrimary = oraclediff.NewRestartConn(goConn, dialGo, goLogin, goSettle, restartGo)
 		case crashesActor:
-			// Mirror of the oracle side: only the Go port's process is
-			// killed, in this pass, after which it restarts on the same
-			// throwaway world copy, runtime directory and database, and the
-			// restart gates on the fresh boot's readiness marker (awaitGo),
-			// like restartGo does.
 			crashKillGo, crashRestartGo := crashRestart(goEngine, awaitGo)
 			goPrimary = oraclediff.NewCrashConn(goConn, dialGo, goLogin, crashKillGo, crashRestartGo)
 		default:
 			goPrimary = oraclediff.NewReloginConn(goConn, dialGo, goLogin, goSettle)
 		}
-		defer func() { _ = goPrimary.Close() }()
+		h.deferCleanup(func() { _ = goPrimary.Close() })
 	}
 
 	peerNames := make([]string, 0, len(scenario.Peers))
@@ -730,29 +815,19 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	}
 	sort.Strings(peerNames)
 
-	// Each engine's whole sequence — setup, peer setup, drains, warmup,
-	// peer-drop, probe — runs in its own goroutine, in exactly the order it
-	// runs today; the two engines only overlap in wall-clock time. Nothing
-	// one side touches belongs to the other: connections, peer maps, the
-	// restart/crash closures and the engines are all per-side, and the
-	// shared helpers (runSetup/runRelogin) read only the scenario. The
-	// comparison below runs after both finish; on error, returning then
-	// stops both engines through deferred cleanup, and the
-	// oracle error wins a tie because today the oracle's step always ran
-	// first and its error surfaced first.
-	type sideResult struct {
-		setup  string
-		blocks []oraclediff.AudienceProbeBlock
-		draws  []oraclediff.DrawBoundary
+	type setupResult struct {
+		setup    string
+		actor    oraclediff.Conn
+		audience map[string]oraclediff.Conn
+		peers    []oraclediff.Conn
+		draws    []oraclediff.DrawBoundary
 	}
-	// markDraws records how many draw entries a side's log holds when a phase
-	// or probe step finishes, so a draw mismatch can name its step.
-	markDraws := func(res *sideResult, path, label string) {
-		if drawParity {
-			res.draws = append(res.draws, oraclediff.DrawBoundary{Label: label, Count: oraclediff.CountDrawLines(path)})
+	markDraws := func(draws *[]oraclediff.DrawBoundary, path, label string) {
+		if cfg.drawParity {
+			*draws = append(*draws, oraclediff.DrawBoundary{Label: label, Count: oraclediff.CountDrawLines(path)})
 		}
 	}
-	runOracleSide := func() (res sideResult, sideErr error) {
+	setupOracleSide := func() (res setupResult, sideErr error) {
 		res.setup, sideErr = runSetup(oracleConn, scenario.SetupOracle)
 		if sideErr != nil {
 			return res, fmt.Errorf("run C oracle setup: %w\nserver log:\n%s", sideErr, oracleEngine.log())
@@ -760,22 +835,22 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		peers := make(map[string]oraclediff.Conn, len(scenario.Peers))
 		for _, name := range peerNames {
 			peer := scenario.Peers[name]
-			oraclePeerNet, dialErr := dialWhenReady(oracleEngine.proc, oracleAddr, bootTimeout)
+			oraclePeerNet, dialErr := dialWhenReady(oracleEngine.proc, oracleAddr, cfg.bootTimeout)
 			if dialErr != nil {
 				return res, fmt.Errorf("dial C oracle %s: %w", name, dialErr)
 			}
 			oraclePeer := newTCPConn(oraclePeerNet)
-			defer func() { _ = oraclePeer.Close() }()
+			res.peers = append(res.peers, oraclePeer)
 			if _, setupErr := runSetup(oraclePeer, peer.SetupOracle); setupErr != nil {
 				return res, fmt.Errorf("run C oracle %s setup: %w\nserver log:\n%s", name, setupErr, oracleEngine.log())
 			}
 			peers[name] = oraclePeer
 		}
-		if err := drainClients(quiescence, oracleConn, peers); err != nil {
+		if err := drainClients(cfg.quiescence, oracleConn, peers); err != nil {
 			return res, fmt.Errorf("drain C oracle setup output: %w", err)
 		}
-		markDraws(&res, cDrawLog, "setup")
-		if err := oraclediff.RunWarmup(oraclePrimary, peers, scenario.Warmup, quiescence, oraclediff.WarmupPolicy{
+		markDraws(&res.draws, h.cDrawLog, "setup")
+		if err := oraclediff.RunWarmup(oraclePrimary, peers, scenario.Warmup, cfg.quiescence, oraclediff.WarmupPolicy{
 			Engine: "c",
 			Capture: func(blocks []oraclediff.AudienceProbeBlock) error {
 				return retainWarmupEvidence(os.Getenv("DP_ORACLE_EVIDENCE_ROOT"), os.Getenv("DP_ORACLE_EVIDENCE"), "c", blocks)
@@ -794,33 +869,11 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 			}
 			delete(peers, scenario.PeerDrop)
 		}
-		actor, audience := probeClients(oraclePrimary, peers, scenario.ProbeActor)
-		markDraws(&res, cDrawLog, "warmup")
-		blocks, probeErr := oraclediff.RunAudienceProbeWithOptions(actor, audience, scenario.Probe, quiescence, oraclediff.ProbeOptions{
-			AfterStep: func(i int, step string) {
-				markDraws(&res, cDrawLog, fmt.Sprintf("probe step %d: %s", i+1, step))
-			},
-			Fault:     func(step string) error { return applyFaultStep(faults, step) },
-			QuietMobs: scenario.QuietAllMobs,
-		})
-		if probeErr != nil {
-			return res, fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", probeErr, oracleEngine.log())
-		}
-		empty, closedEmpty := 0, 0
-		for _, block := range blocks {
-			if block.Output == "" {
-				if block.Closed {
-					closedEmpty++
-				} else {
-					empty++
-				}
-			}
-		}
-		fmt.Printf("capture-statistics\tblocks=%d\tempty-open=%d\tempty-closed=%d\n", len(blocks), empty, closedEmpty)
-		res.blocks = blocks
+		res.actor, res.audience = probeClients(oraclePrimary, peers, scenario.ProbeActor)
+		markDraws(&res.draws, h.cDrawLog, "warmup")
 		return res, nil
 	}
-	runGoSide := func() (res sideResult, sideErr error) {
+	setupGoSide := func() (res setupResult, sideErr error) {
 		res.setup, sideErr = runSetup(goConn, scenario.SetupPort)
 		if sideErr != nil {
 			return res, fmt.Errorf("run Go port setup: %w\nserver log:\n%s", sideErr, goEngine.log())
@@ -832,17 +885,17 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 			if dialErr != nil {
 				return res, fmt.Errorf("dial Go port %s: %w", name, dialErr)
 			}
-			defer func() { _ = goPeer.Close() }()
+			res.peers = append(res.peers, goPeer)
 			if _, setupErr := runSetup(goPeer, peer.SetupPort); setupErr != nil {
 				return res, fmt.Errorf("run Go port %s setup: %w\nserver log:\n%s", name, setupErr, goEngine.log())
 			}
 			peers[name] = goPeer
 		}
-		if err := drainClients(quiescence, goConn, peers); err != nil {
+		if err := drainClients(cfg.quiescence, goConn, peers); err != nil {
 			return res, fmt.Errorf("drain Go port setup output: %w", err)
 		}
-		markDraws(&res, goDrawLog, "setup")
-		if err := oraclediff.RunWarmup(goPrimary, peers, scenario.Warmup, quiescence, oraclediff.WarmupPolicy{
+		markDraws(&res.draws, h.goDrawLog, "setup")
+		if err := oraclediff.RunWarmup(goPrimary, peers, scenario.Warmup, cfg.quiescence, oraclediff.WarmupPolicy{
 			Engine: "go",
 			Capture: func(blocks []oraclediff.AudienceProbeBlock) error {
 				return retainWarmupEvidence(os.Getenv("DP_ORACLE_EVIDENCE_ROOT"), os.Getenv("DP_ORACLE_EVIDENCE"), "go", blocks)
@@ -861,42 +914,112 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 			}
 			delete(peers, scenario.PeerDrop)
 		}
-		actor, audience := probeClients(goPrimary, peers, scenario.ProbeActor)
-		markDraws(&res, goDrawLog, "warmup")
-		blocks, probeErr := oraclediff.RunAudienceProbeWithOptions(actor, audience, scenario.Probe, quiescence, oraclediff.ProbeOptions{
-			AfterStep: func(i int, step string) {
-				markDraws(&res, goDrawLog, fmt.Sprintf("probe step %d: %s", i+1, step))
-			},
-			Fault:     func(step string) error { return applyFaultStep(faults, step) },
-			QuietMobs: scenario.QuietAllMobs,
-		})
-		if probeErr != nil {
-			return res, fmt.Errorf("run Go port probe: %w\nserver log:\n%s", probeErr, goEngine.log())
-		}
-		empty, closedEmpty := 0, 0
-		for _, block := range blocks {
-			if block.Output == "" {
-				if block.Closed {
-					closedEmpty++
-				} else {
-					empty++
-				}
-			}
-		}
-		fmt.Printf("capture-statistics\tblocks=%d\tempty-open=%d\tempty-closed=%d\n", len(blocks), empty, closedEmpty)
-		res.blocks = blocks
+		res.actor, res.audience = probeClients(goPrimary, peers, scenario.ProbeActor)
+		markDraws(&res.draws, h.goDrawLog, "warmup")
 		return res, nil
 	}
-	var oracleResult, goResult sideResult
+
+	var oracleRes, goRes setupResult
 	var oracleSideErr, goSideErr error
 	done := make(chan struct{}, 2)
 	go func() {
 		defer func() { done <- struct{}{} }()
-		oracleResult, oracleSideErr = runOracleSide()
+		oracleRes, oracleSideErr = setupOracleSide()
 	}()
 	go func() {
 		defer func() { done <- struct{}{} }()
-		goResult, goSideErr = runGoSide()
+		goRes, goSideErr = setupGoSide()
+	}()
+	<-done
+	<-done
+	for _, p := range oracleRes.peers {
+		peer := p
+		h.deferCleanup(func() { _ = peer.Close() })
+	}
+	for _, p := range goRes.peers {
+		peer := p
+		h.deferCleanup(func() { _ = peer.Close() })
+	}
+	if oracleSideErr != nil {
+		return nil, oracleSideErr
+	}
+	if goSideErr != nil {
+		return nil, goSideErr
+	}
+	h.oracleSetup = oracleRes.setup
+	h.goSetup = goRes.setup
+	h.oracleActor = oracleRes.actor
+	h.goActor = goRes.actor
+	h.oracleAudience = oracleRes.audience
+	h.goAudience = goRes.audience
+	h.oracleDraws = oracleRes.draws
+	h.goDraws = goRes.draws
+	return h, nil
+}
+
+func execute(scenarioName, scenarioFile string, quiescence, firstByteWait, bootTimeout time.Duration, oracleBin, seed string, showOracle bool, dumpOracle string, showGoLog bool, goTransport string, drawParity bool, enforceProbeSetup bool) error {
+	scenario, _, err := loadScenario(scenarioName, scenarioFile, false)
+	if err != nil {
+		return err
+	}
+	h, err := bootHarness(scenario, harnessConfig{
+		quiescence:    quiescence,
+		firstByteWait: firstByteWait,
+		bootTimeout:   bootTimeout,
+		oracleBin:     oracleBin,
+		seed:          seed,
+		goTransport:   goTransport,
+		drawParity:    drawParity,
+	})
+	if err != nil {
+		return err
+	}
+	defer h.close()
+
+	var oracleBlocks, goBlocks []oraclediff.AudienceProbeBlock
+	var oracleSideErr, goSideErr error
+	done := make(chan struct{}, 2)
+	go func() {
+		defer func() { done <- struct{}{} }()
+		blocks, probeErr := oraclediff.RunAudienceProbeWithOptions(h.oracleActor, h.oracleAudience, scenario.Probe, quiescence, oraclediff.ProbeOptions{
+			AfterStep: func(i int, step string) {
+				if drawParity {
+					h.oracleDraws = append(h.oracleDraws, oraclediff.DrawBoundary{
+						Label: fmt.Sprintf("probe step %d: %s", i+1, step),
+						Count: oraclediff.CountDrawLines(h.cDrawLog),
+					})
+				}
+			},
+			Fault:     func(step string) error { return applyFaultStep(h.faults, step) },
+			QuietMobs: scenario.QuietAllMobs,
+		})
+		if probeErr != nil {
+			oracleSideErr = fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", probeErr, h.oracleEngine.log())
+			return
+		}
+		printCaptureStats(blocks)
+		oracleBlocks = blocks
+	}()
+	go func() {
+		defer func() { done <- struct{}{} }()
+		blocks, probeErr := oraclediff.RunAudienceProbeWithOptions(h.goActor, h.goAudience, scenario.Probe, quiescence, oraclediff.ProbeOptions{
+			AfterStep: func(i int, step string) {
+				if drawParity {
+					h.goDraws = append(h.goDraws, oraclediff.DrawBoundary{
+						Label: fmt.Sprintf("probe step %d: %s", i+1, step),
+						Count: oraclediff.CountDrawLines(h.goDrawLog),
+					})
+				}
+			},
+			Fault:     func(step string) error { return applyFaultStep(h.faults, step) },
+			QuietMobs: scenario.QuietAllMobs,
+		})
+		if probeErr != nil {
+			goSideErr = fmt.Errorf("run Go port probe: %w\nserver log:\n%s", probeErr, h.goEngine.log())
+			return
+		}
+		printCaptureStats(blocks)
+		goBlocks = blocks
 	}()
 	<-done
 	<-done
@@ -906,24 +1029,16 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	if goSideErr != nil {
 		return goSideErr
 	}
-	oracleSetup, goSetup := oracleResult.setup, goResult.setup
-	oracleBlocks, goBlocks := oracleResult.blocks, goResult.blocks
 
 	diffs := make([]oraclediff.BlockDiff, 0, len(oracleBlocks)+1)
 	var hollowSteps []hollowPromptStep
-	normalize := oraclediff.Normalize
-	if scenario.KeepANSI {
-		normalize = oraclediff.NormalizeKeepANSI
-	}
-	if scenario.KeepPrompts {
-		normalize = oraclediff.NormalizeKeepPrompts
-	}
+	normalize := oraclediff.NormalizerFor(scenario)
 	// Character-creation coverage: diff the whole normalized setup transcript
 	// (the nanny dialogue) as one block when the scenario opts in via
 	// [creation:oracle]/[creation:port].
 	if scenario.DiffSetup {
-		oracleCreation := normalize(oracleSetup)
-		goCreation := normalize(goSetup)
+		oracleCreation := normalize(h.oracleSetup)
+		goCreation := normalize(h.goSetup)
 		if scenario.EntryPromptOnly {
 			oracleCreation = oraclediff.TrailingSimplePromptFrame(oracleCreation)
 			goCreation = oraclediff.TrailingSimplePromptFrame(goCreation)
@@ -936,49 +1051,22 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		})
 	}
 	for i, oracleResult := range oracleBlocks {
-		var oracleBlock, goBlock string
-		oracleRaw := oracleResult.Output
-		var goRaw string
-		goClosed := false
-		if i < len(goBlocks) {
-			goRaw = goBlocks[i].Output
-			goClosed = goBlocks[i].Closed
+		var goResult oraclediff.AudienceProbeBlock
+		hasGo := i < len(goBlocks)
+		if hasGo {
+			goResult = goBlocks[i]
 		}
-		if scenario.CompareClose {
-			oracleRaw = withCloseMarker(oracleRaw, oracleResult.Closed)
-			goRaw = withCloseMarker(goRaw, goClosed)
+		cmp := oraclediff.CompareProbeBlock(scenario, oracleResult, goResult, hasGo, nil)
+		if cmp.Hollow {
+			hollowSteps = append(hollowSteps, hollowPromptStep{
+				block:   i,
+				command: oracleResult.Command,
+			})
 		}
-		oracleBlock = normalize(oracleRaw)
-		if i < len(goBlocks) {
-			goBlock = normalize(goRaw)
-		}
-		// The adopted comparator's two-sided pass: reconcile block-edge
-		// prompt frames between the two sides before diffing. Ordinary
-		// comparisons only — keep-ansi and keep-prompts modes certify their
-		// own raw framing and are outside the blank-line class.
-		oracleBefore, goBefore := oracleBlock, goBlock
-		if !scenario.KeepANSI && !scenario.KeepPrompts {
-			oracleBlock, goBlock = oraclediff.ReconcilePromptFrames(oracleBlock, goBlock)
-			if i < len(goBlocks) && isHollowPromptStep(oracleResult.Command, oracleResult.Audience, oracleRaw, goRaw, oracleBefore, goBefore, oracleBlock, goBlock) {
-				hollowSteps = append(hollowSteps, hollowPromptStep{
-					block:   i,
-					command: oracleResult.Command,
-				})
-			}
-		}
-		label := oracleResult.Command
-		if len(scenario.Peers) > 0 {
-			label = fmt.Sprintf("%s [%s]", oracleResult.Command, oracleResult.Audience)
-		}
-		diffs = append(diffs, oraclediff.BlockDiff{
-			Command: label,
-			Oracle:  oracleBlock,
-			Go:      goBlock,
-			Diff:    oraclediff.UnifiedDiff("c-oracle", "go-port", oracleBlock, goBlock),
-		})
+		diffs = append(diffs, cmp.Diff)
 	}
 
-	if err := retainEvidence(os.Getenv("DP_ORACLE_EVIDENCE_ROOT"), os.Getenv("DP_ORACLE_EVIDENCE"), cDrawLog, goDrawLog, diffs, oracleEngine.log(), goEngine.log()); err != nil {
+	if err := retainEvidence(os.Getenv("DP_ORACLE_EVIDENCE_ROOT"), os.Getenv("DP_ORACLE_EVIDENCE"), h.cDrawLog, h.goDrawLog, diffs, h.oracleEngine.log(), h.goEngine.log()); err != nil {
 		return err
 	}
 
@@ -1002,15 +1090,14 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	// UNRELATED new divergence inside the same scenario.
 	for _, d := range diffs {
 		if d.Diff != "" {
-			sum := sha256.Sum256([]byte(d.Diff))
-			fmt.Printf("divergence-fingerprint\t%s\t%x\n", d.Command, sum)
+			fmt.Printf("divergence-fingerprint\t%s\t%s\n", d.Command, oraclediff.DiffFingerprint(d.Diff))
 		}
 	}
 
 	fmt.Print(oraclediff.Report(oraclediff.ReportMeta{
 		Scenario:   scenario.Name,
-		OracleAddr: oracleAddr,
-		GoAddr:     goAddr,
+		OracleAddr: h.oracleAddr,
+		GoAddr:     h.goAddr,
 		Seed:       seed,
 	}, diffs))
 	if showOracle {
@@ -1025,15 +1112,15 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	}
 	if showGoLog {
 		fmt.Println("go port server log:")
-		fmt.Print(goEngine.log())
+		fmt.Print(h.goEngine.log())
 	}
-	if scriptTwinPath != "" {
-		expected, err := os.ReadFile(scriptTwinPath)
+	if h.scriptTwinPath != "" {
+		expected, err := os.ReadFile(h.scriptTwinPath)
 		if err != nil {
 			return fmt.Errorf("read script twin: %w", err)
 		}
-		cPath := filepath.Join(oracleData, "scripts", filepath.FromSlash(scenario.ScriptTwin.Path))
-		goPath := filepath.Join(goWorld, "scripts", filepath.FromSlash(scenario.ScriptTwin.Path))
+		cPath := filepath.Join(h.oracleData, "scripts", filepath.FromSlash(scenario.ScriptTwin.Path))
+		goPath := filepath.Join(h.goWorld, "scripts", filepath.FromSlash(scenario.ScriptTwin.Path))
 		cSaved, err := os.ReadFile(cPath)
 		if err != nil {
 			return fmt.Errorf("read saved C script twin: %w", err)
@@ -1051,7 +1138,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	drawMismatch := false
 	if drawParity {
 		var err error
-		if drawMismatch, err = reportDrawParity(cDrawLog, goDrawLog, oracleResult.draws, goResult.draws); err != nil {
+		if drawMismatch, err = reportDrawParity(h.cDrawLog, h.goDrawLog, h.oracleDraws, h.goDraws); err != nil {
 			return err
 		}
 	}
@@ -1066,19 +1153,22 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	return nil
 }
 
-// withCloseMarker appends the canonical closed-transport marker to a captured
-// block when the server closed that connection during the block's read. Only
-// scenarios that declare the `compare-close` fixture use it: the marker turns
-// an invisible end-of-data into a compared line, so a port that leaves the
-// connection open can never match a C oracle that closed it.
+func printCaptureStats(blocks []oraclediff.AudienceProbeBlock) {
+	empty, closedEmpty := 0, 0
+	for _, block := range blocks {
+		if block.Output == "" {
+			if block.Closed {
+				closedEmpty++
+			} else {
+				empty++
+			}
+		}
+	}
+	fmt.Printf("capture-statistics\tblocks=%d\tempty-open=%d\tempty-closed=%d\n", len(blocks), empty, closedEmpty)
+}
+
 func withCloseMarker(raw string, closed bool) string {
-	if !closed {
-		return raw
-	}
-	if raw != "" && !strings.HasSuffix(raw, "\n") {
-		raw += "\n"
-	}
-	return raw + oraclediff.CloseMarker + "\n"
+	return oraclediff.WithCloseMarker(raw, closed)
 }
 
 type hollowPromptStep struct {
@@ -1086,44 +1176,8 @@ type hollowPromptStep struct {
 	command string
 }
 
-func isActorProbeBlock(command, audience string) bool {
-	if !strings.HasPrefix(command, "send:") {
-		return audience == "actor"
-	}
-	directed := strings.TrimPrefix(command, "send:")
-	target, _, _ := strings.Cut(directed, " ")
-	return target != "" && audience == target
-}
-
-func isPulseControlStep(command string) bool {
-	line := command
-	if strings.HasPrefix(command, "send:") {
-		directed := strings.TrimPrefix(command, "send:")
-		_, after, ok := strings.Cut(directed, " ")
-		if !ok {
-			return false
-		}
-		line = after
-	}
-	return strings.HasPrefix(strings.TrimSpace(line), "~dpclock pulse")
-}
-
-func isEmptyNormalizedBlock(s string) bool {
-	return s == "" || s == "\n"
-}
-
-// isHollowPromptStep reports whether an actor probe step had one engine emit
-// nothing while the other emitted only framing/prompt bytes that Normalize or
-// ReconcilePromptFrames stripped, leaving both post-reconcile blocks empty.
 func isHollowPromptStep(command, audience, oracleRaw, goRaw, oracleBefore, goBefore, oracleAfter, goAfter string) bool {
-	if !isActorProbeBlock(command, audience) || isPulseControlStep(command) {
-		return false
-	}
-	if !isEmptyNormalizedBlock(oracleAfter) || !isEmptyNormalizedBlock(goAfter) {
-		return false
-	}
-	return isEmptyNormalizedBlock(oracleBefore) != isEmptyNormalizedBlock(goBefore) ||
-		(oracleRaw == "") != (goRaw == "")
+	return oraclediff.IsHollowPromptStep(command, audience, oracleRaw, goRaw, oracleBefore, goBefore, oracleAfter, goAfter)
 }
 
 // oracleBlocksText renders the normalized C blocks exactly as --show-oracle
