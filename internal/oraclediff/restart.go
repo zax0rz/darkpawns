@@ -74,6 +74,12 @@ func (c *RestartConn) ReadUntilPrompt(d, maxWait time.Duration, suffix string, m
 	return readConnUntilPrompt(c.current, d, maxWait, suffix, minCount)
 }
 
+// FirstByteWait forwards the current transport's first-byte wait.
+func (c *RestartConn) FirstByteWait() time.Duration { return connFirstByteWait(c.current) }
+
+// SetFirstByteWait forwards first-byte wait updates to the current transport.
+func (c *RestartConn) SetFirstByteWait(d time.Duration) { setConnFirstByteWait(c.current, d) }
+
 func (c *RestartConn) Close() error { return c.current.Close() }
 
 // ObservedClose forwards the current transport's server-close observation, the

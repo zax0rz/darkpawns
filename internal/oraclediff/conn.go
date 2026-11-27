@@ -64,6 +64,19 @@ type FirstByteWaiter interface {
 	SetFirstByteWait(d time.Duration)
 }
 
+func connFirstByteWait(c Conn) time.Duration {
+	if w, ok := c.(FirstByteWaiter); ok {
+		return w.FirstByteWait()
+	}
+	return 0
+}
+
+func setConnFirstByteWait(c Conn, d time.Duration) {
+	if w, ok := c.(FirstByteWaiter); ok {
+		w.SetFirstByteWait(d)
+	}
+}
+
 // PromptWaiter is implemented by transports that wait until a target prompt
 // suffix has appeared at least minCount times (after stripping ANSI escapes)
 // before switching from maxWait to the trailing quiescence window. Used for

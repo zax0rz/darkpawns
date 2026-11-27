@@ -54,6 +54,13 @@ func (c *ReloginConn) ReadUntilPrompt(d, maxWait time.Duration, suffix string, m
 	return readConnUntilPrompt(c.current, d, maxWait, suffix, minCount)
 }
 
+// FirstByteWait forwards the current transport's first-byte wait so
+// extendPulseFirstByteWait and RunPulseWithBarrier work through ReloginConn.
+func (c *ReloginConn) FirstByteWait() time.Duration { return connFirstByteWait(c.current) }
+
+// SetFirstByteWait forwards first-byte wait updates to the current transport.
+func (c *ReloginConn) SetFirstByteWait(d time.Duration) { setConnFirstByteWait(c.current, d) }
+
 func (c *ReloginConn) Close() error { return c.current.Close() }
 
 // ObservedClose forwards the current transport's server-close observation, so a
