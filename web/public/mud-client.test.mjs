@@ -294,3 +294,39 @@ test('Tab leaves the terminal instead of reaching the game', async () => {
     globalThis.location = previous.location;
   }
 });
+
+test('a host query parameter cannot redirect the WebSocket away from the current origin', () => {
+  const previous = { WebSocket: globalThis.WebSocket, fetch: globalThis.fetch, location: globalThis.location };
+  class FakeWebSocket {
+    static OPEN = 1;
+    constructor(url) {
+      this.url = url;
+      this.readyState = FakeWebSocket.OPEN;
+      FakeWebSocket.latest = this;
+    }
+    send() {}
+    close() {}
+  }
+  globalThis.WebSocket = FakeWebSocket;
+  globalThis.fetch = async () => ({ json: async () => ({}) });
+  globalThis.location = {
+    search: '?host=wss://example.invalid/',
+    protocol: 'https:',
+    host: 'darkpawns.org',
+  };
+  const terminal = { write() {}, writeln() {}, onData() {}, cols: 80 };
+  const doc = { querySelector: () => null, querySelectorAll: () => [], getElementById: () => null };
+  try {
+    const client = createMudClient({ terminal, doc });
+    assert.equal(FakeWebSocket.latest.url, 'wss://darkpawns.org/ws');
+    client.disconnect();
+
+    const explicit = createMudClient({ terminal, doc, wsUrl: 'ws://127.0.0.1:4350/ws' });
+    assert.equal(FakeWebSocket.latest.url, 'ws://127.0.0.1:4350/ws');
+    explicit.disconnect();
+  } finally {
+    globalThis.WebSocket = previous.WebSocket;
+    globalThis.fetch = previous.fetch;
+    globalThis.location = previous.location;
+  }
+});

@@ -29,7 +29,7 @@ export interface MudClientOptions {
     cols?: number;
     onResize?(handler: (size: { cols: number; rows: number }) => void): unknown;
   };
-  /** Defaults to /ws on the current origin, or the `host` query parameter. */
+  /** Defaults to /ws on the current origin. */
   wsUrl?: string;
   /** Document queried for the optional panel elements. Defaults to `document`. */
   doc?: Document;

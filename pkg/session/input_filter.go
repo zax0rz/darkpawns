@@ -142,7 +142,8 @@ func commandDataLine(cmd CommandData) string {
 
 // frameCommandData applies cTruncateInputLine to an external structured
 // MsgCommand payload, sends the truncation notice before dispatch when cut,
-// and rebuilds Command, Args, RawArgs, and RawLine so every field agrees.
+// and rebuilds Command, Args, RawArgs, and RawLine from the framed line so
+// every field agrees with what was measured.
 func (s *Session) frameCommandData(data json.RawMessage) (json.RawMessage, error) {
 	var cmd CommandData
 	if err := json.Unmarshal(data, &cmd); err != nil {
@@ -150,10 +151,9 @@ func (s *Session) frameCommandData(data json.RawMessage) (json.RawMessage, error
 	}
 	line := commandDataLine(cmd)
 	cut, notice := cTruncateInputLine(line)
-	if notice == "" {
-		return data, nil
+	if notice != "" {
+		s.Send(notice)
 	}
-	s.Send(notice)
 	cmdWord, cmdArgs := SplitCommandInput(strings.TrimSpace(cut))
 	cmd.Command = cmdWord
 	cmd.Args = cmdArgs

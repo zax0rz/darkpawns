@@ -213,23 +213,20 @@ func forwardedForSomeoneElse(r *http.Request) bool {
 }
 
 // checkOrigin validates WebSocket origins. Public origins in the allowlist are
-// permitted without further credentials. Genuinely machine-local connections
-// are trusted. Connections with no Origin header from a private IP, or through
-// the reverse proxy, must present a valid agent API key (DP-594, DP-1302).
+// permitted. An unproxied loopback connection with no Origin header is allowed
+// for local harnesses and tools; when Origin is present it must be allowlisted
+// or a local origin paired with a local Host header (DP-594, DP-1302).
 func (m *Manager) checkOrigin(r *http.Request) bool {
 	// A proxied request arrives from loopback too, so loopback alone does not
 	// mean local: behind Caddy every WebSocket did, and the origin allowlist
-	// was never enforced in production (DP-1302). Only a loopback peer that
-	// names no forwarded client is local (CI smoke tests, local harnesses).
+	// was never enforced in production (DP-1302). Only an unproxied loopback
+	// peer may omit Origin (CI smoke tests, local harnesses).
 	proxied := forwardedForSomeoneElse(r)
-	if isLoopback(r.RemoteAddr) && !proxied {
-		return true
-	}
-
 	origin := r.Header.Get("Origin")
 	if origin == "" {
-		// A browser always sends Origin; only a local harness may omit it,
-		// and that case returned above.
+		if isLoopback(r.RemoteAddr) && !proxied {
+			return true
+		}
 		slog.Warn("rejected WebSocket connection without Origin header", "remote_addr", r.RemoteAddr)
 		return false
 	}
@@ -240,14 +237,13 @@ func (m *Manager) checkOrigin(r *http.Request) bool {
 		}
 	}
 
-	// Allow a localhost/127.0.0.1 origin only when the site being requested
-	// is also local: that is same-host development (a dev server's page
-	// connecting to a local game port). A localhost Origin against the
-	// production Host is a page on the victim's own machine — a malicious
-	// local server or extension page — driving their session (VULN-007).
+	// Allow a localhost/127.0.0.1/[::1] origin only when the site being
+	// requested is also local: same-host local browser access or a local dev
+	// server connecting to a local game port. A local Origin against a
+	// non-local Host is rejected (VULN-007).
 	if u, err := url.Parse(origin); err == nil {
 		originHost := strings.ToLower(u.Hostname())
-		if originHost == "localhost" || originHost == "127.0.0.1" {
+		if originHost == "localhost" || originHost == "127.0.0.1" || originHost == "::1" {
 			if isLocalHostHeader(r.Host) {
 				return true
 			}
@@ -259,14 +255,13 @@ func (m *Manager) checkOrigin(r *http.Request) bool {
 }
 
 // isLocalHostHeader reports whether the request's Host names this machine:
-// localhost or 127.0.0.1 on any port. The Host of a same-host development
-// page's WebSocket handshake matches the origin's; production Host is the
-// public name.
+// localhost, 127.0.0.1, or [::1] on any port.
 func isLocalHostHeader(host string) bool {
 	if h, _, err := net.SplitHostPort(host); err == nil {
 		host = h
 	}
 	host = strings.ToLower(strings.TrimSpace(host))
+	host = strings.TrimPrefix(strings.TrimSuffix(host, "]"), "[")
 	return host == "localhost" || host == "127.0.0.1" || host == "::1"
 }
 

@@ -498,7 +498,7 @@ func TestCheckOriginBehindTheProxy(t *testing.T) {
 		want                   bool
 	}{
 		{"local, no origin", "", "", "", true},
-		{"local, any origin", "", "https://elsewhere.example", "", true},
+		{"local, foreign origin", "", "https://elsewhere.example", "", false},
 		{"proxied, site origin", "203.0.113.9", "https://darkpawns.org", "", true},
 		{"proxied, another site", "203.0.113.9", "https://elsewhere.example", "", false},
 		{"proxied, no origin, no key", "203.0.113.9", "", "", false},
