@@ -163,42 +163,75 @@ func executeLockstep(cfg lockstepConfig, in io.Reader, out io.Writer) error {
 		var oracleBlocks, goBlocks []oraclediff.AudienceProbeBlock
 		var oracleErr, goErr error
 		done := make(chan struct{}, 2)
-		go func() {
-			defer func() { done <- struct{}{} }()
-			oracleBlocks, oracleErr = oraclediff.RunSingleAudienceProbeStep(
-				h.oracleActor, h.oracleAudience, stepLine, stepIdx, true, h.quiescence,
-				oraclediff.ProbeOptions{
-					AfterStep: func(i int, step string) {
-						if h.drawParity {
-							h.oracleDraws = append(h.oracleDraws, oraclediff.DrawBoundary{
-								Label: fmt.Sprintf("probe step %d: %s", i+1, step),
-								Count: oraclediff.CountDrawLines(h.cDrawLog),
-							})
-						}
+		if reqType == "pulse" && len(h.oracleAudience) == 0 && len(h.goAudience) == 0 {
+			go func() {
+				defer func() { done <- struct{}{} }()
+				blk, err := oraclediff.RunPulseWithBarrier(h.oracleActor, req.Pulses, h.quiescence)
+				if err != nil {
+					oracleErr = err
+					return
+				}
+				if h.drawParity {
+					h.oracleDraws = append(h.oracleDraws, oraclediff.DrawBoundary{
+						Label: fmt.Sprintf("probe step %d: %s", stepIdx+1, stepLine),
+						Count: oraclediff.CountDrawLines(h.cDrawLog),
+					})
+				}
+				oracleBlocks = []oraclediff.AudienceProbeBlock{blk}
+			}()
+			go func() {
+				defer func() { done <- struct{}{} }()
+				blk, err := oraclediff.RunPulseWithBarrier(h.goActor, req.Pulses, h.quiescence)
+				if err != nil {
+					goErr = err
+					return
+				}
+				if h.drawParity {
+					h.goDraws = append(h.goDraws, oraclediff.DrawBoundary{
+						Label: fmt.Sprintf("probe step %d: %s", stepIdx+1, stepLine),
+						Count: oraclediff.CountDrawLines(h.goDrawLog),
+					})
+				}
+				goBlocks = []oraclediff.AudienceProbeBlock{blk}
+			}()
+		} else {
+			go func() {
+				defer func() { done <- struct{}{} }()
+				oracleBlocks, oracleErr = oraclediff.RunSingleAudienceProbeStep(
+					h.oracleActor, h.oracleAudience, stepLine, stepIdx, true, h.quiescence,
+					oraclediff.ProbeOptions{
+						AfterStep: func(i int, step string) {
+							if h.drawParity {
+								h.oracleDraws = append(h.oracleDraws, oraclediff.DrawBoundary{
+									Label: fmt.Sprintf("probe step %d: %s", i+1, step),
+									Count: oraclediff.CountDrawLines(h.cDrawLog),
+								})
+							}
+						},
+						Fault:     func(step string) error { return applyFaultStep(h.faults, step) },
+						QuietMobs: scenario.QuietAllMobs,
 					},
-					Fault:     func(step string) error { return applyFaultStep(h.faults, step) },
-					QuietMobs: scenario.QuietAllMobs,
-				},
-			)
-		}()
-		go func() {
-			defer func() { done <- struct{}{} }()
-			goBlocks, goErr = oraclediff.RunSingleAudienceProbeStep(
-				h.goActor, h.goAudience, stepLine, stepIdx, true, h.quiescence,
-				oraclediff.ProbeOptions{
-					AfterStep: func(i int, step string) {
-						if h.drawParity {
-							h.goDraws = append(h.goDraws, oraclediff.DrawBoundary{
-								Label: fmt.Sprintf("probe step %d: %s", i+1, step),
-								Count: oraclediff.CountDrawLines(h.goDrawLog),
-							})
-						}
+				)
+			}()
+			go func() {
+				defer func() { done <- struct{}{} }()
+				goBlocks, goErr = oraclediff.RunSingleAudienceProbeStep(
+					h.goActor, h.goAudience, stepLine, stepIdx, true, h.quiescence,
+					oraclediff.ProbeOptions{
+						AfterStep: func(i int, step string) {
+							if h.drawParity {
+								h.goDraws = append(h.goDraws, oraclediff.DrawBoundary{
+									Label: fmt.Sprintf("probe step %d: %s", i+1, step),
+									Count: oraclediff.CountDrawLines(h.goDrawLog),
+								})
+							}
+						},
+						Fault:     func(step string) error { return applyFaultStep(h.faults, step) },
+						QuietMobs: scenario.QuietAllMobs,
 					},
-					Fault:     func(step string) error { return applyFaultStep(h.faults, step) },
-					QuietMobs: scenario.QuietAllMobs,
-				},
-			)
-		}()
+				)
+			}()
+		}
 		<-done
 		<-done
 		if oracleErr != nil {
@@ -209,6 +242,9 @@ func executeLockstep(cfg lockstepConfig, in io.Reader, out io.Writer) error {
 		}
 
 		recordedSteps = append(recordedSteps, stepLine)
+		if reqType == "pulse" && len(h.oracleAudience) == 0 && len(h.goAudience) == 0 {
+			recordedSteps = append(recordedSteps, "")
+		}
 		if err := writeOut(); err != nil {
 			return err
 		}

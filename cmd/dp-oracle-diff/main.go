@@ -282,6 +282,10 @@ type harnessSession struct {
 	goAddr         string
 	oracleEngine   *engine
 	goEngine       *engine
+	oracleConn     oraclediff.Conn
+	goConn         oraclediff.Conn
+	oraclePrimary  oraclediff.Conn
+	goPrimary      oraclediff.Conn
 	oracleActor    oraclediff.Conn
 	goActor        oraclediff.Conn
 	oracleAudience map[string]oraclediff.Conn
@@ -293,18 +297,29 @@ type harnessSession struct {
 	faults         faultTrees
 	drawParity     bool
 	quiescence     time.Duration
+	bootTimeout    time.Duration
+	peerNames      []string
+	newTCPConn     func(net.Conn) *oraclediff.TCPConn
+	dialGo         func() (oraclediff.Conn, error)
+	runSetup       func(oraclediff.Conn, []string) (string, error)
 	cleanups       []func()
+	cleanupMu      sync.Mutex
 }
 
 func (h *harnessSession) close() {
-	for i := len(h.cleanups) - 1; i >= 0; i-- {
-		h.cleanups[i]()
-	}
+	h.cleanupMu.Lock()
+	cleanups := h.cleanups
 	h.cleanups = nil
+	h.cleanupMu.Unlock()
+	for i := len(cleanups) - 1; i >= 0; i-- {
+		cleanups[i]()
+	}
 }
 
 func (h *harnessSession) deferCleanup(fn func()) {
+	h.cleanupMu.Lock()
 	h.cleanups = append(h.cleanups, fn)
+	h.cleanupMu.Unlock()
 }
 
 func loadScenario(scenarioName, scenarioFile string, allowEmptyProbe bool) (oraclediff.Scenario, string, error) {
@@ -342,11 +357,11 @@ func loadScenario(scenarioName, scenarioFile string, allowEmptyProbe bool) (orac
 	return scenario, string(raw), nil
 }
 
-// bootHarness boots both engines, applies all scenario fixtures, opens telnet
-// (or ws) connections, runs setup, peer setup, drains, and warmup, and records
-// setup/warmup RNG draw boundaries. Both batch census execution and interactive
-// lockstep mode call this single function.
-func bootHarness(scenario oraclediff.Scenario, cfg harnessConfig) (_ *harnessSession, retErr error) {
+// prepareHarness boots both engines, applies all scenario fixtures, opens
+// telnet (or ws) connections, and configures relogin/restart/crash wrappers.
+// Both batch census execution (execute) and interactive lockstep mode
+// (bootHarness -> executeLockstep) share this single boot path.
+func prepareHarness(scenario oraclediff.Scenario, cfg harnessConfig) (_ *harnessSession, retErr error) {
 	if cfg.firstByteWait < 0 {
 		return nil, errors.New("first-byte-wait must be nonnegative")
 	}
@@ -815,131 +830,149 @@ func bootHarness(scenario oraclediff.Scenario, cfg harnessConfig) (_ *harnessSes
 	}
 	sort.Strings(peerNames)
 
-	type setupResult struct {
-		setup    string
-		actor    oraclediff.Conn
-		audience map[string]oraclediff.Conn
-		peers    []oraclediff.Conn
-		draws    []oraclediff.DrawBoundary
-	}
-	markDraws := func(draws *[]oraclediff.DrawBoundary, path, label string) {
-		if cfg.drawParity {
-			*draws = append(*draws, oraclediff.DrawBoundary{Label: label, Count: oraclediff.CountDrawLines(path)})
-		}
-	}
-	setupOracleSide := func() (res setupResult, sideErr error) {
-		res.setup, sideErr = runSetup(oracleConn, scenario.SetupOracle)
-		if sideErr != nil {
-			return res, fmt.Errorf("run C oracle setup: %w\nserver log:\n%s", sideErr, oracleEngine.log())
-		}
-		peers := make(map[string]oraclediff.Conn, len(scenario.Peers))
-		for _, name := range peerNames {
-			peer := scenario.Peers[name]
-			oraclePeerNet, dialErr := dialWhenReady(oracleEngine.proc, oracleAddr, cfg.bootTimeout)
-			if dialErr != nil {
-				return res, fmt.Errorf("dial C oracle %s: %w", name, dialErr)
-			}
-			oraclePeer := newTCPConn(oraclePeerNet)
-			res.peers = append(res.peers, oraclePeer)
-			if _, setupErr := runSetup(oraclePeer, peer.SetupOracle); setupErr != nil {
-				return res, fmt.Errorf("run C oracle %s setup: %w\nserver log:\n%s", name, setupErr, oracleEngine.log())
-			}
-			peers[name] = oraclePeer
-		}
-		if err := drainClients(cfg.quiescence, oracleConn, peers); err != nil {
-			return res, fmt.Errorf("drain C oracle setup output: %w", err)
-		}
-		markDraws(&res.draws, h.cDrawLog, "setup")
-		if err := oraclediff.RunWarmup(oraclePrimary, peers, scenario.Warmup, cfg.quiescence, oraclediff.WarmupPolicy{
-			Engine: "c",
-			Capture: func(blocks []oraclediff.AudienceProbeBlock) error {
-				return retainWarmupEvidence(os.Getenv("DP_ORACLE_EVIDENCE_ROOT"), os.Getenv("DP_ORACLE_EVIDENCE"), "c", blocks)
-			},
-			AllowSetupRefusal: scenario.AllowSetupRefusal,
-		}); err != nil {
-			return res, fmt.Errorf("run C oracle warmup: %w", err)
-		}
-		if scenario.PeerDrop != "" {
-			oraclePeer, ok := peers[scenario.PeerDrop]
-			if !ok {
-				return res, fmt.Errorf("c oracle peer-drop target %q is not connected", scenario.PeerDrop)
-			}
-			if err := oraclePeer.Close(); err != nil {
-				return res, fmt.Errorf("close C oracle peer %q: %w", scenario.PeerDrop, err)
-			}
-			delete(peers, scenario.PeerDrop)
-		}
-		res.actor, res.audience = probeClients(oraclePrimary, peers, scenario.ProbeActor)
-		markDraws(&res.draws, h.cDrawLog, "warmup")
-		return res, nil
-	}
-	setupGoSide := func() (res setupResult, sideErr error) {
-		res.setup, sideErr = runSetup(goConn, scenario.SetupPort)
-		if sideErr != nil {
-			return res, fmt.Errorf("run Go port setup: %w\nserver log:\n%s", sideErr, goEngine.log())
-		}
-		peers := make(map[string]oraclediff.Conn, len(scenario.Peers))
-		for _, name := range peerNames {
-			peer := scenario.Peers[name]
-			goPeer, dialErr := dialGo()
-			if dialErr != nil {
-				return res, fmt.Errorf("dial Go port %s: %w", name, dialErr)
-			}
-			res.peers = append(res.peers, goPeer)
-			if _, setupErr := runSetup(goPeer, peer.SetupPort); setupErr != nil {
-				return res, fmt.Errorf("run Go port %s setup: %w\nserver log:\n%s", name, setupErr, goEngine.log())
-			}
-			peers[name] = goPeer
-		}
-		if err := drainClients(cfg.quiescence, goConn, peers); err != nil {
-			return res, fmt.Errorf("drain Go port setup output: %w", err)
-		}
-		markDraws(&res.draws, h.goDrawLog, "setup")
-		if err := oraclediff.RunWarmup(goPrimary, peers, scenario.Warmup, cfg.quiescence, oraclediff.WarmupPolicy{
-			Engine: "go",
-			Capture: func(blocks []oraclediff.AudienceProbeBlock) error {
-				return retainWarmupEvidence(os.Getenv("DP_ORACLE_EVIDENCE_ROOT"), os.Getenv("DP_ORACLE_EVIDENCE"), "go", blocks)
-			},
-			AllowSetupRefusal: scenario.AllowSetupRefusal,
-		}); err != nil {
-			return res, fmt.Errorf("run Go port warmup: %w", err)
-		}
-		if scenario.PeerDrop != "" {
-			goPeer, ok := peers[scenario.PeerDrop]
-			if !ok {
-				return res, fmt.Errorf("go port peer-drop target %q is not connected", scenario.PeerDrop)
-			}
-			if err := goPeer.Close(); err != nil {
-				return res, fmt.Errorf("close Go port peer %q: %w", scenario.PeerDrop, err)
-			}
-			delete(peers, scenario.PeerDrop)
-		}
-		res.actor, res.audience = probeClients(goPrimary, peers, scenario.ProbeActor)
-		markDraws(&res.draws, h.goDrawLog, "warmup")
-		return res, nil
-	}
+	h.oracleConn = oracleConn
+	h.goConn = goConn
+	h.oraclePrimary = oraclePrimary
+	h.goPrimary = goPrimary
+	h.bootTimeout = cfg.bootTimeout
+	h.peerNames = peerNames
+	h.newTCPConn = newTCPConn
+	h.dialGo = dialGo
+	h.runSetup = runSetup
+	return h, nil
+}
 
-	var oracleRes, goRes setupResult
+type sideSetupResult struct {
+	setup    string
+	actor    oraclediff.Conn
+	audience map[string]oraclediff.Conn
+	draws    []oraclediff.DrawBoundary
+}
+
+func (h *harnessSession) markDraws(draws *[]oraclediff.DrawBoundary, path, label string) {
+	if h.drawParity {
+		*draws = append(*draws, oraclediff.DrawBoundary{Label: label, Count: oraclediff.CountDrawLines(path)})
+	}
+}
+
+func (h *harnessSession) setupOracleSide() (res sideSetupResult, sideErr error) {
+	res.setup, sideErr = h.runSetup(h.oracleConn, h.scenario.SetupOracle)
+	if sideErr != nil {
+		return res, fmt.Errorf("run C oracle setup: %w\nserver log:\n%s", sideErr, h.oracleEngine.log())
+	}
+	peers := make(map[string]oraclediff.Conn, len(h.scenario.Peers))
+	for _, name := range h.peerNames {
+		peer := h.scenario.Peers[name]
+		oraclePeerNet, dialErr := dialWhenReady(h.oracleEngine.proc, h.oracleAddr, h.bootTimeout)
+		if dialErr != nil {
+			return res, fmt.Errorf("dial C oracle %s: %w", name, dialErr)
+		}
+		oraclePeer := h.newTCPConn(oraclePeerNet)
+		h.deferCleanup(func() { _ = oraclePeer.Close() })
+		if _, setupErr := h.runSetup(oraclePeer, peer.SetupOracle); setupErr != nil {
+			return res, fmt.Errorf("run C oracle %s setup: %w\nserver log:\n%s", name, setupErr, h.oracleEngine.log())
+		}
+		peers[name] = oraclePeer
+	}
+	if err := drainClients(h.quiescence, h.oracleConn, peers); err != nil {
+		return res, fmt.Errorf("drain C oracle setup output: %w", err)
+	}
+	h.markDraws(&res.draws, h.cDrawLog, "setup")
+	if err := oraclediff.RunWarmup(h.oraclePrimary, peers, h.scenario.Warmup, h.quiescence, oraclediff.WarmupPolicy{
+		Engine: "c",
+		Capture: func(blocks []oraclediff.AudienceProbeBlock) error {
+			return retainWarmupEvidence(os.Getenv("DP_ORACLE_EVIDENCE_ROOT"), os.Getenv("DP_ORACLE_EVIDENCE"), "c", blocks)
+		},
+		AllowSetupRefusal: h.scenario.AllowSetupRefusal,
+	}); err != nil {
+		return res, fmt.Errorf("run C oracle warmup: %w", err)
+	}
+	if h.scenario.PeerDrop != "" {
+		oraclePeer, ok := peers[h.scenario.PeerDrop]
+		if !ok {
+			return res, fmt.Errorf("c oracle peer-drop target %q is not connected", h.scenario.PeerDrop)
+		}
+		if err := oraclePeer.Close(); err != nil {
+			return res, fmt.Errorf("close C oracle peer %q: %w", h.scenario.PeerDrop, err)
+		}
+		delete(peers, h.scenario.PeerDrop)
+	}
+	res.actor, res.audience = probeClients(h.oraclePrimary, peers, h.scenario.ProbeActor)
+	h.markDraws(&res.draws, h.cDrawLog, "warmup")
+	return res, nil
+}
+
+func (h *harnessSession) setupGoSide() (res sideSetupResult, sideErr error) {
+	res.setup, sideErr = h.runSetup(h.goConn, h.scenario.SetupPort)
+	if sideErr != nil {
+		return res, fmt.Errorf("run Go port setup: %w\nserver log:\n%s", sideErr, h.goEngine.log())
+	}
+	peers := make(map[string]oraclediff.Conn, len(h.scenario.Peers))
+	for _, name := range h.peerNames {
+		peer := h.scenario.Peers[name]
+		goPeer, dialErr := h.dialGo()
+		if dialErr != nil {
+			return res, fmt.Errorf("dial Go port %s: %w", name, dialErr)
+		}
+		h.deferCleanup(func() { _ = goPeer.Close() })
+		if _, setupErr := h.runSetup(goPeer, peer.SetupPort); setupErr != nil {
+			return res, fmt.Errorf("run Go port %s setup: %w\nserver log:\n%s", name, setupErr, h.goEngine.log())
+		}
+		peers[name] = goPeer
+	}
+	if err := drainClients(h.quiescence, h.goConn, peers); err != nil {
+		return res, fmt.Errorf("drain Go port setup output: %w", err)
+	}
+	h.markDraws(&res.draws, h.goDrawLog, "setup")
+	if err := oraclediff.RunWarmup(h.goPrimary, peers, h.scenario.Warmup, h.quiescence, oraclediff.WarmupPolicy{
+		Engine: "go",
+		Capture: func(blocks []oraclediff.AudienceProbeBlock) error {
+			return retainWarmupEvidence(os.Getenv("DP_ORACLE_EVIDENCE_ROOT"), os.Getenv("DP_ORACLE_EVIDENCE"), "go", blocks)
+		},
+		AllowSetupRefusal: h.scenario.AllowSetupRefusal,
+	}); err != nil {
+		return res, fmt.Errorf("run Go port warmup: %w", err)
+	}
+	if h.scenario.PeerDrop != "" {
+		goPeer, ok := peers[h.scenario.PeerDrop]
+		if !ok {
+			return res, fmt.Errorf("go port peer-drop target %q is not connected", h.scenario.PeerDrop)
+		}
+		if err := goPeer.Close(); err != nil {
+			return res, fmt.Errorf("close Go port peer %q: %w", h.scenario.PeerDrop, err)
+		}
+		delete(peers, h.scenario.PeerDrop)
+	}
+	res.actor, res.audience = probeClients(h.goPrimary, peers, h.scenario.ProbeActor)
+	h.markDraws(&res.draws, h.goDrawLog, "warmup")
+	return res, nil
+}
+
+// bootHarness prepares both engines and runs setup/warmup concurrently, leaving
+// both sides ready for interactive lockstep commands.
+func bootHarness(scenario oraclediff.Scenario, cfg harnessConfig) (_ *harnessSession, retErr error) {
+	h, err := prepareHarness(scenario, cfg)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if retErr != nil {
+			h.close()
+		}
+	}()
+	var oracleRes, goRes sideSetupResult
 	var oracleSideErr, goSideErr error
 	done := make(chan struct{}, 2)
 	go func() {
 		defer func() { done <- struct{}{} }()
-		oracleRes, oracleSideErr = setupOracleSide()
+		oracleRes, oracleSideErr = h.setupOracleSide()
 	}()
 	go func() {
 		defer func() { done <- struct{}{} }()
-		goRes, goSideErr = setupGoSide()
+		goRes, goSideErr = h.setupGoSide()
 	}()
 	<-done
 	<-done
-	for _, p := range oracleRes.peers {
-		peer := p
-		h.deferCleanup(func() { _ = peer.Close() })
-	}
-	for _, p := range goRes.peers {
-		peer := p
-		h.deferCleanup(func() { _ = peer.Close() })
-	}
 	if oracleSideErr != nil {
 		return nil, oracleSideErr
 	}
@@ -957,12 +990,28 @@ func bootHarness(scenario oraclediff.Scenario, cfg harnessConfig) (_ *harnessSes
 	return h, nil
 }
 
+// trailingPulseCount returns N when the last probe step is "~dpclock pulse N".
+func trailingPulseCount(probe []string) int {
+	if len(probe) == 0 {
+		return 0
+	}
+	last := strings.TrimSpace(probe[len(probe)-1])
+	if !strings.HasPrefix(last, "~dpclock pulse ") {
+		return 0
+	}
+	n, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(last, "~dpclock pulse ")))
+	if err != nil || n <= 0 {
+		return 0
+	}
+	return n
+}
+
 func execute(scenarioName, scenarioFile string, quiescence, firstByteWait, bootTimeout time.Duration, oracleBin, seed string, showOracle bool, dumpOracle string, showGoLog bool, goTransport string, drawParity bool, enforceProbeSetup bool) error {
 	scenario, _, err := loadScenario(scenarioName, scenarioFile, false)
 	if err != nil {
 		return err
 	}
-	h, err := bootHarness(scenario, harnessConfig{
+	h, err := prepareHarness(scenario, harnessConfig{
 		quiescence:    quiescence,
 		firstByteWait: firstByteWait,
 		bootTimeout:   bootTimeout,
@@ -976,19 +1025,29 @@ func execute(scenarioName, scenarioFile string, quiescence, firstByteWait, bootT
 	}
 	defer h.close()
 
+	trailingPulses := trailingPulseCount(scenario.Probe)
+
+	// Run each engine's setup, warmup, and probe continuously in its own
+	// goroutine (no mid-run barrier between warmup and probe, matching
+	// origin/main). When drawParity is enabled and the scenario ends on a
+	// "~dpclock pulse N" step, drain the pulse queue via DrainPulseBarrier
+	// AFTER all probe blocks are captured and BEFORE reportDrawParity reads
+	// the draw logs, so a slow live-world pulse pump never races the draw read.
 	var oracleBlocks, goBlocks []oraclediff.AudienceProbeBlock
 	var oracleSideErr, goSideErr error
 	done := make(chan struct{}, 2)
 	go func() {
 		defer func() { done <- struct{}{} }()
-		blocks, probeErr := oraclediff.RunAudienceProbeWithOptions(h.oracleActor, h.oracleAudience, scenario.Probe, quiescence, oraclediff.ProbeOptions{
+		setupRes, sideErr := h.setupOracleSide()
+		if sideErr != nil {
+			oracleSideErr = sideErr
+			return
+		}
+		h.oracleSetup = setupRes.setup
+		h.oracleDraws = setupRes.draws
+		blocks, probeErr := oraclediff.RunAudienceProbeWithOptions(setupRes.actor, setupRes.audience, scenario.Probe, quiescence, oraclediff.ProbeOptions{
 			AfterStep: func(i int, step string) {
-				if drawParity {
-					h.oracleDraws = append(h.oracleDraws, oraclediff.DrawBoundary{
-						Label: fmt.Sprintf("probe step %d: %s", i+1, step),
-						Count: oraclediff.CountDrawLines(h.cDrawLog),
-					})
-				}
+				h.markDraws(&h.oracleDraws, h.cDrawLog, fmt.Sprintf("probe step %d: %s", i+1, step))
 			},
 			Fault:     func(step string) error { return applyFaultStep(h.faults, step) },
 			QuietMobs: scenario.QuietAllMobs,
@@ -997,19 +1056,24 @@ func execute(scenarioName, scenarioFile string, quiescence, firstByteWait, bootT
 			oracleSideErr = fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", probeErr, h.oracleEngine.log())
 			return
 		}
+		if drawParity && trailingPulses > 0 {
+			_, _ = oraclediff.DrainPulseBarrier(setupRes.actor, trailingPulses, quiescence)
+		}
 		printCaptureStats(blocks)
 		oracleBlocks = blocks
 	}()
 	go func() {
 		defer func() { done <- struct{}{} }()
-		blocks, probeErr := oraclediff.RunAudienceProbeWithOptions(h.goActor, h.goAudience, scenario.Probe, quiescence, oraclediff.ProbeOptions{
+		setupRes, sideErr := h.setupGoSide()
+		if sideErr != nil {
+			goSideErr = sideErr
+			return
+		}
+		h.goSetup = setupRes.setup
+		h.goDraws = setupRes.draws
+		blocks, probeErr := oraclediff.RunAudienceProbeWithOptions(setupRes.actor, setupRes.audience, scenario.Probe, quiescence, oraclediff.ProbeOptions{
 			AfterStep: func(i int, step string) {
-				if drawParity {
-					h.goDraws = append(h.goDraws, oraclediff.DrawBoundary{
-						Label: fmt.Sprintf("probe step %d: %s", i+1, step),
-						Count: oraclediff.CountDrawLines(h.goDrawLog),
-					})
-				}
+				h.markDraws(&h.goDraws, h.goDrawLog, fmt.Sprintf("probe step %d: %s", i+1, step))
 			},
 			Fault:     func(step string) error { return applyFaultStep(h.faults, step) },
 			QuietMobs: scenario.QuietAllMobs,
@@ -1017,6 +1081,9 @@ func execute(scenarioName, scenarioFile string, quiescence, firstByteWait, bootT
 		if probeErr != nil {
 			goSideErr = fmt.Errorf("run Go port probe: %w\nserver log:\n%s", probeErr, h.goEngine.log())
 			return
+		}
+		if drawParity && trailingPulses > 0 {
+			_, _ = oraclediff.DrainPulseBarrier(setupRes.actor, trailingPulses, quiescence)
 		}
 		printCaptureStats(blocks)
 		goBlocks = blocks
