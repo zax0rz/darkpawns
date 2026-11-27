@@ -182,13 +182,21 @@ func TestExtendPulseFirstByteWaitScalesLongPulse(t *testing.T) {
 	restore()
 
 	conn.SetFirstByteWait(2 * time.Second)
-	for _, cmd := range []string{"look", "~dpclock pulse 630"} {
+	for _, cmd := range []string{"look", "~dpclock pulse 40"} {
 		restore = extendPulseFirstByteWait(conn, cmd, false)
 		if got := conn.FirstByteWait(); got != 2*time.Second {
 			t.Fatalf("%q changed firstByteWait to %s", cmd, got)
 		}
 		restore()
 	}
+
+	// 1-hour live-world bursts (630 pulses) extend firstByteWait proportionally
+	// so Go's PumpPulses(630) does not race the 2s default wait.
+	restore = extendPulseFirstByteWait(conn, "~dpclock pulse 630", false)
+	if got, want := conn.FirstByteWait(), 630*12*time.Millisecond; got != want {
+		t.Fatalf("630-pulse firstByteWait = %s, want %s", got, want)
+	}
+	restore()
 
 	// quiet-mobs keeps PumpPulses(N) sub-second, so silent probe steps must
 	// not wait up to 60s each.

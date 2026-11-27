@@ -3,8 +3,10 @@ package oraclediff
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -85,6 +87,98 @@ func readConnUntilPrompt(c Conn, quiescence, maxWait time.Duration, suffix strin
 		return pw.ReadUntilPrompt(quiescence, maxWait, suffix, minCount)
 	}
 	return c.ReadUntilQuiescent(quiescence)
+}
+
+// PulseDrainTimeout returns the maximum wait for a frozen-clock pulse barrier
+// of n pulses on a live world.
+func PulseDrainTimeout(pulses int) time.Duration {
+	wait := time.Duration(pulses) * 25 * time.Millisecond
+	if wait < 15*time.Second {
+		wait = 15 * time.Second
+	}
+	if wait > 90*time.Second {
+		wait = 90 * time.Second
+	}
+	return wait
+}
+
+// DrainPulseBarrier proves that an engine has drained every queued DP_CLOCK
+// pulse by sending an empty line ("", recorded in scenarios as "<ENTER>") and
+// waiting for the command prompt "> ". Both engines process the empty line
+// only after all queued pulses have completed synchronously:
+//   - C: game_loop drains dp_seam_take() before dp_command_phase pops t->input
+//     (src/comm.c:1899-1920, 2233).
+//   - Go: HandleClockControl runs GameLoop.PumpPulses(n) synchronously before
+//     the telnet reader goroutine reads the next line.
+//
+// NOTE on C side effects: process_dpclock_control (src/comm.c:1899-1920) only
+// accepts "~dpclock pulse <count>" (1 <= count <= DP_CLOCK_MAX_PENDING) and
+// emits no reply. Every other input line, including "", goes through
+// process_descriptor_command (src/comm.c:475-492), which resets
+// d->character->char_specials.timer = 0, pulls an idle character back from the
+// void with act("$n has returned."), and clears d->has_prompt (cf. check_idling
+// at src/limits.c:419-427, IDLE_TO_VOID = 8 at src/utils.h:131). Any live
+// lockstep session that sends this barrier MUST therefore record "<ENTER>" as
+// a real probe step in its output scenario so census replay executes the exact
+// same timeline.
+func DrainPulseBarrier(c Conn, pulses int, quiescence time.Duration) (string, error) {
+	if connObservedClose(c) {
+		return "", nil
+	}
+	if err := c.Send(""); err != nil {
+		return "", err
+	}
+	out, err := readConnUntilPrompt(c, quiescence, PulseDrainTimeout(pulses), "> ", 1)
+	if err != nil && errors.Is(err, io.EOF) {
+		return out, nil
+	}
+	return out, err
+}
+
+// RunPulseWithBarrier sends "~dpclock pulse N", waits long enough for any
+// live-world pulse output to arrive on both engines (preventing late Go output
+// from bleeding into the barrier read), and then sends an empty-line ("<ENTER>")
+// barrier and waits for the prompt "> " so both engines are guaranteed to have
+// drained all N queued pulses before returning. When the barrier is sent, it
+// is returned as a second AudienceProbeBlock so callers can compare it and
+// record "<ENTER>" in the scenario to keep lockstep and batch replay identical.
+func RunPulseWithBarrier(c Conn, pulses int, quiescence time.Duration, quietMobs bool) (AudienceProbeBlock, *AudienceProbeBlock, error) {
+	stepLine := pulseControl + strconv.Itoa(pulses)
+	if err := c.Send(stepLine); err != nil {
+		return AudienceProbeBlock{}, nil, fmt.Errorf("send %q: %w", stepLine, err)
+	}
+	if waiter, ok := c.(FirstByteWaiter); ok && !quietMobs && pulses >= 100 {
+		prev := waiter.FirstByteWait()
+		pulseWait := min(time.Duration(pulses)*12*time.Millisecond, 60*time.Second)
+		if pulseWait > prev {
+			waiter.SetFirstByteWait(pulseWait)
+			defer waiter.SetFirstByteWait(prev)
+		}
+	}
+	out, err := c.ReadUntilQuiescent(quiescence)
+	if err != nil && !errors.Is(err, io.EOF) {
+		return AudienceProbeBlock{}, nil, fmt.Errorf("read after %q: %w\noutput so far:\n%s", stepLine, err, out)
+	}
+	pulseBlk := AudienceProbeBlock{
+		Command:  stepLine,
+		Audience: "actor",
+		Output:   out,
+		Closed:   connObservedClose(c),
+	}
+	var barrierBlk *AudienceProbeBlock
+	if !connObservedClose(c) {
+		bOut, bErr := DrainPulseBarrier(c, pulses, quiescence)
+		if bErr != nil {
+			return AudienceProbeBlock{}, nil, fmt.Errorf("pulse barrier after %q: %w\noutput so far:\n%s", stepLine, bErr, out)
+		}
+		barrierBlk = &AudienceProbeBlock{
+			Command:  "",
+			Audience: "actor",
+			Output:   bOut,
+			Closed:   connObservedClose(c),
+		}
+	}
+	return pulseBlk, barrierBlk, nil
 }
 
 // SetFirstByteWait separates response latency after Send from trailing silence.

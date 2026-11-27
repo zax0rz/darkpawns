@@ -380,6 +380,18 @@ type AudienceProbeBlock struct {
 // Blank lines and lines beginning with # are comments; <ENTER> represents an
 // intentional empty command.
 func ParseScenario(name string, r io.Reader) (Scenario, error) {
+	return parseScenario(name, r, false)
+}
+
+// ParseScenarioHead parses a scenario head for lockstep mode: all fixtures,
+// setup, relogin, and warmup sections are parsed identically to ParseScenario,
+// but an empty [probe] section is permitted because probe steps arrive live
+// over stdin.
+func ParseScenarioHead(name string, r io.Reader) (Scenario, error) {
+	return parseScenario(name, r, true)
+}
+
+func parseScenario(name string, r io.Reader, allowEmptyProbe bool) (Scenario, error) {
 	sc := Scenario{Name: name, Peers: make(map[string]*PeerSetup)}
 	scanner := bufio.NewScanner(r)
 	var section *[]string
@@ -851,7 +863,7 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	if err := scanner.Err(); err != nil {
 		return Scenario{}, fmt.Errorf("read scenario: %w", err)
 	}
-	if len(sc.Probe) == 0 && !sc.DiffSetup {
+	if len(sc.Probe) == 0 && !sc.DiffSetup && !allowEmptyProbe {
 		return Scenario{}, fmt.Errorf("scenario %q has no [probe] steps", name)
 	}
 	if sc.EntryPromptOnly && (!sc.DiffSetup || !sc.SkipSetupSettle || !sc.KeepPrompts) {
@@ -1102,88 +1114,103 @@ func RunAudienceProbeWithOptions(primary Conn, peers map[string]Conn, probe []st
 func runAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quiescence time.Duration, opts ProbeOptions) ([]AudienceProbeBlock, error) {
 	blocks := make([]AudienceProbeBlock, 0, len(probe)*(len(peers)+1))
 	for i, step := range probe {
-		if opts.Fault != nil && strings.HasPrefix(step, FaultControlPrefix+" ") {
-			if err := opts.Fault(step); err != nil {
-				return blocks, fmt.Errorf("probe step %d %q: %w", i+1, step, err)
-			}
-			blocks = append(blocks, AudienceProbeBlock{Command: step})
-			if opts.AfterStep != nil {
-				opts.AfterStep(i, step)
-			}
-			continue
-		}
 		// The connection may close at the last step, or just before a relogin
 		// or restart (a quit that ends the session); either is the scenario's
 		// intent.
 		mayClose := i == len(probe)-1 || probe[i+1] == ReloginStep || probe[i+1] == RestartStep || probe[i+1] == CrashStep
-		var output string
-		target, targetName, audience := primary, "actor", peers
-		switch step {
-		case ReloginStep:
-			relogger, ok := primary.(Relogger)
-			if !ok {
-				return blocks, fmt.Errorf("probe step %d: %w", i+1, errNoRelogin)
-			}
-			transcript, err := relogger.Relogin(quiescence)
-			if err != nil {
-				return blocks, fmt.Errorf("probe step %d relogin: %w\ntranscript so far:\n%s", i+1, err, transcript)
-			}
-			output = transcript
-		case RestartStep:
-			restarter, ok := primary.(Restarter)
-			if !ok {
-				return blocks, fmt.Errorf("probe step %d: %w", i+1, errNoRestart)
-			}
-			transcript, err := restarter.Restart(quiescence)
-			if err != nil {
-				return blocks, fmt.Errorf("probe step %d restart: %w\ntranscript so far:\n%s", i+1, err, transcript)
-			}
-			output = transcript
-		case CrashStep:
-			crasher, ok := primary.(Crasher)
-			if !ok {
-				return blocks, fmt.Errorf("probe step %d: %w", i+1, errNoCrash)
-			}
-			transcript, err := crasher.Crash(quiescence)
-			if err != nil {
-				return blocks, fmt.Errorf("probe step %d crash: %w\ntranscript so far:\n%s", i+1, err, transcript)
-			}
-			output = transcript
-		default:
-			promptSuffix, promptCount, innerStep, err := parsePromptWait(step)
-			if err != nil {
-				return blocks, fmt.Errorf("probe step %d %q: %w", i+1, step, err)
-			}
-			var sendLine string
-			target, targetName, audience, sendLine, err = resolveAudienceProbeTarget(primary, peers, innerStep)
-			if err != nil {
-				return blocks, fmt.Errorf("probe step %d %q: %w", i+1, step, err)
-			}
-			if err := target.Send(sendLine); err != nil {
-				return blocks, fmt.Errorf("probe step %d send %q: %w", i+1, step, err)
-			}
-			restoreWait := extendPulseFirstByteWait(target, sendLine, opts.QuietMobs)
-			if promptSuffix != "" {
-				output, err = readConnUntilPrompt(target, quiescence, promptWaitMax, promptSuffix, promptCount)
-			} else {
-				output, err = target.ReadUntilQuiescent(quiescence)
-			}
-			restoreWait()
-			if err != nil && (!mayClose || !errors.Is(err, io.EOF)) {
-				return blocks, fmt.Errorf("probe step %d read actor after %q: %w\noutput so far:\n%s", i+1, step, err, output)
-			}
-			step = innerStep
+		stepBlocks, err := RunSingleAudienceProbeStep(primary, peers, step, i, mayClose, quiescence, opts)
+		blocks = append(blocks, stepBlocks...)
+		if err != nil {
+			return blocks, err
 		}
-		blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: targetName, Output: output, Closed: connObservedClose(target)})
+	}
+	return blocks, nil
+}
 
-		peerBlocks, peerErr := readAudiencePeers(audience, step, i, quiescence, mayClose)
-		blocks = append(blocks, peerBlocks...)
-		if peerErr != nil {
-			return blocks, peerErr
+// RunSingleAudienceProbeStep executes one probe step against primary and its
+// passive audience peers. Both batch census scenarios (via runAudienceProbe)
+// and interactive lockstep sessions call this function so step execution,
+// prompt waits, pulse wait extensions, relogin/restart/crash hooks, and
+// audience draining share one code path.
+func RunSingleAudienceProbeStep(primary Conn, peers map[string]Conn, step string, stepIdx int, mayClose bool, quiescence time.Duration, opts ProbeOptions) ([]AudienceProbeBlock, error) {
+	if opts.Fault != nil && strings.HasPrefix(step, FaultControlPrefix+" ") {
+		if err := opts.Fault(step); err != nil {
+			return nil, fmt.Errorf("probe step %d %q: %w", stepIdx+1, step, err)
 		}
+		blocks := []AudienceProbeBlock{{Command: step}}
 		if opts.AfterStep != nil {
-			opts.AfterStep(i, step)
+			opts.AfterStep(stepIdx, step)
 		}
+		return blocks, nil
+	}
+	var output string
+	target, targetName, audience := primary, "actor", peers
+	switch step {
+	case ReloginStep:
+		relogger, ok := primary.(Relogger)
+		if !ok {
+			return nil, fmt.Errorf("probe step %d: %w", stepIdx+1, errNoRelogin)
+		}
+		transcript, err := relogger.Relogin(quiescence)
+		if err != nil {
+			return nil, fmt.Errorf("probe step %d relogin: %w\ntranscript so far:\n%s", stepIdx+1, err, transcript)
+		}
+		output = transcript
+	case RestartStep:
+		restarter, ok := primary.(Restarter)
+		if !ok {
+			return nil, fmt.Errorf("probe step %d: %w", stepIdx+1, errNoRestart)
+		}
+		transcript, err := restarter.Restart(quiescence)
+		if err != nil {
+			return nil, fmt.Errorf("probe step %d restart: %w\ntranscript so far:\n%s", stepIdx+1, err, transcript)
+		}
+		output = transcript
+	case CrashStep:
+		crasher, ok := primary.(Crasher)
+		if !ok {
+			return nil, fmt.Errorf("probe step %d: %w", stepIdx+1, errNoCrash)
+		}
+		transcript, err := crasher.Crash(quiescence)
+		if err != nil {
+			return nil, fmt.Errorf("probe step %d crash: %w\ntranscript so far:\n%s", stepIdx+1, err, transcript)
+		}
+		output = transcript
+	default:
+		promptSuffix, promptCount, innerStep, err := parsePromptWait(step)
+		if err != nil {
+			return nil, fmt.Errorf("probe step %d %q: %w", stepIdx+1, step, err)
+		}
+		var sendLine string
+		target, targetName, audience, sendLine, err = resolveAudienceProbeTarget(primary, peers, innerStep)
+		if err != nil {
+			return nil, fmt.Errorf("probe step %d %q: %w", stepIdx+1, step, err)
+		}
+		if err := target.Send(sendLine); err != nil {
+			return nil, fmt.Errorf("probe step %d send %q: %w", stepIdx+1, step, err)
+		}
+		restoreWait := extendPulseFirstByteWait(target, sendLine, opts.QuietMobs)
+		if promptSuffix != "" {
+			output, err = readConnUntilPrompt(target, quiescence, promptWaitMax, promptSuffix, promptCount)
+		} else {
+			output, err = target.ReadUntilQuiescent(quiescence)
+		}
+		restoreWait()
+		if err != nil && (!mayClose || !errors.Is(err, io.EOF)) {
+			return nil, fmt.Errorf("probe step %d read actor after %q: %w\noutput so far:\n%s", stepIdx+1, step, err, output)
+		}
+		step = innerStep
+	}
+	blocks := make([]AudienceProbeBlock, 0, 1+len(audience))
+	blocks = append(blocks, AudienceProbeBlock{Command: step, Audience: targetName, Output: output, Closed: connObservedClose(target)})
+
+	peerBlocks, peerErr := readAudiencePeers(audience, step, stepIdx, quiescence, mayClose)
+	blocks = append(blocks, peerBlocks...)
+	if peerErr != nil {
+		return blocks, peerErr
+	}
+	if opts.AfterStep != nil {
+		opts.AfterStep(stepIdx, step)
 	}
 	return blocks, nil
 }
@@ -1205,13 +1232,13 @@ func extendPulseFirstByteWait(target Conn, line string, quietMobs bool) func() {
 		return func() {}
 	}
 	n, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(trimmed, pulseControl)))
-	if err != nil || n <= 2000 {
+	if err != nil || n < 100 {
 		return func() {}
 	}
-	// Long ~dpclock pulse bursts (>2000 pulses, e.g. populated-world soaks)
-	// hold output until the end of PumpPulses(N) and can take >15s in Go (DP-1439).
-	// Shorter bursts (e.g. 630-pulse idle loops) keep the caller's firstByteWait
-	// so silent steps do not stack multi-second waits across 30+ probes.
+	// Live-world ~dpclock pulse bursts (>=100 pulses, including 1-hour 630-pulse
+	// ticks and populated-world soaks) hold output until PumpPulses(N) finishes
+	// and regularly take 2.5–3s+ on Go, exceeding the default 2s firstByteWait
+	// (DP-1439). Extend firstByteWait proportionally without adding any input.
 	const maxPulseFirstByteWait = 60 * time.Second
 	pulseWait := min(time.Duration(n)*12*time.Millisecond, maxPulseFirstByteWait)
 	if pulseWait <= prev {
