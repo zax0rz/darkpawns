@@ -1232,13 +1232,13 @@ func extendPulseFirstByteWait(target Conn, line string, quietMobs bool) func() {
 		return func() {}
 	}
 	n, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(trimmed, pulseControl)))
-	if err != nil || n <= 2000 {
+	if err != nil || n < 100 {
 		return func() {}
 	}
-	// Long ~dpclock pulse bursts (>2000 pulses, e.g. populated-world soaks)
-	// hold output until the end of PumpPulses(N) and can take >15s in Go (DP-1439).
-	// Shorter bursts (e.g. 630-pulse idle loops) keep the caller's firstByteWait
-	// so silent steps do not stack multi-second waits across 30+ probes.
+	// Live-world ~dpclock pulse bursts (>=100 pulses, including 1-hour 630-pulse
+	// ticks and populated-world soaks) hold output until PumpPulses(N) finishes
+	// and regularly take 2.5–3s+ on Go, exceeding the default 2s firstByteWait
+	// (DP-1439). Extend firstByteWait proportionally without adding any input.
 	const maxPulseFirstByteWait = 60 * time.Second
 	pulseWait := min(time.Duration(n)*12*time.Millisecond, maxPulseFirstByteWait)
 	if pulseWait <= prev {

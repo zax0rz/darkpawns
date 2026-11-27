@@ -39,6 +39,7 @@ type lockstepResponse struct {
 	Step             int                     `json:"step"`
 	Type             string                  `json:"type"`
 	Command          string                  `json:"command,omitempty"`
+	BarrierStep      string                  `json:"barrier_step,omitempty"`
 	OracleRaw        string                  `json:"oracle_raw"`
 	OracleNormalized string                  `json:"oracle_normalized"`
 	GoNormalized     string                  `json:"go_normalized"`
@@ -161,12 +162,13 @@ func executeLockstep(cfg lockstepConfig, in io.Reader, out io.Writer) error {
 		stepNum++
 
 		var oracleBlocks, goBlocks []oraclediff.AudienceProbeBlock
+		var oracleBarrier, goBarrier *oraclediff.AudienceProbeBlock
 		var oracleErr, goErr error
 		done := make(chan struct{}, 2)
 		if reqType == "pulse" && len(h.oracleAudience) == 0 && len(h.goAudience) == 0 {
 			go func() {
 				defer func() { done <- struct{}{} }()
-				blk, err := oraclediff.RunPulseWithBarrier(h.oracleActor, req.Pulses, h.quiescence)
+				blk, bBlk, err := oraclediff.RunPulseWithBarrier(h.oracleActor, req.Pulses, h.quiescence, scenario.QuietAllMobs)
 				if err != nil {
 					oracleErr = err
 					return
@@ -178,10 +180,11 @@ func executeLockstep(cfg lockstepConfig, in io.Reader, out io.Writer) error {
 					})
 				}
 				oracleBlocks = []oraclediff.AudienceProbeBlock{blk}
+				oracleBarrier = bBlk
 			}()
 			go func() {
 				defer func() { done <- struct{}{} }()
-				blk, err := oraclediff.RunPulseWithBarrier(h.goActor, req.Pulses, h.quiescence)
+				blk, bBlk, err := oraclediff.RunPulseWithBarrier(h.goActor, req.Pulses, h.quiescence, scenario.QuietAllMobs)
 				if err != nil {
 					goErr = err
 					return
@@ -193,6 +196,7 @@ func executeLockstep(cfg lockstepConfig, in io.Reader, out io.Writer) error {
 					})
 				}
 				goBlocks = []oraclediff.AudienceProbeBlock{blk}
+				goBarrier = bBlk
 			}()
 		} else {
 			go func() {
@@ -242,8 +246,10 @@ func executeLockstep(cfg lockstepConfig, in io.Reader, out io.Writer) error {
 		}
 
 		recordedSteps = append(recordedSteps, stepLine)
-		if reqType == "pulse" && len(h.oracleAudience) == 0 && len(h.goAudience) == 0 {
+		barrierStep := ""
+		if oracleBarrier != nil || goBarrier != nil {
 			recordedSteps = append(recordedSteps, "")
+			barrierStep = "<ENTER>"
 		}
 		if err := writeOut(); err != nil {
 			return err
@@ -258,6 +264,24 @@ func executeLockstep(cfg lockstepConfig, in io.Reader, out io.Writer) error {
 			goBlock = goBlocks[0]
 		}
 		cmp := oraclediff.CompareProbeBlock(scenario, oracleBlock, goBlock, hasGo, ledger)
+		oracleRaw := oracleBlock.Output
+		if oracleBarrier != nil || goBarrier != nil {
+			var ob, gb oraclediff.AudienceProbeBlock
+			if oracleBarrier != nil {
+				ob = *oracleBarrier
+				if strings.TrimSpace(ob.Output) != "" {
+					oracleRaw += ob.Output
+				}
+			}
+			hasGoBarrier := goBarrier != nil
+			if hasGoBarrier {
+				gb = *goBarrier
+			}
+			bCmp := oraclediff.CompareProbeBlock(scenario, ob, gb, hasGoBarrier, ledger)
+			if cmp.Verdict == oraclediff.VerdictSame && bCmp.Verdict != oraclediff.VerdictSame {
+				cmp = bCmp
+			}
+		}
 
 		dpStatus, dpStream, dpDetail, cCount, goCount, dpErr := checkLockstepDraws(h)
 		if dpErr != nil {
@@ -268,7 +292,8 @@ func executeLockstep(cfg lockstepConfig, in io.Reader, out io.Writer) error {
 			Step:             stepNum,
 			Type:             reqType,
 			Command:          stepLine,
-			OracleRaw:        oracleBlock.Output,
+			BarrierStep:      barrierStep,
+			OracleRaw:        oracleRaw,
 			OracleNormalized: cmp.Diff.Oracle,
 			GoNormalized:     cmp.Diff.Go,
 			Diff:             cmp.Diff.Diff,
