@@ -469,9 +469,18 @@ func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {
 		w.actToChar(ch, "$E can't carry that much weight.", vict, nil)
 		return
 	}
+	// C has no failure branch here: once the hands-full and weight gates
+	// pass, obj_from_char/obj_to_char are unconditional
+	// (src/act.item.c:695-696). The Go move can still fail when the
+	// recipient's stored inventory capacity is stale against the live
+	// MaxCarryWeight gate above; keep the guard but send nothing (R4) and
+	// log it.
 	if err := w.MoveObjectToPlayerInventory(obj, vict); err != nil {
-		w.actToChar(ch, "$E can't carry any more.\n", vict, nil)
-		// Give item back to giver
+		slog.Error("give move failed after gates passed", "player", ch.Name, "victim", vict.Name, "obj_vnum", obj.VNum, "error", err)
+		// MoveObject's own rollback (movement.go moveObjectLocked) has
+		// already re-seated the object with the giver; re-seat it again so
+		// an object stranded by a failed rollback is still rescued. Either
+		// way it ends with the giver, never lost or duplicated.
 		if rbErr := w.MoveObjectToPlayerInventory(obj, ch); rbErr != nil {
 			slog.Error("rollback after failed give: restore to giver failed", "player", ch.Name, "obj_vnum", obj.VNum, "error", rbErr)
 		}

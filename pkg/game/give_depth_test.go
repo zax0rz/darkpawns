@@ -148,6 +148,49 @@ func TestPerformGiveHandsFullAndWeight(t *testing.T) {
 	})
 }
 
+// TestPerformGiveMoveFailureSilent proves the defensive arm after
+// perform_give's recipient gates: C has no failure branch at
+// obj_from_char/obj_to_char (src/act.item.c:695-696), so when the Go move
+// still fails the giver hears nothing (R4), and the object ends back with
+// the giver — never lost or duplicated. The failure is forced with a
+// stale-low stored carry capacity against the live MaxCarryWeight gate
+// (str 25 -> 1750 passes the gate; the stored str-3 capacity of 10 fails
+// the move's addItem).
+func TestPerformGiveMoveFailureSilent(t *testing.T) {
+	w, ch, vict, msgs := newGiveTestWorld(t)
+	vict.Stats.Str = 25
+	vict.CopyBaseAttributes()
+	vict.Inventory.SetCapacity(3, 0, 10, 1) // stale against the live str-25 gate
+
+	heavy := newTransferItem(8400, "a boulder", "boulder", 1)
+	heavy.SetWeight(15)
+	registerTransferObject(w, heavy)
+	if err := w.MoveObjectToPlayerInventory(heavy, ch); err != nil {
+		t.Fatalf("seat boulder: %v", err)
+	}
+
+	w.performGive(ch, vict, heavy)
+
+	if got := msgOf(msgs, "Giver"); got != "" {
+		t.Fatalf("giver heard %q on the guard path, want silence (C has no such branch)", got)
+	}
+	if _, ok := vict.Inventory.FindItem("boulder"); ok {
+		t.Fatal("boulder should not transfer on the guard path")
+	}
+	count := 0
+	for _, item := range ch.Inventory.Snapshot() {
+		if item == heavy {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Fatalf("boulder in giver inventory %d times, want exactly 1 (lost or duplicated)", count)
+	}
+	if heavy.Location.Kind != ObjInInventory || heavy.Location.PlayerName != ch.Name {
+		t.Fatalf("boulder location = %+v, want the giver's inventory", heavy.Location)
+	}
+}
+
 func timeoutAfter() <-chan struct{} {
 	ch := make(chan struct{})
 	go func() {

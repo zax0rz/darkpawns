@@ -1031,6 +1031,48 @@ func TestMagSummons_AnimateDead_KeepsCorpseOnSpawnFailure(t *testing.T) {
 	}
 }
 
+// mockNoSpawnerWorld reaches MagSummons' mobSpawner type assertion without
+// satisfying it.
+type mockNoSpawnerWorld struct{}
+
+// TestMagSummons_AnimateDead_SpawnFailureSilent proves both Go-only spawn
+// guards send the caster nothing: C mag_summons has no failure branch —
+// create_mobile is unconditional once the pfail roll passes
+// (src/magic.c:1724-1726) — so the guards only log (R4).
+func TestMagSummons_AnimateDead_SpawnFailureSilent(t *testing.T) {
+	t.Run("spawn error", func(t *testing.T) {
+		forceAnimateDeadRoll(t, 101)
+		caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
+		corpse := &mockCorpse{keywords: "corpse", objType: 15, values: [4]int{0, 0, 0, 1}}
+		world := &mockAnimateWorld{
+			items:    []interface{}{corpse},
+			spawnErr: fmt.Errorf("spawn failed"),
+			canRaise: true,
+		}
+
+		MagSummons(10, caster, corpse, SpellAnimateDead, world)
+
+		if len(caster.messages) != 0 {
+			t.Errorf("spawn-failure output = %q, want silence (C has no failure branch, src/magic.c:1724-1726)", caster.messages)
+		}
+		if world.removed {
+			t.Error("corpse was removed even though spawn failed")
+		}
+	})
+
+	t.Run("world has no spawner", func(t *testing.T) {
+		forceAnimateDeadRoll(t, 101)
+		caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
+		corpse := &mockCorpse{keywords: "corpse", objType: 15, values: [4]int{0, 0, 0, 1}}
+
+		MagSummons(10, caster, corpse, SpellAnimateDead, &mockNoSpawnerWorld{})
+
+		if len(caster.messages) != 0 {
+			t.Errorf("no-spawner output = %q, want silence (C has no failure branch, src/magic.c:1724-1726)", caster.messages)
+		}
+	})
+}
+
 func TestMagSummons_AnimateDead_InvalidTarget(t *testing.T) {
 	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
 	roomCorpse := &mockCorpse{keywords: "corpse", objType: 15, values: [4]int{0, 0, 0, 1}}

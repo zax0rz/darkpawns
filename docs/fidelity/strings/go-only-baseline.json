@@ -1,11 +1,11 @@
 {
   "description": "Known Go player-facing strings with no C source and no world-data source. make string-census fails when a new one appears; each reason starts unreviewed and is settled by a human (data-driven text, transport framing, deliberate post-C addition, or a bug).",
-  "generated": "2026-11-27",
+  "generated": "2026-11-28",
   "segments": {
     "A bribe of a couple hundred coins will make a guard look the other way while you fight.": {
       "segment": "A bribe of a couple hundred coins will make a guard look the other way while you fight.",
       "file": "pkg/game/spec_procs2.go",
-      "line": 400,
+      "line": 410,
       "sink": ".npcSay",
       "reason": "census:composed",
       "evidence": "src/spec_procs2.c:492-493 — SPECIAL(tipster) speaks it with do_say(ch, ...); do_say is C's own command function, invisible to the census's C sink lexer (two adjacent literals)",
@@ -23,7 +23,7 @@
     "AUTO EXIT will show you the exits for every room.": {
       "segment": "AUTO EXIT will show you the exits for every room.",
       "file": "pkg/game/spec_procs2.go",
-      "line": 392,
+      "line": 402,
       "sink": ".npcSay",
       "reason": "census:composed",
       "evidence": "src/spec_procs2.c:480-481 — SPECIAL(tipster) speaks it with do_say(ch, ...); do_say is C's own command function, invisible to the census's C sink lexer (two adjacent literals)",
@@ -50,7 +50,7 @@
     "For ansi color, type COLOR COMPLETE!": {
       "segment": "For ansi color, type COLOR COMPLETE!",
       "file": "pkg/game/spec_procs2.go",
-      "line": 388,
+      "line": 398,
       "sink": ".npcSay",
       "reason": "census:composed",
       "evidence": "src/spec_procs2.c:475 — SPECIAL(tipster) speaks it with do_say(ch, ...); do_say is C's own command function, invisible to the census's C sink lexer",
@@ -68,7 +68,7 @@
     "Guards will attack you if you fight in front of them.": {
       "segment": "Guards will attack you if you fight in front of them.",
       "file": "pkg/game/spec_procs2.go",
-      "line": 401,
+      "line": 411,
       "sink": ".npcSay",
       "reason": "census:composed",
       "evidence": "src/spec_procs2.c:494-495 — SPECIAL(tipster) speaks it with do_say(ch, ...); do_say is C's own command function, invisible to the census's C sink lexer (two adjacent literals)",
@@ -86,7 +86,7 @@
     "If you don't like something, use the IDEA command.": {
       "segment": "If you don't like something, use the IDEA command.",
       "file": "pkg/game/spec_procs2.go",
-      "line": 405,
+      "line": 415,
       "sink": ".npcSay",
       "reason": "census:composed",
       "evidence": "src/spec_procs2.c:499-500 — SPECIAL(tipster) speaks it with do_say(ch, ...); do_say is C's own command function, invisible to the census's C sink lexer (two adjacent literals)",
@@ -95,7 +95,7 @@
     "If you see something out of place, use the BUG command.": {
       "segment": "If you see something out of place, use the BUG command.",
       "file": "pkg/game/spec_procs2.go",
-      "line": 407,
+      "line": 417,
       "sink": ".npcSay",
       "reason": "census:composed",
       "evidence": "src/spec_procs2.c:502-503 — SPECIAL(tipster) speaks it with do_say(ch, ...); do_say is C's own command function, invisible to the census's C sink lexer (two adjacent literals)",
@@ -104,7 +104,7 @@
     "If you see something spelled incorrectly, use the TYPO command.": {
       "segment": "If you see something spelled incorrectly, use the TYPO command.",
       "file": "pkg/game/spec_procs2.go",
-      "line": 409,
+      "line": 419,
       "sink": ".npcSay",
       "reason": "census:composed",
       "evidence": "src/spec_procs2.c:505-506 — SPECIAL(tipster) speaks it with do_say(ch, ...); do_say is C's own command function, invisible to the census's C sink lexer (two adjacent literals)",
@@ -113,7 +113,7 @@
     "It's always safest to quit in the temple.": {
       "segment": "It's always safest to quit in the temple.",
       "file": "pkg/game/spec_procs2.go",
-      "line": 394,
+      "line": 404,
       "sink": ".npcSay",
       "reason": "census:composed",
       "evidence": "src/spec_procs2.c:483 — SPECIAL(tipster) speaks it with do_say(ch, ...); do_say is C's own command function, invisible to the census's C sink lexer",
@@ -122,7 +122,7 @@
     "Nice try.": {
       "segment": "Nice try.",
       "file": "pkg/game/spec_procs4.go",
-      "line": 488,
+      "line": 490,
       "sink": "sendToChar",
       "reason": "divergence:approved",
       "evidence": "DP-1373, approved by Zach 2026-09-30: C src/spec_procs.c:2081-2126 grants Serapis/Orodreth level 40 and Frontline 39 on \"pray immortality\" (a name-based backdoor). The port refuses those names with this line instead and changes nothing.",
@@ -131,7 +131,7 @@
     "Room data not found.": {
       "segment": "Room data not found.",
       "file": "pkg/session/wiz_stats.go",
-      "line": 656,
+      "line": 655,
       "sink": ".Send",
       "reason": "surface:no-c",
       "evidence": "DP-1581: defensive nil-room guard in stat room; unreachable by players in a live server",
@@ -167,7 +167,7 @@
     "Teleport failed: world interface not available.": {
       "segment": "Teleport failed: world interface not available.",
       "file": "pkg/spells/affect_spells.go",
-      "line": 2773,
+      "line": 2778,
       "sink": "sendToCaster",
       "reason": "surface:no-c",
       "evidence": "Go world-interface assertion in castTeleport; the live server's world always implements the transfer interfaces, so only a partial test double can trip it. No telnet player can reach it.",
@@ -182,19 +182,10 @@
       "evidence": "DP-1581: defensive fallback when boot-loaded text is unavailable; unreachable by players in a live server",
       "firstSeen": "2026-09-23"
     },
-    "The corpse refuses to come alive!": {
-      "segment": "The corpse refuses to come alive!",
-      "file": "pkg/spells/affect_spells.go",
-      "line": 1193,
-      "sink": "sendToCaster",
-      "reason": "bug:invented",
-      "evidence": "C's mag_summons (src/magic.c:1728-1734) calls create_mobile for SPELL_ANIMATE_DEAD with no failure branch — create_mobile asserts on a bad vnum, so C prints nothing here. Go-only spawn-error branch with invented text.",
-      "firstSeen": "2026-11-27"
-    },
     "Too many failed login attempts. Try again in": {
       "segment": "Too many failed login attempts. Try again in",
       "file": "pkg/session/session_login.go",
-      "line": 129,
+      "line": 138,
       "sink": ".sendError",
       "reason": "divergence:approved",
       "evidence": "Deliberate security control: IP login lockout (code cites findings H-15/L2-024); same SECURITY-AUDIT.md control family as I4. C's nanny counts bad passwords (src/interpreter.c:1878-1879) but never locks out.",
@@ -203,7 +194,7 @@
     "Too many failed login attempts. Try again later.": {
       "segment": "Too many failed login attempts. Try again later.",
       "file": "pkg/session/session_login.go",
-      "line": 137,
+      "line": 146,
       "sink": ".sendError",
       "reason": "divergence:approved",
       "evidence": "Deliberate security control: per-account failure budget (code cites finding L2-004); same SECURITY-AUDIT.md control family as I4. C's nanny has no account lockout.",
@@ -212,25 +203,25 @@
     "Too many login attempts. Please try again later.": {
       "segment": "Too many login attempts. Please try again later.",
       "file": "pkg/session/session_login.go",
-      "line": 39,
+      "line": 40,
       "sink": ".sendError",
       "reason": "divergence:approved",
       "evidence": "Deliberate security control: IP login rate limiting, listed as implemented control I4 in docs/operational/SECURITY-AUDIT.md. C's nanny has no rate limiting (grep src/ for rate-limit/lockout finds nothing). Telnet-reachable via the name/password gates (pkg/session/char_creation.go:172,178).",
       "firstSeen": "2026-11-27"
     },
-    "Usage: checkload { obj | mob } <number>": {
-      "segment": "Usage: checkload { obj | mob } <number>",
+    "Usage: checkload { obj | mob } \u003cnumber\u003e": {
+      "segment": "Usage: checkload { obj | mob } \u003cnumber\u003e",
       "file": "pkg/session/wiz_info.go",
-      "line": 501,
+      "line": 506,
       "sink": ".Send",
       "reason": "census:composed",
-      "evidence": "src/act.wizard.c:3825 \"Usage: checkload { obj | mob } <number>\\r\\n\" — C holds it in a local const char* usage, invisible to the census sink lexer",
+      "evidence": "src/act.wizard.c:3825 \"Usage: checkload { obj | mob } \u003cnumber\u003e\\r\\n\" — C holds it in a local const char* usage, invisible to the census sink lexer",
       "firstSeen": "2026-09-23"
     },
     "Use an identify scroll on yourself to see your numerical statistics. (Available at your local magick shop.)": {
       "segment": "Use an identify scroll on yourself to see your numerical statistics. (Available at your local magick shop.)",
       "file": "pkg/game/spec_procs2.go",
-      "line": 411,
+      "line": 421,
       "sink": ".npcSay",
       "reason": "census:composed",
       "evidence": "src/spec_procs2.c:508-510 — SPECIAL(tipster) speaks it with do_say(ch, ...); do_say is C's own command function, invisible to the census's C sink lexer (three adjacent literals)",
@@ -239,7 +230,7 @@
     "Use the CONSIDER command!": {
       "segment": "Use the CONSIDER command!",
       "file": "pkg/game/spec_procs2.go",
-      "line": 403,
+      "line": 413,
       "sink": ".npcSay",
       "reason": "census:composed",
       "evidence": "src/spec_procs2.c:497 — SPECIAL(tipster) speaks it with do_say(ch, ...); do_say is C's own command function, invisible to the census's C sink lexer",
@@ -248,7 +239,7 @@
     "Wargs make a tasty meal if you CARVE their corpse.": {
       "segment": "Wargs make a tasty meal if you CARVE their corpse.",
       "file": "pkg/game/spec_procs2.go",
-      "line": 390,
+      "line": 400,
       "sink": ".npcSay",
       "reason": "census:composed",
       "evidence": "src/spec_procs2.c:477-478 — SPECIAL(tipster) speaks it with do_say(ch, ...); do_say is C's own command function, invisible to the census's C sink lexer (two adjacent literals)",
@@ -269,7 +260,7 @@
       "line": 280,
       "sink": "mobileSend",
       "reason": "surface:no-c",
-      "evidence": "Nil-room guard in behead; C's do_behead reads world[ch->in_room].contents directly (src/new_cmds.c:255) with no such branch — a live server always has the mob's room. No telnet player can reach it.",
+      "evidence": "Nil-room guard in behead; C's do_behead reads world[ch-\u003ein_room].contents directly (src/new_cmds.c:255) with no such branch — a live server always has the mob's room. No telnet player can reach it.",
       "firstSeen": "2026-11-27"
     },
     "You are nowhere.": {
@@ -284,7 +275,7 @@
     "You can hire a mercenary by giving him 100 coins.": {
       "segment": "You can hire a mercenary by giving him 100 coins.",
       "file": "pkg/game/spec_procs2.go",
-      "line": 398,
+      "line": 408,
       "sink": ".npcSay",
       "reason": "census:composed",
       "evidence": "src/spec_procs2.c:489-490 — SPECIAL(tipster) speaks it with do_say(ch, ...); do_say is C's own command function, invisible to the census's C sink lexer (two adjacent literals)",
@@ -293,7 +284,7 @@
     "You failed.": {
       "segment": "You failed.",
       "file": "pkg/spells/affect_spells.go",
-      "line": 3346,
+      "line": 3351,
       "sink": "sendToCaster",
       "reason": "census:composed",
       "evidence": "src/spells.c:216 #define SUMMON_FAIL \"You failed.\\r\\n\" — the summon-refusal branch send_to_char()s it at src/spells.c:321; a #defined message",
@@ -311,19 +302,10 @@
     "You're allowed to play up to 3 characters at once.": {
       "segment": "You're allowed to play up to 3 characters at once.",
       "file": "pkg/game/spec_procs2.go",
-      "line": 396,
+      "line": 406,
       "sink": ".npcSay",
       "reason": "census:composed",
       "evidence": "src/spec_procs2.c:486-487 — SPECIAL(tipster) speaks it with do_say(ch, ...); do_say is C's own command function, invisible to the census's C sink lexer (two adjacent literals)",
-      "firstSeen": "2026-11-27"
-    },
-    "can't carry any more.": {
-      "segment": "can't carry any more.",
-      "file": "pkg/game/item_transfer.go",
-      "line": 473,
-      "sink": ".actToChar",
-      "reason": "bug:invented",
-      "evidence": "C's perform_give (src/act.item.c:670-708) has no failure branch: after the hands-full (src/act.item.c:687) and weight (src/act.item.c:693) gates, obj_from_char/obj_to_char just relink the object. The Go line fires when MoveObjectToPlayerInventory errors after both gates already passed — a Go-only error branch with invented text.",
       "firstSeen": "2026-11-27"
     },
     "fingers!": {
@@ -356,10 +338,10 @@
     "rate limit exceeded — slow down": {
       "segment": "rate limit exceeded — slow down",
       "file": "pkg/session/session_login.go",
-      "line": 276,
+      "line": 285,
       "sink": ".sendError",
       "reason": "divergence:approved",
-      "evidence": "Deliberate security control: per-session command token bucket, listed as implemented control I5 in docs/operational/SECURITY-AUDIT.md. C's comm.c has no command rate limit. Telnet commands reach it via TerminalLine -> handleCommand (pkg/session/session_pump.go:402).",
+      "evidence": "Deliberate security control: per-session command token bucket, listed as implemented control I5 in docs/operational/SECURITY-AUDIT.md. C's comm.c has no command rate limit. Telnet commands reach it via TerminalLine -\u003e handleCommand (pkg/session/session_pump.go:402).",
       "firstSeen": "2026-11-27"
     },
     "smokes on his joint.": {

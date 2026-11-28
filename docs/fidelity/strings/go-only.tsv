@@ -3,56 +3,52 @@
 # columns: segment	file:line	sink
 Stinkin' Kender scum!	pkg/game/actor_specials_shop.go:52	.mobShoutGenComm
 Stinkin' Kender scum!	pkg/game/damage_gate.go:125	.mobShoutGenComm
-can't carry any more.	pkg/game/item_transfer.go:473	.actToChar
 Sorry, we have closed, but come back later.	pkg/game/shop_npc.go:46	.shopNpcSay
 Sorry, come back tomorrow.	pkg/game/shop_npc.go:50	.shopNpcSay
 I don't trade with someone I can't see!	pkg/game/shop_npc.go:55	.shopNpcSay
 Get out of here before I call the guards!	pkg/game/shop_npc.go:62	.shopNpcTell
 You are in a void.	pkg/game/skill_actor_selected.go:280	mobileSend
 You are nowhere.	pkg/game/skill_actor_shoot.go:69	mobileSend
-For ansi color, type COLOR COMPLETE!	pkg/game/spec_procs2.go:388	.npcSay
-Wargs make a tasty meal if you CARVE their corpse.	pkg/game/spec_procs2.go:390	.npcSay
-AUTO EXIT will show you the exits for every room.	pkg/game/spec_procs2.go:392	.npcSay
-It's always safest to quit in the temple.	pkg/game/spec_procs2.go:394	.npcSay
-You're allowed to play up to 3 characters at once.	pkg/game/spec_procs2.go:396	.npcSay
-You can hire a mercenary by giving him 100 coins.	pkg/game/spec_procs2.go:398	.npcSay
-A bribe of a couple hundred coins will make a guard look the other way while you fight.	pkg/game/spec_procs2.go:400	.npcSay
-Guards will attack you if you fight in front of them.	pkg/game/spec_procs2.go:401	.npcSay
-Use the CONSIDER command!	pkg/game/spec_procs2.go:403	.npcSay
-If you don't like something, use the IDEA command.	pkg/game/spec_procs2.go:405	.npcSay
-If you see something out of place, use the BUG command.	pkg/game/spec_procs2.go:407	.npcSay
-If you see something spelled incorrectly, use the TYPO command.	pkg/game/spec_procs2.go:409	.npcSay
-Use an identify scroll on yourself to see your numerical statistics. (Available at your local magick shop.)	pkg/game/spec_procs2.go:411	.npcSay
+For ansi color, type COLOR COMPLETE!	pkg/game/spec_procs2.go:398	.npcSay
+Wargs make a tasty meal if you CARVE their corpse.	pkg/game/spec_procs2.go:400	.npcSay
+AUTO EXIT will show you the exits for every room.	pkg/game/spec_procs2.go:402	.npcSay
+It's always safest to quit in the temple.	pkg/game/spec_procs2.go:404	.npcSay
+You're allowed to play up to 3 characters at once.	pkg/game/spec_procs2.go:406	.npcSay
+You can hire a mercenary by giving him 100 coins.	pkg/game/spec_procs2.go:408	.npcSay
+A bribe of a couple hundred coins will make a guard look the other way while you fight.	pkg/game/spec_procs2.go:410	.npcSay
+Guards will attack you if you fight in front of them.	pkg/game/spec_procs2.go:411	.npcSay
+Use the CONSIDER command!	pkg/game/spec_procs2.go:413	.npcSay
+If you don't like something, use the IDEA command.	pkg/game/spec_procs2.go:415	.npcSay
+If you see something out of place, use the BUG command.	pkg/game/spec_procs2.go:417	.npcSay
+If you see something spelled incorrectly, use the TYPO command.	pkg/game/spec_procs2.go:419	.npcSay
+Use an identify scroll on yourself to see your numerical statistics. (Available at your local magick shop.)	pkg/game/spec_procs2.go:421	.npcSay
 Stinkin' Kender scum!	pkg/game/spec_procs3.go:101	.mobShoutGenComm
-Nice try.	pkg/game/spec_procs4.go:488	sendToChar
+Nice try.	pkg/game/spec_procs4.go:490	sendToChar
 subscribe is only available to agents or structured clients	pkg/session/agent_vars.go:75	.sendError
 too many or too large subscriptions	pkg/session/agent_vars.go:90	.sendError
 That information is not available right now.	pkg/session/gen_ps_cmds.go:132	.Send
-Too many login attempts. Please try again later.	pkg/session/session_login.go:39	.sendError
-Too many failed login attempts. Try again in	pkg/session/session_login.go:48	.sendError
-Too many failed login attempts. Try again in	pkg/session/session_login.go:129	.sendError
-Too many failed login attempts. Try again later.	pkg/session/session_login.go:137	.sendError
-rate limit exceeded — slow down	pkg/session/session_login.go:276	.sendError
+Too many login attempts. Please try again later.	pkg/session/session_login.go:40	.sendError
+Too many failed login attempts. Try again in	pkg/session/session_login.go:49	.sendError
+Too many failed login attempts. Try again in	pkg/session/session_login.go:138	.sendError
+Too many failed login attempts. Try again later.	pkg/session/session_login.go:146	.sendError
+rate limit exceeded — slow down	pkg/session/session_login.go:285	.sendError
 An internal server error occurred. Your connection has been reset.	pkg/session/session_pump.go:92	.sendError
 I don't trade with someone I can't see!	pkg/session/shop_cmds.go:104	.NPCSayCommand
 Get out of here before I call the guards!	pkg/session/shop_cmds.go:119	sendShopKeeperTell
 We don't serve your kind here!	pkg/session/shop_cmds.go:130	sendShopKeeperTell
 smokes on his joint.	pkg/session/shop_cmds.go:399	.NPCEmoteCommand
-Usage: checkload { obj | mob } <number>	pkg/session/wiz_info.go:501	.Send
-Room data not found.	pkg/session/wiz_stats.go:656	.Send
+Usage: checkload { obj | mob } <number>	pkg/session/wiz_info.go:506	.Send
+Room data not found.	pkg/session/wiz_stats.go:655	.Send
 As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.	pkg/spells/affect_spells.go:1007	sendToCaster
 You gesture and the earth begins to shake all around you!	pkg/spells/affect_spells.go:1072	sendToCaster
 gracefully gestures and the earth begins to shake violently!	pkg/spells/affect_spells.go:1073	sendAffectRoom
 A spray of acid flows from your fingertips!	pkg/spells/affect_spells.go:1075	sendToCaster
 fingers!	pkg/spells/affect_spells.go:1076	sendAffectRoom
 raises a hand and acid sprays from	pkg/spells/affect_spells.go:1076	sendAffectRoom
-The corpse refuses to come alive!	pkg/spells/affect_spells.go:1183	sendToCaster
-The corpse refuses to come alive!	pkg/spells/affect_spells.go:1193	sendToCaster
-No target.	pkg/spells/affect_spells.go:1759	sendToCaster
-Teleport failed: world interface not available.	pkg/spells/affect_spells.go:2762	sendToCaster
-Teleport failed: world interface not available.	pkg/spells/affect_spells.go:2773	sendToCaster
-You failed.	pkg/spells/affect_spells.go:3269	sendToCaster
-You failed.	pkg/spells/affect_spells.go:3279	sendToCaster
-You failed.	pkg/spells/affect_spells.go:3285	sendToCaster
-You failed.	pkg/spells/affect_spells.go:3292	sendToCaster
-You failed.	pkg/spells/affect_spells.go:3346	sendToCaster
+Teleport failed: world interface not available.	pkg/spells/affect_spells.go:2767	sendToCaster
+Teleport failed: world interface not available.	pkg/spells/affect_spells.go:2778	sendToCaster
+You failed.	pkg/spells/affect_spells.go:3274	sendToCaster
+You failed.	pkg/spells/affect_spells.go:3284	sendToCaster
+You failed.	pkg/spells/affect_spells.go:3290	sendToCaster
+You failed.	pkg/spells/affect_spells.go:3297	sendToCaster
+You failed.	pkg/spells/affect_spells.go:3351	sendToCaster
