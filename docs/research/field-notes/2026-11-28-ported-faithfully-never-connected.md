@@ -37,12 +37,24 @@ reads as normal.
 
 ## Zach's classification
 
-Zach separates this from **port slop**, the plausible paraphrase of C that the
-slop-squash thesis is about (the `yank` mis-port). Here nothing was
-paraphrased: the leaf is C's table, byte for byte. His name for it is
-**standard slop: ported faithfully, never connected.** It can happen in any
-project built by AI agents, port or not, because each session starts without
+Zach separates this from **port slop**: C's content invented, paraphrased or
+summarized, which is what the slop-squash thesis is about (the `yank`
+mis-port). Port slop here would have been made-up death descriptions, or C's
+15 collapsed into a few. Nothing like that happened: the leaf is C's table,
+byte for byte. His name for this kind is **standard slop: ported faithfully,
+never connected**. It's general code slop, not specific to ports, and can
+happen in any project built by AI agents, because each session starts without
 memory of what the others built or still need to connect.
+
+**Open question on the term (Zach, 2026-11-28):** "slop" may be the wrong
+word. Slop suggests low-quality output, and here the output is correct.
+Humans make the same defect (dead code, features built and never switched on,
+integration gaps), so the shape isn't new. What may be specific to AI agents
+is how often it happens and why: task-scoped sessions with no memory of the
+wiring that's still owed. A neutral name such as *disconnected
+implementation* or *orphaned port* may fit better. Testing that needs the
+rate, not one case: compare how often it happens in agent-written and
+human-written code, using the PF-114 attribution approach.
 
 He places it as a cousin of **amnesiac clones** (PF-114). Both come from the
 same missing memory:
