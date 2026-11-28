@@ -382,7 +382,7 @@ func (s *Session) buildRoomMobs() []RoomMobVar {
 	if !s.agentCanSeeRoom() {
 		return []RoomMobVar{}
 	}
-	mobs := s.manager.world.GetMobsInRoom(s.player.GetRoom())
+	mobs := s.manager.world.COrderedRoomMobs(s.player.GetRoom())
 	// R4: the agent sees the occupants a mortal sees — CAN_SEE-filtered
 	// (invisible mobs hidden unless the viewer sees invisible; look.go:418).
 	visible := mobs[:0:0]

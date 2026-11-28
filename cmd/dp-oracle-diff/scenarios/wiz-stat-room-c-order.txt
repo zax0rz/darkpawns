@@ -1,0 +1,44 @@
+# R5h regression scenario for do_stat_room Chars present order (src/act.wizard.c:452-465).
+# Spawns three distinct mobiles in room 8000 so C's world[room].people newest-first order
+# differs from origin/main's ID-ascending mob sort.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8001 1 8000 80
+spawn-mob 8002 1 8000 80
+spawn-mob 8027 1 8000 80
+
+[setup:oracle]
+StatOrderImm
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+StatOrderImm
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8000
+
+[probe]
+stat room

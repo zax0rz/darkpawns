@@ -246,7 +246,7 @@ func cmdPurge(s *Session, args []string) error {
 	// No argument — purge entire room
 	game.Act(s.manager.world, false, s.player, nil, nil, nil, "$n gestures... You are surrounded by scorching flames!", "", game.ToRoom)
 	sendPurgeRoomLine(s, roomVNum, "The world seems a little cleaner.\r\n")
-	for _, mob := range s.manager.world.GetMobsInRoom(roomVNum) {
+	for _, mob := range s.manager.world.COrderedRoomMobs(roomVNum) {
 		s.manager.world.ExtractMob(mob)
 	}
 	// C's room-wide do_purge flushes extract_pending_chars immediately after
