@@ -15,7 +15,6 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"strings"
 	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
@@ -112,9 +111,10 @@ func (w *World) roomCleanup(roomVNum int) int {
 		// capitalised ("A barrel vanishes…"), and with no actor the audience is
 		// the object's own room.
 		Act(w, false, nil, nil, obj, nil, "$p vanishes in a puff of smoke!", "", ToRoom)
-		if err := w.MoveObjectToNowhere(obj); err != nil {
-			slog.Warn("MoveObjectToNowhere failed in room cleanup", "obj_vnum", obj.GetVNum(), "error", err)
-		}
+		// C extract_obj frees the object (src/spec_procs.c:265, :277) and
+		// decrements the existing count, so a later reset reloads it; parking
+		// in nowhere would keep the count and stop the reload.
+		w.ExtractObject(obj, roomVNum)
 		cost := obj.GetCost()
 		if cost < 1 {
 			cost = 1
@@ -155,7 +155,9 @@ func specGuild(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	}
 
 	class := ch.GetClass()
-	arg = strings.TrimSpace(arg)
+	// C: skip_spaces strips leading whitespace only, so a trailing space stays
+	// in the find_skill_num argument (src/spec_procs.c:211-213).
+	arg = skipSpaces(arg)
 
 	if arg == "" {
 		// RenderSkillList already contains the terminal CRLF because the
@@ -214,7 +216,7 @@ func specGuildWithPlayerContext(w *World, ctx CharacterSpecialContext, me *MobIn
 	if !ok {
 		return SpecialDeclined
 	}
-	if cmd == "practice" && strings.TrimSpace(arg) == "" && ctx.PageOutput != nil {
+	if cmd == "practice" && skipSpaces(arg) == "" && ctx.PageOutput != nil {
 		ctx.PageOutput(RenderSkillList(ch))
 		return SpecialHandled
 	}
@@ -742,10 +744,9 @@ func specFido(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 					return false
 				}
 			}
-			if err := w.MoveObjectToNowhere(obj); err != nil {
-				slog.Error("MoveObjectToNowhere failed in fido spec", "obj_vnum", obj.GetVNum(), "error", err)
-				return false
-			}
+			// C extract_obj frees the corpse (src/spec_procs.c:742) and
+			// decrements the existing count, so a later reset reloads it.
+			w.ExtractObject(obj, me.RoomVNum)
 			return true
 		}
 	}

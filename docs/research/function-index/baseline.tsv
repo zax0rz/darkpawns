@@ -1005,6 +1005,8 @@ src/spec_procs2.c:carrion	pkg/game/actor_specials_rooms.go	specCarrionBody	split
 src/spec_procs2.c:carrion	pkg/game/mob.go	(MobInstance).SetDamroll	split
 src/spec_procs2.c:carrion	pkg/game/spec_procs2.go	specCarrion	split
 src/spec_procs2.c:castle_guard_down	pkg/game/actor_specials_guards.go	specCastleGuardActor	primary
+src/spec_procs2.c:castle_guard_east	pkg/game/actor_specials_guards.go	specCastleGuardEastActor	primary
+src/spec_procs2.c:castle_guard_east	pkg/game/spec_procs2.go	specCastleGuardEast	split
 src/spec_procs2.c:chosen_guard	pkg/game/actor_specials_guards.go	specChosenGuardActor	primary
 src/spec_procs2.c:evillead	pkg/game/spec_procs2.go	specEvilLead	primary
 src/spec_procs2.c:give_tat	pkg/game/spec_procs2.go	specAssassin	primary

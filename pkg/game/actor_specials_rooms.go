@@ -204,7 +204,9 @@ func specQuanLoBody(w *World, actor cBody, me *MobInstance, cmd, arg string) boo
 			w.NPCCommandDirect(me, "gossip", "What was that, "+actor.GetName()+
 				"? This is not a shawade. Try it again. This time with fewing.", npcACMDSubcmdGossip)
 		}
-		arg = strings.TrimSpace(arg)
+		// C: skip_spaces then isname — a trailing space fails isname
+		// (src/spec_procs3.c:385-388).
+		arg = skipSpaces(arg)
 		if (cmd == "look" || cmd == "examine") && arg != "" && isCName(arg, charKeywords(me)) {
 			// C builds the act with $n for the mobile and GET_NAME(ch) for the
 			// actor (src/spec_procs3.c:390-392).

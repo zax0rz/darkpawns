@@ -200,6 +200,59 @@ func TestCastleGuardActorPortsGroupedOwnerPasses(t *testing.T) {
 	}
 }
 
+// TestCastleGuardEastActorBlocksNPCMover pins the east guard's NPC-actor
+// lane (src/spec_procs2.c:1934-1970): a charmed pet walking east meets the
+// yell and a hit, where C's down/up/north guards block without one. This lane
+// did not exist, so an NPC mover passed east unyell'd.
+func TestCastleGuardEastActorBlocksNPCMover(t *testing.T) {
+	tests := []struct {
+		name       string
+		cmd        string
+		actorLevel int
+		guardPos   int
+		want       SpecialResult
+		wantYell   bool
+	}{
+		{name: "east yell and hit", cmd: "east", actorLevel: 10, guardPos: combat.PosStanding, want: SpecialHandled, wantYell: true},
+		{name: "other direction", cmd: "west", actorLevel: 10, guardPos: combat.PosStanding, want: SpecialDeclined},
+		{name: "non-movement command", cmd: "emote", actorLevel: 10, guardPos: combat.PosStanding, want: SpecialDeclined},
+		{name: "immortal actor", cmd: "east", actorLevel: LVL_IMMORT, guardPos: combat.PosStanding, want: SpecialDeclined},
+		{name: "sleeping guard", cmd: "east", actorLevel: 10, guardPos: combat.PosSleeping, want: SpecialDeclined},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			w, _, actor, peer, private := guardActorWorld(t)
+			guard := newSpecProcTestMob(t, w, actor.GetRoom(), 10)
+			actor.SetLevel(test.actorLevel)
+			guard.SetPosition(test.guardPos)
+			actorProto := *actor.Proto()
+			actorProto.ShortDesc = "an ogre"
+			actor.SetProto(&actorProto)
+			guardProto := *guard.Proto()
+			guardProto.ShortDesc = "the eastern guard"
+			guard.SetProto(&guardProto)
+
+			ce := &testCombatEngine{}
+			if test.wantYell {
+				w.combatEngine = ce
+			}
+			got := DispatchCharacterSpecial("castle_guard_east", w, guardActorCtx(actor, private), guard, test.cmd, "")
+			if got != test.want {
+				t.Fatalf("castle_guard_east result = %v, want %v", got, test.want)
+			}
+			if test.wantYell {
+				if want := "The eastern guard yells, 'Stay outta there!'"; !strings.Contains(peer.String(), want) {
+					t.Errorf("peer output = %q, want the yell line %q", peer.String(), want)
+				}
+				if len(ce.starts) != 1 || ce.starts[0].attacker != guard.GetName() || ce.starts[0].defender != actor.GetName() {
+					t.Errorf("combat starts = %+v, want one guard-on-actor start like C's hit()", ce.starts)
+				}
+			}
+		})
+	}
+}
+
 // TestChosenGuardActorPortsMatchC pins SPECIAL(chosen_guard),
 // src/spec_procs2.c:2113-2132, for an NPC actor.
 func TestChosenGuardActorPortsMatchC(t *testing.T) {

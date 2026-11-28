@@ -321,7 +321,9 @@ func specMoonGate(w *World, ch *Player, obj *ObjectInstance, cmd string, arg str
 		w.lookAtRoom(ch, true)
 		return true
 	case "look":
-		lowered := strings.ToLower(strings.TrimSpace(arg))
+		// C: skip_spaces, lowercase, then strcmp — a trailing space fails
+		// (src/gate.c:311-318).
+		lowered := strings.ToLower(skipSpaces(arg))
 		if lowered != "gate" && lowered != "moongate" && lowered != "portal" {
 			// C moon_gate delegates non-portal targets to do_look and consumes
 			// the command (src/gate.c:309-316).
