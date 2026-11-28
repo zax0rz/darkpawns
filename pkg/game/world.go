@@ -472,15 +472,10 @@ func (w *World) GetPlayer(name string) (*Player, bool) {
 	return p, ok
 }
 
-// GetPlayers returns a snapshot of the currently online players.
+// GetPlayers returns a snapshot of the currently online players in C's
+// character_list order (newest-first).
 func (w *World) GetPlayers() []*Player {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	players := make([]*Player, 0, len(w.players))
-	for _, player := range w.players {
-		players = append(players, player)
-	}
-	return players
+	return w.GetAllPlayers()
 }
 
 // GetPlayerByID finds a player by their instance ID.
@@ -771,14 +766,10 @@ func (w *World) GetPlayerCount() int {
 }
 
 // GetAllPlayers returns all online players.
+// GetAllPlayers returns all active players in C's character_list order
+// (newest-first).
 func (w *World) GetAllPlayers() []*Player {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	result := make([]*Player, 0, len(w.players))
-	for _, p := range w.players {
-		result = append(result, p)
-	}
-	return result
+	return w.COrderedPlayers()
 }
 
 // playingPlayers snapshots world players whose active descriptors are in
@@ -1232,7 +1223,8 @@ func (w *World) GetMobByName(name string) *MobInstance {
 	return nil
 }
 
-// GetMobsInRoom returns all mobs in a given room.
+// GetMobsInRoom returns all mobs in a given room in C's world[room].people
+// order (newest arrival first, tie-break on Name for determinism, R3).
 func (w *World) GetMobsInRoom(roomVNum int) []*MobInstance {
 	// Snapshot the mob list under the world lock, then query each mob's room
 	// OUTSIDE the world lock. mob.GetRoom() acquires m.mu.RLock(); holding
@@ -1252,18 +1244,6 @@ func (w *World) GetMobsInRoom(roomVNum int) []*MobInstance {
 			mobs = append(mobs, mob)
 		}
 	}
-	return mobs
-}
-
-// COrderedRoomMobs returns the room's mobiles in C's world[room].people order:
-// the most recent arrival first, because char_to_room() prepends to the list.
-// Ties fall back to name so the order is deterministic for two mobs that
-// entered in the same tick (R3). C's special() walks exactly this list for
-// mobile specials and mobile oncmd scripts (src/interpreter.c:1452-1466);
-// GetMobsInRoom walks a map and must not be used where the order is
-// observable.
-func (w *World) COrderedRoomMobs(roomVNum int) []*MobInstance {
-	mobs := w.GetMobsInRoom(roomVNum)
 	sort.SliceStable(mobs, func(i, j int) bool {
 		si, sj := mobs[i].GetRoomEntrySequence(), mobs[j].GetRoomEntrySequence()
 		if si != sj {
@@ -1274,28 +1254,23 @@ func (w *World) COrderedRoomMobs(roomVNum int) []*MobInstance {
 	return mobs
 }
 
-// GetAllObjects returns all active object instances in the world.
-func (w *World) GetAllObjects() []*ObjectInstance {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-
-	objs := make([]*ObjectInstance, 0, len(w.objectInstances))
-	for _, o := range w.objectInstances {
-		objs = append(objs, o)
-	}
-	return objs
+// COrderedRoomMobs returns the room's mobiles in C's world[room].people order.
+// GetMobsInRoom now returns C order by default; this alias keeps the signature
+// stable for callers and future per-room occupant lists.
+func (w *World) COrderedRoomMobs(roomVNum int) []*MobInstance {
+	return w.GetMobsInRoom(roomVNum)
 }
 
-// GetAllMobs returns all active mobs in the world.
-func (w *World) GetAllMobs() []*MobInstance {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
+// GetAllObjects returns all active object instances in C's global object_list
+// order (newest-first).
+func (w *World) GetAllObjects() []*ObjectInstance {
+	return w.COrderedObjects()
+}
 
-	mobs := make([]*MobInstance, 0, len(w.activeMobs))
-	for _, m := range w.activeMobs {
-		mobs = append(mobs, m)
-	}
-	return mobs
+// GetAllMobs returns all active mobs in C's global character_list order
+// (newest-first).
+func (w *World) GetAllMobs() []*MobInstance {
+	return w.COrderedMobs()
 }
 
 // CharTransfer moves a character (player or mob) from one room to another.

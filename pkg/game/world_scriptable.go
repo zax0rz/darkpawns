@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"sort"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 
@@ -19,26 +18,7 @@ import (
 // `ch->next_in_room = world[room].people`). A Lua room walk must see the same
 // order the core does (R3).
 func (w *World) GetPlayersInRoomScriptable(roomVNum int) []scripting.ScriptablePlayer {
-	w.mu.RLock()
-	allPlayers := make([]*Player, 0, len(w.players))
-	for _, p := range w.players {
-		allPlayers = append(allPlayers, p)
-	}
-	w.mu.RUnlock()
-
-	var players []*Player
-	for _, p := range allPlayers {
-		if p.GetRoom() == roomVNum {
-			players = append(players, p)
-		}
-	}
-	sort.SliceStable(players, func(i, j int) bool {
-		si, sj := players[i].GetRoomEntrySequence(), players[j].GetRoomEntrySequence()
-		if si != sj {
-			return si > sj
-		}
-		return players[i].GetName() < players[j].GetName()
-	})
+	players := w.GetPlayersInRoom(roomVNum)
 	out := make([]scripting.ScriptablePlayer, len(players))
 	for i, p := range players {
 		out[i] = p
