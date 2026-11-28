@@ -88,3 +88,20 @@ Two traits make this instance a good teaching case:
   a discriminating parameter (an attack type, a subcommand, a message number),
   check that some live caller passes a non-constant value. A port whose
   callers only ever pass one constant is a never-connected candidate.
+
+## Update, 2026-11-28: the remaining paths
+
+DeepSeek's darkpawns#3106 named them. The Oct 29 fix stored the attack type on
+the combat pair (`CombatPair.LastAttackType`) and had the death handler look
+it up by scanning the pairs. Four swings ran on a temporary pair, so the value
+was written where nothing read it: the first swing of `kill` when the attacker
+was already fighting (the newbie case was `kick recruit` then `kill recruit`),
+the leftover body swing, ranged retaliation, and the miss arm's `damage(0)`
+death, where two pairs for one killer let Go's map order choose. The fix is
+C's own shape: `w_type` is passed down as a parameter
+(`src/fight.c:1795,1314,1691,619`), and the stored field is gone. Neon's
+mob-kills-player route scenario, which failed on main, passes with the fix.
+
+The lesson for the class: the half fix wasn't wrong, it was **stateful where C
+is not**. C never stores the attack type; it passes it. A port that adds state
+C doesn't have creates paths that never update it.
