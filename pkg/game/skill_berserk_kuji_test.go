@@ -245,7 +245,11 @@ func TestDoKujiKiri_SealNotMastered(t *testing.T) {
 // `case SKILL_KK_TOH:` (new_cmds.c:1500-1541): prob stays 0 for Toh
 // regardless of skill level, so the 1-101 roll always exceeds it and the
 // seal's success check always fails. This must hold even at max skill.
-func TestCheckKkSuccess_TohAlwaysFails(t *testing.T) {
+// TestCheckKkSuccess_TohCanSucceed pins C's SKILL_KK_TOH case
+// (src/new_cmds.c:1514-1516): with Toh practised, the seal's success check
+// can succeed. On the pre-fix port the switch had no Toh case, so prob
+// stayed 0 and every attempt failed.
+func TestCheckKkSuccess_TohCanSucceed(t *testing.T) {
 	p := NewPlayer(1, "Ninja", 3001)
 	p.Class = ClassNinja
 	p.Level = 30
@@ -253,14 +257,14 @@ func TestCheckKkSuccess_TohAlwaysFails(t *testing.T) {
 
 	for i := 0; i < 50; i++ {
 		if checkKkSuccess(p, SkillKkToh) {
-			t.Fatal("checkKkSuccess(SkillKkToh) succeeded — the missing-case bug must always fail Toh")
+			return
 		}
 	}
+	t.Fatal("checkKkSuccess(SkillKkToh) never succeeded at skill 100 across 50 attempts")
 }
 
-// TestCheckKkSuccess_OtherSealsCanSucceed sanity-checks that the missing-TOH
-// bug is specific to Toh — a seal with a real case (Rin) at max skill should
-// be able to succeed.
+// TestCheckKkSuccess_OtherSealsCanSucceed sanity-checks that a seal with a
+// real case (Rin) at max skill can succeed, same as Toh above.
 func TestCheckKkSuccess_OtherSealsCanSucceed(t *testing.T) {
 	p := NewPlayer(1, "Ninja", 3001)
 	p.Class = ClassNinja

@@ -128,15 +128,6 @@
       "evidence": "DP-1373, approved by Zach 2026-09-30: C src/spec_procs.c:2081-2126 grants Serapis/Orodreth level 40 and Frontline 39 on \"pray immortality\" (a name-based backdoor). The port refuses those names with this line instead and changes nothing.",
       "firstSeen": "2026-09-30"
     },
-    "No target.": {
-      "segment": "No target.",
-      "file": "pkg/spells/affect_spells.go",
-      "line": 1759,
-      "sink": "sendToCaster",
-      "reason": "surface:no-c",
-      "evidence": "Defensive nil-victim guard in castSobriety, unreachable by telnet players: SPELL_SOBRIETY is TAR_CHAR_ROOM (src/spell_parser.c:1398-1399) and the cast target resolution always supplies a victim (self for a non-violent char-room spell, pkg/session/cast_cmds.go:122-124); C's spell_sobriety asserts victim non-null (src/spells.c:690).",
-      "firstSeen": "2026-11-27"
-    },
     "Room data not found.": {
       "segment": "Room data not found.",
       "file": "pkg/session/wiz_stats.go",
@@ -227,13 +218,13 @@
       "evidence": "Deliberate security control: IP login rate limiting, listed as implemented control I4 in docs/operational/SECURITY-AUDIT.md. C's nanny has no rate limiting (grep src/ for rate-limit/lockout finds nothing). Telnet-reachable via the name/password gates (pkg/session/char_creation.go:172,178).",
       "firstSeen": "2026-11-27"
     },
-    "Usage: checkload { obj | mob } \u003cnumber\u003e": {
-      "segment": "Usage: checkload { obj | mob } \u003cnumber\u003e",
+    "Usage: checkload { obj | mob } <number>": {
+      "segment": "Usage: checkload { obj | mob } <number>",
       "file": "pkg/session/wiz_info.go",
       "line": 501,
       "sink": ".Send",
       "reason": "census:composed",
-      "evidence": "src/act.wizard.c:3825 \"Usage: checkload { obj | mob } \u003cnumber\u003e\\r\\n\" — C holds it in a local const char* usage, invisible to the census sink lexer",
+      "evidence": "src/act.wizard.c:3825 \"Usage: checkload { obj | mob } <number>\\r\\n\" — C holds it in a local const char* usage, invisible to the census sink lexer",
       "firstSeen": "2026-09-23"
     },
     "Use an identify scroll on yourself to see your numerical statistics. (Available at your local magick shop.)": {
@@ -278,7 +269,7 @@
       "line": 280,
       "sink": "mobileSend",
       "reason": "surface:no-c",
-      "evidence": "Nil-room guard in behead; C's do_behead reads world[ch-\u003ein_room].contents directly (src/new_cmds.c:255) with no such branch — a live server always has the mob's room. No telnet player can reach it.",
+      "evidence": "Nil-room guard in behead; C's do_behead reads world[ch->in_room].contents directly (src/new_cmds.c:255) with no such branch — a live server always has the mob's room. No telnet player can reach it.",
       "firstSeen": "2026-11-27"
     },
     "You are nowhere.": {
@@ -368,7 +359,7 @@
       "line": 276,
       "sink": ".sendError",
       "reason": "divergence:approved",
-      "evidence": "Deliberate security control: per-session command token bucket, listed as implemented control I5 in docs/operational/SECURITY-AUDIT.md. C's comm.c has no command rate limit. Telnet commands reach it via TerminalLine -\u003e handleCommand (pkg/session/session_pump.go:402).",
+      "evidence": "Deliberate security control: per-session command token bucket, listed as implemented control I5 in docs/operational/SECURITY-AUDIT.md. C's comm.c has no command rate limit. Telnet commands reach it via TerminalLine -> handleCommand (pkg/session/session_pump.go:402).",
       "firstSeen": "2026-11-27"
     },
     "smokes on his joint.": {

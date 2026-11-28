@@ -766,6 +766,7 @@ src/modify.c:string_add	pkg/game/object.go	(ObjectInstance).ActionDescription	sp
 src/modify.c:string_add	pkg/session/menu.go	(Session).startMenuDescriptionEditor	split
 src/new_cmds.c:check_kk_success	pkg/command/skill_commands.go	CmdStrike	primary
 src/new_cmds.c:check_kk_success	pkg/game/skill_advanced.go	DoStrike	split
+src/new_cmds.c:check_kk_success	pkg/game/skill_berserk_kuji.go	checkKkSuccess	split
 src/new_cmds.c:check_kk_success	pkg/game/skill_kuji_kiri_actor.go	CharacterKujiKiri	split
 src/new_cmds.c:do_berserk	pkg/game/spec_fighter.go	mobBerserk	primary
 src/new_cmds.c:do_bite	pkg/game/skill_special.go	DoBite	primary
