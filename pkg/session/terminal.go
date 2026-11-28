@@ -360,6 +360,15 @@ func (s *Session) TerminalLine(rawLine string) bool {
 	// linkdead reaper sees it.
 	s.OnInboundActivity()
 
+	// C's game loop takes a line off d->input only when the descriptor's
+	// character is ready (src/comm.c:597). The nanny's name step loads an
+	// existing character with wait = 1 (src/interpreter.c:1766); under the
+	// frozen clock only a pulsing pass decrements it, so the password and the
+	// lines behind it wait on the queue until a pump, as they do in the oracle.
+	if s.holdEntryLine(rawLine) {
+		return !s.SendClosed()
+	}
+
 	// C reads one line per descriptor, then flushes every descriptor's output
 	// with its prompt in the same pass (comm.c:626-642). This line's own
 	// prompt is queued below; the others its command reached (a say, an

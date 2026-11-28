@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zax0rz/darkpawns/internal/dpclock"
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/db"
@@ -95,6 +96,14 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				s.manager.mu.Unlock()
 				s.charStage = "login_password"
 				s.charName = rec.Name
+				// src/interpreter.c:1766 loads the character with wait = 1. C's
+				// loop decrements every descriptor's wait on every pass
+				// (src/comm.c:597), so in live play it is gone before the password
+				// arrives; under the frozen clock only a pulsing pass decrements it,
+				// and the password waits for a pump.
+				if dpclock.Frozen() {
+					s.entryWait.Store(1)
+				}
 				s.sendCharCreatePromptWithSecret("login_password", "Password: ", nil, true)
 				return nil
 			}

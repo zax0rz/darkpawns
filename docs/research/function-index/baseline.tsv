@@ -329,6 +329,8 @@ src/comm.c:do_broadcast	pkg/game/act.go	actArenaBroadcast	split
 src/comm.c:dp_main	pkg/game/limits_exp.go	CheckAutowiz	primary
 src/comm.c:flush_queues	pkg/session/session_manager.go	(Session).FlushQueues	primary
 src/comm.c:game_loop	pkg/game/ai.go	(World).StartEventQueue	primary
+src/comm.c:game_loop	pkg/session/manager.go	(Session).decrementEntryWait	split
+src/comm.c:game_loop	pkg/session/manager.go	(Session).routeHeldEntryLine	split
 src/comm.c:get_status	pkg/session/session_send.go	promptCombatSegment	primary
 src/comm.c:heartbeat	pkg/engine/gameloop.go	(GameLoop).heartbeat	primary
 src/comm.c:init_game	pkg/dprng/cmwc.go	ConfigureFromEnvironment	primary
@@ -673,6 +675,7 @@ src/interpreter.c:nanny	pkg/session/menu.go	(Session).loginMOTDFile	split
 src/interpreter.c:nanny	pkg/session/menu.go	(Session).prepareWorldEntry	split
 src/interpreter.c:nanny	pkg/session/menu.go	(Session).startMenuDescriptionEditor	split
 src/interpreter.c:nanny	pkg/session/session_send.go	(Session).sendPlayerText	split
+src/interpreter.c:nanny	pkg/session/manager.go	(Session).holdEntryLine	split
 src/interpreter.c:one_argument	pkg/game/act_comm.go	oneArgument	primary
 src/interpreter.c:one_argument	pkg/game/bans.go	(BanManager).DoBan	split
 src/interpreter.c:one_argument	pkg/game/spec_procs2.go	mobRescueVictim	split

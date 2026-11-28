@@ -91,5 +91,6 @@ icepass
 
 [relogin:port]
 Reclaim
+~dpclock pulse 1
 icepass
 <ENTER>
