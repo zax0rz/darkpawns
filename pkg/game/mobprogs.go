@@ -318,7 +318,8 @@ func (w *World) EntryProg(mob *MobInstance, room int) {
 	if room < 0 || mob.GetVNum() != 8059 {
 		return
 	}
-	for _, tch := range w.GetMobsInRoom(room) {
+	// C: entry_prog walks world[room].people newest-first (src/mobprog.c:296).
+	for _, tch := range w.COrderedRoomMobs(room) {
 		if tch == mob {
 			continue
 		}
@@ -377,7 +378,8 @@ func (w *World) isCityguard(ch *MobInstance) bool {
 // ---------------------------------------------------------------------------
 
 func (w *World) NpcRescue(chHero *MobInstance, chVictim *Player) bool {
-	roomMobs := w.GetMobsInRoom(chHero.GetRoom())
+	// C: npc_rescue walks world[ch_hero->in_room].people newest-first (src/mobprog.c:439).
+	roomMobs := w.COrderedRoomMobs(chHero.GetRoom())
 	var chBadGuy *MobInstance
 	for _, m := range roomMobs {
 		if m.GetFightingBody() == chVictim {
@@ -538,9 +540,10 @@ func (w *World) MpSound(mob *MobInstance) {
 // Helper methods needed by mobprogs
 // ---------------------------------------------------------------------------
 
-// GetFirstMobInRoomByVNum returns the first mob in a room with the given VNum.
+// GetFirstMobInRoomByVNum returns the first mob in a room with the given VNum
+// in C's world[room].people order (newest-first, src/handler.c:537-538).
 func (w *World) GetFirstMobInRoomByVNum(roomVNum int, vnum int) *MobInstance {
-	for _, m := range w.GetMobsInRoom(roomVNum) {
+	for _, m := range w.COrderedRoomMobs(roomVNum) {
 		if m.GetVNum() == vnum {
 			return m
 		}

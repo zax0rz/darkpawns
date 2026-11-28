@@ -1,0 +1,48 @@
+# R5h regression scenario for SPECIAL(assassin) list order (src/spec_procs2.c:856).
+# Spawns five distinct mobiles in room 8115 (room 8114 + 1) so C's world[as_loc].people
+# newest-first order has 120 permutations; origin/main's GetMobsInRoom map iteration
+# fails ~99.2% of runs while COrderedRoomPeople matches C deterministically.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8001 1 8115 80
+spawn-mob 8002 1 8115 80
+spawn-mob 8027 1 8115 80
+spawn-mob 8062 1 8115 80
+spawn-mob 8070 1 8115 80
+replace-room-exits 8115 none
+
+[setup:oracle]
+AssOrderActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+AssOrderActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8114
+
+[probe]
+list

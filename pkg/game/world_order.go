@@ -128,3 +128,64 @@ func (w *World) GetAllCharsInCharacterListOrder() []any {
 	}
 	return characters
 }
+
+// COrderedRoomPeople returns every live player and mobile in roomVNum in C's
+// world[room].people order (newest arrival first). Delegates to actChar so
+// there is a single room-people ordering implementation.
+func (w *World) COrderedRoomPeople(roomVNum int) []Actor {
+	return w.actChar(roomVNum)
+}
+
+// COrderedRoomPlayers returns the room's players in C's world[room].people
+// order (newest arrival first, src/handler.c:537-538).
+func (w *World) COrderedRoomPlayers(roomVNum int) []*Player {
+	players := w.GetPlayersInRoom(roomVNum)
+	sort.SliceStable(players, func(i, j int) bool {
+		si, sj := players[i].GetRoomEntrySequence(), players[j].GetRoomEntrySequence()
+		if si != sj {
+			return si > sj
+		}
+		return players[i].GetName() < players[j].GetName()
+	})
+	return players
+}
+
+// COrderedMobs returns all live mobiles in C's character_list order
+// (newest-first, src/db.c:1745-1746).
+func (w *World) COrderedMobs() []*MobInstance {
+	ordered := w.cOrderedCharacters()
+	mobs := make([]*MobInstance, 0, len(ordered))
+	for _, entry := range ordered {
+		if entry.mob != nil {
+			mobs = append(mobs, entry.mob)
+		}
+	}
+	return mobs
+}
+
+// COrderedPlayers returns all live players in C's character_list order
+// (newest-first, src/db.c:1716-1717; src/interpreter.c:2188-2189).
+func (w *World) COrderedPlayers() []*Player {
+	ordered := w.cOrderedCharacters()
+	players := make([]*Player, 0, len(ordered))
+	for _, entry := range ordered {
+		if entry.player != nil {
+			players = append(players, entry.player)
+		}
+	}
+	return players
+}
+
+// COrderedObjects returns all live object instances in C's global object_list
+// order (newest-first, because create_obj and read_object prepend:
+// src/db.c:1892-1893, 1950-1951).
+func (w *World) COrderedObjects() []*ObjectInstance {
+	w.mu.RLock()
+	objs := make([]*ObjectInstance, 0, len(w.objectInstances))
+	for _, obj := range w.objectInstances {
+		objs = append(objs, obj)
+	}
+	w.mu.RUnlock()
+	sort.Slice(objs, func(i, j int) bool { return objs[i].ID > objs[j].ID })
+	return objs
+}
