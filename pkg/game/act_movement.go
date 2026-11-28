@@ -370,9 +370,10 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	if !ch.IsAffected(affSneak) {
 		// MobProg greet: C-style trigger for specific mobs.
 		w.MpGreetActor(ch, ext.ToRoom)
-		// Lua greet triggers for all mobs in the new room with the script.
+		// Lua greet triggers for all mobs in the new room with the script
+		// in C's world[room].people newest-first order.
 		if ScriptEngine != nil {
-			for _, mob := range w.GetMobsInRoom(ext.ToRoom) {
+			for _, mob := range w.COrderedRoomMobs(ext.ToRoom) {
 				if mob.HasScript("greet") {
 					ctx := mob.CreateScriptContext(ch, nil, "")
 					ctx.World = NewWorldScriptableAdapter(w)
@@ -462,7 +463,7 @@ func (w *World) clearMountedPair(rider *Player, mount *MobInstance) {
 // the entities in their room.
 func (w *World) movementSpecialBlocks(ch *Player, direction string) bool {
 	roomVNum := ch.GetRoom()
-	for _, mob := range w.GetMobsInRoom(roomVNum) {
+	for _, mob := range w.COrderedRoomMobs(roomVNum) {
 		if spec := GetMobSpec(mob.VNum); spec != nil && spec(w, ch, mob, direction, "") {
 			return true
 		}

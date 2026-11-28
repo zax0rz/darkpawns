@@ -643,9 +643,7 @@ func (w *World) RemovePlayerBody(p *Player) {
 
 // ForEachPlayerInZone calls fn for each player in the given zone. Thread-safe.
 func (w *World) ForEachPlayerInZone(zoneNum int, fn func(p *Player)) {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	for _, p := range w.players {
+	for _, p := range w.COrderedPlayers() {
 		roomVNum := p.GetRoom()
 		zone := w.GetRoomZone(roomVNum)
 		if zone == zoneNum {
@@ -663,19 +661,15 @@ func (w *World) ForEachPlayerInZoneInterface(zoneNum int, fn func(p any)) {
 // ForEachPlayerInRoomInterface iterates players in a room with interface{} callback.
 // For use from packages that can't import game types (e.g., spells).
 func (w *World) ForEachPlayerInRoomInterface(roomVNum int, fn func(p any)) {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	for _, p := range w.players {
-		if p.GetRoom() == roomVNum {
-			fn(p)
-		}
+	for _, p := range w.COrderedRoomPlayers(roomVNum) {
+		fn(p)
 	}
 }
 
 // ForEachMobInRoomInterface iterates mobs in a room with interface{} callback.
 // For use from packages that can't import game types (e.g., spells).
 func (w *World) ForEachMobInRoomInterface(roomVNum int, fn func(m any)) {
-	for _, m := range w.GetMobsInRoom(roomVNum) {
+	for _, m := range w.COrderedRoomMobs(roomVNum) {
 		fn(m)
 	}
 }

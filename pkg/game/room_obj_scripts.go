@@ -11,7 +11,6 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"sort"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
@@ -357,14 +356,7 @@ func (w *World) repairObjectWeight(obj *ObjectInstance) {
 // liveObjectsInCOrder snapshots every live object instance in C's newest-first
 // object_list order (src/db.c:1892-1893,1950-1951).
 func (w *World) liveObjectsInCOrder() []*ObjectInstance {
-	w.mu.RLock()
-	objs := make([]*ObjectInstance, 0, len(w.objectInstances))
-	for _, obj := range w.objectInstances {
-		objs = append(objs, obj)
-	}
-	w.mu.RUnlock()
-	sort.Slice(objs, func(i, j int) bool { return objs[i].ID > objs[j].ID })
-	return objs
+	return w.COrderedObjects()
 }
 
 // objPulseRoomVNum resolves the room C passes for an object's onpulse: the

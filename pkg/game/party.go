@@ -48,6 +48,12 @@ func (w *World) GetFollowersInRoom(leaderName string, roomVNum int) []*Player {
 			followers = append(followers, p)
 		}
 	}
+	sort.SliceStable(followers, func(i, j int) bool {
+		if followers[i].GetFollowingSequence() != followers[j].GetFollowingSequence() {
+			return followers[i].GetFollowingSequence() > followers[j].GetFollowingSequence()
+		}
+		return strings.ToLower(followers[i].GetName()) < strings.ToLower(followers[j].GetName())
+	})
 	return followers
 }
 

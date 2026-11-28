@@ -529,24 +529,16 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 		return SkillResult{Success: false, MessageToCh: "This room just has such a peaceful, easy feeling...\r\n"}
 	}
 
-	// Find who is fighting the target
+	// Find who is fighting the target in C's world[ch->in_room].people order.
 	var attacker combat.Combatant
-	// Check players
-	players := world.GetPlayersInRoom(ch.GetRoom())
-	for _, p := range players {
-		if p.GetFightingBody() == target && p.Name != ch.Name {
-			attacker = p
-			break
+	for _, person := range world.COrderedRoomPeople(ch.GetRoom()) {
+		body, ok := person.(combat.Combatant)
+		if !ok || body == combat.Combatant(ch) {
+			continue
 		}
-	}
-	// Check mobs
-	if attacker == nil {
-		mobs := world.GetMobsInRoom(ch.GetRoom())
-		for _, m := range mobs {
-			if m.GetFightingBody() == target {
-				attacker = m
-				break
-			}
+		if body.GetFightingBody() == target {
+			attacker = body
+			break
 		}
 	}
 

@@ -295,13 +295,7 @@ func (w *World) followingActor(name string) Actor {
 	if player, ok := w.GetPlayer(name); ok {
 		return player
 	}
-	w.mu.RLock()
-	mobs := make([]*MobInstance, 0, len(w.activeMobs))
-	for _, mob := range w.activeMobs {
-		mobs = append(mobs, mob)
-	}
-	w.mu.RUnlock()
-	for _, mob := range mobs {
+	for _, mob := range w.COrderedMobs() {
 		if strings.EqualFold(mob.GetName(), name) || strings.EqualFold(mob.GetShortDesc(), name) {
 			return mob
 		}

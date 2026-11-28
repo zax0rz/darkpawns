@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"sort"
 )
 
 func (w *World) doClanEnroll(ch *Player, arg string) {
@@ -31,10 +32,20 @@ func (w *World) doClanEnroll(ch *Player, arg string) {
 		ch.SendMessage("The following players have applied to your clan:\r\n" +
 			"-----------------------------------------------\r\n")
 		playingNames := w.playingPlayerNames()
+		online := make([]*Player, 0, len(w.players))
 		for _, p := range w.players {
 			if playingNames[p.Name] && p.ClanID == c.ID && p.ClanRank == 0 {
-				ch.SendMessage(fmt.Sprintf("%s\r\n", p.Name))
+				online = append(online, p)
 			}
+		}
+		sort.SliceStable(online, func(i, j int) bool {
+			if online[i].ID != online[j].ID {
+				return online[i].ID < online[j].ID
+			}
+			return online[i].Name < online[j].Name
+		})
+		for _, p := range online {
+			ch.SendMessage(fmt.Sprintf("%s\r\n", p.Name))
 		}
 		players, err := w.StoredPlayers()
 		if err != nil {
@@ -304,14 +315,24 @@ func (w *World) doClanMembers(ch *Player) {
 	ch.SendMessage("\r\nList of your clan members\r\n" +
 		"-------------------------\r\n")
 
+	onlineMembers := make([]*Player, 0, len(w.players))
 	for _, p := range w.players {
 		if p.ClanID == ch.ClanID && p.ClanRank != 0 {
-			rankName := ""
-			if p.ClanRank-1 >= 0 && p.ClanRank-1 < len(c.RankName) {
-				rankName = c.RankName[p.ClanRank-1]
-			}
-			ch.SendMessage(fmt.Sprintf("%s %s \r\n", rankName, p.Name))
+			onlineMembers = append(onlineMembers, p)
 		}
+	}
+	sort.SliceStable(onlineMembers, func(i, j int) bool {
+		if onlineMembers[i].ID != onlineMembers[j].ID {
+			return onlineMembers[i].ID < onlineMembers[j].ID
+		}
+		return onlineMembers[i].Name < onlineMembers[j].Name
+	})
+	for _, p := range onlineMembers {
+		rankName := ""
+		if p.ClanRank-1 >= 0 && p.ClanRank-1 < len(c.RankName) {
+			rankName = c.RankName[p.ClanRank-1]
+		}
+		ch.SendMessage(fmt.Sprintf("%s %s \r\n", rankName, p.Name))
 	}
 	players, err := w.StoredPlayers()
 	if err != nil {
