@@ -84,10 +84,14 @@ them; Go registers all of these):
 ## Cross-cutting patterns (the "anything that didn't fit" list)
 
 - **`isname` → `isnameWithAbbrevs` drift.** C's exact-token `isname` became
-  the prefix-matching `isnameWithAbbrevs` in several ports: `assassin`
-  roster lookup, `medusa` look gate, `eq_thief` junk scan, `mortician`
-  corpse match, `elements_load_cylinders` dropped-talisman match. Each lets
-  Go accept abbreviations C rejects. (`quan_lo`, `eviltrade`, `con_seller`
+  the prefix-matching `isnameWithAbbrevs` in two ports: `medusa`
+  (`src/spec_procs2.c:1561`) and `mortician` (`src/spec_procs3.c:838`), each
+  calling `isname` directly. Each lets Go accept abbreviations C rejects.
+  Three rows previously listed here — `assassin`, `eq_thief`,
+  `elements_load_cylinders` — were false positives: they go through C's
+  `get_char_room`/`get_obj_in_list_vis`, which match with
+  `isname_with_abbrevs` themselves (`src/handler.c:877`, `:1341`), so Go's
+  prefix match is faithful there. (`quan_lo`, `eviltrade`, `con_seller`
   correctly use exact-match `isCName`/EqualFold.)
 - **`strings.TrimSpace` vs C's `skip_spaces`.** C strips leading whitespace
   only, so a trailing space fails its `strcmp`/`strcasecmp` gates
@@ -116,6 +120,26 @@ them; Go registers all of these):
   `enter_circle`'s "Enter what?" go through `sendToChar`/`SendMessage` and
   emit `\r\n` where C emits `\n\r`. `brass_dragon` and the element rooms
   preserve the C bytes verbatim.
+
+## Corrections after review
+
+Ember's review (#3105) checked rows against C and found five cells wrong;
+fixed 2026-11-28, each re-verified against the cited C line:
+
+- `assassin`, `eq_thief`, `elements_load_cylinders` — the claimed
+  `isname`-exact-token drift does not exist: C's `get_char_room` and
+  `get_obj_in_list_vis` match with `isname_with_abbrevs`
+  (`src/handler.c:877`, `:1341`), so Go's prefix match is faithful. Those
+  checks are now `ok`.
+- `tattoo4` — Go's extra `IS_NPC` gate is real textually but inert:
+  `Player.IsNPC()` always returns false (`pkg/game/player_stats.go:442`).
+  Kept, marked inert.
+- `suck_in` — the `strcasecmp` mismatch is inert: C lowercases the token
+  with `one_argument` (called at `src/spec_procs.c:2289`; `LOWER` at
+  `src/interpreter.c:1276`) before comparing, and Go's `oneArgument`
+  lowercases too (`pkg/game/act_comm.go:749`).
+
+No `summary` value changed (still 85 faithful / 21 minor / 7 stand-in).
 
 ## Bookkeeping (verified before push)
 
