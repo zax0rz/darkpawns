@@ -1,0 +1,92 @@
+# The guild guard's ninja row carries the same slip as the cleric row, but no
+# player can reach it. guild_info's ninja row is {CLASS_NINJA, 8525,
+# SCMD_SOUTH} (src/class.c:287), matched at src/spec_procs.c:599; the port
+# stored it as east. Room 8525 is in 85.wld, which the shipped world index
+# omits (lib/world/wld/index lists 68 of the 93 room files), so neither
+# engine loads it, and the ninja guild guard, mob 8025
+# (src/spec_assign.c:276), loads in 8150 (lib/world/zon/80.zon:56), a room
+# no row names. This vehicle builds the row's doorway on a disposable world:
+# add-wld-index loads 85.wld on both sides, and the spawn puts the registered
+# guard where the table expects it.
+#
+# Room 8525 has north and south exits only (lib/world/wld/85.wld:490-499),
+# so east must reach perform_move's missing-exit line
+# (src/act.movement.c:319-320). The warrior is wrong for the row, the ninja
+# is right for it. The first player in an empty store is an implementor
+# (src/db.c:3016-3019), so warmup drops the warrior to level 1 before the
+# guard sees a mover (src/spec_procs.c:592). The drop comes last: C answers
+# teleport with "Huh?!?" once the caller is level 1
+# (src/interpreter.c:910-916; teleport needs LVL_GOD, src/interpreter.c:763).
+# depth-case: mob.guild-guard-ninja-doorway
+
+[fixture]
+empty-players
+quiet-mobs
+add-wld-index 85.wld
+spawn-mob 8025 1 8525 80
+
+[setup:oracle]
+Dojowarrior
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dojowarrior
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Dojoninja
+Y
+oraclepass
+oraclepass
+N
+M
+H
+N
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Dojoninja
+Y
+oraclepass
+oraclepass
+N
+M
+H
+N
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8525
+teleport Dojoninja 8525
+set Dojowarrior level 1
+
+[probe]
+east
+south
+send:peer south

@@ -100,19 +100,27 @@ var PracParams = [4][12]int{
 type GuildInfoEntry struct {
 	Class     int // Class constant (or -1 for sentinel)
 	Room      int // Guild room vnum
-	Direction int // SCMD_NORTH/SOUTH/EAST/WEST
+	Direction int // 0-based direction index (dirs order), not the C SCMD_* value
 }
 
 // GuildInfo controls which rooms guildguards allow each class to enter.
 // The last entry is a sentinel with Class=-1.
 // Source: class.c guild_info[][3]
+//
+// C's third column is an SCMD_* constant (src/interpreter.h:93-98), which
+// guild_guard compares with the cmd_info index of the typed command
+// (src/spec_procs.c:599). That index is one-based: cmd_info[0] is RESERVED
+// and the six directions follow it (src/interpreter.c:311-319). Go compares
+// the direction guildGuardDirection returns, the same 0-based index do_move
+// passes perform_move as cmd - 1 (src/act.movement.c:365), so each row below
+// is its C constant minus 1.
 var GuildInfo = []GuildInfoEntry{
 	{ClassMageUser, 8014, 0}, // SCMD_NORTH
 	{ClassThief, 8028, 0},    // SCMD_NORTH
-	{ClassCleric, 8027, 1},   // SCMD_SOUTH
+	{ClassCleric, 8027, 2},   // SCMD_SOUTH
 	{ClassWarrior, 8015, 0},  // SCMD_NORTH
 	{ClassPsionic, 8518, 3},  // SCMD_WEST
-	{ClassNinja, 8525, 1},    // SCMD_SOUTH
+	{ClassNinja, 8525, 2},    // SCMD_SOUTH
 	{-1, -1, -1},             // sentinel
 }
 

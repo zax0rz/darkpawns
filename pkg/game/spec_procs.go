@@ -612,7 +612,9 @@ func specGuildGuard(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 // direction index. C compares cmd_info's command number against
 // guild_info[i][2] after IS_MOVE(cmd) (src/spec_procs.c:585-599); the resolved
 // name is the port's handle on that number, so the typed abbreviations no
-// longer appear.
+// longer appear. cmd_info's number is one-based (RESERVED is 0,
+// src/interpreter.c:311-319), so this returns that number minus 1, as do_move
+// does for perform_move (src/act.movement.c:365).
 func guildGuardDirection(cmd string) (int, bool) {
 	switch cmd {
 	case "north":
