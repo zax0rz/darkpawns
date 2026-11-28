@@ -121,11 +121,10 @@ func DoBerserk(ch *Player) SkillResult {
 	}
 }
 
-// checkKkSuccess implements check_kk_success() from new_cmds.c:1500-1541.
-//
-// NOTE: the original C switch has no case for SKILL_KK_TOH, so prob stays 0
-// for that seal and the 1-101 roll always exceeds it — the Toh seal's
-// success check always fails. Ported faithfully; do not "fix".
+// checkKkSuccess implements check_kk_success() from new_cmds.c:1501-1541:
+// one number(1,101) draw, then prob is the seal's practiced skill, with one
+// case per seal in C's order (RIN, KYO, TOH, SHA, KAI, JIN, RETSU, ZAI, ZHEN;
+// src/new_cmds.c:1507-1534).
 func checkKkSuccess(ch *Player, seal string) bool {
 	// #nosec G404 — game RNG, not cryptographic
 	percent := dprng.Number(1, 101) // 1-101, 101 = guaranteed failure
@@ -135,6 +134,8 @@ func checkKkSuccess(ch *Player, seal string) bool {
 		prob = ch.GetSkill(SkillKkRin)
 	case SkillKkKyo:
 		prob = ch.GetSkill(SkillKkKyo)
+	case SkillKkToh:
+		prob = ch.GetSkill(SkillKkToh)
 	case SkillKkSha:
 		prob = ch.GetSkill(SkillKkSha)
 	case SkillKkKai:

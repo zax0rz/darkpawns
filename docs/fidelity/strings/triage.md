@@ -17,13 +17,13 @@ the counts below in step with the baseline).
 | `bug:paraphrase` | 0 |
 | `census:composed` | 28 |
 | `data` | 0 |
-| `surface:no-c` | 9 |
+| `surface:no-c` | 8 |
 | `unsure` | 0 |
 | `divergence:approved` | 5 |
 | `unreviewed` | 0 |
-| **total** | **44** |
+| **total** | **43** |
 
-`unsure` is 0/44 (0.0%).
+`unsure` is 0/43 (0.0%).
 
 **This document classifies; it changes no game code.** Fix work is Claude's.
 
@@ -109,7 +109,7 @@ bytes (`census:composed`).
 | `You failed.` | `pkg/spells/affect_spells.go:3346` | `census:composed` | `src/spells.c:216` `#define SUMMON_FAIL "You failed.\r\n"`, sent at `src/spells.c:321` |
 | `can't carry any more.` | `pkg/game/item_transfer.go:473` | `bug:invented` | C `perform_give` (`src/act.item.c:670-708`) has no failure branch after its two gates; `obj_to_char` is infallible |
 | `The corpse refuses to come alive!` | `pkg/spells/affect_spells.go:1193` | `bug:invented` | C `mag_summons` (`src/magic.c:1728-1734`) calls `create_mobile` with no failure branch; it asserts on a bad vnum |
-| `No target.` | `pkg/spells/affect_spells.go:1759` | `surface:no-c` | Unreachable nil-victim guard: TAR_CHAR_ROOM dispatch always supplies a victim; C asserts (`src/spells.c:690`) |
+| ~~`No target.`~~ | `pkg/spells/affect_spells.go:1759` | `surface:no-c` | Unreachable nil-victim guard: TAR_CHAR_ROOM dispatch always supplies a victim; C asserts (`src/spells.c:690`). **Fixed 2026-11-28:** the guard now sends nothing (R4), so the row left the baseline |
 | `Teleport failed: world interface not available.` | `pkg/spells/affect_spells.go:2773` | `surface:no-c` | Go world-interface assertion; the live server's world always implements it |
 | `You are in a void.` | `pkg/game/skill_actor_selected.go:280` | `surface:no-c` | Nil-room guard in behead; C reads `world[ch->in_room]` directly (`src/new_cmds.c:255`) |
 | `You are nowhere.` | `pkg/game/skill_actor_shoot.go:69` | `surface:no-c` | Nil-room guard in shoot; C reads the room via `EXIT(ch, dir)` (`src/act.offensive.c:814`) |

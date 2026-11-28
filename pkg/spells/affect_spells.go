@@ -1752,11 +1752,13 @@ func init() {
 // --- Wave A manual spell implementations ---
 
 // castSobriety — clears drunk condition.
-// C source: spells.c:688-715. C bug: assert(victim) crashes on null — we return gracefully.
+// C source: spells.c:688-715. C asserts victim non-null (src/spells.c:690);
+// the TAR_CHAR_ROOM dispatch always supplies one, so the nil guard below is
+// unreachable. It stays as a guard but sends nothing — C prints no line on
+// this path (R4).
 func castSobriety(level int, ch, cvict interface{}) {
 	_ = level
 	if cvict == nil {
-		sendToCaster(ch, "No target.\r\n")
 		return
 	}
 

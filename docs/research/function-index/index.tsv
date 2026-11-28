@@ -5298,9 +5298,9 @@ game	TestSkillResultDamageAttackTypePrefersCSkillMessageKey	pkg/game/skill_attac
 game	TestSkillKillCorpseUsesCSkillAttackType	pkg/game/skill_attack_type_test.go	105	src/fight.c:make_corpse	src/fight.c:283-370	
 game	kkSkillNum	pkg/game/skill_berserk_kuji.go	50			
 game	DoBerserk	pkg/game/skill_berserk_kuji.go	77			
-game	checkKkSuccess	pkg/game/skill_berserk_kuji.go	129			
-game	DoKujiKiri	pkg/game/skill_berserk_kuji.go	164			
-game	kujiKiriAfterGates	pkg/game/skill_berserk_kuji.go	181			
+game	checkKkSuccess	pkg/game/skill_berserk_kuji.go	128	src/new_cmds.c:check_kk_success	src/new_cmds.c:1507-1534	
+game	DoKujiKiri	pkg/game/skill_berserk_kuji.go	165			
+game	kujiKiriAfterGates	pkg/game/skill_berserk_kuji.go	182			
 game	TestDoBerserk_NoSkill	pkg/game/skill_berserk_kuji_test.go	14			
 game	TestDoBerserk_AlreadyAffected	pkg/game/skill_berserk_kuji_test.go	26			
 game	TestDoBerserk_AffectedGateConsumesPercentDraw	pkg/game/skill_berserk_kuji_test.go	40			
@@ -5313,11 +5313,11 @@ game	TestDoKujiKiri_Fighting	pkg/game/skill_berserk_kuji_test.go	177
 game	TestDoKujiKiri_AlreadyAffected	pkg/game/skill_berserk_kuji_test.go	193			
 game	TestDoKujiKiri_Mounted	pkg/game/skill_berserk_kuji_test.go	209			
 game	TestDoKujiKiri_SealNotMastered	pkg/game/skill_berserk_kuji_test.go	225			
-game	TestCheckKkSuccess_TohAlwaysFails	pkg/game/skill_berserk_kuji_test.go	248	src/new_cmds.c:check_kk_success	ports check_kk_success(	
-game	TestCheckKkSuccess_OtherSealsCanSucceed	pkg/game/skill_berserk_kuji_test.go	264			
-game	TestDoKujiKiri_RinSuccessFoldsIntoAC	pkg/game/skill_berserk_kuji_test.go	286			
-game	TestDoKujiKiri_ShaSuccessHeals	pkg/game/skill_berserk_kuji_test.go	316			
-game	TestDoKujiKiri_FailurePreventsNumericEffect	pkg/game/skill_berserk_kuji_test.go	350			
+game	TestCheckKkSuccess_TohCanSucceed	pkg/game/skill_berserk_kuji_test.go	252	src/new_cmds.c:check_kk_success	ports check_kk_success( | src/new_cmds.c:1514-1516	
+game	TestCheckKkSuccess_OtherSealsCanSucceed	pkg/game/skill_berserk_kuji_test.go	268			
+game	TestDoKujiKiri_RinSuccessFoldsIntoAC	pkg/game/skill_berserk_kuji_test.go	290			
+game	TestDoKujiKiri_ShaSuccessHeals	pkg/game/skill_berserk_kuji_test.go	320			
+game	TestDoKujiKiri_FailurePreventsNumericEffect	pkg/game/skill_berserk_kuji_test.go	354			
 game	DoDisembowel	pkg/game/skill_c10_combat.go	12			
 game	DoDragonKick	pkg/game/skill_c10_combat.go	84			
 game	DoTigerPunch	pkg/game/skill_c10_combat.go	142	src/fight.c:damage	C's damage(	
@@ -6385,6 +6385,7 @@ game	wireTigerPunchMessages	pkg/game/tiger_skillmsg_test.go	134
 game	MudTimePassed	pkg/game/time_utils.go	43	src/utils.c:mud_time_passed	Ported from mud_time_passed(	
 game	Age	pkg/game/time_utils.go	77	src/utils.c:age	Ported from age(	
 game	ParseRace	pkg/game/time_utils.go	108	src/utils.c:parse_race	Ported from parse_race(	
+game	TestDoKujiKiri_TohSuccessPreservesTwoCRecords	pkg/game/toh_depth_test.go	11	src/new_cmds.c:check_kk_success; src/new_cmds.c:do_kuji_kiri	C: check_kk_success( | src/new_cmds.c:1500-1739	
 game	wireTripMessages	pkg/game/trip_skillmsg_test.go	13			
 game	TestDoTrip_Miss_ReroutesThroughSkillMessage	pkg/game/trip_skillmsg_test.go	41			
 game	TestDoTrip_Hit_ReroutesThroughSkillMessage	pkg/game/trip_skillmsg_test.go	85			
@@ -11286,54 +11287,54 @@ spells	setHP	pkg/spells/affect_spells.go	1591
 spells	npcRetaliate	pkg/spells/affect_spells.go	1611	src/fight.c:hit; src/magic.c:mag_affects; src/spells.c:spell_teleport	C's hit( | src/magic.c:945 | src/spells.c:186	
 spells	spellCounterattack	pkg/spells/affect_spells.go	1632	src/fight.c:hit; src/spells.c:spell_teleport	C's hit( | src/spells.c:186	
 spells	init	pkg/spells/affect_spells.go	1640			
-spells	castSobriety	pkg/spells/affect_spells.go	1756			
-spells	castZen	pkg/spells/affect_spells.go	1783	src/spells.c:spell_silken_missile; src/spells.c:spell_zen	src/spells.c:871-883	
-spells	castDetectPoison	pkg/spells/affect_spells.go	1826			
-spells	castCalliope	pkg/spells/affect_spells.go	1880			
-spells	castLycanthropy	pkg/spells/affect_spells.go	1894			
-spells	castVampirism	pkg/spells/affect_spells.go	1939			
-spells	castControlWeather	pkg/spells/affect_spells.go	1976			
-spells	firstManualSpellArgument	pkg/spells/affect_spells.go	2000	src/interpreter.c:fill_word; src/interpreter.c:one_argument; src/interpreter.c:reserved_word	src/interpreter.c:1251-1281	
-spells	lowerManualSpellASCII	pkg/spells/affect_spells.go	2020			
-spells	castCoC	pkg/spells/affect_spells.go	2032			
-spells	castMentalLapse	pkg/spells/affect_spells.go	2088			
-spells	castEnchantWeapon	pkg/spells/affect_spells.go	2147			
-spells	castEnchantArmor	pkg/spells/affect_spells.go	2222			
-spells	castCreateWater	pkg/spells/affect_spells.go	2289			
-spells	clearDrinkconName	pkg/spells/affect_spells.go	2351			
-spells	setDrinkconName	pkg/spells/affect_spells.go	2364			
-spells	castIdentify	pkg/spells/affect_spells.go	2376			
-spells	castIdentifyObject	pkg/spells/affect_spells.go	2384			
-spells	identifyBits	pkg/spells/affect_spells.go	2517			
-spells	identifyItemTypeName	pkg/spells/affect_spells.go	2525			
-spells	identifySpellName	pkg/spells/affect_spells.go	2532			
-spells	identifyAffectedBitName	pkg/spells/affect_spells.go	2540			
-spells	identifyApplyTypeName	pkg/spells/affect_spells.go	2547			
-spells	identifyMobRaceName	pkg/spells/affect_spells.go	2554			
-spells	pluralS	pkg/spells/affect_spells.go	2561			
-spells	castIdentifyCharacter	pkg/spells/affect_spells.go	2568			
-spells	areGrouped	pkg/spells/affect_spells.go	2674	src/utils.c:are_grouped; src/utils.c:is_intelligent	src/utils.c:655-674	
-spells	castWordOfRecall	pkg/spells/affect_spells.go	2728	src/spells.c:spell_recall	c spell_recall (	
-spells	castTeleport	pkg/spells/affect_spells.go	2753	src/spells.c:spell_teleport	c spell_teleport (	
-spells	castMeteorSwarm	pkg/spells/affect_spells.go	2880	src/spells.c:spell_meteor_swarm	c spell_meteor_swarm (	
-spells	castHellfire	pkg/spells/affect_spells.go	2963	src/spells.c:spell_hellfire	c spell_hellfire (	
-spells	castHellfireActToVictim	pkg/spells/affect_spells.go	3042			
-spells	castHellfireActNotVictim	pkg/spells/affect_spells.go	3054			
-spells	castCharm	pkg/spells/affect_spells.go	3066	src/spells.c:spell_charm	c spell_charm (	
-spells	castSummon	pkg/spells/affect_spells.go	3217	src/spells.c:spell_summon	c spell_summon (	
-spells	transferSummonCharacter	pkg/spells/affect_spells.go	3384			
-spells	consumeSummoningCircle	pkg/spells/affect_spells.go	3397			
-spells	hasSummonMobFlag	pkg/spells/affect_spells.go	3430			
-spells	isSummonable	pkg/spells/affect_spells.go	3436			
-spells	summonAttemptNotice	pkg/spells/affect_spells.go	3442			
-spells	castDivineInt	pkg/spells/affect_spells.go	3462	src/spells.c:spell_divine_int	c spell_divine_int (	
-spells	spellActToRoom	pkg/spells/affect_spells.go	3540			
-spells	castConjureElemental	pkg/spells/affect_spells.go	3553	src/spells.c:spell_conjure_elemental	c spell_conjure_elemental (	
-spells	castMindsight	pkg/spells/affect_spells.go	3656	src/spells.c:spell_mindsight	c spell_mindsight (	
-spells	castGate	pkg/spells/affect_spells.go	3738			
-spells	castLocateObject	pkg/spells/affect_spells.go	3752			
-spells	castMirrorImage	pkg/spells/affect_spells.go	3798			
-spells	logProtectionKill	pkg/spells/affect_spells.go	3871	src/magic.c:mag_affects	src/magic.c:1146-1148	
+spells	castSobriety	pkg/spells/affect_spells.go	1759	src/spells.c:spell_sobriety	src/spells.c:690	
+spells	castZen	pkg/spells/affect_spells.go	1785	src/spells.c:spell_silken_missile; src/spells.c:spell_zen	src/spells.c:871-883	
+spells	castDetectPoison	pkg/spells/affect_spells.go	1828			
+spells	castCalliope	pkg/spells/affect_spells.go	1882			
+spells	castLycanthropy	pkg/spells/affect_spells.go	1896			
+spells	castVampirism	pkg/spells/affect_spells.go	1941			
+spells	castControlWeather	pkg/spells/affect_spells.go	1978			
+spells	firstManualSpellArgument	pkg/spells/affect_spells.go	2002	src/interpreter.c:fill_word; src/interpreter.c:one_argument; src/interpreter.c:reserved_word	src/interpreter.c:1251-1281	
+spells	lowerManualSpellASCII	pkg/spells/affect_spells.go	2022			
+spells	castCoC	pkg/spells/affect_spells.go	2034			
+spells	castMentalLapse	pkg/spells/affect_spells.go	2090			
+spells	castEnchantWeapon	pkg/spells/affect_spells.go	2149			
+spells	castEnchantArmor	pkg/spells/affect_spells.go	2224			
+spells	castCreateWater	pkg/spells/affect_spells.go	2291			
+spells	clearDrinkconName	pkg/spells/affect_spells.go	2353			
+spells	setDrinkconName	pkg/spells/affect_spells.go	2366			
+spells	castIdentify	pkg/spells/affect_spells.go	2378			
+spells	castIdentifyObject	pkg/spells/affect_spells.go	2386			
+spells	identifyBits	pkg/spells/affect_spells.go	2519			
+spells	identifyItemTypeName	pkg/spells/affect_spells.go	2527			
+spells	identifySpellName	pkg/spells/affect_spells.go	2534			
+spells	identifyAffectedBitName	pkg/spells/affect_spells.go	2542			
+spells	identifyApplyTypeName	pkg/spells/affect_spells.go	2549			
+spells	identifyMobRaceName	pkg/spells/affect_spells.go	2556			
+spells	pluralS	pkg/spells/affect_spells.go	2563			
+spells	castIdentifyCharacter	pkg/spells/affect_spells.go	2570			
+spells	areGrouped	pkg/spells/affect_spells.go	2676	src/utils.c:are_grouped; src/utils.c:is_intelligent	src/utils.c:655-674	
+spells	castWordOfRecall	pkg/spells/affect_spells.go	2730	src/spells.c:spell_recall	c spell_recall (	
+spells	castTeleport	pkg/spells/affect_spells.go	2755	src/spells.c:spell_teleport	c spell_teleport (	
+spells	castMeteorSwarm	pkg/spells/affect_spells.go	2882	src/spells.c:spell_meteor_swarm	c spell_meteor_swarm (	
+spells	castHellfire	pkg/spells/affect_spells.go	2965	src/spells.c:spell_hellfire	c spell_hellfire (	
+spells	castHellfireActToVictim	pkg/spells/affect_spells.go	3044			
+spells	castHellfireActNotVictim	pkg/spells/affect_spells.go	3056			
+spells	castCharm	pkg/spells/affect_spells.go	3068	src/spells.c:spell_charm	c spell_charm (	
+spells	castSummon	pkg/spells/affect_spells.go	3219	src/spells.c:spell_summon	c spell_summon (	
+spells	transferSummonCharacter	pkg/spells/affect_spells.go	3386			
+spells	consumeSummoningCircle	pkg/spells/affect_spells.go	3399			
+spells	hasSummonMobFlag	pkg/spells/affect_spells.go	3432			
+spells	isSummonable	pkg/spells/affect_spells.go	3438			
+spells	summonAttemptNotice	pkg/spells/affect_spells.go	3444			
+spells	castDivineInt	pkg/spells/affect_spells.go	3464	src/spells.c:spell_divine_int	c spell_divine_int (	
+spells	spellActToRoom	pkg/spells/affect_spells.go	3542			
+spells	castConjureElemental	pkg/spells/affect_spells.go	3555	src/spells.c:spell_conjure_elemental	c spell_conjure_elemental (	
+spells	castMindsight	pkg/spells/affect_spells.go	3658	src/spells.c:spell_mindsight	c spell_mindsight (	
+spells	castGate	pkg/spells/affect_spells.go	3740			
+spells	castLocateObject	pkg/spells/affect_spells.go	3754			
+spells	castMirrorImage	pkg/spells/affect_spells.go	3800			
+spells	logProtectionKill	pkg/spells/affect_spells.go	3873	src/magic.c:mag_affects	src/magic.c:1146-1148	
 spells	(mockSpellsChar).GetName	pkg/spells/affect_spells_test.go	41			
 spells	(mockSpellsChar).GetTitle	pkg/spells/affect_spells_test.go	42			
 spells	(mockSpellsChar).GetDescription	pkg/spells/affect_spells_test.go	43			
