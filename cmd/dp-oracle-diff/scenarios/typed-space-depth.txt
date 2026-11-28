@@ -1,0 +1,51 @@
+# Red witness for PF-193 (the spaces a player typed): interior runs and
+# trailing spaces in the typed line. The <SP> marker writes a literal space
+# the parser would otherwise trim, so "say tail<SP><SP><SP>" types trailing
+# spaces like C's process_input hands them to command_interpreter. The last
+# probe repeats portal_to_temple's gate (room 19658): C's strcasecmp fails
+# the trailing space and the word is said, not teleported; the Go port
+# currently joins the words and teleports. Both diverge on the port until
+# handlers preserve the raw argument.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+TypedHero
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TypedHero
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 19658
+
+[probe]
+say hi     there
+say one  two   three
+gossip hi     there
+emote waves     slowly
+say tail<SP><SP><SP>
+say setchswayno<SP>
