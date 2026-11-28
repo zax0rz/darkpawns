@@ -1,0 +1,55 @@
+# Regression scenario for ReloginConn FirstByteWaiter forwarding on live-world
+# ~dpclock pulse bursts (brief 2026-11-27 PR 1).
+# Without FirstByteWaiter forwarding on ReloginConn, extendPulseFirstByteWait
+# silently returns a no-op and leaves firstByteWait at 2s while Go's live-world
+# PumpPulses(1260) takes ~4-5s, causing empty-open on the pulse step and leaking
+# the pulse's async output + extra prompt into the following steps.
+
+[setup:oracle]
+Plaaaa
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Plaaaa
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Plaaaa
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Plaaaa
+oraclepass
+<ENTER>
+1
+
+[probe]
+north
+east
+south
+west
+~dpclock pulse 1260
+<ENTER>
+score

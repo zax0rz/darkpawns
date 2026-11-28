@@ -221,4 +221,25 @@ func TestExtendPulseFirstByteWaitScalesLongPulse(t *testing.T) {
 		t.Fatalf("capped pulse firstByteWait = %s, want 60s", got)
 	}
 	restore()
+
+	// ReloginConn, RestartConn, and CrashConn must forward FirstByteWaiter so
+	// scenarios with [relogin:*] still extend firstByteWait on ~dpclock pulse N.
+	wrappers := []struct {
+		name string
+		conn Conn
+	}{
+		{"ReloginConn", NewReloginConn(conn, nil, nil, nil)},
+		{"RestartConn", NewRestartConn(conn, nil, nil, nil, nil)},
+		{"CrashConn", NewCrashConn(conn, nil, nil, nil, nil)},
+	}
+	for _, w := range wrappers {
+		restore = extendPulseFirstByteWait(w.conn, "~dpclock pulse 630", false)
+		if got, want := conn.FirstByteWait(), 630*12*time.Millisecond; got != want {
+			t.Fatalf("%s did not forward extendPulseFirstByteWait: got %s, want %s", w.name, got, want)
+		}
+		restore()
+		if got := conn.FirstByteWait(); got != 2*time.Second {
+			t.Fatalf("%s did not restore firstByteWait: got %s, want 2s", w.name, got)
+		}
+	}
 }
