@@ -9,7 +9,10 @@
 #
 # The glowing line keeps that blank line inside the block, where the census
 # compares it. Zone 158 equips the ring on a mobile (lib/world/zon/158.zon:69),
-# so the spawn's maximum is high.
+# so the spawn's maximum is high. The viewer's name must not begin with the
+# keyword: look_at_target takes a character before an extra description
+# (src/act.informative.c:1020-1031), and isname matches abbreviations, so a
+# viewer called Ringlooker is who "look ring" described.
 # depth-case: look.object-extra-trailing-blank
 
 [fixture]
@@ -18,7 +21,7 @@ quiet-mobs
 spawn-obj 15850 99 8125 80
 
 [setup:oracle]
-Ringlooker
+Glowlooker
 Y
 oraclepass
 oraclepass
@@ -32,7 +35,7 @@ Y
 1
 
 [setup:port]
-Ringlooker
+Glowlooker
 Y
 oraclepass
 oraclepass

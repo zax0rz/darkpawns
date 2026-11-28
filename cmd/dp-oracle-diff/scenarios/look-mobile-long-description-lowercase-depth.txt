@@ -4,15 +4,19 @@
 # the line, and act()'s cap() upper-cased it.
 #
 # The shipped world has one such mobile, 9918: "a cloven footed goat-like
-# demon wanders around here." (lib/world/mob/99.mob:249). Zone 99 loads six
-# into 9913 (lib/world/zon/99.zon:40). They are aggressive, so they come from
-# the zone's own reset, which quiet-mobs silences, and not from an explicit
-# spawn. The room is inside, so it is never dark (src/utils.h:254-259).
+# demon wanders around here." (lib/world/mob/99.mob:249). Zone 99 loads it,
+# but 9913 lists nothing when a scenario's probe looks there (C's own block is
+# the bare room), so the scenario spawns one into zone 80's reset instead. An
+# explicit spawn stays active under quiet-mobs, and 9918 is aggressive
+# (MOB_AGGRESSIVE, src/mobact.c:199-207), so the fixture clears that flag. Its
+# affects are sense-life and dodge, which print nothing in a room look.
 # depth-case: look.mobile-long-description-lowercase
 
 [fixture]
 empty-players
 quiet-mobs
+spawn-mob 9918 1 8125 80
+clear-mob-flag 9918 AGGRESSIVE
 
 [setup:oracle]
 Schirimlooker
@@ -43,7 +47,7 @@ Y
 1
 
 [warmup]
-goto 9913
+goto 8125
 
 [probe]
 look
