@@ -130,6 +130,7 @@ src/act.movement.c:do_gen_door	pkg/game/act_movement.go	(World).mobDoorObjectTar
 src/act.movement.c:do_gen_door	pkg/game/act_movement.go	(World).mobGenDoor	split
 src/act.movement.c:do_move	pkg/game/character_command.go	CharacterMove	primary
 src/act.movement.c:do_move	pkg/game/flee.go	(World).performMoveMob	split
+src/act.movement.c:do_move	pkg/game/spec_procs.go	guildGuardDirection	split
 src/act.movement.c:do_rest	pkg/game/character_command.go	CharacterRest	primary
 src/act.movement.c:do_rest	pkg/game/movement_commands.go	(World).doPositionCommand	split
 src/act.movement.c:do_simple_move	pkg/game/ai.go	mobWanderMovementCost	primary

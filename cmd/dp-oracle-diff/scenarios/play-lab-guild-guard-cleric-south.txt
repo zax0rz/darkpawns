@@ -1,0 +1,90 @@
+# Lockstep play found the guild guard's cleric row set to the wrong direction
+# (triage s00050 dwarf thief; s00061 minotaur psionic). guild_info's cleric row
+# is {CLASS_CLERIC, 8027, SCMD_SOUTH} (src/class.c:281), and guild_guard
+# matches the typed command's cmd_info index against that column
+# (src/spec_procs.c:595-599). The port stored the row as east, so a warrior
+# walked south into the cleric guildmaster's room, and on east the guard
+# answered where perform_move's missing-exit line belongs
+# (src/act.movement.c:319-320).
+#
+# Mob 8017 is the registered guild guard that zone 80 loads in 8027
+# (lib/world/zon/80.zon:163); quiet-mobs suppresses that load, so it is
+# spawned back into its own room. Room 8027 has north and south exits only
+# (lib/world/wld/80.wld:540-548). The warrior is wrong for the row, the
+# cleric is right for it. The first player in an empty store is an
+# implementor (src/db.c:3016-3019), so warmup drops the warrior to level 1
+# before the guard sees a mover (src/spec_procs.c:592). The drop comes last:
+# C answers teleport with "Huh?!?" once the caller is level 1
+# (src/interpreter.c:910-916; teleport needs LVL_GOD, src/interpreter.c:763).
+# depth-case: mob.guild-guard-cleric-doorway
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8017 1 8027 80
+
+[setup:oracle]
+Guildwarrior
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Guildwarrior
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Guildcleric
+Y
+oraclepass
+oraclepass
+N
+M
+H
+C
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Guildcleric
+Y
+oraclepass
+oraclepass
+N
+M
+H
+C
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8027
+teleport Guildcleric 8027
+set Guildwarrior level 1
+
+[probe]
+east
+south
+send:peer south

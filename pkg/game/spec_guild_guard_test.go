@@ -1,7 +1,6 @@
 package game
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 
@@ -9,18 +8,70 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
+// TestSpecGuildGuard_GuildInfoMatchesC pins every GuildInfo row to C's
+// guild_info (src/class.c:277-290) and proves each one through the guard.
+// C writes an SCMD_* constant in the third column, the one-based cmd_info
+// index guild_guard compares at src/spec_procs.c:599 (src/interpreter.h:93-98,
+// src/interpreter.c:311-319); GuildInfo holds that constant minus 1. The
+// rows are spelled as C spells them, so a port that stores the wrong number
+// fails both halves.
 func TestSpecGuildGuard_GuildInfoMatchesC(t *testing.T) {
-	want := []GuildInfoEntry{
-		{ClassMageUser, 8014, 0},
-		{ClassThief, 8028, 0},
-		{ClassCleric, 8027, 1},
-		{ClassWarrior, 8015, 0},
-		{ClassPsionic, 8518, 3},
-		{ClassNinja, 8525, 1},
-		{-1, -1, -1},
+	cRows := []struct {
+		class int
+		room  int
+		scmd  int    // third column as written in src/class.c
+		cmd   string // the direction that SCMD_* names
+	}{
+		{ClassMageUser, 8014, 1, "north"}, // SCMD_NORTH
+		{ClassThief, 8028, 1, "north"},    // SCMD_NORTH
+		{ClassCleric, 8027, 3, "south"},   // SCMD_SOUTH
+		{ClassWarrior, 8015, 1, "north"},  // SCMD_NORTH
+		{ClassPsionic, 8518, 4, "west"},   // SCMD_WEST
+		{ClassNinja, 8525, 3, "south"},    // SCMD_SOUTH
 	}
-	if !reflect.DeepEqual(GuildInfo, want) {
-		t.Fatalf("GuildInfo = %#v, want C table %#v", GuildInfo, want)
+	if len(GuildInfo) != len(cRows)+1 {
+		t.Fatalf("GuildInfo has %d rows, want %d plus the sentinel", len(GuildInfo), len(cRows)+1)
+	}
+	if got := GuildInfo[len(cRows)]; got != (GuildInfoEntry{-1, -1, -1}) {
+		t.Errorf("GuildInfo sentinel = %+v, want {-1 -1 -1}", got)
+	}
+
+	w, player, lastMsg := newSpecProcTestWorld(t)
+	player.SetLevel(1)
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+	for i, c := range cRows {
+		row := GuildInfo[i]
+		if row.Class != c.class || row.Room != c.room || row.Direction != c.scmd-1 {
+			t.Errorf("GuildInfo[%d] = {%d, %d, %d}, want C's {%d, %d, SCMD %d} stored as direction %d",
+				i, row.Class, row.Room, row.Direction, c.class, c.room, c.scmd, c.scmd-1)
+		}
+
+		// A base class the row does not authorize, in the row's own room.
+		wrongClass := ClassWarrior
+		if row.Class == ClassWarrior {
+			wrongClass = ClassThief
+		}
+		player.Class = wrongClass
+		player.SetRoom(c.room)
+		mob.SetRoom(c.room)
+
+		if !specGuildGuard(w, player, mob, c.cmd, "") {
+			t.Errorf("row %d: wrong-class %s in %d should be blocked", i, c.cmd, c.room)
+		}
+		if got := lastMsg(); !strings.Contains(got, "The guard humiliates you, and blocks your way.\r\n") {
+			t.Errorf("row %d: %s block = %q, want C victim line", i, c.cmd, got)
+		}
+		for _, other := range dirs {
+			if other == c.cmd {
+				continue
+			}
+			if specGuildGuard(w, player, mob, other, "") {
+				t.Errorf("row %d: wrong-class %s in %d should not be blocked by this row", i, other, c.room)
+			}
+			if got := lastMsg(); got != "" {
+				t.Errorf("row %d: %s emitted bytes: %q", i, other, got)
+			}
+		}
 	}
 }
 
