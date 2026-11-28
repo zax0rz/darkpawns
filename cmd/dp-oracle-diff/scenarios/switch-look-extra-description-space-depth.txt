@@ -1,0 +1,54 @@
+# do_switch moves the wizard's descriptor to the mobile body
+# (src/act.wizard.c:1198-1199), so look_at_room's writes for that body are the
+# wizard's own output, the bytes send_to_char wrote them. do_description sends
+# sprintf("%s ", description) for a room with extra descriptions
+# (src/act.informative.c:2784): the space starts whatever look_at_room writes
+# next. Here that is the wizard's own linkless body in the character list
+# (src/act.informative.c:552-559). A mobile has no colour preferences, so the
+# list brackets are empty writes.
+#
+# The port framed each write for a mobile body, so the space became a line of
+# its own. Room 8061 carries one extra description (lib/world/wld/80.wld:
+# 1246-1249) and no zone load puts anything in it. The unfinished mob
+# (lib/world/mob/0.mob:144) has no flags but ISNPC, no affects and level 0.
+# depth-case: look.switched-mobile-description-space
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 11 1 8061 80
+
+[setup:oracle]
+Switchgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8061
+switch unfinished
+
+[probe]
+look

@@ -1,0 +1,49 @@
+# list_one_char writes a mobile that stands at its default position with one
+# send_to_char of its long description (src/act.informative.c:511-526): no
+# capital, and the line breaks as fread_string stored them. The port framed
+# the line, and act()'s cap() upper-cased it.
+#
+# The shipped world has one such mobile, 9918: "a cloven footed goat-like
+# demon wanders around here." (lib/world/mob/99.mob:249). Zone 99 loads six
+# into 9913 (lib/world/zon/99.zon:40). They are aggressive, so they come from
+# the zone's own reset, which quiet-mobs silences, and not from an explicit
+# spawn. The room is inside, so it is never dark (src/utils.h:254-259).
+# depth-case: look.mobile-long-description-lowercase
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Schirimlooker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Schirimlooker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 9913
+
+[probe]
+look

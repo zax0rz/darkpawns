@@ -1,0 +1,52 @@
+# look_at_target writes an object's extra description with send_to_char
+# (src/act.informative.c:1061-1064) and follows it with show_obj_to_char's
+# mode 6, the object's flags and one CRLF (src/act.informative.c:1066-1071,
+# :124-178). fread_string keeps an empty last line as a CRLF
+# (src/db.c:2705-2717), so C prints ring 15850's extra description with a
+# blank line after it, before its "(glowing)" line (lib/world/obj/158.obj:
+# 353-357; the ring's extra flags are 65, glow and magic). The port framed
+# the description as an act() line, which trims trailing line breaks.
+#
+# The glowing line keeps that blank line inside the block, where the census
+# compares it. Zone 158 equips the ring on a mobile (lib/world/zon/158.zon:69),
+# so the spawn's maximum is high.
+# depth-case: look.object-extra-trailing-blank
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 15850 99 8125 80
+
+[setup:oracle]
+Ringlooker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ringlooker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8125
+
+[probe]
+look ring
