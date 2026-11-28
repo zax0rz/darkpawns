@@ -28,7 +28,7 @@ func makeManagerWithStartRoom(t *testing.T) *Manager {
 			{
 				VNum:        game.NewbieHometownRoom(1),
 				Name:        "Temple Infirmary",
-				Description: "A quiet infirmary tended by the temple healers.",
+				Description: "A quiet infirmary tended by the temple healers.\n",
 				Zone:        80,
 			},
 		},

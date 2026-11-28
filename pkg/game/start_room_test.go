@@ -52,7 +52,7 @@ func TestSpecStartRoom_BirthTransitionAndImmortalGate(t *testing.T) {
 				"   The figure glows a moment, then disappears, but his voice remains.\r\n" +
 				"   'Your life begins now...' it says, then fades -- just as the world around\r\n" +
 				"you does the same.\r\n\r\n" +
-				"Temple Infirmary\r\nInfirmary\r\n[ Exits: None! ]\r\n",
+				"Temple Infirmary\r\n   The infirmary.\r\n[ Exits: None! ]\r\n",
 		},
 		{
 			name:        "immortal",
@@ -67,7 +67,7 @@ func TestSpecStartRoom_BirthTransitionAndImmortalGate(t *testing.T) {
 			parsed := &parser.World{
 				Rooms: []parser.Room{
 					{VNum: NewbieStartRoom, Name: "Burning Hut", Description: "intro"},
-					{VNum: 8162, Name: "Temple Infirmary", Description: "infirmary"},
+					{VNum: 8162, Name: "Temple Infirmary", Description: "   The infirmary.\n"},
 				},
 			}
 			w, err := NewWorld(parsed)

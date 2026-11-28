@@ -22,7 +22,7 @@ func newGaleruColumnTestWorld(t *testing.T) (*World, *Player, *Player, *MobInsta
 		// which is what makes do_description append its trailing space — the byte
 		// that ends up in front of the peer's arrival line.
 		{
-			VNum: 1389, Name: "Temple of Elements", Description: "The altar of elements stands here.",
+			VNum: 1389, Name: "Temple of Elements", Description: "The altar of elements stands here.\n",
 			ExtraDescs: []parser.ExtraDesc{{Keywords: "altar", Description: "A great altar to the elements."}},
 		},
 		{VNum: 1395, Name: "Tropical Island", Description: "A tropical island surrounds you."},

@@ -198,7 +198,7 @@ func TestSpecTakeToJailAlignmentInterventionOutput(t *testing.T) {
 func TestSpecTakeToJailSubdueStateAndAudience(t *testing.T) {
 	parsed := &parser.World{Rooms: []parser.Room{
 		{VNum: 1001, Name: "Street"},
-		{VNum: 8118, Name: "The Main Holding Cell", Description: "A plain cell."},
+		{VNum: 8118, Name: "The Main Holding Cell", Description: "A plain cell.\n"},
 	}}
 	w, err := NewWorld(parsed)
 	if err != nil {
@@ -297,7 +297,7 @@ func TestSkillDamageSeamRunsFullJailGuardRedirect(t *testing.T) {
 	w, err := NewWorld(&parser.World{
 		Rooms: []parser.Room{
 			{VNum: 1001, Name: "Street"},
-			{VNum: 8118, Name: "The Main Holding Cell", Description: "A plain cell."},
+			{VNum: 8118, Name: "The Main Holding Cell", Description: "A plain cell.\n"},
 		},
 		Mobs: []parser.Mob{
 			{

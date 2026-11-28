@@ -41,13 +41,17 @@ func (r *ObservationResult) takeLinePrefix() string {
 // descriptions whose '$' bytes must not be interpreted as act substitutions.
 // Bare marks control bytes C wrote with no line ending — the escapes that open
 // and close the room-content lists (src/act.informative.c:823-833) — so they
-// reach the terminal untouched and unframed. Observation is single-viewer, so
-// every message is routed ToChar.
+// reach the terminal untouched and unframed. Verbatim marks a write C sent
+// with send_to_char that a framed act() line could not reproduce
+// (writeRoomDescription); it is sent untouched too, and counts as player
+// output so the prompt still follows.
+// Observation is single-viewer, so every message is routed ToChar.
 type ObservationMessage struct {
 	Format        string
 	Literal       bool
 	Raw           bool
 	Bare          bool
+	Verbatim      bool
 	HideInvisible bool
 	Actor         Actor
 	Target        Actor
@@ -114,6 +118,18 @@ func (r *ObservationResult) bare(ch combat.Combatant, text string) {
 	})
 }
 
+// verbatim queues bytes as C's send_to_char wrote them, for the writes a
+// framed act() line cannot reproduce: do_description's buffer in the cases
+// writeRoomDescription names. They reach the descriptor as they are; a framed
+// message would apply act()'s rules.
+func (r *ObservationResult) verbatim(ch combat.Combatant, text string) {
+	r.Messages = append(r.Messages, ObservationMessage{
+		Format:   r.takeLinePrefix() + text,
+		Verbatim: true,
+		Actor:    observationBodyActor(ch),
+	})
+}
+
 // raw queues a block sent verbatim via SendMessage — bypassing act(), so it is
 // neither capitalized nor $-substituted. Mirrors C send_to_char for list output
 // (inventory / look-in container). Ordering is preserved with other messages.
@@ -144,6 +160,19 @@ func (w *World) RenderObservationMessages(result ObservationResult) {
 			// through the literal sink: Player.SendLiteral → a "raw" event,
 			// which RenderTerminalFrame passes to the terminal untouched
 			// (pkg/session/terminal.go:123-127).
+			if message.Actor != nil {
+				if player, ok := message.Actor.(*Player); ok {
+					player.SendLiteral(message.Format)
+				} else {
+					message.Actor.SendMessage(message.Format)
+				}
+			}
+			continue
+		}
+		if message.Verbatim {
+			// C wrote these bytes with send_to_char. A player's literal sink keeps
+			// them as they are and still counts them as output, so the prompt
+			// follows; another body keeps its framed path.
 			if message.Actor != nil {
 				if player, ok := message.Actor.(*Player); ok {
 					player.SendLiteral(message.Format)
@@ -293,11 +322,7 @@ func (w *World) observeRoom(ch combat.Combatant, room *parser.Room, ignoreBrief,
 	}
 	result.literal(ch, cyan+roomName+normal)
 	if showDescription && room.Description != "" {
-		desc, spaced := doDescription(room.Description, room.ExtraDescs, colorLevel(ch) > 0)
-		result.literal(ch, desc)
-		if spaced {
-			result.linePrefix = " "
-		}
+		writeRoomDescription(&result, ch, room)
 	}
 	if observationBodyAutoExit(ch) {
 		result.literal(ch, w.autoExitsText(ch, room))
@@ -1546,28 +1571,75 @@ func colorLevel(ch combat.Combatant) int {
 	return screen.LevelFromFlags(observationBodyFlags(ch), uint(PrfColor1), uint(PrfColor2))
 }
 
-// doDescription is do_description (act.informative.c:2757-2803), which
-// look_at_room sends the room description through. A room with no extra
-// descriptions sends its description as it is. Otherwise C sends
-// sprintf("%s ", description), so a space follows the description's last
-// newline and starts whatever look_at_room prints next; and for a viewer
-// with any color level it bolds each extra-description keyword where it
-// first appears (strstr, so inside a longer word too), taking in the
-// character before the match and the whitespace after it.
+// writeRoomDescription sends do_description's buffer the way C's one
+// send_to_char does (src/act.informative.c:2802): verbatim, unless a framed
+// line reproduces the same bytes (framedRoomDescription). Framing is act(): it
+// capitalizes the first rune, trims trailing line breaks and ends the line
+// once. On a buffer that does not fit that shape it prints bytes C never
+// printed. Lockstep play found one: in room 8061 the keyword "guild" is the
+// description's last word, so the colour reset follows the final CR, the
+// framed line ended at the reset and act() ended it again, a blank line
+// before the exits.
+func writeRoomDescription(result *ObservationResult, ch combat.Combatant, room *parser.Room) {
+	desc := doDescription(room.Description, room.ExtraDescs, colorLevel(ch) > 0)
+	if line, prefix, ok := framedRoomDescription(desc); ok {
+		result.literal(ch, line)
+		result.linePrefix = prefix
+		return
+	}
+	result.verbatim(ch, desc)
+}
+
+// framedRoomDescription reports how a framed message can carry C's buffer byte
+// for byte. literal() trims the text's trailing line breaks (here the final
+// CRLF), act() capitalizes the first rune and supplies that CRLF again, and
+// do_description's space becomes the next line's prefix. Any other buffer has
+// no such form: a first rune cap() changes, a colour reset after the final CR
+// (src/act.informative.c:2795-2796), no final line break at all (the stored
+// shape doDescription's comment describes), or a trailing blank line. The two
+// checks ask those functions themselves, so this cannot drift from what the
+// framed path does.
+func framedRoomDescription(desc string) (line, prefix string, ok bool) {
+	body := desc
+	if strings.HasSuffix(body, "\r\n ") {
+		body, prefix = body[:len(body)-1], " "
+	}
+	if !strings.HasSuffix(body, "\r\n") || cap(body) != body {
+		return "", "", false
+	}
+	if line = normalizeObservationText(body); line+"\r\n" != body {
+		return "", "", false
+	}
+	return line, prefix, true
+}
+
+// doDescription is do_description (src/act.informative.c:2757-2803), which
+// look_at_room sends the room description through. It returns the bytes of
+// C's one send_to_char. A room with no extra descriptions sends its
+// description as it is. Otherwise C sends sprintf("%s ", description), so a
+// space follows the description's last newline and starts whatever
+// look_at_room prints next; and for a viewer with any color level it bolds
+// each extra-description keyword where it first appears (strstr, so inside a
+// longer word too), taking in the character before the match and the
+// whitespace after it.
 //
-// It returns the description to send and whether C's trailing space
-// follows it.
-func doDescription(description string, extras []parser.ExtraDesc, color bool) (string, bool) {
+// The line breaks are C's: fread_string keeps every whole line of the world
+// file as CRLF (src/db.c:2705-2717), where the parser keeps LF. C's scan for
+// the keyword's trailing whitespace stops at the CR, so when the keyword is
+// the description's last word the colour reset lands between that CR and the
+// LF (src/act.informative.c:2789-2796).
+func doDescription(description string, extras []parser.ExtraDesc, color bool) string {
+	description = strings.ReplaceAll(strings.ReplaceAll(description, "\r\n", "\n"), "\n", "\r\n")
 	var keywords []string
 	for _, ed := range extras {
 		keywords = append(keywords, strings.Fields(ed.Keywords)...)
 	}
 	if len(keywords) == 0 {
-		return description, false
+		return description
 	}
 	buf := description + " "
 	if !color {
-		return description, true
+		return buf
 	}
 	const bold, normal = "\x1b[0;1m", "\x1b[0m" // VT_BOLDTEX, VT_NORMALT (vt100.h:43-44)
 	for _, keyword := range keywords {
@@ -1584,7 +1656,7 @@ func doDescription(description string, extras []parser.ExtraDesc, color bool) (s
 		}
 		buf = buf[:begin-1] + bold + buf[begin-1:begin] + buf[begin:end] + buf[end:end+1] + normal + buf[end+1:]
 	}
-	return strings.TrimSuffix(buf, " "), true
+	return buf
 }
 
 // isCSpace is isspace in the C locale.
