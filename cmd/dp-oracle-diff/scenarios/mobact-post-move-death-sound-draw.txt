@@ -1,0 +1,84 @@
+# Regression scenario for post-perform_move number(0,15) sound draw (brief 2026-11-27 PR 2, Cause B).
+# At ORACLE_REGRESSION_SEED=18 on origin/main, a wandering mob killed during perform_move() skips
+# mobact.c:146's number(0,15) in Go because mobact.go checked !ch.IsAlive() before the sound draw.
+# Lockstep differential play session: s00017-kender-mage-model
+# character=Plaaar race=kender class=mage sex=F hometown=Kir-Oshi seed=18 policy=model goal=flee_die_corpse
+
+[setup:oracle]
+Plaaar
+Y
+oraclepass
+oraclepass
+Y
+F
+K
+M
+O
+Y
+<ENTER>
+1
+
+[setup:port]
+Plaaar
+Y
+oraclepass
+oraclepass
+Y
+F
+K
+M
+O
+Y
+<ENTER>
+1
+
+[probe]
+auto exits
+look
+score
+inventory
+equipment
+practice
+wimpy 5
+practice
+practice flame arrow
+flee
+drop backpack
+hold tunic
+get all corpse
+wear tunic
+wear dagger
+score
+practice flame arrow
+rest
+~dpclock pulse 630
+stand
+practice flame arrow
+say hello
+practice flame arrow
+say hello
+practice
+say hello
+remove dagger
+rest
+~dpclock pulse 630
+stand
+practice infravision
+practice
+look
+look
+say hello
+remove tunic
+rest
+~dpclock pulse 630
+stand
+practice flame arrow
+remove dagger
+practice
+practice flame arrow
+sleep
+~dpclock pulse 630
+wake
+practice infravision
+sleep
+~dpclock pulse 630

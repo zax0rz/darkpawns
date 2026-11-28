@@ -1,0 +1,36 @@
+# Regression scenario for COrderedRoomMobs in mobact.go aggr24/helper (brief 2026-11-27 PR 2, Cause A).
+# At ORACLE_REGRESSION_SEED=121 on origin/main, unordered map iteration in GetMobsInRoom picks a
+# different weaker NPC than C's world[room].people head, skipping damage()'s fight.c:1590 number(0,2).
+# Lockstep differential play session: s00120-dwarf-mage-random
+# character=Plaaeq race=dwarf class=mage sex=F hometown=Kir Drax'in seed=121 policy=random goal=save_quit_relogin
+
+[setup:oracle]
+Plaaeq
+Y
+oraclepass
+oraclepass
+Y
+F
+D
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Plaaeq
+Y
+oraclepass
+oraclepass
+Y
+F
+D
+M
+K
+Y
+<ENTER>
+1
+
+[probe]
+auto exits
