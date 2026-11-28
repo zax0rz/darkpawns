@@ -137,7 +137,7 @@ func (w *World) COrderedRoomPeople(roomVNum int) []Actor {
 }
 
 // COrderedRoomPlayers returns the room's players in C's world[room].people
-// order (newest arrival first, src/handler.c:537-538).
+// order (newest arrival first).
 func (w *World) COrderedRoomPlayers(roomVNum int) []*Player {
 	players := w.GetPlayersInRoom(roomVNum)
 	sort.SliceStable(players, func(i, j int) bool {
@@ -151,7 +151,7 @@ func (w *World) COrderedRoomPlayers(roomVNum int) []*Player {
 }
 
 // COrderedMobs returns all live mobiles in C's character_list order
-// (newest-first, src/db.c:1745-1746).
+// (newest-first).
 func (w *World) COrderedMobs() []*MobInstance {
 	ordered := w.cOrderedCharacters()
 	mobs := make([]*MobInstance, 0, len(ordered))
@@ -164,7 +164,7 @@ func (w *World) COrderedMobs() []*MobInstance {
 }
 
 // COrderedPlayers returns all live players in C's character_list order
-// (newest-first, src/db.c:1716-1717; src/interpreter.c:2188-2189).
+// (newest-first).
 func (w *World) COrderedPlayers() []*Player {
 	ordered := w.cOrderedCharacters()
 	players := make([]*Player, 0, len(ordered))
@@ -177,8 +177,7 @@ func (w *World) COrderedPlayers() []*Player {
 }
 
 // COrderedObjects returns all live object instances in C's global object_list
-// order (newest-first, because create_obj and read_object prepend:
-// src/db.c:1892-1893, 1950-1951).
+// order (newest-first, matching C's create_obj/read_object prepend).
 func (w *World) COrderedObjects() []*ObjectInstance {
 	w.mu.RLock()
 	objs := make([]*ObjectInstance, 0, len(w.objectInstances))

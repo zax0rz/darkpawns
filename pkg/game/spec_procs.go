@@ -864,7 +864,7 @@ type cityguardAlignedCombatant interface {
 // for the cityguard's visible protection scan. The Go world stores players and
 // mobs separately, so retain both sets at this boundary.
 // cityguardRoomCombatants returns every room occupant in C's world[room].people
-// order (newest arrival first, src/handler.c:537-538; src/spec_procs.c:785,800).
+// order (newest arrival first).
 func cityguardRoomCombatants(w *World, roomVNum int) []combat.Combatant {
 	people := w.actChar(roomVNum)
 	actors := make([]combat.Combatant, 0, len(people))

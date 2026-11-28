@@ -541,7 +541,7 @@ func (w *World) MpSound(mob *MobInstance) {
 // ---------------------------------------------------------------------------
 
 // GetFirstMobInRoomByVNum returns the first mob in a room with the given VNum
-// in C's world[room].people order (newest-first, src/handler.c:537-538).
+// in C's world[room].people order (newest-first).
 func (w *World) GetFirstMobInRoomByVNum(roomVNum int, vnum int) *MobInstance {
 	for _, m := range w.COrderedRoomMobs(roomVNum) {
 		if m.GetVNum() == vnum {

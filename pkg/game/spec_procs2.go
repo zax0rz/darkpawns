@@ -947,7 +947,7 @@ func twoAssassinArguments(arg string) (string, string) {
 }
 
 // assassinRoster returns room occupants in C's world[as_loc].people order
-// (newest arrival first, src/spec_procs2.c:856,871).
+// (newest arrival first).
 func assassinRoster(w *World, roomVNum int) []Actor {
 	return w.actChar(roomVNum)
 }
