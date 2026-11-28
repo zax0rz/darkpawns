@@ -263,8 +263,8 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	case "stable":
 		var horse *MobInstance
 		if ch.IsMounted() {
-			// Find the mount mob and unmount
-			for _, m := range w.GetMobsInRoom(ch.GetRoom()) {
+			// Find the mount mob and unmount (C: world[ch->in_room].people, src/spec_procs2.c:373).
+			for _, m := range w.COrderedRoomMobs(ch.GetRoom()) {
 				if m.GetMountRider() == ch.Name {
 					horse = m
 					Unmount(ch, horse)
@@ -274,11 +274,21 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 				}
 			}
 		} else {
-			// Find an unmounted mountable follower in the room.
-			for _, m := range w.GetMobsInRoom(ch.GetRoom()) {
-				if m.GetFollowing() == ch.Name && m.HasFlag("mountable") && !m.IsMountedMob() {
+			// Find an unmounted mountable follower. C walks ch->followers
+			// newest-first (src/spec_procs2.c:387-394). Fall back to C room
+			// order for fixtures whose followers lack a FollowingSequence.
+			for _, f := range w.OrderedGroupFollowers(ch.Name) {
+				if m, ok := f.(*MobInstance); ok && m.GetRoom() == ch.GetRoom() && m.HasFlag("mountable") && !m.IsMountedMob() {
 					horse = m
 					break
+				}
+			}
+			if horse == nil {
+				for _, m := range w.COrderedRoomMobs(ch.GetRoom()) {
+					if m.GetFollowing() == ch.Name && m.HasFlag("mountable") && !m.IsMountedMob() {
+						horse = m
+						break
+					}
 				}
 			}
 		}
@@ -437,8 +447,8 @@ func specRescuer(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 		return false
 	}
 
-	allies := w.GetMobsInRoom(me.GetRoomVNum())
-	sort.Slice(allies, func(i, j int) bool { return allies[i].GetID() < allies[j].GetID() })
+	// C: SPECIAL(rescuer) walks world[ch->in_room].people newest-first (src/spec_procs2.c:535).
+	allies := w.COrderedRoomMobs(me.GetRoomVNum())
 	for _, ally := range allies {
 		if ally == nil || ally.GetID() == me.GetID() || ally.GetFightingBody() == nil {
 			continue
@@ -936,15 +946,10 @@ func twoAssassinArguments(arg string) (string, string) {
 	return fields[0], fields[1]
 }
 
+// assassinRoster returns room occupants in C's world[as_loc].people order
+// (newest arrival first).
 func assassinRoster(w *World, roomVNum int) []Actor {
-	members := make([]Actor, 0)
-	for _, player := range w.GetPlayersInRoom(roomVNum) {
-		members = append(members, player)
-	}
-	for _, mob := range w.GetMobsInRoom(roomVNum) {
-		members = append(members, mob)
-	}
-	return members
+	return w.actChar(roomVNum)
 }
 
 func findAssassinRosterMember(w *World, roomVNum int, name string) Actor {
@@ -1955,7 +1960,8 @@ func specCastleGuardEast(w *World, ch *Player, me *MobInstance, cmd string, arg 
 	if me.GetFightingBody() != nil {
 		return false
 	}
-	for _, other := range w.GetMobsInRoom(me.GetRoomVNum()) {
+	// C: castle_guard_east walks world[mobile->in_room].people newest-first (src/spec_procs2.c:1960).
+	for _, other := range w.COrderedRoomMobs(me.GetRoomVNum()) {
 		if other == me || MobSpecAssign[other.GetVNum()] != "castle_guard_east" || !other.IsFighting() {
 			continue
 		}
@@ -2176,7 +2182,8 @@ func specCastleGuard(w *World, ch *Player, me *MobInstance, cmd string, spec cas
 	// second guard that is already fighting another character is handed to the
 	// canonical hit() seam, even when that target is a mob.
 	if me.GetFightingBody() == nil {
-		for _, other := range w.GetMobsInRoom(me.GetRoomVNum()) {
+		// C: castle_guard_down/up/north walks world[mobile->in_room].people newest-first (src/spec_procs2.c:2164,2206,2248).
+		for _, other := range w.COrderedRoomMobs(me.GetRoomVNum()) {
 			if MobSpecAssign[other.GetVNum()] != spec.assignedName || !other.IsFighting() {
 				continue
 			}
@@ -2283,8 +2290,8 @@ func specWallGuardNS(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	// return and greets the room either way.
 	w.performMoveMob(me, wallGuardDirToMove, true)
 
-	// Greet church guard (VNum 8020) when encountered on patrol
-	for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
+	// Greet church guard (VNum 8020) when encountered on patrol (C: src/spec_procs2.c:2283).
+	for _, mob := range w.COrderedRoomMobs(me.GetRoomVNum()) {
 		if mob == me {
 			continue
 		}

@@ -2,7 +2,6 @@ package game
 
 import (
 	"log/slog"
-	"sort"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -34,43 +33,15 @@ func cRoomPeople(w *World, roomVNum int) []Actor {
 	if w == nil || roomVNum < 0 {
 		return nil
 	}
-	type occupant struct {
-		actor Actor
-		seq   uint64
-		name  string
-	}
-	var people []occupant
-	for _, mob := range w.GetMobsInRoom(roomVNum) {
-		// No MOB_EXTRACT filter: C's room-special bodies walk
-		// world[ch->in_room].people unguarded (start_room,
-		// src/spec_procs.c:2209; the Elemental Temple loops,
-		// src/spec_procs3.c:948, 1012, 1164, 1195, 1254), so a body flagged
-		// for extraction earlier in the same pulse is still an occupant and is
-		// moved like any other. Only the *mob special* call in special() skips
-		// flagged bodies (src/interpreter.c:1453), and that guard lives in
-		// pkg/session/character_dispatch.go and pkg/game/flee.go.
-		if mob == nil {
-			continue
-		}
-		people = append(people, occupant{actor: mob, seq: mob.GetRoomEntrySequence(), name: mob.GetName()})
-	}
-	for _, player := range w.GetPlayersInRoom(roomVNum) {
-		if player == nil {
-			continue
-		}
-		people = append(people, occupant{actor: player, seq: player.GetRoomEntrySequence(), name: player.GetName()})
-	}
-	sort.SliceStable(people, func(i, j int) bool {
-		if people[i].seq != people[j].seq {
-			return people[i].seq > people[j].seq
-		}
-		return people[i].name < people[j].name
-	})
-	out := make([]Actor, 0, len(people))
-	for _, person := range people {
-		out = append(out, person.actor)
-	}
-	return out
+	// No MOB_EXTRACT filter: C's room-special bodies walk
+	// world[ch->in_room].people unguarded (start_room,
+	// src/spec_procs.c:2209; the Elemental Temple loops,
+	// src/spec_procs3.c:948, 1012, 1164, 1195, 1254), so a body flagged
+	// for extraction earlier in the same pulse is still an occupant and is
+	// moved like any other. Only the *mob special* call in special() skips
+	// flagged bodies (src/interpreter.c:1453), and that guard lives in
+	// pkg/session/character_dispatch.go and pkg/game/flee.go.
+	return w.actChar(roomVNum)
 }
 
 // cBody is the part of a character C's special() body reads: the Actor roles

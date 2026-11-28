@@ -128,3 +128,63 @@ func (w *World) GetAllCharsInCharacterListOrder() []any {
 	}
 	return characters
 }
+
+// COrderedRoomPeople returns every live player and mobile in roomVNum in C's
+// world[room].people order (newest arrival first). Delegates to actChar so
+// there is a single room-people ordering implementation.
+func (w *World) COrderedRoomPeople(roomVNum int) []Actor {
+	return w.actChar(roomVNum)
+}
+
+// COrderedRoomPlayers returns the room's players in C's world[room].people
+// order (newest arrival first).
+func (w *World) COrderedRoomPlayers(roomVNum int) []*Player {
+	players := w.GetPlayersInRoom(roomVNum)
+	sort.SliceStable(players, func(i, j int) bool {
+		si, sj := players[i].GetRoomEntrySequence(), players[j].GetRoomEntrySequence()
+		if si != sj {
+			return si > sj
+		}
+		return players[i].GetName() < players[j].GetName()
+	})
+	return players
+}
+
+// COrderedMobs returns all live mobiles in C's character_list order
+// (newest-first).
+func (w *World) COrderedMobs() []*MobInstance {
+	ordered := w.cOrderedCharacters()
+	mobs := make([]*MobInstance, 0, len(ordered))
+	for _, entry := range ordered {
+		if entry.mob != nil {
+			mobs = append(mobs, entry.mob)
+		}
+	}
+	return mobs
+}
+
+// COrderedPlayers returns all live players in C's character_list order
+// (newest-first).
+func (w *World) COrderedPlayers() []*Player {
+	ordered := w.cOrderedCharacters()
+	players := make([]*Player, 0, len(ordered))
+	for _, entry := range ordered {
+		if entry.player != nil {
+			players = append(players, entry.player)
+		}
+	}
+	return players
+}
+
+// COrderedObjects returns all live object instances in C's global object_list
+// order (newest-first, matching C's create_obj/read_object prepend).
+func (w *World) COrderedObjects() []*ObjectInstance {
+	w.mu.RLock()
+	objs := make([]*ObjectInstance, 0, len(w.objectInstances))
+	for _, obj := range w.objectInstances {
+		objs = append(objs, obj)
+	}
+	w.mu.RUnlock()
+	sort.Slice(objs, func(i, j int) bool { return objs[i].ID > objs[j].ID })
+	return objs
+}
