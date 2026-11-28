@@ -2,7 +2,6 @@ package session
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -699,16 +698,14 @@ func (s *Session) sendStatRoom() {
 		break
 	}
 
-	players := w.GetPlayersInRoom(room.VNum)
-	sort.Slice(players, func(i, j int) bool { return players[i].GetID() > players[j].GetID() })
-	mobs := w.GetMobsInRoom(room.VNum)
-	sort.Slice(mobs, func(i, j int) bool { return mobs[i].GetID() < mobs[j].GetID() })
 	var chars []string
-	for _, player := range players {
-		chars = append(chars, fmt.Sprintf("%s(PC)", player.GetName()))
-	}
-	for _, mob := range mobs {
-		chars = append(chars, fmt.Sprintf("%s(MOB)", mob.GetName()))
+	for _, person := range w.COrderedRoomPeople(room.VNum) {
+		switch body := person.(type) {
+		case *game.Player:
+			chars = append(chars, fmt.Sprintf("%s(PC)", body.GetName()))
+		case *game.MobInstance:
+			chars = append(chars, fmt.Sprintf("%s(MOB)", body.GetName()))
+		}
 	}
 	s.Send(wizardWrappedListOutput("Chars present:", chars, ansiYellow, normal))
 

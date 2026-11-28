@@ -344,33 +344,38 @@ func showReagentListing() string {
 // cmdDark — stop all combat in the room (LVL_IMMORT)
 func cmdDark(s *Session, args []string) error {
 	roomVNum := s.player.GetRoom()
-	// C walks the room list and stops every fighting character. A fighter is
-	// told about the peace before the command's actor/room messages; fighting
-	// mobs also forget their combat memory.
-	players := s.manager.world.GetPlayersInRoom(roomVNum)
-	mobs := s.manager.world.GetMobsInRoom(roomVNum)
-	fightingMobs := make([]*game.MobInstance, 0, len(mobs))
-	for _, mob := range mobs {
-		if mob.IsFighting() {
-			fightingMobs = append(fightingMobs, mob)
+	// C walks world[ch->in_room].people newest-first and stops every fighting
+	// character. Snapshot fighting bodies in C room order before StopCombat
+	// clears opposing fighting links; fighting mobs also forget memory.
+	people := s.manager.world.COrderedRoomPeople(roomVNum)
+	fighting := make([]game.Actor, 0, len(people))
+	for _, person := range people {
+		switch body := person.(type) {
+		case *game.Player:
+			if body.IsFighting() {
+				fighting = append(fighting, body)
+			}
+		case *game.MobInstance:
+			if body.IsFighting() {
+				fighting = append(fighting, body)
+			}
 		}
 	}
-	for _, p := range players {
-		if !p.IsFighting() {
-			continue
+	for _, person := range fighting {
+		switch body := person.(type) {
+		case *game.Player:
+			s.manager.combatEngine.StopCombat(body)
+			// C uses the mixed \n\r terminator here. Send a lone LF so the
+			// telnet transport's canonicalizer produces one line terminator rather
+			// than appending a second CRLF to C's already-terminated text.
+			body.SendMessage("The peace of the ancients fills your soul.\n")
+		case *game.MobInstance:
+			s.manager.combatEngine.StopCombat(body)
+			if len(body.GetMemory()) > 0 {
+				body.ClearMemory()
+			}
+			body.SendMessage("The peace of the ancients fills your soul.\n")
 		}
-		s.manager.combatEngine.StopCombat(p)
-		// C uses the mixed \n\r terminator here. Send a lone LF so the
-		// telnet transport's canonicalizer produces one line terminator rather
-		// than appending a second CRLF to C's already-terminated text.
-		p.SendMessage("The peace of the ancients fills your soul.\n")
-	}
-	for _, mob := range fightingMobs {
-		s.manager.combatEngine.StopCombat(mob)
-		if len(mob.GetMemory()) > 0 {
-			mob.ClearMemory()
-		}
-		mob.SendMessage("The peace of the ancients fills your soul.\n")
 	}
 
 	s.Send("You stop the senseless violence in the room with a wave of your hand.\r\n")
