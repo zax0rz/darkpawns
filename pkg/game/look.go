@@ -324,46 +324,39 @@ func (w *World) observeRoom(ch combat.Combatant, room *parser.Room, ignoreBrief,
 }
 
 func (w *World) appendDarkOccupants(result *ObservationResult, ch combat.Combatant, room *parser.Room) {
-	for _, mob := range sortedMobs(w.GetMobsInRoom(room.VNum)) {
-		if mob == nil || mob.HasMobFlag(MobFlagExtract) {
-			continue // C list_char_to_char skips MOB_EXTRACT before visibility checks
-		}
-		// C list_char_to_char suppresses a mount while get_rider(mob) is
-		// non-nil; the rider's presence line represents the pair. get_rider is
-		// IS_MOUNTED(mount) (src/utils.c:387-392), so a cleared AFF_MOUNT shows
-		// the mount again even though the master link survives.
-		if mobHasRider(mob) {
-			continue
-		}
-		if mob.IsAffected(affSneak) || mob.IsAffected(affHide) {
-			continue
-		}
-		if mob.IsAffected(affInfravision) {
-			result.literal(ch, "You see a pair of glowing red eyes.")
-		} else {
-			result.literal(ch, "You hear someone or something moving around nearby.")
-		}
-	}
-	players := w.GetPlayersInRoom(room.VNum)
-	sort.SliceStable(players, func(i, j int) bool {
-		sequenceI := players[i].GetRoomEntrySequence()
-		sequenceJ := players[j].GetRoomEntrySequence()
-		if sequenceI != sequenceJ {
-			return sequenceI > sequenceJ
-		}
-		return players[i].GetName() < players[j].GetName()
-	})
-	for _, player := range players {
-		if player == nil || player == ch || player.GetLevel() >= LVL_IMMORT {
-			continue
-		}
-		if player.IsAffected(affSneak) || player.IsAffected(affHide) {
-			continue
-		}
-		if player.IsAffected(affInfravision) {
-			result.literal(ch, "You see a pair of glowing red eyes.")
-		} else {
-			result.literal(ch, "You hear someone or something moving around nearby.")
+	for _, person := range w.COrderedRoomPeople(room.VNum) {
+		switch body := person.(type) {
+		case *MobInstance:
+			if body == nil || body.HasMobFlag(MobFlagExtract) {
+				continue // C list_char_to_char skips MOB_EXTRACT before visibility checks
+			}
+			// C list_char_to_char suppresses a mount while get_rider(mob) is
+			// non-nil; the rider's presence line represents the pair. get_rider is
+			// IS_MOUNTED(mount) (src/utils.c:387-392), so a cleared AFF_MOUNT shows
+			// the mount again even though the master link survives.
+			if mobHasRider(body) {
+				continue
+			}
+			if body.IsAffected(affSneak) || body.IsAffected(affHide) {
+				continue
+			}
+			if body.IsAffected(affInfravision) {
+				result.literal(ch, "You see a pair of glowing red eyes.")
+			} else {
+				result.literal(ch, "You hear someone or something moving around nearby.")
+			}
+		case *Player:
+			if body == nil || combat.Combatant(body) == ch || body.GetLevel() >= LVL_IMMORT {
+				continue
+			}
+			if body.IsAffected(affSneak) || body.IsAffected(affHide) {
+				continue
+			}
+			if body.IsAffected(affInfravision) {
+				result.literal(ch, "You see a pair of glowing red eyes.")
+			} else {
+				result.literal(ch, "You hear someone or something moving around nearby.")
+			}
 		}
 	}
 }
@@ -492,73 +485,49 @@ func listsHiddenBody(viewer combat.Combatant, body interface{}) bool {
 }
 
 func (w *World) roomCharacterLines(ch combat.Combatant, room *parser.Room, view *RoomView) []string {
-	type character struct {
-		actor Actor
-		seq   uint64
-		line  string
-		auras []string
-	}
-	characters := make([]character, 0)
 	var lines []string
-	for _, mob := range w.GetMobsInRoom(room.VNum) {
-		if mob == nil || combat.Combatant(mob) == ch || mob.HasMobFlag(MobFlagExtract) {
-			continue // act.informative.c:list_one_char skips MOB_EXTRACT first
-		}
-		// C list_char_to_char suppresses a mount while get_rider(mob) is
-		// non-nil; the rider's presence line represents the pair. get_rider
-		// is IS_MOUNTED(mount) (src/utils.c:387-392), so a cleared AFF_MOUNT
-		// shows the mount again even though the master link survives.
-		if mobHasRider(mob) {
-			continue
-		}
-		hidden := mob.IsAffected(affHide)
-		if (!canSee(observationBodyActor(ch), mob) || hidden) && !listsHiddenBody(ch, mob) {
-			if hidden && observationBodyAffected(ch, affSenseLife) {
-				lines = append(lines, "You sense a hidden presence in the room.")
-			}
-			continue
-		}
-		line := mobPresenceLine(mob, ch)
-		if line == "" {
-			continue
-		}
-		characters = append(characters, character{
-			actor: mob, seq: mob.GetRoomEntrySequence(), line: line,
-			auras: presenceAuras(mob, mob.Proto() != nil && mob.Proto().LongDesc != "" && mob.GetPosition() == mob.Proto().DefaultPos),
-		})
-	}
-	players := w.GetPlayersInRoom(room.VNum)
-	for _, player := range players {
-		if player == nil || combat.Combatant(player) == ch {
-			continue
-		}
-		hidden := player.IsAffected(affHide)
-		if (!canSee(observationBodyActor(ch), player) || hidden) && !listsHiddenBody(ch, player) {
-			if hidden && observationBodyAffected(ch, affSenseLife) {
-				lines = append(lines, "You sense a hidden presence in the room.")
-			}
-			continue
-		}
-		line := w.playerPresenceLine(player, ch)
-		characters = append(characters, character{
-			actor: player, seq: player.GetRoomEntrySequence(), line: line,
-			auras: presenceAuras(player, false),
-		})
-	}
-	sort.SliceStable(characters, func(i, j int) bool {
-		if characters[i].seq != characters[j].seq {
-			return characters[i].seq > characters[j].seq
-		}
-		return characters[i].actor.GetName() < characters[j].actor.GetName()
-	})
-	for _, entry := range characters {
-		lines = append(lines, entry.line)
-		lines = append(lines, entry.auras...)
-		switch entry.actor.(type) {
+	for _, person := range w.COrderedRoomPeople(room.VNum) {
+		switch body := person.(type) {
 		case *MobInstance:
-			view.Mobs = append(view.Mobs, entry.line)
+			if body == nil || combat.Combatant(body) == ch || body.HasMobFlag(MobFlagExtract) {
+				continue // act.informative.c:list_one_char skips MOB_EXTRACT first
+			}
+			// C list_char_to_char suppresses a mount while get_rider(mob) is
+			// non-nil; the rider's presence line represents the pair. get_rider
+			// is IS_MOUNTED(mount) (src/utils.c:387-392), so a cleared AFF_MOUNT
+			// shows the mount again even though the master link survives.
+			if mobHasRider(body) {
+				continue
+			}
+			hidden := body.IsAffected(affHide)
+			if (!canSee(observationBodyActor(ch), body) || hidden) && !listsHiddenBody(ch, body) {
+				if hidden && observationBodyAffected(ch, affSenseLife) {
+					lines = append(lines, "You sense a hidden presence in the room.")
+				}
+				continue
+			}
+			line := mobPresenceLine(body, ch)
+			if line == "" {
+				continue
+			}
+			lines = append(lines, line)
+			lines = append(lines, presenceAuras(body, body.Proto() != nil && body.Proto().LongDesc != "" && body.GetPosition() == body.Proto().DefaultPos)...)
+			view.Mobs = append(view.Mobs, line)
 		case *Player:
-			view.Players = append(view.Players, entry.actor.GetName())
+			if body == nil || combat.Combatant(body) == ch {
+				continue
+			}
+			hidden := body.IsAffected(affHide)
+			if (!canSee(observationBodyActor(ch), body) || hidden) && !listsHiddenBody(ch, body) {
+				if hidden && observationBodyAffected(ch, affSenseLife) {
+					lines = append(lines, "You sense a hidden presence in the room.")
+				}
+				continue
+			}
+			line := w.playerPresenceLine(body, ch)
+			lines = append(lines, line)
+			lines = append(lines, presenceAuras(body, false)...)
+			view.Players = append(view.Players, body.GetName())
 		}
 	}
 	return lines
@@ -1613,15 +1582,4 @@ func startsWithVowel(text string) bool {
 		return false
 	}
 	return strings.ContainsRune("aeiouyAEIOUY", rune(text[0]))
-}
-
-func sortedMobs(mobs []*MobInstance) []*MobInstance {
-	result := append([]*MobInstance(nil), mobs...)
-	sort.Slice(result, func(i, j int) bool {
-		if result[i].GetVNum() != result[j].GetVNum() {
-			return result[i].GetVNum() < result[j].GetVNum()
-		}
-		return result[i].ID < result[j].ID
-	})
-	return result
 }

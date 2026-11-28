@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"sort"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
@@ -327,14 +326,7 @@ func clearMemory(m *MobInstance) {
 // pointUpdateObjectList snapshots the live object registry in the order C's
 // prepended object_list is traversed.
 func (w *World) pointUpdateObjectList() []*ObjectInstance {
-	w.mu.RLock()
-	objects := make([]*ObjectInstance, 0, len(w.objectInstances))
-	for _, obj := range w.objectInstances {
-		objects = append(objects, obj)
-	}
-	w.mu.RUnlock()
-	sort.Slice(objects, func(i, j int) bool { return objects[i].ID > objects[j].ID })
-	return objects
+	return w.COrderedObjects()
 }
 
 func (w *World) objectIsRegistered(obj *ObjectInstance) bool {

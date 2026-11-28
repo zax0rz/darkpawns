@@ -6,6 +6,7 @@ package game
 
 import (
 	"log/slog"
+	"sort"
 )
 
 // CircleMUD constants used for character management.
@@ -204,16 +205,25 @@ func (w *World) ExtractPendingPlayers() []*Player {
 		}
 	}
 	// ExtractChar is also used by non-death lifecycle paths that do not have a
-	// World to enqueue on. Keep the legacy flag scan as a compatibility arm.
+	// World to enqueue on. Keep the legacy flag scan as a compatibility arm,
+	// sorted in C character_list order (newest-first).
+	var fallbackPending []*Player
 	for _, p := range w.players {
 		if p.GetFlags()&extractMask != 0 {
 			if _, alreadyQueued := seen[p]; alreadyQueued {
 				continue
 			}
-			pending = append(pending, p)
+			fallbackPending = append(fallbackPending, p)
 			seen[p] = struct{}{}
 		}
 	}
+	sort.SliceStable(fallbackPending, func(i, j int) bool {
+		if fallbackPending[i].characterSequence != fallbackPending[j].characterSequence {
+			return fallbackPending[i].characterSequence > fallbackPending[j].characterSequence
+		}
+		return fallbackPending[i].Name < fallbackPending[j].Name
+	})
+	pending = append(pending, fallbackPending...)
 
 	// Snapshot this pass before dropping World.mu. Newly queued bodies wait for
 	// the next pass; follower Act callbacks must run without the world lock.
@@ -230,6 +240,12 @@ func (w *World) ExtractPendingPlayers() []*Player {
 			pendingMobs = append(pendingMobs, m)
 		}
 	}
+	sort.SliceStable(pendingMobs, func(i, j int) bool {
+		if pendingMobs[i].characterSequence != pendingMobs[j].characterSequence {
+			return pendingMobs[i].characterSequence > pendingMobs[j].characterSequence
+		}
+		return pendingMobs[i].GetID() > pendingMobs[j].GetID()
+	})
 	w.mu.Unlock()
 
 	for _, p := range pending {

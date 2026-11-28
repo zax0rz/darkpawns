@@ -262,7 +262,7 @@ func (w *World) StopFollowerByName(name string) {
 		StopFollower(w, p)
 		return
 	}
-	for _, m := range w.activeMobs {
+	for _, m := range w.COrderedMobs() {
 		if m.GetName() == name {
 			StopFollowerMob(w, m)
 			return
