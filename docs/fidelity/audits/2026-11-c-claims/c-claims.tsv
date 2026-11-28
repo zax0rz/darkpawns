@@ -1,0 +1,153 @@
+go_site	claim	c_evidence	verdict	divergence
+pkg/admin/olc_entity_write.go:220	C re-prompts "That mobile/object does not exist"; C has no vnum-0 rule; 0 accepted exactly when a prototype 0 exists	src/zedit.c:1052,1063 (two per-kind strings "That mobile does not exist, try again : " / "That object does not exist, try again : "); real_mobile/real_object at :1047,:1058	partly	the re-prompt and vnum-0 claims are true, but the quoted message is a splice of two per-kind C strings, not a C literal; code unaffected
+pkg/auth/ratelimit.go:391	C has no account lockout at all	grep -ri lockout src/ finds none; src/interpreter.c:1878-1879 counts bad pws, never locks	true	—
+pkg/combat/fight_core.go:1097	attitude_loot returns before any draw through three gates (MOB_AGGR24, can_speak, not-victim)	src/fight.c:1161,1167,1170	true	—
+pkg/combat/formulas_test.go:758	a sleeping defender is hit on every roll, natural 1 included; C has no natural-1 miss there	src/fight.c:1826 (miss requires AWAKE(victim); utils.h:450 AWAKE = GET_POS > POS_SLEEPING)	true	—
+pkg/command/skill_commands.go:1041	C's do_turn ignores its arguments	src/new_cmds2.c:960 (body never reads argument)	true	—
+pkg/command/skill_commands.go:1061	C's do_compare terminator is LF-CR: "They're the same thing!\n\r"	src/new_cmds.c:1991	true	—
+pkg/command/skill_commands.go:1359	set_hunting is gated on !mini_mud; the port has no mini-mud mode	src/new_cmds2.c:609 (if (mob && !mini_mud && ch && hunting))	true	—
+pkg/command/damage_neutral_rescue_test.go:56	C does not enroll an already-stunned victim; the one-way attacker stays fighting	src/fight.c:1444 (victim enrollment gated on GET_POS(victim) > POS_STUNNED); :1498-1502 (neutral-room arm)	true	—
+pkg/command/skill_enrollment_test.go:105	C does not set_fighting a corpse: neither combatant is enrolled	src/fight.c:1406-1408,1444 (both arms gated on GET_POS > POS_STUNNED)	true	—
+pkg/game/act.go:184	dark room renders "someone" exactly as C does (PERS + infravision)	src/utils.h:552 PERS = CAN_SEE ? GET_NAME : "someone"; CAN_SEE carries the dark-room check	true	—
+pkg/game/act_movement_door_test.go:301	C has no `key < 0` guard in has_key	src/act.movement.c:428-441 (no negative-key check)	true	—
+pkg/game/act_movement.go:212	C never parses a direction string in do_move	src/act.movement.c:358-366 (do_move maps cmd number; parsing is command_interpreter's)	true	—
+pkg/game/actor_specials.go:174	conjured: C ignores actor/command text; uncharmed fizzles + queues extraction	src/spec_procs3.c:866-887 (fizzle/disappearance acts, extract_char)	true	—
+pkg/game/actor_specials.go:217	C's guard special rejects mini_mud; Go has no mini_mud runtime	src/spec_procs2.c:1827 (if (!cmd || mini_mud || ...))	true	—
+pkg/game/actor_specials_guards.go:265	C has no IS_NPC guard on the guild_info loop	src/spec_procs.c:595-598 ((IS_NPC(ch) || GET_CLASS(ch) != guild_info[i][0]))	true	—
+pkg/game/actor_specials_rooms.go:362	elements_platforms: C does not skip mobiles in the teleport loop	src/spec_procs3.c:1011-1022 (people loop, no IS_NPC test)	true	—
+pkg/game/actor_specials_rooms.go:645	elements_master_column: C always returns TRUE on this path	src/spec_procs3.c:1000 (return (TRUE))	true	—
+pkg/game/bans_test.go:16	a wildcard interpretation would match 192.168.1.100; C does not (strstr literal)	src/ban.c:100 (strstr(hostname, banned_node->site))	true	—
+pkg/game/character_command.go:97	order/force/lua carry subcmd 0, so C skips the shadow skill draw in do_follow	src/act.movement.c:933-936 (quiet && GET_SKILL(SKILL_SHADOW) > number(0,101))	true	—
+pkg/game/death_floors_depth_test.go:10	C has no floor on real_abils.con in die_with_killer or on GET_HIT in damage()	src/fight.c:605-607 (con-- twice, no MAX); :1483-1484 (GET_HIT -= dam, no floor)	true	—
+pkg/game/equipment_ac_depth_test.go:94	a WEAR_ABOUT ITEM_WORN piece contributes no apply_ac value	src/handler.c:182 (APPLY_AC fold); :734-736 (apply_ac only for ITEM_ARMOR)	true	—
+pkg/game/flee.go:309	C skips a follower whose rider is the mover (get_rider check)	src/act.movement.c:345-347 (get_rider(k->follower) != ch)	true	—
+pkg/game/help.go:21	index.mini is read only in mini_mud mode	src/db.c:581-584 (mini_mud ? MINDEX_FILE : INDEX_FILE)	true	—
+pkg/game/house_player.go:46	C has no fallback after do_house's guest/transfer branches; unknown subcommand is silent	src/house.c:603-718 (is_abbrev guest/transfer arms, no final else)	true	—
+pkg/game/hunting_mudlog.go:21	a guest body is a Go-only concept; C has no equivalent	grep -i guest src/*.c: only house num_of_guests; no guest players	true	—
+pkg/game/item_consumable_actor.go:102	NPCs' shared dummy_mob flag set is zero, so C takes the ordinary sustenance arm	src/db.c:104,1281 (mob_proto[i].player_specials = &dummy_mob after clear_char); act.item.c:983 (PLR_VAMPIRE arm)	true	—
+pkg/game/item_consumable.go:488	C get_obj_in_list_vis matches keywords with isname_with_abbrevs, not short descriptions	src/handler.c:1335-1346 (isname_with_abbrevs(tmp, i->name))	true	—
+pkg/game/item_consumable.go:501	C name_to_drinkcon prepends drinknames[type] to obj->name, no short-desc change, no dedupe	src/act.item.c:881-895	true	—
+pkg/game/item_equipment.go:191	defensive guard only; C has no refusal message at this transfer step (equip_char cannot fail)	src/handler.c:734-746 (equip_char returns void, no message)	true	—
+pkg/game/item_transfer.go:153	quiet pickup suppresses the room act and trains SKILL_PALM, as C does	src/act.item.c:269-283; src/new_cmds.c:2122 (get_from_room(ch, arg1, prob>percent))	true	—
+pkg/game/item_transfer.go:499	defensive guard only; C has no refusal message at this transfer step	src/act.item.c:269-283 (perform_get_from_room has no failure message)	true	—
+pkg/game/level_draw_order_test.go:123	C skips do_start for an already-leveled God	src/interpreter.c:2214-2217 (do_start only when GET_LEVEL == 0)	true	—
+pkg/game/look_extra_presence_test.go:27	C never reaches a later extra-desc node for the same arg	src/act.informative.c:987-997 (find_exdesc returns first match)	true	—
+pkg/game/mob.go:1077	C send_to_char writes into the descriptor output buffer with no framing	src/comm.c:2335-2341 (SEND_TO_Q)	true	—
+pkg/game/mob.go:88	C never clamps GET_MOB_WAIT, so it may go negative	src/fight.c:1977-1981 (GET_MOB_WAIT -= PULSE_VIOLENCE, no floor)	true	—
+pkg/game/movement_actor_commands.go:113	NPC skill reads are dummy_mob zeros; the quiet shadow command still draws before the immortal shortcut	src/act.movement.c:933-936 (left-to-right && evaluation); src/db.c:104,1281	true	—
+pkg/game/movement.go:383	C's reset-zone obj-to-obj path does not require ITEM_CONTAINER	src/db.c:2167-2184 ('P' arm); src/handler.c:939-954 (obj_to_obj, no container check)	true	—
+pkg/game/muddate.go:59	C never needs MkdirAll because its lib tree always carries etc/; C logs "Saving mud time."	src/comm.c:2636; lib/etc/ present in the shipped tree	true	—
+pkg/game/note_write_test.go:85	C's empty-note '@' path allocates nothing; no "Note discarded." exists in src/	grep "Note discarded" src/ = no hits; src/modify.c:114+ (string_add '@' arm)	true	—
+pkg/game/npc_command.go:36	a direct ACMD call skips command_interpreter's hide draw, gates and special() pass	src/interpreter.c:883 (command_interpreter owns those gates; direct calls bypass it)	true	—
+pkg/game/object_movement_test.go:738	C has no transactional rollback path for object moves	src/handler.c:939-954,566-600 (obj_to_obj/obj_to_char link unconditionally)	true	—
+pkg/game/other_character.go:58	C's do_report has no IS_NPC gate	src/act.other.c:799-821 (no IS_NPC test; room loop)	true	—
+pkg/game/other_settings.go:212	C ships nameserver_is_slow YES and never resolves the hostname with it	src/config.c:206; src/comm.c:1527-1529 (short-circuit skips gethostbyaddr)	true	—
+pkg/game/other_utility.go:121	only ROOM_BFR blocks recall by room; C has no no_recall room flag	src/act.other.c:1738; grep -ri no_recall src/ = no hits	true	—
+pkg/game/pk_death_mudlog_test.go:229	C's PK-death mudlog call has no invis term	src/fight.c:1681 (mudlog(buf2, BRF, LVL_IMMORT, TRUE))	true	—
+pkg/game/practice.go:181	C find_skill_num accepts an abbreviation per token of a multiword name ("c li" -> "cure light")	src/spell_parser.c:370-390 (per-token is_abbrev loop)	true	—
+pkg/game/room_activity.go:308	a spell attacktype is never IS_WEAPON, so C always takes skill_message	src/fight.c:1534; src/spells.h:266,283 (TYPE_HIT 300, TYPE_SUFFERING 399; spells < 300)	true	—
+pkg/game/room_obj_scripts.go:257	C ignores the onpulse trigger's return value	src/comm.c:789-793 (run_script result unused)	true	—
+pkg/game/room_obj_scripts.go:37	C's script-trigger gate never tests the object name	src/comm.c:789 (GET_OBJ_SCRIPT && OBJ_SCRIPT_FLAGGED only)	true	—
+pkg/game/say_spell_act.go:65	act() with hide_invisible skips a listener who cannot see ch	src/comm.c:2530-2533 (!(hide_invisible && ch && !CAN_SEE(to, ch)))	true	—
+pkg/game/scripts.go:95	perform_give ignores ongive's run_script result; C has no fallback line	src/act.item.c:705-707 (result unused)	true	—
+pkg/game/shoot_target.go:11	C's get_char_room applies no CAN_SEE/self/me semantics for do_shoot's fallback	src/handler.c:865-881 (isname_with_abbrevs only, no CAN_SEE)	true	—
+pkg/game/shop_stock.go:28	C's get_purchase_obj extract branch does not decrement SHOP_SORT	src/shop.c:447-451 (extract_obj with no SHOP_SORT change)	true	—
+pkg/game/skill_advanced.go:298	C never gates compare on a skill; APPRAISE only sets the success probability	src/new_cmds.c:1963-1966 (unskilled prob = 20+level, no refusal)	true	—
+pkg/game/skill_combat_test.go:344	C skips hit(vict, ch) when the aware mob is already fighting	src/new_cmds.c:2440-2441 (if (!FIGHTING(vict)) hit(...))	true	—
+pkg/game/skill_known_gate_test.go:100	C has no class gate on skill USE (only on learning)	for the audited warrior skills: src/act.offensive.c:172-220 etc. check GET_SKILL only; but do_kuji_kiri does gate use on CLASS_NINJA (src/new_cmds.c:1557)	partly	comment overgeneralizes; the audited skills' code is right, but C does class-gate some skill uses (kuji-kiri)
+pkg/game/skill_known_gate_test.go:86	C does not gate skill use on level	src/act.offensive.c:172-220 (no level gate in do_backstab)	true	—
+pkg/game/skills.go:532	do_bite's "Your victim is already a creature of the night!" has no trailing CRLF	src/new_cmds.c:1260 (literal ends without \r\n)	true	—
+pkg/game/skill_special.go:211	C has no movement-point gate or expenditure in do_bearhug	src/new_cmds.c:471-505 (no GET_MOVE term)	true	—
+pkg/game/skill_stealth.go:66	the former Go stealth handler was invented; C's do_stealth has no access gate, only the skill-driven probability	src/act.other.c:1751-1781 (number(1,101) vs GET_SKILL(SKILL_STEALTH)+dex, no refusal gate)	true	—
+pkg/game/spec_act_templates_test.go:6	the spec_procs4 bodies are ports of C specials that src/spec_assign.c never assigns	src/spec_assign.c:577-578 (enter_circle/elevator: declarations only) — but dracula (:262,432), jailguard (:298), outofjailguard (:299), bank (:535), horn (:558), pray_for_items (:605), start_room (:606), newbie_zone_entrance (:607), oro_study_room (:613), oro_quarters_room (:614), suck_in (:616), pet_shops (:618) ARE assigned	partly	true for the two bodies the test pins (enter_circle, elevator); false as a blanket statement about spec_procs4 — 12 of its specials are assigned; code unaffected
+pkg/game/spec_procs2.go:1372	little_boy: C has no give/note exchange; the flower logic was invented	src/spec_procs2.c:1391-1403 (random exclaim only)	true	—
+pkg/game/spec_procs2.go:2264	wall_guard_ns: C ignores perform_move's return and greets the room either way	src/spec_procs2.c:2281-2285	true	—
+pkg/game/spec_procs3.go:292	C's cleric switch has no case 12; lspell 12 falls to default's harm	src/spec_procs.c:1490-1543 (cases 1-11, 13-27, default SPELL_HARM)	true	—
+pkg/game/spec_procs3.go:522	C ignores do_behead's void result and continues to the brain-eating act	src/spec_procs3.c:211-215	true	—
+pkg/game/spec_procs.go:1139	C sets GET_LEVEL(ch) = LVL_IMPL in cuchi's Orodreth arm (name backdoor)	src/spec_procs.c:1049	true	—
+pkg/game/spec_procs_missing.go:151	C's beholder has no HP gate; the old Go body invented one and drew wrong	src/new_cmds2.c:370-397 (number(0,4)/(0,10)/(0,5) arms, no GET_HIT gate)	true	—
+pkg/game/spec_procs_missing.go:49	C's recharger has no position gate; dispatch governs each verb	src/new_cmds2.c:415-430 (no position check)	true	—
+pkg/game/spec_werewolf_test.go:195	C writes the caller's string verbatim; process_output's flush supplies the only terminator	src/comm.c:2384-2386 (SEND_TO_Q verbatim); :1630-1632 (flush CRLF)	true	—
+pkg/game/string_add_overflow_test.go:15	C skips an overflowing later line but keeps the existing text	src/modify.c:146-147 ("String too long.  Last line skipped.")	true	—
+pkg/game/unassigned_script_mudlog_test.go:163	C's object-onpulse passes me=NULL; the unassigned-script arm formats GET_NAME(NULL) and faults before emitting	src/scripts.c:1762-1767 (GET_NAME(me) with me NULL); src/utils.h:230-231; src/comm.c:791-793	true	—
+pkg/game/world.go:1027	C has no "<mob> appears." line on a zone reset (read_mobile/char_to_room are silent)	grep "appears" src/handler.c src/db.c = no such line; char_to_room sends nothing	true	—
+pkg/game/world.go:893	C's zone lines (werewolf howl, fire/lightning) are bare; the flush supplies the only terminator	src/magic.c:833,838 (send_to_zone bare strings); src/comm.c:1630-1632	true	—
+pkg/game/world.go:999	C never indexes movement_loss out of bounds (no guard; valid shipped data)	src/act.movement.c:135-136 (unchecked movement_loss[SECT(...)] lookup)	true	—
+pkg/game/world_movement.go:204	C skips NPC observers for the watched feeling (!IS_NPC)	src/spells.c:944-946	true	—
+pkg/game/world_oedit.go:129	C never writes the zone file on this edit path; a later oedit save keeps the edit	src/oedit.c:339 (oedit_save_to_disk writes the obj file, not the zone)	true	—
+pkg/game/world_oedit.go:194	C has no struct slot for synthetic corpse/money runtime identity	src/structs.h:743 (struct obj_data has no runtime/synthetic field)	true	—
+pkg/game/world_redit.go:191	C never reverts unrelated rooms' runtime state (in-place edits)	src/zedit.c (rooms edited in place; no re-parse revert path)	true	—
+pkg/game/world_redit_test.go:55	C never reverts runtime door state on an unrelated structural commit	src/zedit.c (same in-place edit model)	true	—
+pkg/olc/entity_draft.go:220	zedit's E/G/P commands have no room case; their room is sticky from the previous command	src/zedit.c:315-325,75-90 (default: break keeps cmd_room)	true	—
+pkg/olc/registry.go:222	C's OLC duplicate refusal prints the holder's plain character name; C has no web editor	src/olc.c:157-158 (GET_NAME(d->character))	true	—
+pkg/parser/obj.go:67	C's object save stores no extra descriptions	src/objsave.c (0 ex_description hits)	true	—
+pkg/scripting/engine.go:332	C's open_lua_file names the load-error kinds; unmapped failures get no invented payload	src/scripts.c:1675-1687 (five named kinds)	true	—
+pkg/session/act_informative.go:176	C always appends one final CRLF after the listing, then page_string	src/act.informative.c:2684-2686	true	—
+pkg/session/act_social.go:103	C has no alias limit (approved divergence adds count/size caps)	grep MAX_ALIASES/"too many aliases" src/interpreter.c = no hits	true	—
+pkg/session/alias_cap_test.go:11	C has no alias limit (approved divergence)	same as above	true	—
+pkg/session/bare_send_test.go:6	C sends these gate/failure replies with no terminator; the prompt frame supplies the break	src/comm.c:1630-1632 (flush frame); PF-063 pattern	true	—
+pkg/session/cast_cmds.go:268	immortals skip the mana sufficiency check but still pay, exactly as C does	src/spell_parser.c:1072 (check has GET_LEVEL < LVL_IMMORT); :1102-1108 (deduction has none)	true	—
+pkg/session/cast_cmds.go:275	C deducts mana only after the concentration roll	src/spell_parser.c:1097-1111	true	—
+pkg/session/char_creation.go:743	C skips do_start() for the first-player God (nonzero level from init_char)	src/interpreter.c:2214-2217	true	—
+pkg/session/close_descriptor.go:38	C logs "Losing descriptor without char." for a pre-name-prompt drop	src/comm.c:2142	true	—
+pkg/session/cmd_info.go:1509	C's do_help is one contiguous stc stream; per-message emission injected blank lines	src/act.informative.c:1566+ (one buffer to page_string)	true	—
+pkg/session/cmd_info.go:187	C's "extremely well armored" line has no final period	src/act.informative.c:1246	true	—
+pkg/session/cmd_movement.go:35	C has no room-entry aggro path; mobs engage from mobile_activity gated on AWAKE	src/mobact.c:71,199,226	true	—
+pkg/session/gen_ps_cmds.go:243	C strftimes into buf1 but never sends it (SCMD_VERSION)	src/act.informative.c:2165-2171	true	—
+pkg/session/gen_ps_cmds.go:249	C has no "Built with: <go version>" line in version output	src/act.informative.c:2162-2176 (only Dark Pawns 2.3- + Compile Time)	true	—
+pkg/session/interpreter_batch8_mudlog_test.go:240	the new-player mudlog uses fixed LVL_IMMORT; C has no invisibility term	src/interpreter.c:2154-2155	true	—
+pkg/session/luaedit.go:106	C's SCRIPT_DIR is the relative "scripts"; Go's absolute root with dots is unseen in C	src/db.h:79	true	—
+pkg/session/manager.go:330	C has no account lockout (renewable per-account lockout removed per Zach's Option D)	grep -ri lockout src/ = no hits	true	—
+pkg/session/manager.go:634	C's load_messages exits(1) when the combat-message file cannot be read	src/fight.c:133-137	true	—
+pkg/session/medit.go:634	C skips leading spaces before medit_parse sees the line	src/interpreter.c:1721 (skip_spaces(&arg) before CON_MEDIT dispatch)	true	—
+pkg/session/pager.go:127	C has no structured-data analog; every descriptor is a terminal	C descriptor model (comm.c); no structured clients in src/	true	—
+pkg/session/reconnect.go:29	C disconnects a non-playing duplicate with "Multiple login detected"	src/interpreter.c:1550,1573	true	—
+pkg/session/report_group_color_test.go:168	C has no "Your group leader is not online." anywhere; print_group uses ch->master directly	grep "group leader is not online" src/ = no hits; src/act.other.c:649	true	—
+pkg/session/retreat_doors_test.go:52	do_retreat takes six draws, skips closed doors, ends cornered in the same room	src/act.offensive.c:1057-1075	true	—
+pkg/session/special_order_test.go:155	C's special() pass skips an MOB_EXTRACT-flagged mobile	src/interpreter.c:1451-1456	true	—
+pkg/session/tedit.go:823	C's replace sets i=-1 on overflow (caller reports not found) and leaves d->str truncated at the failed match	src/improved-edit.c:592-617	true	—
+pkg/session/wiz_communication.go:242	force "all" skips any victim whose level is not below the caster's	src/act.wizard.c:1899-1905	true	—
+pkg/session/wiz_communication.go:359	C's wiznet usage is one contiguous send; a per-message split added a blank line C never sends	src/act.wizard.c:1928	true	—
+pkg/session/wiz_info.go:439	C's do_idlist ignores arguments and always opens "object_idlist"	src/act.wizard.c:3582	true	—
+pkg/session/wiz_movement.go:377	C skips the caller, non-CON_PLAYING descriptors, missing characters, and level >= caller's	src/act.wizard.c:347-351	true	—
+pkg/session/wiz_object.go:107	defensive guard only; C has no refusal message at the wizard-load transfer step	src/handler.c:566-600 (obj_to_char cannot fail)	true	—
+pkg/session/wiz_stats_color_test.go:186	the exit Type: field is sprintbit output ending in a space, uncoloured	src/act.wizard.c:498-502	true	—
+pkg/session/zedit_new_zone_mudlog.go:11	C does not check fprintf/fclose in the zone save	src/zedit.c:136-173 (unchecked fprintf/fclose)	true	—
+pkg/spells/affect_messages_golden_test.go:267	haste's only message is a to_self line: the caster sees it when ch != victim; the victim sees nothing	src/magic.c:1046; to_self acted only when ch != victim (TO_CHAR to ch)	true	—
+pkg/spells/affect_spells.go:314	haste's "You feel your movement quicken!" is a to_self line (caster sees it, victim never)	src/magic.c:1046	true	—
+pkg/spells/affect_spells.go:3822	mirror image's clone is created at level 1 BEFORE the guards, exactly as C does	src/spells.c:1130,1136	true	—
+pkg/spells/affect_spells.go:3826	C's (NULL == ch) || (NULL == clone) is a silent return; no failure message	src/spells.c:1138	true	—
+pkg/spells/affect_spells.go:652	C tests IS_AFFECTED(victim, af[0]) || IS_AFFECTED(victim, af[1]) unconditionally; unset slot 0 = AFF_BLIND	src/magic.c:1388-1389	true	—
+pkg/spells/affect_spells_test.go:127	C has no spell number or dispatch entry for silken missile	grep SILKEN src/spells.h src/spell_parser.c: only the orphaned ASPELL body (spells.c:883) and declaration (spells.h:373); no SPELL_ number, no spello/MANUAL_SPELL	true	—
+pkg/spells/area_spells_test.go:285	C skips a mortal player at LVL_IMMORT (31) in mag_areas but enrolls a 0-damage target	src/structs.h:620; src/magic.c:1610-1611; src/fight.c:1406-1408,1444	true	—
+pkg/spells/area_spells_test.go:355	C ignores the dispatch level and passes GET_LEVEL(caster) to spell_charm for mass dominate	src/magic.c:1617-1618	true	—
+pkg/spells/damage_spells.go:132	C always calls damage(), even for 0	src/magic.c:827 (unconditional damage call)	true	—
+pkg/command/bite_night_creature_bytes_test.go:12	do_bite's night-creature refusal is the only bite refusal with no trailing CRLF	src/new_cmds.c:1260	true	—
+pkg/game/item_equipment.go:525	defensive guard only; C has no refusal message at the unequip transfer step	src/handler.c:566-600 (obj link/unlink cannot fail)	true	—
+pkg/session/combat_message_boot_test.go:13	C's load_messages prints "Error reading combat message file %s" and exit(1)	src/fight.c:133-137	true	—
+pkg/session/equipment_ac_test.go:20	C does not print an AC line in equipment; AC belongs to score	src/act.informative.c:1470-1495 (no AC line in do_equipment)	true	—
+pkg/spells/affect_spells.go:1755	C's spell_sobriety asserts victim non-null (assert crashes on null)	src/spells.c:690 (assert(victim))	true	—
+pkg/telnet/conn_limit_refusal_test.go:61	per-IP connection limit is a Go-only guard; C has none	grep -i "per.ip\|max_conn" src/comm.c = no per-IP cap	true	—
+pkg/telnet/listener.go:302	with nameserver_is_slow C never resolves; d->host is the zero-padded quad	src/config.c:206; src/comm.c:1527-1540 (%03u.%03u.%03u.%03u)	true	—
+pkg/telnet/listener.go:481	C has no transport deadline for a playing descriptor; idling is check_idling's business	src/limits.c:419-454	true	—
+pkg/telnet/listener_test.go:413	with nameserver_is_slow C never resolves; no PTR lookup, no failure producer	src/comm.c:1527-1529	true	—
+pkg/boards/boards_test.go:348	C Board_remove_msg has no READ_LVL check	src/boards.c:377-408 (REMOVE_LVL and LVL_IMPL-1 checks only)	true	—
+pkg/game/character_command.go:26	CharacterCommandUnsupported marks a command whose C behavior has not been ported for that actor	port-coverage statement about the enum, not a claim about C's behavior	unverifiable	—
+pkg/game/look.go:329	C list_char_to_char skips MOB_EXTRACT before visibility checks	the EXTRACT skip is real but lives in list_one_char (src/act.informative.c:508), called at :640 after list_char_to_char's CAN_SEE gate (:635-637) — not "before visibility checks"	partly	ordering claim wrong; behaviorally inert (an extracted mob is unlisted either way); code unaffected
+pkg/game/movement.go:26	C obj_from_room does not alter room light	src/handler.c:920-940 (no light term)	true	—
+pkg/game/movement.go:125	C obj_to_room does not alter room light	src/handler.c:901-919 (no light term)	true	—
+pkg/game/other_status.go:41	C only skips leading spaces here (do_auto compares the rest literally)	src/interpreter.c:1721 (skip_spaces); do_auto's literal arg compare	true	—
+pkg/game/player.go:404	C store_to_char does not call roll_real_abils or init_char	src/db.c:2412-2460 (neither call in the body)	true	—
+pkg/game/raw_kill.go:139	C obj_to_obj does not mark PLR_CRASH; obj_from_char does	src/handler.c:939-954 (no PLR_CRASH in obj_to_obj); :598 (obj_from_char sets it)	true	—
+pkg/game/room_activity.go:180	the no-hassle exemption only exists for players; C NPCs never carry PRF flags	src/db.c:104,1281 (NPCs share the zeroed dummy_mob player_specials)	true	—
+pkg/game/skill_berserk_kuji.go:126	the original C switch has no case for SKILL_KK_TOH, so the Toh seal's success check always fails; ported faithfully, do not fix	src/new_cmds.c:1514-1516 (case SKILL_KK_TOH: prob = GET_SKILL(ch, SKILL_KK_TOH); break;)	false	Go's checkKkSuccess omitted the SkillKkToh case, so every ninja's Toh seal failed its success check for five months (PF-192); fixed in the sibling PR (kimi/toh-seal-fix) with the case added in C's order
+pkg/game/spec_mortician_test.go:144	the C mortician procedure does not consume or alter a retrieved corpse	src/spec_procs3.c:807-845 (obj_from_room + dump acts; no extract or stat change)	true	—
+pkg/game/spec_procs.go:86	a terminated literal passed to sendToChar prints an extra blank line the C oracle never wrote (do_gen_door/ok_pick build lines across calls)	src/act.movement.c:606-609; src/comm.c:1620-1644 (PF-063 pattern)	true	—
+pkg/game/version.go:31	DP_FIXED_TIME would print a date the C oracle never prints	src/act.informative.c:2162-2176 (version output has no date line)	true	—
+pkg/session/entry_name.go:11	C nanny skips leading spaces before checking for the empty-name close	src/interpreter.c:1721 (skip_spaces(&arg))	true	—
+pkg/session/hit_depth_test.go:12	C one_argument skips the leading fill word and ignores everything after the first non-fill token	src/interpreter.c:1267-1284 (fill_word loop; first token returned)	true	—
+pkg/session/menu.go:116	C nanny skips only leading whitespace; menu arms inspect arg[0]	src/interpreter.c:1721,2165+	true	—
+pkg/session/olc_control_test.go:24	C saveinfo does not require authorization for the dirty zones	src/olc.c:347-365 (olc_saveinfo lists without any level check)	true	—
+pkg/session/sendtochar_wire_test.go:60	C's do_gen_door sends "Open what?\r\n" and process_output appends one CRLF plus the prompt; Go's extra CRLF printed a blank line C never wrote	src/act.movement.c:606-609; src/comm.c:1620-1644	true	—
+pkg/session/wiz_player.go:168	C do_return has no handler-level authorization gate, is silent unless switched, and ignores its arguments	src/act.wizard.c:1205-1221	true	—
+pkg/spells/area_spells_test.go:385	C mag_masses skips !IS_NPC(tch) && GET_LEVEL(tch) >= LVL_IMMORT	src/magic.c:1536-1538	true	—
