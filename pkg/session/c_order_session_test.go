@@ -96,7 +96,7 @@ func TestCOrderListOutput_SendStatRoom(t *testing.T) {
 		idxBeta := strings.Index(text, "Mob Beta(MOB)")
 		idxImm := strings.Index(text, "Immortal(PC)")
 		idxAlpha := strings.Index(text, "Mob Alpha(MOB)")
-		if idxBeta < 0 || idxImm < 0 || idxAlpha < 0 || !(idxBeta < idxImm && idxImm < idxAlpha) {
+		if idxBeta < 0 || idxImm < 0 || idxAlpha < 0 || idxBeta >= idxImm || idxImm >= idxAlpha {
 			t.Fatalf("iter %d: expected Mob Beta(MOB) < Immortal(PC) < Mob Alpha(MOB) in:\n%s", iter, text)
 		}
 	}
