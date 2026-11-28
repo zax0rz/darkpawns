@@ -18,7 +18,7 @@ func newPortalToTempleTestWorld(t *testing.T) portalToTempleTestWorld {
 	t.Helper()
 	w, err := NewWorld(&parser.World{Rooms: []parser.Room{
 		{VNum: 19658, Name: "Tower", Description: "A tall tower."},
-		{VNum: 8008, Name: "Temple of the Cross", Description: "A quiet temple."},
+		{VNum: 8008, Name: "Temple of the Cross", Description: "A quiet temple.\n"},
 	}})
 	if err != nil {
 		t.Fatalf("NewWorld: %v", err)

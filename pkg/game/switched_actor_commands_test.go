@@ -172,7 +172,7 @@ func TestSwitchedMobileMovementLooksAtDestination(t *testing.T) {
 		{VNum: 1001, Name: "Body Origin", Exits: map[string]parser.Exit{
 			"north": {Direction: "north", ToRoom: 1002},
 		}},
-		{VNum: 1002, Name: "Body Destination", Description: "The switched body is here."},
+		{VNum: 1002, Name: "Body Destination", Description: "The switched body is here.\n"},
 	}})
 	if err != nil {
 		t.Fatal(err)

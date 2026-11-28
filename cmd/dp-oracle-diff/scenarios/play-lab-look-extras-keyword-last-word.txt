@@ -1,0 +1,88 @@
+# Lockstep play found a blank line between room 8061's description and its
+# exits (triage s00055 kender thief; play-lab-div-s00003). do_description
+# writes the room description with one send_to_char
+# (src/act.informative.c:2757-2803). A room with extra descriptions gets
+# sprintf("%s ", description) (src/act.informative.c:2784), and for a viewer
+# with colour it bolds each keyword's first occurrence, taking in the
+# character before it and the whitespace after it
+# (src/act.informative.c:2787-2796). fread_string keeps the description's last
+# line as CRLF (src/db.c:2705-2717), so when the keyword is the last word that
+# whitespace is the final CR, and the colour reset lands between the CR and
+# the LF. The port framed the description as an act() line: the reset ended
+# that line and act() ended it again. Room 8061's keyword is "guild"
+# (lib/world/wld/80.wld:1246-1249) and its description ends "thieves guild."
+#
+# The peer answers the colour question with Y (src/interpreter.c:1978); without
+# colour neither engine runs the wrap, which is why look-description-space-depth
+# never reached this. The peer walks west into 8061 from 8062 as play did
+# (lib/world/wld/80.wld:1263-1266). The first player, the teleporting
+# implementor, has colour off and waits in 8125, so it is not in 8061 when the
+# peer enters it.
+# depth-case: look.description-keyword-last-word
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Lookgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lookgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Lookmortal
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Lookmortal
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8125
+teleport Lookmortal 8062
+
+[probe]
+send:peer west

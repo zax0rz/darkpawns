@@ -17,7 +17,7 @@ func TestSpecSuckIn_LookGateAudienceAndRelocation(t *testing.T) {
 					Description: "The painting shows a strange maze.",
 				}},
 			},
-			{VNum: 18101, Name: "Entrance Tunnel", Description: "A strong wind flows outward."},
+			{VNum: 18101, Name: "Entrance Tunnel", Description: "A strong wind flows outward.\n"},
 		},
 	})
 	if err != nil {
