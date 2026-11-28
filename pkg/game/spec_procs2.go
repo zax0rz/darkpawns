@@ -224,7 +224,7 @@ func specNineLives(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	return false
 }
 
-// stopFighter runs C stop_fighting on one body (src/spec_procs2.c:232-233).
+// stopFighter runs C stop_fighting (src/fight.c:230) on one body.
 func stopFighter(body combat.Combatant) {
 	switch b := body.(type) {
 	case *Player:
