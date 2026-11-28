@@ -137,17 +137,10 @@ func (w *World) COrderedRoomPeople(roomVNum int) []Actor {
 }
 
 // COrderedRoomPlayers returns the room's players in C's world[room].people
-// order (newest arrival first).
+// order (newest arrival first). Delegates to GetPlayersInRoom, which returns C
+// order by default.
 func (w *World) COrderedRoomPlayers(roomVNum int) []*Player {
-	players := w.GetPlayersInRoom(roomVNum)
-	sort.SliceStable(players, func(i, j int) bool {
-		si, sj := players[i].GetRoomEntrySequence(), players[j].GetRoomEntrySequence()
-		if si != sj {
-			return si > sj
-		}
-		return players[i].GetName() < players[j].GetName()
-	})
-	return players
+	return w.GetPlayersInRoom(roomVNum)
 }
 
 // COrderedMobs returns all live mobiles in C's character_list order

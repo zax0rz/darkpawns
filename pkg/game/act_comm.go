@@ -838,13 +838,7 @@ func halfChop(input string) (string, string) {
 
 // AllPlayers returns a snapshot of all connected players.
 func (w *World) AllPlayers() []*Player {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	players := make([]*Player, 0, len(w.players))
-	for _, p := range w.players {
-		players = append(players, p)
-	}
-	return players
+	return w.GetAllPlayers()
 }
 
 // CIsNumber is the single Go port of C's is_number() (src/interpreter.c:1175-1182):
