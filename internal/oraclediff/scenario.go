@@ -18,6 +18,11 @@ const enterGameStep = "1"
 
 const pulseControl = "~dpclock pulse "
 
+// spaceMarker expands to one literal space inside a step line. The parser
+// trims every line, so trailing spaces (and leading runs) cannot be written
+// directly; a marker keeps them exact. Ordinary lines are untouched.
+const spaceMarker = "<SP>"
+
 // beginningOfTime mirrors src/db.c:417 for fixed-time validation.
 const beginningOfTime = 650336715
 
@@ -378,7 +383,10 @@ type AudienceProbeBlock struct {
 // primary client.
 //
 // Blank lines and lines beginning with # are comments; <ENTER> represents an
-// intentional empty command.
+// intentional empty command. Inside a step, <SP> expands to one literal
+// space, so a step can carry exact interior or trailing spacing (e.g.
+// "say hi<SP><SP>" types "say hi  "). Probe setup-refusal reasons quote the
+// expanded step text.
 func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	return parseScenario(name, r, false)
 }
@@ -857,6 +865,12 @@ func parseScenario(name string, r io.Reader, allowEmptyProbe bool) (Scenario, er
 		}
 		if line == enterStep {
 			line = ""
+		} else {
+			// <SP> expands to one literal space, so a step can end with
+			// the trailing spaces C's command_interpreter would see.
+			// Applied after section/fixture parsing: directives never
+			// expand, and marker-free lines are byte-identical.
+			line = strings.ReplaceAll(line, spaceMarker, " ")
 		}
 		*section = append(*section, line)
 	}
