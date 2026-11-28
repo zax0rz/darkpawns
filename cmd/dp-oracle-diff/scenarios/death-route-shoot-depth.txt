@@ -1,0 +1,88 @@
+# Death route: die(to) (TYPE_UNDEFINED) from legacy ranged shoot.
+# C: src/act.offensive.c:944 -> die(to) (fight.c:626-630) -> raw_kill(to, TYPE_UNDEFINED) ->
+# make_corpse (fight.c:283-285).
+# depth-case: death.route-shoot
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 4841 1 8162 48
+spawn-obj 4802 1 8162 48
+spawn-mob 16304 1 8163 163
+replace-room-exits 8162 north 8163 0
+replace-room-exits 8163 none
+set-room-flag 8162 4 off
+set-room-flag 8163 4 off
+
+[setup:oracle]
+Shootgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:destination]
+Shootdest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:destination]
+Shootdest
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Shootdest 8163
+set mob instructor maxhit 30000
+set mob instructor hit 1
+get hoopak
+get arrow
+wield hoopak
+skillset Shootgod 'shoot' 100
+set player Shootgod dex 18
+set mob instructor dex 0
+set player Shootgod damroll 100
+
+[probe]
+shoot arrow north instructor
+send:destination look

@@ -1,0 +1,84 @@
+# Death route: die(ch) (TYPE_UNDEFINED) when quitting while POS_INCAP.
+# C: src/act.other.c:121 -> die(ch) (fight.c:626-630) -> raw_kill(ch, TYPE_UNDEFINED) ->
+# make_corpse (fight.c:283-285).
+# depth-case: death.route-quit-incap
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Quitgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Quitgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Quitincap
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Quitincap
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Quitincap 8105
+set player Quitincap level 20
+set player Quitincap outlaw on
+set player Quitincap maxhit 100
+set player Quitincap hit 28
+set player Quitgod class mage
+set player Quitgod maxmana 5000
+set player Quitgod mana 5000
+skillset Quitgod 'burning hands' 100
+set player Quitgod outlaw on
+set player Quitgod level 20
+cast 'burning hands' Quitincap
+
+[probe]
+send:victim quit
+~dpclock pulse 20
+look

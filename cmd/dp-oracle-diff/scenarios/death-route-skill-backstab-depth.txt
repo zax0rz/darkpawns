@@ -1,0 +1,83 @@
+# Death route: skill backstab (SKILL_BACKSTAB).
+# C: src/act.offensive.c:218 -> hit(..., SKILL_BACKSTAB) -> src/fight.c:1868 ->
+# damage(..., SKILL_BACKSTAB) -> die_with_killer() -> raw_kill(..., SKILL_BACKSTAB) ->
+# make_corpse (fight.c:337-340).
+# depth-case: death.route-skill-backstab
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Bsgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bsgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Bspiercer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker]
+Bspiercer
+y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Bspiercer 8105
+set player Bspiercer level 20
+skillset Bspiercer 'backstab' 100
+load obj 8020
+give dagger Bspiercer
+send:attacker wield dagger
+set mob trainee maxhit 1
+set mob trainee hit -10
+force trainee sleep
+
+[probe]
+send:attacker backstab trainee
+look

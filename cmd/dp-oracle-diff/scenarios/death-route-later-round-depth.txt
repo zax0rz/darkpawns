@@ -1,0 +1,89 @@
+# Death route: player killing blow in a later combat round (perform_violence -> hit).
+# Uses a flail (TYPE_CRUSH) so it does not duplicate play-lab-corpse-slash-wording.
+# C: src/fight.c:1954 (perform_violence -> hit) -> src/fight.c:1792,1885 ->
+# damage() -> die_with_killer() -> raw_kill(victim, TYPE_CRUSH) -> make_corpse (fight.c:350-355).
+# depth-case: death.route-later-round
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Roundgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Roundgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:fighter]
+Roundpc
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:fighter]
+Roundpc
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Roundpc 8105
+set player Roundpc level 20
+set player Roundpc hitroll 20
+set player Roundpc damroll 5
+set player Roundpc maxhit 500
+set player Roundpc hit 500
+load obj 8025
+give flail Roundpc
+send:fighter wield flail
+set mob trainee maxhit 30
+set mob trainee hit 30
+
+[probe]
+send:fighter hit trainee
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+look

@@ -1,0 +1,78 @@
+# Death route: skill kick (SKILL_KICK).
+# C: src/act.offensive.c:606 -> damage(ch, vict, ..., SKILL_KICK) ->
+# die_with_killer() -> raw_kill(..., SKILL_KICK) -> make_corpse (fight.c:318-331).
+# depth-case: death.route-skill-kick
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Kickgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Kickgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Kicker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker]
+Kicker
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Kicker 8105
+set player Kicker level 20
+skillset Kicker 'kick' 100
+set mob trainee maxhit 1
+set mob trainee hit -10
+
+[probe]
+send:attacker kick trainee
+look
