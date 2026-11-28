@@ -1,0 +1,50 @@
+# look_at_room writes a room's name with send_to_char
+# (src/act.informative.c:808), which prints the stored string as it is: no
+# capital. fread_string keeps the name without a line break (src/db.c:2705-2710),
+# and the colour reset and "\r\n" are two more writes
+# (src/act.informative.c:810-811). The port framed the name as an act() line,
+# and act()'s cap() upper-cased a name that begins in lowercase.
+#
+# The shipped world has one such name, 8111's: "stable room, do not delete"
+# (lib/world/wld/80.wld:2081-2082). The viewer answers the colour question
+# with N. With colour the name's escape comes first and cap() changes nothing,
+# which is why no earlier look scenario reached this.
+# depth-case: look.room-name-lowercase
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Stablegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stablegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8111
+
+[probe]
+look

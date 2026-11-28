@@ -68,7 +68,6 @@ src/act.informative.c:do_consider	pkg/game/consider.go	(World).DoConsider	primar
 src/act.informative.c:do_consider	pkg/session/consider.go	cmdConsider	split
 src/act.informative.c:do_description	pkg/game/look.go	(ObservationResult).bare	primary
 src/act.informative.c:do_description	pkg/game/look.go	doDescription	split
-src/act.informative.c:do_description	pkg/game/look.go	framedRoomDescription	split
 src/act.informative.c:do_description	pkg/game/look.go	writeRoomDescription	split
 src/act.informative.c:do_equipment	pkg/game/item_views.go	(World).DoEquipment	primary
 src/act.informative.c:do_examine	pkg/game/look.go	(World).findObservationObjectWithLocation	primary
@@ -94,6 +93,7 @@ src/act.informative.c:find_exdesc	pkg/session/string_cmd.go	(Session).stringObjD
 src/act.informative.c:list_char_to_char	pkg/game/look.go	listsHiddenBody	primary
 src/act.informative.c:look_at_char	pkg/game/look.go	appendCharacterAffectLook	primary
 src/act.informative.c:look_at_room	pkg/game/look.go	(ObservationResult).bare	primary
+src/act.informative.c:look_at_room	pkg/game/look.go	(ObservationResult).worldText	split
 src/act.informative.c:look_at_target	pkg/game/look.go	(World).findObservationObjectWithLocation	primary
 src/act.informative.c:look_in_direction	pkg/game/world_object.go	CFName	primary
 src/act.informative.c:look_in_obj	pkg/game/look.go	(World).findObservationObjectWithLocation	primary
@@ -251,6 +251,7 @@ src/act.wizard.c:do_stat_object	pkg/session/wiz_stats.go	(Session).statColorGate
 src/act.wizard.c:do_stat_room	pkg/session/wiz_stats.go	(Session).statColorGates	primary
 src/act.wizard.c:do_stat_room	pkg/session/wiz_stats.go	wizardWrappedListOutput	split
 src/act.wizard.c:do_switch	pkg/session/switch_ownership.go	(Manager).attachedBody	primary
+src/act.wizard.c:do_switch	pkg/game/look.go	sendLiteral	split
 src/act.wizard.c:do_sysfile	pkg/session/wiz_zone.go	cmdSysfile	primary
 src/act.wizard.c:do_sysfile	pkg/session/wiz_zone.go	sysfileName	split
 src/act.wizard.c:do_trans	pkg/game/world_movement.go	(World).PlayerTransferNoMount	primary
@@ -367,6 +368,7 @@ src/comm.c:send_to_char	pkg/game/look.go	appendLookedDescription	split
 src/comm.c:send_to_char	pkg/game/player_affects.go	(Player).SendLiteral	split
 src/comm.c:send_to_char	pkg/game/spec_procs.go	sendToChar	split
 src/comm.c:send_to_char	pkg/session/terminal.go	NormalizeCRLF	split
+src/comm.c:send_to_char	pkg/game/look.go	(ObservationResult).worldText	split
 src/comm.c:send_to_outdoor	pkg/session/session_manager.go	(Manager).SendToOutdoor	primary
 src/comm.c:send_to_room	pkg/game/spec_procs.go	(World).roomMessage	primary
 src/comm.c:send_to_room	pkg/session/wiz_object.go	sendPurgeRoomLine	split
@@ -387,6 +389,8 @@ src/db.c:file_to_string_alloc	pkg/game/help.go	LoadHelpScreen	primary
 src/db.c:fread_string	pkg/game/object.go	(ObjectInstance).ActionDescription	primary
 src/db.c:fread_string	pkg/parser/obj.go	NewLoadedExtraDesc	split
 src/db.c:fread_string	pkg/game/look.go	doDescription	split
+src/db.c:fread_string	pkg/game/look.go	(ObservationResult).worldText	split
+src/db.c:fread_string	pkg/game/look.go	cStoredForm	split
 src/db.c:get_one_line	pkg/game/help.go	getOneLine	primary
 src/db.c:index_boot	pkg/game/help.go	(World).ReloadHelpTable	primary
 src/db.c:index_boot	pkg/game/help.go	LoadHelpFiles	split

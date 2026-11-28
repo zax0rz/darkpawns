@@ -1084,6 +1084,19 @@ func (m *MobInstance) SendRaw(msg string) {
 	}
 }
 
+// SendLiteral is Player.SendLiteral for a switched mobile: the bytes reach the
+// wizard's descriptor as C's send_to_char wrote them, with no terminator
+// appended and no line ending folded, and they count as output, so the prompt
+// follows. Silent for an ordinary descriptorless mobile, like SendMessage.
+func (m *MobInstance) SendLiteral(msg string) {
+	if m.world == nil || m.world.MobileLiteralSink == nil || m.world.MobileDescriptorOwner == nil {
+		return
+	}
+	if m.world.MobileDescriptorOwner(m) != nil {
+		m.world.MobileLiteralSink(m, []byte(msg))
+	}
+}
+
 // GetWaitState returns the mob's remaining ch->wait in pulses. Nothing gates
 // on it for a descriptorless mob (C reads ch->wait only through descriptors).
 func (m *MobInstance) GetWaitState() int {

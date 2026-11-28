@@ -94,6 +94,43 @@ func (r *ObservationResult) literal(ch combat.Combatant, text string) {
 	})
 }
 
+// worldText queues a string C wrote with send_to_char: a room's name
+// (src/act.informative.c:805-811), an extra description (:1035, :1043, :1052,
+// :1063) or an exit's description (:858). send_to_char writes the stored
+// string as it is (src/comm.c:2335-2339), so C's bytes are its stored form
+// (cStoredForm). The framed literal line is used only where it is those bytes
+// (framedWorldText).
+//
+// Any other string goes to the descriptor untouched: as it is stored when C's
+// write ended the line, and with no line ending at all when C left the line
+// open for whatever it wrote next (a description whose last line carries the
+// tilde, src/db.c:2705-2710).
+func (r *ObservationResult) worldText(ch combat.Combatant, text string) {
+	body := cStoredForm(text)
+	if line, ok := framedWorldText(body); ok {
+		r.literal(ch, line)
+		return
+	}
+	if strings.HasSuffix(body, "\r\n") {
+		r.verbatim(ch, body)
+		return
+	}
+	r.bare(ch, body)
+}
+
+// framedWorldText reports how a framed literal message can carry a string C
+// wrote with send_to_char, byte for byte. literal() trims the text's trailing
+// line breaks (normalizeObservationText), act() capitalizes the first rune
+// and supplies one CRLF, so the framed line is body only when body ends its
+// own line exactly once and those two steps leave the text alone. An empty
+// line is never framed: literal() gives act() an empty format, which delivers
+// nothing. The checks ask cap() and normalizeObservationText() themselves, so
+// this cannot drift from what the framed path does.
+func framedWorldText(body string) (line string, ok bool) {
+	line = normalizeObservationText(body)
+	return line, line != "" && cap(line)+"\r\n" == body
+}
+
 // bare queues control bytes with no line ending and no act() formatting,
 // mirroring C's send_to_char(CCxxx(ch, C_NRM), ch) writes that bracket the
 // room-content lists (src/act.informative.c:823-833).
@@ -155,30 +192,14 @@ func (r *ObservationResult) act(ch combat.Combatant, target Actor, obj *ObjectIn
 // canonical act() delivery path.
 func (w *World) RenderObservationMessages(result ObservationResult) {
 	for _, message := range result.Messages {
-		if message.Bare {
-			// C's bare send_to_char writes carry no line ending, so they go
-			// through the literal sink: Player.SendLiteral → a "raw" event,
-			// which RenderTerminalFrame passes to the terminal untouched
-			// (pkg/session/terminal.go:123-127).
+		// bare and verbatim are C's send_to_char writes: the bare ones carry no
+		// line ending (the list brackets, src/act.informative.c:823-833), the
+		// verbatim ones a whole buffer a framed act() line could not reproduce.
+		// Either body's literal sink keeps the bytes as they are and still
+		// counts them as output, so the prompt follows.
+		if message.Bare || message.Verbatim {
 			if message.Actor != nil {
-				if player, ok := message.Actor.(*Player); ok {
-					player.SendLiteral(message.Format)
-				} else {
-					message.Actor.SendMessage(message.Format)
-				}
-			}
-			continue
-		}
-		if message.Verbatim {
-			// C wrote these bytes with send_to_char. A player's literal sink keeps
-			// them as they are and still counts them as output, so the prompt
-			// follows; another body keeps its framed path.
-			if message.Actor != nil {
-				if player, ok := message.Actor.(*Player); ok {
-					player.SendLiteral(message.Format)
-				} else {
-					message.Actor.SendMessage(message.Format)
-				}
+				sendLiteral(message.Actor, message.Format)
 			}
 			continue
 		}
@@ -212,6 +233,22 @@ func (w *World) RenderObservationMessages(result ObservationResult) {
 		if observer := w.outOfBand(); observer != nil {
 			observer.RoomShown(result.viewer, result.Room.VNum)
 		}
+	}
+}
+
+// sendLiteral delivers C's send_to_char bytes to a body's descriptor untouched.
+// A player has the literal sink for that, and so does a mobile a wizard
+// SWITCHed onto (do_switch moves the wizard's descriptor to the mobile body,
+// src/act.wizard.c:1198-1199); the framed path closed the mobile's line.
+// Any other Actor keeps the framed path it has.
+func sendLiteral(to Actor, text string) {
+	switch body := to.(type) {
+	case *Player:
+		body.SendLiteral(text)
+	case *MobInstance:
+		body.SendLiteral(text)
+	default:
+		to.SendMessage(text)
 	}
 }
 
@@ -315,12 +352,16 @@ func (w *World) observeRoom(ch combat.Combatant, room *parser.Room, ignoreBrief,
 		}
 	}
 
+	// look_at_room sends the name's colour, the name, the reset and "\r\n" as
+	// four send_to_char writes (src/act.informative.c:765-811), which is one
+	// string ending its line once. Framed, act()'s cap() capitalized a name
+	// that begins in lowercase (8111, "stable room, do not delete").
 	cyan, normal := observationColors(ch, "\x1b[36m"), observationColors(ch, "\x1b[0m")
 	roomName := room.Name
 	if observationBodyRoomFlags(ch) {
 		roomName = formatRoomFlags(room)
 	}
-	result.literal(ch, cyan+roomName+normal)
+	result.worldText(ch, cyan+roomName+normal+"\r\n")
 	if showDescription && room.Description != "" {
 		writeRoomDescription(&result, ch, room)
 	}
@@ -575,8 +616,11 @@ func (w *World) DoLookTarget(ch combat.Combatant, arg string) ObservationResult 
 	}
 
 	foundObj := w.findObservationObject(ch, arg)
+	// look_at_target writes the room's extra description with send_to_char and
+	// returns (src/act.informative.c:1033-1037), so its trailing blank lines
+	// and an open last line are C's (20073's painting ends in two).
 	if desc, ok := findExtraDescription(arg, room.ExtraDescs); ok {
-		result.literal(ch, desc)
+		result.worldText(ch, desc)
 		return result
 	}
 	for cPosition := 0; cPosition < int(SlotMax); cPosition++ {
@@ -828,7 +872,9 @@ func (w *World) DoLookDirection(ch combat.Combatant, direction int) ObservationR
 		return result
 	}
 	if exit.Description != "" {
-		result.literal(ch, exit.Description)
+		// look_in_direction writes the exit's description with send_to_char
+		// and returns (src/act.informative.c:856-860).
+		result.worldText(ch, exit.Description)
 		return result
 	}
 	secret := strings.Contains(exit.Keywords, "secret")
@@ -1144,15 +1190,11 @@ func diagCondition(hp, maxHP int) string {
 }
 
 func appendObjectExtraDescLook(result *ObservationResult, ch combat.Combatant, object *ObjectInstance, desc string) {
-	// C's look_at_target writes the extra description via send_to_char(desc, ch)
-	// without appending a newline (src/act.informative.c:1043,1052,1063). Disk
-	// prototypes already end in \r\n, while synthetic descriptions (create_money)
-	// do not, so only emit a trailing newline when desc already carries one.
-	if strings.HasSuffix(desc, "\n") {
-		result.literal(ch, desc)
-	} else {
-		result.bare(ch, desc)
-	}
+	// C's look_at_target writes the extra description with send_to_char(desc, ch)
+	// (src/act.informative.c:1043,1052,1063). Disk prototypes end in CRLF, while
+	// synthetic descriptions (create_money) do not, and C's next write then
+	// continues on the same line.
+	result.worldText(ch, desc)
 	appendObjectLook(result, ch, object, 6)
 }
 
@@ -1541,45 +1583,30 @@ func colorLevel(ch combat.Combatant) int {
 }
 
 // writeRoomDescription sends do_description's buffer the way C's one
-// send_to_char does (src/act.informative.c:2802): verbatim, unless a framed
-// line reproduces the same bytes (framedRoomDescription). Framing is act(): it
-// capitalizes the first rune, trims trailing line breaks and ends the line
-// once. On a buffer that does not fit that shape it prints bytes C never
+// send_to_char does (src/act.informative.c:2802): framed only where the framed
+// line is C's bytes (framedWorldText), verbatim everywhere else. Framing is
+// act(): it capitalizes the first rune, trims trailing line breaks and ends the
+// line once. On a buffer that does not fit that shape it prints bytes C never
 // printed. Lockstep play found one: in room 8061 the keyword "guild" is the
 // description's last word, so the colour reset follows the final CR, the
 // framed line ended at the reset and act() ended it again, a blank line
 // before the exits.
 func writeRoomDescription(result *ObservationResult, ch combat.Combatant, room *parser.Room) {
 	desc := doDescription(room.Description, room.ExtraDescs, colorLevel(ch) > 0)
-	if line, prefix, ok := framedRoomDescription(desc); ok {
+	// A room with extra descriptions gets sprintf("%s ", description)
+	// (src/act.informative.c:2784): the space follows the last line break and
+	// starts whatever look_at_room writes next. The session ends every
+	// message's line, so a framed line carries it as the next line's prefix.
+	body, prefix := desc, ""
+	if strings.HasSuffix(body, "\r\n ") {
+		body, prefix = body[:len(body)-1], " "
+	}
+	if line, ok := framedWorldText(body); ok {
 		result.literal(ch, line)
 		result.linePrefix = prefix
 		return
 	}
 	result.verbatim(ch, desc)
-}
-
-// framedRoomDescription reports how a framed message can carry C's buffer byte
-// for byte. literal() trims the text's trailing line breaks (here the final
-// CRLF), act() capitalizes the first rune and supplies that CRLF again, and
-// do_description's space becomes the next line's prefix. Any other buffer has
-// no such form: a first rune cap() changes, a colour reset after the final CR
-// (src/act.informative.c:2795-2796), no final line break at all (the stored
-// shape doDescription's comment describes), or a trailing blank line. The two
-// checks ask those functions themselves, so this cannot drift from what the
-// framed path does.
-func framedRoomDescription(desc string) (line, prefix string, ok bool) {
-	body := desc
-	if strings.HasSuffix(body, "\r\n ") {
-		body, prefix = body[:len(body)-1], " "
-	}
-	if !strings.HasSuffix(body, "\r\n") || cap(body) != body {
-		return "", "", false
-	}
-	if line = normalizeObservationText(body); line+"\r\n" != body {
-		return "", "", false
-	}
-	return line, prefix, true
 }
 
 // doDescription is do_description (src/act.informative.c:2757-2803), which
@@ -1592,13 +1619,13 @@ func framedRoomDescription(desc string) (line, prefix string, ok bool) {
 // longer word too), taking in the character before the match and the
 // whitespace after it.
 //
-// The line breaks are C's: fread_string keeps every whole line of the world
-// file as CRLF (src/db.c:2705-2717), where the parser keeps LF. C's scan for
-// the keyword's trailing whitespace stops at the CR, so when the keyword is
-// the description's last word the colour reset lands between that CR and the
-// LF (src/act.informative.c:2789-2796).
+// The line breaks are C's (cStoredForm): fread_string keeps every whole line
+// of the world file as CRLF, where the parser keeps LF. C's scan for the
+// keyword's trailing whitespace stops at the CR, so when the keyword is the
+// description's last word the colour reset lands between that CR and the LF
+// (src/act.informative.c:2789-2796).
 func doDescription(description string, extras []parser.ExtraDesc, color bool) string {
-	description = strings.ReplaceAll(strings.ReplaceAll(description, "\r\n", "\n"), "\n", "\r\n")
+	description = cStoredForm(description)
 	var keywords []string
 	for _, ed := range extras {
 		keywords = append(keywords, strings.Fields(ed.Keywords)...)
@@ -1640,6 +1667,13 @@ func directionIndex(name string) int {
 		}
 	}
 	return -1
+}
+
+// cStoredForm is a world string as C's fread_string stored it. The parser keeps
+// each line break as LF; fread_string keeps it as CRLF (src/db.c:2705-2717).
+// Nothing else moves, so a lone CR inside a line stays the byte it was.
+func cStoredForm(text string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\n", "\r\n")
 }
 
 func normalizeObservationText(text string) string {

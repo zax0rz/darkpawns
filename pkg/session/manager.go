@@ -451,6 +451,16 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 			attached.sendRawEvent(string(msg))
 		}
 	}
+	// C's send_to_char to a switched mobile writes to the wizard's descriptor
+	// (src/comm.c:2335-2339). sendLiteralText is the player's literal path:
+	// the bytes go out untouched, as player output, so the prompt follows and
+	// a snooper sees them.
+	world.MobileLiteralSink = func(body *game.MobInstance, msg []byte) {
+		attached := m.combatSession(body)
+		if attached != nil {
+			attached.sendLiteralText(string(msg))
+		}
+	}
 	world.MobileDescriptorOwner = m.mobileDescriptorOwner
 	// extract_char returns a switched rider to the original body when the
 	// borrowed NPC is freed (src/handler.c:1158-1159).

@@ -672,7 +672,9 @@ func specSuckIn(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	// transition bytes. Room specials receive no mob receiver, so use ch as
 	// the act() actor and let TO_ROOM exclude the actor and substitute $n.
 	w.doLook(ch, me, "look", what)
-	ch.SendMessage("\r\n\r\n\r\n\r\nYou suddenly feel very dizzy...\r\n\r\n")
+	// C's one send_to_char (src/spec_procs.c:2291). The look before it keeps
+	// the painting's two trailing blank lines, as C's do_look does.
+	ch.SendLiteral("\r\n\r\nYou suddenly feel very dizzy...\r\n\r\n")
 	Act(w, false, ch, nil, nil, nil, "$n suddenly vanishes!", "", ToRoom)
 	ch.SetRoom(paintingRoom)
 	w.lookAtRoom(ch, true)

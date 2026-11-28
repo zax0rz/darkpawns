@@ -212,6 +212,12 @@ type World struct {
 	MobileMessageSink func(*MobInstance, []byte)
 	MobileRawSink     func(*MobInstance, []byte)
 
+	// MobileLiteralSink is Player.SendLiteral for a switched mobile: C's
+	// send_to_char bytes reach the wizard's descriptor untouched and still
+	// count as output, so the prompt follows and a snooper sees them.
+	// MobileRawSink is the infobar's control-byte path, which does neither.
+	MobileLiteralSink func(*MobInstance, []byte)
+
 	// MobileDescriptorOwner identifies the player body whose descriptor is
 	// temporarily attached to a switched NPC. C removes that descriptor from
 	// the original player in act.wizard.c:1175-1200, so room acts must not send

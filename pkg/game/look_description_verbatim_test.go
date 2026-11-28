@@ -11,9 +11,10 @@ import (
 // do_description writes its buffer with one send_to_char
 // (src/act.informative.c:2757-2803). writeRoomDescription frames it only
 // where a framed line is the same bytes, and writes it verbatim everywhere
-// else. Each room below is a shape the framed line changed: 15, 4 and 8 of
-// the 8,218 indexed rooms carry the first three, and the parser cannot yet
-// produce the fourth (readTildeString drops the empty last line).
+// else. Each room below is a shape the framed line changed; 15, 4, 8 and 9 of
+// the 8,218 indexed rooms carry them. readTildeString keeps an empty last
+// line, as fread_string does (TestShippedWorldTextReachesTheLookAsStored
+// reads one of the nine from the shipped file).
 //
 // The events are one look's writes in delivery order. The bare ones are the
 // literal sink's, which is where C's buffer must arrive untouched.
