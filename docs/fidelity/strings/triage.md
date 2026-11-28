@@ -2,9 +2,9 @@
 
 Every go-only segment in [`go-only.tsv`](go-only.tsv) classified, each with evidence a
 reviewer can check in a minute. Generated from the census at `1d4702dde`; pruned to the live baseline on 2026-10-30. Segments are the
-key, not file:line, because lines move. The 42 segments the 2026-11-27 sink-table
-widening surfaced are listed [below](#unreviewed-batch-2026-11-27-42-segments) and
-are still `unreviewed`; everything before that batch is settled.
+key, not file:line, because lines move. The 2026-11-27 sink-table widening surfaced 42
+segments; #3099 replaced two of them, and the remaining 40 are settled
+[below](#batch-2026-11-27-40-segments).
 
 Reproduce the queue with `make string-census-update`; the ratchet baseline
 [`go-only-baseline.json`](go-only-baseline.json) carries the reason and the evidence per row
@@ -13,17 +13,17 @@ the counts below in step with the baseline).
 
 | reason | count |
 |---|---|
-| `bug:invented` | 0 |
+| `bug:invented` | 2 |
 | `bug:paraphrase` | 0 |
-| `census:composed` | 1 |
+| `census:composed` | 28 |
 | `data` | 0 |
-| `surface:no-c` | 2 |
+| `surface:no-c` | 9 |
 | `unsure` | 0 |
-| `divergence:approved` | 1 |
-| `unreviewed` | 42 |
-| **total** | **46** |
+| `divergence:approved` | 5 |
+| `unreviewed` | 0 |
+| **total** | **44** |
 
-`unsure` is 0/46 (0.0%).
+`unsure` is 0/44 (0.0%).
 
 **This document classifies; it changes no game code.** Fix work is Claude's.
 
@@ -63,66 +63,70 @@ C player text are invisible to the matcher, and several rows below are them:
    (`pkg/game/graph.go:317`, `"%s opens the door."`) were invisible. The entry is
    now `goSinkBoth` in `internal/stringcensus/gosink.go`.
 
-## Unreviewed batch, 2026-11-27 (42 segments)
+## Batch, 2026-11-27 (40 segments)
 
 The sink-table widening
 (`docs/briefs/BRIEF-2026-11-27-deepseek-string-census-sinks.md`) closed the
 census over this tree's output wrappers — `roomMessage`, the OLC editors,
 `sendToCaster`, `mobileSend`, `npcSay`, the spell act bridges and the rest — and
-53 new go-only rows (42 distinct segments) came out of it. They are unclassified
-on purpose: triage is a fidelity decision each, and the brief's scope was the
-tool. Each row is the census's own report, not a verdict.
+53 new go-only rows (42 distinct segments) came out of it. #3099 replaced two
+(`sees and gives a battle cry!`, `blocks your way down.`) before triage, leaving
+40. All 40 are settled below; the baseline carries the full evidence string per
+row. The dominant pattern is the C-side blind spot this batch was expected to
+expose: C text spoken through its own command functions (`do_say`, `do_gen_comm`,
+`do_tell`, `do_echo`), `#define`d messages, and strings held in locals or split
+across adjacent literals — all invisible to the census's C matcher, all real C
+bytes (`census:composed`).
 
-| segment | site | sink |
-|---|---|---|
-| `can't carry any more.` | `pkg/game/item_transfer.go:473` | `.actToChar` |
-| `Sorry, we have closed, but come back later.` | `pkg/game/shop_npc.go:46` | `.shopNpcSay` |
-| `Sorry, come back tomorrow.` | `pkg/game/shop_npc.go:50` | `.shopNpcSay` |
-| `You are in a void.` | `pkg/game/skill_actor_selected.go:280` | `mobileSend` |
-| `You are nowhere.` | `pkg/game/skill_actor_shoot.go:69` | `mobileSend` |
-| `sees and gives a battle cry!` | `pkg/game/spec_procs.go:1213` | `.roomMessage` |
-| `For ansi color, type COLOR COMPLETE!` | `pkg/game/spec_procs2.go:388` | `.npcSay` |
-| `Wargs make a tasty meal if you CARVE their corpse.` | `pkg/game/spec_procs2.go:390` | `.npcSay` |
-| `AUTO EXIT will show you the exits for every room.` | `pkg/game/spec_procs2.go:392` | `.npcSay` |
-| `It's always safest to quit in the temple.` | `pkg/game/spec_procs2.go:394` | `.npcSay` |
-| `You're allowed to play up to 3 characters at once.` | `pkg/game/spec_procs2.go:396` | `.npcSay` |
-| `You can hire a mercenary by giving him 100 coins.` | `pkg/game/spec_procs2.go:398` | `.npcSay` |
-| `A bribe of a couple hundred coins will make a guard look the other way while you fight.` | `pkg/game/spec_procs2.go:400` | `.npcSay` |
-| `Guards will attack you if you fight in front of them.` | `pkg/game/spec_procs2.go:401` | `.npcSay` |
-| `Use the CONSIDER command!` | `pkg/game/spec_procs2.go:403` | `.npcSay` |
-| `If you don't like something, use the IDEA command.` | `pkg/game/spec_procs2.go:405` | `.npcSay` |
-| `If you see something out of place, use the BUG command.` | `pkg/game/spec_procs2.go:407` | `.npcSay` |
-| `If you see something spelled incorrectly, use the TYPO command.` | `pkg/game/spec_procs2.go:409` | `.npcSay` |
-| `Use an identify scroll on yourself to see your numerical statistics. (Available at your local magick shop.)` | `pkg/game/spec_procs2.go:411` | `.npcSay` |
-| `Stinkin' Kender scum!` | `pkg/game/spec_procs3.go:101` | `.mobShoutGenComm` |
-| `blocks your way down.` | `pkg/game/spec_procs3.go:310` | `.roomMessage` |
-| `subscribe is only available to agents or structured clients` | `pkg/session/agent_vars.go:75` | `.sendError` |
-| `too many or too large subscriptions` | `pkg/session/agent_vars.go:90` | `.sendError` |
-| `Too many login attempts. Please try again later.` | `pkg/session/session_login.go:39` | `.sendError` |
-| `Too many failed login attempts. Try again in` | `pkg/session/session_login.go:129` | `.sendError` |
-| `Too many failed login attempts. Try again later.` | `pkg/session/session_login.go:137` | `.sendError` |
-| `rate limit exceeded — slow down` | `pkg/session/session_login.go:276` | `.sendError` |
-| `An internal server error occurred. Your connection has been reset.` | `pkg/session/session_pump.go:92` | `.sendError` |
-| `I don't trade with someone I can't see!` | `pkg/session/shop_cmds.go:104` | `.NPCSayCommand` |
-| `Get out of here before I call the guards!` | `pkg/session/shop_cmds.go:119` | `sendShopKeeperTell` |
-| `We don't serve your kind here!` | `pkg/session/shop_cmds.go:130` | `sendShopKeeperTell` |
-| `smokes on his joint.` | `pkg/session/shop_cmds.go:399` | `.NPCEmoteCommand` |
-| `As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.` | `pkg/spells/affect_spells.go:1007` | `sendToCaster` |
-| `You gesture and the earth begins to shake all around you!` | `pkg/spells/affect_spells.go:1072` | `sendToCaster` |
-| `gracefully gestures and the earth begins to shake violently!` | `pkg/spells/affect_spells.go:1073` | `sendAffectRoom` |
-| `A spray of acid flows from your fingertips!` | `pkg/spells/affect_spells.go:1075` | `sendToCaster` |
-| `fingers!` | `pkg/spells/affect_spells.go:1076` | `sendAffectRoom` |
-| `raises a hand and acid sprays from` | `pkg/spells/affect_spells.go:1076` | `sendAffectRoom` |
-| `The corpse refuses to come alive!` | `pkg/spells/affect_spells.go:1193` | `sendToCaster` |
-| `No target.` | `pkg/spells/affect_spells.go:1759` | `sendToCaster` |
-| `Teleport failed: world interface not available.` | `pkg/spells/affect_spells.go:2773` | `sendToCaster` |
-| `You failed.` | `pkg/spells/affect_spells.go:3346` | `sendToCaster` |
+| segment | Go site | reason | C evidence |
+|---|---|---|---|
+| `For ansi color, type COLOR COMPLETE!` | `pkg/game/spec_procs2.go:388` | `census:composed` | `src/spec_procs2.c:475`, `do_say` in SPECIAL(tipster) |
+| `Wargs make a tasty meal if you CARVE their corpse.` | `pkg/game/spec_procs2.go:390` | `census:composed` | `src/spec_procs2.c:477-478`, `do_say` (two adjacent literals) |
+| `AUTO EXIT will show you the exits for every room.` | `pkg/game/spec_procs2.go:392` | `census:composed` | `src/spec_procs2.c:480-481`, `do_say` (two adjacent literals) |
+| `It's always safest to quit in the temple.` | `pkg/game/spec_procs2.go:394` | `census:composed` | `src/spec_procs2.c:483`, `do_say` |
+| `You're allowed to play up to 3 characters at once.` | `pkg/game/spec_procs2.go:396` | `census:composed` | `src/spec_procs2.c:486-487`, `do_say` (two adjacent literals) |
+| `You can hire a mercenary by giving him 100 coins.` | `pkg/game/spec_procs2.go:398` | `census:composed` | `src/spec_procs2.c:489-490`, `do_say` (two adjacent literals) |
+| `A bribe of a couple hundred coins will make a guard look the other way while you fight.` | `pkg/game/spec_procs2.go:400` | `census:composed` | `src/spec_procs2.c:492-493`, `do_say` (two adjacent literals) |
+| `Guards will attack you if you fight in front of them.` | `pkg/game/spec_procs2.go:401` | `census:composed` | `src/spec_procs2.c:494-495`, `do_say` (two adjacent literals) |
+| `Use the CONSIDER command!` | `pkg/game/spec_procs2.go:403` | `census:composed` | `src/spec_procs2.c:497`, `do_say` |
+| `If you don't like something, use the IDEA command.` | `pkg/game/spec_procs2.go:405` | `census:composed` | `src/spec_procs2.c:499-500`, `do_say` (two adjacent literals) |
+| `If you see something out of place, use the BUG command.` | `pkg/game/spec_procs2.go:407` | `census:composed` | `src/spec_procs2.c:502-503`, `do_say` (two adjacent literals) |
+| `If you see something spelled incorrectly, use the TYPO command.` | `pkg/game/spec_procs2.go:409` | `census:composed` | `src/spec_procs2.c:505-506`, `do_say` (two adjacent literals) |
+| `Use an identify scroll on yourself to see your numerical statistics. (Available at your local magick shop.)` | `pkg/game/spec_procs2.go:411` | `census:composed` | `src/spec_procs2.c:508-510`, `do_say` (three adjacent literals) |
+| `Stinkin' Kender scum!` | `pkg/game/spec_procs3.go:101` | `census:composed` | `src/shop.c:974`, `do_gen_comm(keeper, ..., SCMD_SHOUT)` |
+| `Sorry, we have closed, but come back later.` | `pkg/game/shop_npc.go:46` | `census:composed` | `src/shop.h:191` `#define MSG_NOT_REOPEN_YET`, spoken by `is_open` (`src/shop.c:117-128`) |
+| `Sorry, come back tomorrow.` | `pkg/game/shop_npc.go:50` | `census:composed` | `src/shop.h:192` `#define MSG_CLOSED_FOR_DAY`, same `is_open` path |
+| `I don't trade with someone I can't see!` | `pkg/session/shop_cmds.go:104` | `census:composed` | `src/shop.h:194` `#define MSG_NO_SEE_CHAR`, `do_say` at `src/shop.c:80` |
+| `Get out of here before I call the guards!` | `pkg/session/shop_cmds.go:119` | `census:composed` | `src/shop.h:195` `#define MSG_NO_SELL_ALIGN`, `sprintf` + `do_tell` at `src/shop.c:88-91` |
+| `We don't serve your kind here!` | `pkg/session/shop_cmds.go:130` | `census:composed` | `src/shop.h:196` `#define MSG_NO_SELL_CLASS`, `sprintf` + `do_tell` at `src/shop.c:100-103` |
+| `smokes on his joint.` | `pkg/session/shop_cmds.go:399` | `census:composed` | `src/shop.c:512`, `do_echo(keeper, ..., SCMD_EMOTE)` |
+| `As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.` | `pkg/spells/affect_spells.go:1007` | `census:composed` | `src/magic.c:1521`, local `to_char` in `mag_masses`, `act`ed at :1527 |
+| `You gesture and the earth begins to shake all around you!` | `pkg/spells/affect_spells.go:1072` | `census:composed` | `src/magic.c:1575`, local `to_char` in `mag_areas`, `act`ed at :1589 |
+| `gracefully gestures and the earth begins to shake violently!` | `pkg/spells/affect_spells.go:1073` | `census:composed` | `src/magic.c:1576-1577`, `to_room` from two adjacent literals |
+| `A spray of acid flows from your fingertips!` | `pkg/spells/affect_spells.go:1075` | `census:composed` | `src/magic.c:1581`, local `to_char` in `mag_areas` |
+| `raises a hand and acid sprays from` | `pkg/spells/affect_spells.go:1076` | `census:composed` | `src/magic.c:1582`, `to_room` `"$n raises a hand and acid sprays from $s fingers!"`; census segments around `$s` |
+| `fingers!` | `pkg/spells/affect_spells.go:1076` | `census:composed` | `src/magic.c:1582`, tail of the same `to_room` |
+| `You failed.` | `pkg/spells/affect_spells.go:3346` | `census:composed` | `src/spells.c:216` `#define SUMMON_FAIL "You failed.\r\n"`, sent at `src/spells.c:321` |
+| `can't carry any more.` | `pkg/game/item_transfer.go:473` | `bug:invented` | C `perform_give` (`src/act.item.c:670-708`) has no failure branch after its two gates; `obj_to_char` is infallible |
+| `The corpse refuses to come alive!` | `pkg/spells/affect_spells.go:1193` | `bug:invented` | C `mag_summons` (`src/magic.c:1728-1734`) calls `create_mobile` with no failure branch; it asserts on a bad vnum |
+| `No target.` | `pkg/spells/affect_spells.go:1759` | `surface:no-c` | Unreachable nil-victim guard: TAR_CHAR_ROOM dispatch always supplies a victim; C asserts (`src/spells.c:690`) |
+| `Teleport failed: world interface not available.` | `pkg/spells/affect_spells.go:2773` | `surface:no-c` | Go world-interface assertion; the live server's world always implements it |
+| `You are in a void.` | `pkg/game/skill_actor_selected.go:280` | `surface:no-c` | Nil-room guard in behead; C reads `world[ch->in_room]` directly (`src/new_cmds.c:255`) |
+| `You are nowhere.` | `pkg/game/skill_actor_shoot.go:69` | `surface:no-c` | Nil-room guard in shoot; C reads the room via `EXIT(ch, dir)` (`src/act.offensive.c:814`) |
+| `An internal server error occurred. Your connection has been reset.` | `pkg/session/session_pump.go:92` | `surface:no-c` | `readPump` panic recovery; the WebSocket read loop is a surface C does not have |
+| `subscribe is only available to agents or structured clients` | `pkg/session/agent_vars.go:75` | `surface:no-c` | Agent/structured-client subscription surface, gated on `wantsStructuredData` |
+| `too many or too large subscriptions` | `pkg/session/agent_vars.go:90` | `surface:no-c` | Agent subscription caps (L2-010) on the same surface |
+| `Too many login attempts. Please try again later.` | `pkg/session/session_login.go:39` | `divergence:approved` | IP login rate limiting — implemented control I4, `docs/operational/SECURITY-AUDIT.md`; C's nanny has none |
+| `Too many failed login attempts. Try again in` | `pkg/session/session_login.go:129` | `divergence:approved` | IP login lockout (H-15/L2-024); C's nanny counts bad passwords but never locks out |
+| `Too many failed login attempts. Try again later.` | `pkg/session/session_login.go:137` | `divergence:approved` | Per-account failure budget (L2-004); C's nanny has no account lockout |
+| `rate limit exceeded — slow down` | `pkg/session/session_login.go:276` | `divergence:approved` | Per-session command token bucket — implemented control I5, `docs/operational/SECURITY-AUDIT.md`; C's `comm.c` has none |
 
-Two of those read like paraphrase or invented text on sight —
-`sees and gives a battle cry!` (`pkg/game/spec_procs.go:1213`, an act line built
-from concatenated names) and `blocks your way down.`
-(`pkg/game/spec_procs3.go:310`) — but no row here has been checked against `src/`,
-and this document does not classify them.
+The two `bug:invented` rows are the batch's only fix work: both are Go-only
+error branches on paths where C cannot fail, so the fix is to remove the
+invented text (or reroute the branch), not to re-word it. The four
+`divergence:approved` rows are the login/command security controls; they are
+telnet-visible, so they are not `surface:no-c`, and deleting them is not on the
+table — they stay in the baseline so the exception remains visible.
 
 
 ## Root causes for the fix work
