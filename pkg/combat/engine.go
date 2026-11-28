@@ -25,7 +25,6 @@ type CombatPair struct {
 	Attacker          Combatant
 	Defender          Combatant
 	Started           time.Time
-	LastAttackType    int // Track what type of attack killed the victim (spell number, skill number, or TYPE_ constant)
 	// DeferDefenderEnrollment preserves hit()'s NPC-special ordering.  C's
 	// damage() sets the victim's FIGHTING field after the NPC switcheroo scan;
 	// ordinary command entry keeps the historical eager enrollment.
@@ -979,11 +978,20 @@ func (ce *CombatEngine) performOneHitBody(pair *CombatPair) bool {
 
 	// fight.c:1792-1806 one_hit w_type derivation: the message attack-type is
 	// derived from the wielded weapon (offset val3), NOT from the damage type.
-	// Compute it fresh every round so the miss branch (below) doesn't read a
-	// stale pair.LastAttackType. This offset is handed ONLY to the message
-	// senders — CalculateDamage keeps AttackNormal so AC reduction still applies
-	// (R3: damage math is unchanged).
+	// Compute it fresh every round, so a miss and a hit in the same exchange
+	// cannot share a stale value. This offset feeds the message senders and,
+	// as TYPE_HIT+offset, the death callback (the corpse wording).
+	// CalculateDamage keeps AttackNormal so AC reduction still applies (R3:
+	// damage math is unchanged).
 	msgAttackType := cbWeaponInfo(attacker)
+	// w_type is C's TYPE_HIT+offset (fight.c:1792-1806): the same value feeds
+	// the hit/miss messages and, through damage() -> die_with_killer ->
+	// raw_kill -> make_corpse, the corpse's long description. C derives it
+	// before the to-hit draw and passes it down the call stack; the port keeps
+	// it in a local so a kill that resolves on a pair that was never enrolled
+	// (do_hit's deferred first swing while already fighting, a pending-body
+	// swing, a ranged retaliation) still reaches make_corpse.
+	wType := TYPE_HIT + msgAttackType
 
 	hit := CalculateHitChance(attacker, defender, HitModifiers{
 		WeaponBlessed: cbWeaponBlessed(attacker),
@@ -1150,7 +1158,7 @@ func (ce *CombatEngine) performOneHitBody(pair *CombatPair) bool {
 		newPos := UpdatePositionAfterDamage(defender, ce.woundRoomAct(), ce.StopCombat)
 		if newPos == PosDead {
 			EmitDeathPositionMessage(defender, ce.woundRoomAct())
-			ce.handleDeath(defender, attacker)
+			ce.handleDeath(defender, attacker, wType)
 			return true
 		}
 		return ce.handleSurvivingVictimState(attacker, defender, 0, newPos)
@@ -1161,12 +1169,13 @@ func (ce *CombatEngine) performOneHitBody(pair *CombatPair) bool {
 	// wielded weapon's val3, the mob's attack_type, or bare hands, always as
 	// TYPE_HIT + offset. make_corpse selects the corpse's long description from
 	// exactly that value (fight.c:283-370), so the death callback must receive
-	// TYPE_HIT+msgAttackType. It used to receive AttackNormal (0), which is not
-	// a TYPE_* constant at all: every weapon and claw kill built the generic
-	// "The corpse of X is lying here." instead of C's wording (R1/R3).
-	ce.mu.Lock()
-	pair.LastAttackType = TYPE_HIT + msgAttackType
-	ce.mu.Unlock()
+	// TYPE_HIT+msgAttackType. C passes w_type down the call stack (damage,
+	// fight.c:1314, to die_with_killer, :1691); the port keeps that value in a
+	// local and hands it to the death callback, because damage() can run on a
+	// pair that was never the enrolled one (do_hit's deferred initial swing
+	// while the attacker is already fighting, PerformPendingBodySwing, a ranged
+	// retaliation). Pair state lost it there and every one-shot kill produced
+	// the generic "The corpse of X is lying here." (R1/R3).
 	damage = ApplyDamageModifiers(attacker, defender, damage)
 
 	// Stand the victim only now — after the prone-victim damage multiplier has
@@ -1206,7 +1215,7 @@ func (ce *CombatEngine) performOneHitBody(pair *CombatPair) bool {
 	// The death callback owns XP/autogold before raw_kill's cry/corpse. A
 	// false return is die_with_killer's canceled tail (fight.c:599): the
 	// healed body keeps fighting, so this exchange has not ended.
-	return ce.handleDeath(defender, attacker)
+	return ce.handleDeath(defender, attacker, wType)
 }
 
 // handleSurvivingVictimState mirrors damage()'s default position branch after
@@ -1376,9 +1385,11 @@ func (ce *CombatEngine) sendMissMessage(attacker, defender Combatant, attackType
 
 // handleDeath processes character death.
 //
-// Attack-type lookup takes engine RLock alone. Retirement takes engine Lock
-// then one body mutex at a time. Both release before DeathFunc acquires World
-// or session locks; no world/session callback runs under the engine lock.
+// attackType is the killing swing's w_type, supplied by the caller the way C's
+// damage() supplies it to die_with_killer (src/fight.c:1314, 1691). Nothing in
+// here takes the engine lock: retirement takes engine Lock then one body mutex
+// at a time, and both release before DeathFunc acquires World or session locks,
+// so no world/session callback runs under the engine lock.
 //
 // Faithful to Dark Pawns die()/raw_kill() in fight.c:
 //   - Player: lose EXP/3, create corpse with inventory+equipment+gold, send to room 8004
@@ -1390,7 +1401,7 @@ func (ce *CombatEngine) sendMissMessage(attacker, defender Combatant, attackType
 // here on the callback's return state: a special that healed the body —
 // never_die (src/spec_procs2.c:2075-2090) — cancels stop_fighting, POS_DEAD
 // and raw_kill, and the exchange reports itself as continuing.
-func (ce *CombatEngine) handleDeath(victim, killer Combatant) bool {
+func (ce *CombatEngine) handleDeath(victim, killer Combatant, attackType int) bool {
 	roomVNum := victim.GetRoom()
 
 	// Fire death script trigger on victim mob (before DeathFunc removes it)
@@ -1398,16 +1409,11 @@ func (ce *CombatEngine) handleDeath(victim, killer Combatant) bool {
 		ce.ScriptDeathFunc(victim, killer, roomVNum)
 	}
 
-	// Snapshot attack type before retiring related pairs; callbacks run unlocked.
-	attackType := -1
-	ce.mu.RLock()
-	for key, pair := range ce.combatPairs {
-		if key.Attacker == killer {
-			attackType = pair.LastAttackType
-			break
-		}
-	}
-	ce.mu.RUnlock()
+	// attackType is the swing's w_type, passed by the caller exactly as C's
+	// damage() hands it to die_with_killer (fight.c:1691). Callbacks run
+	// unlocked. Do not read it back from pair state: a swing can resolve on a
+	// pair that was never enrolled, and a killer fighting two bodies has two
+	// pairs with different last attacks (R3 would be map-order dependent).
 	if ce.DeathFunc != nil {
 		ce.DeathFunc(victim, killer, attackType)
 	}

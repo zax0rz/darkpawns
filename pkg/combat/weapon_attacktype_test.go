@@ -143,9 +143,9 @@ func TestPerformOneHit_DamageUnchangedByWeaponOffset(t *testing.T) {
 }
 
 // TestPerformOneHit_MissBranchUsesFreshWeaponOffset — trap #3: the miss branch
-// must read a FRESH weapon offset, not the stale pair.LastAttackType. A miss on
-// the very first round (LastAttackType still zero) with a piercing weapon must
-// still pass offset 11 to the miss message sender.
+// must read a FRESH weapon offset rather than a value cached by an earlier
+// swing. A miss on the very first round with a piercing weapon must still pass
+// offset 11 to the miss message sender.
 func TestPerformOneHit_MissBranchUsesFreshWeaponOffset(t *testing.T) {
 	orig := GetCallbacks()
 	defer SetCallbacks(orig)
@@ -196,7 +196,7 @@ func TestPerformOneHit_MissBranchUsesFreshWeaponOffset(t *testing.T) {
 
 	if missOffset != 11 {
 		t.Errorf("miss message attackType = %d, want 11 (pierce); the miss branch "+
-			"must compute the weapon offset FRESH, not read the stale pair.LastAttackType", missOffset)
+			"must compute the weapon offset FRESH, not reuse an earlier swing's", missOffset)
 	}
 	joined := strings.Join(missMessages, " ")
 	if !strings.Contains(joined, "pierce") {

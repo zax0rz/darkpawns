@@ -1,0 +1,139 @@
+# Attack-specific corpse wording (R1): a new warrior wields the starting sword
+# (obj value[3] = TYPE_SLASH offset) in the New Recruit Training Area and kills the
+# recruit; C make_corpse prints "The hacked up, bloody corpse of a new recruit is
+# lying here." (src/fight.c:333-340) from the attack type hit() derives
+# (src/fight.c:1792-1806) and raw_kill passes through (src/fight.c:578).
+# Shrunk from play-lab s00000-human-warrior-progression (Luna lockstep hunt,
+# 2026-11-27), which repeated in a second census.
+
+[setup:oracle]
+Plaaaa
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Plaaaa
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Plaaaa
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Plaaaa
+oraclepass
+<ENTER>
+1
+
+[probe]
+look
+score
+inventory
+equipment
+wield sword
+north
+east
+south
+~dpclock pulse 40
+<ENTER>
+west
+north
+north
+north
+~dpclock pulse 40
+<ENTER>
+east
+north
+practice
+practice kick
+practice kick
+practice kick
+practice kick
+wear tunic
+south
+west
+south
+south
+~dpclock pulse 40
+<ENTER>
+west
+south
+open door
+east
+~dpclock pulse 40
+<ENTER>
+north
+north
+north
+south
+~dpclock pulse 40
+<ENTER>
+south
+west
+consider small
+kick small
+~dpclock pulse 20
+<ENTER>
+~dpclock pulse 20
+<ENTER>
+~dpclock pulse 20
+<ENTER>
+kill small
+~dpclock pulse 20
+<ENTER>
+~dpclock pulse 20
+<ENTER>
+~dpclock pulse 20
+<ENTER>
+south
+consider recruit
+kick recruit
+~dpclock pulse 20
+<ENTER>
+~dpclock pulse 20
+<ENTER>
+~dpclock pulse 20
+<ENTER>
+kill recruit
+~dpclock pulse 20
+<ENTER>
+~dpclock pulse 20
+<ENTER>
+~dpclock pulse 20
+<ENTER>
+rest
+~dpclock pulse 630
+<ENTER>
+rest
+~dpclock pulse 630
+<ENTER>
+stand
+kill recruit
+~dpclock pulse 20
+<ENTER>
+~dpclock pulse 20
+<ENTER>
+~dpclock pulse 20
+<ENTER>
+look

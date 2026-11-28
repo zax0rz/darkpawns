@@ -633,7 +633,7 @@ func TestHandleDeath_Basic(t *testing.T) {
 		deathFuncCalled = true
 	}
 
-	engine.handleDeath(defender, attacker)
+	engine.handleDeath(defender, attacker, TYPE_HIT)
 
 	if !deathFuncCalled {
 		t.Error("expected DeathFunc to be called")
