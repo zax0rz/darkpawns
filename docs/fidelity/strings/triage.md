@@ -13,7 +13,7 @@ the counts below in step with the baseline).
 
 | reason | count |
 |---|---|
-| `bug:invented` | 2 |
+| `bug:invented` | 0 |
 | `bug:paraphrase` | 0 |
 | `census:composed` | 28 |
 | `data` | 0 |
@@ -21,9 +21,9 @@ the counts below in step with the baseline).
 | `unsure` | 0 |
 | `divergence:approved` | 5 |
 | `unreviewed` | 0 |
-| **total** | **43** |
+| **total** | **41** |
 
-`unsure` is 0/43 (0.0%).
+`unsure` is 0/41 (0.0%).
 
 **This document classifies; it changes no game code.** Fix work is Claude's.
 
@@ -107,8 +107,8 @@ bytes (`census:composed`).
 | `raises a hand and acid sprays from` | `pkg/spells/affect_spells.go:1076` | `census:composed` | `src/magic.c:1582`, `to_room` `"$n raises a hand and acid sprays from $s fingers!"`; census segments around `$s` |
 | `fingers!` | `pkg/spells/affect_spells.go:1076` | `census:composed` | `src/magic.c:1582`, tail of the same `to_room` |
 | `You failed.` | `pkg/spells/affect_spells.go:3346` | `census:composed` | `src/spells.c:216` `#define SUMMON_FAIL "You failed.\r\n"`, sent at `src/spells.c:321` |
-| `can't carry any more.` | `pkg/game/item_transfer.go:473` | `bug:invented` | C `perform_give` (`src/act.item.c:670-708`) has no failure branch after its two gates; `obj_to_char` is infallible |
-| `The corpse refuses to come alive!` | `pkg/spells/affect_spells.go:1193` | `bug:invented` | C `mag_summons` (`src/magic.c:1728-1734`) calls `create_mobile` with no failure branch; it asserts on a bad vnum |
+| ~~`can't carry any more.`~~ | `pkg/game/item_transfer.go:473` | `bug:invented` | C `perform_give` (`src/act.item.c:670-708`) has no failure branch after its two gates; `obj_to_char` is infallible. **Fixed 2026-11-28:** the guard now sends nothing and logs (R4), so the row left the baseline |
+| ~~`The corpse refuses to come alive!`~~ | `pkg/spells/affect_spells.go:1193` | `bug:invented` | C `mag_summons` (`src/magic.c:1728-1734`) calls `create_mobile` with no failure branch; it asserts on a bad vnum. **Fixed 2026-11-28:** both spawn guards now send nothing and log (R4), so the row left the baseline |
 | ~~`No target.`~~ | `pkg/spells/affect_spells.go:1759` | `surface:no-c` | Unreachable nil-victim guard: TAR_CHAR_ROOM dispatch always supplies a victim; C asserts (`src/spells.c:690`). **Fixed 2026-11-28:** the guard now sends nothing (R4), so the row left the baseline |
 | `Teleport failed: world interface not available.` | `pkg/spells/affect_spells.go:2773` | `surface:no-c` | Go world-interface assertion; the live server's world always implements it |
 | `You are in a void.` | `pkg/game/skill_actor_selected.go:280` | `surface:no-c` | Nil-room guard in behead; C reads `world[ch->in_room]` directly (`src/new_cmds.c:255`) |
@@ -121,9 +121,11 @@ bytes (`census:composed`).
 | `Too many failed login attempts. Try again later.` | `pkg/session/session_login.go:137` | `divergence:approved` | Per-account failure budget (L2-004); C's nanny has no account lockout |
 | `rate limit exceeded — slow down` | `pkg/session/session_login.go:276` | `divergence:approved` | Per-session command token bucket — implemented control I5, `docs/operational/SECURITY-AUDIT.md`; C's `comm.c` has none |
 
-The two `bug:invented` rows are the batch's only fix work: both are Go-only
-error branches on paths where C cannot fail, so the fix is to remove the
-invented text (or reroute the branch), not to re-word it. The four
+The two `bug:invented` rows were the batch's only fix work: both were Go-only
+error branches on paths where C cannot fail, so the fix was to remove the
+invented text (or reroute the branch), not to re-word it. **Both fixed
+2026-11-28:** each guard now sends nothing and logs the failure (R4), and the
+rows left the baseline. The four
 `divergence:approved` rows are the login/command security controls; they are
 telnet-visible, so they are not `surface:no-c`, and deleting them is not on the
 table — they stay in the baseline so the exception remains visible.

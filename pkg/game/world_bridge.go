@@ -443,6 +443,17 @@ func (a *WorldScriptableAdapter) RawKill(vict scripting.CharRef, killer *scripti
 	if victim == nil {
 		return
 	}
+	// C-ERRATA E-001: scripts.c declares raw_kill with three parameters
+	// (src/scripts.c:1231) but the real function takes two — victim and
+	// attack type (src/fight.c:534) — so C reads the killer pointer as the
+	// attack type: 0 with no killer, an unmatched pointer value otherwise.
+	// Both land on make_corpse's default plain corpse (src/fight.c:369-370)
+	// and neither is SPELL_DISINTEGRATE in make_dust (src/fight.c:470), so
+	// every Lua raw_kill death leaves the plain corpse. Pass the 0 C
+	// effectively gets; it produces the same result in both branches. The
+	// script's own type argument is still read and validated by the binding
+	// (src/scripts.c:1244; bridgeRawKill), so a bad argument logs the same.
+	const cAttackType = 0
 	if p != nil {
 		// src/scripts.c:1246-1252: C logs a PC victim at BRF/LVL_IMMORT/file
 		// FALSE before raw_kill, naming the killer and the victim's room when
@@ -464,10 +475,10 @@ func (a *WorldScriptableAdapter) RawKill(vict scripting.CharRef, killer *scripti
 		} else {
 			MudLog(fmt.Sprintf("%s killed at %s.", p.GetName(), roomName), MudlogBrief, lvlImmort, false)
 		}
-		a.world.rawKillCombatant(p, attackType, killerBody)
+		a.world.rawKillCombatant(p, cAttackType, killerBody)
 		return
 	}
-	a.world.RawKillCombatant(m, attackType)
+	a.world.RawKillCombatant(m, cAttackType)
 }
 
 // Log is mudlog for a script.

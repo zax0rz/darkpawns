@@ -260,7 +260,11 @@ func TestRawKillLuaBinding(t *testing.T) {
 		t.Fatalf("Lua kill: %t %v", ok, err)
 	}
 	objects := w.GetItemsInRoom(1001)
-	if len(objects) != 1 || objects[0].GetLongDesc() != "A blasted corpse lies here in pieces." || !p.HasPLRFlag(PlrExtract) || p.GetMana() != 30 || p.IsAffected(affVampire) {
+	// C-ERRATA E-001: C's lua_raw_kill reads the killer pointer as raw_kill's
+	// attack type (src/scripts.c:1231,1253; src/fight.c:534), so the script's
+	// TYPE_BLAST never reaches make_corpse — the default arm's plain corpse is
+	// the ruled behavior, not the blasted one.
+	if len(objects) != 1 || objects[0].GetLongDesc() != "The corpse of Victim is lying here." || !p.HasPLRFlag(PlrExtract) || p.GetMana() != 30 || p.IsAffected(affVampire) {
 		t.Fatalf("Lua RawKill/attack type/writeback: objects=%v extract=%t mana=%d", objects, p.HasPLRFlag(PlrExtract), p.GetMana())
 	}
 }

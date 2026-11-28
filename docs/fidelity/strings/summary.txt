@@ -3,11 +3,11 @@
 go files scanned	348
 c files scanned	66
 data files scanned	653
-go candidates (literal at a sink)	3180
+go candidates (literal at a sink)	3176
 c candidates (literal in a sink call)	5547
-go segments	3271
+go segments	3267
 c segments	4902
-go-only segments	55
+go-only segments	51
 c-missing segments	2099
 data-sourced segments	28
 unresolved go sink arguments	1341
@@ -29,7 +29,7 @@ PageString	0	pkg/session/pager.go:111 session pager entry point (21 call sites)
 RoomEcho	1	pkg/game/world.go:993 board system room broadcast (1 call site)
 SaySpellDeliver	0	pkg/game/say_spell_act.go:15 say-spell same-class, other-class and victim lines (1 call site)
 Send	488	Session.Send and wrapper sessions (679 call sites)
-SendMessage	721	Player/MobInstance.SendMessage (599 call sites)
+SendMessage	722	Player/MobInstance.SendMessage (599 call sites)
 SendToAll	0	World.SendToAll and SessionManager.SendToAll (10 call sites)
 SendToChar	5	act.go:744 SendToChar(): C send_to_char, a direct descriptor write with no SENDOK gate; callers supply their own line ending
 SendToOutdoor	0	SessionManager.SendToOutdoor, weather broadcast
@@ -42,7 +42,7 @@ SpellActToVictim	0	pkg/game/say_spell_act.go:105 spell Act(ToVict) bridge (4 cal
 SpellObjectAct	0	pkg/game/world_bridge.go:1135 act() on an object at an explicit target type (2 call sites)
 actDoorDestinationMessage	3	pkg/game/act_movement.go:725 door-move Act(ToRoom) line (3 call sites)
 actForPrivateBody	4	pkg/game/flee.go:25 Act whose actor sink is a body message sink (6 call sites)
-actToChar	36	pkg/game/item_helpers.go:373 legacy World.actToChar adapter to Act(ToChar) (37 call sites)
+actToChar	35	pkg/game/item_helpers.go:373 legacy World.actToChar adapter to Act(ToChar) (37 call sites)
 actToRoom	10	World.actToRoom method and the package-level twin in other_helpers.go:94 (20 call sites)
 actToRoomExclude	2	pkg/game/item_helpers.go:395 legacy actToRoomExclude adapter to Act(ToNotVict) (2 call sites)
 actToVictim	2	pkg/game/item_helpers.go:388 legacy actToVictim adapter to Act(ToVict) (2 call sites)
@@ -119,8 +119,8 @@ sendSpellActToCaster	12	pkg/spells/say_spell.go:264 spell Act(ToChar) through th
 sendStatMobLine	20	pkg/session/wiz_stats.go:225 stat mob output line (20 call sites)
 sendText	8	Session.sendText, group and mail text (73 call sites)
 sendTextEditor	48	pkg/session/tedit.go:234 tedit buffered output (56 call sites)
-sendToCaster	123	pkg/spells/affect_spells.go:1492 spell caster SendMessage (125 call sites)
-sendToChar	55	spec_procs.go:85 sendToChar(): one-line SendMessage wrapper
+sendToCaster	120	pkg/spells/affect_spells.go:1492 spell caster SendMessage (125 call sites)
+sendToChar	54	spec_procs.go:85 sendToChar(): one-line SendMessage wrapper
 sendToRoomExact	3	pkg/game/limits_condition.go:539 awake-gated room send_to_room (4 call sites)
 sendToVictim	20	pkg/spells/affect_spells.go:1485 spell victim SendMessage (22 call sites)
 sendToZone	2	pkg/spells/damage_spells.go:528 spells-package zone broadcast (2 call sites)
@@ -153,9 +153,9 @@ write_to_output	72	descriptor output queue (107 call sites)
 
 [go candidates by package]
 pkg/combat	18
-pkg/game	2130
+pkg/game	2129
 pkg/session	821
-pkg/spells	211
+pkg/spells	208
 
 [c candidates by file]
 act.comm.c	115
@@ -222,7 +222,6 @@ zedit.c	118
 [go-only segments by file]
 pkg/game/actor_specials_shop.go	1
 pkg/game/damage_gate.go	1
-pkg/game/item_transfer.go	1
 pkg/game/shop_npc.go	4
 pkg/game/skill_actor_selected.go	1
 pkg/game/skill_actor_shoot.go	1
@@ -236,7 +235,7 @@ pkg/session/session_pump.go	1
 pkg/session/shop_cmds.go	4
 pkg/session/wiz_info.go	1
 pkg/session/wiz_stats.go	1
-pkg/spells/affect_spells.go	16
+pkg/spells/affect_spells.go	13
 
 [c-missing segments by c file]
 src/act.comm.c	19

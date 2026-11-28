@@ -1175,12 +1175,15 @@ func MagSummons(level int, ch, obj interface{}, spellNum int, world interface{})
 			return
 		}
 
+		// C mag_summons has no failure branch: once the pfail roll passes,
+		// create_mobile is unconditional (src/magic.c:1724-1726). Keep both
+		// Go guards but send nothing (R4) and log instead.
 		type mobSpawner interface {
 			SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error)
 		}
 		w, ok := world.(mobSpawner)
 		if !ok {
-			sendToCaster(ch, "The corpse refuses to come alive!\r\n")
+			slog.Error("animate dead: world has no mob spawner; C has no such branch")
 			return
 		}
 
@@ -1190,7 +1193,7 @@ func MagSummons(level int, ch, obj interface{}, spellNum int, world interface{})
 		}
 		mob, err := w.SpawnMobWithLevelI(10, roomVNum, mobLevel) // MOB_ZOMBIE = 10
 		if err != nil {
-			sendToCaster(ch, "The corpse refuses to come alive!\r\n")
+			slog.Error("animate dead: zombie spawn failed; C has no such branch", "vnum", 10, "room", roomVNum, "error", err)
 			return
 		}
 
