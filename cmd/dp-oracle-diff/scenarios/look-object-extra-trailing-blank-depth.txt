@@ -8,7 +8,9 @@
 # the description as an act() line, which trims trailing line breaks.
 #
 # The glowing line keeps that blank line inside the block, where the census
-# compares it. Zone 158 equips the ring on a mobile (lib/world/zon/158.zon:69),
+# compares it. The ring's file gives it a load chance of 20 (lib/world/obj/
+# 158.obj:352), which both engines roll the same way, so the fixture
+# force-loads it. Zone 158 equips it on a mobile (lib/world/zon/158.zon:69),
 # so the spawn's maximum is high. The viewer's name must not begin with the
 # keyword: look_at_target takes a character before an extra description
 # (src/act.informative.c:1020-1031), and isname matches abbreviations, so a
@@ -19,6 +21,7 @@
 empty-players
 quiet-mobs
 spawn-obj 15850 99 8125 80
+force-load 15850
 
 [setup:oracle]
 Glowlooker
