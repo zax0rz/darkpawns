@@ -45,7 +45,12 @@ fixed first, or it fires again every few sessions.
 | Room 8061 blank line, reconnect prompts | GLM-5.4 | resumes 11-28 13:51 |
 | Iteration order, PRs 1–4 (#3101–#3104) + C order by default (PR 5) | Neon | censuses running, then round 2 |
 | Toh seal, sobriety, C-claim comment sweep | Kimi | in progress |
+| Data fixes in `dp-play-lab`: runner overrides, gold sources, per-round combat, death filter, row format, escalate, persistent teacher, pre-flight check ([brief](../briefs/BRIEF-2026-11-28-play-lab-data-fixes.md)) | Carbon (suggested) | brief written |
 | Fill in the window brief's commands and known-bug list | Claude | after the above |
+
+The data fixes don't touch the port, so they run in parallel with the rest.
+They have to land first anyway: without them, the window still produces port
+evidence, but its training rows are quietly wrong.
 
 Then Luna starts the window
 ([draft brief](../briefs/BRIEF-2026-11-26-luna-24h-play-window.md)). Her
@@ -71,27 +76,64 @@ classes until then.
   the C and Go output digests, the policy, and `teacher_model`.
 - **Where it lives:** `dp-play-lab` and `~/Archives` only, never the public
   repo. No real player data: local engines, test characters.
-- **Gold rows** are the `model` policy's choices. Volume rows come from
-  `progression` and `random`.
-- **Training format:** the Unsloth decision-model recipe, rows
-  `{state, questions, gold}`, gold rows only, filtered by outcome, held out by
-  session (memory: decision-model plan).
+- **Gold rows** are the `model` policy's choices, in `train.jsonl`. Heuristic
+  `progression` rows go to their own file, and `random` rows to theirs. A step
+  where the teacher failed and the stub answered is labeled `stub-fallback`
+  and is never gold.
+- **The questions per row:** `action` (choice among the options) and
+  `escalate` (should System One wake the big model now?). The escalate head
+  is the most valuable thing the small model learns: knowing when it's out of
+  its depth.
+- **Row shape for the trainer:** the subgoal, position, fight target, vitals
+  as percentages and the latest output come **first** in `state`, because the
+  Unsloth trainer cuts the end of a long input. At most 20 options per row
+  (labels get trimmed past about 20), with the chosen one always kept, and
+  the option order shuffled per row.
+- **Combat is decided round by round** (20 pulses), with `wait` as an option,
+  so the data has the per-round choices: stand after a bash, flee at low HP,
+  wait out skill lag.
+- **Filtering:** defensive choices just before a death are kept (a failed flee
+  was still the right call). First tries that got refused are kept; repeats
+  are dropped. Rows before a divergence are still verified against C, so
+  they're kept, tagged.
+
+## Training, in two stages
+
+1. **Stage 1, after the window:** supervised training with Unsloth's
+   `DecisionTrainer` on the gold rows, held out by session, with the
+   player's own previous command randomly masked so the model reads the state
+   instead of copying itself. Train **Laya-421M** (bidirectional, runs on CPU)
+   and a small Qwen (needs a GPU to serve) on the same split, and compare
+   calibration and latency. Act on `probabilities`, not `confidence`
+   (Unsloth's docs say so). Their guide disagrees with itself on the learning
+   rate (2e-4 in the prose, 2e-5 in the code): try both, and check that
+   `build_dataset` skipped no rows.
+2. **Stage 2, after v1:** play the Stage 1 model in Go alone on the frozen
+   clock (fast, no oracle needed once the port is done). Wherever it's unsure,
+   escalates, loops, dies or gets refused, ask the big model what it should
+   have done in that exact state, add those rows, and retrain (DAgger).
+   Supervised training alone tends to fall apart once a model drifts into
+   states the teacher never visited.
 
 ## Open decisions for Zach
 
+Each has a recommendation from Carbon's review (2026-11-28), checked by Claude.
+
 1. **Who chooses the gold rows.** The `model` policy calls an outside command
-   once per step (`-model-cmd`, JSON in and out, 30 s limit) and otherwise
-   uses a stub. Real gold rows need a wrapper around a model with a CLI or API
-   (Luna's, or another lab's). Without it, the window yields port evidence and
-   volume rows, but no gold rows.
-2. **Text or GMCP state.** Lockstep runs over plain telnet, so rows carry the
-   text a telnet player sees, not GMCP. The October architecture plan assumed
-   GMCP state. Decide whether text-only rows are acceptable for the first
-   model, or whether GMCP capture is a later run.
-3. **Depth of play.** The last proof window gained 0 levels in 30 minutes
-   (21 fights, 5 kills). If the window's progression play still doesn't
-   level, the data stays shallow (newbie-zone only). Decide whether to
-   improve `progression` first, or rely on the model policy for depth.
+   once per step (`-model-cmd`) and otherwise uses a stub. *Recommended:* a
+   persistent teacher service (the data-fix brief adds the interface), on 1 of
+   the 4 workers, replying with the choice, subgoal and escalate. The window
+   doesn't need to produce all the gold: a few thousand good rows bootstrap
+   Stage 1, and Stage 2 and your own play add more after v1.
+2. **Text or GMCP state.** Lockstep runs over plain telnet. *Recommended:*
+   text-derived state is fine for v0. The real risk is train/serve skew, so
+   the MCP/CLI observation built after v1 must use the same state
+   serializer as these rows.
+3. **Depth of play.** The last proof window gained 0 levels in 30 minutes.
+   *Recommended:* fix it before the clock starts. The data-fix brief ends with
+   a 20-minute pre-flight that must show characters leveling, or say why not.
+   Shallow play would weaken both the port evidence (no level-ups, mid-level
+   skills, hunger ticks) and the data.
 
 ## After the window
 
