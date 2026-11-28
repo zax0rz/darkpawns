@@ -235,7 +235,7 @@ func TestObjectExtraDescriptionIsWrittenAsCSendsIt(t *testing.T) {
 }
 
 // look_in_direction sends an exit's description with send_to_char and returns
-// (src/act.informative.c:856-860). 526 of the shipped exits end theirs on the
+// (src/act.informative.c:856-860). 418 of the shipped exits end theirs on the
 // line that carries the tilde, so C leaves the line open.
 func TestExitDescriptionIsWrittenAsCSendsIt(t *testing.T) {
 	cases := []struct {
@@ -294,6 +294,30 @@ func TestExitDescriptionIsWrittenAsCSendsIt(t *testing.T) {
 			checkWorldText(t, w, w.DoLookDirection(ch, directionIndex(tc.dir)), preface+tc.want, wantLiteral)
 		})
 	}
+}
+
+// look_at_char sends a mobile's detailed description with send_to_char
+// (src/act.informative.c:394-395) and follows it with diag_char_to_char's one
+// line (src/act.informative.c:354-384). 55 shipped descriptions end in a blank
+// line. They take the raw path, not literal(), so nothing trimmed them; this
+// guards that the class's largest member stays as it is.
+func TestLookAtMobileKeepsDescriptionTrailingBlankLines(t *testing.T) {
+	w, ch := newWorldTextWorld(t, &parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Pond"}},
+		Mobs: []parser.Mob{{
+			VNum: 9001, Keywords: "frog", ShortDesc: "a frog", LongDesc: "A frog sits here.\n",
+			DetailedDesc: "He is tall.\n\n",
+		}},
+	})
+	mob, err := w.SpawnMob(9001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob: %v", err)
+	}
+	condition := cap("a frog " + diagCondition(mob.GetHP(), mob.GetMaxHP()))
+	// The raw write hands the sink the parser's LF line breaks; the session's
+	// text frame turns each into CRLF (NormalizeCRLF, pkg/session/terminal.go)
+	// and, unlike literal(), trims nothing.
+	checkWorldText(t, w, w.DoLookTarget(ch, "frog"), "He is tall.\n\n"+condition+"\r\n", "")
 }
 
 // list_one_char writes a mobile that stands at its default position with one
