@@ -446,6 +446,7 @@ src/fight.c:damage	pkg/combat/engine.go	(CombatEngine).PerformRangedRetaliation	
 src/fight.c:damage	pkg/combat/engine.go	(CombatEngine).SkillMessage	split
 src/fight.c:damage	pkg/combat/engine.go	(CombatEngine).StartCombatAfterDamage	split
 src/fight.c:damage	pkg/combat/engine.go	(CombatEngine).applyMobCombatRedirects	split
+src/fight.c:damage	pkg/combat/engine.go	(CombatEngine).handleDeath	split
 src/fight.c:damage	pkg/combat/engine.go	(CombatEngine).handleSurvivingVictimState	split
 src/fight.c:damage	pkg/combat/engine.go	(CombatEngine).startCombatOpt	split
 src/fight.c:damage	pkg/combat/fight_core.go	ApplyDamageModifiers	split

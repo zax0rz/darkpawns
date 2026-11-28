@@ -1,0 +1,78 @@
+# Death route: mob killing a player in melee with a non-default natural attack (TYPE_BITE).
+# C: src/fight.c:1798-1799 (BareHandAttack 4 -> TYPE_BITE) -> src/fight.c:1885 ->
+# damage() -> die_with_killer() -> raw_kill(victim, TYPE_BITE) -> make_corpse (fight.c:334-340).
+# depth-case: death.route-mob-kills-pc
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+Mobpcgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mobpcgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Biteprey
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Biteprey
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load mob 12202
+teleport Biteprey 8105
+set player Biteprey level 1
+set player Biteprey maxhit 1
+set player Biteprey hit -10
+send:victim sleep
+
+[probe]
+force croc hit Biteprey
+look
