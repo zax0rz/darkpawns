@@ -32,17 +32,5 @@ Y
 <ENTER>
 1
 
-[relogin:oracle]
-Plaaeq
-oraclepass
-<ENTER>
-1
-
-[relogin:port]
-Plaaeq
-oraclepass
-<ENTER>
-1
-
 [probe]
 auto exits

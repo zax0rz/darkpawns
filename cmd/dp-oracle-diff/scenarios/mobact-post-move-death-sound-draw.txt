@@ -32,18 +32,6 @@ Y
 <ENTER>
 1
 
-[relogin:oracle]
-Plaaar
-oraclepass
-<ENTER>
-1
-
-[relogin:port]
-Plaaar
-oraclepass
-<ENTER>
-1
-
 [probe]
 auto exits
 look
