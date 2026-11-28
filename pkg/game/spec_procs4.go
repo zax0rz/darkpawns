@@ -222,7 +222,9 @@ func specDracula(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 		return false
 	}
 
-	sendToChar(ch, "You feel mesmerized... your will weakens.")
+	// src/spec_procs.c:1815: buf3 ends in LF CR, not the CRLF sendToChar
+	// would add (send_to_char writes verbatim, comm.c:2335-2339).
+	ch.SendMessage("You feel mesmerized... your will weakens.\n\r")
 	sendToChar(ch, fmt.Sprintf("%s sinks his fangs into your neck!", me.GetName()))
 	Act(w, false, ch, nil, nil, nil, fmt.Sprintf("$n looks at %s.\r\n", me.GetName()), "", ToRoom)
 	Act(w, false, ch, nil, nil, nil, fmt.Sprintf("%s gazes intently at $n.\r\n", me.GetName()), "", ToRoom)

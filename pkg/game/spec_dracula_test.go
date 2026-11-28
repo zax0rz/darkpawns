@@ -101,7 +101,8 @@ func TestSpecDracula_LookBiteAudienceAndVampireState(t *testing.T) {
 	if !specDracula(w, player, mob, "look", "lothar") {
 		t.Fatal("keyword abbreviation should trigger Dracula")
 	}
-	if got, want := transcript[player.GetName()], "You feel mesmerized... your will weakens.\r\n"+
+	// src/spec_procs.c:1815: buf3 is LF CR, not the CRLF sendToChar adds.
+	if got, want := transcript[player.GetName()], "You feel mesmerized... your will weakens.\n\r"+
 		"Lothar the Vampire Lord sinks his fangs into your neck!\r\n"+
 		"You exclaim 'Now I know... The blood is the life!'\r\n"+
 		"Your blood boils with a stinging fire...\r\n"; got != want {
