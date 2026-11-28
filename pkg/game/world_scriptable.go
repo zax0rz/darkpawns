@@ -113,20 +113,16 @@ func (w *World) HandleSpellDeathScriptable(victimName string, spellNum int, room
 		return
 	}
 
-	// Check if it's a mob
-	w.mu.RLock()
-	for _, mob := range w.activeMobs {
-		if mob.GetShortDesc() == victimName && mob.GetRoom() == roomVNum {
+	// Check if it's a mob in C's world[room].people newest-first order.
+	for _, mob := range w.COrderedRoomMobs(roomVNum) {
+		if mob.GetShortDesc() == victimName {
 			if !mob.IsAlive() {
-				w.mu.RUnlock()
 				return
 			}
-			w.mu.RUnlock()
 			w.handleMobDeath(mob, nil, spellNum)
 			return
 		}
 	}
-	w.mu.RUnlock()
 }
 
 // ScriptableWorld interface implementation via adapter
