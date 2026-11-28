@@ -10,7 +10,6 @@ I don't trade with someone I can't see!	pkg/game/shop_npc.go:55	.shopNpcSay
 Get out of here before I call the guards!	pkg/game/shop_npc.go:62	.shopNpcTell
 You are in a void.	pkg/game/skill_actor_selected.go:280	mobileSend
 You are nowhere.	pkg/game/skill_actor_shoot.go:69	mobileSend
-sees and gives a battle cry!	pkg/game/spec_procs.go:1213	.roomMessage
 For ansi color, type COLOR COMPLETE!	pkg/game/spec_procs2.go:388	.npcSay
 Wargs make a tasty meal if you CARVE their corpse.	pkg/game/spec_procs2.go:390	.npcSay
 AUTO EXIT will show you the exits for every room.	pkg/game/spec_procs2.go:392	.npcSay
@@ -25,7 +24,6 @@ If you see something out of place, use the BUG command.	pkg/game/spec_procs2.go:
 If you see something spelled incorrectly, use the TYPO command.	pkg/game/spec_procs2.go:409	.npcSay
 Use an identify scroll on yourself to see your numerical statistics. (Available at your local magick shop.)	pkg/game/spec_procs2.go:411	.npcSay
 Stinkin' Kender scum!	pkg/game/spec_procs3.go:101	.mobShoutGenComm
-blocks your way down.	pkg/game/spec_procs3.go:310	.roomMessage
 Nice try.	pkg/game/spec_procs4.go:488	sendToChar
 subscribe is only available to agents or structured clients	pkg/session/agent_vars.go:75	.sendError
 too many or too large subscriptions	pkg/session/agent_vars.go:90	.sendError

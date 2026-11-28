@@ -3,17 +3,17 @@
 go files scanned	348
 c files scanned	66
 data files scanned	653
-go candidates (literal at a sink)	3179
+go candidates (literal at a sink)	3180
 c candidates (literal in a sink call)	5547
 go segments	3271
 c segments	4902
-go-only segments	57
+go-only segments	55
 c-missing segments	2099
 data-sourced segments	28
-unresolved go sink arguments	1332
+unresolved go sink arguments	1341
 
 [go sink table]
-Act	688	pkg/game Act(): the act()-style primitive (427 call sites)
+Act	692	pkg/game Act(): the act()-style primitive (427 call sites)
 ActWithPrivateSink	52	pkg/game/act.go:592 Act with a private sink for a switched body (64 call sites)
 BroadcastToRoom	0	SessionManager.BroadcastToRoom, socket-level room broadcast (22 call sites)
 DoReply	0	pkg/game/directed_speech.go:275 reply command, text forwarded to performTell (2 call sites)
@@ -94,7 +94,7 @@ positionSelfLine	0	pkg/game/movement_commands.go:130 position-change self line (
 puffEmote	5	pkg/game/spec_procs.go:720 spec_procs puff emote Act(ToRoom) (5 call sites)
 reditSend	32	pkg/session/redit.go:192 redit buffered output (40 call sites)
 reditSendDirect	5	pkg/session/redit.go:200 redit immediate output (7 call sites)
-roomMessage	4	pkg/game/spec_procs.go:43 spec_procs room line (sendActRoomMessage plus CRLF) (4 call sites)
+roomMessage	1	pkg/game/spec_procs.go:43 spec_procs room line (sendActRoomMessage plus CRLF) (4 call sites)
 seditSend	26	pkg/session/sedit.go:230 sedit buffered output (27 call sites)
 seditSendLocked	0	pkg/session/sedit.go:240 sedit buffered output under the edit lock (8 call sites)
 sendActLine	1	pkg/game/act.go:608 Act's final write to one actor (2 call sites)
@@ -153,7 +153,7 @@ write_to_output	72	descriptor output queue (107 call sites)
 
 [go candidates by package]
 pkg/combat	18
-pkg/game	2129
+pkg/game	2130
 pkg/session	821
 pkg/spells	211
 
@@ -226,9 +226,8 @@ pkg/game/item_transfer.go	1
 pkg/game/shop_npc.go	4
 pkg/game/skill_actor_selected.go	1
 pkg/game/skill_actor_shoot.go	1
-pkg/game/spec_procs.go	1
 pkg/game/spec_procs2.go	13
-pkg/game/spec_procs3.go	2
+pkg/game/spec_procs3.go	1
 pkg/game/spec_procs4.go	1
 pkg/session/agent_vars.go	2
 pkg/session/gen_ps_cmds.go	1
