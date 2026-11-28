@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -189,26 +188,10 @@ func (a *WorldScriptableAdapter) RoomFields(vnum int) (scripting.RoomFields, boo
 			f.Exits[dir] = exit.ToRoom
 		}
 	}
-	type occupant struct {
-		ref  scripting.CharRef
-		seq  uint64
-		name string
-	}
-	var people []occupant
-	for _, m := range a.world.GetMobsInRoom(vnum) {
-		people = append(people, occupant{*charRefFor(m), m.GetRoomEntrySequence(), m.GetName()})
-	}
-	for _, p := range a.world.GetPlayersInRoom(vnum) {
-		people = append(people, occupant{*charRefFor(p), p.GetRoomEntrySequence(), p.GetName()})
-	}
-	sort.SliceStable(people, func(i, j int) bool {
-		if people[i].seq != people[j].seq {
-			return people[i].seq > people[j].seq
+	for _, person := range a.world.COrderedRoomPeople(vnum) {
+		if ref := charRefFor(person); ref != nil {
+			f.People = append(f.People, *ref)
 		}
-		return people[i].name < people[j].name
-	})
-	for _, o := range people {
-		f.People = append(f.People, o.ref)
 	}
 	f.Objs = objRefs(a.world.GetItemsInRoom(vnum))
 	return f, true

@@ -503,23 +503,27 @@ func (w *World) SetObjectExtraDesc(vnum int, keyword string, description string)
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
+	var target *ObjectInstance
 	for _, obj := range w.objectInstances {
-		if obj.VNum == vnum {
-			// Get existing runtime extra descs from CustomData
-			var descs []parser.ExtraDesc
-			if raw, ok := obj.CustomData["extra_descs"]; ok {
-				descs, _ = raw.([]parser.ExtraDesc)
-			}
-			if descs == nil {
-				descs = make([]parser.ExtraDesc, 0)
-			}
-			descs = append(descs, parser.ExtraDesc{
-				Keywords:    keyword,
-				Description: description,
-			})
-			obj.SetCustomData("extra_descs", descs)
-			return true
+		if obj.VNum == vnum && (target == nil || obj.ID > target.ID) {
+			target = obj
 		}
+	}
+	if target != nil {
+		// Get existing runtime extra descs from CustomData
+		var descs []parser.ExtraDesc
+		if raw, ok := target.CustomData["extra_descs"]; ok {
+			descs, _ = raw.([]parser.ExtraDesc)
+		}
+		if descs == nil {
+			descs = make([]parser.ExtraDesc, 0)
+		}
+		descs = append(descs, parser.ExtraDesc{
+			Keywords:    keyword,
+			Description: description,
+		})
+		target.SetCustomData("extra_descs", descs)
+		return true
 	}
 	return false
 }
@@ -533,15 +537,19 @@ func (w *World) SetObjectExtraFlag(vnum int, flag int, set bool) bool {
 	word := flag / 32
 	bit := flag % 32
 
+	var target *ObjectInstance
 	for _, obj := range w.objectInstances {
-		if obj.VNum == vnum {
-			if set {
-				obj.SetExtraFlag(word, bit)
-			} else {
-				obj.RemoveExtraFlag(word, bit)
-			}
-			return true
+		if obj.VNum == vnum && (target == nil || obj.ID > target.ID) {
+			target = obj
 		}
+	}
+	if target != nil {
+		if set {
+			target.SetExtraFlag(word, bit)
+		} else {
+			target.RemoveExtraFlag(word, bit)
+		}
+		return true
 	}
 	return false
 }
@@ -1182,9 +1190,10 @@ func (w *World) newObjectInstanceLocked(proto *parser.Obj, roomVNum int) *Object
 	return obj
 }
 
-// GetMobsInRoomScriptable returns mobs in a room as ScriptableMob slice.
+// GetMobsInRoomScriptable returns mobs in a room as ScriptableMob slice
+// in C's world[room].people newest-first order.
 func (w *World) GetMobsInRoomScriptable(roomVNum int) []scripting.ScriptableMob {
-	mobs := w.GetMobsInRoom(roomVNum)
+	mobs := w.COrderedRoomMobs(roomVNum)
 	out := make([]scripting.ScriptableMob, 0, len(mobs))
 	for _, m := range mobs {
 		out = append(out, m)
@@ -1192,9 +1201,10 @@ func (w *World) GetMobsInRoomScriptable(roomVNum int) []scripting.ScriptableMob 
 	return out
 }
 
-// GetMobByVNumAndRoomScriptable returns a mob by vnum+room as ScriptableMob.
+// GetMobByVNumAndRoomScriptable returns a mob by vnum+room as ScriptableMob
+// in C's world[room].people newest-first order.
 func (w *World) GetMobByVNumAndRoomScriptable(vnum int, roomVNum int) scripting.ScriptableMob {
-	for _, m := range w.GetMobsInRoom(roomVNum) {
+	for _, m := range w.COrderedRoomMobs(roomVNum) {
 		if m.GetVNum() == vnum {
 			return m
 		}
@@ -1210,12 +1220,11 @@ func (w *World) GetMobByID(id int) (*MobInstance, bool) {
 	return mob, ok
 }
 
-// GetMobByName finds an active mob by partial name match (case-insensitive).
+// GetMobByName finds an active mob by partial name match (case-insensitive)
+// in C's character_list newest-first order.
 func (w *World) GetMobByName(name string) *MobInstance {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
 	nameLower := strings.ToLower(name)
-	for _, mob := range w.activeMobs {
+	for _, mob := range w.COrderedMobs() {
 		if strings.Contains(strings.ToLower(mob.GetName()), nameLower) {
 			return mob
 		}
@@ -1342,7 +1351,7 @@ func (w *World) EquipChar(charName string, isMob bool, objVNum int) bool {
 // EquipMobByVNum finds a mob by vnum and room, removes the object from its
 // inventory, and equips it. Used by the scripting engine's equip_char().
 func (w *World) EquipMobByVNum(mobVNum, roomVNum, objVNum int) bool {
-	for _, m := range w.GetMobsInRoom(roomVNum) {
+	for _, m := range w.COrderedRoomMobs(roomVNum) {
 		if m.GetVNum() == mobVNum {
 			return w.equipMobileInventoryVNum(m, objVNum)
 		}
@@ -1375,24 +1384,17 @@ func (w *World) SetFollower(followerName, leaderName string, followerIsMob bool)
 	var leader combat.Combatant
 	if p := w.players[leaderName]; p != nil {
 		leader = p
-	} else {
-		for _, m := range w.activeMobs {
-			if m.GetName() == leaderName {
-				leader = m
-				break
-			}
-		}
+	} else if m := w.newestMobByNameLocked(leaderName); m != nil {
+		leader = m
 	}
 	if followerIsMob {
-		for _, m := range w.activeMobs {
-			if m.GetName() == followerName {
-				if leader != nil {
-					m.SetFollowingBody(leader)
-				} else {
-					m.SetFollowing(leaderName)
-				}
-				return nil
+		if m := w.newestMobByNameLocked(followerName); m != nil {
+			if leader != nil {
+				m.SetFollowingBody(leader)
+			} else {
+				m.SetFollowing(leaderName)
 			}
+			return nil
 		}
 	} else {
 		if p, ok := w.players[followerName]; ok {
@@ -1407,7 +1409,22 @@ func (w *World) SetFollower(followerName, leaderName string, followerIsMob bool)
 	return fmt.Errorf("follower %q not found", followerName)
 }
 
-// MountPlayer sets a player's mount name.
+// newestMobByNameLocked returns the newest active mobile matching name in C's
+// character_list order. Caller holds w.mu (read or write).
+func (w *World) newestMobByNameLocked(name string) *MobInstance {
+	var best *MobInstance
+	for _, m := range w.activeMobs {
+		if m == nil || m.GetName() != name {
+			continue
+		}
+		if best == nil || m.characterSequence > best.characterSequence ||
+			(m.characterSequence == best.characterSequence && m.GetID() > best.GetID()) {
+			best = m
+		}
+	}
+	return best
+}
+
 func (w *World) MountPlayer(playerName, mountName string) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -1435,11 +1452,9 @@ func (w *World) ClearAffects(charName string, isMob bool) {
 	defer w.mu.Unlock()
 
 	if isMob {
-		for _, m := range w.activeMobs {
-			if m.GetName() == charName {
-				m.ClearHunting()
-				return
-			}
+		if m := w.newestMobByNameLocked(charName); m != nil {
+			m.ClearHunting()
+			return
 		}
 	} else {
 		if p, ok := w.players[charName]; ok {
@@ -1551,10 +1566,8 @@ func (w *World) IsHunting(charName string, isMob bool) bool {
 	defer w.mu.RUnlock()
 
 	if isMob {
-		for _, m := range w.activeMobs {
-			if m.GetName() == charName {
-				return m.GetHunting() != ""
-			}
+		if m := w.newestMobByNameLocked(charName); m != nil {
+			return m.GetHunting() != ""
 		}
 	}
 	return false
