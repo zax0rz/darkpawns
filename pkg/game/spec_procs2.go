@@ -16,7 +16,8 @@ import (
 )
 
 func init() {
-	// Chunk 1: normal_checker, whirlpool, couch, stableboy, tipster
+	// Chunk 1: ninelives, normal_checker, whirlpool, couch, stableboy, tipster
+	RegisterSpec("ninelives", specNineLives)
 	RegisterSpec("normal_checker", specNormalChecker)
 	RegisterSpec("whirlpool", specWhirlpool)
 	RegisterSpec("couch", specCouch)
@@ -151,6 +152,88 @@ func specNormalChecker(w *World, ch *Player, me *MobInstance, cmd string, arg st
 // ================================================================
 // whirlpool — Sucks players in and teleports them to random rooms 4600-4699
 // ================================================================
+// ================================================================
+// ninelives — chest opener, then nine revives (src/spec_procs2.c:190-237)
+// ================================================================
+func specNineLives(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if me == nil {
+		return false
+	}
+	if cmd != "" {
+		if ch == nil {
+			return false
+		}
+		// src/spec_procs2.c:195: (!AWAKE(ch) && GET_HIT(ch) > 0).
+		if ch.GetPosition() <= combat.PosSleeping && ch.GetHP() > 0 {
+			return false
+		}
+		// src/spec_procs2.c:202-207: skip_spaces, empty and strstr("chest")
+		// gates. strstr is a substring test, so a trailing space still
+		// matches, exactly like C.
+		a := skipSpaces(arg)
+		if a == "" {
+			return false
+		}
+		if !strings.Contains(a, "chest") {
+			return false
+		}
+		// src/spec_procs2.c:208-212: open/look/examine return TRUE with a
+		// conditional hit; every other command falls to FALSE.
+		if cmd != "open" && cmd != "look" && cmd != "examine" {
+			return false
+		}
+		// src/spec_procs2.c:208: !IS_NPC(ch) && CAN_SEE(mobile, ch) &&
+		// !PRF_NOHASSLE(ch). The player lane's ch is always a player.
+		if !ch.IsNPC() && canSeeForPers(me, ch) && ch.GetFlags()&(1<<uint(PrfNohassle)) == 0 {
+			if err := w.mobHit(me, ch); err != nil {
+				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
+			}
+		}
+		return true
+	}
+	// src/spec_procs2.c:195, pulse lane: (!AWAKE(ch) && GET_HIT(ch) > 0).
+	if me.GetPosition() <= combat.PosSleeping && me.GetHP() > 0 {
+		return false
+	}
+	// src/spec_procs2.c:218: !FIGHTING(ch) || GET_HIT(ch) > 0.
+	if me.GetFightingBody() == nil || me.GetHP() > 0 {
+		return false
+	}
+	// src/spec_procs2.c:220: MAX_MOVE is the life counter, capped at 8.
+	if maxMove := me.GetMaxMove(); maxMove > 0 {
+		if maxMove > 8 {
+			me.SetMovePool(me.GetMove(), 8)
+		} else {
+			me.SetMovePool(me.GetMove(), maxMove-1)
+		}
+		// src/spec_procs2.c:225: GET_HIT(ch) = GET_MAX_HIT(ch).
+		me.SetHealth(me.GetMaxHP())
+		// src/spec_procs2.c:227-234: stop both fights, then re-engage.
+		if fighter := me.GetFightingBody(); fighter != nil {
+			Act(w, true, me, fighter, nil, nil, "$n rises from the dead and keeps fighting!\n\n", "", ToRoom)
+			if fighter.GetFightingBody() == me {
+				stopFighter(fighter)
+			}
+			me.SetFightingBody(nil)
+			if err := w.mobHit(me, fighter); err != nil {
+				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
+			}
+		}
+		return true
+	}
+	return false
+}
+
+// stopFighter runs C stop_fighting (src/fight.c:230) on one body.
+func stopFighter(body combat.Combatant) {
+	switch b := body.(type) {
+	case *Player:
+		b.StopFighting()
+	case *MobInstance:
+		b.StopFighting()
+	}
+}
+
 // specWhirlpool ports SPECIAL(whirlpool) (src/spec_procs2.c:244-275), assigned
 // to mob vnum 12200 (spec_assign.c:342). C iterates the mob's room people and
 // pulls every victim that is not PRF_NOHASSLE, not the mobile itself, and not

@@ -56,6 +56,8 @@ func init() {
 	RegisterSpec("alien_elevator", specAlienElevator)
 	RegisterSpec("werewolf", specWerewolf)
 	RegisterSpec("field_object", specFieldObject)
+	RegisterObjSpec("mirror", specMirrorObject)
+	RegisterSpec("mirror", func(_ *World, _ *Player, _ *MobInstance, _, _ string) bool { return false })
 	RegisterSpec("portal_to_temple", specPortalToTemple)
 	// src/spec_procs3.c:543-581 is an OBJECT special (obj = me); the mob-lane
 	// stub keeps the nil-mob adapter fallback inert while the real handler
@@ -991,6 +993,87 @@ func specPortalToTemple(w *World, ch *Player, me *MobInstance, cmd string, arg s
 	// C calls do_look (src/spec_procs3.c:537), not look_at_room.
 	w.doLook(ch, nil, "look", "")
 	return true
+}
+
+// mirrorDestination is SPECIAL(mirror)'s other end (src/spec_procs3.c:612).
+const mirrorDestination = 14496
+
+// specMirrorObject ports SPECIAL(mirror) (src/spec_procs3.c:612-668), an
+// object special: hitting the mirror shatters it and swaps the first person
+// in room 14496 into the mirror's room; looking at it swaps the looker into
+// 14496 and that person into the mirror's room. C assigns this special
+// nowhere (src/spec_assign.c declares it without ASSIGNOBJ), so the proof is
+// a direct call, not the census.
+func specMirrorObject(w *World, ch *Player, obj *ObjectInstance, cmd string, arg string) bool {
+	if obj == nil || ch == nil {
+		return false
+	}
+	// src/spec_procs3.c:617: floating mirror (in_room < 0) declines.
+	objRoom := obj.RoomVNum
+	if objRoom < 0 {
+		return false
+	}
+	// src/spec_procs3.c:619: the first person in 14496, if any (may be nil).
+	var swapper combat.Combatant
+	if occupants := cRoomPeople(w, mirrorDestination); len(occupants) > 0 {
+		if body, ok := occupants[0].(combat.Combatant); ok {
+			swapper = body
+		}
+	}
+	// src/spec_procs3.c:622-623: skip_spaces, then isname against the
+	// object's keywords.
+	if !cIsName(skipSpaces(arg), obj.GetKeywords()) {
+		return false
+	}
+	switch cmd {
+	case "hit", "kill":
+		// src/spec_procs3.c:627-628.
+		Act(w, false, ch, nil, obj, nil, "You break $p into tiny pieces!", "", ToChar)
+		Act(w, true, ch, nil, obj, nil, "$n shatters $p into a million pieces!", "", ToRoom)
+		// src/spec_procs3.c:630-635: swap the other person into the
+		// mirror's room.
+		if swapper != nil {
+			if err := w.transferBody(swapper, objRoom, false); err != nil {
+				slog.Warn("mirror swapper transfer failed", "room", objRoom, "error", err)
+			}
+			Act(w, false, swapper, nil, nil, nil, "You feel pulled in a hundred different directions!", "", ToChar)
+			Act(w, true, swapper, nil, nil, nil, "$n appears in a brilliant flash!", "", ToRoom)
+		}
+		// src/spec_procs3.c:638-639: a fresh 14503 piece lands in the
+		// mirror's room; the mirror is extracted.
+		if piece, err := w.SpawnObject(14503, objRoom); err == nil {
+			w.AddItemToRoomFront(piece, objRoom)
+		} else {
+			slog.Warn("mirror piece spawn failed", "room", objRoom, "error", err)
+		}
+		w.ExtractObject(obj, objRoom)
+		// src/spec_procs3.c:640-641.
+		if swapper != nil {
+			w.lookAtRoom(swapper, false)
+		}
+		return true
+	case "look":
+		// src/spec_procs3.c:645-646.
+		Act(w, false, ch, nil, nil, nil, "You feel pulled in a hundred different directions!", "", ToChar)
+		Act(w, false, ch, nil, nil, nil, "$n disappears in a brilliant flash!", "", ToRoom)
+		if swapper != nil {
+			if err := w.transferBody(swapper, objRoom, false); err != nil {
+				slog.Warn("mirror swapper transfer failed", "room", objRoom, "error", err)
+			}
+			Act(w, false, swapper, nil, nil, nil, "You feel pulled in a hundred different directions!", "", ToChar)
+			Act(w, true, swapper, nil, nil, nil, "$n appears in a brilliant flash!", "", ToRoom)
+		}
+		// src/spec_procs3.c:656-657: the looker ends in 14496.
+		if err := w.PlayerTransfer(ch, mirrorDestination); err != nil {
+			slog.Warn("mirror looker transfer failed", "room", mirrorDestination, "error", err)
+		}
+		w.lookAtRoom(ch, false)
+		if swapper != nil {
+			w.lookAtRoom(swapper, false)
+		}
+		return true
+	}
+	return false
 }
 
 // specTurnUndeadObject ports SPECIAL(turn_undead) (src/spec_procs3.c:543-581),
