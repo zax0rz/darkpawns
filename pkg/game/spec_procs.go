@@ -1206,8 +1206,10 @@ func specMiniThief(w *World, ch *Player, me *MobInstance, cmd string, arg string
 // knight and attacks the first one whose !number(0,2) roll passes.
 // Both specials are declared at src/spec_assign.c:108-109 but never
 // ASSIGNMOB'd, so neither C nor Go ever dispatches them; the body is ported
-// faithfully anyway.
-func specUndeadKnight(w *World, me *MobInstance, cmd string, hatedVNum int, hateColor string, taunt func()) bool {
+// faithfully anyway. battleCry is the caller's battle-cry format verbatim
+// (src/spec_procs.c:1197/:1256), so the string census can vouch for both
+// colour lines without a concatenated segment.
+func specUndeadKnight(w *World, me *MobInstance, cmd string, hatedVNum int, battleCry string, taunt func()) bool {
 	// src/spec_procs.c:1151: !AWAKE(ch) || !IS_NPC(ch) || cmd || GET_HIT(ch) < 0.
 	// Go's me is always a *MobInstance, so !IS_NPC(ch) can never reject (R5e).
 	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
@@ -1219,8 +1221,7 @@ func specUndeadKnight(w *World, me *MobInstance, cmd string, hatedVNum int, hate
 	}
 	for _, m := range w.COrderedRoomMobs(me.GetRoomVNum()) {
 		if m.VNum == hatedVNum && number(0, 2) == 0 {
-			Act(w, false, me, nil, nil, nil,
-				"$n sees the knight dressed in "+hateColor+" and gives a battle cry!", "", ToRoom)
+			Act(w, false, me, nil, nil, nil, battleCry, "", ToRoom)
 			if err := w.mobHit(me, m); err != nil {
 				slog.Warn("undead knight mobHit failed", "mob", me.GetName(), "target", m.GetName(), "error", err)
 			}
@@ -1232,7 +1233,7 @@ func specUndeadKnight(w *World, me *MobInstance, cmd string, hatedVNum int, hate
 
 // black_undead_knight — mob spec: taunts + hates red undead
 func specBlackUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	return specUndeadKnight(w, me, cmd, 18402, "red", func() {
+	return specUndeadKnight(w, me, cmd, 18402, "$n sees the knight dressed in red and gives a battle cry!", func() {
 		switch randRange(1, 20) {
 		case 1:
 			Act(w, false, me, nil, nil, nil, "$n screams, 'Protect the kingdom!'", "", ToRoom)
@@ -1253,7 +1254,7 @@ func specBlackUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, ar
 
 // red_undead_knight — mob spec: taunts + hates black undead
 func specRedUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	return specUndeadKnight(w, me, cmd, 18401, "black", func() {
+	return specUndeadKnight(w, me, cmd, 18401, "$n sees the knight dressed in black and gives a battle cry!", func() {
 		switch randRange(1, 20) {
 		case 1:
 			Act(w, false, me, nil, nil, nil, "$n screams, 'Protect the homeland!'", "", ToRoom)
