@@ -1,0 +1,82 @@
+# Death route: direct raw_kill(tch, SPELL_DISINTEGRATE) from do_turn.
+# C: src/new_cmds2.c:1014 -> raw_kill(tch, SPELL_DISINTEGRATE) ->
+# make_corpse (fight.c:267-271) -> make_dust (fight.c:470-479).
+# depth-case: death.route-turn-disintegrate
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Turngod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+load mob 3107
+
+[setup:port]
+Turngod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+load mob 3107
+
+[setup:oracle:actor]
+Turncleric
+Y
+oraclepass
+oraclepass
+N
+M
+H
+C
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Turncleric
+y
+oraclepass
+oraclepass
+N
+M
+H
+C
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Turncleric 8162
+set player Turncleric align 1000
+skillset Turncleric 'turn' 100
+set player Turncleric maxmana 5000
+set player Turncleric mana 5000
+set player Turncleric level 39
+set mob Mikel level 24
+
+[probe]
+send:actor turn
+look

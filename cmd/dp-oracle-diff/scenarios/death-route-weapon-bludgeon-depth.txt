@@ -1,0 +1,81 @@
+# Death route: player opening melee hit with a bludgeon weapon (TYPE_BLUDGEON).
+# C: src/act.offensive.c:101-131 -> src/fight.c:1792,1885 -> damage() ->
+# die_with_killer() -> raw_kill(victim, TYPE_BLUDGEON) -> make_corpse (fight.c:326-331).
+# depth-case: death.route-weapon-bludgeon
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Bludgegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bludgegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+LookWitness
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+LookWitness
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport LookWitness 8105
+set player Bludgegod class warrior
+set player Bludgegod str 25
+set mob trainee maxhit 1
+set mob trainee hit -10
+force trainee sleep
+load obj 4833
+wield staff
+
+[probe]
+hit trainee
+send:observer look

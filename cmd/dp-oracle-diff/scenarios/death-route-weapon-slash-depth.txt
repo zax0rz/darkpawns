@@ -1,0 +1,80 @@
+# Death route: player opening melee hit with a slashing weapon (TYPE_SLASH).
+# C: src/act.offensive.c:101-131 -> src/fight.c:1792,1885 -> damage() ->
+# die_with_killer() -> raw_kill(victim, TYPE_SLASH) -> make_corpse (fight.c:336-340).
+# depth-case: death.route-weapon-slash
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Slashgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Slashgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+LookWitness
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+LookWitness
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport LookWitness 8105
+set player Slashgod class warrior
+set mob trainee maxhit 1
+set mob trainee hit -10
+force trainee sleep
+load obj 8022
+wield sword
+
+[probe]
+hit trainee
+send:observer look

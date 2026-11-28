@@ -1,0 +1,53 @@
+# Death route: area damage spell (SPELL_HELLFIRE).
+# C: src/spells.c:701-755 (spell_hellfire) -> damage(ch, tmp_victim, dam, SPELL_HELLFIRE) ->
+# die_with_killer() -> raw_kill(..., SPELL_HELLFIRE) -> make_corpse (fight.c:288-291).
+# depth-case: death.route-area-spell
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Hellgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hellgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set player Hellgod class mage
+skillset Hellgod 'hellfire' 100
+set player Hellgod maxmana 5000
+set player Hellgod mana 5000
+set mob trainee level 5
+set mob trainee maxhit 1
+set mob trainee hit -10
+
+[probe]
+cast 'hellfire'
+~dpclock pulse 20
+look

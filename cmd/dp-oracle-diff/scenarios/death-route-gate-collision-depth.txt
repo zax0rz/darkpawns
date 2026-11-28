@@ -1,0 +1,73 @@
+# Death route: direct raw_kill(ch, TYPE_BLAST) on gate portal collision.
+# C: src/gate.c:366 -> raw_kill(ch, TYPE_BLAST) -> make_corpse (fight.c:300-302).
+# depth-case: death.route-gate-collision
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Gatecol
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gatecol
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Gatewatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Gatewatch
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 4002
+teleport Gatewatch 4002
+
+[probe]
+cast 'gate'
+~dpclock pulse 20
+cast 'gate'
+send:observer look

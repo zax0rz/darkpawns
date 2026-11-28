@@ -1,0 +1,49 @@
+# Death route: mob natural pierce attack (BareHandAttack 11 -> TYPE_PIERCE).
+# C: src/fight.c:1798-1799,1885 -> damage() -> die_with_killer() ->
+# raw_kill(victim, TYPE_PIERCE) -> make_corpse (fight.c:356-360).
+# depth-case: death.route-mob-pierce
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Piercegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Piercegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load mob 12217
+set mob trainee maxhit 1
+set mob trainee hit -10
+force trainee sleep
+
+[probe]
+force mosquito hit trainee
+look

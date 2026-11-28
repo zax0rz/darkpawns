@@ -1,0 +1,49 @@
+# Death route: mob natural bite attack (BareHandAttack 4 -> TYPE_BITE).
+# C: src/fight.c:1798-1799,1885 -> damage() -> die_with_killer() ->
+# raw_kill(victim, TYPE_BITE) -> make_corpse (fight.c:334-340).
+# depth-case: death.route-mob-bite
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Bitegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bitegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load mob 12202
+set mob trainee maxhit 1
+set mob trainee hit -10
+force trainee sleep
+
+[probe]
+force croc hit trainee
+look
