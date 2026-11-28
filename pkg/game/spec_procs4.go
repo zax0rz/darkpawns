@@ -494,7 +494,17 @@ func specPrayForItems(w *World, ch *Player, me *MobInstance, cmd string, arg str
 	key := "item_for_" + ch.GetName()
 	gold := 0
 	found := false
-	for _, tmpObj := range w.GetItemsInRoom(ch.GetRoomVNum()) {
+	// src/spec_procs.c:2077/2141: C scans `world[key_room = 1 + ch->in_room]`,
+	// the world-index-next room — not the altar room itself.
+	roomIndex, ok := w.RealRoomIndex(ch.GetRoomVNum())
+	if !ok {
+		return false
+	}
+	keyRoomVNum, ok := w.RoomVNumByIndex(roomIndex + 1)
+	if !ok {
+		return false
+	}
+	for _, tmpObj := range w.GetItemsInRoom(keyRoomVNum) {
 		for _, extra := range tmpObj.GetExtraDescs() {
 			if !strings.EqualFold(key, extra.Keywords) {
 				continue

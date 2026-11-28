@@ -1,6 +1,10 @@
 package game
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
+)
 
 // TestSpecPrayForItems_StaffNamesPatched pins the DP-1373 security
 // divergence: C's pray immortality made Serapis/Orodreth level 40 and
@@ -79,12 +83,40 @@ func TestSpecPrayForItems_FallsThroughOrdinarySocial(t *testing.T) {
 }
 
 func TestSpecPrayForItems_ItemRewardBranch(t *testing.T) {
-	w, player, lastMsg := newSpecProcTestWorld(t)
+	// C scans `world[1 + ch->in_room]` (src/spec_procs.c:2077, :2141), the
+	// world-index-next room — the altar object must sit there, not in the
+	// prayer's own room.
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Dump Room", Zone: 1},
+			{VNum: 1002, Name: "Next Room", Zone: 1},
+		},
+		Objs: []parser.Obj{
+			{
+				VNum:      3001,
+				Keywords:  "sword steel",
+				ShortDesc: "a steel sword",
+				LongDesc:  "A steel sword lies here.",
+				Cost:      100,
+			},
+		},
+	}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+	wireLiveNPCDispatchForTest(w)
+
+	player := NewPlayer(1, "Tester", 1001)
+	if err := w.AddPlayer(player); err != nil {
+		t.Fatalf("AddPlayer: %v", err)
+	}
 	observer := NewPlayer(2, "Observer", 1001)
 	if err := w.AddPlayer(observer); err != nil {
 		t.Fatalf("AddPlayer observer: %v", err)
 	}
-	_ = lastMsg() // discard setup output
+
 	messages := make(map[string]string)
 	w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
 
@@ -92,7 +124,7 @@ func TestSpecPrayForItems_ItemRewardBranch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SpawnObject altar: %v", err)
 	}
-	if err := w.MoveObjectToRoom(altar, 1001); err != nil {
+	if err := w.MoveObjectToRoom(altar, 1002); err != nil {
 		t.Fatalf("MoveObjectToRoom altar: %v", err)
 	}
 	if !w.SetObjectExtraDesc(3001, "item_for_Tester", "a test reward") {
@@ -107,8 +139,8 @@ func TestSpecPrayForItems_ItemRewardBranch(t *testing.T) {
 	if got := player.GetGold(); got != 0 {
 		t.Errorf("gold = %d, want 0 after the 100-gold reward cost", got)
 	}
-	if got := len(w.GetItemsInRoom(1001)); got != 2 {
-		t.Errorf("room item count = %d, want generated reward plus altar", got)
+	if got := len(w.GetItemsInRoom(1001)); got != 1 {
+		t.Errorf("altar-room item count = %d, want only the generated reward", got)
 	}
 	if got, want := messages[player.GetName()], "You notice a faint light in Odin's eye.\r\nA steel sword slowly fades into existence.\r\n"; got != want {
 		t.Errorf("actor item reward bytes = %q, want %q", got, want)
