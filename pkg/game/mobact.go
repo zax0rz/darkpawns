@@ -217,14 +217,17 @@ func (w *World) mobileActivityForMob(ch *MobInstance) bool {
 			return false // C's sector-gate continue skips the rest of this mob's pulse.
 		}
 	}
+	// Sound trigger (C: 1-in-16 chance for mp_sound + lua sound).
+	// C's `if (!ch || ch->in_room < 0) continue;` sits BEFORE perform_move()
+	// (src/mobact.c:139-142), NOT after, so a mob killed during perform_move()
+	// (e.g. by a greet/entry attack) still consumes mobact.c:146's number(0,15)
+	// before check_dead(ch) at mobact.c:177 skips the rest of its pulse (R3).
+	// #nosec G404 — game RNG, not cryptographic
+	soundRoll := mobactNumber(0, 15)
 	if !ch.IsAlive() || ch.RoomVNum < 0 {
 		return false
 	}
-
-	// Sound trigger (C: 1-in-16 chance for mp_sound + lua sound). This draw is
-	// unconditional and occurs before all aggression draws.
-	// #nosec G404 — game RNG, not cryptographic
-	if mobactNumber(0, 15) == 0 {
+	if soundRoll == 0 {
 		w.MpSound(ch)
 		// mobact.c:148-158: the sound script, with the mobile as ch and me,
 		// only when a player (a non-mobile) is in the room.
@@ -423,7 +426,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) bool {
 			}
 		}
 		found := false
-		for _, vict := range w.GetMobsInRoom(ch.RoomVNum) {
+		for _, vict := range w.COrderedRoomMobs(ch.RoomVNum) {
 			if found {
 				break
 			}
@@ -491,7 +494,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) bool {
 	// C: src/mobact.c:324-336. The grin act fires at C's point, between
 	// selecting the visible weaker mobile and hit().
 	if hasMobFlag(ch, "aggr24") && hasMobFlag(ch, "aggressive") && ch.GetHP() == ch.GetMaxHP() {
-		for _, vict := range w.GetMobsInRoom(ch.RoomVNum) {
+		for _, vict := range w.COrderedRoomMobs(ch.RoomVNum) {
 			if vict == ch {
 				continue
 			}

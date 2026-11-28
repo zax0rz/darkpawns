@@ -154,3 +154,44 @@ func TestMobactAggressiveNormalRoomSwingsAndEnrols(t *testing.T) {
 		t.Fatal("missed first swing failed to enrol the pair")
 	}
 }
+
+func TestMobactAggr24UsesCOrderedRoomMobs(t *testing.T) {
+	// C's world[room].people is LIFO (most recent arrival first), so aggr24 +
+	// aggressive (src/mobact.c:324-336) must deterministically target the most
+	// recently spawned weaker mob rather than iterating an unordered Go map.
+	for iter := 0; iter < 20; iter++ {
+		w, ce := newRealPulseWorld(t, false,
+			parser.Mob{
+				VNum: 9610, Keywords: "lord", ShortDesc: "the lord", Level: 33,
+				HP: parser.DiceRoll{Num: 1, Sides: 1, Plus: 500}, ActionFlags: []string{"aggr24", "aggressive", "sentinel"},
+			},
+			parser.Mob{
+				VNum: 9611, Keywords: "first", ShortDesc: "the first victim", Level: 5,
+				HP: parser.DiceRoll{Num: 1, Sides: 1, Plus: 100},
+			},
+			parser.Mob{
+				VNum: 9612, Keywords: "second", ShortDesc: "the second victim", Level: 5,
+				HP: parser.DiceRoll{Num: 1, Sides: 1, Plus: 100},
+			},
+		)
+		lord, err := w.SpawnMob(9610, 1001)
+		if err != nil {
+			t.Fatalf("SpawnMob lord: %v", err)
+		}
+		first, err := w.SpawnMob(9611, 1001)
+		if err != nil {
+			t.Fatalf("SpawnMob first: %v", err)
+		}
+		second, err := w.SpawnMob(9612, 1001)
+		if err != nil {
+			t.Fatalf("SpawnMob second: %v", err)
+		}
+		seed := missAfterPulseDraws(t)
+		dprng.ResetStream(seed)
+		w.mobileActivityForMob(lord)
+		target, ok := ce.GetCombatTarget(lord)
+		if !ok || target != second {
+			t.Fatalf("iter %d: aggr24 targeted %v (first=%v, second=%v), want second (LIFO room head)", iter, target, first, second)
+		}
+	}
+}
