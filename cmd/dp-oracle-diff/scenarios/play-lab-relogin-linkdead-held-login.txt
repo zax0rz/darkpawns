@@ -1,0 +1,59 @@
+# Lockstep play relogged a linkdead body with the creation script's lines and
+# found the port reading each one at once (triage s00076). C's nanny loads an
+# existing character with wait = 1 (src/interpreter.c:1766). Under the frozen
+# clock the oracle decrements a wait only on a pumped pass, so the password,
+# the RETURN and the menu choice 1 wait on d->input until the harness's settle
+# pump after the 1, then run back to back before one output flush
+# (src/comm.c:594-642): "Reconnecting.", then "Huh?!?" for the stray menu
+# choice (src/interpreter.c:910-916), then one prompt. The port read the
+# password as it arrived and printed a prompt after "Reconnecting.", another
+# after the bare RETURN, and "Huh?!?" on that prompt's line.
+#
+# The body is linkdead because <RELOGIN> closes the connection without a quit,
+# so the password reconnects (src/interpreter.c:1635-1642) instead of showing
+# the MOTD. No ~dpclock pulse follows the name, so nothing releases the hold
+# before the settle pump.
+# depth-case: entry.reconnect-holds-lines-until-pumped
+
+[setup:oracle]
+Plaacy
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Plaacy
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Plaacy
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Plaacy
+oraclepass
+<ENTER>
+1
+
+[probe]
+<RELOGIN>

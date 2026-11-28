@@ -1181,6 +1181,9 @@ type queuedInput struct {
 	args    []string
 	rawArgs string
 	aliased bool
+	// held marks a line taken at the password prompt while the name step's
+	// wait held it: rawArgs is the whole line, not yet split or routed.
+	held bool
 }
 
 // maxQueuedInput is Zach's DP-1400 security divergence. C's complete-line
@@ -1278,6 +1281,116 @@ func (s *Session) tryExecuteNow(cmd string, args []string, rawArgText ...string)
 	return false
 }
 
+// holdEntryLine queues a line for a session still at the password prompt, as
+// C leaves it on d->input while the loaded character's wait holds
+// (src/interpreter.c:1766; the gate is comm.c:597). Only a session without a
+// player is held: once the password is read, tryExecuteNow keeps later lines
+// behind the queue. It reports whether the line was queued, or overflow
+// closed the transport.
+func (s *Session) holdEntryLine(rawLine string) bool {
+	// Same manager -> inputMu order as tryExecuteNow and DrainInputQueues.
+	managerLocked := s.manager != nil
+	if managerLocked {
+		s.manager.mu.RLock()
+	}
+	atPassword := s.player == nil
+	s.inputMu.Lock()
+	if !atPassword || (s.entryWait.Load() <= 0 && len(s.inputQueue) == 0) {
+		s.inputMu.Unlock()
+		if managerLocked {
+			s.manager.mu.RUnlock()
+		}
+		return false
+	}
+	if s.inputOverflow {
+		s.inputMu.Unlock()
+		if managerLocked {
+			s.manager.mu.RUnlock()
+		}
+		return true
+	}
+	accepted := s.reserveQueuedInputLocked(1)
+	if accepted {
+		s.inputQueue = append(s.inputQueue, queuedInput{rawArgs: rawLine, held: true})
+	}
+	s.inputMu.Unlock()
+	if managerLocked {
+		s.manager.mu.RUnlock()
+	}
+	if !accepted {
+		s.Close()
+	}
+	return true
+}
+
+// decrementEntryWait is a pulsing pass's --(d->character->wait)
+// (src/comm.c:597) for the wait the name step set. An idle pass leaves it
+// alone, as the oracle's does under the frozen clock.
+func (s *Session) decrementEntryWait() {
+	for {
+		wait := s.entryWait.Load()
+		if wait <= 0 || s.entryWait.CompareAndSwap(wait, wait-1) {
+			return
+		}
+	}
+}
+
+// drainEntryWait is the drain's step for a session without a player: a pulsing
+// pass decrements the wait the name step set, and a ready session gives up the
+// line held at its password prompt.
+func (s *Session) drainEntryWait(decrement bool) (queuedInput, bool) {
+	if decrement {
+		s.decrementEntryWait()
+	}
+	if s.entryWait.Load() > 0 {
+		return queuedInput{}, false
+	}
+	return s.dequeueHeldInput()
+}
+
+// dequeueHeldInput pops the queue's head for a session without a player, and
+// only if it is a line held at the password prompt. Any other entry there
+// belongs to a session whose player is gone and stays queued.
+func (s *Session) dequeueHeldInput() (queuedInput, bool) {
+	s.inputMu.Lock()
+	defer s.inputMu.Unlock()
+	if len(s.inputQueue) == 0 || !s.inputQueue[0].held {
+		return queuedInput{}, false
+	}
+	head := s.inputQueue[0]
+	s.inputQueue[0] = queuedInput{}
+	s.inputQueue = s.inputQueue[1:]
+	if len(s.inputQueue) == 0 {
+		s.inputQueue = nil
+	}
+	return head, true
+}
+
+// routeHeldEntryLine hands a line held at the password prompt to the nanny or
+// the menu, if the session is still in their hands once the password is read.
+// It reports whether one of them took it; otherwise the session is playing and
+// the line is an ordinary command (src/comm.c:621-628).
+func (s *Session) routeHeldEntryLine(rawLine string) bool {
+	switch {
+	case s.IsMenuActive():
+		s.terminalError(s.handleMenuInput(entryChoiceData(rawLine)))
+		return true
+	case s.IsCharCreating():
+		s.terminalError(s.handleCharInput(entryChoiceData(rawLine)))
+		return true
+	}
+	return false
+}
+
+// entryChoiceData is the message terminalCharInput builds for a nanny line.
+func entryChoiceData(choice string) json.RawMessage {
+	data, err := json.Marshal(map[string]any{"choice": choice})
+	if err != nil {
+		return nil
+	}
+	return data
+}
+
 // reserveQueuedInputLocked checks every queue insertion under inputMu. An
 // overflow discards retained commands and latches admission closed, preventing
 // a concurrent pump or heartbeat from executing more input before teardown.
@@ -1367,16 +1480,26 @@ func (m *Manager) drainInputPass(decrement bool) bool {
 		args    []string
 		rawArgs string
 		aliased bool
+		held    bool
 	}
 
 	m.mu.RLock()
 	jobs := make([]drainJob, 0)
-	for _, s := range m.sessionsInDescriptorOrderLocked() {
+	// A session at the password prompt carries the wait the name step set on
+	// its loaded character (src/interpreter.c:1766): a pulsing pass
+	// decrements it, and a ready session gives up the line held there.
+	takeHeld := func(s *Session) {
+		if input, ok := s.drainEntryWait(decrement); ok {
+			jobs = append(jobs, drainJob{s: s, rawArgs: input.rawArgs, held: true})
+		}
+	}
+	drainSession := func(s *Session) {
 		if s.player == nil {
-			continue
+			takeHeld(s)
+			return
 		}
 		if attached, involved := m.switchDescriptorLocked(s.player); involved && attached != s {
-			continue
+			return
 		}
 		// C decrements d->character->wait, which is the switched body when this
 		// descriptor controls a mobile or borrowed player.
@@ -1386,7 +1509,7 @@ func (m *Manager) drainInputPass(decrement bool) bool {
 			DecrementWaitState()
 		})
 		if !ok {
-			continue
+			return
 		}
 		if decrement {
 			// Fact 2: wait decrements once per pulse.
@@ -1395,13 +1518,45 @@ func (m *Manager) drainInputPass(decrement bool) bool {
 		// Fact 3: one command drains per pass (if, not while).
 		if waiter.GetWaitState() <= 0 {
 			if input, ok := s.dequeueInput(); ok {
-				jobs = append(jobs, drainJob{s: s, cmd: input.cmd, args: input.args, rawArgs: input.rawArgs, aliased: input.aliased})
+				// Lines held at the password prompt can still be behind the
+				// password once the session is playing; held keeps their routing.
+				jobs = append(jobs, drainJob{s: s, cmd: input.cmd, args: input.args, rawArgs: input.rawArgs, aliased: input.aliased, held: input.held})
 			}
 		}
+	}
+	for _, s := range m.sessionsInDescriptorOrderLocked() {
+		drainSession(s)
+	}
+	// C's loop walks descriptor_list, every connection (src/comm.c:577). A
+	// connection is in m.sessions only once it enters the game; until then it
+	// is only in m.descriptors: at the name or password prompt, and between
+	// the password and the menu choice. Lock order is mu before descMu, as in
+	// activeDescriptors.
+	m.descMu.Lock()
+	entries := make([]*Session, 0, len(m.descriptors))
+	for s := range m.descriptors {
+		if s == nil || m.sessions[s.playerName] == s {
+			continue
+		}
+		entries = append(entries, s)
+	}
+	m.descMu.Unlock()
+	for _, s := range entries {
+		drainSession(s)
 	}
 	m.mu.RUnlock()
 
 	for _, job := range jobs {
+		if job.held {
+			if job.s.routeHeldEntryLine(job.rawArgs) || job.s.player == nil {
+				// Still with the nanny or the menu, or the session left the
+				// password prompt without entering the game.
+				continue
+			}
+			// The password put the session in the game, so the line goes to the
+			// command interpreter (src/comm.c:628), tokenized as on arrival.
+			job.cmd, job.args = SplitCommandInput(strings.TrimSpace(job.rawArgs))
+		}
 		// Taking the queued line clears has_prompt (comm.c:613); a line from
 		// an alias expansion sets it again (comm.c:621-623).
 		if job.aliased {
@@ -2433,6 +2588,15 @@ type Session struct {
 	inputMu       sync.Mutex
 	inputQueue    []queuedInput
 	inputOverflow bool // guarded by inputMu; latched until transport teardown
+
+	// entryWait is the wait the nanny's name step puts on a loaded character
+	// (src/interpreter.c:1766: d->character->wait = 1) while the session has no
+	// player to carry it. Under the frozen clock only a pulsing pass decrements
+	// it, so the password line waits on inputQueue until a pump, as it does in
+	// the oracle. Live play never sets it: C's loop decrements every
+	// descriptor's wait on every pass (src/comm.c:597), long before a password
+	// arrives.
+	entryWait atomic.Int32
 
 	// Temporary data storage for command handlers
 	tempData map[string]any

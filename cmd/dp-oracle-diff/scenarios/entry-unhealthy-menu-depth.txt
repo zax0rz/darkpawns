@@ -90,5 +90,6 @@ healpass
 
 [relogin:port]
 Unhealthy
+~dpclock pulse 1
 healpass
 <ENTER>
