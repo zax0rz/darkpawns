@@ -36,16 +36,23 @@ ordinary census scenario, so the census replay is the proof.
 The window counts only clean hours, so every known divergence has to be
 fixed first, or it fires again every few sessions.
 
-| Item | Owner | State (2026-11-28) |
+| Item | Owner | State (2026-11-28, afternoon) |
 |---|---|---|
 | Guild guards (#3097) | GLM-5.4 | merged |
 | Corpse attack type (#3106) | DeepSeek | merged |
-| Spec-proc gates, PR 1 (#3105) | Ember | merged |
-| Spec-proc effects and bytes, PRs 2–3 | Ember | resumes 11-28 01:50 |
-| Room 8061 blank line, reconnect prompts | GLM-5.4 | resumes 11-28 13:51 |
-| Iteration order, PRs 1–4 (#3101–#3104) + C order by default (PR 5) | Neon | censuses running, then round 2 |
-| Toh seal, sobriety, C-claim comment sweep | Kimi | in progress |
-| Data fixes in `dp-play-lab`: runner overrides, gold sources, per-round combat, death filter, row format, escalate, persistent teacher, pre-flight check ([brief](../briefs/BRIEF-2026-11-28-play-lab-data-fixes.md)) | Carbon (suggested) | brief written |
+| Spec-proc gates, effects, bytes (#3105, #3115, #3117) | Ember | merged |
+| Spec-proc leftovers and unassigned stand-ins (#3119, #3121) | Ember | merged |
+| Room 8061 blank line, reconnect prompts (#3116, #3118) | GLM-5.4 | merged |
+| Iteration order, C order by default (#3101–#3104, #3114) | Neon | merged |
+| Toh seal, sobriety, C-claim sweep (#3112, #3113) | Kimi | merged |
+| Invented strings, Lua `raw_kill` (#3120) | Kimi | merged |
+| World text framing, trailing blank lines ([follow-up](../briefs/FOLLOWUP-2026-11-28-glm-world-text-framing.md)) | GLM-5.4 | in progress |
+| Wall guard `fighter(ch, ch)`, E-034 ([brief](../briefs/BRIEF-2026-11-28-wall-guard-fighter-player.md)) | Kimi | in progress |
+| Typed spacing, PF-193 ([brief](../briefs/BRIEF-2026-11-28-ember-typed-spacing.md)) | Ember | in progress |
+| **Pulse-wait read race in the harness** ([brief](../briefs/BRIEF-2026-11-28-pulse-barrier-read.md)): every 630-pulse rest can stop a session, and quiet waits cost 7.5s each | Neon (suggested) | brief written; **blocks the window** |
+| Data fixes in `dp-play-lab` (PR #3: runner overrides, sources, per-round combat, filters, row format, escalate, teacher transport, answer-blind cap, overwrite guard) | Sol, Luna | done on PR #3, not merged |
+| Progression that levels, round 2 ([follow-up](../briefs/FOLLOWUP-2026-11-28-play-lab-progression-round-2.md)): guild at level 1, class powers each round, loot and wear, C's `consider` arithmetic, per-mob memory | lab agent | brief written |
+| A real teacher model for `model` sessions | Zach | open |
 | Fill in the window brief's commands and known-bug list | Claude | after the above |
 
 The data fixes don't touch the port, so they run in parallel with the rest.
@@ -130,8 +137,12 @@ Each has a recommendation from Carbon's review (2026-11-28), checked by Claude.
    the MCP/CLI observation built after v1 must use the same state
    serializer as these rows.
 3. **Depth of play.** The last proof window gained 0 levels in 30 minutes.
-   *Recommended:* fix it before the clock starts. The data-fix brief ends with
-   a 20-minute pre-flight that must show characters leveling, or say why not.
+   *Recommended:* fix it before the clock starts. The first bar, level 3 in a
+   20-minute pre-flight, was unrealistic: level 2 needs 1,500 XP and level 3
+   needs 3,000 (`src/class.c:1131-1140`). The bar is now a fast Go-only loop
+   (four of six classes reach level 3 in 1,000 steps), then a 60-minute
+   lockstep pre-flight where every stop is confirmed by a full replay and XP
+   rises in every session.
    Shallow play would weaken both the port evidence (no level-ups, mid-level
    skills, hunger ticks) and the data.
 
