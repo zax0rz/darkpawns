@@ -474,9 +474,12 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	case spellRoll <= 11:
 		castMobSpell(w, me, vict, spells.SpellShockingGrasp)
 	case spellRoll == 12:
+		// src/spec_procs.c:450: `if (IS_EVIL(vict) && !IS_EVIL(ch))`
+		// dispel-evil, `else if (IS_GOOD(vict) && !IS_GOOD(ch))` dispel-good
+		// (src/utils.h:454-455) — a neutral caster dispels good too.
 		if !mobIsEvil(me) && combatantAlignment(vict) <= -350 {
 			castMobSpell(w, me, vict, spells.SpellDispelEvil)
-		} else if mobIsEvil(me) && combatantAlignment(vict) >= 350 {
+		} else if !mobIsGood(me) && combatantAlignment(vict) >= 350 {
 			castMobSpell(w, me, vict, spells.SpellDispelGood)
 		}
 	case spellRoll == 13:
@@ -777,7 +780,10 @@ func specJanitor(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 // Ported from src/spec_procs.c:771-821. Handles the reachable autonomous
 // branches; fighter() is a shared callee owned by mob.fighter.
 func specCityguard(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() <= 0 {
+	// src/spec_procs.c:776: `if (cmd || !AWAKE(ch)) return FALSE;` — AWAKE is
+	// POS > POS_SLEEPING (src/utils.h:450), so sleeping and resting guards
+	// must not act.
+	if cmd != "" || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
 

@@ -449,7 +449,10 @@ func specRescuer(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 		if MobSpecAssign[ally.GetVNum()] == "rescuer" {
 			continue
 		}
-		if opponent, ok := combatPlayer(ally.GetFightingBody()); !ok || opponent.GetRoom() != me.GetRoomVNum() {
+		// src/spec_procs2.c:534: `!IS_NPC(FIGHTING(i))` only — C checks the
+		// opponent is a player, not its room, so a fleeing victim still
+		// draws the rescue attempt.
+		if _, ok := combatPlayer(ally.GetFightingBody()); !ok {
 			continue
 		}
 		// SPECIAL(rescuer) unconditionally returns TRUE after calling
@@ -499,7 +502,17 @@ func specPissedalchemist(w *World, ch *Player, me *MobInstance, cmd string, arg 
 		return false
 	}
 	players := w.GetPlayersInRoom(me.GetRoomVNum())
-	if len(players) == 0 {
+	// src/spec_procs2.c:556: `cont` holds only for a non-NPC below
+	// LEVEL_IMMORT (src/structs.h:620-621); an immortals-only room returns
+	// FALSE before any say or swing.
+	cont := false
+	for _, player := range players {
+		if player.GetLevel() < lvlImmort {
+			cont = true
+			break
+		}
+	}
+	if !cont {
 		return false
 	}
 	if me.GetAlignment() != -69 {
@@ -1532,9 +1545,10 @@ func specMedusa(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		return false
 	}
 
-	// C uses isname(argument, mobile->player.name), so match the complete
-	// character keyword list rather than searching the display description.
-	if !isnameWithAbbrevs(strings.TrimSpace(arg), charKeywords(me)) {
+	// C uses isname(argument, mobile->player.name) (src/spec_procs2.c:1561),
+	// exact case-insensitive token — a prefix like "med" must not look at
+	// the medusa.
+	if !isCName(strings.TrimSpace(arg), charKeywords(me)) {
 		return false
 	}
 
@@ -2236,8 +2250,12 @@ var (
 )
 
 func specWallGuardNS(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	// src/spec_procs2.c:2266: `if (cmd || sleeping || FIGHTING) return
+	// (fighter(ch, ch, 0, NULL))` — delegate with cmd cleared like C's NULL
+	// argument (and the actor lane's ""), or the target helper declines and
+	// a typing player never triggers fighter's draws (R3).
 	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetFightingBody() != nil {
-		return false
+		return specFighter(w, ch, me, "", "")
 	}
 
 	room := w.GetRoomInWorld(me.GetRoomVNum())

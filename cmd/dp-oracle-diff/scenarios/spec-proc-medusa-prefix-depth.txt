@@ -1,0 +1,81 @@
+# C-first vehicle for the exact-token gate of SPECIAL(medusa)
+# (src/spec_procs2.c:1552-1590). C gates an intercepted look/examine with
+# isname(argument, mobile->player.name) (src/handler.c:81-111), an exact
+# case-insensitive token, so "med" falls through to the ordinary look with
+# no saving-throw draws. Go's isnameWithAbbrevs accepts the prefix, consumes
+# the SAVING_PETRI draws, and (seed permitting) petrifies. With
+# --draw-parity the draw difference reds origin/main even when the save
+# falls through to an identical look.
+#
+# C path: src/interpreter.c:1407-1456 -> src/spec_procs2.c:1559-1561 ->
+# mag_savingthrow (skipped by C for a non-exact token).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14101 1 14112 80
+
+[setup:oracle]
+Gazeprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gazeprobe
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Gazepeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Gazepeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 14112
+teleport Gazepeer 14112
+set Gazeprobe level 1
+
+[probe]
+look med
+score

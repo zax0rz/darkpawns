@@ -113,8 +113,11 @@ func TestSpecWerewolf_EntryGates(t *testing.T) {
 	}
 	a.mob.SetFightingBody(a.victim)
 	a.mob.SetHealth(0)
-	if specWerewolf(a.w, nil, a.mob, "", "") {
-		t.Fatal("non-positive HP werewolf should fall through")
+	// src/spec_procs3.c:434-440: number(0,9)/number(0,3) are drawn BEFORE
+	// the `GET_HIT(mob) > 0` gate, so a dying fighting werewolf still
+	// handles and the silence check below still applies (R3).
+	if !specWerewolf(a.w, nil, a.mob, "", "") {
+		t.Fatal("non-positive HP werewolf should handle the fighting arm")
 	}
 	if got := strings.Join([]string{a.message[a.victim.Name], a.message[a.peer.Name], a.message[a.remote.Name]}, ""); got != "" {
 		t.Fatalf("entry-gate output = %q, want empty", got)

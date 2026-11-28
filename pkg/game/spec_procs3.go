@@ -805,7 +805,10 @@ func (w *World) mobSendToZone(me *MobInstance, message string) {
 // specWerewolf howls and bites when fighting.
 // C source: SPECIAL(werewolf) src/spec_procs3.c:427-448
 func specWerewolf(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if me == nil || cmd != "" || me.GetFightingBody() == nil || me.GetHP() <= 0 {
+	// src/spec_procs3.c:432: `if (!cmd && FIGHTING(mob) && mob)`. The HP
+	// check lives inside each arm (:434/:440) AFTER its number() draw, so a
+	// dying werewolf still consumes both draws (R3).
+	if me == nil || cmd != "" || me.GetFightingBody() == nil {
 		return false
 	}
 	vict := mobFightingTarget(w, me)
@@ -815,14 +818,14 @@ func specWerewolf(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	// Howl (10% chance)
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if werewolfNumber(0, 9) == 0 {
+	if werewolfNumber(0, 9) == 0 && me.GetHP() > 0 {
 		Act(w, true, me, nil, nil, nil, "$n looks up and lets out a long, fierce howl.", "", ToRoom)
 		w.mobSendToZone(me, "You hear a loud howling in the distance.")
 	}
 	// Bite attack (25% chance)
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if werewolfNumber(0, 3) == 0 && vict.GetRoom() == me.GetRoomVNum() && me.GetHP() > 0 {
+	if werewolfNumber(0, 3) == 0 && me.GetHP() > 0 {
 		Act(w, true, me, vict, nil, nil, "$n tears into your leg with $s huge fangs!", "", ToVict)
 		Act(w, true, me, vict, nil, nil, "$n rips apart $N's leg with $s fangs!", "", ToNotVict)
 		dam := combat.RollDice(me.GetLevel(), 2)
@@ -1255,7 +1258,9 @@ func specMortician(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			return objects[i].ID > objects[j].ID
 		})
 		for _, obj := range objects {
-			if !isnameWithAbbrevs(ch.GetName(), obj.GetKeywords()) ||
+			// src/spec_procs3.c:838: `isname(temp_name, obj->name)` — an
+			// exact-token match, so "Alison" finds no corpse for "Al".
+			if !isCName(ch.GetName(), obj.GetKeywords()) ||
 				obj.GetValue(3) == 0 || obj.GetTypeFlag() != ITEM_CONTAINER {
 				continue
 			}
