@@ -299,15 +299,32 @@ func specClericCombat(w *World, me *MobInstance, vict combat.Combatant) bool {
 	return true
 }
 
-// specNoMoveDown blocks "down" movement unless the player is an immort.
+// specNoMoveDown blocks "down" movement unless the mover is an immort.
+// Ported from SPECIAL(no_move_down) (src/spec_procs3.c:316-335). It is
+// declared at src/spec_assign.c:151 but never ASSIGNMOB'd in C, and Go never
+// assigns it either (RegisterSpec only), so it never runs live; the body is
+// ported faithfully anyway.
 func specNoMoveDown(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "down" || me.GetPosition() <= combat.PosSleeping {
+	// src/spec_procs3.c:320: !cmd || mini_mud || !IS_MOVE(cmd) || !AWAKE(mobile).
+	// Go has no mini_mud runtime mode, so !mini_mud always holds (specMickey).
+	if cmd == "" || !isMoveCmd(cmd) || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
+	// src/spec_procs3.c:323: GET_LEVEL(ch) >= LVL_IMMORT || HUNTING(ch). C's
+	// HUNTING returns NULL for a non-NPC (src/utils.c:731-739), and Go's ch
+	// is always a *Player, so the HUNTING half can never reject (R5e).
 	if ch.GetLevel() >= lvlImmort {
 		return false
 	}
-	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s blocks your way down.", mobName(me)))
+	// src/spec_procs3.c:326: CMD_IS("down") && GET_LEVEL(ch) < LEVEL_IMMORT.
+	// LEVEL_IMMORT is LVL_IMMORT (src/structs.h:620-621), already rejected
+	// above, so no second level check.
+	if cmd != "down" {
+		return false
+	}
+	Act(w, false, me, ch, nil, nil, "$n blocks $N's way.", "", ToNotVict)
+	Act(w, false, me, ch, nil, nil, "$n blocks your way.", "", ToVict)
+	Act(w, false, me, nil, nil, nil, "$n says 'Thou shalt not pass.'", "", ToRoom)
 	return true
 }
 
@@ -856,9 +873,14 @@ var fieldObjTypes = map[int]fieldObjTypeDef{
 }
 
 // specFieldObject checks field objects that damage room occupants.
-// C source: SPECIAL(field_object) — me is actually an ObjectInstance.
-// Since spec procs receive *MobInstance but this is object-driven, we use
-// me's vnum to look up in fieldObjTypes and act accordingly.
+// Ported statement-for-statement from SPECIAL(field_object)
+// (src/spec_procs3.c:456-513) — C's `me` is actually the ObjectInstance,
+// so the SpecFunc lane's stand-in mobile carries the object's vnum and room
+// while the real object (its values and action description) is resolved
+// from the room's floor contents. ASSIGNOBJ(50/52, field_object) is at
+// src/spec_assign.c:528-529; the command lane only ever calls with a
+// non-empty cmd (src/interpreter.c:1440-1476), so like C the body is
+// reachable only from a pulse-style caller with cmd == "".
 func specFieldObject(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd != "" {
 		return false
@@ -869,6 +891,11 @@ func specFieldObject(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	vnum := me.GetVNum()
 	def, ok := fieldObjTypes[vnum]
 	if !ok {
+		// src/spec_procs3.c:473's `if (index >= NUM_FOS) return FALSE` offers
+		// no fallthrough for an unlisted id (the loop var i runs past the
+		// table and field_objs[i] is out of bounds — undefined behaviour,
+		// R1a); ASSIGNOBJ only ever fires 50/52, both listed, so a miss
+		// stays a plain return-false.
 		return false
 	}
 
@@ -876,28 +903,58 @@ func specFieldObject(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	if roomVNum <= 0 {
 		return false
 	}
+	// The field object C was invoked on (src/spec_procs3.c:460).
+	var obj *ObjectInstance
+	for _, item := range w.GetItemsInRoom(roomVNum) {
+		if item.VNum == vnum {
+			obj = item
+			break
+		}
+	}
+	if obj == nil {
+		return false
+	}
+
+	// Damage is rolled once before the walk, so every occupant takes the
+	// same figure (src/spec_procs3.c:476-482, R3).
+	dam, affect, level := 0, 0, 0
+	switch def.FoType {
+	case "damage":
+		dam = dice(obj.GetValue(0), obj.GetValue(1))
+	case "affect":
+		affect = obj.GetValue(0)
+		level = obj.GetValue(1)
+	}
 
 	damaged := false
-	players := w.GetPlayersInRoom(roomVNum)
-	for _, vict := range players {
-		if def.FoType == "damage" {
-			// Use mob proto values as dice params (matches C: GET_OBJ_VAL(obj,0), GET_OBJ_VAL(obj,1))
-			dam := me.GetLevel()/2 + 1
-			if dam > 0 {
-				vict.TakeDamage(dam)
-				vict.SendMessage("An incredible force hits you!\r\n")
-				// Wounded band / POS_DEAD from the new HP; only kill at POS_DEAD
-				// (HP <= -11) — fight.c update_pos (DP-1021).
-				if combat.UpdatePositionAfterDamage(vict, w.WoundAct, w.StopFightingBody) == combat.PosDead {
-					w.roomMessage(roomVNum, fmt.Sprintf("%s falls to the ground, screaming in agony!", vict.GetName()))
-					w.rawKill(vict, 0)
-				}
-				damaged = true
-			}
+	for _, victActor := range w.actChar(roomVNum) {
+		vict, ok := victActor.(combat.Combatant)
+		if !ok {
+			continue
 		}
-		if def.FoType == "affect" {
-			// Cast poison on room occupants (affect=spell, level=cast level)
-			spells.Cast(vict, vict, spells.SpellPoison, me.GetLevel(), w)
+		if dam != 0 {
+			// src/spec_procs3.c:489: GET_HIT(vict) -= dam, with no
+			// update_pos, no wounded band, and no combat pipeline.
+			vict.TakeDamage(dam)
+			// Go's "" models C's NULL action_description
+			// (src/db.c:2735-2741), so this is the stc branch, and C sends
+			// it to `ch` — the command issuer, not the victim.
+			if obj.ActionDescription() != "" {
+				Act(w, false, vict, vict, obj, nil, obj.ActionDescription(), "", ToVict)
+			} else if ch != nil {
+				ch.SendMessage("An incredible force hits you!\r\n")
+			}
+			if vict.GetHP() <= 0 {
+				Act(w, true, vict, vict, nil, nil, "$N falls to the ground, screaming in agony!", "", ToNotVict)
+				w.RawKillCombatant(vict, TypeUndefined)
+			}
+			damaged = true
+		}
+		if affect != 0 && vict.GetRoom() > 0 {
+			if obj.ActionDescription() != "" {
+				Act(w, false, vict, vict, obj, nil, obj.ActionDescription(), "", ToVict)
+			}
+			spells.CallMagic(vict, vict, nil, affect, level, spells.CastSpell, w)
 			damaged = true
 		}
 	}

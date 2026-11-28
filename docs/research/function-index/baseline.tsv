@@ -690,6 +690,7 @@ src/interpreter.c:special	pkg/game/item_views.go	COrderedCarrying	split
 src/interpreter.c:special	pkg/game/item_views.go	COrderedWorn	split
 src/interpreter.c:special	pkg/game/room_obj_scripts.go	(World).RunRoomOnCmdScript	split
 src/interpreter.c:special	pkg/game/world.go	(World).COrderedRoomMobs	split
+src/interpreter.c:special	pkg/game/spec_procs3.go	specFieldObject	split
 src/interpreter.c:special	pkg/session/commands.go	runSpecials	split
 src/interpreter.c:special	pkg/session/commands.go	specialScriptText	split
 src/limits.c:check_autowiz	pkg/game/limits_exp.go	CheckAutowiz	primary
@@ -954,6 +955,8 @@ src/shop.c:transaction_amt	pkg/game/shop_npc.go	shopNpcTransactionAmt	split
 src/shop.c:transaction_amt	pkg/game/shop_trade.go	ShopTransactionAmount	split
 src/shop.c:transaction_amt	pkg/session/shop_cmds.go	shopTransactionAmount	split
 src/spec_assign.c:assign_mobiles	pkg/game/spec_procs2.go	specTipster	primary
+src/spec_assign.c:assign_mobiles	pkg/game/spec_procs.go	specUndeadKnight	primary
+src/spec_assign.c:assign_mobiles	pkg/game/spec_procs3.go	specNoMoveDown	primary
 src/spec_assign.c:assign_rooms	pkg/game/spec_procs2.go	specCarrion	primary
 src/spec_procs.c:citizen	pkg/game/spec_assign.go	npcSpecialFallback	primary
 src/spec_procs.c:citizen	pkg/game/spec_procs.go	specCitizen	split
