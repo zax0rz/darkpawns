@@ -263,8 +263,10 @@ func TestMinorWerewolfDyingDraws(t *testing.T) {
 }
 
 // TestMinorWallGuardFighterDelegate proves the player-lane cmd arm returns
-// fighter()'s result (src/spec_procs2.c:2266), drawing like C; the old lane
-// declined and drew nothing.
+// fighter()'s result (src/spec_procs2.c:2268-2270), drawing like C; the old
+// lane declined and drew nothing. C-ERRATA E-034: on a typed command C's
+// fighter runs as the typing player, so the fixture's player — not the
+// guard — carries the fighting position and opponent.
 func TestMinorWallGuardFighterDelegate(t *testing.T) {
 	build := func(t *testing.T) (*minorFixWorld, *Player, *MobInstance) {
 		mf := newMinorFixWorld(t)
@@ -273,6 +275,7 @@ func TestMinorWallGuardFighterDelegate(t *testing.T) {
 		guard.SetFightingBody(p)
 		p.SetFightingBody(guard)
 		guard.SetPosition(combat.PosFighting)
+		p.SetPosition(combat.PosFighting)
 		return mf, p, guard
 	}
 

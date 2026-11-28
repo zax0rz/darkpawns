@@ -551,6 +551,49 @@ func specFighter(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	return true
 }
 
+// playerFighter is SPECIAL(fighter) run with ch = a player
+// (src/spec_procs.c:509-535): wall_guard_ns's command arm hands it the typing
+// player as both arguments (src/spec_procs2.c:2268-2270; C-ERRATA E-034), so
+// the free martial move — and the swallowed command — belong to the player,
+// not the guard. The inner call's cmd is NULL, so only the player's own
+// combat state gates the draw. GET_MOB_WAIT(ch) reads mob_specials.wait_state
+// (src/utils.h:434), which only mobact sets; a player's is always 0.
+func (w *World) playerFighter(ch *Player) bool {
+	if ch == nil || ch.GetPosition() != combat.PosFighting || ch.GetHP() < 0 {
+		return false
+	}
+	vict := ch.GetFightingBody()
+	if vict == nil {
+		return false
+	}
+	// fighter passes GET_NAME(vict) as the argument (NULL for berserk) and
+	// returns TRUE after the call, swallowing the typed command
+	// (src/spec_procs.c:522-534).
+	switch number(0, 10) {
+	case 1:
+		w.playerDirectACMD(ch, "headbutt", vict.GetName(), 1)
+	case 2:
+		w.playerDirectACMD(ch, "parry", vict.GetName(), 1)
+	case 3:
+		w.playerDirectACMD(ch, "bash", vict.GetName(), 1)
+	case 4:
+		w.playerDirectACMD(ch, "berserk", "", 1)
+	default:
+		return false
+	}
+	return true
+}
+
+// playerDirectACMD is a direct C ACMD call with a player ch, as fighter's
+// cases make (src/spec_procs.c:524-530). It shares the mobile direct
+// dispatcher; the session layer owns the player lane.
+func (w *World) playerDirectACMD(ch *Player, commandName, argument string, subcmd int) {
+	if w == nil || ch == nil || w.CharacterCommandDirectExecFunc == nil {
+		return
+	}
+	w.CharacterCommandDirectExecFunc(ch, strings.ToLower(strings.TrimSpace(commandName)), argument, subcmd)
+}
+
 // paladin — mob spec: paladin combat
 func specPaladin(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	melee, ok := mobCombatSpecialTarget(w, me, cmd)

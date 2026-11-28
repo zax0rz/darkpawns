@@ -2264,12 +2264,16 @@ var (
 )
 
 func specWallGuardNS(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	// src/spec_procs2.c:2266: `if (cmd || sleeping || FIGHTING) return
-	// (fighter(ch, ch, 0, NULL))` — delegate with cmd cleared like C's NULL
-	// argument (and the actor lane's ""), or the target helper declines and
-	// a typing player never triggers fighter's draws (R3).
-	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetFightingBody() != nil {
-		return specFighter(w, ch, me, "", "")
+	// src/spec_procs2.c:2268-2270: `if (cmd || sleeping || FIGHTING) return
+	// (fighter(ch, ch, 0, NULL))`. On a typed command ch is the player who
+	// typed it, so C's fighter runs as the player — their combat state, their
+	// number(0,10), their move, their swallowed command (C-ERRATA E-034).
+	if cmd != "" {
+		return w.playerFighter(ch)
+	}
+	// On the pulse ch is the guard itself, so fighter runs as the mob.
+	if me.GetPosition() <= combat.PosSleeping || me.GetFightingBody() != nil {
+		return specFighter(w, nil, me, "", "")
 	}
 
 	room := w.GetRoomInWorld(me.GetRoomVNum())

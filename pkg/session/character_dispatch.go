@@ -1,6 +1,7 @@
 package session
 
 import (
+	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -81,7 +82,38 @@ func (m *Manager) executeCharacterCommand(actor combat.Combatant, sess *Session,
 // already selected the command body and passed its argument pointer, so this
 // path skips command_interpreter's draw, name resolution, gates, and specials.
 func (m *Manager) executeCharacterCommandDirect(actor combat.Combatant, sess *Session, commandName, rawArgs string, subcmd int) game.CharacterCommandResult {
+	if player, ok := actor.(*game.Player); ok {
+		return m.executePlayerDirectACMD(player, sess, commandName, rawArgs, subcmd)
+	}
 	return dispatchCharacterCommandDirect(command.ExecutionContext{Body: actor, Session: commandSessionForCharacter(sess), World: m.world, RawArgs: rawArgs, DirectCall: true, Subcmd: subcmd}, commandName, rawArgs, subcmd)
+}
+
+// executePlayerDirectACMD runs a direct C ACMD call whose ch is a player —
+// today only wall_guard_ns's fighter(ch, ch, 0, NULL) arm reaches it
+// (C-ERRATA E-034; src/spec_procs2.c:2268-2270, src/spec_procs.c:522-531).
+// Exactly the four commands fighter can call are ported for a player actor;
+// anything else stays Unsupported rather than guessing at C behavior.
+func (m *Manager) executePlayerDirectACMD(player *game.Player, sess *Session, commandName, rawArgs string, subcmd int) game.CharacterCommandResult {
+	if player == nil || sess == nil || subcmd == 0 {
+		return game.CharacterCommandUnsupported
+	}
+	var err error
+	switch strings.ToLower(strings.TrimSpace(commandName)) {
+	case "headbutt":
+		err = command.CmdHeadbuttDirect(sess, rawArgs, subcmd)
+	case "parry":
+		err = cmdParrySubcmd(sess, subcmd)
+	case "bash":
+		err = command.CmdBashDirect(sess, rawArgs, subcmd)
+	case "berserk":
+		err = command.CmdBerserkDirect(sess, subcmd)
+	default:
+		return game.CharacterCommandUnsupported
+	}
+	if err != nil {
+		slog.Error("player direct ACMD failed", "command", commandName, "player", player.GetName(), "error", err)
+	}
+	return game.CharacterCommandHandled
 }
 
 func commandSessionForCharacter(sess *Session) common.CommandSession {

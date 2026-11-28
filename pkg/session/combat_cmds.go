@@ -169,9 +169,20 @@ func cmdHit(s *Session, args []string) error {
 // argument is intentionally ignored: C checks the caller's current FIGHTING
 // pointer, not the text supplied after "parry".
 func cmdParry(s *Session, _ []string) error {
+	return cmdParrySubcmd(s, 0)
+}
+
+// cmdParrySubcmd is do_parry with C's subcmd argument. fighter's direct call
+// passes subcmd=1 (src/spec_procs.c:526): the no-skill refusal prints and the
+// body proceeds anyway (src/new_cmds.c:2344-2349), prob is a fresh
+// number(50,100) draw rather than the caster's skill (src/new_cmds.c:2369),
+// and the failure arm skips improve_skill (src/new_cmds.c:2375-2376).
+func cmdParrySubcmd(s *Session, subcmd int) error {
 	if s.player.GetSkill(game.SkillParry) == 0 {
 		s.Send("You're not good enough at swordplay to parry!\r\n")
-		return nil
+		if subcmd == 0 {
+			return nil
+		}
 	}
 
 	if s.player.GetFightingBody() == nil {
@@ -199,11 +210,18 @@ func cmdParry(s *Session, _ []string) error {
 		return nil
 	}
 
-	// C draws number(1, 101) before choosing the manual skill probability.
+	// C draws number(1, 101) before the probability (src/new_cmds.c:2368-2369):
+	// the caster's skill, or a fresh number(50,100) under subcmd.
 	percent := dprng.Number(1, 101)
-	if percent > s.player.GetSkill(game.SkillParry) {
+	prob := s.player.GetSkill(game.SkillParry)
+	if subcmd != 0 {
+		prob = dprng.Number(50, 100)
+	}
+	if percent > prob {
 		s.Send("With a dazzling show of swordplay, you attempt to parry...but are outmaneuvered!\r\n")
-		game.ImproveSkill(s.player, game.SkillParry)
+		if subcmd == 0 {
+			game.ImproveSkill(s.player, game.SkillParry)
+		}
 		s.player.SetWaitState(3) // C: WAIT_STATE(ch, PULSE_VIOLENCE * 3)
 		return nil
 	}

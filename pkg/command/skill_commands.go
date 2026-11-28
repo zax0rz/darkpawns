@@ -131,6 +131,47 @@ func CmdBash(s SessionInterface, args []string) error {
 	return sendSkillResult(s, ch, target, result)
 }
 
+// CmdBashDirect is C's do_bash called directly with a subcmd, as fighter's
+// case 3 does (src/spec_procs.c:528). The interpreter's gates do not run.
+// With subcmd != 0 the no-skill refusal prints and the body proceeds anyway
+// (src/act.offensive.c:427-433), so the refusal is sent here, before C's
+// peaceful check (src/act.offensive.c:435-439) and target resolution
+// (src/act.offensive.c:440-449: one_argument, get_char_room_vis, then the
+// same-room FIGHTING fallback).
+func CmdBashDirect(s SessionInterface, rawArgs string, subcmd int) error {
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
+	}
+	if ch.GetSkill(game.SkillBash) == 0 {
+		if err := s.SendMessage("You'd better leave all the martial arts to fighters.\r\n"); err != nil {
+			return err
+		}
+		if subcmd == 0 {
+			return nil
+		}
+	}
+	world := s.GetWorld()
+	if world != nil && world.RoomHasFlag(ch.GetRoom(), "peaceful") {
+		return s.SendMessage("This room just has such a peaceful, easy feeling...\r\n")
+	}
+	var target combat.Combatant
+	if targetName, _ := game.OneArgument(rawArgs); targetName != "" {
+		if t, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch); found {
+			target = t
+		}
+	}
+	if target == nil {
+		if fighting := ch.GetFightingBody(); fighting != nil && fighting.GetRoom() == ch.GetRoom() {
+			target = fighting
+		} else {
+			return s.SendMessage("Bash who?\r\n")
+		}
+	}
+	result := game.DoBashSubcmd(ch, target, world, subcmd)
+	return sendSkillResult(s, ch, target, result)
+}
+
 // CmdKick handles the kick command.
 func CmdKick(s SessionInterface, args []string) error {
 	ch, err := skillContext(s, game.SkillKick)
@@ -247,6 +288,50 @@ func CmdHeadbutt(s SessionInterface, args []string) error {
 	}
 
 	result := game.DoHeadbutt(ch, target, world)
+	return sendSkillResult(s, ch, target, result)
+}
+
+// CmdHeadbuttDirect is C's do_headbutt called directly with a subcmd, as
+// fighter's case 1 does (src/spec_procs.c:524). The interpreter's gates do
+// not run; C's own order stands: peaceful (src/new_cmds.c:377-380), the
+// refusal that proceeds under subcmd (src/new_cmds.c:382-387), the mounted
+// check (src/new_cmds.c:388-392), then one_argument/get_char_room_vis with
+// the FIGHTING fallback (src/new_cmds.c:394-405).
+func CmdHeadbuttDirect(s SessionInterface, rawArgs string, subcmd int) error {
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
+	}
+	world := s.GetWorld()
+	if world != nil && world.RoomHasFlag(ch.GetRoom(), "peaceful") {
+		return s.SendMessage("The Gods prevent thy violent act.\r\n")
+	}
+	if ch.GetSkill(game.SkillHeadbutt) == 0 {
+		if err := s.SendMessage("You aren't qualified to headbutt anyone!\r\n"); err != nil {
+			return err
+		}
+		if subcmd == 0 {
+			return nil
+		}
+	}
+	if ch.IsMounted() {
+		return s.SendMessage("Dismount first!\r\n")
+	}
+	var target combat.Combatant
+	if targetName, _ := game.OneArgument(rawArgs); targetName != "" {
+		if t, _, found := game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch); found {
+			target = t
+		}
+	}
+	if target == nil {
+		if fighting := ch.GetFightingBody(); fighting != nil {
+			target = fighting
+		} else {
+			// C's literal ends \n\r (src/new_cmds.c:402).
+			return s.SendMessage("Headbutt who?\n\r")
+		}
+	}
+	result := game.DoHeadbuttSubcmd(ch, target, world, subcmd)
 	return sendSkillResult(s, ch, target, result)
 }
 
@@ -633,6 +718,26 @@ func CmdBerserk(s SessionInterface, args []string) error {
 		return err
 	}
 	return sendSkillResult(s, ch, nil, game.DoBerserk(ch))
+}
+
+// CmdBerserkDirect is C's do_berserk called directly with a subcmd, as
+// fighter's case 4 does with a NULL argument (src/spec_procs.c:530). The
+// interpreter's gates do not run; with subcmd != 0 the no-skill refusal
+// prints and the body proceeds anyway (src/new_cmds.c:2140-2145).
+func CmdBerserkDirect(s SessionInterface, subcmd int) error {
+	ch, err := skillPlayer(s)
+	if err != nil {
+		return err
+	}
+	if ch.GetSkill(game.SkillBerserk) == 0 {
+		if err := s.SendMessage("You're about as berserk as you're gonna get.\r\n"); err != nil {
+			return err
+		}
+		if subcmd == 0 {
+			return nil
+		}
+	}
+	return sendSkillResult(s, ch, nil, game.DoBerserkSubcmd(ch, subcmd))
 }
 
 // CmdKujiKiri returns a command handler bound to the given kuji-kiri seal

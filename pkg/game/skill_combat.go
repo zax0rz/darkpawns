@@ -158,7 +158,16 @@ func backstabAfterGates(ch *Player, target combat.Combatant) SkillResult {
 // Strength-based check. On success: damage + target sits + stunned.
 // On failure: user sits.
 func DoBash(ch *Player, target combat.Combatant, world *World) SkillResult {
-	if ch.GetSkill(SkillBash) == 0 {
+	return DoBashSubcmd(ch, target, world, 0)
+}
+
+// DoBashSubcmd is do_bash with C's subcmd argument. fighter's direct call
+// passes subcmd=1 (src/spec_procs.c:528): the no-skill refusal has already
+// been printed by the caller and the body proceeds anyway, prob is the fixed
+// 131 rather than the caster's skill (src/act.offensive.c:476), and
+// improve_skill is skipped (src/act.offensive.c:491-492).
+func DoBashSubcmd(ch *Player, target combat.Combatant, world *World, subcmd int) SkillResult {
+	if ch.GetSkill(SkillBash) == 0 && subcmd == 0 {
 		return SkillResult{Success: false, MessageToCh: "You'd better leave all the martial arts to fighters."}
 	}
 
@@ -188,11 +197,14 @@ func DoBash(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 
 	// Bash formula: percent = ((5 - (GET_AC(vict)/10)) << 1) + number(1,101)
-	// prob = GET_SKILL(ch, SKILL_BASH)
+	// prob = subcmd ? 131 : GET_SKILL(ch, SKILL_BASH) — src/act.offensive.c:475-476
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
 	percent := ((5 - (target.GetAC() / 10)) * 2) + dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillBash)
+	if subcmd != 0 {
+		prob = 131
+	}
 
 	// MOB_NOBASH force-fail unless the caster is an immortal — act.offensive.c:478
 	if mob, ok := target.(*MobInstance); ok && mob.HasMobFlag(MobFlagNobash) && ch.GetLevel() < LVL_IMMORT {
@@ -224,13 +236,13 @@ func DoBash(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	// Success — C: damage(ch, vict, (GET_LEVEL/2)+1, SKILL_BASH) routes the
 	// message + damage through skill_message + the damage/death pipeline and
-	// starts combat; the victim is set sitting. improve_skill runs only on the
-	// player path (subcmd 0), AFTER damage() returns — deferred to
-	// sendSkillResult so its number(1,200) draw follows the skill_message dice
-	// (R3b). act.offensive.c:489-495.
+	// starts combat; the victim is set sitting. improve_skill runs only when
+	// !subcmd (src/act.offensive.c:491-492), AFTER damage() returns — deferred
+	// to sendSkillResult so its number(1,200) draw follows the skill_message
+	// dice (R3b). act.offensive.c:489-495.
 	dam := (ch.GetLevel() / 2) + 1
 
-	return SkillResult{
+	result := SkillResult{
 		Success:           true,
 		Damage:            dam,
 		SkillMsgType:      SkillBashNum,
@@ -239,9 +251,12 @@ func DoBash(ch *Player, target combat.Combatant, world *World) SkillResult {
 		StunTarget:        true, // see PR note: C sets only POS_SITTING; StunTarget may over-stun — separate finding
 		WaitCh:            2,
 		WaitTarget:        2, // PULSE_VIOLENCE * 2 (act.offensive.c:494)
-		DeferredImprove:   []string{SkillBash},
 		EffectsNeedDamage: true,
 	}
+	if subcmd == 0 {
+		result.DeferredImprove = []string{SkillBash}
+	}
+	return result
 }
 
 // DoKick implements do_kick() from act.offensive.c lines 587-634.
@@ -399,12 +414,23 @@ func DoTrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 // recoil (level/4, or level/3 wearing a helm), gated by an HP check that
 // refuses the attempt outright if the recoil could be fatal.
 func DoHeadbutt(ch *Player, target combat.Combatant, world *World) SkillResult {
+	return DoHeadbuttSubcmd(ch, target, world, 0)
+}
+
+// DoHeadbuttSubcmd is do_headbutt with C's subcmd argument. fighter's direct
+// call passes subcmd=1 (src/spec_procs.c:524): the no-skill refusal has
+// already been printed by the caller and the body proceeds anyway
+// (src/new_cmds.c:382-387), prob is a fresh number(50,100) draw rather than
+// the caster's skill (src/new_cmds.c:437), and the success arm keeps only the
+// unconditional improve_skill (src/new_cmds.c:450), not the !subcmd one
+// (src/new_cmds.c:456-457).
+func DoHeadbuttSubcmd(ch *Player, target combat.Combatant, world *World, subcmd int) SkillResult {
 	// Peaceful room — checked before even the skill gate — new_cmds.c:378-381
 	if world != nil && world.roomHasFlag(ch.GetRoom(), "peaceful") {
 		return SkillResult{Success: false, MessageToCh: "The Gods prevent thy violent act.\r\n"}
 	}
 
-	if ch.GetSkill(SkillHeadbutt) == 0 {
+	if ch.GetSkill(SkillHeadbutt) == 0 && subcmd == 0 {
 		return SkillResult{Success: false, MessageToCh: "You aren't qualified to headbutt anyone!\r\n"}
 	}
 
@@ -447,6 +473,11 @@ func DoHeadbutt(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 
 	skillLevel := ch.GetSkill(SkillHeadbutt)
+	if subcmd != 0 {
+		// C draws the fixed chance here, after the HP gate
+		// (src/new_cmds.c:437).
+		skillLevel = dprng.Number(50, 100)
+	}
 
 	// C: WAIT_STATE(ch, PULSE_VIOLENCE*3) sits outside the hit/miss if/else —
 	// both branches get WaitCh=3 — new_cmds.c:459.
@@ -470,15 +501,13 @@ func DoHeadbutt(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 	ch.TakeDamage(recoil)
 
-	// C do_headbutt calls improve_skill TWICE on a player's success: once
-	// unconditionally (new_cmds.c:450) and again under `if (!subcmd)`
-	// (new_cmds.c:457), separated only by a non-drawing position update. A
-	// player is always subcmd==0 (the command table registers headbutt with
-	// subcmd 0; only mob spec-procs pass subcmd 1, and improve_skill's IS_NPC
-	// guard bails on those anyway), so both calls fire and each can consume a
-	// number(1,200) gate draw. Both run AFTER damage() — i.e. after the
-	// skill_message dice — so they are deferred to sendSkillResult, in order
-	// (DP-1212 / R3b).
+	// C do_headbutt calls improve_skill TWICE on a player's subcmd==0 success:
+	// once unconditionally (new_cmds.c:450) and again under `if (!subcmd)`
+	// (new_cmds.c:457), separated only by a non-drawing position update. Under
+	// fighter's subcmd==1 only the unconditional call runs. Each call can
+	// consume a number(1,200) gate draw. They run AFTER damage() — i.e. after
+	// the skill_message dice — so they are deferred to sendSkillResult, in
+	// order (DP-1212 / R3b).
 	//
 	// C: damage(ch, victim, GET_LEVEL(ch), SKILL_HEADBUTT) routes the hit
 	// message through skill_message + the damage/death pipeline and starts
@@ -490,7 +519,10 @@ func DoHeadbutt(ch *Player, target combat.Combatant, world *World) SkillResult {
 		SkillMsgType:    SkillHeadbuttNum,
 		StartCombat:     true,
 		WaitCh:          3,
-		DeferredImprove: []string{SkillHeadbutt, SkillHeadbutt},
+		DeferredImprove: []string{SkillHeadbutt},
+	}
+	if subcmd == 0 {
+		result.DeferredImprove = append(result.DeferredImprove, SkillHeadbutt)
 	}
 	if target.GetPosition() > combat.PosStunned {
 		result.TargetFalls = true

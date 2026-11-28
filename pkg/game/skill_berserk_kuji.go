@@ -75,7 +75,17 @@ func kkSkillNum(seal string) int {
 // Self-buff: +hitroll/+damroll/+AC(worse) for 1 tick, gated on a skill-vs-
 // percent roll. Immortals (level > LVL_IMMORT) always succeed.
 func DoBerserk(ch *Player) SkillResult {
-	if ch.GetSkill(SkillBerserk) == 0 {
+	return DoBerserkSubcmd(ch, 0)
+}
+
+// DoBerserkSubcmd is do_berserk with C's subcmd argument. fighter's direct
+// call passes subcmd=1 (src/spec_procs.c:530): the no-skill refusal has
+// already been printed by the caller and the body proceeds anyway
+// (src/new_cmds.c:2140-2145), and prob is a fresh number(50,100) draw rather
+// than the caster's skill (src/new_cmds.c:2159). improve_skill runs either
+// way — C's dangling else makes it unconditional (src/new_cmds.c:2166-2169).
+func DoBerserkSubcmd(ch *Player, subcmd int) SkillResult {
+	if ch.GetSkill(SkillBerserk) == 0 && subcmd == 0 {
 		return SkillResult{Success: false, MessageToCh: "You're about as berserk as you're gonna get."}
 	}
 
@@ -92,6 +102,11 @@ func DoBerserk(ch *Player) SkillResult {
 		percent = 0 // immortals always succeed
 	}
 	prob := ch.GetSkill(SkillBerserk)
+	if subcmd != 0 {
+		// C draws the fixed chance here, after the affect and level gates
+		// (src/new_cmds.c:2159).
+		prob = dprng.Number(50, 100)
+	}
 	failed := percent > prob
 
 	msg := "Your vision turns sanguine as you summon up your battle rage!"

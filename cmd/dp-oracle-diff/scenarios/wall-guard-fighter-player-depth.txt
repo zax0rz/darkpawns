@@ -1,0 +1,104 @@
+# C-ERRATA E-034: SPECIAL(wall_guard_ns)'s typed-command arm runs
+# fighter(ch, ch, 0, NULL) with ch = the typing player
+# (src/spec_procs2.c:2268-2270, registered for mob 8060 at
+# src/spec_assign.c:287; fighter at src/spec_procs.c:509-535). A fighting mage
+# in the guard's room types commands: on number(0,10) 1-4 the mage's own
+# headbutt/parry/bash/berserk fires through the skill's subcmd=1 path — the
+# no-skill refusal prints and the move goes ahead anyway
+# (src/act.offensive.c:427-433, src/new_cmds.c:382-387,2344-2349,2140-2145) —
+# and the typed command is swallowed; on other rolls the command runs. The
+# pre-fix port delegated to the guard instead, handing the mob a free move on
+# the player's command. The mage attacks the guard itself (its ~210 HP
+# outlasts the probe; the mage gets a deep HP pool to outlast the
+# wait-clearing pulses), and 8060's exits are removed so the guard's wall
+# road patrol (lib/world/zon/80.zon:50,52) cannot walk it out of the room.
+# depth-case: mob.wall-guard-fighter-typing-player
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8060 1 8060 80
+replace-room-exits 8060 none
+
+[setup:oracle]
+Wallgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wallgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:wallmage]
+Wallmage
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:wallmage]
+Wallmage
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Wallmage maxhit 5000
+set player Wallmage hit 5000
+teleport Wallmage 8060
+
+[probe:wallmage]
+kill cityguard
+emote wg-probe-1
+~dpclock pulse 70
+emote wg-probe-2
+~dpclock pulse 70
+emote wg-probe-3
+~dpclock pulse 70
+emote wg-probe-4
+~dpclock pulse 70
+emote wg-probe-5
+~dpclock pulse 70
+emote wg-probe-6
+~dpclock pulse 70
+emote wg-probe-7
+~dpclock pulse 70
+emote wg-probe-8
+~dpclock pulse 70
+emote wg-probe-9
+~dpclock pulse 70
+emote wg-probe-10
