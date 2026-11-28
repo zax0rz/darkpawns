@@ -1,0 +1,57 @@
+# Death route: damage-over-time tick (AFF_FLAMING -> SPELL_FLAMESTRIKE).
+# C: src/comm.c:710-711 (room_activity) -> damage(ch, ch, 15, SPELL_FLAMESTRIKE) ->
+# die_with_killer() -> raw_kill(..., SPELL_FLAMESTRIKE) -> make_corpse (fight.c:289-291).
+# depth-case: death.route-dot-flaming
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Pyrotester
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pyrotester
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set player Pyrotester class mage
+skillset Pyrotester 'flame strike' 100
+set player Pyrotester maxmana 5000
+set player Pyrotester mana 5000
+set mob trainee maxhit 500
+set mob trainee hit 500
+cast 'flame strike' trainee
+cast 'flame strike' trainee
+cast 'flame strike' trainee
+peace
+set mob trainee hit 1
+
+[probe]
+~dpclock pulse 40
+look

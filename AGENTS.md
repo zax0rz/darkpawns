@@ -20,6 +20,7 @@ Dark Pawns is a **1:1 faithful port**: the Go server must emit the *same player-
 | [`website-astro/CONTENT-AUDIT.md`](website-astro/CONTENT-AUDIT.md) | Post-migration content review queue |
 | [`website-astro/SPEC-AUDIT.md`](website-astro/SPEC-AUDIT.md) | specification.website release checklist status |
 | [`docs/plans/ROADMAP-2026-11-10-port-completion.md`](docs/plans/ROADMAP-2026-11-10-port-completion.md) | What "done" means for the port, the lists to burn down, and the stopping rule |
+| [`docs/fidelity/C-ERRATA.md`](docs/fidelity/C-ERRATA.md) | C bugs with clear intent: Classic reproduces them, the intended behavior is recorded for a later edition |
 
 - **R1** player-facing bytes are law (normalization may not erase a byte class, R1b) · **R2** the command surface is part of the game · **R3** determinism & draw parity · **R4** no invention · **R5** process rules (find-one-find-the-class; verify the call path; cite C from `src/`, R5g; a green must be able to fail, R5h; a silenced surface needs a scenario that unsilences it, R5i).
 - **Cite rules by number** in commits, PRs, reviews, and Linear — "violates R4" is a complete verdict.
@@ -41,6 +42,7 @@ A green census proves the scenarios agree, not that the code is covered. Before 
 - Hand-written stand-ins sat beside faithful C paths, on the paths players use most. Returning players found them; an audit then replaced 127 of 173 mob-command sites (field note 2026-10-25).
 - A pre-registered random sample changed one letter of a message in each of 40 player-output functions. The full census missed 17 (PF-102).
 - Fixtures and scenario names claim reach they lack: practice scenarios that only used no-cost classes (PF-099), quiet-mobs hiding literal `$n` on every city mob (PF-100), and five scenarios that don't reach the command they're named for (PF-102).
+- **A C bug is still the game.** When C's bytes come from an evident bug and the intent is clear, Classic matches C (R1, R1a) and you propose an errata row in `docs/fidelity/C-ERRATA.md` (C lines, what players saw, what was meant, the evidence). Never "fix" it in the port; Zach rules on each row. Taught 2026-11-28 by Lua `raw_kill` (E-001).
 
 ### Oracle Evidence Retention
 
