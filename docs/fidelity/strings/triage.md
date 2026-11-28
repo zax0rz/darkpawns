@@ -2,7 +2,9 @@
 
 Every go-only segment in [`go-only.tsv`](go-only.tsv) classified, each with evidence a
 reviewer can check in a minute. Generated from the census at `1d4702dde`; pruned to the live baseline on 2026-10-30. Segments are the
-key, not file:line, because lines move.
+key, not file:line, because lines move. The 42 segments the 2026-11-27 sink-table
+widening surfaced are listed [below](#unreviewed-batch-2026-11-27-42-segments) and
+are still `unreviewed`; everything before that batch is settled.
 
 Reproduce the queue with `make string-census-update`; the ratchet baseline
 [`go-only-baseline.json`](go-only-baseline.json) carries the reason and the evidence per row
@@ -13,14 +15,15 @@ the counts below in step with the baseline).
 |---|---|
 | `bug:invented` | 0 |
 | `bug:paraphrase` | 0 |
-| `census:composed` | 2 |
+| `census:composed` | 1 |
 | `data` | 0 |
-| `surface:no-c` | 6 |
+| `surface:no-c` | 2 |
 | `unsure` | 0 |
 | `divergence:approved` | 1 |
-| **total** | **9** |
+| `unreviewed` | 42 |
+| **total** | **46** |
 
-`unsure` is 0/9 (0.0%).
+`unsure` is 0/46 (0.0%).
 
 **This document classifies; it changes no game code.** Fix work is Claude's.
 
@@ -53,12 +56,74 @@ C player text are invisible to the matcher, and several rows below are them:
 2. **`#define`d literals** such as `SUMMON_FAIL "You failed.
 "` (`src/spells.c:216`) are skipped by the
    C lexer as preprocessor lines.
-3. **A package-level twin of a method sink**: `actToRoom(w, roomVNum, format, exclude)` exists both as a
-   package function (`pkg/game/other_helpers.go:71`) and as a `*World` method, but the sink table lists
-   only the method, so literals passed to the function form (`pkg/game/graph.go:317`, `"%s opens the
-   door."`) are invisible. Fix is one word in `internal/stringcensus/gosink.go` (`Kind: goSinkBoth`);
-   reported rather than fixed here, because widening the census adds rows that would need their own
-   triage.
+3. **A package-level twin of a method sink** (fixed 2026-11-27):
+   `actToRoom(w, roomVNum, format, exclude)` exists both as a package function
+   (`pkg/game/other_helpers.go:94`) and as a `*World` method, but the sink table
+   listed only the method, so literals passed to the function form
+   (`pkg/game/graph.go:317`, `"%s opens the door."`) were invisible. The entry is
+   now `goSinkBoth` in `internal/stringcensus/gosink.go`.
+
+## Unreviewed batch, 2026-11-27 (42 segments)
+
+The sink-table widening
+(`docs/briefs/BRIEF-2026-11-27-deepseek-string-census-sinks.md`) closed the
+census over this tree's output wrappers — `roomMessage`, the OLC editors,
+`sendToCaster`, `mobileSend`, `npcSay`, the spell act bridges and the rest — and
+53 new go-only rows (42 distinct segments) came out of it. They are unclassified
+on purpose: triage is a fidelity decision each, and the brief's scope was the
+tool. Each row is the census's own report, not a verdict.
+
+| segment | site | sink |
+|---|---|---|
+| `can't carry any more.` | `pkg/game/item_transfer.go:473` | `.actToChar` |
+| `Sorry, we have closed, but come back later.` | `pkg/game/shop_npc.go:46` | `.shopNpcSay` |
+| `Sorry, come back tomorrow.` | `pkg/game/shop_npc.go:50` | `.shopNpcSay` |
+| `You are in a void.` | `pkg/game/skill_actor_selected.go:280` | `mobileSend` |
+| `You are nowhere.` | `pkg/game/skill_actor_shoot.go:69` | `mobileSend` |
+| `sees and gives a battle cry!` | `pkg/game/spec_procs.go:1213` | `.roomMessage` |
+| `For ansi color, type COLOR COMPLETE!` | `pkg/game/spec_procs2.go:388` | `.npcSay` |
+| `Wargs make a tasty meal if you CARVE their corpse.` | `pkg/game/spec_procs2.go:390` | `.npcSay` |
+| `AUTO EXIT will show you the exits for every room.` | `pkg/game/spec_procs2.go:392` | `.npcSay` |
+| `It's always safest to quit in the temple.` | `pkg/game/spec_procs2.go:394` | `.npcSay` |
+| `You're allowed to play up to 3 characters at once.` | `pkg/game/spec_procs2.go:396` | `.npcSay` |
+| `You can hire a mercenary by giving him 100 coins.` | `pkg/game/spec_procs2.go:398` | `.npcSay` |
+| `A bribe of a couple hundred coins will make a guard look the other way while you fight.` | `pkg/game/spec_procs2.go:400` | `.npcSay` |
+| `Guards will attack you if you fight in front of them.` | `pkg/game/spec_procs2.go:401` | `.npcSay` |
+| `Use the CONSIDER command!` | `pkg/game/spec_procs2.go:403` | `.npcSay` |
+| `If you don't like something, use the IDEA command.` | `pkg/game/spec_procs2.go:405` | `.npcSay` |
+| `If you see something out of place, use the BUG command.` | `pkg/game/spec_procs2.go:407` | `.npcSay` |
+| `If you see something spelled incorrectly, use the TYPO command.` | `pkg/game/spec_procs2.go:409` | `.npcSay` |
+| `Use an identify scroll on yourself to see your numerical statistics. (Available at your local magick shop.)` | `pkg/game/spec_procs2.go:411` | `.npcSay` |
+| `Stinkin' Kender scum!` | `pkg/game/spec_procs3.go:101` | `.mobShoutGenComm` |
+| `blocks your way down.` | `pkg/game/spec_procs3.go:310` | `.roomMessage` |
+| `subscribe is only available to agents or structured clients` | `pkg/session/agent_vars.go:75` | `.sendError` |
+| `too many or too large subscriptions` | `pkg/session/agent_vars.go:90` | `.sendError` |
+| `Too many login attempts. Please try again later.` | `pkg/session/session_login.go:39` | `.sendError` |
+| `Too many failed login attempts. Try again in` | `pkg/session/session_login.go:129` | `.sendError` |
+| `Too many failed login attempts. Try again later.` | `pkg/session/session_login.go:137` | `.sendError` |
+| `rate limit exceeded — slow down` | `pkg/session/session_login.go:276` | `.sendError` |
+| `An internal server error occurred. Your connection has been reset.` | `pkg/session/session_pump.go:92` | `.sendError` |
+| `I don't trade with someone I can't see!` | `pkg/session/shop_cmds.go:104` | `.NPCSayCommand` |
+| `Get out of here before I call the guards!` | `pkg/session/shop_cmds.go:119` | `sendShopKeeperTell` |
+| `We don't serve your kind here!` | `pkg/session/shop_cmds.go:130` | `sendShopKeeperTell` |
+| `smokes on his joint.` | `pkg/session/shop_cmds.go:399` | `.NPCEmoteCommand` |
+| `As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.` | `pkg/spells/affect_spells.go:1007` | `sendToCaster` |
+| `You gesture and the earth begins to shake all around you!` | `pkg/spells/affect_spells.go:1072` | `sendToCaster` |
+| `gracefully gestures and the earth begins to shake violently!` | `pkg/spells/affect_spells.go:1073` | `sendAffectRoom` |
+| `A spray of acid flows from your fingertips!` | `pkg/spells/affect_spells.go:1075` | `sendToCaster` |
+| `fingers!` | `pkg/spells/affect_spells.go:1076` | `sendAffectRoom` |
+| `raises a hand and acid sprays from` | `pkg/spells/affect_spells.go:1076` | `sendAffectRoom` |
+| `The corpse refuses to come alive!` | `pkg/spells/affect_spells.go:1193` | `sendToCaster` |
+| `No target.` | `pkg/spells/affect_spells.go:1759` | `sendToCaster` |
+| `Teleport failed: world interface not available.` | `pkg/spells/affect_spells.go:2773` | `sendToCaster` |
+| `You failed.` | `pkg/spells/affect_spells.go:3346` | `sendToCaster` |
+
+Two of those read like paraphrase or invented text on sight —
+`sees and gives a battle cry!` (`pkg/game/spec_procs.go:1213`, an act line built
+from concatenated names) and `blocks your way down.`
+(`pkg/game/spec_procs3.go:310`) — but no row here has been checked against `src/`,
+and this document does not classify them.
+
 
 ## Root causes for the fix work
 

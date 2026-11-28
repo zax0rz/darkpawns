@@ -18,7 +18,6 @@ You tell the group, '	src/act.comm.c:863	buffered:sprintf	do_gsay
 Monsters can't page.. go away.	src/act.comm.c:1115	send_to_char	do_page
 ? Yes, fine,	src/act.comm.c:1321	buffered:sprintf	do_qcomm
 &WYou quest-say, '	src/act.comm.c:1334	buffered:sprintf	do_qcomm
-quest-says, '	src/act.comm.c:1341	buffered:sprintf	do_qcomm
 thinks about life, the universe, and everything.	src/act.comm.c:1363	buffered:sprintf	do_think
 thinks . o O (	src/act.comm.c:1375	buffered:sprintf	do_think
 +-----+-----+-----+-----+-----+-----+-----	src/act.display.c:294	buffered:sprintf	IB_Seperator
@@ -120,8 +119,6 @@ You hear someone or something moving around nearby.	src/act.informative.c:759	se
 [ Wind ]	src/act.informative.c:799	buffered:sprintf	look_at_room
 [ Water ]	src/act.informative.c:801	buffered:sprintf	look_at_room
 [ Unknown ]	src/act.informative.c:803	buffered:sprintf	look_at_room
-You're a little busy right now!	src/act.informative.c:847	send_to_char	look_in_direction
-is closed.	src/act.informative.c:866	buffered:sprintf	look_in_direction
 is open.	src/act.informative.c:877	buffered:sprintf	look_in_direction
 You see nothing special.	src/act.informative.c:885	send_to_char	look_in_direction
 You see nothing special.	src/act.informative.c:908	send_to_char	look_in_direction
@@ -173,7 +170,6 @@ Coins carried:	src/act.informative.c:1263	buffered:sprintf	do_score
 Coins in bank:	src/act.informative.c:1265	buffered:sprintf	do_score
 exp to reach your next level.	src/act.informative.c:1273	buffered:sprintf	do_score
 You have been playing for	src/act.informative.c:1278	buffered:sprintf	do_score
-days and	src/act.informative.c:1278	buffered:sprintf	do_score
 You are a veteran of many battles.	src/act.informative.c:1282	buffered:sprintf	do_score
 You are a citizen of	src/act.informative.c:1284	buffered:sprintf	do_score
 This ranks you as	src/act.informative.c:1292	buffered:sprintf	do_score
@@ -196,8 +192,6 @@ You are fighting thin air.	src/act.informative.c:1349	buffered:strcat	do_score
 You are standing.	src/act.informative.c:1352	buffered:strcat	do_score
 You are floating.	src/act.informative.c:1355	buffered:strcat	do_score
 You are intoxicated.	src/act.informative.c:1360	buffered:strcat	do_score
-You are hungry.	src/act.informative.c:1363	buffered:strcat	do_score
-You are thirsty.	src/act.informative.c:1366	buffered:strcat	do_score
 You have been blinded!	src/act.informative.c:1369	buffered:strcat	do_score
 You are summonable by other players.	src/act.informative.c:1372	buffered:strcat	do_score
 You're a lycanthrope!	src/act.informative.c:1375	buffered:strcat	do_score
@@ -300,28 +294,21 @@ That's not a valid class.	src/act.informative.c:2708	send_to_char	do_skills
 Usage: skills <class-abbrev>	src/act.informative.c:2708	send_to_char	do_skills
 ---------------------------------------------------------------------------	src/act.informative.c:2716	buffered:sprintf	do_skills
 Skills/Spells for the class '	src/act.informative.c:2716	buffered:sprintf	do_skills
-: you can't carry that many items.	src/act.item.c:162	act	can_take_obj
-: you can't carry that much weight.	src/act.item.c:167	act	can_take_obj
-: you can't take that!	src/act.item.c:172	act	can_take_obj
-: you can't hold any more items.	src/act.item.c:203	act	perform_get_from_container
-is closed.	src/act.item.c:228	act	get_from_container
-seems to be empty.	src/act.item.c:259	act	get_from_container
-hands full.	src/act.item.c:687	act	perform_give
-seems to have	src/act.item.c:687	act	perform_give
-: you can't carry that many items!	src/act.item.c:1722	act	perform_remove
-You're in no position to go ANYWHERE!	src/act.movement.c:150	send_to_char	do_simple_move
 flies in from the	src/act.movement.c:232	buffered:sprintf	do_simple_move
 swims in from the	src/act.movement.c:234	buffered:sprintf	do_simple_move
 rides in from the	src/act.movement.c:236	buffered:sprintf	do_simple_move
 arrives from the	src/act.movement.c:238	buffered:sprintf	do_simple_move
 skillfully picks the lock on	src/act.movement.c:509	buffered:strcpy	do_doorcmd
-from the other side.	src/act.movement.c:523	buffered:sprintf	do_doorcmd
 You are already standing.	src/act.movement.c:703	act	do_stand
 You stand up.	src/act.movement.c:708	act	do_stand
+clambers to	src/act.movement.c:709	act	do_stand
 You stop resting, and stand up.	src/act.movement.c:713	act	do_stand
+stops resting, and clambers on	src/act.movement.c:714	act	do_stand
 You have to wake up first!	src/act.movement.c:718	act	do_stand
 Do you not consider fighting as standing?	src/act.movement.c:721	act	do_stand
 You stop floating around, and put your feet on the ground.	src/act.movement.c:724	act	do_stand
+feet on the ground.	src/act.movement.c:726	act	do_stand
+stops floating around, and puts	src/act.movement.c:726	act	do_stand
 You sit down.	src/act.movement.c:740	act	do_sit
 sits down.	src/act.movement.c:741	act	do_sit
 You can't rest while mounted.	src/act.movement.c:745	act	do_sit
@@ -348,154 +335,35 @@ You are already sound asleep.	src/act.movement.c:825	send_to_char	do_sleep
 Sleep while fighting? Are you MAD?	src/act.movement.c:828	send_to_char	do_sleep
 You stop floating around, and lie down to sleep.	src/act.movement.c:831	act	do_sleep
 stops floating around, and lie down to sleep.	src/act.movement.c:833	act	do_sleep
-Maybe you should wake yourself up first.	src/act.movement.c:849	send_to_char	do_wake
-is already awake.	src/act.movement.c:855	act	do_wake
-'s in pretty bad shape!	src/act.movement.c:859	act	do_wake
-You wake	src/act.movement.c:861	act	do_wake
 You can't see who is fighting	src/act.offensive.c:88	act	do_assist
-You hit yourself...OUCH!.	src/act.offensive.c:114	send_to_char	do_hit
-is just such a good friend, you simply can't hit	src/act.offensive.c:118	act	do_hit
 You chop	src/act.offensive.c:156	act	do_kill
 to pieces! Ah! The blood!	src/act.offensive.c:156	act	do_kill
 chops you to pieces!	src/act.offensive.c:158	act	do_kill
 brutally slays	src/act.offensive.c:159	act	do_kill
-Backstab who?	src/act.offensive.c:181	send_to_char	do_backstab
-How can you sneak up on yourself?	src/act.offensive.c:186	send_to_char	do_backstab
-You need to wield a weapon to make it a success.	src/act.offensive.c:191	send_to_char	do_backstab
-Only piercing weapons can be used for backstabbing.	src/act.offensive.c:196	send_to_char	do_backstab
-You can't backstab a fighting person -- they're too alert!	src/act.offensive.c:207	send_to_char	do_backstab
-notices you lunging at	src/act.offensive.c:215	act	do_backstab
-Disembowel who?	src/act.offensive.c:254	send_to_char	do_disembowel
-Nah. Hari Kari is for wimps.	src/act.offensive.c:260	send_to_char	do_disembowel
-You need to wield a weapon to make it a success.	src/act.offensive.c:265	send_to_char	do_disembowel
-Only piercing weapons can be used for disemboweling.	src/act.offensive.c:270	send_to_char	do_disembowel
 orders you to '	src/act.offensive.c:323	buffered:sprintf	do_order
 an order.	src/act.offensive.c:325	act	do_order
 has an indifferent look.	src/act.offensive.c:328	act	do_order
 issues the order '	src/act.offensive.c:337	buffered:sprintf	do_order
-You can't flee yet!	src/act.offensive.c:379	send_to_char	do_flee
-You'd better leave all the martial arts to fighters.	src/act.offensive.c:429	send_to_char	do_bash
-Bash who?	src/act.offensive.c:446	send_to_char	do_bash
-Aren't we funny today...	src/act.offensive.c:452	send_to_char	do_bash
-You can't bash someone who's sitting already!	src/act.offensive.c:457	send_to_char	do_bash
-You haven't the energy!	src/act.offensive.c:469	send_to_char	do_bash
-But only true warriors can do this!	src/act.offensive.c:510	send_to_char	do_rescue
-Whom do you want to rescue?	src/act.offensive.c:517	send_to_char	do_rescue
-What about fleeing instead?	src/act.offensive.c:522	send_to_char	do_rescue
-How can you rescue someone you are trying to kill?	src/act.offensive.c:527	send_to_char	do_rescue
-You fail the rescue!	src/act.offensive.c:558	send_to_char	do_rescue
-Banzai! To the rescue...	src/act.offensive.c:563	send_to_char	do_rescue
-You'd better leave all the martial arts to fighters.	src/act.offensive.c:594	send_to_char	do_kick
-Kick who?	src/act.offensive.c:606	send_to_char	do_kick
-Aren't we funny today...	src/act.offensive.c:612	send_to_char	do_kick
-What's that, idiot-san?	src/act.offensive.c:644	send_to_char	do_dragon_kick
-Kick who?	src/act.offensive.c:655	send_to_char	do_dragon_kick
-Aren't we funny today...	src/act.offensive.c:661	send_to_char	do_dragon_kick
-You're too exhausted!	src/act.offensive.c:672	send_to_char	do_dragon_kick
-What's that, idiot-san?	src/act.offensive.c:700	send_to_char	do_tiger_punch
-That's pretty tough to do while wielding a weapon.	src/act.offensive.c:705	send_to_char	do_tiger_punch
-Aren't we funny today...	src/act.offensive.c:723	send_to_char	do_tiger_punch
-But you are already engaged in close-range combat!	src/act.offensive.c:768	send_to_char	do_shoot
-Shoot what where?	src/act.offensive.c:778	send_to_char	do_shoot
-Where would you like to shoot it?	src/act.offensive.c:783	send_to_char	do_shoot
-Who would you like to shoot it at in that direction?	src/act.offensive.c:788	send_to_char	do_shoot
 You do not seem to have	src/act.offensive.c:804	buffered:sprintf	do_shoot
-is not a projectile!	src/act.offensive.c:811	act	do_shoot
-Interesting Direction.	src/act.offensive.c:818	send_to_char	do_shoot
-You must wield a bow or sling to fire a projectile.	src/act.offensive.c:826	send_to_char	do_shoot
-Alas, you cannot shoot that way...	src/act.offensive.c:839	send_to_char	do_shoot
-You feel too peaceful to contemplate violence.	src/act.offensive.c:858	send_to_char	do_shoot
-Twang...	src/act.offensive.c:868	send_to_char	do_shoot
-Maybe that isn't such a great idea...	src/act.offensive.c:883	send_to_char	do_shoot
-It looks like they are fighting, you can't aim properly.	src/act.offensive.c:890	send_to_char	do_shoot
-You cannot see well enough to aim...	src/act.offensive.c:898	send_to_char	do_shoot
-Twang... your projectile flies into the distance.	src/act.offensive.c:908	send_to_char	do_shoot
-You hear a roar of pain!	src/act.offensive.c:928	send_to_char	do_shoot
-Suddenly some kind of projectile pierces your arm!	src/act.offensive.c:938	send_to_char	do_shoot
-You decide to go investigate...	src/act.offensive.c:947	send_to_char	do_shoot
-bursts into the room and scowls at you!	src/act.offensive.c:952	buffered:sprintf	do_shoot
-and hits you!	src/act.offensive.c:961	buffered:sprintf	do_shoot
-and just misses you!	src/act.offensive.c:980	buffered:sprintf	do_shoot
-Interesting direction.	src/act.offensive.c:994	send_to_char	do_shoot
 realizes it's a losing cause and gracefully attempts to	src/act.offensive.c:1062	buffered:sprintf	do_retreat
 is cornered and fails to	src/act.offensive.c:1072	buffered:sprintf	do_retreat
 is cornered and fails to	src/act.offensive.c:1080	buffered:sprintf	do_retreat
-You're too busy right now!	src/act.offensive.c:1098	send_to_char	do_subdue
-Subdue who?	src/act.offensive.c:1103	send_to_char	do_subdue
-Aren't we funny today...	src/act.offensive.c:1108	send_to_char	do_subdue
-You can't contemplate violence in such a place!	src/act.offensive.c:1113	send_to_char	do_subdue
-You can't get close enough!	src/act.offensive.c:1123	send_to_char	do_subdue
-You can't subdue them because you are not an Outlaw!	src/act.offensive.c:1129	send_to_char	do_subdue
-Haha.. Don't think so.	src/act.offensive.c:1137	send_to_char	do_subdue
-What's the point of doing that now?	src/act.offensive.c:1142	send_to_char	do_subdue
-avoids your misplaced blow to the back of	src/act.offensive.c:1164	act	do_subdue
-You knock	src/act.offensive.c:1174	act	do_subdue
-out cold.	src/act.offensive.c:1174	act	do_subdue
-You can't do this while fighting!	src/act.offensive.c:1200	send_to_char	do_sleeper
-You can't get a good grip on them while you are holding that weapon!	src/act.offensive.c:1219	send_to_char	do_sleeper
-Sleeper who?	src/act.offensive.c:1225	send_to_char	do_sleeper
-Can't get to sleep fast enough, huh?	src/act.offensive.c:1230	send_to_char	do_sleeper
-You can not sleeper them because you are not an Outlaw!	src/act.offensive.c:1236	send_to_char	do_sleeper
-You can't get a good grip on them while they're fighting!	src/act.offensive.c:1244	send_to_char	do_sleeper
-Ha Ha. Don't think so.	src/act.offensive.c:1250	send_to_char	do_sleeper
-What's the point of doing that now?	src/act.offensive.c:1255	send_to_char	do_sleeper
-You try to grab	src/act.offensive.c:1272	act	do_sleeper
-in a sleeper hold but fail!	src/act.offensive.c:1272	act	do_sleeper
-What's that, idiot-san?	src/act.offensive.c:1303	send_to_char	do_neckbreak
-You can't do this and wield a weapon at the same time!	src/act.offensive.c:1309	send_to_char	do_neckbreak
-I don't see them here.	src/act.offensive.c:1317	send_to_char	do_neckbreak
-Haha.. Don't think so.	src/act.offensive.c:1323	send_to_char	do_neckbreak
-Aren't we funny today...	src/act.offensive.c:1330	send_to_char	do_neckbreak
-You can't contemplate violence in such a place!	src/act.offensive.c:1336	send_to_char	do_neckbreak
-You haven't the energy to do this!	src/act.offensive.c:1349	send_to_char	do_neckbreak
-You try to break	src/act.offensive.c:1361	act	do_neckbreak
-is too strong!	src/act.offensive.c:1361	act	do_neckbreak
-Ambush who?	src/act.offensive.c:1463	send_to_char	do_ambush
-You'd better not.	src/act.offensive.c:1469	send_to_char	do_ambush
-You are a little busy for that right now!	src/act.offensive.c:1475	send_to_char	do_ambush
-Ambush yourself? You idiot!	src/act.offensive.c:1481	send_to_char	do_ambush
-Ambush someone here? Impossible!	src/act.offensive.c:1490	send_to_char	do_ambush
-They're too alert for that, currently.	src/act.offensive.c:1496	send_to_char	do_ambush
 Type REALLYQUIT to quit the game and lose your eq.	src/act.other.c:126	send_to_char	do_quit
 Return to the temple and QUIT to leave the game and keep your equipment.	src/act.other.c:127	send_to_char	do_quit
 You can type RECALL to return to your temple.	src/act.other.c:130	send_to_char	do_quit
 has left the game.	src/act.other.c:134	act	do_quit
 has quit the game.	src/act.other.c:135	buffered:sprintf	do_quit
 has quit out of a save room.	src/act.other.c:171	buffered:sprintf	do_quit
-Okay, you'll try to move silently for a while.	src/act.other.c:225	send_to_char	do_sneak
 Hide out here during the day? Yeah right.	src/act.other.c:262	send_to_char	do_hide
 You can't hide very well with all the sun and sand out here!	src/act.other.c:265	send_to_char	do_hide
 Hide in the water? Don't think so.	src/act.other.c:271	send_to_char	do_hide
 You are completely exposed here, nowhere to hide!	src/act.other.c:277	send_to_char	do_hide
-You attempt to practice the art of kabuki.	src/act.other.c:284	send_to_char	do_hide
-You attempt to hide yourself.	src/act.other.c:286	send_to_char	do_hide
-Steal what from who?	src/act.other.c:332	send_to_char	do_steal
-Come on now, that's rather stupid!	src/act.other.c:337	send_to_char	do_steal
-You can't contemplate stealing in such a place!	src/act.other.c:342	send_to_char	do_steal
-You can not steal from	src/act.other.c:354	buffered:sprintf	do_steal
-because you are not an Outlaw!	src/act.other.c:354	buffered:sprintf	do_steal
-hasn't got that item.	src/act.other.c:402	act	do_steal
-Steal the equipment now? Impossible!	src/act.other.c:409	send_to_char	do_steal
-, but fail!	src/act.other.c:415	act	do_steal
-You try to unequip	src/act.other.c:415	act	do_steal
-You unequip	src/act.other.c:437	act	do_steal
-and steal it.	src/act.other.c:437	act	do_steal
-You cannot carry that much.	src/act.other.c:445	send_to_char	do_steal
-You cannot carry that much.	src/act.other.c:489	send_to_char	do_steal
-Bingo! You got	src/act.other.c:515	buffered:sprintf	do_steal
-You manage to swipe a solitary gold coin.	src/act.other.c:520	send_to_char	do_steal
-You couldn't get any gold...	src/act.other.c:524	send_to_char	do_steal
 unsuccessfuly tried to steal from	src/act.other.c:534	buffered:sprintf	do_steal
 (Head of group)	src/act.other.c:653	buffered:sprintf	print_group
 [---H ---M ---V] [-- --]	src/act.other.c:669	buffered:sprintf	print_group
-You can only quaff potions.	src/act.other.c:953	send_to_char	do_use
-You can only recite scrolls.	src/act.other.c:959	send_to_char	do_use
-Monsters don't need displays. Go away.	src/act.other.c:1030	send_to_char	do_display
-Monsters can't have ideas - Go away.	src/act.other.c:1107	send_to_char	do_gen_write
 You have the following autos set:	src/act.other.c:1308	buffered:sprintf	do_auto
 Your skill in	src/act.other.c:1721	buffered:sprintf	improve_skill
 improves.	src/act.other.c:1721	buffered:sprintf	improve_skill
-Okay, you'll try to move silently for a while.	src/act.other.c:1762	send_to_char	do_stealth
 accuses you of fighting like a woman!	src/act.social.c:171	act	do_insult
 says that women can't fight.	src/act.social.c:173	act	do_insult
 accuses you of having the smallest... (brain?)	src/act.social.c:176	act	do_insult
@@ -507,10 +375,8 @@ Can't open socials file '	src/act.social.c:229	buffered:sprintf	boot_social_mess
 Unknown social '	src/act.social.c:246	buffered:sprintf	boot_social_messages
 disappears in a puff of smoke.	src/act.wizard.c:287	buffered:strcpy	do_goto
 appears with an ear-splitting bang.	src/act.wizard.c:301	buffered:strcpy	do_goto
-disappears in a blaze of hellfire!	src/act.wizard.c:329	act	do_trans
 arrives from a puff of smoke.	src/act.wizard.c:337	act	do_trans
 has transferred you!	src/act.wizard.c:338	act	do_trans
-disappears in a mushroom cloud.	src/act.wizard.c:352	act	do_trans
 arrives from a puff of smoke.	src/act.wizard.c:355	act	do_trans
 has transferred you!	src/act.wizard.c:356	act	do_trans
 disappears in a puff of smoke.	src/act.wizard.c:384	act	do_teleport
@@ -519,8 +385,6 @@ has teleported you!	src/act.wizard.c:388	act	do_teleport
 Extra descs:	src/act.wizard.c:443	buffered:sprintf	do_stat_room
 Chars present:	src/act.wizard.c:451	buffered:sprintf	do_stat_room
 Contents:	src/act.wizard.c:472	buffered:sprintf	do_stat_room
-], Key: [	src/act.wizard.c:499	buffered:sprintf	do_stat_room
-], Keywrd:	src/act.wizard.c:499	buffered:sprintf	do_stat_room
 Extra descs:	src/act.wizard.c:538	buffered:sprintf	do_stat_object
 Hours left: Infinite	src/act.wizard.c:584	buffered:strcpy	do_stat_object
 Hours left: [	src/act.wizard.c:586	buffered:sprintf	do_stat_object
@@ -545,15 +409,8 @@ Affections:	src/act.wizard.c:670	send_to_char	do_stat_object
 casts permanent	src/act.wizard.c:680	buffered:sprintf	do_stat_object
 NEUTRAL-SEX	src/act.wizard.c:710	buffered:strcpy	do_stat_character
 ILLEGAL-SEX!!	src/act.wizard.c:713	buffered:strcpy	do_stat_character
-Monster Class:	src/act.wizard.c:737	buffered:strcpy	do_stat_character
 Last Death: [NONE]	src/act.wizard.c:786	buffered:sprintf	do_stat_character
-, Fighting:	src/act.wizard.c:849	buffered:sprintf	do_stat_character
-, Attack type:	src/act.wizard.c:853	buffered:strcat	do_stat_character
 , Connected:	src/act.wizard.c:858	buffered:strcat	do_stat_character
-NPC flags:	src/act.wizard.c:879	buffered:sprintf	do_stat_character
-, NPC Bare Hand Dam:	src/act.wizard.c:908	buffered:sprintf	do_stat_character
-Mob Spec-Proc:	src/act.wizard.c:908	buffered:sprintf	do_stat_character
-Hunting:	src/act.wizard.c:936	buffered:sprintf	do_stat_character
 , Followers are:	src/act.wizard.c:948	buffered:sprintf	do_stat_character
 Master is:	src/act.wizard.c:948	buffered:sprintf	do_stat_character
 (GC) Shutdown by	src/act.wizard.c:1086	buffered:sprintf	do_shutdown
@@ -570,14 +427,11 @@ A sound not unlike the shriek of a dying dragon fills the room...	src/act.wizard
 A sound not unlike the shriek of a dying dragon fills the room...	src/act.wizard.c:1242	act	random_load_msg
 makes a strange magickal gesture.	src/act.wizard.c:1318	act	do_load
 has created	src/act.wizard.c:1320	act	do_load
-You create	src/act.wizard.c:1321	act	do_load
 makes a strange magickal gesture.	src/act.wizard.c:1373	act	do_load
 has created	src/act.wizard.c:1375	act	do_load
-You create	src/act.wizard.c:1376	act	do_load
 has purged	src/act.wizard.c:1440	buffered:sprintf	do_purge
 destroys	src/act.wizard.c:1450	act	do_purge
 gestures... You are surrounded by scorching flames!	src/act.wizard.c:1459	act	do_purge
-The world seems a little cleaner.	src/act.wizard.c:1461	send_to_room	do_purge
 A strange feeling comes upon you,	src/act.wizard.c:1556	act	do_advance
 Like a giant hand, light comes down	src/act.wizard.c:1556	act	do_advance
 Suddenly a silent explosion of light	src/act.wizard.c:1556	act	do_advance
@@ -636,8 +490,8 @@ Password changed to '	src/act.wizard.c:2989	buffered:sprintf	do_set
 That is not a race.	src/act.wizard.c:3007	send_to_char	do_set
 IP Address Host Name	src/act.wizard.c:3172	buffered:sprintf	do_dns
 stops the senseless violence in the room with a wave of	src/act.wizard.c:3233	act	do_dark
-disappears in a blaze of hellfire!	src/act.wizard.c:3262	buffered:sprintf	do_home
 You're not godly enough for that room.	src/act.wizard.c:3287	send_to_char	do_home
+Sorry, there are no objs in that zone.	src/act.wizard.c:3329	buffered:sprintf	do_olist
 Objects found in Zone	src/act.wizard.c:3331	buffered:sprintf	do_olist
 Sorry, there are no mobs in that zone.	src/act.wizard.c:3402	buffered:sprintf	do_mlist
 Mobiles found in Zone	src/act.wizard.c:3404	buffered:sprintf	do_mlist
@@ -926,7 +780,6 @@ In Flight	src/constants.c:431	table
 Mortally wounded	src/constants.c:454	table	
 Incapacitated	src/constants.c:455	table	
 Sleeping	src/constants.c:457	table	
-Fighting	src/constants.c:460	table	
 Standing	src/constants.c:461	table	
 SENTINEL	src/constants.c:496	table	
 SCAVENGER	src/constants.c:497	table	
@@ -961,13 +814,11 @@ detect invisibility	src/constants.c:650	table
 detect magic	src/constants.c:651	table	
 sense life	src/constants.c:652	table	
 waterwalk	src/constants.c:653	table	
-sanctuary	src/constants.c:654	table	
 infravision	src/constants.c:657	table	
 protection from evil	src/constants.c:659	table	
 protection from good	src/constants.c:660	table	
 no track	src/constants.c:662	table	
 flesh alter	src/constants.c:663	table	
-kuji-kiri	src/constants.c:671	table	
 cutthroat	src/constants.c:672	table	
 invulnerability	src/constants.c:677	table	
 waterbreathe	src/constants.c:683	table	
@@ -1296,12 +1147,6 @@ is here, frozen in stone.	src/fight.c:366	buffered:sprintf	make_corpse
 The corpse of	src/fight.c:370	buffered:sprintf	make_corpse
 is lying here.	src/fight.c:370	buffered:sprintf	make_corpse
 death_cry() in fight.c called with ch->in_room = NOWHERE	src/fight.c:512	buffered:sprintf	death_cry
-Your blood freezes as you hear someone's death cry.	src/fight.c:524	act	death_cry
-You receive your share of experience --	src/fight.c:694	buffered:sprintf	perform_group_gain
-You receive your share of experience -- one measly little point!	src/fight.c:699	send_to_char	perform_group_gain
-splits some gold with you,	src/fight.c:774	buffered:sprintf	group_gain
-splits some gold with you,	src/fight.c:793	buffered:sprintf	group_gain
-would have shared some gold with you	src/fight.c:807	buffered:sprintf	group_gain
 attitude looted	src/fight.c:1157	buffered:sprintf	attitude_loot
 I killed	src/fight.c:1179	buffered:sprintf	attitude_loot
 and looted	src/fight.c:1179	buffered:sprintf	attitude_loot
@@ -1320,36 +1165,19 @@ I think I finally found a use for that punk	src/fight.c:1223	buffered:sprintf	at
 ? *cackle*	src/fight.c:1230	buffered:sprintf	attitude_loot
 Hrmm.. Is this your head,	src/fight.c:1230	buffered:sprintf	attitude_loot
 , was that suicide or did you try to fight back?	src/fight.c:1238	buffered:sprintf	attitude_loot
-You are not experienced enough to attack	src/fight.c:1346	act	damage
-Ancient forces protect	src/fight.c:1353	act	damage
-from your wrath!	src/fight.c:1353	act	damage
-That really did HURT!	src/fight.c:1589	act	damage
 screams in pain!	src/fight.c:1591	act	damage
 You wish that your wounds would stop BLEEDING so much!	src/fight.c:1595	buffered:sprintf	damage
-You wimp out, and attempt to flee!	src/fight.c:1605	send_to_char	damage
-You receive	src/fight.c:1646	buffered:sprintf	damage
-experience points.	src/fight.c:1646	buffered:sprintf	damage
-You receive one lousy experience point.	src/fight.c:1650	send_to_char	damage
 killed by	src/fight.c:1673	buffered:sprintf	damage
 killed by	src/fight.c:1678	buffered:sprintf	damage
-has just learned the Five Fingers of Enlightenment. Who else wishes to learn from the master?	src/fight.c:1702	buffered:sprintf	damage
-You dodge!	src/fight.c:1969	send_to_char	perform_violence
 's attack!	src/fight.c:1970	act	perform_violence
 dodges your attack!	src/fight.c:1971	act	perform_violence
 scrambles to	src/fight.c:1985	act	perform_violence
-You drag yourself to your feet.	src/fight.c:1986	send_to_char	perform_violence
 scrambles to	src/fight.c:1995	act	perform_violence
-You drag yourself to your feet.	src/fight.c:1996	send_to_char	perform_violence
 SYSERR: Can't delete file '	src/file-edit.c:40	buffered:sprintf	tedit_string_cleanup
 deletes '	src/file-edit.c:43	buffered:sprintf	tedit_string_cleanup
-Deleted.	src/file-edit.c:45	write_to_output	tedit_string_cleanup
 SYSERR: Can't write file '	src/file-edit.c:48	buffered:sprintf	tedit_string_cleanup
-Edit aborted.	src/file-edit.c:62	write_to_output	tedit_string_cleanup
 stops editing some scrolls.	src/file-edit.c:63	act	tedit_string_cleanup
-Edit file below:	src/file-edit.c:156	send_to_char	general_file_edit
 begins editing a scroll.	src/file-edit.c:171	act	general_file_edit
-A shimmering portal of blue light suddenly appears in the darkness!	src/gate.c:191	send_to_room	load_night_gate
-The shimmering blue portal of light fades out of existence.	src/gate.c:226	send_to_room	remove_night_gate
 Let's have an ass-kicking contest	src/graph.c:351	buffered:sprintf	hunt_victim
 Corpse of	src/graph.c:355	buffered:sprintf	hunt_victim
 for sale in a minute..	src/graph.c:355	buffered:sprintf	hunt_victim
@@ -1371,8 +1199,6 @@ You are too dumb to do much of anything!	src/handler.c:660	send_to_char	check_fo
 The world hates you!	src/handler.c:663	send_to_char	check_for_bad_stats
 You trip over your own feet and hit your head!	src/handler.c:668	send_to_char	check_for_bad_stats
 SYSERR: Char is already equipped:	src/handler.c:688	buffered:sprintf	equip_char
-Your light begins to flicker and fade.	src/handler.c:1057	act	update_char_objects
-Your light sputters out and dies.	src/handler.c:1062	act	update_char_objects
 a gold coin	src/handler.c:1406	buffered:strcpy	money_desc
 a tiny pile of gold coins	src/handler.c:1408	buffered:strcpy	money_desc
 a handful of gold coins	src/handler.c:1410	buffered:strcpy	money_desc
@@ -1414,15 +1240,7 @@ Ident error from	src/ident.c:197	buffered:sprintf	ident_check
 Malformed ident response from	src/ident.c:205	buffered:sprintf	ident_check
 Connection attempt denied from [	src/ident.c:234	buffered:sprintf	ident_check
 By what name do you wish to be known?	src/ident.c:240	SEND_TO_Q	ident_check
-Instructions: /s or @ to save, /h for more options.	src/improved-edit.c:20	write_to_output	send_editor_help
 Instructions: Type @ on a line by itself to end.	src/improved-edit.c:22	write_to_output	send_editor_help
-Current buffer cleared.	src/improved-edit.c:45	write_to_output	improved_editor_execute
-Current buffer empty.	src/improved-edit.c:47	write_to_output	improved_editor_execute
-Current buffer empty.	src/improved-edit.c:59	write_to_output	improved_editor_execute
-Current buffer empty.	src/improved-edit.c:65	write_to_output	improved_editor_execute
-Current buffer empty.	src/improved-edit.c:74	write_to_output	improved_editor_execute
-Current buffer empty.	src/improved-edit.c:80	write_to_output	improved_editor_execute
-Invalid option.	src/improved-edit.c:88	write_to_output	improved_editor_execute
 /a - aborts editor	src/improved-edit.c:108	write_to_output	parse_action
 /c - clears buffer	src/improved-edit.c:108	write_to_output	parse_action
 /d# - deletes a line #	src/improved-edit.c:108	write_to_output	parse_action
@@ -1438,40 +1256,7 @@ Invalid option.	src/improved-edit.c:88	write_to_output	improved_editor_execute
 /s - saves text	src/improved-edit.c:108	write_to_output	parse_action
 Editor command formats: /<letter>	src/improved-edit.c:108	write_to_output	parse_action
 usage: /r[a] 'pattern' 'replacement'	src/improved-edit.c:108	write_to_output	parse_action
-Text formatted with	src/improved-edit.c:131	write_to_output	parse_action
-Invalid format.	src/improved-edit.c:140	write_to_output	parse_action
-Target string must be enclosed in single quotes.	src/improved-edit.c:143	write_to_output	parse_action
-No replacement string.	src/improved-edit.c:146	write_to_output	parse_action
-Replacement string must be enclosed in single quotes.	src/improved-edit.c:149	write_to_output	parse_action
-' with '	src/improved-edit.c:156	write_to_output	parse_action
-Replaced	src/improved-edit.c:156	write_to_output	parse_action
-occurance	src/improved-edit.c:156	write_to_output	parse_action
-' not found.	src/improved-edit.c:159	write_to_output	parse_action
-String '	src/improved-edit.c:159	write_to_output	parse_action
-ERROR: Replacement string causes buffer overflow, aborted replace.	src/improved-edit.c:161	write_to_output	parse_action
-Not enough space left in buffer.	src/improved-edit.c:163	write_to_output	parse_action
-You must specify a line number or range to delete.	src/improved-edit.c:168	write_to_output	parse_action
-That range is invalid.	src/improved-edit.c:175	write_to_output	parse_action
-Buffer is empty.	src/improved-edit.c:184	write_to_output	parse_action
-Line(s) out of range; not deleting.	src/improved-edit.c:193	write_to_output	parse_action
-Invalid, line numbers to delete must be higher than 0.	src/improved-edit.c:213	write_to_output	parse_action
-Line numbers must be greater than 0.	src/improved-edit.c:238	write_to_output	parse_action
-That range is invalid.	src/improved-edit.c:241	write_to_output	parse_action
 Current buffer range [	src/improved-edit.c:246	buffered:sprintf	parse_action
-Line(s) out of range; no buffer listing.	src/improved-edit.c:256	write_to_output	parse_action
-Line numbers must be greater than 0.	src/improved-edit.c:300	write_to_output	parse_action
-That range is invalid.	src/improved-edit.c:304	write_to_output	parse_action
-Line(s) out of range; no buffer listing.	src/improved-edit.c:317	write_to_output	parse_action
-You must specify a line number before which to insert text.	src/improved-edit.c:347	write_to_output	parse_action
-Buffer is empty, nowhere to insert.	src/improved-edit.c:356	write_to_output	parse_action
-Line number out of range; insert aborted.	src/improved-edit.c:366	write_to_output	parse_action
-Insert text pushes buffer over maximum size, insert aborted.	src/improved-edit.c:373	write_to_output	parse_action
-Line inserted.	src/improved-edit.c:385	write_to_output	parse_action
-You must specify a line number at which to change text.	src/improved-edit.c:395	write_to_output	parse_action
-Buffer is empty, nothing to change.	src/improved-edit.c:404	write_to_output	parse_action
-Line number out of range; change aborted.	src/improved-edit.c:420	write_to_output	parse_action
-Change causes new length to exceed buffer maximum size, aborted.	src/improved-edit.c:459	write_to_output	parse_action
-Invalid option.	src/improved-edit.c:474	write_to_output	parse_action
 You try, but the mind-numbing cold prevents you...	src/interpreter.c:918	send_to_char	command_interpreter
 Sorry, that command hasn't been implemented yet.	src/interpreter.c:920	send_to_char	command_interpreter
 You can't use immortal commands while switched.	src/interpreter.c:922	send_to_char	command_interpreter
@@ -1486,7 +1271,6 @@ has reconnected.	src/interpreter.c:1639	act	perform_dupe_check
 's body has been taken over by a new spirit!	src/interpreter.c:1645	act	perform_dupe_check
 suddenly keels over in pain, surrounded by a white aura...	src/interpreter.c:1645	act	perform_dupe_check
 has re-logged in ... disconnecting old socket.	src/interpreter.c:1648	buffered:sprintf	perform_dupe_check
-Reconnecting to unswitched char.	src/interpreter.c:1653	SEND_TO_Q	perform_dupe_check
 ] has reconnected.	src/interpreter.c:1654	buffered:sprintf	perform_dupe_check
 Invalid name, please try another.	src/interpreter.c:1758	SEND_TO_Q	nanny
 Please remember to choose an appropriate fantasy-oriented name.	src/interpreter.c:1781	SEND_TO_Q	nanny
@@ -1535,7 +1319,6 @@ That is not a race..	src/interpreter.c:2051	SEND_TO_Q	nanny
 That is not a race..	src/interpreter.c:2070	SEND_TO_Q	nanny
 What IS your race?	src/interpreter.c:2070	SEND_TO_Q	nanny
 That's not a class.	src/interpreter.c:2085	SEND_TO_Q	nanny
-Invalid choice!	src/interpreter.c:2101	SEND_TO_Q	nanny
 Your ability scores:	src/interpreter.c:2107	SEND_TO_Q	nanny
 Press 'Y' to keep these stats, and 'N' to reroll:	src/interpreter.c:2118	SEND_TO_Q	nanny
 *** PRESS RETURN:	src/interpreter.c:2131	SEND_TO_Q	nanny
@@ -1543,7 +1326,6 @@ Your ability scores:	src/interpreter.c:2135	SEND_TO_Q	nanny
 Press 'Y' to keep these stats, and 'N' to reroll:	src/interpreter.c:2146	SEND_TO_Q	nanny
 Invalid choice! Select 'Y' or 'N':	src/interpreter.c:2150	SEND_TO_Q	nanny
 ] new player.	src/interpreter.c:2154	buffered:sprintf	nanny
-You are too unhealthy to play!	src/interpreter.c:2178	SEND_TO_Q	nanny
 has entered the game.	src/interpreter.c:2211	act	nanny
 You could not afford your rent!	src/interpreter.c:2227	send_to_char	nanny
 Your possesions have been donated to the Salvation Army!	src/interpreter.c:2227	send_to_char	nanny
@@ -1551,25 +1333,14 @@ Current description:	src/interpreter.c:2248	write_to_output	nanny
 Enter the new text you'd like others to see when they look at you.	src/interpreter.c:2259	write_to_output	nanny
 Enter your old password:	src/interpreter.c:2272	SEND_TO_Q	nanny
 Enter your password for verification:	src/interpreter.c:2278	SEND_TO_Q	nanny
-That's not a menu choice!	src/interpreter.c:2284	SEND_TO_Q	nanny
-Incorrect password.	src/interpreter.c:2294	SEND_TO_Q	nanny
 Enter a new password:	src/interpreter.c:2299	SEND_TO_Q	nanny
-Incorrect password.	src/interpreter.c:2308	SEND_TO_Q	nanny
 ARE YOU ABSOLUTELY SURE?	src/interpreter.c:2314	SEND_TO_Q	nanny
 Please type "yes" to confirm:	src/interpreter.c:2314	SEND_TO_Q	nanny
 YOU ARE ABOUT TO DELETE THIS CHARACTER PERMANENTLY.	src/interpreter.c:2314	SEND_TO_Q	nanny
 ) has self-deleted.	src/interpreter.c:2344	buffered:sprintf	nanny
 nice ../bin/autowiz	src/limits.c:279	buffered:sprintf	check_autowiz
 You advance to level	src/limits.c:312	buffered:sprintf	gain_exp
-Your stomach growls with hunger.	src/limits.c:386	send_to_char	gain_condition
-You feel a bit parched.	src/limits.c:389	send_to_char	gain_condition
-Your head starts to clear.	src/limits.c:393	send_to_char	gain_condition
-You are hungry.	src/limits.c:403	send_to_char	gain_condition
-You are thirsty.	src/limits.c:406	send_to_char	gain_condition
-You are now sober.	src/limits.c:410	send_to_char	gain_condition
 force-rented and extracted (idle).	src/limits.c:449	buffered:sprintf	check_idling
-The pile of dust is blown away by a draft of wind.	src/limits.c:569	send_to_room	point_update
-The circle on the ground slowly fades away.	src/limits.c:584	send_to_room	point_update
 A quivering horde of maggots consumes	src/limits.c:607	act	point_update
 A quivering horde of maggots consumes	src/limits.c:609	act	point_update
 Dissolving into the ground,	src/limits.c:614	act	point_update
@@ -1581,73 +1352,17 @@ The earth opens up and swallows	src/limits.c:631	act	point_update
 A puff of smoke rises from your pack.	src/magic.c:588	send_to_char	mag_materials
 's pack.	src/magic.c:589	act	mag_materials
 A puff of smoke rises from	src/magic.c:589	act	mag_materials
-Pulling a shard of obsidian from a pocket, you crush it under your heel...	src/magic.c:624	send_to_char	mag_damage
-pocket and crushes it beneath	src/magic.c:626	act	mag_damage
-pulls something out of	src/magic.c:626	act	mag_damage
-You attempt the spell without the components..	src/magic.c:629	send_to_char	mag_damage
-Pulling a prism from a pocket, you crush it under your heel...	src/magic.c:662	send_to_char	mag_damage
-pocket and crushes it beneath	src/magic.c:664	act	mag_damage
-pulls something out of	src/magic.c:664	act	mag_damage
-Pulling a pinch of ash from a pocket, you cast it about the room...	src/magic.c:678	send_to_char	mag_damage
-pulls a pinch of ash out of a pocket and casts it about the room.	src/magic.c:680	act	mag_damage
-Pulling the eye of a beholder from a pocket, you throw it to the ground...	src/magic.c:694	send_to_char	mag_damage
-pulls a small orb out of a pocket and dashes it to the ground.	src/magic.c:696	act	mag_damage
-Your magick backfires!	src/magic.c:705	send_to_char	mag_damage
-Your magick backfires!	src/magic.c:717	send_to_char	mag_damage
-The gods protect	src/magic.c:735	act	mag_damage
-The gods protect	src/magic.c:752	act	mag_damage
-Pulling the vampire dust from a pocket, you throw it into the air...	src/magic.c:778	send_to_char	mag_damage
-throws some dust into the air...	src/magic.c:780	act	mag_damage
-Suddenly, your psionic power recoils!	src/magic.c:813	send_to_char	mag_damage
-A blast of hot air washes over you.	src/magic.c:833	send_to_zone	mag_damage
-Thunder rumbles through the air.	src/magic.c:838	send_to_zone	mag_damage
-You crush a small lens under your heel.	src/magic.c:935	send_to_char	mag_affects
-crushes a small lens under	src/magic.c:936	act	mag_affects
-Your magic fades, then dies out totally.	src/magic.c:943	send_to_char	mag_affects
-You throw a raven's feather into the air...	src/magic.c:981	send_to_char	mag_affects
-throws a feather into the air...	src/magic.c:982	act	mag_affects
-You can only do this outdoors!	src/magic.c:1120	send_to_char	mag_affects
-You cannot protect yourself from the Evil inside you!	src/magic.c:1145	send_to_char	mag_affects
 killed by Protection from Evil.	src/magic.c:1146	buffered:sprintf	mag_affects
-The forces of Light destroy you for your betrayal!	src/magic.c:1165	send_to_char	mag_affects
 killed by Protection from Good.	src/magic.c:1166	buffered:sprintf	mag_affects
-Pulling a bit of sand from a pocket, you cast it about the room...	src/magic.c:1204	send_to_char	mag_affects
-pulls a bit of sand out of a pocket and casts it about the room.	src/magic.c:1206	act	mag_affects
-You attempt the spell without the components...	src/magic.c:1210	send_to_char	mag_affects
-Your spell fails to affect them because you are not an Outlaw!	src/magic.c:1214	send_to_char	mag_affects
-tried to cast a spell on you but failed because	src/magic.c:1215	buffered:sprintf	mag_affects
-shakes his head wearily, but then snaps out of it!	src/magic.c:1224	act	mag_affects
-shakes his head wearily, but then snaps out of it!	src/magic.c:1231	act	mag_affects
 You feel very sleepy... Zzzz......	src/magic.c:1243	act	mag_affects
-A frog leg turns into dust as you mouth the words of the spell...	src/magic.c:1276	send_to_char	mag_affects
-A small chunk of iron melts in your palm as you cast the spell...	src/magic.c:1303	send_to_char	mag_affects
-'s palm as	src/magic.c:1305	act	mag_affects
-A small chunk of iron melts in	src/magic.c:1305	act	mag_affects
-cast a spell...	src/magic.c:1305	act	mag_affects
 You are too giddy to have any followers!	src/magic.c:1711	send_to_char	mag_summons
-The corpse starts to twitch, then stands with a life of it's own!	src/magic.c:1736	send_to_char	mag_summons
-You feel better.	src/magic.c:1767	send_to_char	mag_points
-'s wounds glow and mend themselves.	src/magic.c:1769	act	mag_points
-You feel a lot better!	src/magic.c:1774	send_to_char	mag_points
-'s wounds glow and mend themselves.	src/magic.c:1776	act	mag_points
-You focus your mind on healing your body..	src/magic.c:1784	send_to_char	mag_points
-Your wounds mend themselves!	src/magic.c:1786	send_to_char	mag_points
-A warm feeling floods your body.	src/magic.c:1791	send_to_char	mag_points
-'s wounds glow and mend themselves.	src/magic.c:1793	act	mag_points
-A warm feeling floods your body.	src/magic.c:1801	send_to_char	mag_points
-'s wounds glow and mend themselves.	src/magic.c:1803	act	mag_points
-You feel vitalized!	src/magic.c:1809	send_to_char	mag_points
-You feel invigorated!	src/magic.c:1814	send_to_char	mag_points
-Your wounds mend beneath your hands!	src/magic.c:1819	send_to_char	mag_points
 's hands!	src/magic.c:1821	act	mag_points
 Your wounds start to heal beneath	src/magic.c:1821	act	mag_points
 SYSERR: unknown spellnum	src/magic.c:1863	buffered:sprintf	mag_unaffects
 passed to mag_unaffects	src/magic.c:1863	buffered:sprintf	mag_unaffects
 Spell unimplemented, it would seem.	src/magic.c:1983	send_to_char	mag_creations
-I seem to have goofed.	src/magic.c:1990	send_to_char	mag_creations
 : obj not found	src/magic.c:1991	buffered:sprintf	mag_creations
 SYSERR: spell_creations, spell	src/magic.c:1991	buffered:sprintf	mag_creations
-You create	src/magic.c:1998	act	mag_creations
 * * * * Dark Pawns Mail System * * * *	src/mail.c:435	buffered:sprintf	read_delete
 undefined	src/medit.c:372	buffered:strcpy	medit_save_to_disk
 undefined	src/medit.c:374	buffered:strcpy	medit_save_to_disk
@@ -1687,21 +1402,10 @@ Enter mob race :	src/medit.c:604	send_to_char	medit_disp_races
 ) Race :	src/medit.c:654	buffered:snprintf	medit_disp_menu
 ) Script Menu	src/medit.c:654	buffered:snprintf	medit_disp_menu
 Enter choice :	src/medit.c:654	buffered:snprintf	medit_disp_menu
-Cannot assign a script until the mob is saved at least once.	src/medit.c:685	send_to_char	medit_disp_script_menu
 ) Script Flags:	src/medit.c:696	buffered:sprintf	medit_disp_script_menu
 Enter choice (0 to quit) :	src/medit.c:703	buffered:strcat	medit_disp_script_menu
-Field must be numerical, try again :	src/medit.c:722	send_to_char	medit_parse
-Saving mobile to memory.	src/medit.c:737	send_to_char	medit_parse
 edits mob	src/medit.c:739	buffered:sprintf	medit_parse
-Invalid choice!	src/medit.c:749	send_to_char	medit_parse
-Do you wish to save the mobile? :	src/medit.c:750	send_to_char	medit_parse
-Do you wish to save the changes to the mobile? (y/n) :	src/medit.c:764	send_to_char	medit_parse
-Enter mob description:	src/medit.c:790	write_to_output	medit_parse
-Enter new value :	src/medit.c:900	send_to_char	medit_parse
-Enter new text :	src/medit.c:904	send_to_char	medit_parse
-Enter script name:	src/medit.c:982	send_to_char	medit_parse
 ): Attempting to call non-existing mob func	src/mobact.c:85	buffered:sprintf	mobile_activity
-'Come to destroy my kin? Die!', exclaims	src/mobact.c:252	act	mobile_activity
 roars: 'Protect the innocent! BANZAIIII! CHARGE!'	src/mobprog.c:425	act	kill_bad_guy
 You bravely rescue	src/mobprog.c:445	act	npc_rescue
 Sign this, please! There's too much violence!	src/mobprog.c:528	buffered:strcpy	mp_sound
@@ -1722,7 +1426,6 @@ Carry on, citizen.	src/mobprog.c:586	buffered:strcpy	mp_sound
 jiggles in your direction.	src/mobprog.c:590	buffered:strcpy	mp_sound
 smiles at you.	src/mobprog.c:596	buffered:strcpy	mp_sound
 shuffles some papers around on his desk.	src/mobprog.c:601	buffered:strcpy	mp_sound
-Description aborted.	src/modify.c:245	write_to_output	exdesc_string_cleanup
 Skill being one of the following:	src/modify.c:266	buffered:strcpy	do_skillset
 Usage: string ('obj'|'mob') <name> <field> [<string>]	src/modify.c:608	send_to_char	do_string
 No field by that name. Try 'help string'.	src/modify.c:613	send_to_char	do_string
@@ -1758,51 +1461,11 @@ Your initials are about all you can carve in that!	src/new_cmds.c:152	send_to_ch
 There's no way you could ever eat THAT!!!	src/new_cmds.c:158	send_to_char	do_carve
 You can't carve with that!	src/new_cmds.c:188	send_to_char	do_carve
 You don't have anything to carve with!	src/new_cmds.c:195	send_to_char	do_carve
-carves up some meat from the	src/new_cmds.c:200	act	do_carve
-You carve up some meat from the	src/new_cmds.c:201	act	do_carve
-You're a little busy for that!	src/new_cmds.c:237	send_to_char	do_behead
-Behead who?	src/new_cmds.c:242	send_to_char	do_behead
-This MUD doesn't support self-mutilation!	src/new_cmds.c:247	send_to_char	do_behead
-You kill it first and THEN you behead it!	src/new_cmds.c:252	send_to_char	do_behead
-to behead!	src/new_cmds.c:257	buffered:sprintf	do_behead
-You can't behead something without a head!	src/new_cmds.c:263	send_to_char	do_behead
-You can't behead that!	src/new_cmds.c:269	send_to_char	do_behead
-You behead	src/new_cmds.c:278	act	do_behead
-bare hands!	src/new_cmds.c:283	act	do_behead
-You rip the head off	src/new_cmds.c:288	act	do_behead
-with your bare hands!	src/new_cmds.c:288	act	do_behead
-bare hands!	src/new_cmds.c:294	act	do_behead
-You rip the head off	src/new_cmds.c:299	act	do_behead
-with your bare hands!	src/new_cmds.c:299	act	do_behead
 a bloody head hacked from	src/new_cmds.c:313	buffered:strcpy	do_behead
 a bloody head ripped from	src/new_cmds.c:315	buffered:strcpy	do_behead
 a bloody head ripped from	src/new_cmds.c:317	buffered:strcpy	do_behead
 has been left here.	src/new_cmds.c:325	buffered:strcat	do_behead
 headless beheaded	src/new_cmds.c:343	buffered:strcat	do_behead
-The Gods prevent thy violent act.	src/new_cmds.c:378	send_to_char	do_headbutt
-You aren't qualified to headbutt anyone!	src/new_cmds.c:384	send_to_char	do_headbutt
-Headbutt who?	src/new_cmds.c:402	send_to_char	do_headbutt
-You bang your head into the nearest wall...	src/new_cmds.c:409	send_to_char	do_headbutt
-How dare you try to headbutt a god!	src/new_cmds.c:415	send_to_char	do_headbutt
-You are thrown across the room...	src/new_cmds.c:416	send_to_char	do_headbutt
-But that could kill you!	src/new_cmds.c:433	send_to_char	do_headbutt
-You'd better leave all the martial arts to fighters.	src/new_cmds.c:481	send_to_char	do_bearhug
-Bear hug who?	src/new_cmds.c:499	send_to_char	do_bearhug
-The gods reject your impunity.	src/new_cmds.c:506	send_to_char	do_bearhug
-Aren't we funny today...	src/new_cmds.c:512	send_to_char	do_bearhug
-You need to be bare handed to get a good grip.	src/new_cmds.c:518	send_to_char	do_bearhug
-You're not trained in slitting throats!	src/new_cmds.c:561	send_to_char	do_cutthroat
-Cut what throat where?	src/new_cmds.c:567	send_to_char	do_cutthroat
-That would be bad.	src/new_cmds.c:572	send_to_char	do_cutthroat
-You need to wield a weapon to make it a success.	src/new_cmds.c:577	send_to_char	do_cutthroat
-Only daggers and such can be used for cutting a throat.	src/new_cmds.c:582	send_to_char	do_cutthroat
-You feel too peaceful to slit a throat!	src/new_cmds.c:595	send_to_char	do_cutthroat
-Ancient forces protect	src/new_cmds.c:601	act	do_cutthroat
-from your wrath!	src/new_cmds.c:601	act	do_cutthroat
-Their throat is already slit!	src/new_cmds.c:607	send_to_char	do_cutthroat
-You can't get close enough!	src/new_cmds.c:613	send_to_char	do_cutthroat
-You slit their throat from ear to ear!	src/new_cmds.c:638	send_to_char	do_cutthroat
-Your slash at their throat barely misses!	src/new_cmds.c:643	send_to_char	do_cutthroat
 just can't stop playing with	src/new_cmds.c:690	act	do_otouch
 , who slumps over in orgasm!	src/new_cmds.c:695	act	do_otouch
 A wonderful feeling spreads throughout your entire body as	src/new_cmds.c:697	act	do_otouch
@@ -1814,47 +1477,15 @@ touches them..	src/new_cmds.c:701	act	do_otouch
 A dark stain appears under	src/new_cmds.c:709	act	do_otouch
 deftly glides a hand beneath her panties!	src/new_cmds.c:719	act	do_otouch
 pleads for more and	src/new_cmds.c:719	act	do_otouch
-You'd better leave the sneaky stuff to the thieves.	src/new_cmds.c:744	send_to_char	do_trip
-Trip who?	src/new_cmds.c:761	send_to_char	do_trip
-You trip over your shoe laces...	src/new_cmds.c:774	send_to_char	do_trip
-You can't trip something that's FLYING!	src/new_cmds.c:779	send_to_char	do_trip
-Whats the point of doing that now?	src/new_cmds.c:784	send_to_char	do_trip
-You couldn't slug your way out of a wet paper bag.	src/new_cmds.c:829	send_to_char	do_slug
-Slug who?	src/new_cmds.c:840	send_to_char	do_slug
-You curl up your fist and slug yourself in the nose! Ouch!	src/new_cmds.c:847	send_to_char	do_slug
-You can't make a fist while wielding a weapon!	src/new_cmds.c:854	send_to_char	do_slug
-You couldn't charge if you wanted to!	src/new_cmds.c:890	send_to_char	do_charge
-Great! Fine! Charge who?!?!	src/new_cmds.c:901	send_to_char	do_charge
-You charge headlong into the ground, impressing everyone..	src/new_cmds.c:908	send_to_char	do_charge
-You're barehanded, try it with a sword or lance next time.	src/new_cmds.c:915	send_to_char	do_charge
-You need sword or a lance to run 'em through!	src/new_cmds.c:923	send_to_char	do_charge
-The only heads you're gonna smack are yours and Rosie's.	src/new_cmds.c:979	send_to_char	do_smackheads
-Looks like the gangs not all here...	src/new_cmds.c:987	send_to_char	do_smackheads
-We call that 'headbutt' around here, son...	src/new_cmds.c:993	send_to_char	do_smackheads
 You smack your head twice and say 'DOH!'	src/new_cmds.c:999	send_to_char	do_smackheads
-You need your hands free to smack some heads!	src/new_cmds.c:1005	send_to_char	do_smackheads
-You're a little busy right now!	src/new_cmds.c:1017	send_to_char	do_smackheads
-They are too busy fighting at the moment!	src/new_cmds.c:1023	send_to_char	do_smackheads
 Smack whose heads together?	src/new_cmds.c:1029	send_to_char	do_smackheads
-You can't commit acts of violence here!	src/new_cmds.c:1035	send_to_char	do_smackheads
 slip out of your hands!	src/new_cmds.c:1048	buffered:strcat	do_smackheads
 lunges at them!	src/new_cmds.c:1055	buffered:strcat	do_smackheads
 You grab the heads of	src/new_cmds.c:1063	buffered:strcpy	do_smackheads
 and bang them together with a sickening *SMACK*.	src/new_cmds.c:1067	buffered:strcat	do_smackheads
 grabs the heads of	src/new_cmds.c:1070	buffered:strcat	do_smackheads
 and bangs them together with a sickening *SMACK*.	src/new_cmds.c:1074	buffered:strcat	do_smackheads
-someone while fighting!	src/new_cmds.c:1111	buffered:sprintf	do_spike
-You need to wield a	src/new_cmds.c:1127	buffered:sprintf	do_spike
-to succeed!	src/new_cmds.c:1127	buffered:sprintf	do_spike
-You can't commit murder in this holy place!	src/new_cmds.c:1131	send_to_char	do_spike
-The monster in you won't let you suicide!	src/new_cmds.c:1133	send_to_char	do_spike
-Spiking is only for werewolves..	src/new_cmds.c:1135	send_to_char	do_spike
-Staking is only for vampires..	src/new_cmds.c:1137	send_to_char	do_spike
 You can't destroy your own kind!	src/new_cmds.c:1140	send_to_char	do_spike
-You drive	src/new_cmds.c:1159	act	do_spike
-twists at the last moment, and you miss!	src/new_cmds.c:1179	act	do_spike
-Bite who?!	src/new_cmds.c:1218	send_to_char	do_bite
-You bite your tongue and say nothing.	src/new_cmds.c:1224	send_to_char	do_bite
 You gnash your teeth.	src/new_cmds.c:1233	send_to_char	do_bite
 You must be transformed to bite!	src/new_cmds.c:1247	send_to_char	do_bite
 Your victim is already a creature of the night!	src/new_cmds.c:1260	send_to_char	do_bite
@@ -1871,26 +1502,6 @@ fangs into the flesh of	src/new_cmds.c:1283	act	do_bite
 screams in agony!	src/new_cmds.c:1288	act	do_bite
 Last Gossips:	src/new_cmds.c:1373	buffered:strcpy	do_review
 Someone invisible	src/new_cmds.c:1382	buffered:strcat	do_review
-Strike who?	src/new_cmds.c:1450	send_to_char	do_strike
-You beat yourself about the face and neck.	src/new_cmds.c:1460	send_to_char	do_strike
-is just such a good friend, you simply can't strike	src/new_cmds.c:1466	act	do_strike
-You know nothing of kuji-kiri!	src/new_cmds.c:1561	send_to_char	do_kuji_kiri
-You are too busy fighting to practice kuji-kiri!	src/new_cmds.c:1567	send_to_char	do_kuji_kiri
-You can not practice kuji-kiri again right now!	src/new_cmds.c:1573	send_to_char	do_kuji_kiri
-You have not mastered this art yet!	src/new_cmds.c:1608	send_to_char	do_kuji_kiri
-You have not mastered this art yet!	src/new_cmds.c:1622	send_to_char	do_kuji_kiri
-You have not mastered this art yet!	src/new_cmds.c:1633	send_to_char	do_kuji_kiri
-You have not mastered this art yet!	src/new_cmds.c:1647	send_to_char	do_kuji_kiri
-You have not mastered this art yet!	src/new_cmds.c:1657	send_to_char	do_kuji_kiri
-You have not mastered this art yet!	src/new_cmds.c:1671	send_to_char	do_kuji_kiri
-You have not mastered this art yet!	src/new_cmds.c:1679	send_to_char	do_kuji_kiri
-You have not mastered this art yet!	src/new_cmds.c:1692	send_to_char	do_kuji_kiri
-You have not mastered this art yet!	src/new_cmds.c:1706	send_to_char	do_kuji_kiri
-You know nothing of altering your flesh!	src/new_cmds.c:1900	send_to_char	do_flesh_alter
-You lose your concentration!	src/new_cmds.c:1908	send_to_char	do_flesh_alter
-You shift your molecules back to normal.	src/new_cmds.c:1916	send_to_char	do_flesh_alter
-Your hand reverts from a	src/new_cmds.c:1919	buffered:sprintf	do_flesh_alter
-Your hand turns into a	src/new_cmds.c:1933	buffered:sprintf	do_flesh_alter
 You can't see a damned thing!	src/new_cmds.c:1969	send_to_char	do_compare
 You're pretty busy right now!	src/new_cmds.c:1979	send_to_char	do_compare
 Looks like you don't have those objects..	src/new_cmds.c:1984	send_to_char	do_compare
@@ -1906,76 +1517,23 @@ They look just about the same.	src/new_cmds.c:2083	buffered:sprintf	do_compare
 looks slightly better than	src/new_cmds.c:2085	buffered:sprintf	do_compare
 looks a little better than	src/new_cmds.c:2088	buffered:sprintf	do_compare
 looks much better than	src/new_cmds.c:2091	buffered:sprintf	do_compare
-Palm what?	src/new_cmds.c:2120	send_to_char	do_palm
-You're about as berserk as you're gonna get.	src/new_cmds.c:2142	send_to_char	do_berserk
-You're unable to summon your battle rage right now.	src/new_cmds.c:2151	send_to_char	do_berserk
 You fail to summon up your battle rage.	src/new_cmds.c:2163	send_to_char	do_berserk
 Your vision turns sanguine as you summon up your battle rage!	src/new_cmds.c:2167	send_to_char	do_berserk
 Tag who?	src/new_cmds.c:2207	send_to_char	do_tag
-No way! They're linkless!	src/new_cmds.c:2217	send_to_char	do_tag
-But you are not it!	src/new_cmds.c:2230	send_to_char	do_tag
-You're it already!	src/new_cmds.c:2236	send_to_char	do_tag
-tags you right back!	src/new_cmds.c:2242	act	do_tag
 Let the game begin!	src/new_cmds.c:2255	send_to_char	do_tag
-and scream, 'TAG! You're it!'	src/new_cmds.c:2262	act	do_tag
 You're unable to see very far...	src/new_cmds.c:2289	send_to_char	do_scan
 You see nothing around.	src/new_cmds.c:2336	send_to_char	do_scan
-Circle who?	src/new_cmds.c:2402	send_to_char	do_circle
-How can you stab yourself in the back?	src/new_cmds.c:2408	send_to_char	do_circle
-You're a little too busy right now!	src/new_cmds.c:2413	send_to_char	do_circle
-You need to wield a weapon to make it a success.	src/new_cmds.c:2418	send_to_char	do_circle
-Only piercing weapons can be used for backstabbing.	src/new_cmds.c:2423	send_to_char	do_circle
-notices you lunging at	src/new_cmds.c:2437	act	do_circle
-You make a circle in the air.	src/new_cmds.c:2445	send_to_char	do_circle
-You point at	src/new_cmds.c:2483	act	point_obj
-You cannot commit acts of violence here!	src/new_cmds.c:2576	send_to_char	do_groinrip
-You're not trained in martial arts!	src/new_cmds.c:2582	send_to_char	do_groinrip
-Groinrip who?	src/new_cmds.c:2601	send_to_char	do_groinrip
-No masochism allowed!	src/new_cmds.c:2608	send_to_char	do_groinrip
-Ha Ha. Don't think so.	src/new_cmds.c:2614	send_to_char	do_groinrip
-How dare you try to touch a god!	src/new_cmds.c:2620	send_to_char	do_groinrip
-You are thrown across the room...	src/new_cmds.c:2621	send_to_char	do_groinrip
-Umm, they have nothing there to tug on!	src/new_cmds.c:2629	send_to_char	do_groinrip
-By the light of the full moon.. DIE!	src/new_cmds.c:2678	buffered:sprintf	lunar_hunter
-Suddenly a ghostly ship appears to the north!	src/new_cmds.c:2703	send_to_room	ghost_ship_appear
-Suddenly a dock appears to the south!	src/new_cmds.c:2704	send_to_room	ghost_ship_appear
-Suddenly the ghostly ship to the north disappears!	src/new_cmds.c:2723	send_to_room	ghost_ship_disappear
-Suddenly the ghostly ship to the north disappears!	src/new_cmds.c:2730	send_to_room	ghost_ship_disappear
-Suddenly the dock to the south disappears!	src/new_cmds.c:2737	send_to_room	ghost_ship_disappear
-The ghost ship has set sail!	src/new_cmds.c:2738	send_to_room	ghost_ship_disappear
 Sharpen what?	src/new_cmds.c:2753	send_to_char	do_sharpen
 This weapon can not be sharpened.	src/new_cmds.c:2759	send_to_char	do_sharpen
 This weapon can not be sharpened any further.	src/new_cmds.c:2766	send_to_char	do_sharpen
 You're too busy to be sharpening anything!	src/new_cmds.c:2771	send_to_char	do_sharpen
-sharpens	src/new_cmds.c:2781	act	do_sharpen
-to perfection.	src/new_cmds.c:2781	act	do_sharpen
 You sharpen it to perfection!	src/new_cmds.c:2782	send_to_char	do_sharpen
 You damage it trying to sharpen it!	src/new_cmds.c:2789	send_to_char	do_sharpen
-You can't seem to find anything edible.	src/new_cmds2.c:73	send_to_char	do_scrounge
-You need to be in the wilderness to scrounge!	src/new_cmds2.c:112	send_to_char	do_scrounge
 You find	src/new_cmds2.c:122	act	do_scrounge
 You capture and kill	src/new_cmds2.c:124	act	do_scrounge
-You can't seem to find anything edible.	src/new_cmds2.c:131	send_to_char	do_scrounge
-Aid who?	src/new_cmds2.c:153	send_to_char	do_first_aid
-You wish you could.	src/new_cmds2.c:157	send_to_char	do_first_aid
-They don't really need first aid.	src/new_cmds2.c:162	send_to_char	do_first_aid
-You apply some makeshift bandages to	src/new_cmds2.c:172	act	do_first_aid
-You fumble and ruin the bandages.	src/new_cmds2.c:183	send_to_char	do_first_aid
-You'd better leave all the martial arts to fighters.	src/new_cmds2.c:201	send_to_char	do_disarm
-Disarm who?	src/new_cmds2.c:209	send_to_char	do_disarm
-Just try removing your weapon instead.	src/new_cmds2.c:214	send_to_char	do_disarm
-doesn't have anything to disarm.	src/new_cmds2.c:219	act	do_disarm
-You can't disarm them if you aren't fighting them!	src/new_cmds2.c:225	send_to_char	do_disarm
-You disarm	src/new_cmds2.c:233	act	do_disarm
-goes flying!	src/new_cmds2.c:233	act	do_disarm
-You try to disarm	src/new_cmds2.c:244	act	do_disarm
-but fail, tumbling to the ground in the process!	src/new_cmds2.c:244	act	do_disarm
-Link your mind to whose?	src/new_cmds2.c:262	send_to_char	do_mindlink
-You wish you could.	src/new_cmds2.c:266	send_to_char	do_mindlink
 stares at you blankly.	src/new_cmds2.c:273	act	do_mindlink
 for a while and then falls flat on	src/new_cmds2.c:274	act	do_mindlink
 stares at	src/new_cmds2.c:274	act	do_mindlink
-You fail.	src/new_cmds2.c:276	send_to_char	do_mindlink
 There's too much going on to establish a mind link.	src/new_cmds2.c:281	send_to_char	do_mindlink
 You don't have enough life to spare!	src/new_cmds2.c:286	send_to_char	do_mindlink
 They don't have enough energy to spare!	src/new_cmds2.c:291	send_to_char	do_mindlink
@@ -1984,9 +1542,6 @@ stare at each other for a while and drop to the ground in unison!	src/new_cmds2.
 for a while and then falls flat on	src/new_cmds2.c:309	act	do_mindlink
 stares at	src/new_cmds2.c:309	act	do_mindlink
 You feel a little drained...	src/new_cmds2.c:314	send_to_char	do_mindlink
-You're fucking blind, you can't find anything!!	src/new_cmds2.c:512	send_to_char	do_detect
-You carefully check the room...	src/new_cmds2.c:516	send_to_char	do_detect
-You can't seem to find anything.	src/new_cmds2.c:520	send_to_char	do_detect
 You notice something funny about the ceiling.	src/new_cmds2.c:531	buffered:sprintf	do_detect
 You notice something funny about the floor.	src/new_cmds2.c:533	buffered:sprintf	do_detect
 You notice something funny about the	src/new_cmds2.c:535	buffered:sprintf	do_detect
@@ -1995,17 +1550,8 @@ You inhale and blow deeply on	src/new_cmds2.c:636	act	black_horn
 A deep, foreboding tone resounds through the air.	src/new_cmds2.c:637	send_to_char	black_horn
 blows on	src/new_cmds2.c:638	act	black_horn
 A deep, foreboding tone resounds through the air.	src/new_cmds2.c:639	act	black_horn
-You'd better leave all the martial arts to others.	src/new_cmds2.c:700	send_to_char	do_serpent_kick
-Kick who?	src/new_cmds2.c:711	send_to_char	do_serpent_kick
-Aren't we funny today...	src/new_cmds2.c:717	send_to_char	do_serpent_kick
-I must have	src/new_cmds2.c:804	buffered:sprintf	hunt_items
-the south	src/new_cmds2.c:896	buffered:sprintf	flow_room
-the north	src/new_cmds2.c:900	buffered:sprintf	flow_room
 the west	src/new_cmds2.c:905	buffered:sprintf	flow_room
 the east	src/new_cmds2.c:910	buffered:sprintf	flow_room
-A disturbing feeling washes over your body.	src/new_cmds2.c:1005	act	do_turn
-You feel your body twist horribly and disintegrate into nothing!	src/new_cmds2.c:1013	act	do_turn
-You are suddenly terrified!	src/new_cmds2.c:1020	act	do_turn
 SYSERR: deleting crash file	src/objsave.c:160	buffered:sprintf	Crash_delete_file
 SYSERR: deleting crash file	src/objsave.c:169	buffered:sprintf	Crash_delete_file
 SYSERR: checking for crash file	src/objsave.c:187	buffered:sprintf	Crash_delete_crashfile
@@ -2016,9 +1562,6 @@ UNKNOWN!	src/objsave.c:243	buffered:strcpy	Crash_clean_file
 's rent file.	src/objsave.c:254	buffered:sprintf	Crash_clean_file
 TimedOut	src/objsave.c:305	buffered:strcat	Crash_listrent
 SYSERR: READING OBJECT FILE	src/objsave.c:481	buffered:sprintf	Crash_load
-********************* NOTICE *********************	src/objsave.c:483	send_to_char	Crash_load
-Contact a God for assistance.	src/objsave.c:483	send_to_char	Crash_load
-There was a problem loading your objects from disk.	src/objsave.c:483	send_to_char	Crash_load
 entering game with no equipment.	src/objsave.c:488	buffered:sprintf	Crash_load
 entering game, rented equipment lost (no $).	src/objsave.c:502	buffered:sprintf	Crash_load
 un-renting and entering game.	src/objsave.c:518	buffered:sprintf	Crash_load
@@ -2068,7 +1611,6 @@ ____THIS IS AN ERROR, PLEASE REPORT!____	src/oc.c:131	buffered:strcpy	oc_show_li
 ) PICKPROOF	src/oedit.c:465	buffered:sprintf	oedit_disp_container_flags_menu
 Container flags:	src/oedit.c:465	buffered:sprintf	oedit_disp_container_flags_menu
 Enter flag, 0 to quit :	src/oedit.c:465	buffered:sprintf	oedit_disp_container_flags_menu
-Cannot assign a script until the object is saved at least once.	src/oedit.c:481	send_to_char	oedit_disp_script_menu
 ) Script Flags:	src/oedit.c:492	buffered:sprintf	oedit_disp_script_menu
 Enter choice (0 to quit) :	src/oedit.c:499	buffered:strcat	oedit_disp_script_menu
 Current flags :	src/oedit.c:520	buffered:sprintf	oedit_disp_script_flags
@@ -2079,7 +1621,6 @@ Enter script flags (0 to quit) :	src/oedit.c:520	buffered:sprintf	oedit_disp_scr
 ) Keyword:	src/oedit.c:542	buffered:sprintf	oedit_disp_extradesc_menu
 Enter choice :	src/oedit.c:542	buffered:sprintf	oedit_disp_extradesc_menu
 Extra desc menu	src/oedit.c:542	buffered:sprintf	oedit_disp_extradesc_menu
-Enter affection to modify (0 to quit) :	src/oedit.c:591	send_to_char	oedit_disp_prompt_apply_menu
 Enter drink type :	src/oedit.c:612	buffered:sprintf	oedit_liquid_type
 Enter apply type (0 is no apply) :	src/oedit.c:633	send_to_char	oedit_disp_apply_menu
 Enter perm spell effect :	src/oedit.c:653	send_to_char	oedit_disp_spell_menu
@@ -2123,51 +1664,13 @@ Wear flags:	src/oedit.c:920	buffered:sprintf	oedit_disp_wear_menu
 ) Values :	src/oedit.c:973	buffered:snprintf	oedit_disp_menu
 ) Wear flags :	src/oedit.c:973	buffered:snprintf	oedit_disp_menu
 Enter choice :	src/oedit.c:973	buffered:snprintf	oedit_disp_menu
-Saving object to memory.	src/oedit.c:1030	send_to_char	oedit_parse
 edits obj	src/oedit.c:1032	buffered:sprintf	oedit_parse
-Invalid choice!	src/oedit.c:1043	send_to_char	oedit_parse
-Do you wish to save this object internally?	src/oedit.c:1044	send_to_char	oedit_parse
-Do you wish to save this object internally? :	src/oedit.c:1057	send_to_char	oedit_parse
-Enter namelist :	src/oedit.c:1065	send_to_char	oedit_parse
-Enter short desc :	src/oedit.c:1069	send_to_char	oedit_parse
-Enter long desc :-	src/oedit.c:1073	send_to_char	oedit_parse
-Enter action description:	src/oedit.c:1079	write_to_output	oedit_parse
-Enter weight :	src/oedit.c:1101	send_to_char	oedit_parse
-Enter cost (10000 max):	src/oedit.c:1105	send_to_char	oedit_parse
-Enter percent chance	src/oedit.c:1110	send_to_char	oedit_parse
-of the item loading :	src/oedit.c:1110	send_to_char	oedit_parse
-Enter timer :	src/oedit.c:1116	send_to_char	oedit_parse
-Invalid choice, try again :	src/oedit.c:1184	send_to_char	oedit_parse
-That's not a valid choice!	src/oedit.c:1219	send_to_char	oedit_parse
-Modifier :	src/oedit.c:1417	send_to_char	oedit_parse
-Enter script name:	src/oedit.c:1436	send_to_char	oedit_parse
-Enter keywords, separated by spaces :-	src/oedit.c:1506	send_to_char	oedit_parse
-Enter the extra description:	src/oedit.c:1513	write_to_output	oedit_parse
-VNUM to edit.	src/olc.c:113	buffered:sprintf	do_olc
-Save which zone?	src/olc.c:125	send_to_char	do_olc
-Specify a new zone number.	src/olc.c:138	send_to_char	do_olc
-Yikes! Stop that, someone will get hurt!	src/olc.c:143	send_to_char	do_olc
-is currently being edited by	src/olc.c:157	buffered:sprintf	do_olc
-Sorry, there is no zone for that number!	src/olc.c:172	send_to_char	do_olc
-You do not have permission to edit this zone.	src/olc.c:181	send_to_char	do_olc
-Saving all rooms in zone.	src/olc.c:189	send_to_char	do_olc
 saves rooms for zone	src/olc.c:190	buffered:sprintf	do_olc
-Saving all zone information.	src/olc.c:196	send_to_char	do_olc
 saves zone info for zone	src/olc.c:197	buffered:sprintf	do_olc
-Saving all objects in zone.	src/olc.c:203	send_to_char	do_olc
 saves objects for zone	src/olc.c:204	buffered:sprintf	do_olc
-Saving all mobiles in zone.	src/olc.c:210	send_to_char	do_olc
 saves mobs for zone	src/olc.c:211	buffered:sprintf	do_olc
-Saving all shops in zone.	src/olc.c:217	send_to_char	do_olc
 saves shops for zone	src/olc.c:218	buffered:sprintf	do_olc
-starts using OLC.	src/olc.c:275	act	do_olc
-The database is up to date.	src/olc.c:326	send_to_char	olc_saveall
-saved for zone	src/olc.c:334	buffered:sprintf	olc_saveall
 saves all	src/olc.c:343	buffered:sprintf	olc_saveall
-The following OLC components need saving:-	src/olc.c:352	send_to_char	olc_saveinfo
-The database is up to date.	src/olc.c:354	send_to_char	olc_saveinfo
-for zone	src/olc.c:359	buffered:sprintf	olc_saveinfo
-stops using OLC.	src/olc.c:514	act	cleanup_olc
 rides in on your mom.	src/poof.c:39	buffered:strcpy	write_poofs
 rides out on your mom.	src/poof.c:40	buffered:strcpy	write_poofs
 undefined	src/redit.c:313	buffered:sprintf	redit_save_to_disk
@@ -2193,7 +1696,6 @@ Room flags:	src/redit.c:532	buffered:sprintf	redit_disp_flag_menu
 Enter sector type :	src/redit.c:554	send_to_char	redit_disp_sector_menu
 Current flags :	src/redit.c:575	buffered:sprintf	redit_disp_script_flags
 Enter script flags (0 to quit) :	src/redit.c:575	buffered:sprintf	redit_disp_script_flags
-Cannot assign a script until the room is saved at least once.	src/redit.c:587	send_to_char	redit_disp_script_menu
 ) Script Flags:	src/redit.c:600	buffered:sprintf	redit_disp_script_menu
 Enter choice (0 to quit) :	src/redit.c:606	buffered:strcat	redit_disp_script_menu
 ) Copy another room description	src/redit.c:621	buffered:snprintf	redit_disp_menu
@@ -2213,28 +1715,6 @@ Enter choice (0 to quit) :	src/redit.c:606	buffered:strcat	redit_disp_script_men
 Enter choice :	src/redit.c:621	buffered:snprintf	redit_disp_menu
 ] Room zone: [	src/redit.c:621	buffered:snprintf	redit_disp_menu
 edits room	src/redit.c:685	buffered:sprintf	redit_parse
-Room saved to memory.	src/redit.c:689	send_to_char	redit_parse
-Invalid choice!	src/redit.c:697	send_to_char	redit_parse
-Do you wish to save this room internally? :	src/redit.c:698	send_to_char	redit_parse
-Do you wish to save this room internally? :	src/redit.c:709	send_to_char	redit_parse
-Enter room name:-	src/redit.c:715	send_to_char	redit_parse
-Enter room description:	src/redit.c:721	write_to_output	redit_parse
-Enter virtual number of room to copy :	src/redit.c:773	send_to_char	redit_parse
-Invalid choice!	src/redit.c:781	send_to_char	redit_parse
-That's not a valid choice!	src/redit.c:802	send_to_char	redit_parse
-Invalid choice!	src/redit.c:821	send_to_char	redit_parse
-Exit to room number :	src/redit.c:834	send_to_char	redit_parse
-Enter exit description:	src/redit.c:839	write_to_output	redit_parse
-Enter keywords :	src/redit.c:849	send_to_char	redit_parse
-Enter key number :	src/redit.c:853	send_to_char	redit_parse
-Try again :	src/redit.c:869	send_to_char	redit_parse
-That room does not exist, try again :	src/redit.c:879	send_to_char	redit_parse
-That's not a valid choice!	src/redit.c:908	send_to_char	redit_parse
-Enter keywords, separated by spaces :	src/redit.c:957	send_to_char	redit_parse
-Enter extra description:	src/redit.c:962	write_to_output	redit_parse
-You can't edit the next extra desc without completing this one.	src/redit.c:972	send_to_char	redit_parse
-That room does not exist, try again :	src/redit.c:999	send_to_char	redit_parse
-Enter script name:	src/redit.c:1021	send_to_char	redit_parse
 [Lua] Invalid room specified in lua_direction.	src/scripts.c:327	buffered:sprintf	lua_direction
 killed by	src/scripts.c:1247	buffered:sprintf	lua_raw_kill
 killed at	src/scripts.c:1250	buffered:sprintf	lua_raw_kill
@@ -2298,44 +1778,10 @@ Enter choice :	src/sedit.c:747	buffered:sprintf	sedit_types_menu
 ) Shop flags :	src/sedit.c:765	buffered:snprintf	sedit_disp_menu
 -- Shop Number : [	src/sedit.c:765	buffered:snprintf	sedit_disp_menu
 Enter Choice :	src/sedit.c:765	buffered:snprintf	sedit_disp_menu
-Field must be numerical, try again :	src/sedit.c:822	send_to_char	sedit_parse
-Saving shop to memory.	src/sedit.c:834	send_to_char	sedit_parse
 edits shop	src/sedit.c:836	buffered:sprintf	sedit_parse
-Invalid choice!	src/sedit.c:846	send_to_char	sedit_parse
-Do you wish to save the shop? :	src/sedit.c:847	send_to_char	sedit_parse
-Do you wish to save the changes to the shop? (y/n) :	src/sedit.c:859	send_to_char	sedit_parse
-Enter virtual number of shop keeper :	src/sedit.c:866	send_to_char	sedit_parse
-Enter new value :	src/sedit.c:950	send_to_char	sedit_parse
-Enter new text :	src/sedit.c:954	send_to_char	sedit_parse
-Delete which entry? :	src/sedit.c:967	send_to_char	sedit_parse
-Enter new product virtual number :	src/sedit.c:980	send_to_char	sedit_parse
-Delete which product? :	src/sedit.c:985	send_to_char	sedit_parse
-Enter new room virtual number,	src/sedit.c:998	send_to_char	sedit_parse
-or 1 to make the keeper sell anywhere :	src/sedit.c:999	send_to_char	sedit_parse
-Delete which room? :	src/sedit.c:1013	send_to_char	sedit_parse
-That mobile does not exist, try again :	src/sedit.c:1064	send_to_char	sedit_parse
-Enter namelist (return for none) :-	src/sedit.c:1095	send_to_char	sedit_parse
-That object does not exist, try again :	src/sedit.c:1107	send_to_char	sedit_parse
-That room does not exist, try again :	src/sedit.c:1124	send_to_char	sedit_parse
-A negative amount? Try selling me something.	src/shop.c:487	buffered:sprintf	shopping_buy
-What do you want to buy??	src/shop.c:494	buffered:sprintf	shopping_buy
-I only have	src/shop.c:560	buffered:sprintf	shopping_buy
-to sell you.	src/shop.c:560	buffered:sprintf	shopping_buy
-You can only afford	src/shop.c:562	buffered:sprintf	shopping_buy
-You can only hold	src/shop.c:564	buffered:sprintf	shopping_buy
-You can only carry	src/shop.c:566	buffered:sprintf	shopping_buy
-Something screwy only gave you	src/shop.c:568	buffered:sprintf	shopping_buy
 Illegal return value of	src/shop.c:622	buffered:sprintf	get_selling_obj
 from trade_with() (shop.c)	src/shop.c:622	buffered:sprintf	get_selling_obj
 An error has occurred.	src/shop.c:625	buffered:sprintf	get_selling_obj
-A negative amount? Try buying something.	src/shop.c:746	buffered:sprintf	shopping_sell
-What do you want to sell??	src/shop.c:753	buffered:sprintf	shopping_sell
-You only have	src/shop.c:784	buffered:sprintf	shopping_sell
-I can only afford to buy	src/shop.c:787	buffered:sprintf	shopping_sell
-Something really screwy made me buy	src/shop.c:790	buffered:sprintf	shopping_sell
-What do you want me to valuate??	src/shop.c:828	buffered:sprintf	shopping_value
-I'll give you	src/shop.c:836	buffered:sprintf	shopping_value
-gold coins for that!	src/shop.c:836	buffered:sprintf	shopping_value
 Unlimited	src/shop.c:853	buffered:strcpy	list_object
 (partially used)	src/shop.c:868	buffered:strcat	list_object
 ## Available Item Cost	src/shop.c:892	buffered:strcpy	shopping_list
@@ -2371,15 +1817,6 @@ You have no practice sessions remaining.	src/spec_procs.c:166	buffered:strcpy	li
 practice session	src/spec_procs.c:168	buffered:sprintf	list_skills
 You know of the following	src/spec_procs.c:171	buffered:sprintf	list_skills
 **OVERFLOW**	src/spec_procs.c:180	buffered:strcat	list_skills
-looks at you and then breaks out in a fit of laughter!	src/spec_procs.c:662	act	puff
-wonders where she left that darn wand.	src/spec_procs.c:672	act	puff
-does female stuff.	src/spec_procs.c:686	act	puff
-contemplates the meaning of life.	src/spec_procs.c:691	act	puff
-rocks out to some funky beats.	src/spec_procs.c:702	act	puff
-'s hand coming out of your coin purse.	src/spec_procs.c:1113	buffered:sprintf	mini_thief
-You catch	src/spec_procs.c:1113	buffered:sprintf	mini_thief
-'s hand going into your coin purse.	src/spec_procs.c:1123	buffered:sprintf	mini_thief
-You catch	src/spec_procs.c:1123	buffered:sprintf	mini_thief
 sees the knight dressed in red and gives a battle cry!	src/spec_procs.c:1197	act	black_undead_knight
 sees the knight dressed in black and gives a battle cry!	src/spec_procs.c:1256	act	red_undead_knight
 shouts, 'I said give me your ticket!'	src/spec_procs.c:1643	act	conductor
@@ -2393,8 +1830,6 @@ Your skin is pummeled by the forces of earth, breaking your bones...	src/spec_pr
 Your flesh is peeled from your bones as the forcesof air pummel you...	src/spec_procs.c:2041	send_to_char	elemental_room
 You struggle for air as your lungs fill with water...	src/spec_procs.c:2044	send_to_char	elemental_room
 The forces of nature slowly rip you apart...	src/spec_procs.c:2047	send_to_char	elemental_room
-You are DYING!	src/spec_procs.c:2050	send_to_char	elemental_room
-You ignore the elements that barrage you.	src/spec_procs.c:2061	send_to_char	elemental_room
 Welcome back	src/spec_procs.c:2089	send_to_char	pray_for_items
 You feel the power pulse through your veins again!	src/spec_procs.c:2092	send_to_char	pray_for_items
 Welcome back	src/spec_procs.c:2097	send_to_char	pray_for_items
@@ -2471,12 +1906,10 @@ life. As you near a narrow, well lit passage, Swiss turns around and vanishes	sr
 turns, winding through the various tunnels as if he's been doing it all his	src/spec_procs2.c:1372	send_to_char	evillead
 killed by Medusa special at	src/spec_procs2.c:1571	buffered:sprintf	medusa
 all.black	src/spec_procs2.c:1633	buffered:sprintf	eq_thief
-humiliates you and blocks your way.	src/spec_procs2.c:1837	act	no_move_east
 Sorry, I only serve the house owner.	src/spec_procs2.c:1888	buffered:sprintf	key_seller
 I only sell keys, currently.	src/spec_procs2.c:1899	buffered:sprintf	key_seller
 You can't afford a key.	src/spec_procs2.c:1906	buffered:sprintf	key_seller
 You can buy a key for 10,000 gold coins.	src/spec_procs2.c:1925	buffered:sprintf	key_seller
-humiliates you and blocks your way.	src/spec_procs2.c:2047	act	no_move_west
 says 'I cannot let you pass.'	src/spec_procs2.c:2068	act	no_move_north
 default case reached in clerk special - tell a god	src/spec_procs3.c:96	send_to_char	clerk
 BUY CITIZENSHIP, if you're interested.	src/spec_procs3.c:114	buffered:sprintf	clerk
@@ -2497,9 +1930,6 @@ stares at	src/spec_procs3.c:303	act	con_seller
 falls, stunned.	src/spec_procs3.c:305	act	con_seller
 ? This is not a shawade. Try it again. This time with fewing.	src/spec_procs3.c:380	buffered:sprintf	quan_lo
 What was that,	src/spec_procs3.c:380	buffered:sprintf	quan_lo
-The room starts to move!	src/spec_procs3.c:418	send_to_char	alien_elevator
-You hear a loud howling in the distance.	src/spec_procs3.c:438	send_to_zone	werewolf
-falls to the ground, screaming in agony!	src/spec_procs3.c:497	act	field_object
 You break	src/spec_procs3.c:627	act	mirror
 into tiny pieces!	src/spec_procs3.c:627	act	mirror
 into a million pieces!	src/spec_procs3.c:628	act	mirror
@@ -2522,18 +1952,10 @@ The talisman of	src/spec_procs3.c:976	buffered:sprintf	elements_master_column
 glows softly and your vision fades. When you wake...	src/spec_procs3.c:976	buffered:sprintf	elements_master_column
 You feel a tingling sensation and your vision fades. When you wake...	src/spec_procs3.c:979	buffered:sprintf	elements_master_column
 The four talismans glow softly and your vision fades. When you wake...	src/spec_procs3.c:990	buffered:sprintf	elements_master_column
-vanishes in a brilliant flash of light.	src/spec_procs3.c:994	act	elements_master_column
-appears in a brilliant flash of light.	src/spec_procs3.c:998	act	elements_master_column
-A wave of power surges through you and you feel dizzy.	src/spec_procs3.c:1015	buffered:sprintf	elements_platforms
-disappears in a brilliant flash of light.	src/spec_procs3.c:1017	act	elements_platforms
-appears in a brilliant flash of light.	src/spec_procs3.c:1020	act	elements_platforms
 A green cylinder of light extends upwards from the pillar.	src/spec_procs3.c:1100	buffered:sprintf	elements_load_cylinders
 A yellow cylinder of light extends upwards from the pillar.	src/spec_procs3.c:1107	buffered:sprintf	elements_load_cylinders
 A red cylinder of light extends upwards from the pillar.	src/spec_procs3.c:1114	buffered:sprintf	elements_load_cylinders
 A blue cylinder of light extends upwards from the pillar.	src/spec_procs3.c:1121	buffered:sprintf	elements_load_cylinders
-You begin to feel very dizzy and the world around you fades...	src/spec_procs3.c:1204	send_to_char	elements_galeru_alive
-disappears in a brilliant flash of light.	src/spec_procs3.c:1205	act	elements_galeru_alive
-appears in a brilliant flash of light.	src/spec_procs3.c:1209	act	elements_galeru_alive
 eyes and utters the words, '%s'.	src/spell_parser.c:295	buffered:sprintf	say_spell
 and utters the words, '%s'.	src/spell_parser.c:297	buffered:sprintf	say_spell
 stares at	src/spell_parser.c:297	buffered:sprintf	say_spell
@@ -2546,18 +1968,14 @@ stares at	src/spell_parser.c:312	buffered:sprintf	say_spell
 utters the words, '%s'.	src/spell_parser.c:317	buffered:sprintf	say_spell
 stares at you and utters the words, '	src/spell_parser.c:337	buffered:sprintf	say_spell
 will on you...	src/spell_parser.c:340	buffered:sprintf	say_spell
-'s magic fizzles out and dies.	src/spell_parser.c:420	act	call_magic
-'s will fades, disturbed by an unseen force.	src/spell_parser.c:425	act	call_magic
-White light from no particular source suddenly fills the room, then vanishes.	src/spell_parser.c:447	act	call_magic
 SYSERR: Unknown spellnum	src/spell_parser.c:532	buffered:sprintf	call_magic
 in manual assign	src/spell_parser.c:532	buffered:sprintf	call_magic
-There is nothing to here to affect with	src/spell_parser.c:676	act	mag_objectmagic
-You recite	src/spell_parser.c:684	act	mag_objectmagic
-which dissolves.	src/spell_parser.c:684	act	mag_objectmagic
 SYSERR: cast_spell trying to call spellnum	src/spell_parser.c:834	buffered:sprintf	cast_spell
-You can't cast anything yet!	src/spell_parser.c:847	send_to_char	cast_spell
+You dream about great magical powers.	src/spell_parser.c:856	send_to_char	cast_spell
+You cannot concentrate while resting.	src/spell_parser.c:859	send_to_char	cast_spell
+Impossible! You can't concentrate enough!	src/spell_parser.c:865	send_to_char	cast_spell
+You can't do much of anything like this!	src/spell_parser.c:868	send_to_char	cast_spell
 You can only cast this spell upon yourself!	src/spell_parser.c:881	send_to_char	cast_spell
-You can only will this power upon yourself!	src/spell_parser.c:883	send_to_char	cast_spell
 You cannot cast this spell upon yourself!	src/spell_parser.c:889	send_to_char	cast_spell
 You cannot will this power upon yourself!	src/spell_parser.c:891	send_to_char	cast_spell
 You can't cast this spell if you're not in a group!	src/spell_parser.c:897	send_to_char	cast_spell
@@ -2577,7 +1995,6 @@ should the power be willed?	src/spell_parser.c:1045	buffered:sprintf	do_cast
 You shouldn't cast that on yourself -- could be bad for your health!	src/spell_parser.c:1056	send_to_char	do_cast
 Exerting that power on yourself could be harmful!	src/spell_parser.c:1059	send_to_char	do_cast
 Cannot find the target of your spell!	src/spell_parser.c:1066	send_to_char	do_cast
-Cannot find the target of your will!	src/spell_parser.c:1068	send_to_char	do_cast
 You haven't the energy to cast that spell!	src/spell_parser.c:1074	send_to_char	do_cast
 You haven't the energy to will that power!	src/spell_parser.c:1076	send_to_char	do_cast
 SYSERR: attempting assign to illegal spellnum	src/spell_parser.c:1123	buffered:sprintf	spell_level
@@ -2585,132 +2002,25 @@ SYSERR: attempting assign to illegal spellnum	src/spell_parser.c:1123	buffered:s
 SYSERR: assigning '	src/spell_parser.c:1129	buffered:sprintf	spell_level
 ' to illegal level	src/spell_parser.c:1136	buffered:sprintf	spell_level
 SYSERR: assigning '	src/spell_parser.c:1136	buffered:sprintf	spell_level
-is filled.	src/spells.c:112	act	ASPELL
-You cannot create water in that!	src/spells.c:116	send_to_char	ASPELL
-The gods deny thy magick.	src/spells.c:175	send_to_char	ASPELL
-You can only will this power upon yourself!	src/spells.c:180	send_to_char	ASPELL
-The magic words fail to form properly.	src/spells.c:185	send_to_char	ASPELL
-The magic fails utterly!	src/spells.c:191	send_to_char	ASPELL
-The world around you turns black and you suddenly find yourself..	src/spells.c:201	send_to_char	ASPELL
-slowly fades out of existence and is gone.	src/spells.c:203	act	ASPELL
-Who do you want this done to?	src/spells.c:211	send_to_char	ASPELL
-You lack the proper glyphs to perform this magick.	src/spells.c:231	send_to_char	ASPELL
-Sorry, but you need to be summonable to summon other players.	src/spells.c:239	send_to_char	ASPELL
 just tried to summon you to:	src/spells.c:246	buffered:sprintf	ASPELL
 just tried to summon you to:	src/spells.c:272	buffered:sprintf	ASPELL
-Your spell backfires!	src/spells.c:303	send_to_char	ASPELL
-disappears suddenly.	src/spells.c:304	act	ASPELL
-arrives suddenly.	src/spells.c:314	act	ASPELL
 just tried to summon you to:	src/spells.c:322	buffered:sprintf	ASPELL
-disappears suddenly.	src/spells.c:332	act	ASPELL
-arrives suddenly.	src/spells.c:342	act	ASPELL
 has summoned you!	src/spells.c:345	act	ASPELL
-You have a strange dream about falling...	src/spells.c:351	send_to_char	ASPELL
-Your magick suddenly dissolves into a wash of brilliant colours, and then, nothing.	src/spells.c:370	send_to_char	ASPELL
 is being carried by	src/spells.c:378	buffered:sprintf	ASPELL
 is being worn by	src/spells.c:390	buffered:sprintf	ASPELL
 's location is uncertain.	src/spells.c:394	buffered:sprintf	ASPELL
-You sense nothing.	src/spells.c:403	send_to_char	ASPELL
-You like yourself even better!	src/spells.c:415	send_to_char	ASPELL
-Your victim is protected by sanctuary!	src/spells.c:417	send_to_char	ASPELL
-Your victim resists!	src/spells.c:419	send_to_char	ASPELL
-You can't have any followers of your own!	src/spells.c:421	send_to_char	ASPELL
-You fail.	src/spells.c:423	send_to_char	ASPELL
-Sorry, following in circles can not be allowed.	src/spells.c:427	send_to_char	ASPELL
-Your victim resists!	src/spells.c:430	send_to_char	ASPELL
-Your power fails to effect them because you are not an Outlaw!	src/spells.c:441	send_to_char	ASPELL
-in not an Outlaw!	src/spells.c:442	buffered:sprintf	ASPELL
-tried to control you but failed because	src/spells.c:442	buffered:sprintf	ASPELL
 just such a nice fellow?	src/spells.c:465	act	ASPELL
-You feel informed:	src/spells.c:489	send_to_char	ASPELL
-', Item type:	src/spells.c:490	buffered:sprintf	ASPELL
-Object '	src/spells.c:490	buffered:sprintf	ASPELL
-CASTING_EQ	src/spells.c:492	buffered:strcat	ASPELL
-Item will give you following abilities:	src/spells.c:501	send_to_char	ASPELL
-Item is:	src/spells.c:507	send_to_char	ASPELL
-maximum charge	src/spells.c:535	buffered:sprintf	ASPELL
-Damage Dice is '	src/spells.c:541	buffered:sprintf	ASPELL
-for an average per-round damage of	src/spells.c:543	buffered:sprintf	ASPELL
-AC-apply is	src/spells.c:548	buffered:sprintf	ASPELL
-Can affect you as :	src/spells.c:560	send_to_char	ASPELL
-Permanent	src/spells.c:565	buffered:sprintf	ASPELL
-when equipped.	src/spells.c:565	buffered:sprintf	ASPELL
-Affects:	src/spells.c:571	buffered:sprintf	ASPELL
-Extra damage to:	src/spells.c:575	buffered:sprintf	ASPELL
-You cannot identify them yet.	src/spells.c:584	send_to_char	ASPELL
-The magicks fail horribly!	src/spells.c:589	send_to_char	ASPELL
-days and	src/spells.c:599	buffered:sprintf	ASPELL
-hours old.	src/spells.c:599	buffered:sprintf	ASPELL
-cm, Weight	src/spells.c:604	buffered:sprintf	ASPELL
-glows blue.	src/spells.c:647	act	ASPELL
-glows red.	src/spells.c:652	act	ASPELL
-glows yellow.	src/spells.c:655	act	ASPELL
-Already a werewolf.	src/spells.c:668	send_to_char	ASPELL
-Already a creature of the night.	src/spells.c:673	send_to_char	ASPELL
-You feel a strange sensation in your bones...	src/spells.c:676	send_to_char	ASPELL
-Specify a target.	src/spells.c:682	send_to_char	ASPELL
-You are splashed in the face with HOT coffee,	src/spells.c:696	send_to_char	ASPELL
-but feel much more sober.	src/spells.c:697	send_to_char	ASPELL
-The bowels of hell open beneath your feet!!	src/spells.c:714	send_to_char	ASPELL
-conjures the flames of hell upon	src/spells.c:717	act	ASPELL
-enemies!!	src/spells.c:717	act	ASPELL
-The fires of hell bring blisters on your skin!!	src/spells.c:731	act	ASPELL
-The fires of hell scorch the skin of	src/spells.c:733	act	ASPELL
-The fires of hell bring you to your knees!	src/spells.c:739	act	ASPELL
-The fires of hell bring	src/spells.c:741	act	ASPELL
-The fires of hell overcome you!!	src/spells.c:748	act	ASPELL
-The soul of	src/spells.c:751	act	ASPELL
-is charred by the flames of hell!	src/spells.c:751	act	ASPELL
-The flames of hell spring up around you!!	src/spells.c:759	act	ASPELL
-Already a vampire.	src/spells.c:774	send_to_char	ASPELL
-Already a creature of the night.	src/spells.c:779	send_to_char	ASPELL
-You feel a strange sensation in your blood!	src/spells.c:782	send_to_char	ASPELL
-Specify a target.	src/spells.c:788	send_to_char	ASPELL
-You can sense poison in your blood.	src/spells.c:801	send_to_char	ASPELL
-You feel healthy.	src/spells.c:803	send_to_char	ASPELL
-is poisoned.	src/spells.c:808	act	ASPELL
-is healthy.	src/spells.c:811	act	ASPELL
-has been contaminated.	src/spells.c:823	act	ASPELL
-is safe for consumption.	src/spells.c:826	act	ASPELL
-You sense that it should not be consumed.	src/spells.c:830	send_to_char	ASPELL
-glows blue.	src/spells.c:858	act	ASPELL
-glows red.	src/spells.c:863	act	ASPELL
-glows yellow.	src/spells.c:866	act	ASPELL
-You begin to meditate deeply, focusing your thoughts only on healing.	src/spells.c:873	send_to_char	ASPELL
-sinks into a deep, meditative sleep.	src/spells.c:875	act	ASPELL
 You can't make anything useful from	src/spells.c:892	act	ASPELL
 and creates an arrow.	src/spells.c:904	act	ASPELL
 takes a strip of cloth from	src/spells.c:904	act	ASPELL
 You create an arrow from	src/spells.c:906	act	ASPELL
-With a searing pain, your psionic energy recoils!	src/spells.c:925	send_to_char	ASPELL
-Cannot find the target of your will!	src/spells.c:931	send_to_char	ASPELL
-You send out your mental voice...	src/spells.c:967	send_to_char	ASPELL
-Your psionic energy recoils!	src/spells.c:970	send_to_char	ASPELL
-intentions even from where you are, and change	src/spells.c:974	act	ASPELL
-Do you want it to get better or worse?	src/spells.c:1005	send_to_char	ASPELL
-You draw a magic circle on the ground.	src/spells.c:1019	send_to_char	ASPELL
-draws a magic circle on the ground.	src/spells.c:1020	act	ASPELL
-You begin to chant slowly, drawing power from	src/spells.c:1067	buffered:sprintf	ASPELL
 chants slowly, drawing power from	src/spells.c:1070	act	ASPELL
-appears before you!	src/spells.c:1075	buffered:sprintf	ASPELL
 glows brightly, and	src/spells.c:1075	buffered:sprintf	ASPELL
-You begin to chant, but nothing seems to happen.	src/spells.c:1082	send_to_char	ASPELL
 begins to chant slowly, but nothing seems to happen.	src/spells.c:1083	act	ASPELL
-You can only do this outdoors!	src/spells.c:1105	send_to_char	ASPELL
-Your incantation brings the heavens down upon your victims!	src/spells.c:1109	send_to_char	ASPELL
 finishes	src/spells.c:1110	act	ASPELL
 incantation, bright lights from the heavens streak downward towards you.	src/spells.c:1110	act	ASPELL
-You divide yourself in two!	src/spells.c:1152	send_to_char	ASPELL
-self in two!	src/spells.c:1153	act	ASPELL
-Your request for intervention falls on deaf ears.	src/spells.c:1185	send_to_char	ASPELL
-You pray for the intervention of your deity.	src/spells.c:1195	send_to_char	ASPELL
-grovels in the dirt and prays for a miracle.	src/spells.c:1196	act	ASPELL
-Suddenly, a portal of light appears out of nowhere!	src/spells.c:1207	send_to_char	ASPELL
-Suddenly, a portal of light appears out of nowhere!	src/spells.c:1208	act	ASPELL
-steps through the portal!	src/spells.c:1213	act	ASPELL
 's tattoo glows brightly for a second, and	src/tattoo.c:67	act	use_tattoo
 Files available to be edited:	src/tedit.c:68	send_to_char	do_tedit
-Invalid text editor option.	src/tedit.c:88	send_to_char	do_tedit
 hit death trap #	src/utils.c:146	buffered:sprintf	log_death_trap
 <INVALID BITVECTOR>	src/utils.c:250	buffered:strcpy	sprintbit
 UNDEFINED	src/utils.c:259	buffered:strcat	sprintbit
@@ -2745,10 +2055,7 @@ WHO request from	src/whod.c:333	buffered:sprintf	whod_loop
 A list of active players on	src/whod.c:341	buffered:sprintf	whod_loop
 [ ** Unknown ** ]	src/whod.c:409	buffered:sprintf	whod_loop
 Players :	src/whod.c:422	buffered:sprintf	whod_loop
-326 is the highest zone allowed.	src/zedit.c:117	send_to_char	zedit_new_zone
-A zone already covers that area.	src/zedit.c:127	send_to_char	zedit_new_zone
 creates new zone #	src/zedit.c:225	buffered:sprintf	zedit_new_zone
-Zone created.	src/zedit.c:227	send_to_char	zedit_new_zone
 /newindex	src/zedit.c:260	buffered:sprintf	zedit_create_index
 SYSERR: OLC: Failed to open	src/zedit.c:263	buffered:sprintf	zedit_create_index
 SYSERR: OLC: Failed to open	src/zedit.c:269	buffered:sprintf	zedit_create_index
@@ -2765,7 +2072,6 @@ Room zone:	src/zedit.c:574	buffered:snprintf	zedit_disp_menu
 [Command list]	src/zedit.c:574	buffered:snprintf	zedit_disp_menu
 Reset when no players are in zone.	src/zedit.c:589	buffered:snprintf	zedit_disp_menu
 Normal reset.	src/zedit.c:590	buffered:snprintf	zedit_disp_menu
-Never reset	src/zedit.c:591	buffered:snprintf	zedit_disp_menu
 ], Max :	src/zedit.c:599	buffered:sprintf	zedit_disp_menu
 ], Max :	src/zedit.c:608	buffered:sprintf	zedit_disp_menu
 ], Max :	src/zedit.c:617	buffered:sprintf	zedit_disp_menu
@@ -2791,53 +2097,6 @@ Enter your choice :	src/zedit.c:690	buffered:sprintf	zedit_disp_menu
 ) Put object in another object	src/zedit.c:711	buffered:sprintf	zedit_disp_comtype
 ) Remove a mobile/object from room	src/zedit.c:711	buffered:sprintf	zedit_disp_comtype
 What sort of command will this be? :	src/zedit.c:711	buffered:sprintf	zedit_disp_comtype
-Input mob's vnum :	src/zedit.c:733	send_to_char	zedit_disp_arg1
-Input object vnum :	src/zedit.c:740	send_to_char	zedit_disp_arg1
-Input the maximum number that can exist on the mud :	src/zedit.c:776	send_to_char	zedit_disp_arg2
 Enter exit number for door :	src/zedit.c:784	send_to_char	zedit_disp_arg2
-Input 0 for a mobile, 1 for an object:	src/zedit.c:787	send_to_char	zedit_disp_arg2
-Input 0 for loop start, 1 for loop finish:	src/zedit.c:790	send_to_char	zedit_disp_arg2
 Input location to equip :	src/zedit.c:821	send_to_char	zedit_disp_arg3
-Input the vnum of the container :	src/zedit.c:824	send_to_char	zedit_disp_arg3
-0) Door open	src/zedit.c:827	send_to_char	zedit_disp_arg3
-1) Door closed	src/zedit.c:827	send_to_char	zedit_disp_arg3
-2) Door locked	src/zedit.c:827	send_to_char	zedit_disp_arg3
-Enter state of the door :	src/zedit.c:827	send_to_char	zedit_disp_arg3
-Input the number of times to repeat the loop :	src/zedit.c:834	send_to_char	zedit_disp_arg3
-Input object's vnum :	src/zedit.c:840	send_to_char	zedit_disp_arg3
-Input mobile's vnum :	src/zedit.c:842	send_to_char	zedit_disp_arg3
-Saving zone info in memory.	src/zedit.c:874	send_to_char	zedit_parse
 edits zone info for room	src/zedit.c:876	buffered:sprintf	zedit_parse
-Invalid choice!	src/zedit.c:886	send_to_char	zedit_parse
-Do you wish to save the zone info? :	src/zedit.c:887	send_to_char	zedit_parse
-Do you wish to save the changes to the zone info? (y/n) :	src/zedit.c:899	send_to_char	zedit_parse
-No changes made.	src/zedit.c:903	send_to_char	zedit_parse
-What number in the list should the new command be? :	src/zedit.c:910	send_to_char	zedit_parse
-Which command do you wish to change? :	src/zedit.c:916	send_to_char	zedit_parse
-Which command do you wish to delete? :	src/zedit.c:922	send_to_char	zedit_parse
-Enter new zone name :	src/zedit.c:928	send_to_char	zedit_parse
-Enter new top of zone :	src/zedit.c:937	send_to_char	zedit_parse
-Enter new zone lifespan :	src/zedit.c:944	send_to_char	zedit_parse
-0) Never reset	src/zedit.c:950	send_to_char	zedit_parse
-1) Reset only when no players in zone	src/zedit.c:950	send_to_char	zedit_parse
-2) Normal reset	src/zedit.c:950	send_to_char	zedit_parse
-Enter new zone reset type :	src/zedit.c:950	send_to_char	zedit_parse
-Invalid choice, try again :	src/zedit.c:1004	send_to_char	zedit_parse
-Is this command dependent on the success of the previous one? (y/n)	src/zedit.c:1008	send_to_char	zedit_parse
-Try again :	src/zedit.c:1031	send_to_char	zedit_parse
-Must be a numeric value, try again :	src/zedit.c:1042	send_to_char	zedit_parse
-That mobile does not exist, try again :	src/zedit.c:1052	send_to_char	zedit_parse
-That object does not exist, try again :	src/zedit.c:1063	send_to_char	zedit_parse
-Must be a numeric value, try again :	src/zedit.c:1081	send_to_char	zedit_parse
-Try again :	src/zedit.c:1106	send_to_char	zedit_parse
-Try again :	src/zedit.c:1115	send_to_char	zedit_parse
-Try again :	src/zedit.c:1124	send_to_char	zedit_parse
-Must be a numeric value, try again :	src/zedit.c:1145	send_to_char	zedit_parse
-Try again :	src/zedit.c:1156	send_to_char	zedit_parse
-That object does not exist, try again :	src/zedit.c:1168	send_to_char	zedit_parse
-Try again :	src/zedit.c:1173	send_to_char	zedit_parse
-The loop must repeat at least once, try again :	src/zedit.c:1186	send_to_char	zedit_parse
-That object does not exist, try again :	src/zedit.c:1202	send_to_char	zedit_parse
-That mobile does not exist, try again :	src/zedit.c:1204	send_to_char	zedit_parse
-Try again (0-2) :	src/zedit.c:1232	send_to_char	zedit_parse
-Try again (0-240) :	src/zedit.c:1245	send_to_char	zedit_parse

@@ -1,15 +1,110 @@
 {
   "description": "Known Go player-facing strings with no C source and no world-data source. make string-census fails when a new one appears; each reason starts unreviewed and is settled by a human (data-driven text, transport framing, deliberate post-C addition, or a bug).",
-  "generated": "2026-11-20",
+  "generated": "2026-11-27",
   "segments": {
-    "Cannot access manager state.": {
-      "segment": "Cannot access manager state.",
-      "file": "pkg/session/wiz_system.go",
-      "line": 195,
-      "sink": ".Send",
-      "reason": "surface:no-c",
-      "evidence": "DP-1581: defensive nil-manager guard in wizlock; unreachable by players in a live server",
-      "firstSeen": "2026-09-23"
+    "A bribe of a couple hundred coins will make a guard look the other way while you fight.": {
+      "segment": "A bribe of a couple hundred coins will make a guard look the other way while you fight.",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 400,
+      "sink": ".npcSay",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "A spray of acid flows from your fingertips!": {
+      "segment": "A spray of acid flows from your fingertips!",
+      "file": "pkg/spells/affect_spells.go",
+      "line": 1075,
+      "sink": "sendToCaster",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "AUTO EXIT will show you the exits for every room.": {
+      "segment": "AUTO EXIT will show you the exits for every room.",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 392,
+      "sink": ".npcSay",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "An internal server error occurred. Your connection has been reset.": {
+      "segment": "An internal server error occurred. Your connection has been reset.",
+      "file": "pkg/session/session_pump.go",
+      "line": 92,
+      "sink": ".sendError",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.": {
+      "segment": "As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.",
+      "file": "pkg/spells/affect_spells.go",
+      "line": 1007,
+      "sink": "sendToCaster",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "For ansi color, type COLOR COMPLETE!": {
+      "segment": "For ansi color, type COLOR COMPLETE!",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 388,
+      "sink": ".npcSay",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "Get out of here before I call the guards!": {
+      "segment": "Get out of here before I call the guards!",
+      "file": "pkg/session/shop_cmds.go",
+      "line": 119,
+      "sink": "sendShopKeeperTell",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "Guards will attack you if you fight in front of them.": {
+      "segment": "Guards will attack you if you fight in front of them.",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 401,
+      "sink": ".npcSay",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "I don't trade with someone I can't see!": {
+      "segment": "I don't trade with someone I can't see!",
+      "file": "pkg/session/shop_cmds.go",
+      "line": 104,
+      "sink": ".NPCSayCommand",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "If you don't like something, use the IDEA command.": {
+      "segment": "If you don't like something, use the IDEA command.",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 405,
+      "sink": ".npcSay",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "If you see something out of place, use the BUG command.": {
+      "segment": "If you see something out of place, use the BUG command.",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 407,
+      "sink": ".npcSay",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "If you see something spelled incorrectly, use the TYPO command.": {
+      "segment": "If you see something spelled incorrectly, use the TYPO command.",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 409,
+      "sink": ".npcSay",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "It's always safest to quit in the temple.": {
+      "segment": "It's always safest to quit in the temple.",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 394,
+      "sink": ".npcSay",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
     },
     "Nice try.": {
       "segment": "Nice try.",
@@ -20,32 +115,54 @@
       "evidence": "DP-1373, approved by Zach 2026-09-30: C src/spec_procs.c:2081-2126 grants Serapis/Orodreth level 40 and Frontline 39 on \"pray immortality\" (a name-based backdoor). The port refuses those names with this line instead and changes nothing.",
       "firstSeen": "2026-09-30"
     },
-    "No parsed world available.": {
-      "segment": "No parsed world available.",
-      "file": "pkg/session/wiz_zone.go",
-      "line": 194,
-      "sink": ".Send",
-      "reason": "surface:no-c",
-      "evidence": "DP-1581: defensive nil-parsed-world guard in rlist/olist/mlist; unreachable by players in a live server",
-      "firstSeen": "2026-09-23"
-    },
-    "Parsed world data not available.": {
-      "segment": "Parsed world data not available.",
-      "file": "pkg/session/wiz_stats.go",
-      "line": 1244,
-      "sink": ".Send",
-      "reason": "surface:no-c",
-      "evidence": "DP-1581: defensive nil-parsed-world guard in vnum; unreachable by players in a live server",
-      "firstSeen": "2026-09-23"
+    "No target.": {
+      "segment": "No target.",
+      "file": "pkg/spells/affect_spells.go",
+      "line": 1759,
+      "sink": "sendToCaster",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
     },
     "Room data not found.": {
       "segment": "Room data not found.",
       "file": "pkg/session/wiz_stats.go",
-      "line": 661,
+      "line": 656,
       "sink": ".Send",
       "reason": "surface:no-c",
       "evidence": "DP-1581: defensive nil-room guard in stat room; unreachable by players in a live server",
       "firstSeen": "2026-09-23"
+    },
+    "Sorry, come back tomorrow.": {
+      "segment": "Sorry, come back tomorrow.",
+      "file": "pkg/game/shop_npc.go",
+      "line": 50,
+      "sink": ".shopNpcSay",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "Sorry, we have closed, but come back later.": {
+      "segment": "Sorry, we have closed, but come back later.",
+      "file": "pkg/game/shop_npc.go",
+      "line": 46,
+      "sink": ".shopNpcSay",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "Stinkin' Kender scum!": {
+      "segment": "Stinkin' Kender scum!",
+      "file": "pkg/game/spec_procs3.go",
+      "line": 101,
+      "sink": ".mobShoutGenComm",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "Teleport failed: world interface not available.": {
+      "segment": "Teleport failed: world interface not available.",
+      "file": "pkg/spells/affect_spells.go",
+      "line": 2773,
+      "sink": "sendToCaster",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
     },
     "That information is not available right now.": {
       "segment": "That information is not available right now.",
@@ -56,32 +173,206 @@
       "evidence": "DP-1581: defensive fallback when boot-loaded text is unavailable; unreachable by players in a live server",
       "firstSeen": "2026-09-23"
     },
+    "The corpse refuses to come alive!": {
+      "segment": "The corpse refuses to come alive!",
+      "file": "pkg/spells/affect_spells.go",
+      "line": 1193,
+      "sink": "sendToCaster",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "Too many failed login attempts. Try again in": {
+      "segment": "Too many failed login attempts. Try again in",
+      "file": "pkg/session/session_login.go",
+      "line": 129,
+      "sink": ".sendError",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "Too many failed login attempts. Try again later.": {
+      "segment": "Too many failed login attempts. Try again later.",
+      "file": "pkg/session/session_login.go",
+      "line": 137,
+      "sink": ".sendError",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "Too many login attempts. Please try again later.": {
+      "segment": "Too many login attempts. Please try again later.",
+      "file": "pkg/session/session_login.go",
+      "line": 39,
+      "sink": ".sendError",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
     "Usage: checkload { obj | mob } \u003cnumber\u003e": {
       "segment": "Usage: checkload { obj | mob } \u003cnumber\u003e",
       "file": "pkg/session/wiz_info.go",
-      "line": 505,
+      "line": 501,
       "sink": ".Send",
       "reason": "census:composed",
       "evidence": "src/act.wizard.c:3825 \"Usage: checkload { obj | mob } \u003cnumber\u003e\\r\\n\" — C holds it in a local const char* usage, invisible to the census sink lexer",
       "firstSeen": "2026-09-23"
     },
-    "World not available.": {
-      "segment": "World not available.",
-      "file": "pkg/session/wiz_stats.go",
-      "line": 1238,
-      "sink": ".Send",
-      "reason": "surface:no-c",
-      "evidence": "DP-1581: defensive nil-world guard in stat/vnum; unreachable by players in a live server",
-      "firstSeen": "2026-09-23"
+    "Use an identify scroll on yourself to see your numerical statistics. (Available at your local magick shop.)": {
+      "segment": "Use an identify scroll on yourself to see your numerical statistics. (Available at your local magick shop.)",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 411,
+      "sink": ".npcSay",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
     },
-    "points around the room.": {
-      "segment": "points around the room.",
-      "file": "pkg/game/skill_actor_utility.go",
-      "line": 197,
-      "sink": "Act",
-      "reason": "census:composed",
-      "evidence": "src/new_cmds.c:2533 to_room = \"$n points around the room.\" — do_point assigns to_room on several branches and acts it at :2557, so the census sink lexer cannot resolve it; the actor line is witnessed by switched-body-utility-skills-depth, which has no room observer for the bare point",
-      "firstSeen": "2026-11-18"
+    "Use the CONSIDER command!": {
+      "segment": "Use the CONSIDER command!",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 403,
+      "sink": ".npcSay",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "Wargs make a tasty meal if you CARVE their corpse.": {
+      "segment": "Wargs make a tasty meal if you CARVE their corpse.",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 390,
+      "sink": ".npcSay",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "We don't serve your kind here!": {
+      "segment": "We don't serve your kind here!",
+      "file": "pkg/session/shop_cmds.go",
+      "line": 130,
+      "sink": "sendShopKeeperTell",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "You are in a void.": {
+      "segment": "You are in a void.",
+      "file": "pkg/game/skill_actor_selected.go",
+      "line": 280,
+      "sink": "mobileSend",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "You are nowhere.": {
+      "segment": "You are nowhere.",
+      "file": "pkg/game/skill_actor_shoot.go",
+      "line": 69,
+      "sink": "mobileSend",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "You can hire a mercenary by giving him 100 coins.": {
+      "segment": "You can hire a mercenary by giving him 100 coins.",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 398,
+      "sink": ".npcSay",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "You failed.": {
+      "segment": "You failed.",
+      "file": "pkg/spells/affect_spells.go",
+      "line": 3346,
+      "sink": "sendToCaster",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "You gesture and the earth begins to shake all around you!": {
+      "segment": "You gesture and the earth begins to shake all around you!",
+      "file": "pkg/spells/affect_spells.go",
+      "line": 1072,
+      "sink": "sendToCaster",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "You're allowed to play up to 3 characters at once.": {
+      "segment": "You're allowed to play up to 3 characters at once.",
+      "file": "pkg/game/spec_procs2.go",
+      "line": 396,
+      "sink": ".npcSay",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "blocks your way down.": {
+      "segment": "blocks your way down.",
+      "file": "pkg/game/spec_procs3.go",
+      "line": 310,
+      "sink": ".roomMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "can't carry any more.": {
+      "segment": "can't carry any more.",
+      "file": "pkg/game/item_transfer.go",
+      "line": 473,
+      "sink": ".actToChar",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "fingers!": {
+      "segment": "fingers!",
+      "file": "pkg/spells/affect_spells.go",
+      "line": 1076,
+      "sink": "sendAffectRoom",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "gracefully gestures and the earth begins to shake violently!": {
+      "segment": "gracefully gestures and the earth begins to shake violently!",
+      "file": "pkg/spells/affect_spells.go",
+      "line": 1073,
+      "sink": "sendAffectRoom",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "raises a hand and acid sprays from": {
+      "segment": "raises a hand and acid sprays from",
+      "file": "pkg/spells/affect_spells.go",
+      "line": 1076,
+      "sink": "sendAffectRoom",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "rate limit exceeded — slow down": {
+      "segment": "rate limit exceeded — slow down",
+      "file": "pkg/session/session_login.go",
+      "line": 276,
+      "sink": ".sendError",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "sees and gives a battle cry!": {
+      "segment": "sees and gives a battle cry!",
+      "file": "pkg/game/spec_procs.go",
+      "line": 1213,
+      "sink": ".roomMessage",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "smokes on his joint.": {
+      "segment": "smokes on his joint.",
+      "file": "pkg/session/shop_cmds.go",
+      "line": 399,
+      "sink": ".NPCEmoteCommand",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "subscribe is only available to agents or structured clients": {
+      "segment": "subscribe is only available to agents or structured clients",
+      "file": "pkg/session/agent_vars.go",
+      "line": 75,
+      "sink": ".sendError",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
+    },
+    "too many or too large subscriptions": {
+      "segment": "too many or too large subscriptions",
+      "file": "pkg/session/agent_vars.go",
+      "line": 90,
+      "sink": ".sendError",
+      "reason": "unreviewed",
+      "firstSeen": "2026-11-27"
     }
   }
 }
