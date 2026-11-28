@@ -3,34 +3,135 @@
 go files scanned	348
 c files scanned	66
 data files scanned	653
-go candidates (literal at a sink)	2116
+go candidates (literal at a sink)	3179
 c candidates (literal in a sink call)	5547
-go segments	2144
+go segments	3271
 c segments	4902
-go-only segments	13
-c-missing segments	2840
-data-sourced segments	26
-unresolved go sink arguments	761
+go-only segments	57
+c-missing segments	2099
+data-sourced segments	28
+unresolved go sink arguments	1332
 
 [go sink table]
-Act	701	pkg/game Act(): the act()-style primitive (427 call sites)
+Act	688	pkg/game Act(): the act()-style primitive (427 call sites)
+ActWithPrivateSink	52	pkg/game/act.go:592 Act with a private sink for a switched body (64 call sites)
 BroadcastToRoom	0	SessionManager.BroadcastToRoom, socket-level room broadcast (22 call sites)
-Send	514	Session.Send and wrapper sessions (679 call sites)
-SendMessage	734	Player/MobInstance.SendMessage (599 call sites)
+DoReply	0	pkg/game/directed_speech.go:275 reply command, text forwarded to performTell (2 call sites)
+NPCAuctionCommand	0	pkg/game/npc_command.go:85 NPC command adapter for auction (1 call site)
+NPCEchoCommand	0	pkg/game/npc_command.go:66 NPC command adapter for do_echo (1 call site)
+NPCEmoteCommand	1	pkg/game/npc_command.go:64 NPC command adapter for do_emote (3 call sites)
+NPCGechoCommand	0	pkg/game/npc_command.go:67 NPC command adapter for do_gecho (1 call site)
+NPCGossipCommand	0	pkg/game/npc_command.go:83 NPC command adapter for gossip (1 call site)
+NPCSayCommand	1	pkg/game/npc_command.go:62 NPC command adapter for do_say (4 call sites)
+NPCShoutCommand	0	pkg/game/npc_command.go:84 NPC command adapter for shout (1 call site)
+NPCTellCommand	0	pkg/game/comm_channel.go:491 NPC command adapter for do_tell (1 call site)
+PageString	0	pkg/session/pager.go:111 session pager entry point (21 call sites)
+RoomEcho	1	pkg/game/world.go:993 board system room broadcast (1 call site)
+SaySpellDeliver	0	pkg/game/say_spell_act.go:15 say-spell same-class, other-class and victim lines (1 call site)
+Send	488	Session.Send and wrapper sessions (679 call sites)
+SendMessage	721	Player/MobInstance.SendMessage (599 call sites)
 SendToAll	0	World.SendToAll and SessionManager.SendToAll (10 call sites)
 SendToChar	5	act.go:744 SendToChar(): C send_to_char, a direct descriptor write with no SENDOK gate; callers supply their own line ending
 SendToOutdoor	0	SessionManager.SendToOutdoor, weather broadcast
 SendToRoom	20	World.SendToRoom and act.go SendToRoom(): room broadcast (24 call sites)
-SendToVict	0	act.go:605 SendToVict(): one-line Act(ToVict) wrapper
 SendToZone	1	World.SendToZone and the script adapter
-actToRoom	9	World.actToRoom, raw room line (20 call sites)
+SpellActNotVict	1	pkg/game/say_spell_act.go:67 spell Act(ToNotVict) bridge (2 call sites)
+SpellActToChar	0	pkg/game/world_bridge.go:1151 spell Act(ToChar) bridge (1 call site)
+SpellActToRoom	4	pkg/game/say_spell_act.go:79 spell Act(ToRoom) bridge (7 call sites)
+SpellActToVictim	0	pkg/game/say_spell_act.go:105 spell Act(ToVict) bridge (4 call sites)
+SpellObjectAct	0	pkg/game/world_bridge.go:1135 act() on an object at an explicit target type (2 call sites)
+actDoorDestinationMessage	3	pkg/game/act_movement.go:725 door-move Act(ToRoom) line (3 call sites)
+actForPrivateBody	4	pkg/game/flee.go:25 Act whose actor sink is a body message sink (6 call sites)
+actToChar	36	pkg/game/item_helpers.go:373 legacy World.actToChar adapter to Act(ToChar) (37 call sites)
+actToRoom	10	World.actToRoom method and the package-level twin in other_helpers.go:94 (20 call sites)
+actToRoomExclude	2	pkg/game/item_helpers.go:395 legacy actToRoomExclude adapter to Act(ToNotVict) (2 call sites)
+actToVictim	2	pkg/game/item_helpers.go:388 legacy actToVictim adapter to Act(ToVict) (2 call sites)
+broadcastQuest	1	pkg/session/act_comm.go:111 quest broadcast to self and others (2 call sites)
+castHellfireActNotVictim	3	pkg/spells/affect_spells.go:3054 hellfire Act(ToNotVict) (3 call sites)
+castHellfireActToVictim	4	pkg/spells/affect_spells.go:3042 hellfire Act(ToVict) with a SendMessage fallback (4 call sites)
+cbActChar	1	pkg/combat/callbacks.go:231 combat callback act(ToChar) (1 call site)
+cbSendToChar	0	pkg/combat/callbacks.go:260 combat callback send_to_char (1 call site)
 channelAct	3	pkg/game/out_of_band.go channelAct(): channel lines
+channelActWrapped	4	pkg/game/out_of_band.go:40 channelAct with an optional line wrapper (12 call sites)
 channelSend	2	pkg/game/out_of_band.go channelSend(): the sender's own channel echo
-communicationSend	34	directed_speech.go:56: one-line Act(ToChar|ToSleep) wrapper
-movementSendToChar	27	movement_commands.go:12: one-line Act(ToChar|ToSleep) wrapper
+cmdGechoText	0	pkg/session/wiz_communication.go:18 gecho text (2 call sites)
+cmdGtellText	0	pkg/session/cmd_group.go:216 gtell text (2 call sites)
+cmdPageText	0	pkg/session/comm_cmds.go:180 page text (2 call sites)
+cmdQechoText	0	pkg/session/act_comm.go:68 qecho text (2 call sites)
+cmdQsayText	0	pkg/session/act_comm.go:40 qsay text (2 call sites)
+cmdSendText	0	pkg/session/wiz_communication.go:74 wiz send text (2 call sites)
+cmdWiznetText	0	pkg/session/wiz_communication.go:354 wiznet text (2 call sites)
+combatSendMessage	7	pkg/game/party.go:412 player or NPC-body SendMessage (7 call sites)
+communicationSend	33	directed_speech.go:56: one-line Act(ToChar|ToSleep) wrapper
+consumeReagent	5	pkg/spells/damage_spells.go:283 reagent consumption caster line (5 call sites)
+damageGateAct	2	pkg/game/damage_gate.go:77 damage-gate Act(ToChar) line (2 call sites)
+elementTeleportPerson	8	pkg/game/actor_specials_rooms.go:113 element-room TO_CHAR/departure/arrival lines (3 call sites)
+meditActLocked	2	pkg/session/medit.go:280 medit Act under the edit lock (2 call sites)
+meditSend	10	pkg/session/medit.go:253 medit output (10 call sites)
+meditSendLocked	10	pkg/session/medit.go:259 medit output under the edit lock (19 call sites)
+mobGlobalGossip	1	pkg/game/comm_channel.go:323 mobile gossip do_gen_comm (1 call site)
+mobPerformTell	0	pkg/game/reply_body.go:138 one tell line from a mobile (2 call sites)
+mobSendToZone	1	pkg/game/spec_procs3.go:781 mobile send_to_zone wrapper (1 call site)
+mobShoutGenComm	3	pkg/game/damage_gate.go:163 fixed-channel mobile do_gen_comm (3 call sites)
+mobileActToChar	37	pkg/game/item_transfer_actor.go:362 Act(ToChar) with a private sink for an NPC body (39 call sites)
+mobileActToCharWithTarget	2	pkg/game/skill_actor_itemmagic.go:354 Act(ToChar) with $N and a private sink (2 call sites)
+mobileActionDescription	5	pkg/game/skill_actor_itemmagic.go:338 item action_desc Act(ToRoom) with fallback (6 call sites)
+mobileActionDescriptionWithTarget	3	pkg/game/skill_actor_itemmagic.go:346 item action_desc Act(ToRoom) with a target (3 call sites)
+mobileSend	320	pkg/game/item_transfer_actor.go:354 PrivateOutput or mob SendMessage (321 call sites)
+movementSendToChar	26	movement_commands.go:12: one-line Act(ToChar|ToSleep) wrapper
+npcEcho	0	pkg/game/npc_command.go:87 mobile do_echo (1 call site)
+npcEmote	2	pkg/game/npc_command.go:157 mobile do_echo/emote (4 call sites)
+npcGlobalEcho	0	pkg/game/npc_command.go:98 mobile do_gecho (1 call site)
+npcSay	17	pkg/game/npc_command.go:126 mobile do_say (20 call sites)
+npcTell	2	pkg/game/npc_command.go:175 mobile do_tell buffer, target and text (2 call sites)
+oeditActLocked	2	pkg/session/oedit.go:378 oedit Act(ToRoom) under the edit lock (2 call sites)
+oeditSend	10	pkg/session/oedit.go:350 oedit buffered output (11 call sites)
+oeditSendLocked	22	pkg/session/oedit.go:360 oedit buffered output under the edit lock (39 call sites)
+pageLiteralString	0	pkg/session/pager.go:114 session pager with verbatim C bytes (2 call sites)
+pageString	0	pkg/session/pager.go:116 session pager body (2 call sites)
+performTell	1	pkg/game/directed_speech.go:332 one tell line to a resolved recipient (4 call sites)
+positionSelfLine	0	pkg/game/movement_commands.go:130 position-change self line (2 call sites)
+puffEmote	5	pkg/game/spec_procs.go:720 spec_procs puff emote Act(ToRoom) (5 call sites)
+reditSend	32	pkg/session/redit.go:192 redit buffered output (40 call sites)
+reditSendDirect	5	pkg/session/redit.go:200 redit immediate output (7 call sites)
+roomMessage	4	pkg/game/spec_procs.go:43 spec_procs room line (sendActRoomMessage plus CRLF) (4 call sites)
+seditSend	26	pkg/session/sedit.go:230 sedit buffered output (27 call sites)
+seditSendLocked	0	pkg/session/sedit.go:240 sedit buffered output under the edit lock (8 call sites)
+sendActLine	1	pkg/game/act.go:608 Act's final write to one actor (2 call sites)
+sendActLineWithWorld	4	pkg/game/act.go:612 Act delivery through an NPC body descriptor owner (11 call sites)
+sendActRoomMessage	1	pkg/game/act.go:832 pre-rendered line to every act()-eligible room occupant (1 call site)
+sendActTargetToCaster	2	pkg/spells/damage_spells.go:169 Act(ToChar) with $N pasted from the target name (2 call sites)
+sendAffectRoom	23	pkg/spells/affect_spells.go:1553 spell affect Act(ToRoom) through the world renderer (25 call sites)
+sendBodyMessage	33	pkg/game/flee.go:14 player or NPC-body SendMessage (38 call sites)
+sendColorBracketed	0	pkg/combat/skill_messages.go:53 color-bracketed skill message: message is argument 2, the colour code argument 1 (3 call sites)
+sendCombatMessage	17	pkg/combat/callbacks.go:741 combat callback text sink (23 call sites)
+sendCombatantMessage	4	pkg/game/skill_actor_shoot.go:185 player or NPC-body SendMessage (4 call sites)
+sendCommandBodyMessage	4	pkg/game/other_helpers.go:83 command-body SendMessage for legacy bridges (4 call sites)
+sendError	8	pkg/session/session_send.go:54 session error envelope text (10 call sites)
+sendLiteralText	4	pkg/session/session_send.go:146 session text frame preserving C bytes (10 call sites)
+sendPageText	0	pkg/session/pager.go:324 pager page write (4 call sites)
+sendPlayerText	1	pkg/session/session_send.go:235 session text frame for a descriptor owner (1 call site)
 sendPromptText	3	Session.sendPromptText: prompt bytes are player-facing
+sendPurgeRoomLine	1	pkg/session/wiz_object.go:263 purge room send_to_room (1 call site)
+sendRawEvent	14	pkg/session/session_send.go:314 session raw transport event text (19 call sites)
+sendShopKeeperTell	12	pkg/session/shop_cmds.go:58 keeper tell built from a format (18 call sites)
+sendSpellActToCaster	12	pkg/spells/say_spell.go:264 spell Act(ToChar) through the world renderer (12 call sites)
+sendStatMobLine	20	pkg/session/wiz_stats.go:225 stat mob output line (20 call sites)
 sendText	8	Session.sendText, group and mail text (73 call sites)
+sendTextEditor	48	pkg/session/tedit.go:234 tedit buffered output (56 call sites)
+sendToCaster	123	pkg/spells/affect_spells.go:1492 spell caster SendMessage (125 call sites)
 sendToChar	55	spec_procs.go:85 sendToChar(): one-line SendMessage wrapper
+sendToRoomExact	3	pkg/game/limits_condition.go:539 awake-gated room send_to_room (4 call sites)
+sendToVictim	20	pkg/spells/affect_spells.go:1485 spell victim SendMessage (22 call sites)
+sendToZone	2	pkg/spells/damage_spells.go:528 spells-package zone broadcast (2 call sites)
+sendWeatherRoom	7	pkg/game/weather.go:841 dusk-event send_to_room (7 call sites)
+shopNpcSay	4	pkg/game/shop_npc.go:25 keeper do_say (4 call sites)
+shopNpcTell	15	pkg/game/shop_npc.go:32 keeper do_tell buffer (22 call sites)
+spellActToRoom	4	pkg/spells/affect_spells.go:3540 spells-package Act(ToRoom) bridge (4 call sites)
+tattooNoMagicRoom	2	pkg/game/other_economy.go:305 NOMAGIC tattoo Act(ToRoom) line (2 call sites)
+transferCharacter	2	pkg/session/wiz_movement.go:419 wiz transfer departure Act (2 call sites)
+wakeSelfLine	4	pkg/game/character_command.go:318 wake-up self line (5 call sites)
+zeditSend	57	pkg/session/zedit.go:224 zedit buffered output (61 call sites)
 
 [c sink table]
 SEND_TO_Q	72	comm.h:66 macro: write_to_output(desc, "%s", messg) (118 call sites)
@@ -51,9 +152,10 @@ strncpy	1	buffer append, bounded (29 call sites)
 write_to_output	72	descriptor output queue (107 call sites)
 
 [go candidates by package]
-pkg/game	1546
-pkg/session	560
-pkg/spells	10
+pkg/combat	18
+pkg/game	2129
+pkg/session	821
+pkg/spells	211
 
 [c candidates by file]
 act.comm.c	115
@@ -118,68 +220,77 @@ whod.c	38
 zedit.c	118
 
 [go-only segments by file]
-pkg/game/skill_actor_utility.go	2
+pkg/game/actor_specials_shop.go	1
+pkg/game/damage_gate.go	1
+pkg/game/item_transfer.go	1
+pkg/game/shop_npc.go	4
+pkg/game/skill_actor_selected.go	1
+pkg/game/skill_actor_shoot.go	1
+pkg/game/spec_procs.go	1
+pkg/game/spec_procs2.go	13
+pkg/game/spec_procs3.go	2
 pkg/game/spec_procs4.go	1
+pkg/session/agent_vars.go	2
 pkg/session/gen_ps_cmds.go	1
+pkg/session/session_login.go	5
+pkg/session/session_pump.go	1
+pkg/session/shop_cmds.go	4
 pkg/session/wiz_info.go	1
-pkg/session/wiz_stats.go	5
-pkg/session/wiz_system.go	1
-pkg/session/wiz_zone.go	2
+pkg/session/wiz_stats.go	1
+pkg/spells/affect_spells.go	16
 
 [c-missing segments by c file]
-src/act.comm.c	20
+src/act.comm.c	19
 src/act.display.c	6
-src/act.informative.c	273
-src/act.item.c	9
-src/act.movement.c	43
-src/act.offensive.c	104
-src/act.other.c	40
+src/act.informative.c	268
+src/act.movement.c	41
+src/act.offensive.c	13
+src/act.other.c	16
 src/act.social.c	9
-src/act.wizard.c	145
+src/act.wizard.c	131
 src/ban.c	15
 src/boards.c	32
 src/clan.c	17
 src/class.c	32
 src/comm.c	28
-src/constants.c	455
+src/constants.c	452
 src/db.c	20
 src/dream.c	14
-src/fight.c	77
-src/file-edit.c	8
-src/gate.c	2
+src/fight.c	59
+src/file-edit.c	5
 src/graph.c	13
-src/handler.c	30
+src/handler.c	28
 src/house.c	16
 src/ident.c	5
-src/improved-edit.c	58
-src/interpreter.c	87
-src/limits.c	19
-src/magic.c	70
+src/improved-edit.c	17
+src/interpreter.c	81
+src/limits.c	11
+src/magic.c	14
 src/mail.c	1
-src/medit.c	51
-src/mobact.c	2
+src/medit.c	41
+src/mobact.c	1
 src/mobprog.c	20
-src/modify.c	21
-src/new_cmds.c	208
-src/new_cmds2.c	55
-src/objsave.c	47
+src/modify.c	20
+src/new_cmds.c	83
+src/new_cmds2.c	23
+src/objsave.c	44
 src/oc.c	9
-src/oedit.c	81
-src/olc.c	25
+src/oedit.c	60
+src/olc.c	6
 src/poof.c	2
-src/redit.c	65
+src/redit.c	42
 src/scripts.c	20
-src/sedit.c	62
-src/shop.c	42
+src/sedit.c	44
+src/shop.c	26
 src/spec_assign.c	3
-src/spec_procs.c	57
-src/spec_procs2.c	59
-src/spec_procs3.c	56
-src/spell_parser.c	51
-src/spells.c	123
+src/spec_procs.c	46
+src/spec_procs2.c	57
+src/spec_procs3.c	45
+src/spell_parser.c	46
+src/spells.c	17
 src/tattoo.c	1
-src/tedit.c	2
+src/tedit.c	1
 src/utils.c	6
 src/weather.c	10
 src/whod.c	18
-src/zedit.c	96
+src/zedit.c	45

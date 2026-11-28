@@ -31,8 +31,8 @@ go run ./cmd/dp-string-census --top 30   # report only, write nothing
 Coverage of the C surface by the scenarios that ran is a separate tool and a
 separate dump; see [Coverage](#coverage-which-c-strings-the-census-ever-makes-c-print).
 
-The tool runs over the real tree in under a second (257 Go files, 66 C files,
-630 world-data files).
+The tool runs over the real tree in under a second (348 Go files, 66 C files,
+653 world-data files).
 
 ## What each side reads
 
@@ -62,13 +62,52 @@ Anything else is either ignored or reported, never guessed:
 
 ### The Go sink table
 
+The table is the census's whole declared scope, and it is now closed over this
+tree's output wrappers, not just the primitives: every listed sink already
+existed, and every entry below it was found by walking callers up from the
+sinks (a function whose string parameter reaches a sink call) and then reading
+the body to confirm the parameter is the message.
+
 | Sink | What it is |
 |---|---|
-| `.Send`, `.SendMessage`, `.sendText`, `.sendPromptText` | session and player primitives |
-| `Act` | `pkg/game Act()`, the act()-style primitive |
-| `.SendToRoom`, `SendToRoom`, `.BroadcastToRoom`, `.actToRoom`, `.SendToAll`, `.SendToZone`, `.SendToOutdoor` | broadcast surfaces |
-| `.channelAct`, `.channelSend` | `pkg/game/out_of_band.go` channel lines |
-| `SendToChar`, `SendToVict`, `sendToChar`, `movementSendToChar`, `communicationSend` | one-line forwarding wrappers, each verified to call a sink directly |
+| `.Send`, `.SendMessage`, `.sendText`, `.sendPromptText`, `.sendError`, `.sendPlayerText`, `.sendLiteralText`, `.sendRawEvent` | session and player primitives |
+| `Act`, `ActWithPrivateSink`, `sendActLine`, `sendActLineWithWorld`, `sendActRoomMessage`, `.roomMessage`, `.actToChar`, `actToVictim`, `.actToRoomExclude`, `.actForPrivateBody`, `actDoorDestinationMessage`, `.puffEmote` | `act()` and the wrappers that render or route one line |
+| `.SpellActToChar`, `.SpellActToRoom`, `.SpellActNotVict`, `.SpellActToVictim`, `.SpellObjectAct`, `.SaySpellDeliver`, `sendAffectRoom`, `spellActToRoom`, `castHellfireActToVictim`, `castHellfireActNotVictim`, `sendSpellActToCaster`, `sendActTargetToCaster`, `.damageGateAct`, `.tattooNoMagicRoom` | spell-side `act()` bridges and lines |
+| `.SendToRoom`, `SendToRoom`, `.BroadcastToRoom`, `.actToRoom` (method and the package-level twin), `.SendToAll`, `.SendToZone`, `sendToZone`, `.SendToOutdoor`, `.RoomEcho`, `.mobSendToZone`, `.sendWeatherRoom`, `.sendToRoomExact`, `elementTeleportPerson` | room and zone broadcast surfaces |
+| `.channelAct`, `.channelActWrapped`, `.channelSend`, `mobShoutGenComm`, `mobGlobalGossip`, `performTell`, `mobPerformTell`, `DoReply`, `broadcastQuest` | channel and directed-speech lines |
+| `sendToChar`, `SendToChar`, `SendToVict`, `movementSendToChar`, `communicationSend`, `sendToCaster`, `sendToVictim`, `consumeReagent`, `mobileSend`, `mobileActToChar`, `mobileActToCharWithTarget`, `mobileActionDescription`, `mobileActionDescriptionWithTarget`, `sendBodyMessage`, `combatSendMessage`, `sendCombatantMessage`, `sendCommandBodyMessage`, `wakeSelfLine`, `positionSelfLine`, `cbSendToChar`, `cbActChar`, `sendCombatMessage`, `sendColorBracketed` | wrappers that pick a body, a descriptor owner or a private sink, each verified to call a sink |
+| `npcSay`, `npcEmote`, `npcEcho`, `npcGlobalEcho`, `npcTell`, `shopNpcSay`, `shopNpcTell`, `NPCSayCommand`, `NPCTellCommand`, `NPCEchoCommand`, `NPCGechoCommand`, `NPCEmoteCommand`, `NPCGossipCommand`, `NPCShoutCommand`, `NPCAuctionCommand` | mobile speech and the NPC command adapters (a tell argument is the line, target included) |
+| `PageString`, `pageString`, `pageLiteralString`, `.sendPageText`, `.sendStatMobLine`, `sendShopKeeperTell`, `sendPurgeRoomLine`, `transferCharacter`, `cmdGechoText`, `cmdGtellText`, `cmdPageText`, `cmdQsayText`, `cmdQechoText`, `cmdSendText`, `cmdWiznetText` | session text paths outside the primitives |
+| `.zeditSend`, `.sendTextEditor`, `.reditSend`, `.reditSendDirect`, `.oeditSend`, `.oeditSendLocked`, `.oeditActLocked`, `.seditSend`, `.seditSendLocked`, `.meditSend`, `.meditSendLocked`, `.meditActLocked` | OLC editor output |
+
+A sink's literals are read from every argument unless the entry names
+`TextArgs`: the positions that carry player text. Four sinks mix text with data
+(`elementTeleportPerson`'s direct/departure/arrival lines vs its log message,
+`sendShopKeeperTell`'s format vs the player name, `channelActWrapped`'s format vs
+the channel name, `sendColorBracketed`'s message vs the colour code), so a
+missing table would report a channel or a log line as player-facing text.
+
+The table stops at the message. These produce player-visible bytes but are
+deliberately not sinks, because their string parameter is a datum the function
+parses or substitutes rather than the line itself:
+
+- command handlers whose argument is a keyword, verb or mode rather than the
+  line — `DoGet`, `DoJunk`, `DoEnter`, `npcSocial`, `cmdChannelBody`,
+  `cmdForceText` (the forced command is a command word); a tell or a page is
+  different: its argument *is* the line, so `npcTell`, `shopNpcTell`,
+  `cmdPageText` and `cmdSendText` are sinks;
+- format-argument helpers that substitute a datum into their own template —
+  `findDoor`, `applyDrinkSustenance`, `awardGroupKillGold`, `doDispose`;
+- dispatchers that route a command or channel name — `executeCommandRaw`,
+  `wrapToggle`, `doGenComm`, `mobGenComm`;
+- session paths with no message text — `sendCachedText` takes a filename and
+  `sendGMCPRaw` a protocol payload.
+
+Their literals do reach a player, but as a name or a command word inside
+someone else's sentence: adding them would put `junk`, `open` and toggle keys in
+the R4 queue and tell a reviewer nothing. Catching an invented sentence in one
+of them needs a per-position text table for that function (the `TextArgs` shape),
+not a whole-function entry. That is the one class this model cannot express.
 
 The table is `goSinks` in `internal/stringcensus/gosink.go`; `summary.txt` lists
 it with the literal counts this run found. `goSinks` is the census's whole
@@ -175,9 +214,12 @@ triage row of its own.
 - **No type checking.** `.Send` on any receiver is attributed to the session
   sink. Widening the table is a review decision, and the census does not pretend
   to know receiver types.
-- **Parameter forwarding is invisible.** `helper(msg string)` called with a
-  literal is not followed into `helper`; only the sink table's own forwarders
-  are listed, and each is verified by hand.
+- **Only listed forwarders are followed.** A literal passed to `helper(msg
+  string)` is not followed into `helper` unless `helper` is in the table; the
+  table is maintained by walking callers up from the sinks, and each entry is
+  verified by hand. A new output path needs a new entry, and that is the whole
+  gap: `World.roomMessage` was missing until 2026-11-27 and had been hiding
+  `%s blocks your way down.` (`pkg/game/spec_procs3.go:310`) from the census.
 - **Keyed by segment text.** The ratchet fails on a *new* go-only segment. A
   second occurrence of a known segment in a new file does not fail, and moving
   a string between files does not either; `go-only.tsv` shows those moves.
@@ -277,6 +319,40 @@ separate decision.
   reach", so a filtered run (`ORACLE_REGRESSION_SCENARIOS=...`) produces a
   filtered report. The summary prints the scenario and block counts at the top so
   a partial dump is visible in the numbers themselves.
+
+## Widening, 2026-11-27: the sink table closed over the output wrappers
+
+The first table listed the primitives and a handful of one-line forwarders.
+That left every wrapper above them invisible, and `World.roomMessage`
+(`pkg/game/spec_procs.go:43`) was hiding three invented lines from the census.
+The table was rebuilt by walking callers up from the listed sinks, reading each
+candidate's body and adding the function when its string parameter is the
+message (see *The Go sink table*). 101 sinks were added in that pass — and a
+stale `SendToVict` entry, whose function a dead-code cleanup had deleted, was
+removed — among them
+`mobileSend` (321 call sites), `sendToCaster` (125), `ActWithPrivateSink` (64),
+the OLC editor senders (`zeditSend` 61, `sendTextEditor` 56, `reditSend` 40,
+`oeditSendLocked` 39, `seditSend` 27, `meditSendLocked` 19), `sendBodyMessage`
+(38), `actToChar` (37), `sendAffectRoom` (25), `sendCombatMessage` (23),
+`shopNpcTell` (22), `npcSay` (20) and the pager (`PageString` 21). The
+package-level `actToRoom` twin (`pkg/game/other_helpers.go:94`) was already
+recorded as a blind spot in [`triage.md`](triage.md); it is now `goSinkBoth`.
+
+On the same tree, before and after:
+
+| | before | after |
+|---|---|---|
+| go candidates (literal at a sink) | 2062 | 3177 |
+| go segments | 2096 | 3270 |
+| go-only rows | 4 | 57 |
+| c-missing rows | 2848 | 2100 |
+| data-sourced segments | 22 | 28 |
+| unresolved sink arguments | 762 | 1328 |
+
+The 53 new go-only rows are the R4 queue the widening uncovered; they are
+listed, unclassified, in [`triage.md`](triage.md) and in the baseline as
+`unreviewed`. `c-missing` fell by 748 because the wider Go corpus now contains
+more of C's lines; a c-missing row is a review lead, not a verdict.
 
 ## First run, 2026-09-23
 

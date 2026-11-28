@@ -9,7 +9,12 @@ import (
 // extractGoFiles parses each Go source file and reports the literals that reach
 // a sink, plus the sink arguments it could not resolve.
 func extractGoFiles(files []sourceFile) (cands []candidate, unresolved []unresolvedSite, err error) {
-	sinks := goSinkIndex()
+	return extractGoFilesWithSinks(files, goSinkIndex())
+}
+
+// extractGoFilesWithSinks is extractGoFiles against an explicit sink table, so
+// a test can show what a table entry is responsible for by removing it.
+func extractGoFilesWithSinks(files []sourceFile, sinks map[string]goSink) (cands []candidate, unresolved []unresolvedSite, err error) {
 	for _, f := range files {
 		fset := token.NewFileSet()
 		parsed, perr := parser.ParseFile(fset, f.rel, f.data, parser.SkipObjectResolution)
@@ -28,25 +33,28 @@ func extractGoFiles(files []sourceFile) (cands []candidate, unresolved []unresol
 				if !ok {
 					return true
 				}
-				name, ok := goCallee(call.Fun, sinks)
+				sink, label, ok := goCallee(call.Fun, sinks)
 				if !ok {
 					return true
 				}
 				line := fset.Position(call.Pos()).Line
-				for _, arg := range call.Args {
+				for i, arg := range call.Args {
+					if !sink.wantsArg(i) {
+						continue
+					}
 					v := g.classify(arg, idx, 0)
-					sink := name
+					sinkName := label
 					if v.via != "" {
-						sink += "(via " + v.via + ")"
+						sinkName += "(via " + v.via + ")"
 					}
 					for _, lit := range v.literals {
 						cands = append(cands, candidate{
-							file: f.rel, line: line, sink: sink, raw: lit,
+							file: f.rel, line: line, sink: sinkName, raw: lit,
 						})
 					}
 					if v.unresolved != "" {
 						unresolved = append(unresolved, unresolvedSite{
-							file: f.rel, line: line, sink: name, expr: v.unresolved,
+							file: f.rel, line: line, sink: label, expr: v.unresolved,
 						})
 					}
 				}
@@ -62,16 +70,31 @@ func extractGoFiles(files []sourceFile) (cands []candidate, unresolved []unresol
 // census does not type-check, so a Send-shaped call on an unrelated receiver is
 // still attributed: the table is the census's declared scope, and whether the
 // receiver can print is a review question.
-func goCallee(fun ast.Expr, sinks map[string]goSink) (string, bool) {
+func goCallee(fun ast.Expr, sinks map[string]goSink) (goSink, string, bool) {
 	switch node := fun.(type) {
 	case *ast.Ident:
 		if s, ok := sinks[node.Name]; ok && s.Kind != goSinkMethod {
-			return s.Name, true
+			return s, s.Name, true
 		}
 	case *ast.SelectorExpr:
 		if s, ok := sinks["."+node.Sel.Name]; ok && s.Kind != goSinkFunc {
-			return "." + s.Name, true
+			return s, "." + s.Name, true
 		}
 	}
-	return "", false
+	return goSink{}, "", false
+}
+
+// wantsArg reports whether argument i of a call to s carries player text. A
+// sink with no TextArgs table takes text in every position, as every sink did
+// before the table grew per-argument entries.
+func (s goSink) wantsArg(i int) bool {
+	if len(s.TextArgs) == 0 {
+		return true
+	}
+	for _, j := range s.TextArgs {
+		if j == i {
+			return true
+		}
+	}
+	return false
 }
