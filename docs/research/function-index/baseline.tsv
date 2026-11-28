@@ -91,9 +91,6 @@ src/act.informative.c:find_exdesc	pkg/game/live_strings.go	FindExtraDescIndex	pr
 src/act.informative.c:find_exdesc	pkg/game/world_oedit.go	(World).ClearLiveObjExtraDesc	split
 src/act.informative.c:find_exdesc	pkg/session/string_cmd.go	(Session).stringObjDeleteExtraDesc	split
 src/act.informative.c:list_char_to_char	pkg/game/look.go	listsHiddenBody	primary
-src/act.informative.c:list_char_to_char	pkg/game/look.go	(World).appendRoomCharacters	split
-src/act.informative.c:list_one_char	pkg/game/look.go	mobAtDefaultPosition	split
-src/act.informative.c:list_one_char	pkg/game/look.go	mobDefaultPositionLine	split
 src/act.informative.c:look_at_char	pkg/game/look.go	appendCharacterAffectLook	primary
 src/act.informative.c:look_at_room	pkg/game/look.go	(ObservationResult).bare	primary
 src/act.informative.c:look_at_room	pkg/game/look.go	(ObservationResult).worldText	split

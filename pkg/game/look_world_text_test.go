@@ -322,65 +322,36 @@ func TestLookAtMobileKeepsDescriptionTrailingBlankLines(t *testing.T) {
 
 // list_one_char writes a mobile that stands at its default position with one
 // send_to_char of its long description (src/act.informative.c:511-526): no
-// capital, and the line breaks as they are stored. Framed, act() capitalized
-// it; the shipped world has one such mobile, 9918, "a cloven footed goat-like
-// demon wanders around here." (lib/world/mob/99.mob). The sanctuary line
-// after it is an act() line (src/act.informative.c:528-535).
-func TestRoomLookMobileLongDescriptionIsWrittenAsCSendsIt(t *testing.T) {
-	cases := []struct {
-		name        string
-		long        string
-		sanctuary   bool
-		framed      bool // the framed line is C's bytes as well
-		want        string
-		wantLiteral string
-	}{
-		{
-			name:        "first letter lowercase",
-			long:        "a cloven footed goat-like demon wanders around here.\n",
-			want:        "a cloven footed goat-like demon wanders around here.\r\n",
-			wantLiteral: "a cloven footed goat-like demon wanders around here.\r\n",
-		},
-		{
-			name:        "trailing blank line",
-			long:        "A frog sits here.\n\n",
-			want:        "A frog sits here.\r\n\r\n",
-			wantLiteral: "A frog sits here.\r\n\r\n",
-		},
-		{
-			// C's next write continues the description's last line.
-			name:        "no line ending, then an act() line",
-			long:        "A frog sits here.",
-			sanctuary:   true,
-			want:        "A frog sits here....it glows with a bright light!\r\n",
-			wantLiteral: "A frog sits here.",
-		},
-		{
-			name:   "one line ending",
-			long:   "A frog sits here.\n",
-			framed: true,
-			want:   "A frog sits here.\r\n",
-		},
+// capital, and the line breaks as fread_string stored them. Every shipped long
+// description ends in CRLF (src/db.c:1299, :2711-2716). The port's mob parser
+// reads the long description as one line up to the tilde and keeps no line
+// break (pkg/parser/mob.go:234-239), so the framed line is what ends it, and
+// the act() line after it starts a line of its own
+// (src/act.informative.c:536-537). worldText there left the line open and
+// joined them: 67 red scenarios in glm-world-text-targeted-1. Until the parser
+// keeps fread_string's string this site stays framed, and 9918's "a cloven
+// footed goat-like demon wanders around here." (lib/world/mob/99.mob:249) is
+// printed capitalized.
+func TestShippedMobLongDescriptionIsStoredWithoutItsLineBreak(t *testing.T) {
+	mobs, err := parser.ParseMobFile(filepath.Join(shippedLibWorld(t), "mob", "163.mob"))
+	if err != nil {
+		t.Fatalf("ParseMobFile(163.mob): %v", err)
 	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			w, ch := newWorldTextWorld(t, &parser.World{
-				Rooms: []parser.Room{{VNum: 1001, Name: "Pond"}},
-				Mobs: []parser.Mob{{
-					VNum: 9001, Keywords: "frog", ShortDesc: "a frog", LongDesc: tc.long,
-					Position: posStanding, DefaultPos: posStanding,
-				}},
-			})
-			mob, err := w.SpawnMob(9001, 1001)
-			if err != nil {
-				t.Fatalf("SpawnMob: %v", err)
-			}
-			if tc.sanctuary {
-				mob.SetAffected(affSanctuary)
-			}
-			checkWorldText(t, w, w.DoLookRoomAt(ch, 1001, true), "Pond\r\n"+tc.want, tc.wantLiteral)
-		})
+	w, ch := newWorldTextWorld(t, &parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Barracks"}},
+		Mobs:  mobs,
+	})
+	const long = "A grey outfitted guard trainee is here."
+	trainee, err := w.SpawnMob(16303, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob: %v", err)
 	}
+	if got := trainee.Proto().LongDesc; got != long {
+		t.Fatalf("parser stored %q, want the line without fread_string's CRLF %q", got, long)
+	}
+	trainee.SetAffected(affBlind)
+	checkWorldText(t, w, w.DoLookRoomAt(ch, 1001, true),
+		"Barracks\r\n"+long+"\r\n...he is groping around blindly!\r\n", "")
 }
 
 // do_switch moves the wizard's descriptor to the mobile body
@@ -427,14 +398,22 @@ func TestSwitchedMobileLookWritesThroughTheLiteralSink(t *testing.T) {
 	}
 }
 
+// shippedLibWorld is the repository's lib/world, as the shipped servers
+// load it. The parser refuses paths that contain "..".
+func shippedLibWorld(t *testing.T) string {
+	t.Helper()
+	dir, err := filepath.Abs("../../lib/world")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return dir
+}
+
 // The shipped world files, read by the shipped parser. fread_string keeps an
 // empty last line as a CRLF (src/db.c:2705-2717) and so does readTildeString:
 // nine shipped room descriptions end in one, which a note in #3116 doubted.
 func TestShippedWorldTextReachesTheLookAsStored(t *testing.T) {
-	libWorld, err := filepath.Abs("../../lib/world")
-	if err != nil {
-		t.Fatal(err)
-	}
+	libWorld := shippedLibWorld(t)
 	var rooms []parser.Room
 	for _, name := range []string{"27.wld", "80.wld", "200.wld"} {
 		parsed, err := parser.ParseWldFile(filepath.Join(libWorld, "wld", name))

@@ -382,7 +382,9 @@ func (w *World) observeRoom(ch combat.Combatant, room *parser.Room, ignoreBrief,
 		result.literal(ch, line)
 	}
 	result.bare(ch, yellow)
-	w.appendRoomCharacters(&result, ch, room, &view)
+	for _, line := range w.roomCharacterLines(ch, room, &view) {
+		result.literal(ch, line)
+	}
 	result.bare(ch, normal)
 	return result
 }
@@ -548,10 +550,8 @@ func listsHiddenBody(viewer combat.Combatant, body interface{}) bool {
 	return invis <= 0 || realLevel(viewer, nil) >= invis
 }
 
-// appendRoomCharacters is list_char_to_char (src/act.informative.c:630-653):
-// each body's presence line (list_one_char, :494-626) and the act() lines
-// that follow it.
-func (w *World) appendRoomCharacters(result *ObservationResult, ch combat.Combatant, room *parser.Room, view *RoomView) {
+func (w *World) roomCharacterLines(ch combat.Combatant, room *parser.Room, view *RoomView) []string {
+	var lines []string
 	for _, person := range w.COrderedRoomPeople(room.VNum) {
 		switch body := person.(type) {
 		case *MobInstance:
@@ -568,30 +568,17 @@ func (w *World) appendRoomCharacters(result *ObservationResult, ch combat.Combat
 			hidden := body.IsAffected(affHide)
 			if (!canSee(observationBodyActor(ch), body) || hidden) && !listsHiddenBody(ch, body) {
 				if hidden && observationBodyAffected(ch, affSenseLife) {
-					result.literal(ch, "You sense a hidden presence in the room.")
-				}
-				continue
-			}
-			// A mobile at its default position is one send_to_char of its long
-			// description (src/act.informative.c:511-526). C neither
-			// capitalizes it nor ends its line itself; 9918's begins "a cloven
-			// footed". Every other presence line is built and given one CRLF
-			// (src/act.informative.c:546-612).
-			if defaultPosition := mobAtDefaultPosition(body); defaultPosition {
-				line := mobDefaultPositionLine(body, ch)
-				result.worldText(ch, line)
-				view.Mobs = append(view.Mobs, normalizeObservationText(line))
-				for _, aura := range presenceAuras(body, true) {
-					result.literal(ch, aura)
+					lines = append(lines, "You sense a hidden presence in the room.")
 				}
 				continue
 			}
 			line := mobPresenceLine(body, ch)
-			result.literal(ch, line)
-			view.Mobs = append(view.Mobs, line)
-			for _, aura := range presenceAuras(body, false) {
-				result.literal(ch, aura)
+			if line == "" {
+				continue
 			}
+			lines = append(lines, line)
+			lines = append(lines, presenceAuras(body, body.Proto() != nil && body.Proto().LongDesc != "" && body.GetPosition() == body.Proto().DefaultPos)...)
+			view.Mobs = append(view.Mobs, line)
 		case *Player:
 			if body == nil || combat.Combatant(body) == ch {
 				continue
@@ -599,17 +586,17 @@ func (w *World) appendRoomCharacters(result *ObservationResult, ch combat.Combat
 			hidden := body.IsAffected(affHide)
 			if (!canSee(observationBodyActor(ch), body) || hidden) && !listsHiddenBody(ch, body) {
 				if hidden && observationBodyAffected(ch, affSenseLife) {
-					result.literal(ch, "You sense a hidden presence in the room.")
+					lines = append(lines, "You sense a hidden presence in the room.")
 				}
 				continue
 			}
-			result.literal(ch, w.playerPresenceLine(body, ch))
-			for _, aura := range presenceAuras(body, false) {
-				result.literal(ch, aura)
-			}
+			line := w.playerPresenceLine(body, ch)
+			lines = append(lines, line)
+			lines = append(lines, presenceAuras(body, false)...)
 			view.Players = append(view.Players, body.GetName())
 		}
 	}
+	return lines
 }
 
 // DoLookTarget resolves room features and nearby objects in the authoritative
@@ -1443,37 +1430,24 @@ func (w *World) playerPresenceLine(player *Player, viewer combat.Combatant) stri
 	return buf
 }
 
-// mobAtDefaultPosition reports the branch list_one_char takes for a mobile:
-// IS_NPC(i) && i->player.long_descr && GET_POS(i) == GET_DEFAULT_POS(i)
-// (src/act.informative.c:511).
-func mobAtDefaultPosition(mob *MobInstance) bool {
-	return mob.Proto() != nil && mob.Proto().LongDesc != "" && mob.GetPosition() == mob.Proto().DefaultPos
-}
-
-// mobDefaultPositionLine is list_one_char's default-position branch
-// (src/act.informative.c:511-526): the long description as it is stored,
-// behind the invisible marker and the alignment aura. It is what C hands
-// send_to_char, with no capital and no line ending of its own.
-func mobDefaultPositionLine(mob *MobInstance, viewer combat.Combatant) string {
-	prefix := ""
-	if mob.IsAffected(affInvisible) {
-		prefix = "*"
-	}
-	if observationBodyAffected(viewer, affDetectAlign) {
-		switch align := mob.GetAlignment(); {
-		case align <= -350:
-			prefix += "(Red Aura) "
-		case align >= 350:
-			prefix += "(Blue Aura) "
-		}
-	}
-	return prefix + mob.Proto().LongDesc
-}
-
-// mobPresenceLine is list_one_char's general branch (act.informative.c:546-612)
-// for a mobile: CAP(short_descr), with the one CRLF that branch appends (:611)
-// supplied by the framed line.
 func mobPresenceLine(mob *MobInstance, viewer combat.Combatant) string {
+	if mob.Proto() != nil && mob.Proto().LongDesc != "" && mob.GetPosition() == mob.Proto().DefaultPos {
+		// list_one_char's default-position branch (act.informative.c:511-526).
+		prefix := ""
+		if mob.IsAffected(affInvisible) {
+			prefix = "*"
+		}
+		if observationBodyAffected(viewer, affDetectAlign) {
+			switch align := mob.GetAlignment(); {
+			case align <= -350:
+				prefix += "(Red Aura) "
+			case align >= 350:
+				prefix += "(Blue Aura) "
+			}
+		}
+		return prefix + normalizeObservationText(mob.Proto().LongDesc)
+	}
+	// The general branch (act.informative.c:546-611): CAP(short_descr).
 	buf := capitalize(mob.GetShortDesc()) + presenceTags(mob)
 	if mob.GetPosition() == posFighting {
 		buf += fightingPresence(mob.GetFightingBody(), viewer)
