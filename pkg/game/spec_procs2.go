@@ -620,6 +620,8 @@ func remortPlayer(ch *Player) {
 	ch.SetClass(newClass)
 	ch.SetLevel(1)
 	ch.SetExp(1)
+	// src/spec_procs2.c:757: `GET_WIMP_LEV(ch) = 0`.
+	ch.WimpLevel = 0
 
 	ch.SetMaxHP(number(30, 40))
 	ch.SetMaxMana(100 + number(20, 30))
@@ -1108,6 +1110,9 @@ func giveTattoo(w *World, ch *Player, me *MobInstance, offer tattooOffer) {
 	ch.SetPosition(combat.PosStunned)
 	updatePosFromHP(ch, ch.GetHP())
 	TattooAf(ch, true)
+	// src/spec_procs2.c:942: `affect_total(ch)` runs right after
+	// `tattoo_af(ch, TRUE)` in C's give_tat (shared by tattoo1-4).
+	ch.AffectTotal()
 }
 
 // ================================================================
@@ -1288,7 +1293,9 @@ func specIdentifier(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		Act(nil, false, ch, me, obj, nil, "You touch $n gently on the forehead.", "", ToVict)
 		Act(w, true, ch, me, obj, nil, "$N touches $n gently on the forehead.", "", ToNotVict)
 		ch.SendMessage("\r\n")
-		spells.CallMagic(ch, nil, obj, spells.SpellIdentify, ch.GetLevel(), spells.CastSpell, w)
+		// src/spec_procs2.c:1275: `spell_identify(LEVEL_IMMORT, ...)` — the
+		// cast level is LVL_IMMORT (31), not the customer's own level.
+		spells.CallMagic(ch, nil, obj, spells.SpellIdentify, lvlImmort, spells.CastSpell, w)
 		return true
 	}
 	return false
