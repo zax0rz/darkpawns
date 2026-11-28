@@ -363,7 +363,9 @@ func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		Act(w, true, me, nil, nil, nil, "$n exclaims, 'Who's there? I can't see you!'", "", ToRoom)
 		return true
 	}
-	arg = strings.TrimSpace(arg)
+	// C: skip_spaces then strcasecmp(argument, "citizenship") — a trailing
+	// space fails (src/spec_procs3.c:104-112).
+	arg = skipSpaces(arg)
 	if cmd == "buy" {
 		if !strings.EqualFold(arg, "citizenship") {
 			tellFromMob(w, me, ch, "BUY CITIZENSHIP, if you're interested.")
@@ -398,7 +400,9 @@ func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 // butlerVisibleRoomObject mirrors get_obj_in_list_vis(mobile, name, room
 // contents), including numbered names, prefix matching, and object visibility.
 func butlerVisibleRoomObject(w *World, me *MobInstance, name string, items []*ObjectInstance) *ObjectInstance {
-	query := strings.TrimSpace(name)
+	// C's get_obj_in_list_vis parses the name with its own leading-space
+	// handling; keep Go's leading-only trim so a trailing space cannot match.
+	query := skipSpaces(name)
 	number := GetNumber(&query)
 	if number <= 0 || query == "" {
 		return nil
@@ -738,8 +742,10 @@ func specQuanLo(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 
 // isCName matches the exact case-insensitive token semantics of C isname(),
 // used by quan_lo rather than the prefix semantics of isname_with_abbrevs().
+// C isname does not trim: a trailing space in the tested name fails the match
+// (src/handler.c:81), so neither does this — callers skip leading spaces
+// first, as C's skip_spaces does before each isname call.
 func isCName(name, namelist string) bool {
-	name = strings.TrimSpace(name)
 	if name == "" {
 		return false
 	}
@@ -760,7 +766,9 @@ var werewolfNumber = dprng.Number
 // "close door" with the east exit open, it moves the caller's room occupants
 // and sends each one the line directly, so sleeping occupants still get it.
 func specAlienElevator(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if w == nil || ch == nil || cmd != "close" || !strings.EqualFold(strings.TrimSpace(arg), "door") {
+	// C: skip_spaces then strcasecmp(argument, "door") — a trailing space
+	// fails (src/spec_procs3.c:406-407).
+	if w == nil || ch == nil || cmd != "close" || !strings.EqualFold(skipSpaces(arg), "door") {
 		return false
 	}
 
@@ -1041,7 +1049,9 @@ func specItoh(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	if w == nil || ch == nil || (cmd != "say" && cmd != "'") {
 		return false
 	}
-	arg = strings.TrimSpace(arg)
+	// C: skip_spaces then strcasecmp(argument, "itoh") — a trailing space
+	// fails (src/spec_procs3.c:591-592).
+	arg = skipSpaces(arg)
 	if !strings.EqualFold(arg, "itoh") {
 		return false
 	}
@@ -1156,9 +1166,9 @@ func (w *World) specRoachFood(me *MobInstance, roomVNum int) bool {
 		} else {
 			Act(w, false, me, nil, nil, nil, "You hear $n burp.", "", ToRoom)
 		}
-		if err := w.MoveObjectToNowhere(obj); err != nil {
-			slog.Warn("MoveObjectToNowhere failed in burp spec", "obj", obj.GetVNum(), "error", err)
-		}
+		// C extract_obj frees the eaten item (src/spec_procs3.c:765) and
+		// decrements the existing count, so a later reset reloads it.
+		w.ExtractObject(obj, roomVNum)
 		return true
 	}
 	return false

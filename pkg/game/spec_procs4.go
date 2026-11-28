@@ -217,7 +217,9 @@ func specDracula(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	if ch == nil || ch.GetFlags()&(1<<uint(PrfNohassle)) != 0 {
 		return false
 	}
-	arg = strings.TrimSpace(arg)
+	// C: skip_spaces then isname_with_abbrevs — a trailing space fails
+	// is_abbrev, so no trim here (src/spec_procs.c:1811-1812).
+	arg = skipSpaces(arg)
 	if !isnameWithAbbrevs(arg, charKeywords(me)) {
 		return false
 	}
@@ -341,9 +343,13 @@ func specEnterCircle(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	}
 
 	if cmd == "enter" {
-		arg = strings.TrimSpace(arg)
+		// C: skip_spaces then strcmp — a trailing space fails
+		// (src/spec_procs.c:1931-1932).
+		arg = skipSpaces(arg)
 		if arg != "circle" && arg != "platform" {
-			ch.SendMessage("Enter what?\r\n")
+			// C: "Enter what?\n\r" (LF CR), verbatim through send_to_char
+			// (src/spec_procs.c:1933); SendMessage is verbatim, so keep it.
+			ch.SendMessage("Enter what?\n\r")
 			return true
 		}
 
@@ -359,7 +365,9 @@ func specEnterCircle(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 		return true
 	}
 
-	arg = strings.TrimSpace(arg)
+	// C: skip_spaces then strcmp — a trailing space fails
+	// (src/spec_procs.c:1957-1958).
+	arg = skipSpaces(arg)
 	if arg != "circle" && arg != "platform" {
 		w.doLook(ch, nil, "look", arg)
 		return true
@@ -391,7 +399,10 @@ func specElevator(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		return false
 	}
 
-	phrase := strings.TrimSpace(arg)
+	// C compares the raw argument (with its leading space) against two
+	// space-prefixed literals, with no trim at all (src/spec_procs.c:1992-1993):
+	// a trailing space fails there and must fail here too.
+	phrase := skipSpaces(arg)
 	if phrase != "Sumuni Elementi Avia Elevata" && phrase != "sumuni elementi avia elevata" {
 		return false
 	}
@@ -751,7 +762,9 @@ func specHornObject(w *World, ch *Player, obj *ObjectInstance, cmd string, arg s
 	}
 
 	held, ok := ch.Equipment.GetItemInSlot(SlotHold)
-	if !ok || held != obj || !cIsName(strings.TrimSpace(arg), obj.GetKeywords()) {
+	// C: skip_spaces then isname — a trailing space fails isname
+	// (src/spec_procs.c:2406-2409).
+	if !ok || held != obj || !cIsName(skipSpaces(arg), obj.GetKeywords()) {
 		return false
 	}
 

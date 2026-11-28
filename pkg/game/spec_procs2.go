@@ -186,7 +186,9 @@ func specCouch(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	if ch == nil {
 		return false
 	}
-	if (cmd != "look" && cmd != "examine") || strings.TrimSpace(arg) != "couch" {
+	// C: skip_spaces then strcmp(argument, "couch") — a trailing space fails
+	// (src/spec_procs2.c:289-291).
+	if (cmd != "look" && cmd != "examine") || skipSpaces(arg) != "couch" {
 		return false
 	}
 	playerRoom := ch.GetRoomVNum()
@@ -251,7 +253,9 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	if ch == nil || ch.IsNPC() {
 		return false
 	}
-	a := strings.TrimSpace(arg)
+	// C: skip_spaces then strcmp(argument, "horse") — a trailing space fails
+	// (src/spec_procs2.c:323-325).
+	a := skipSpaces(arg)
 
 	switch cmd {
 	case "list":
@@ -1348,7 +1352,9 @@ var tattoo4Offers = [...]tattooOffer{
 }
 
 func specTattoo4(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch == nil || ch.IsNPC() || me == nil {
+	// C has no IS_NPC gate here (src/spec_procs2.c:1282-1340); Player.IsNPC()
+	// is always false, so the gate was dead text (R4).
+	if ch == nil || me == nil {
 		return false
 	}
 
@@ -1559,8 +1565,9 @@ func specMedusa(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 
 	// C uses isname(argument, mobile->player.name) (src/spec_procs2.c:1561),
 	// exact case-insensitive token — a prefix like "med" must not look at
-	// the medusa.
-	if !isCName(strings.TrimSpace(arg), charKeywords(me)) {
+	// the medusa. C skip_spaces strips leading whitespace only, so a trailing
+	// space fails isname, as it fails the C strcmp gates.
+	if !isCName(skipSpaces(arg), charKeywords(me)) {
 		return false
 	}
 
@@ -1663,7 +1670,9 @@ func specPortalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	if ch == nil {
 		return false
 	}
-	if !strings.EqualFold(strings.TrimSpace(arg), "kallinistra") {
+	// C: skip_spaces then strcasecmp(argument, "kallinistra") — a trailing
+	// space fails (src/spec_procs2.c:1659-1660).
+	if !strings.EqualFold(skipSpaces(arg), "kallinistra") {
 		return false
 	}
 	w.DoSay(ch, arg)
@@ -1907,7 +1916,9 @@ func specKeySeller(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return true
 	}
 
-	a := strings.TrimSpace(arg)
+	// C: skip_spaces then strcmp(argument, "key") — a trailing space fails
+	// (src/spec_procs2.c:1893-1897).
+	a := skipSpaces(arg)
 	if cmd == "buy" {
 		if a != "key" {
 			tellFromMob(w, me, ch, "I only sell keys, currently.")

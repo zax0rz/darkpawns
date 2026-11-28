@@ -1,6 +1,10 @@
 package game
 
-import "github.com/zax0rz/darkpawns/pkg/combat"
+import (
+	"log/slog"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
+)
 
 // Movement-guard ports for NPC actors (DP-1448).
 //
@@ -17,6 +21,7 @@ func init() {
 	RegisterActorSpec("castle_guard_down", specCastleGuardDownActor)
 	RegisterActorSpec("castle_guard_up", specCastleGuardUpActor)
 	RegisterActorSpec("castle_guard_north", specCastleGuardNorthActor)
+	RegisterActorSpec("castle_guard_east", specCastleGuardEastActor)
 	RegisterActorSpec("chosen_guard", specChosenGuardActor)
 	RegisterActorSpec("jailguard", specJailGuardActor)
 	RegisterActorSpec("outofjailguard", specOutOfJailGuardActor)
@@ -178,6 +183,53 @@ func specCastleGuardUpActor(w *World, ctx CharacterSpecialContext, me *MobInstan
 
 func specCastleGuardNorthActor(w *World, ctx CharacterSpecialContext, me *MobInstance, cmd, _ string) SpecialResult {
 	return specCastleGuardActor(w, ctx, me, cmd, castleGuardSpec{direction: "north", ownerOffset: 2, groupedOwnerOffset: 2})
+}
+
+// specCastleGuardEastActor ports SPECIAL(castle_guard_east)'s command-time
+// body (src/spec_procs2.c:1934-1970) for an NPC actor. Unlike the other castle
+// guards, east yells and hits instead of blocking: a non-owner actor walking
+// east meets "$n yells, 'Stay outta there!'" and a hit, and the move is
+// consumed. A grouped owner's follower is let through with one TO_ROOM line
+// ("$n snaps to attention as you pass.") and declined, exactly like the player
+// lane. The `if (!cmd)` second-guard scan is a pulse arm the player lane
+// keeps; this lane never sees a commandless dispatch.
+func specCastleGuardEastActor(w *World, ctx CharacterSpecialContext, me *MobInstance, cmd, _ string) SpecialResult {
+	if me == nil || ctx.Actor == nil || !ctx.Actor.IsNPC() {
+		return SpecialUnsupported
+	}
+	// C: mini_mud || !AWAKE(mobile)
+	if me.GetPosition() <= combat.PosSleeping {
+		return SpecialDeclined
+	}
+	// C: GET_LEVEL(ch) >= LVL_IMMORT, checked before the command arm.
+	if ctx.Actor.GetLevel() >= LVL_IMMORT {
+		return SpecialDeclined
+	}
+	if cmd != "east" {
+		return SpecialDeclined
+	}
+	if me == ctx.Actor {
+		return SpecialDeclined // C's (mobile != ch)
+	}
+	roomVNum := ctx.Actor.GetRoom()
+	// C: !is_owner(ch, world[ch->in_room].number+2). is_owner returns FALSE
+	// for an NPC, so only a switched player body could satisfy it.
+	if castleGuardOwnerBody(w, ctx.Actor, roomVNum+2) {
+		return SpecialDeclined
+	}
+	if master := w.combatFollowingBody(ctx.Actor); master != nil &&
+		(master == ctx.Actor || (actorHasAffect(ctx.Actor, affGroup) && actorHasAffect(master, affGroup))) &&
+		castleGuardOwnerBody(w, master, roomVNum+2) {
+		actingBody := ctx.ActActor()
+		ActWithPrivateSink(w, false, me, actingBody, nil, nil, "$n snaps to attention as you pass.", "", ToRoom, ctx.Actor, ctx.PrivateOutput)
+		return SpecialDeclined
+	}
+	actingBody := ctx.ActActor()
+	ActWithPrivateSink(w, false, me, actingBody, nil, nil, "$n yells, 'Stay outta there!'", "", ToRoom, ctx.Actor, ctx.PrivateOutput)
+	if err := w.mobHit(me, ctx.Actor); err != nil {
+		slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
+	}
+	return SpecialHandled
 }
 
 // jailGuardSpec carries the room gate and the two messages of C's jailguard and
