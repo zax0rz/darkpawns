@@ -8,6 +8,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 const (
@@ -554,9 +555,51 @@ func specPrayForItems(w *World, ch *Player, me *MobInstance, cmd string, arg str
 	return false
 }
 
+// specFearface ports SPECIAL(fearface) (src/spec_procs.c:2171-2194): the mob
+// makes the first visible player in its room panic and flee. C's `ch` is the
+// mob itself; in this lane me carries that body (the typed-command dispatch
+// requires cmd == "" anyway).
 func specFearface(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd == "" && (!me.IsNPC() || !me.IsFighting()) {
+	_ = ch
+	_ = arg
+	// src/spec_procs.c:2175: !AWAKE(ch) || !IS_NPC(ch) || cmd || GET_HIT(ch) < 0.
+	if me == nil || me.GetPosition() <= combat.PosSleeping || !me.IsNPC() || cmd != "" || me.GetHP() < 0 {
 		return false
+	}
+	// src/spec_procs.c:2178: only a fighting fearface acts.
+	if me.GetFightingBody() == nil {
+		return false
+	}
+	// src/spec_procs.c:2179: a seated fearface stands first instead of
+	// scaring; C's do_stand is silent for an NPC.
+	if pos := me.GetPosition(); pos > combat.PosSleeping && pos < combat.PosFighting {
+		me.SetPosition(combat.PosStanding)
+		return false
+	}
+	// src/spec_procs.c:2182: the first visible non-NPC without nohassle
+	// (room people, newest-first). The commit is unconditional: a saved
+	// victim still ends the walk, like C.
+	for _, body := range cRoomPeople(w, me.GetRoomVNum()) {
+		victim, ok := body.(*Player)
+		if !ok {
+			continue
+		}
+		if !canSeeForPers(me, victim) {
+			continue
+		}
+		if victim.GetFlags()&(1<<uint(PrfNohassle)) != 0 {
+			continue
+		}
+		// src/spec_procs.c:2189: mag_savingthrow(victim, SAVING_SPELL).
+		if spells.CheckSavingThrow(victim, spells.SaveSpell) {
+			return false
+		}
+		Act(w, true, me, victim, nil, nil, "$n stares into the eyes of $N, who panics in fear!", "", ToRoom)
+		// src/spec_procs.c:2191: one number(1,5) draw, then that many flees.
+		for count := dprng.Number(1, 5); count > 0; count-- {
+			w.DoFlee(victim)
+		}
+		return true
 	}
 	return false
 }
